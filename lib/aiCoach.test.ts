@@ -123,7 +123,20 @@ describe('computeProgressiveOverload', () => {
 
   it('uses a smaller increment for dumbbell exercises', () => {
     const entries = [makeWorkout({ exercise_name: 'Dumbbell Bench Press', weight_kg: 20, reps: 8, rpe: 6 })]
-    const plan = computeProgressiveOverload('Dumbbell Bench Press', entries)
+    const exercises = [
+      {
+        id: 'dumbbell-bench-press',
+        name: 'Dumbbell Bench Press',
+        nameTh: 'ดัมเบลเบนช์เพรส',
+        muscleGroup: 'อก' as const,
+        secondaryMuscles: [],
+        equipment: 'ดัมเบล' as const,
+        icon: '🏋️',
+        aliases: [],
+        instructions: [],
+      },
+    ]
+    const plan = computeProgressiveOverload('Dumbbell Bench Press', entries, exercises)
     expect(plan?.targetWeight).toBe(21)
   })
 })

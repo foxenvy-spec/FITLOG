@@ -1,6 +1,6 @@
 import type { ProgramDay, Workout } from './types'
 import { todayStr } from './weekdays'
-import { EXERCISES } from './exercises'
+import type { ExerciseDef } from './exerciseLibrary'
 
 export function computeCurrentStreak(performedDates: string[]): number {
   const days = Array.from(new Set(performedDates)).sort()
@@ -177,7 +177,7 @@ export interface PRSuggestion {
   targetReps: number
 }
 
-export function suggestNextPR(exerciseName: string, allTimeEntries: Workout[]): PRSuggestion | null {
+export function suggestNextPR(exerciseName: string, allTimeEntries: Workout[], exercises: ExerciseDef[] = []): PRSuggestion | null {
   const entries = allTimeEntries.filter((w) => w.type === 'strength' && w.exercise_name === exerciseName && w.weight_kg)
   if (entries.length === 0) return null
 
@@ -185,7 +185,7 @@ export function suggestNextPR(exerciseName: string, allTimeEntries: Workout[]): 
   const lastWeight = best.weight_kg ?? 0
   const lastReps = best.reps ?? 0
 
-  const known = EXERCISES.find((ex) => ex.name === exerciseName || ex.nameTh === exerciseName)
+  const known = exercises.find((ex) => ex.name === exerciseName || ex.nameTh === exerciseName)
   const increment = known?.equipment === 'ดัมเบล' ? 1 : 2.5
 
   return {

@@ -1,5 +1,7 @@
 import * as XLSX from 'xlsx'
 import { MUSCLE_GROUPS, type MuscleGroup } from './muscle-groups'
+import { matchExercise, type ExerciseMatchType } from './exercises'
+import type { ExerciseDef } from './exerciseLibrary'
 
 export interface ParsedExerciseRow {
   id: string
@@ -17,6 +19,9 @@ export interface ParsedExerciseRow {
   targetRirRaw: string | null
   restRaw: string | null
   rationale: string | null
+  // ผลการจับคู่กับ Exercise Library — null = ไม่พบท่านี้ใน Library เลย (fallback ไปเดากลุ่มกล้ามเนื้อจากชื่อวันแทน)
+  matchedExerciseId: string | null
+  matchConfidence: ExerciseMatchType | null
 }
 
 export interface ParsedDay {
@@ -140,7 +145,7 @@ function isRowEmpty(row: unknown[] | undefined): boolean {
   return row.every((c) => c === null || c === undefined || String(c).trim() === '')
 }
 
-function parseDaySheet(sheetName: string, rows: unknown[][], warnings: string[]): ParsedDay | null {
+function parseDaySheet(sheetName: string, rows: unknown[][], warnings: string[], exercises: ExerciseDef[]): ParsedDay | null {
   const headerRowIdx = findHeaderRow(rows)
   if (headerRowIdx === -1) return null
 
@@ -171,6 +176,8 @@ function parseDaySheet(sheetName: string, rows: unknown[][], warnings: string[])
 
   const exercises: ParsedExerciseRow[] = []
   let convertedLbCount = 0
+  let fuzzyMatchCount = 0
+  let noMatchCount = 0
 
   for (let r = headerRowIdx + 2; r < rows.length; r++) {
     const row = rows[r] ?? []
@@ -208,26 +215,43 @@ function parseDaySheet(sheetName: string, rows: unknown[][], warnings: string[])
     if (rest) noteParts.push(`พัก ${rest}`)
     if (extraNotes) noteParts.push(String(extraNotes))
 
+    // จับคู่ชื่อท่ากับ Exercise Library ก่อน (exact → loose → fuzzy) — ได้กลุ่มกล้ามเนื้อที่แม่นยำกว่า
+    // การเดาจากชื่อวัน/ชื่อชีต ถ้าไม่เจอเลยค่อย fallback ไปใช้ dayMuscleGuess เหมือนเดิม
+    const exerciseName = String(nameRaw).trim()
+    const libMatch = matchExercise(exercises, exerciseName)
+    if (libMatch?.matchType === 'fuzzy') fuzzyMatchCount++
+    if (!libMatch) noMatchCount++
+
     exercises.push({
       id: `${sheetName}-${r}`,
-      name: String(nameRaw).trim(),
+      name: exerciseName,
       sets: setsVal !== null ? Math.round(setsVal) : null,
       reps: reps !== null ? Math.round(reps) : null,
       rir: targetRir,
       rpe,
       weight_kg: weightKg,
       notes: noteParts.length > 0 ? noteParts.join(' · ') : null,
-      muscleGroup: dayMuscleGuess,
+      muscleGroup: libMatch?.exercise.muscleGroup ?? dayMuscleGuess,
       include: true,
       targetRepsRaw: targetReps !== null && col.reps !== undefined && row[col.reps] != null ? String(row[col.reps]).trim() : null,
       targetRirRaw: col.rir !== undefined && row[col.rir] != null ? String(row[col.rir]).trim() : null,
       restRaw: rest ? String(rest).trim() : null,
       rationale: rationale ? String(rationale).trim() : null,
+      matchedExerciseId: libMatch?.exercise.id ?? null,
+      matchConfidence: libMatch?.matchType ?? null,
     })
   }
 
   if (convertedLbCount > 0) {
     warnings.push(`"${title}": แปลงน้ำหนัก ${convertedLbCount} รายการจากปอนด์เป็นกิโลกรัมอัตโนมัติ กรุณาตรวจสอบความถูกต้อง`)
+  }
+
+  if (fuzzyMatchCount > 0) {
+    warnings.push(`"${title}": ${fuzzyMatchCount} ท่าจับคู่กับ Exercise Library แบบไม่ตรงเป๊ะ (fuzzy) กรุณาตรวจสอบชื่อและกลุ่มกล้ามเนื้ออีกครั้ง`)
+  }
+
+  if (noMatchCount > 0) {
+    warnings.push(`"${title}": ${noMatchCount} ท่าไม่พบใน Exercise Library — เดากลุ่มกล้ามเนื้อจากชื่อวันแทน กรุณาตรวจสอบ`)
   }
 
   if (exercises.length === 0) return null
@@ -279,7 +303,7 @@ function parseBodyLogSheet(rows: unknown[][]): ParsedBodyLogRow[] {
   return results
 }
 
-export function parseWorkoutExcel(buffer: ArrayBuffer): ParsedWorkbook {
+export function parseWorkoutExcel(buffer: ArrayBuffer, exercises: ExerciseDef[] = []): ParsedWorkbook {
   const wb = XLSX.read(buffer, { type: 'array', cellDates: true })
   const days: ParsedDay[] = []
   const warnings: string[] = []
@@ -295,7 +319,7 @@ export function parseWorkoutExcel(buffer: ArrayBuffer): ParsedWorkbook {
       continue
     }
 
-    const day = parseDaySheet(sheetName, rows, warnings)
+    const day = parseDaySheet(sheetName, rows, warnings, exercises)
     if (day) days.push(day)
   }
 

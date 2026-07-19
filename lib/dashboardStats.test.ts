@@ -240,7 +240,20 @@ describe('suggestNextPR (PR Logic)', () => {
 
   it('suggests a smaller +1kg jump for dumbbell exercises', () => {
     const history = [makeWorkout({ exercise_name: 'Dumbbell Bench Press', weight_kg: 20, reps: 10 })]
-    const pr = suggestNextPR('Dumbbell Bench Press', history)
+    const exercises = [
+      {
+        id: 'dumbbell-bench-press',
+        name: 'Dumbbell Bench Press',
+        nameTh: 'ดัมเบลเบนช์เพรส',
+        muscleGroup: 'อก' as const,
+        secondaryMuscles: [],
+        equipment: 'ดัมเบล' as const,
+        icon: '🏋️',
+        aliases: [],
+        instructions: [],
+      },
+    ]
+    const pr = suggestNextPR('Dumbbell Bench Press', history, exercises)
     expect(pr?.targetWeight).toBe(21)
   })
 

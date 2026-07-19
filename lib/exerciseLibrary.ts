@@ -1,0 +1,73 @@
+import { createClient } from './supabase/client'
+import type { MuscleGroup } from './muscle-groups'
+
+// อุปกรณ์เป็น free text ในตาราง exercise_library (ไม่ได้ล็อกด้วย check constraint)
+// เก็บ union นี้ไว้เผื่ออยากใช้ช่วย autocomplete ตอนเพิ่มท่า custom ในอนาคต
+export type Equipment = 'บาร์เบล' | 'ดัมเบล' | 'เครื่อง' | 'เคเบิล' | 'น้ำหนักตัว' | 'คีทเทิลเบล'
+
+export interface ExerciseDef {
+  id: string
+  name: string
+  nameTh: string
+  muscleGroup: MuscleGroup
+  secondaryMuscles: MuscleGroup[]
+  equipment: Equipment
+  icon: string
+  aliases: string[]
+  instructions: string[]
+}
+
+// แถวดิบตามคอลัมน์ในตาราง public.exercise_library (ดู supabase/migrations/007_exercise_library.sql)
+interface ExerciseLibraryRow {
+  id: string
+  name: string
+  name_th: string
+  aliases: string[] | null
+  primary_muscle: string
+  secondary_muscles: string[] | null
+  equipment: string
+  icon: string | null
+  instructions: string[] | null
+}
+
+function mapRow(row: ExerciseLibraryRow): ExerciseDef {
+  return {
+    id: row.id,
+    name: row.name,
+    nameTh: row.name_th,
+    muscleGroup: row.primary_muscle as MuscleGroup,
+    secondaryMuscles: (row.secondary_muscles ?? []) as MuscleGroup[],
+    equipment: row.equipment as Equipment,
+    icon: row.icon ?? '🏋️',
+    aliases: row.aliases ?? [],
+    instructions: row.instructions ?? [],
+  }
+}
+
+// ดึงท่าออกกำลังกายทั้งหมดจาก Library (ท่ามาตรฐาน is_custom=false ทุกคนอ่านได้ตาม RLS
+// + ท่า custom ของผู้ใช้คนนั้นเอง ถ้ามี) เรียงตามชื่ออังกฤษเพื่อผลลัพธ์ที่นิ่ง
+export async function fetchExerciseLibrary(): Promise<ExerciseDef[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase.from('exercise_library').select('*').order('name')
+  if (error) throw error
+  return ((data ?? []) as ExerciseLibraryRow[]).map(mapRow)
+}
+
+// แคชแบบ shared promise — เรียกกี่ครั้งในหน้าเดียวกันก็ยิง query แค่ครั้งเดียว
+// (react-query เองก็ dedupe ให้อยู่แล้วถ้าใช้ queryKey เดียวกัน แต่กันไว้เผื่อมีที่เรียกตรงๆ นอก React ด้วย)
+let cachedPromise: Promise<ExerciseDef[]> | null = null
+
+export function getExerciseLibrary(): Promise<ExerciseDef[]> {
+  if (!cachedPromise) {
+    cachedPromise = fetchExerciseLibrary().catch((err) => {
+      cachedPromise = null // ให้ลองใหม่ได้ถ้าล้มเหลว แทนที่จะแคช error ค้างไว้ตลอด
+      throw err
+    })
+  }
+  return cachedPromise
+}
+
+// ล้างแคช — ใช้ตอน sign out หรือถ้าต้องการบังคับ refetch (เช่น หลังเพิ่มท่า custom ใหม่)
+export function invalidateExerciseLibraryCache() {
+  cachedPromise = null
+}

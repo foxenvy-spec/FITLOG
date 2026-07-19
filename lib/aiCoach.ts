@@ -1,5 +1,5 @@
 import type { Workout } from './types'
-import { EXERCISES } from './exercises'
+import type { ExerciseDef } from './exerciseLibrary'
 import type { Insight, MuscleRecommendation } from './dashboardStats'
 
 // ==================================================================
@@ -94,7 +94,7 @@ const RPE_HIGH_THRESHOLD = 9
 const RECENT_SESSION_COUNT = 3
 
 // allEntries ควรเป็น workouts ทั้งหมดของ exerciseName นั้น (type='strength') — เรียงลำดับใหม่ในฟังก์ชันนี้เอง
-export function computeProgressiveOverload(exerciseName: string, allEntries: Workout[]): OverloadPlan | null {
+export function computeProgressiveOverload(exerciseName: string, allEntries: Workout[], exercises: ExerciseDef[] = []): OverloadPlan | null {
   const sorted = allEntries
     .filter((w) => w.type === 'strength' && w.exercise_name === exerciseName && w.weight_kg !== null && w.reps !== null)
     .sort((a, b) =>
@@ -111,7 +111,7 @@ export function computeProgressiveOverload(exerciseName: string, allEntries: Wor
   const rpeValues = recent.map((w) => w.rpe).filter((r): r is number => r !== null && r !== undefined)
   const avgRpe = rpeValues.length > 0 ? Math.round((rpeValues.reduce((a, b) => a + b, 0) / rpeValues.length) * 10) / 10 : null
 
-  const known = EXERCISES.find((ex) => ex.name === exerciseName || ex.nameTh === exerciseName)
+  const known = exercises.find((ex) => ex.name === exerciseName || ex.nameTh === exerciseName)
   const weightIncrement = known?.equipment === 'ดัมเบล' ? 1 : 2.5
 
   if (avgRpe === null) {
