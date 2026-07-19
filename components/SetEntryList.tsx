@@ -47,6 +47,7 @@ function Stepper({
         type="text"
         inputMode="decimal"
         value={value}
+        placeholder="0"
         onChange={(e) => {
           // เดิมใช้ type="number" — เบราว์เซอร์บางตัวจะรายงาน e.target.value เป็น "" ทันที
           // ที่พิมพ์เลขทศนิยมค้างอยู่ (เช่น "92.") เพราะยังไม่ใช่ตัวเลขที่ valid สมบูรณ์
