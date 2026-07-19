@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutType } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
 import { WEEKDAYS, defaultWeekdayForIndex } from '@/lib/weekdays'
+import { getExerciseLibrary } from '@/lib/exerciseLibrary'
 import {
   parseWorkoutExcel,
   type ParsedWorkbook,
@@ -48,7 +49,15 @@ export default function ImportPage() {
 
     try {
       const buffer = await file.arrayBuffer()
-      const parsedResult = parseWorkoutExcel(buffer)
+      // โหลด Exercise Library ก่อน parse เพื่อให้จับคู่ชื่อท่ากับกลุ่มกล้ามเนื้อได้แม่นยำ
+      // (ถ้าโหลดไม่สำเร็จ ยังพอ parse ต่อได้ แค่ fallback ไปเดากลุ่มกล้ามเนื้อจากชื่อวันแทนทุกท่า)
+      let exercises: Awaited<ReturnType<typeof getExerciseLibrary>> = []
+      try {
+        exercises = await getExerciseLibrary()
+      } catch (libErr) {
+        console.error('โหลด Exercise Library ไม่สำเร็จ ระหว่าง import', libErr)
+      }
+      const parsedResult = parseWorkoutExcel(buffer, exercises)
       setParsed(parsedResult)
 
       const dates: Record<string, string> = {}
@@ -473,6 +482,7 @@ function DayCard({
                 className="flex-1 bg-transparent text-ink text-sm outline-none border-b border-transparent focus:border-line"
               />
             </div>
+            {ex.include && <MatchBadge confidence={ex.matchConfidence} />}
             {ex.include && mode === 'log' && (
               <div className="grid grid-cols-4 gap-1.5 pl-6">
                 <NumberField label="เซ็ต" value={ex.sets} onChange={(v) => onUpdateExercise(ex.id, { sets: v })} />
@@ -563,6 +573,26 @@ function BodyLogCard({
         ))}
       </ul>
     </div>
+  )
+}
+
+// แสดงว่าชื่อท่านี้จับคู่กับ Exercise Library ได้แม่นแค่ไหน — ให้ผู้ใช้รู้ว่าแถวไหนควรตรวจสอบซ้ำ
+function MatchBadge({ confidence }: { confidence: ParsedExerciseRow['matchConfidence'] }) {
+  if (confidence === 'exact' || confidence === 'loose') return null // ตรงชัดเจน ไม่ต้องเตือน
+
+  if (confidence === 'fuzzy') {
+    return (
+      <p className="pl-6 text-[10px] tracked uppercase text-amber">
+        จับคู่แบบไม่ตรงเป๊ะ (fuzzy) — ตรวจสอบชื่อท่า/กลุ่มกล้ามเนื้ออีกครั้ง
+      </p>
+    )
+  }
+
+  // confidence === null — ไม่พบใน Library เลย
+  return (
+    <p className="pl-6 text-[10px] tracked uppercase text-muted">
+      ไม่พบใน Library — เดากลุ่มกล้ามเนื้อจากชื่อวันแทน
+    </p>
   )
 }
 
