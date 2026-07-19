@@ -43,21 +43,32 @@ function Stepper({
       >
         −
       </button>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        placeholder="0"
-        onChange={(e) => {
-          // เดิมใช้ type="number" — เบราว์เซอร์บางตัวจะรายงาน e.target.value เป็น "" ทันที
-          // ที่พิมพ์เลขทศนิยมค้างอยู่ (เช่น "92.") เพราะยังไม่ใช่ตัวเลขที่ valid สมบูรณ์
-          // ผลคือ input ถูกเคลียร์กลับเป็นว่างทุกครั้งที่พิมพ์ กลายเป็นพิมพ์เองไม่ได้เลย
-          // แก้โดยใช้ type="text" + กรองอักขระเอง: อนุญาตแค่ตัวเลขกับจุดทศนิยมจุดเดียว
-          const raw = e.target.value
-          if (raw === '' || /^\d*\.?\d*$/.test(raw)) onChange(raw)
-        }}
-        className="input font-mono text-center w-16 px-1"
-      />
+      <div className="relative w-16 shrink-0">
+        <input
+          type="text"
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => {
+            // เดิมใช้ type="number" — เบราว์เซอร์บางตัวจะรายงาน e.target.value เป็น "" ทันที
+            // ที่พิมพ์เลขทศนิยมค้างอยู่ (เช่น "92.") เพราะยังไม่ใช่ตัวเลขที่ valid สมบูรณ์
+            // ผลคือ input ถูกเคลียร์กลับเป็นว่างทุกครั้งที่พิมพ์ กลายเป็นพิมพ์เองไม่ได้เลย
+            // แก้โดยใช้ type="text" + กรองอักขระเอง: อนุญาตแค่ตัวเลขกับจุดทศนิยมจุดเดียว
+            const raw = e.target.value
+            if (raw === '' || /^\d*\.?\d*$/.test(raw)) onChange(raw)
+          }}
+          className="input font-mono text-center w-16 px-1"
+        />
+        {value === '' && (
+          // แสดง "0" เองแทนการพึ่ง placeholder ของเบราว์เซอร์ — บาง browser/มือถือ render
+          // placeholder จางเกินไปหรือเอียง (italic) จนอ่านไม่ออก อันนี้คุมสี/ตำแหน่งเองได้ชัวร์
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 flex items-center justify-center font-mono text-ink/70"
+          >
+            0
+          </span>
+        )}
+      </div>
       {suffix && <span className="text-[10px] text-muted -ml-0.5">{suffix}</span>}
       <button
         type="button"
