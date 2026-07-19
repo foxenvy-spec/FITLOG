@@ -252,14 +252,23 @@ function HistoryPageInner() {
                       </p>
                       {w.notes && <p className="text-xs text-muted mt-0.5 truncate">{w.notes}</p>}
                     </div>
-                    <button
-                      onClick={() => handleDelete(w.id)}
-                      disabled={deletingId === w.id}
-                      className="text-muted hover:text-rust text-xs shrink-0 ml-3 disabled:opacity-50"
-                      aria-label="ลบรายการ"
-                    >
-                      {deletingId === w.id ? 'กำลังลบ...' : 'ลบ'}
-                    </button>
+                    <div className="flex items-center gap-3 shrink-0 ml-3">
+                      <a
+                        href={`/log?edit=${w.id}`}
+                        className="text-muted hover:text-amber text-xs"
+                        aria-label="แก้ไขรายการ"
+                      >
+                        แก้ไข
+                      </a>
+                      <button
+                        onClick={() => handleDelete(w.id)}
+                        disabled={deletingId === w.id}
+                        className="text-muted hover:text-rust text-xs disabled:opacity-50"
+                        aria-label="ลบรายการ"
+                      >
+                        {deletingId === w.id ? 'กำลังลบ...' : 'ลบ'}
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
