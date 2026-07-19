@@ -25,6 +25,7 @@ import InsightCard from '@/components/InsightCard'
 import ErrorState from '@/components/ErrorState'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
+import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 
 const MAX_OVERLOAD_EXERCISES = 3
 
@@ -56,6 +57,7 @@ function topExerciseNames(rows: { exercise_name: string | null }[], limit: numbe
 export default function CoachPage() {
   const supabase = createClient()
   const { format } = useWeightUnit()
+  const { data: exercises = [] } = useExerciseLibrary()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<CoachData | null>(null)
@@ -104,7 +106,7 @@ export default function CoachPage() {
       // --- Progressive Overload สำหรับท่าที่ทำบ่อยที่สุด ---
       const names = topExerciseNames(allEntries, MAX_OVERLOAD_EXERCISES)
       const overloadPlans = names
-        .map((name) => computeProgressiveOverload(name, allEntries))
+        .map((name) => computeProgressiveOverload(name, allEntries, exercises))
         .filter((p): p is OverloadPlan => p !== null)
 
       const dailySummary = computeAIDailySummary(recommendation, balance)
@@ -117,7 +119,7 @@ export default function CoachPage() {
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [supabase, exercises])
 
   useEffect(() => {
     load()
