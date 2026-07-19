@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutSet, WorkoutType } from '@/lib/types'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
@@ -25,10 +26,21 @@ function shortDate(iso: string) {
 }
 
 export default function LogPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <LogPageInner />
+    </Suspense>
+  )
+}
+
+function LogPageInner() {
   const supabase = createClient()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const [type, setType] = useState<WorkoutType>('strength')
   const [date, setDate] = useState(todayStr())
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   // strength fields
   const [exerciseName, setExerciseName] = useState('')
@@ -129,6 +141,60 @@ export default function LogPage() {
     loadToday()
   }, [loadToday])
 
+  // เปิดหน้านี้พร้อม ?edit=<id> (เช่น กดปุ่ม "แก้ไข" จากหน้าประวัติ) — โหลดรายการนั้นเข้าฟอร์ม
+  // แล้วล้าง query param ทิ้งกัน refresh แล้วเด้งเข้าโหมดแก้ไขซ้ำอีกครั้งโดยไม่ตั้งใจ
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (!editId) return
+    ;(async () => {
+      const { data } = await supabase.from('workouts').select('*').eq('id', editId).maybeSingle()
+      if (data) await loadWorkoutIntoForm(data as Workout)
+      router.replace('/log')
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // เติมข้อมูลรายการเดิมเข้าฟอร์ม เพื่อแก้ไข (วันที่ผิด/น้ำหนักผิด ฯลฯ) แทนที่จะลบแล้วพิมพ์ใหม่
+  async function loadWorkoutIntoForm(w: Workout) {
+    setEditingId(w.id)
+    setType(w.type)
+    setDate(w.performed_at)
+    setNotes(w.notes ?? '')
+    setError(null)
+    setLastEntry(null)
+    if (w.type === 'strength') {
+      setExerciseName(w.exercise_name ?? '')
+      setMuscleGroup(w.muscle_group ?? '')
+      const match = w.exercise_name ? findExerciseByName(w.exercise_name) : null
+      setSecondaryMuscles(match?.secondaryMuscles ?? [])
+      setRpe(w.rpe !== null ? String(w.rpe) : '')
+      const rows = await buildRowsFromWorkout(w)
+      // เซ็ตพวกนี้ทำเสร็จไปแล้วจริง (มาจากรายการที่บันทึกแล้ว) — ติ๊ก done ให้เลย
+      // ไม่งั้นตอนกดบันทึกซ้ำ ระบบจะกรองทิ้งเพราะคิดว่ายังไม่เสร็จ (ดู doneRows ใน handleSubmit)
+      setSetRows(rows.map((r) => ({ ...r, done: true })))
+      setCardioType('')
+      setDistance('')
+      setDuration('')
+    } else {
+      setCardioType(w.cardio_type ?? '')
+      setDistance(w.distance_km !== null ? String(w.distance_km) : '')
+      setDuration(w.duration_min !== null ? String(w.duration_min) : '')
+      setExerciseName('')
+      setMuscleGroup('')
+      setSecondaryMuscles([])
+      setSetRows([])
+      setRpe('')
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setDate(todayStr())
+    resetForm()
+    setError(null)
+  }
+
   function resetForm() {
     setExerciseName('')
     setMuscleGroup('')
@@ -175,14 +241,14 @@ export default function LogPage() {
 
       let isPR = false
       if (exerciseName) {
-        const { data: prevBest } = await supabase
+        let prQuery = supabase
           .from('workouts')
           .select('weight_kg')
           .eq('type', 'strength')
           .eq('exercise_name', exerciseName)
-          .order('weight_kg', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+        // แก้ไขรายการเดิมอยู่ — ไม่เอาแถวตัวเองมาเทียบกับตัวเอง ไม่งั้นจะไม่มีวันเป็น PR ใหม่ได้เลย
+        if (editingId) prQuery = prQuery.neq('id', editingId)
+        const { data: prevBest } = await prQuery.order('weight_kg', { ascending: false }).limit(1).maybeSingle()
         const prevMax = (prevBest?.weight_kg as number | null) ?? 0
         if (topWeightKg > prevMax) isPR = true
       }
@@ -201,20 +267,32 @@ export default function LogPage() {
         total_volume_kg: totalVolumeKg,
       }
 
-      const { data: inserted, error: insertError } = await supabase
-        .from('workouts')
-        .insert(payload)
-        .select('id')
-        .single()
+      const workoutId = editingId
+        ? await (async () => {
+            const { error: updateError } = await supabase.from('workouts').update(payload).eq('id', editingId)
+            if (updateError) return null
+            // ลบเซ็ตเก่าทั้งหมดแล้วเขียนชุดใหม่ทับ — ง่ายกว่า diff ทีละเซ็ต และจำนวน/ลำดับเซ็ตอาจเปลี่ยนไปจากเดิม
+            await supabase.from('workout_sets').delete().eq('workout_id', editingId)
+            return editingId
+          })()
+        : await (async () => {
+            const { data: inserted, error: insertError } = await supabase
+              .from('workouts')
+              .insert(payload)
+              .select('id')
+              .single()
+            if (insertError || !inserted) return null
+            return inserted.id as string
+          })()
 
-      if (insertError || !inserted) {
+      if (!workoutId) {
         setSaving(false)
-        setError('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง')
+        setError(editingId ? 'บันทึกการแก้ไขไม่สำเร็จ ลองใหม่อีกครั้ง' : 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง')
         return
       }
 
       const setsPayload = doneRows.map((r, i) => ({
-        workout_id: inserted.id,
+        workout_id: workoutId,
         user_id: user.id,
         set_number: i + 1,
         reps: Number(r.reps),
@@ -232,6 +310,7 @@ export default function LogPage() {
 
       resetForm()
       setLastEntry(null)
+      setEditingId(null)
       setFlash(true)
       setTimeout(() => setFlash(false), 1200)
       if (isPR) {
@@ -254,15 +333,18 @@ export default function LogPage() {
       notes: notes || null,
     }
 
-    const { error } = await supabase.from('workouts').insert(payload)
+    const { error } = editingId
+      ? await supabase.from('workouts').update(payload).eq('id', editingId)
+      : await supabase.from('workouts').insert(payload)
 
     setSaving(false)
 
     if (error) {
-      setError('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง')
+      setError(editingId ? 'บันทึกการแก้ไขไม่สำเร็จ ลองใหม่อีกครั้ง' : 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง')
       return
     }
 
+    setEditingId(null)
     resetForm()
     setFlash(true)
     setTimeout(() => setFlash(false), 1200)
@@ -313,7 +395,7 @@ export default function LogPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl tracked uppercase">บันทึกวันนี้</h1>
+        <h1 className="font-display text-2xl tracked uppercase">{editingId ? 'แก้ไขรายการ' : 'บันทึกวันนี้'}</h1>
         <input
           type="date"
           value={date}
@@ -321,6 +403,19 @@ export default function LogPage() {
           className="mt-1 bg-transparent text-muted text-sm font-mono outline-none border-b border-transparent focus:border-line"
         />
       </div>
+
+      {editingId && (
+        <div className="rounded-lg bg-amber/10 border border-amber/40 px-3 py-2 flex items-center justify-between">
+          <span className="text-xs text-amber font-display tracked uppercase">กำลังแก้ไขรายการเดิม</span>
+          <button
+            type="button"
+            onClick={cancelEdit}
+            className="text-xs text-muted hover:text-ink underline underline-offset-2"
+          >
+            ยกเลิกการแก้ไข
+          </button>
+        </div>
+      )}
 
       {/* Type toggle */}
       <div className="flex rounded-full bg-surface p-1 border border-line">
@@ -508,7 +603,7 @@ export default function LogPage() {
             type === 'strength' ? 'bg-steel text-bg' : 'bg-rust text-ink'
           } ${flash ? 'ring-2 ring-amber' : ''}`}
         >
-          {saving ? 'กำลังบันทึก...' : flash ? 'บันทึกแล้ว ✓' : 'บันทึก'}
+          {saving ? 'กำลังบันทึก...' : flash ? 'บันทึกแล้ว ✓' : editingId ? 'บันทึกการแก้ไข' : 'บันทึก'}
         </button>
       </form>
 
@@ -554,13 +649,23 @@ export default function LogPage() {
                   </p>
                   {w.notes && <p className="text-xs text-muted mt-0.5">{w.notes}</p>}
                 </div>
-                <button
-                  onClick={() => handleDelete(w.id)}
-                  className="text-muted hover:text-rust text-xs shrink-0 ml-3"
-                  aria-label="ลบรายการ"
-                >
-                  ลบ
-                </button>
+                <div className="flex items-center gap-3 shrink-0 ml-3">
+                  <button
+                    type="button"
+                    onClick={() => loadWorkoutIntoForm(w)}
+                    className="text-muted hover:text-amber text-xs"
+                    aria-label="แก้ไขรายการ"
+                  >
+                    แก้ไข
+                  </button>
+                  <button
+                    onClick={() => handleDelete(w.id)}
+                    className="text-muted hover:text-rust text-xs"
+                    aria-label="ลบรายการ"
+                  >
+                    ลบ
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
