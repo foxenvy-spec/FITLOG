@@ -7,7 +7,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 import { createClient } from '@/lib/supabase/client'
 import type { Workout } from '@/lib/types'
 import { computeExerciseStats, type ExerciseStats } from '@/lib/exerciseStats'
-import { EXERCISES } from '@/lib/exercises'
+import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
 import { relativeDayLabel } from '@/lib/dashboardStats'
 import { todayStr } from '@/lib/weekdays'
@@ -25,8 +25,9 @@ export default function ExerciseDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<ExerciseStats | null>(null)
+  const { data: exercises = [] } = useExerciseLibrary()
 
-  const known = EXERCISES.find((ex) => ex.name === exerciseName || ex.nameTh === exerciseName)
+  const known = exercises.find((ex) => ex.name === exerciseName || ex.nameTh === exerciseName)
 
   const load = useCallback(async () => {
     setLoading(true)
