@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { EXERCISES, searchExercises, type ExerciseDef } from '@/lib/exercises'
+import { searchExercises, type ExerciseDef } from '@/lib/exercises'
+import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, muscleGroupLabel, type MuscleGroup, type MuscleLabelLang } from '@/lib/muscle-groups'
 import { loadMuscleLabelLang, saveMuscleLabelLang } from '@/lib/muscleLabelPrefs'
 import MuscleLangToggle from '@/components/MuscleLangToggle'
@@ -18,6 +19,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
   const [browseMuscle, setBrowseMuscle] = useState<MuscleGroup | null>(null)
   const [lang, setLang] = useState<MuscleLabelLang>('th')
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { data: exercises = [], isLoading } = useExerciseLibrary()
 
   useEffect(() => {
     setLang(loadMuscleLabelLang())
@@ -28,12 +30,12 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
     saveMuscleLabelLang(next)
   }
 
-  const searchResults = useMemo(() => searchExercises(value, 8), [value])
+  const searchResults = useMemo(() => searchExercises(exercises, value, 8), [exercises, value])
 
   const browseResults = useMemo(() => {
-    const list = browseMuscle ? EXERCISES.filter((ex) => ex.muscleGroup === browseMuscle) : EXERCISES
+    const list = browseMuscle ? exercises.filter((ex) => ex.muscleGroup === browseMuscle) : exercises
     return list.slice(0, 24)
-  }, [browseMuscle])
+  }, [exercises, browseMuscle])
 
   const showSearch = value.trim().length > 0
   const results = showSearch ? searchResults : browseResults
@@ -90,7 +92,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
           <ul className="max-h-64 overflow-y-auto">
             {results.length === 0 ? (
               <li className="px-3 py-4 text-xs text-muted text-center">
-                ไม่พบท่านี้ในฐานข้อมูล — พิมพ์ชื่อเองแล้วบันทึกได้เลย
+                {isLoading ? 'กำลังโหลดฐานข้อมูลท่า...' : 'ไม่พบท่านี้ในฐานข้อมูล — พิมพ์ชื่อเองแล้วบันทึกได้เลย'}
               </li>
             ) : (
               results.map((ex) => (
