@@ -8,6 +8,7 @@ import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ExercisePicker from '@/components/ExercisePicker'
 import { findExerciseByName, type ExerciseDef } from '@/lib/exercises'
+import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import LoadingState from '@/components/LoadingState'
 import SetEntryList, { newSetRow, type SetRow } from '@/components/SetEntryList'
 
@@ -38,6 +39,7 @@ function LogPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { unit, toDisplay, toKg, format } = useWeightUnit()
+  const { data: exercises = [] } = useExerciseLibrary()
   const [type, setType] = useState<WorkoutType>('strength')
   const [date, setDate] = useState(todayStr())
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -165,7 +167,7 @@ function LogPageInner() {
     if (w.type === 'strength') {
       setExerciseName(w.exercise_name ?? '')
       setMuscleGroup(w.muscle_group ?? '')
-      const match = w.exercise_name ? findExerciseByName(w.exercise_name) : null
+      const match = w.exercise_name ? findExerciseByName(exercises, w.exercise_name) : null
       setSecondaryMuscles(match?.secondaryMuscles ?? [])
       setRpe(w.rpe !== null ? String(w.rpe) : '')
       const rows = await buildRowsFromWorkout(w)
@@ -471,7 +473,7 @@ function LogPageInner() {
                   // ผู้ใช้พิมพ์เอง (ไม่ได้เลือกจาก dropdown) — เช็คว่าชื่อที่พิมพ์ตรงกับ
                   // ชื่อ/นามแฝงของท่าไหนในฐานข้อมูลไหม เจอแล้วเติม primary + secondary muscle ให้เลย
                   // รองรับหลายชื่อเรียกของท่าเดียวกัน เช่น "Bench Press" / "Barbell Bench Press" / "Flat BB Bench"
-                  const match = findExerciseByName(name)
+                  const match = findExerciseByName(exercises, name)
                   if (match) {
                     setMuscleGroup(match.muscleGroup)
                     setSecondaryMuscles(match.secondaryMuscles)
