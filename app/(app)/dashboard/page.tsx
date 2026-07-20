@@ -23,6 +23,7 @@ import {
   computeImbalanceInsights,
   computeMissedMuscleInsights,
   suggestMuscleToTrain,
+  recoveryRecommendationLabel,
   type PRSuggestion,
   type Insight,
 } from '@/lib/dashboardStats'
@@ -320,6 +321,7 @@ export default function DashboardPage() {
   const cells = useMemo(() => statCells(prefs, data?.bodyWeightKg ?? null), [prefs, data?.bodyWeightKg])
 
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
+  const hasTrainedToday = (data?.todayWorkouts.length ?? 0) > 0
 
   if (isLoading || !data) {
     return <DashboardSkeleton />
@@ -473,7 +475,7 @@ export default function DashboardPage() {
                         >
                           <span className="text-sm">💪</span>
                           <p className="text-xs text-ink">
-                            วันนี้ควรเล่น{' '}
+                            {recoveryRecommendationLabel(hasTrainedToday)}{' '}
                             <span className="font-display tracked uppercase" style={{ color: recColor }}>
                               {recommendation.muscleGroup}
                             </span>{' '}
