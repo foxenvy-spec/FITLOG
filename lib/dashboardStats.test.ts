@@ -17,6 +17,7 @@ import {
   getWeekRange,
   getPreviousWeekRange,
   suggestMuscleToTrain,
+  recoveryRecommendationLabel,
 } from './dashboardStats'
 
 // ทุกฟังก์ชันที่อ้างอิง "วันนี้" ผ่าน todayStr()/new Date() ต้อง freeze เวลาไว้
@@ -404,5 +405,15 @@ describe('suggestMuscleToTrain', () => {
 
   it('returns null when there is no data', () => {
     expect(suggestMuscleToTrain({})).toBeNull()
+  })
+})
+
+describe('recoveryRecommendationLabel', () => {
+  it('suggests today\'s training when nothing has been logged today', () => {
+    expect(recoveryRecommendationLabel(false)).toBe('วันนี้ควรเล่น')
+  })
+
+  it('reframes as a next-session suggestion once today is already logged', () => {
+    expect(recoveryRecommendationLabel(true)).toBe('ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น')
   })
 })

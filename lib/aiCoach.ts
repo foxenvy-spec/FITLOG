@@ -1,6 +1,7 @@
 import type { Workout } from './types'
 import type { ExerciseDef } from './exerciseLibrary'
 import type { Insight, MuscleRecommendation } from './dashboardStats'
+import { recoveryRecommendationLabel } from './dashboardStats'
 
 // ==================================================================
 // AI Coach — วิเคราะห์สมดุลกล้ามเนื้อ + แนะนำ Progressive Overload
@@ -170,13 +171,14 @@ export function computeProgressiveOverload(exerciseName: string, allEntries: Wor
 // ให้ออกมาเป็นประโยคเดียวอ่านง่าย ใช้เป็น hero message ของหน้า AI Coach
 export function computeAIDailySummary(
   muscleRecommendation: MuscleRecommendation | null,
-  balance: PushPullBalance
+  balance: PushPullBalance,
+  hasTrainedToday = false
 ): string {
   if (!muscleRecommendation) {
     return 'ยังไม่มีข้อมูลพอให้วิเคราะห์ — ลองบันทึกการฝึกสัก 2-3 ครั้งก่อน'
   }
 
-  let msg = `วันนี้ควรเล่น ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
+  let msg = `${recoveryRecommendationLabel(hasTrainedToday)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
 
   if (balance.status === 'push_dominant') {
     msg += ' — และควรแทรกท่าดึง (หลัง) เพิ่ม เพราะสัปดาห์นี้ฝั่งดันเยอะกว่า'

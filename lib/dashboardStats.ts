@@ -168,6 +168,12 @@ export function suggestMuscleToTrain(recoveryPctByMuscle: Record<string, number>
   return { muscleGroup, pct }
 }
 
+// ข้อความนำหน้าคำแนะนำกล้ามเนื้อ — ถ้าวันนี้บันทึกเวิร์คเอาท์ไปแล้ว การพูดว่า "วันนี้ควรเล่น" จะทำให้เข้าใจผิด
+// ว่ายังมีอะไรต้องทำอีกวันนี้ ทั้งที่จริงๆ เป็นคำแนะนำสำหรับเซสชันถัดไป
+export function recoveryRecommendationLabel(hasTrainedToday: boolean): string {
+  return hasTrainedToday ? 'ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น' : 'วันนี้ควรเล่น'
+}
+
 // ==================== Next PR แนะนำ ====================
 export interface PRSuggestion {
   exerciseName: string

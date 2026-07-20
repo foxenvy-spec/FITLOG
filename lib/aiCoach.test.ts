@@ -172,4 +172,23 @@ describe('computeAIDailySummary', () => {
     )
     expect(msg).toContain('ดัน')
   })
+
+  it('defaults to "วันนี้ควรเล่น" when hasTrainedToday is not passed', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'หลัง', pct: 100 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' }
+    )
+    expect(msg).toContain('วันนี้ควรเล่น หลัง')
+  })
+
+  it('reframes as a next-session suggestion when hasTrainedToday is true', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'หลัง', pct: 100 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' },
+      true
+    )
+    expect(msg).toContain('ฝึกวันนี้ไปแล้ว')
+    expect(msg).toContain('ครั้งหน้าแนะนำเล่น หลัง')
+    expect(msg).not.toContain('วันนี้ควรเล่น')
+  })
 })
