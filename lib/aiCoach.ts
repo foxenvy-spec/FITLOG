@@ -172,13 +172,13 @@ export function computeProgressiveOverload(exerciseName: string, allEntries: Wor
 export function computeAIDailySummary(
   muscleRecommendation: MuscleRecommendation | null,
   balance: PushPullBalance,
-  hasTrainedToday = false
+  progressPct: number | null = null
 ): string {
   if (!muscleRecommendation) {
     return 'ยังไม่มีข้อมูลพอให้วิเคราะห์ — ลองบันทึกการฝึกสัก 2-3 ครั้งก่อน'
   }
 
-  let msg = `${recoveryRecommendationLabel(hasTrainedToday)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
+  let msg = `${recoveryRecommendationLabel(progressPct)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
 
   if (balance.status === 'push_dominant') {
     msg += ' — และควรแทรกท่าดึง (หลัง) เพิ่ม เพราะสัปดาห์นี้ฝั่งดันเยอะกว่า'

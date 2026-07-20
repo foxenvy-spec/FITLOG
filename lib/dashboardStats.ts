@@ -168,10 +168,14 @@ export function suggestMuscleToTrain(recoveryPctByMuscle: Record<string, number>
   return { muscleGroup, pct }
 }
 
-// ข้อความนำหน้าคำแนะนำกล้ามเนื้อ — ถ้าวันนี้บันทึกเวิร์คเอาท์ไปแล้ว การพูดว่า "วันนี้ควรเล่น" จะทำให้เข้าใจผิด
+// ข้อความนำหน้าคำแนะนำกล้ามเนื้อ — ถ้าวันนี้ทำครบทุกท่าตามแผนแล้ว การพูดว่า "วันนี้ควรเล่น" จะทำให้เข้าใจผิด
 // ว่ายังมีอะไรต้องทำอีกวันนี้ ทั้งที่จริงๆ เป็นคำแนะนำสำหรับเซสชันถัดไป
-export function recoveryRecommendationLabel(hasTrainedToday: boolean): string {
-  return hasTrainedToday ? 'ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น' : 'วันนี้ควรเล่น'
+// ถ้ายังทำไม่ครบ ให้โชว์ % ความคืบหน้าจริงแทนข้อความทั่วไป เพื่อเน้นตัวเลขความสำเร็จ
+// progressPct: null = ไม่มีแผนวันนี้ (บันทึกอิสระ ยังไม่ได้ล็อกอะไรเลย)
+export function recoveryRecommendationLabel(progressPct: number | null): string {
+  if (progressPct === null) return 'วันนี้ควรเล่น'
+  if (progressPct >= 100) return 'ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น'
+  return `🟢 ทำได้ ${progressPct}% ของเป้าหมาย`
 }
 
 // ==================== Next PR แนะนำ ====================

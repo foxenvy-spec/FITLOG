@@ -409,11 +409,15 @@ describe('suggestMuscleToTrain', () => {
 })
 
 describe('recoveryRecommendationLabel', () => {
-  it('suggests today\'s training when nothing has been logged today', () => {
-    expect(recoveryRecommendationLabel(false)).toBe('วันนี้ควรเล่น')
+  it('suggests today\'s training when there is no plan and nothing has been logged today', () => {
+    expect(recoveryRecommendationLabel(null)).toBe('วันนี้ควรเล่น')
   })
 
-  it('reframes as a next-session suggestion once today is already logged', () => {
-    expect(recoveryRecommendationLabel(true)).toBe('ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น')
+  it('shows the completion percentage when partially through today\'s plan', () => {
+    expect(recoveryRecommendationLabel(43)).toBe('🟢 ทำได้ 43% ของเป้าหมาย')
+  })
+
+  it('reframes as a next-session suggestion once today\'s plan is fully complete', () => {
+    expect(recoveryRecommendationLabel(100)).toBe('ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น')
   })
 })

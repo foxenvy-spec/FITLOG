@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Workout } from './types'
-import { computePushPullBalance, pushPullInsight, computeProgressiveOverload, computeAIDailySummary } from './aiCoach'
+import { computePushPullBalance, pushPullInsight, computeProgressiveOverload, computeAIDailySummary, buildSkippedExerciseInsight } from './aiCoach'
 
 function makeWorkout(overrides: Partial<Workout>): Workout {
   return {
@@ -173,7 +173,7 @@ describe('computeAIDailySummary', () => {
     expect(msg).toContain('ดัน')
   })
 
-  it('defaults to "วันนี้ควรเล่น" when hasTrainedToday is not passed', () => {
+  it('defaults to "วันนี้ควรเล่น" when progressPct is not passed', () => {
     const msg = computeAIDailySummary(
       { muscleGroup: 'หลัง', pct: 100 },
       { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' }
@@ -181,14 +181,52 @@ describe('computeAIDailySummary', () => {
     expect(msg).toContain('วันนี้ควรเล่น หลัง')
   })
 
-  it('reframes as a next-session suggestion when hasTrainedToday is true', () => {
+  it('reframes as a next-session suggestion when progressPct is 100', () => {
     const msg = computeAIDailySummary(
       { muscleGroup: 'หลัง', pct: 100 },
       { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' },
-      true
+      100
     )
     expect(msg).toContain('ฝึกวันนี้ไปแล้ว')
     expect(msg).toContain('ครั้งหน้าแนะนำเล่น หลัง')
     expect(msg).not.toContain('วันนี้ควรเล่น')
+  })
+
+  it('shows the completion percentage when today\'s plan is only partially done', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'หลัง', pct: 100 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' },
+      43
+    )
+    expect(msg).toContain('🟢 ทำได้ 43% ของเป้าหมาย หลัง')
+  })
+})
+
+describe('buildSkippedExerciseInsight', () => {
+  const plan = [
+    { id: 'ex-1', exercise_name: 'เบนช์เพรส', muscle_group: 'อก' },
+    { id: 'ex-2', exercise_name: 'Incline Press', muscle_group: 'อก' },
+    { id: 'ex-3', exercise_name: 'Fly', muscle_group: 'อก' },
+  ]
+
+  it('returns null when every planned exercise was completed', () => {
+    const insight = buildSkippedExerciseInsight('Push Day', '2026-07-20', plan, new Set(['ex-1', 'ex-2', 'ex-3']))
+    expect(insight).toBeNull()
+  })
+
+  it('lists the exercises that were skipped', () => {
+    const insight = buildSkippedExerciseInsight('Push Day', '2026-07-20', plan, new Set(['ex-1', 'ex-2']))
+    expect(insight).not.toBeNull()
+    expect(insight?.title).toContain('1 ท่า')
+    expect(insight?.title).toContain('Push Day')
+    expect(insight?.detail).toContain('Fly')
+    expect(insight?.kind).toBe('warning')
+  })
+
+  it('lists multiple skipped exercises', () => {
+    const insight = buildSkippedExerciseInsight('Push Day', '2026-07-20', plan, new Set(['ex-1']))
+    expect(insight?.title).toContain('2 ท่า')
+    expect(insight?.detail).toContain('Incline Press')
+    expect(insight?.detail).toContain('Fly')
   })
 })
