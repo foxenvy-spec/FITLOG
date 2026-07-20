@@ -11,6 +11,7 @@ import { findExerciseByName, type ExerciseDef } from '@/lib/exercises'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import LoadingState from '@/components/LoadingState'
 import SetEntryList, { newSetRow, type SetRow } from '@/components/SetEntryList'
+import ImportCardioPhoto from '@/components/ImportCardioPhoto'
 
 const CARDIO_PRESETS = ['วิ่ง', 'ปั่นจักรยาน', 'ว่ายน้ำ', 'เดินเร็ว', 'กระโดดเชือก']
 
@@ -54,6 +55,8 @@ function LogPageInner() {
   const [cardioType, setCardioType] = useState('')
   const [distance, setDistance] = useState('')
   const [duration, setDuration] = useState('')
+  const [avgHeartRate, setAvgHeartRate] = useState('')
+  const [caloriesKcal, setCaloriesKcal] = useState('')
 
   const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([])
   const [exerciseLibraryId, setExerciseLibraryId] = useState<string | null>(null)
@@ -184,10 +187,14 @@ function LogPageInner() {
       setCardioType('')
       setDistance('')
       setDuration('')
+      setAvgHeartRate('')
+      setCaloriesKcal('')
     } else {
       setCardioType(w.cardio_type ?? '')
       setDistance(w.distance_km !== null ? String(w.distance_km) : '')
       setDuration(w.duration_min !== null ? String(w.duration_min) : '')
+      setAvgHeartRate(w.avg_heart_rate !== null && w.avg_heart_rate !== undefined ? String(w.avg_heart_rate) : '')
+      setCaloriesKcal(w.calories_kcal !== null && w.calories_kcal !== undefined ? String(w.calories_kcal) : '')
       setExerciseName('')
       setMuscleGroup('')
       setSecondaryMuscles([])
@@ -215,6 +222,8 @@ function LogPageInner() {
     setCardioType('')
     setDistance('')
     setDuration('')
+    setAvgHeartRate('')
+    setCaloriesKcal('')
     setNotes('')
   }
 
@@ -343,6 +352,8 @@ function LogPageInner() {
       cardio_type: cardioType || null,
       distance_km: distance ? Number(distance) : null,
       duration_min: duration ? Number(duration) : null,
+      avg_heart_rate: avgHeartRate ? Math.round(Number(avgHeartRate)) : null,
+      calories_kcal: caloriesKcal ? Number(caloriesKcal) : null,
       notes: notes || null,
     }
 
@@ -401,6 +412,8 @@ function LogPageInner() {
       setCardioType(last.cardio_type ?? '')
       setDistance(last.distance_km !== null ? String(last.distance_km) : '')
       setDuration(last.duration_min !== null ? String(last.duration_min) : '')
+      setAvgHeartRate(last.avg_heart_rate !== null && last.avg_heart_rate !== undefined ? String(last.avg_heart_rate) : '')
+      setCaloriesKcal(last.calories_kcal !== null && last.calories_kcal !== undefined ? String(last.calories_kcal) : '')
     }
   }
 
@@ -562,6 +575,15 @@ function LogPageInner() {
           </>
         ) : (
           <>
+            <ImportCardioPhoto
+              onExtracted={(result) => {
+                if (result.cardio_type) setCardioType(result.cardio_type)
+                if (result.distance_km !== null) setDistance(String(result.distance_km))
+                if (result.duration_min !== null) setDuration(String(result.duration_min))
+                if (result.avg_heart_rate !== null) setAvgHeartRate(String(result.avg_heart_rate))
+                if (result.calories_kcal !== null) setCaloriesKcal(String(result.calories_kcal))
+              }}
+            />
             <Field label="ประเภทคาร์ดิโอ">
               <input
                 required
@@ -593,6 +615,29 @@ function LogPageInner() {
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
                   className="input font-mono text-center"
+                />
+              </Field>
+              <Field label="ชีพจรเฉลี่ย (bpm) — ไม่บังคับ">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step="1"
+                  value={avgHeartRate}
+                  onChange={(e) => setAvgHeartRate(e.target.value)}
+                  className="input font-mono text-center"
+                />
+              </Field>
+              <Field label="แคลอรี่จริง (kcal) — ไม่บังคับ">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="1"
+                  value={caloriesKcal}
+                  onChange={(e) => setCaloriesKcal(e.target.value)}
+                  className="input font-mono text-center"
+                  placeholder="ถ้าไม่กรอกจะประมาณให้เอง"
                 />
               </Field>
             </div>
@@ -664,6 +709,7 @@ function LogPageInner() {
                       <>
                         <span className="text-rusttext font-display tracked uppercase text-xs mr-2">CAR</span>
                         {w.cardio_type} — {w.distance_km}km / {w.duration_min}min
+                        {w.avg_heart_rate !== null && w.avg_heart_rate !== undefined && ` · ${w.avg_heart_rate}bpm`}
                       </>
                     )}
                   </p>
