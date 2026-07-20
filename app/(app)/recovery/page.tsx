@@ -133,7 +133,7 @@ export default function RecoveryPage() {
             style={{ backgroundColor: recColor + '1A' }}
           >
             <span className="text-lg">💪</span>
-            <p className="text-sm text-ink">
+            <p className="text-sm text-ink whitespace-pre-line">
               {recoveryRecommendationLabel(progressPct)}{' '}
               <span className="font-display tracked uppercase" style={{ color: recColor }}>
                 {recommendation.muscleGroup}
