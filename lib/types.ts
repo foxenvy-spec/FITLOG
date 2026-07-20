@@ -7,6 +7,8 @@ export interface Workout {
   performed_at: string
   exercise_name: string | null
   muscle_group: string | null
+  secondary_muscles: string[]
+  exercise_library_id: string | null
   sets: number | null
   reps: number | null
   weight_kg: number | null
@@ -92,6 +94,8 @@ export interface ProgramExercise {
   position: number
   exercise_name: string
   muscle_group: string | null
+  secondary_muscles: string[]
+  exercise_library_id: string | null
   sets: number | null
   target_reps: string | null
   target_rir: string | null
@@ -124,6 +128,8 @@ export interface WorkoutTemplateExercise {
   position: number
   exercise_name: string
   muscle_group: string | null
+  secondary_muscles: string[]
+  exercise_library_id: string | null
   sets: number | null
   target_reps: string | null
   target_rir: string | null
