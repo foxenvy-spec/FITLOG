@@ -56,6 +56,7 @@ function LogPageInner() {
   const [duration, setDuration] = useState('')
 
   const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([])
+  const [exerciseLibraryId, setExerciseLibraryId] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -167,8 +168,14 @@ function LogPageInner() {
     if (w.type === 'strength') {
       setExerciseName(w.exercise_name ?? '')
       setMuscleGroup(w.muscle_group ?? '')
-      const match = w.exercise_name ? findExerciseByName(exercises, w.exercise_name) : null
-      setSecondaryMuscles(match?.secondaryMuscles ?? [])
+      if (w.secondary_muscles && w.secondary_muscles.length > 0) {
+        setSecondaryMuscles(w.secondary_muscles)
+      } else {
+        // แถวเก่าที่บันทึกก่อนมีคอลัมน์ secondary_muscles — เดาจาก Library แทน
+        const match = w.exercise_name ? findExerciseByName(exercises, w.exercise_name) : null
+        setSecondaryMuscles(match?.secondaryMuscles ?? [])
+      }
+      setExerciseLibraryId(w.exercise_library_id ?? null)
       setRpe(w.rpe !== null ? String(w.rpe) : '')
       const rows = await buildRowsFromWorkout(w)
       // เซ็ตพวกนี้ทำเสร็จไปแล้วจริง (มาจากรายการที่บันทึกแล้ว) — ติ๊ก done ให้เลย
@@ -184,6 +191,7 @@ function LogPageInner() {
       setExerciseName('')
       setMuscleGroup('')
       setSecondaryMuscles([])
+      setExerciseLibraryId(null)
       setSetRows([])
       setRpe('')
     }
@@ -201,6 +209,7 @@ function LogPageInner() {
     setExerciseName('')
     setMuscleGroup('')
     setSecondaryMuscles([])
+    setExerciseLibraryId(null)
     setSetRows([])
     setRpe('')
     setCardioType('')
@@ -261,6 +270,8 @@ function LogPageInner() {
         performed_at: date,
         exercise_name: exerciseName || null,
         muscle_group: muscleGroup || null,
+        secondary_muscles: secondaryMuscles,
+        exercise_library_id: exerciseLibraryId,
         sets: doneRows.length,
         reps: Number(topSet.reps),
         weight_kg: topWeightKg,
@@ -365,6 +376,7 @@ function LogPageInner() {
   function handleExerciseSelect(ex: ExerciseDef) {
     setMuscleGroup(ex.muscleGroup)
     setSecondaryMuscles(ex.secondaryMuscles)
+    setExerciseLibraryId(ex.id)
     loadLastEntry(ex.name)
   }
 
@@ -381,6 +393,8 @@ function LogPageInner() {
     if (type === 'strength') {
       setExerciseName(last.exercise_name ?? '')
       setMuscleGroup(last.muscle_group ?? '')
+      setSecondaryMuscles(last.secondary_muscles ?? [])
+      setExerciseLibraryId(last.exercise_library_id ?? null)
       setRpe(last.rpe !== null ? String(last.rpe) : '')
       setSetRows(await buildRowsFromWorkout(last))
     } else {
@@ -477,6 +491,10 @@ function LogPageInner() {
                   if (match) {
                     setMuscleGroup(match.muscleGroup)
                     setSecondaryMuscles(match.secondaryMuscles)
+                    setExerciseLibraryId(match.id)
+                  } else {
+                    // ชื่อไม่ตรงกับท่าไหนใน Library แล้ว — เคลียร์ FK เดิมทิ้ง กันชี้ไปท่าอื่นผิดๆ
+                    setExerciseLibraryId(null)
                   }
                 }}
                 onSelect={handleExerciseSelect}
