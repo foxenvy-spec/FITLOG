@@ -217,7 +217,7 @@ export default function CoachPage() {
         <>
           <div className="flex items-start gap-2.5 rounded-lg bg-surface border border-line px-4 py-3.5">
             <span className="text-lg leading-none shrink-0">✨</span>
-            <p className="text-sm text-ink">{data.dailySummary}</p>
+            <p className="text-sm text-ink whitespace-pre-line">{data.dailySummary}</p>
           </div>
 
           {data.skippedInsight && <InsightCard insight={data.skippedInsight} />}
