@@ -1,7 +1,7 @@
 import type { Workout } from './types'
 import type { ExerciseDef } from './exerciseLibrary'
 import type { Insight, MuscleRecommendation } from './dashboardStats'
-import { recoveryRecommendationLabel } from './dashboardStats'
+import { recoveryRecommendationLabel, relativeDayLabel } from './dashboardStats'
 
 // ==================================================================
 // AI Coach — วิเคราะห์สมดุลกล้ามเนื้อ + แนะนำ Progressive Overload
@@ -187,4 +187,32 @@ export function computeAIDailySummary(
   }
 
   return msg
+}
+
+// ==================== เตือนท่าที่ข้ามไปในเซสชันโปรแกรมล่าสุด ====================
+// เทียบท่าทั้งหมดที่ตั้งไว้ในแผนของวันนั้น กับท่าที่ติ๊กว่าทำแล้วจริง (program_completions)
+// เจตนาใช้กับ "เซสชันล่าสุดที่ผ่านโปรแกรม" เท่านั้น (ไม่ย้อนดูทุกวันในอดีต) กันไม่ให้เตือนซ้ำซ้อนท่วมท้น
+export interface PlanExercise {
+  id: string
+  exercise_name: string
+  muscle_group: string | null
+}
+
+export function buildSkippedExerciseInsight(
+  dayTitle: string,
+  dayDate: string,
+  planExercises: PlanExercise[],
+  completedExerciseIds: Set<string>
+): Insight | null {
+  const skipped = planExercises.filter((ex) => !completedExerciseIds.has(ex.id))
+  if (skipped.length === 0) return null
+
+  const names = skipped.map((ex) => ex.exercise_name).join(', ')
+  return {
+    id: 'skipped-exercises',
+    kind: 'warning',
+    icon: '⏭️',
+    title: `ข้ามไป ${skipped.length} ท่าจาก "${dayTitle}"`,
+    detail: `${names} — ลองแทรกในเซสชันหน้า (${relativeDayLabel(dayDate)})`,
+  }
 }
