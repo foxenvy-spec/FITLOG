@@ -39,11 +39,21 @@ function shortLabel(iso: string) {
   return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
 }
 
+// ใช้ total_volume_kg ที่บันทึกไว้แม่นยำจากผลรวมทีละเซ็ตจริงก่อนเสมอ (ดูคอมเมนต์ที่ Workout.total_volume_kg
+// ใน lib/types.ts) — สูตร sets*reps*weight_kg เป็นแค่ fallback สำหรับแถวเก่าที่ยังไม่มีค่านี้ ถ้าใช้สูตรนี้เป็น
+// หลักจะผิดทันทีเมื่อแต่ละเซ็ตในเซสชันเดียวกันมีน้ำหนัก/reps ไม่เท่ากัน (เช่น drop set หรือเซ็ตที่ทำไม่ครบ)
+// เพราะ sets/reps/weight_kg ที่เก็บในแถว workouts คือค่าของ "เซ็ตที่หนักที่สุด" เซ็ตเดียวเท่านั้น ไม่ใช่ค่าเฉลี่ย
 function volumeOf(w: Workout) {
+  if (w.total_volume_kg !== null && w.total_volume_kg !== undefined) return w.total_volume_kg
   return (w.sets ?? 0) * (w.reps ?? 0) * (w.weight_kg ?? 0)
 }
 
-function repsOf(w: Workout) {
+// actualReps: จำนวน reps จริงรวมทุกเซ็ตของ workout นี้ (รวมจากตาราง workout_sets) — แม่นยำกว่า
+// sets*reps (ซึ่งคูณเหมาว่าทุกเซ็ตมี reps เท่ากับเซ็ตที่หนักที่สุด) ถ้าไม่มีข้อมูล workout_sets
+// (แถวเก่า) ให้ fallback ไปใช้สูตรเดิม
+function repsOf(w: Workout, actualReps?: Map<string, number>) {
+  const fromSets = actualReps?.get(w.id)
+  if (fromSets !== undefined) return fromSets
   return (w.sets ?? 0) * (w.reps ?? 0)
 }
 
@@ -51,6 +61,7 @@ export default function StatsPage() {
   const supabase = createClient()
   const { unit, toDisplay, format } = useWeightUnit()
   const [workouts, setWorkouts] = useState<Workout[]>([])
+  const [actualRepsByWorkout, setActualRepsByWorkout] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [prs, setPrs] = useState<{ name: string; weight: number; reps: number | null; date: string }[]>([])
@@ -69,7 +80,23 @@ export default function StatsPage() {
       setLoading(false)
       return
     }
-    setWorkouts((data as Workout[]) ?? [])
+    const loaded = (data as Workout[]) ?? []
+    setWorkouts(loaded)
+
+    // ดึง reps จริงรายเซ็ตของ workout เวทเทรนนิ่งทั้งหมดในช่วงนี้มารวมกันทีเดียว (แทนการเดาจาก
+    // เซ็ตที่หนักที่สุด) — ไม่ error ทั้งหน้าถ้าคิวรีนี้พลาด แค่ตกกลับไปใช้ค่าประมาณแทน
+    const strengthIds = loaded.filter((w) => w.type === 'strength').map((w) => w.id)
+    if (strengthIds.length > 0) {
+      const { data: setsData } = await supabase.from('workout_sets').select('workout_id, reps').in('workout_id', strengthIds)
+      const repsMap = new Map<string, number>()
+      ;(setsData as { workout_id: string; reps: number | null }[] | null)?.forEach((s) => {
+        repsMap.set(s.workout_id, (repsMap.get(s.workout_id) ?? 0) + (s.reps ?? 0))
+      })
+      setActualRepsByWorkout(repsMap)
+    } else {
+      setActualRepsByWorkout(new Map())
+    }
+
     setLoading(false)
   }, [supabase])
 
@@ -142,14 +169,14 @@ export default function StatsPage() {
   const totals = useMemo(() => {
     const strengthWorkouts = workouts.filter((w) => w.type === 'strength')
     const totalVolume = strengthWorkouts.reduce((s, w) => s + volumeOf(w), 0)
-    const totalReps = strengthWorkouts.reduce((s, w) => s + repsOf(w), 0)
+    const totalReps = strengthWorkouts.reduce((s, w) => s + repsOf(w, actualRepsByWorkout), 0)
     const strengthCount = strengthWorkouts.length
     const cardioCount = workouts.filter((w) => w.type === 'cardio').length
     const totalDistance = workouts.reduce((s, w) => s + (w.distance_km ?? 0), 0)
     const activeDays = new Set(workouts.map((w) => w.performed_at)).size
     const thisWeekVolume = weeklyVolume.length > 0 ? weeklyVolume[weeklyVolume.length - 1].value : 0
     return { totalVolume, totalReps, strengthCount, cardioCount, totalDistance, activeDays, thisWeekVolume }
-  }, [workouts, weeklyVolume])
+  }, [workouts, weeklyVolume, actualRepsByWorkout])
 
   const muscleDistribution = useMemo(() => {
     const map = new Map<string, number>()
