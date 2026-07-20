@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutSet, WorkoutType } from '@/lib/types'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
@@ -12,6 +13,8 @@ import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import LoadingState from '@/components/LoadingState'
 import SetEntryList, { newSetRow, type SetRow } from '@/components/SetEntryList'
 import ImportCardioPhoto from '@/components/ImportCardioPhotoGemini'
+import { computePaceSpeed, formatPace } from '@/lib/cardioPace'
+import { classifyHRZone, HR_ZONES, DEFAULT_MAX_HEART_RATE } from '@/lib/heartRate'
 
 const CARDIO_PRESETS = ['วิ่ง', 'ปั่นจักรยาน', 'ว่ายน้ำ', 'เดินเร็ว', 'กระโดดเชือก']
 
@@ -41,6 +44,22 @@ function LogPageInner() {
   const searchParams = useSearchParams()
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const { data: exercises = [] } = useExerciseLibrary()
+
+  // ใช้จัด Heart Rate Zone ของชีพจรเฉลี่ยที่กรอก/นำเข้ามา — ค่าเดียวกับที่ตั้งไว้ใน Weekly Cardio Volume
+  // (ดู components/HeartRateSettings.tsx) ถ้ายังไม่เคยตั้งจะได้ค่าประมาณมาตรฐานแทน
+  const { data: maxHeartRate } = useQuery({
+    queryKey: ['profile-max-heart-rate'],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return DEFAULT_MAX_HEART_RATE
+      const { data } = await supabase.from('profiles').select('max_heart_rate').eq('user_id', user.id).maybeSingle()
+      return (data as { max_heart_rate: number | null } | null)?.max_heart_rate ?? DEFAULT_MAX_HEART_RATE
+    },
+    staleTime: 60_000,
+  })
+
   const [type, setType] = useState<WorkoutType>('strength')
   const [date, setDate] = useState(todayStr())
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -421,6 +440,13 @@ function LogPageInner() {
   const currentTopWeight =
     setRows.length > 0 ? Math.max(...setRows.map((r) => (r.weight ? Number(r.weight) : 0))) : null
 
+  // Pace/Speed คำนวณสดจากระยะทาง+เวลาที่กรอกอยู่ตอนนี้ — ไม่เก็บลง DB แยก เป็นแค่ตัวช่วยแสดงผล
+  const paceSpeed = computePaceSpeed(distance ? Number(distance) : null, duration ? Number(duration) : null)
+  // Heart Rate Zone ของชีพจรเฉลี่ยที่กรอก/นำเข้ามา เทียบกับชีพจรสูงสุดของผู้ใช้ (ตั้งค่าไว้ที่ Weekly Cardio Volume)
+  const hrZoneDef = avgHeartRate
+    ? HR_ZONES.find((z) => z.key === classifyHRZone(Number(avgHeartRate), maxHeartRate ?? DEFAULT_MAX_HEART_RATE))
+    : null
+
   return (
     <div className="space-y-6">
       <div>
@@ -627,6 +653,12 @@ function LogPageInner() {
                   onChange={(e) => setAvgHeartRate(e.target.value)}
                   className="input font-mono text-center"
                 />
+                {hrZoneDef && (
+                  <p className="text-[11px] font-mono mt-1.5 flex items-center justify-center gap-1.5" style={{ color: hrZoneDef.color }}>
+                    <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hrZoneDef.color }} />
+                    {hrZoneDef.label}
+                  </p>
+                )}
               </Field>
               <Field label="แคลอรี่จริง (kcal) — ไม่บังคับ">
                 <input
@@ -641,6 +673,25 @@ function LogPageInner() {
                 />
               </Field>
             </div>
+
+            {paceSpeed && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-md bg-surface2 px-3 py-2.5 text-center">
+                  <p className="text-[10px] tracked uppercase text-muted">Pace เฉลี่ย</p>
+                  <p className="font-mono text-lg text-ink mt-0.5">
+                    {formatPace(paceSpeed.paceMinPerKm)}
+                    <span className="text-xs text-muted ml-1">/km</span>
+                  </p>
+                </div>
+                <div className="rounded-md bg-surface2 px-3 py-2.5 text-center">
+                  <p className="text-[10px] tracked uppercase text-muted">Avg Speed</p>
+                  <p className="font-mono text-lg text-ink mt-0.5">
+                    {paceSpeed.speedKmh.toFixed(1)}
+                    <span className="text-xs text-muted ml-1">km/h</span>
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
 
