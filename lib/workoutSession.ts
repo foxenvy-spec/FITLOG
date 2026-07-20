@@ -63,6 +63,23 @@ export function computeSessionSummary(
   )
 }
 
+export interface SkippedExercise {
+  id: string
+  exerciseName: string
+  muscleGroup: string | null
+}
+
+// ท่าที่อยู่ในแผนวันนี้แต่ไม่ได้ log เลย (กด "ข้าม" หรือออกจากเซสชันก่อนถึงคิว)
+// ใช้โชว์สรุปตอนจบเซสชัน แยกจาก computeSessionSummary ที่นับเฉพาะท่าที่ทำจริง
+export function getSkippedExercises(
+  exercises: ProgramExercise[],
+  states: Record<string, Pick<SessionSetState, 'logged'>>
+): SkippedExercise[] {
+  return exercises
+    .filter((ex) => !states[ex.id]?.logged)
+    .map((ex) => ({ id: ex.id, exerciseName: ex.exercise_name, muscleGroup: ex.muscle_group }))
+}
+
 export interface MuscleLoadEntry {
   muscleGroup: string | null
   sets: number
