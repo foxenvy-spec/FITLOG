@@ -146,6 +146,8 @@ export default function ProgramPage() {
         performed_at: todayStr(),
         exercise_name: ex.exercise_name,
         muscle_group: ex.muscle_group,
+        secondary_muscles: ex.secondary_muscles,
+        exercise_library_id: ex.exercise_library_id,
         sets: ex.sets,
         reps: parseRangeToNumber(ex.target_reps),
         weight_kg: ex.default_weight_kg,
@@ -206,6 +208,8 @@ export default function ProgramPage() {
     rir: string
     rest: string
     muscleGroup: MuscleGroup
+    secondaryMuscles: string[]
+    exerciseLibraryId: string | null
   }) {
     const day = await ensureDayExists(selectedDow)
     if (!day) return
@@ -225,6 +229,8 @@ export default function ProgramPage() {
         position,
         exercise_name: fields.name,
         muscle_group: fields.muscleGroup,
+        secondary_muscles: fields.secondaryMuscles,
+        exercise_library_id: fields.exerciseLibraryId,
         sets: fields.sets ? Number(fields.sets) : null,
         target_reps: fields.reps || null,
         target_rir: fields.rir || null,
@@ -438,6 +444,9 @@ function ExerciseRow({
               {exercise.default_weight_kg != null && ` · ${format(exercise.default_weight_kg)}`}
             </p>
           )}
+          {!editing && exercise.secondary_muscles && exercise.secondary_muscles.length > 0 && (
+            <p className="text-[11px] text-muted/70 mt-0.5">กล้ามเนื้อรอง: {exercise.secondary_muscles.join(', ')}</p>
+          )}
           {!editing && exercise.rationale && <p className="text-[11px] text-muted/70 mt-1 italic">{exercise.rationale}</p>}
         </div>
         <button onClick={() => setEditing((v) => !v)} className="text-[11px] text-muted hover:text-amber shrink-0">
@@ -502,7 +511,16 @@ function AddExerciseForm({
   onSubmit,
 }: {
   onCancel: () => void
-  onSubmit: (fields: { name: string; sets: string; reps: string; rir: string; rest: string; muscleGroup: MuscleGroup }) => void
+  onSubmit: (fields: {
+    name: string
+    sets: string
+    reps: string
+    rir: string
+    rest: string
+    muscleGroup: MuscleGroup
+    secondaryMuscles: string[]
+    exerciseLibraryId: string | null
+  }) => void
 }) {
   const [name, setName] = useState('')
   const [sets, setSets] = useState('')
@@ -510,15 +528,22 @@ function AddExerciseForm({
   const [rir, setRir] = useState('')
   const [rest, setRest] = useState('')
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('อื่นๆ')
+  const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([])
+  const [exerciseLibraryId, setExerciseLibraryId] = useState<string | null>(null)
 
   return (
     <div className="rounded-lg bg-surface border border-line px-4 py-4 space-y-3">
       <p className="text-sm text-ink font-display tracked uppercase">เพิ่มท่าใหม่</p>
       <ExercisePicker
         value={name}
-        onChange={setName}
+        onChange={(v) => {
+          setName(v)
+          setExerciseLibraryId(null) // พิมพ์เอง ไม่ได้เลือกจาก dropdown — เคลียร์ FK เดิมทิ้ง
+        }}
         onSelect={(ex: ExerciseDef) => {
           setMuscleGroup(ex.muscleGroup)
+          setSecondaryMuscles(ex.secondaryMuscles)
+          setExerciseLibraryId(ex.id)
         }}
         placeholder="ชื่อท่า"
       />
@@ -547,7 +572,7 @@ function AddExerciseForm({
           ยกเลิก
         </button>
         <button
-          onClick={() => name.trim() && onSubmit({ name: name.trim(), sets, reps, rir, rest, muscleGroup })}
+          onClick={() => name.trim() && onSubmit({ name: name.trim(), sets, reps, rir, rest, muscleGroup, secondaryMuscles, exerciseLibraryId })}
           className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99]"
         >
           เพิ่มท่านี้
