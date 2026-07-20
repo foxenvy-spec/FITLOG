@@ -26,6 +26,9 @@ export interface SessionSetState {
   weightKg: number | null
   rpe: number | null
   logged: boolean
+  // id ของแถวใน workouts ที่บันทึกไปแล้วสำหรับท่านี้ในเซสชันนี้ — ใช้เช็คว่าถ้ากดบันทึกซ้ำ
+  // (เช่น กดย้อนกลับมาแก้ท่าที่ทำไปแล้วผ่าน progress chips) ต้อง UPDATE แถวเดิม ไม่ใช่ INSERT ซ้ำ
+  workoutId: string | null
 }
 
 // ค่าเริ่มต้นของแต่ละท่าตอนเปิดเซสชัน — ใช้ค่าเป้าหมายจากโปรแกรมเป็นจุดตั้งต้น
@@ -37,6 +40,7 @@ export function initSessionSet(ex: ProgramExercise): SessionSetState {
     weightKg: ex.default_weight_kg,
     rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
     logged: false,
+    workoutId: null,
   }
 }
 
