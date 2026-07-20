@@ -11,7 +11,9 @@ import {
   RECOVERY_WINDOW_DAYS,
   relativeDayLabel,
   suggestMuscleToTrain,
+  recoveryRecommendationLabel,
 } from '@/lib/dashboardStats'
+import { todayStr } from '@/lib/weekdays'
 import Skeleton from '@/components/Skeleton'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import ErrorState from '@/components/ErrorState'
@@ -34,6 +36,7 @@ export default function RecoveryPage() {
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState<MuscleRow[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [hasTrainedToday, setHasTrainedToday] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -47,6 +50,8 @@ export default function RecoveryPage() {
         .limit(2000)
 
       const strengthRows = (data as { muscle_group: string | null; performed_at: string }[]) ?? []
+      const today = todayStr()
+      setHasTrainedToday(strengthRows.some((r) => r.performed_at?.slice(0, 10) === today))
       const lastTrainedByMuscle: Record<string, string> = {}
       strengthRows.forEach((r) => {
         if (!r.muscle_group) return
@@ -96,7 +101,7 @@ export default function RecoveryPage() {
           >
             <span className="text-lg">💪</span>
             <p className="text-sm text-ink">
-              วันนี้ควรเล่น{' '}
+              {recoveryRecommendationLabel(hasTrainedToday)}{' '}
               <span className="font-display tracked uppercase" style={{ color: recColor }}>
                 {recommendation.muscleGroup}
               </span>{' '}
