@@ -108,14 +108,14 @@ export async function POST(req: NextRequest) {
             role: 'user',
             parts: [
               { inline_data: { mime_type: safeMediaType, data: image } },
-              { text: 'อ่านตัวเลขจากรูปนี้แล้วตอบเป็น JSON ตามรูปแบบที่กำหนด' },
+              { text: 'อ่านตัวเลขจากรูปนี้แล้วตอบกลับเป็น JSON object ล้วนๆ ตาม schema ที่กำหนดเท่านั้น ห้ามมีข้อความอื่นนำหน้าหรือต่อท้าย JSON' },
             ],
           },
         ],
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: RESPONSE_SCHEMA,
-          maxOutputTokens: 300,
+          maxOutputTokens: 600,
         },
       }),
     })
@@ -138,7 +138,18 @@ export async function POST(req: NextRequest) {
       throw new Error(blockReason ? `Blocked: ${blockReason}` : 'ไม่ได้รับข้อความตอบกลับ')
     }
 
-    const parsed = JSON.parse(text)
+    // บางโมเดล (เช่น gemini-3.5-flash) บางครั้งแถมข้อความนำหน้า/ต่อท้าย JSON มาด้วย
+    // ทั้งที่ตั้ง responseMimeType/responseSchema ไว้แล้ว — ตัดเอาเฉพาะช่วง { ... } ออกมาก่อน parse
+    // กันเหนียวไว้แทนที่จะเชื่อว่า text จะเป็น JSON ล้วนๆ เสมอ
+    const jsonStart = text.indexOf('{')
+    const jsonEnd = text.lastIndexOf('}')
+    if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) {
+      console.error('Gemini response did not contain JSON', text)
+      throw new Error('รูปแบบคำตอบจาก Gemini ไม่ถูกต้อง')
+    }
+    const jsonSlice = text.slice(jsonStart, jsonEnd + 1)
+
+    const parsed = JSON.parse(jsonSlice)
     return NextResponse.json(coerceResult(parsed))
   } catch (err) {
     console.error('analyze-cardio-photo-gemini error', err)
