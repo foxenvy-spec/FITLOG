@@ -115,7 +115,12 @@ export async function POST(req: NextRequest) {
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: RESPONSE_SCHEMA,
-          maxOutputTokens: 600,
+          // gemini-3.5-flash (ตระกูล Gemini 3) คิดก่อนตอบ (thinking) เป็นค่าเริ่มต้น และ thinking
+          // tokens จะถูกหักออกจาก maxOutputTokens ด้วย — ถ้าตั้งค่าไม่พอ JSON จะถูกตัดครึ่งก่อนจบ
+          // (ต่างจาก Gemini 2.5 ตรงที่ Gemini 3 Flash ปิด thinking แบบเต็มไม่ได้ ใช้ thinkingLevel
+          // แทน thinkingBudget) เลยลดระดับการคิดลงเป็น 'low' และเผื่อ token ให้เยอะขึ้นเป็นเซฟตี้
+          thinkingConfig: { thinkingLevel: 'low' },
+          maxOutputTokens: 2048,
         },
       }),
     })
