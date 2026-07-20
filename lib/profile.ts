@@ -19,3 +19,20 @@ export async function saveDisplayName(
     .upsert({ user_id: user.id, display_name: trimmed === '' ? null : trimmed, updated_at: new Date().toISOString() })
   if (error) throw error
 }
+
+// ชีพจรสูงสุดโดยประมาณ (bpm) — ใช้คำนวณ Heart Rate Zone ใน Weekly Cardio Volume (ดู lib/heartRate.ts)
+// ส่ง null เพื่อล้างค่า (กลับไปใช้ค่าประมาณมาตรฐานแทน)
+export async function saveMaxHeartRate(
+  supabase: ReturnType<typeof createClient>,
+  maxHeartRate: number | null
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('ยังไม่ได้ล็อกอิน')
+
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ user_id: user.id, max_heart_rate: maxHeartRate, updated_at: new Date().toISOString() })
+  if (error) throw error
+}

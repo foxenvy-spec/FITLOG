@@ -16,6 +16,10 @@ export interface Workout {
   cardio_type: string | null
   distance_km: number | null
   duration_min: number | null
+  // ชีพจรเฉลี่ยระหว่างเซสชัน (bpm) — กรอกเองหรือได้จากการนำเข้ารูปหน้าจอ ใช้ประมาณ HR zone รายสัปดาห์
+  avg_heart_rate: number | null
+  // แคลอรี่จริงจากอุปกรณ์ (กรอกเองหรือนำเข้าจากรูป) ถ้ามีจะใช้แทนค่าประมาณจากสูตร MET
+  calories_kcal: number | null
   notes: string | null
   created_at: string
   // ผลรวม volume ที่แม่นยำจากการรวมทีละเซ็ตจริง (reps x weight_kg ต่อเซ็ตที่ติ๊กเสร็จ)
@@ -38,6 +42,9 @@ export interface WorkoutSet {
 export interface Profile {
   user_id: string
   height_cm: number | null
+  // ชีพจรสูงสุดโดยประมาณ (bpm) — ผู้ใช้กรอกเอง ใช้คำนวณ Heart Rate Zone ใน Weekly Cardio Volume
+  // ถ้ายังไม่ตั้ง ระบบ fallback ไปใช้ค่าประมาณมาตรฐาน (ดู lib/heartRate.ts)
+  max_heart_rate: number | null
   updated_at: string
 }
 

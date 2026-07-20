@@ -77,19 +77,29 @@ export function findNextProgramDay(days: ProgramDay[], fromDow: number): NextPro
 // ==================== แคลอรี่ (ค่าประมาณ) ====================
 // ใช้สูตรมาตรฐาน kcal/นาที = (MET x 3.5 x น้ำหนักตัว กก.) / 200
 // MET เป็นค่าอ้างอิงทั่วไป ไม่ใช่ค่าที่วัดจริงรายบุคคล
-const CARDIO_MET: Record<string, number> = {
+// export ไว้ให้ lib/weeklyCardioVolume.ts เอาไปคำนวณแคลอรี่ของสัปดาห์ซ้ำได้ ไม่ต้องก็อปปี้ตาราง MET
+export const CARDIO_MET: Record<string, number> = {
   วิ่ง: 9.0,
   ปั่นจักรยาน: 7.5,
   ว่ายน้ำ: 7.0,
   เดินเร็ว: 4.3,
   กระโดดเชือก: 10.0,
 }
-const DEFAULT_CARDIO_MET = 6.0
+export const DEFAULT_CARDIO_MET = 6.0
 const STRENGTH_MET = 5.0
-const DEFAULT_BODYWEIGHT_KG = 70
+export const DEFAULT_BODYWEIGHT_KG = 70
 
-function kcalForMinutes(met: number, minutes: number, bodyWeightKg: number) {
+export function kcalForMinutes(met: number, minutes: number, bodyWeightKg: number) {
   return (met * 3.5 * bodyWeightKg) / 200 * minutes
+}
+
+// แคลอรี่ของ cardio หนึ่งเซสชัน — ถ้าผู้ใช้กรอก/นำเข้าค่าจริงมา (calories_kcal) ใช้ค่านั้นก่อนเสมอ
+// เพราะแม่นกว่าค่าประมาณจากสูตร MET; ถ้าไม่มีค่าจริงค่อย fallback ไปประมาณจาก MET ตามชนิดคาร์ดิโอ
+export function estimateCardioSessionCalories(w: Workout, bodyWeightKg: number | null): number {
+  if (w.calories_kcal !== null && w.calories_kcal !== undefined) return w.calories_kcal
+  const weight = bodyWeightKg ?? DEFAULT_BODYWEIGHT_KG
+  const met = w.cardio_type ? CARDIO_MET[w.cardio_type] ?? DEFAULT_CARDIO_MET : DEFAULT_CARDIO_MET
+  return kcalForMinutes(met, w.duration_min ?? 0, weight)
 }
 
 export function estimateCaloriesToday(
@@ -100,10 +110,7 @@ export function estimateCaloriesToday(
   const weight = bodyWeightKg ?? DEFAULT_BODYWEIGHT_KG
   const cardio = todayWorkouts.filter((w) => w.type === 'cardio')
 
-  const cardioKcal = cardio.reduce((sum, w) => {
-    const met = w.cardio_type ? CARDIO_MET[w.cardio_type] ?? DEFAULT_CARDIO_MET : DEFAULT_CARDIO_MET
-    return sum + kcalForMinutes(met, w.duration_min ?? 0, weight)
-  }, 0)
+  const cardioKcal = cardio.reduce((sum, w) => sum + estimateCardioSessionCalories(w, weight), 0)
 
   const strengthKcal = strengthSessionMinutes ? kcalForMinutes(STRENGTH_MET, strengthSessionMinutes, weight) : 0
 
