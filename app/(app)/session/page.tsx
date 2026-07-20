@@ -141,6 +141,11 @@ export default function SessionPage() {
 
   async function logCurrentExercise() {
     if (!current || !currentState) return
+    if (currentState.setsDone > 0 && !currentState.reps) {
+      // ป้องกันบันทึก volume เพี้ยนเป็น 0 ทั้งที่ทำเซ็ตจริงไปแล้ว — ต้องกรอก reps ก่อนเสมอ
+      setErrorMsg('กรุณาใส่จำนวน reps ที่ทำได้ก่อนบันทึก')
+      return
+    }
     setSaving(true)
     setErrorMsg(null)
     try {
@@ -153,7 +158,11 @@ export default function SessionPage() {
       }
 
       if (currentState.setsDone > 0) {
-        const { error: wErr } = await supabase.from('workouts').insert({
+        // total_volume_kg: โมเดลข้อมูลของ session flow นี้เก็บ reps/weight เป็นค่าเดียวต่อท่า
+        // (ไม่ใช่ทีละเซ็ตแบบหน้า /log) ดังนั้น sets*reps*weight คือ volume ที่แม่นยำที่สุดเท่าที่มีอยู่แล้ว
+        // — บันทึกลง total_volume_kg ไปด้วย กันหน้าสถิติต้องเดา/fallback ทีหลัง
+        const totalVolumeKg = currentState.setsDone * (currentState.reps ?? 0) * (currentState.weightKg ?? 0)
+        const payload = {
           user_id: user.id,
           type: 'strength' as const,
           performed_at: todayStr(),
@@ -164,7 +173,15 @@ export default function SessionPage() {
           weight_kg: currentState.weightKg,
           rpe: currentState.rpe,
           notes: current.rationale,
-        })
+          total_volume_kg: totalVolumeKg,
+        }
+
+        // ถ้าเคยบันทึกท่านี้ไปแล้วในเซสชันนี้ (เช่น กดย้อนกลับมาแก้ผ่าน progress chips ด้านบน)
+        // ต้องอัปเดตแถวเดิมแทนการ insert ใหม่ ไม่งั้นจะได้รายการซ้ำซ้อนในประวัติ/สถิติ
+        const { data: upserted, error: wErr } = currentState.workoutId
+          ? await supabase.from('workouts').update(payload).eq('id', currentState.workoutId).select('id').single()
+          : await supabase.from('workouts').insert(payload).select('id').single()
+
         if (wErr) {
           setErrorMsg(`บันทึกไม่สำเร็จ: ${wErr.message}`)
           return
@@ -177,7 +194,7 @@ export default function SessionPage() {
             { onConflict: 'user_id,program_exercise_id,completed_at' }
           )
 
-        updateCurrent({ logged: true })
+        updateCurrent({ logged: true, workoutId: (upserted as { id: string } | null)?.id ?? currentState.workoutId })
       }
 
       goNext()
@@ -566,7 +583,7 @@ export default function SessionPage() {
         <button
           type="button"
           onClick={logCurrentExercise}
-          disabled={saving || currentState.setsDone === 0}
+          disabled={saving || currentState.setsDone === 0 || !currentState.reps}
           className="flex-[2] rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-xs disabled:opacity-40 active:scale-[0.99] transition"
         >
           {saving
