@@ -50,6 +50,9 @@ const WorkoutHeatmap = dynamic(() => import('@/components/WorkoutHeatmap'), {
 const WeeklyVolume = dynamic(() => import('@/components/WeeklyVolume'), {
   loading: () => <Skeleton className="h-56 w-full rounded-lg" />,
 })
+const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume'), {
+  loading: () => <Skeleton className="h-56 w-full rounded-lg" />,
+})
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
 const GRID_COLS: Record<number, string> = {
@@ -639,6 +642,7 @@ export default function DashboardPage() {
       )}
 
       <WeeklyVolume />
+      <WeeklyCardioVolume />
 
       {/* quick actions */}
       <div className="grid grid-cols-3 gap-2">
