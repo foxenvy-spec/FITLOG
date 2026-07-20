@@ -26,7 +26,7 @@ export default function ImportCardioPhoto({ onExtracted }: { onExtracted: (data:
   const [preview, setPreview] = useState<string | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [foundFields, setFoundFields] = useState<string[] | null>(null)
+  const [foundFields, setFoundFields] = useState<(keyof ExtractedCardioData)[] | null>(null)
 
   async function handleFile(file: File | undefined) {
     if (!file) return
