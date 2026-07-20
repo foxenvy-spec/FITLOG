@@ -9,10 +9,12 @@ import { createClient } from '@/lib/supabase/server'
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024 // เผื่อไว้ก่อนเข้ารหัส base64 (~ไฟล์ต้นฉบับ)
 const ALLOWED_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const
 
-// gemini-2.5-flash: อยู่ใน free tier ของ Google AI Studio ณ ปัจจุบัน (เช็คโควต้าจริงได้ที่
-// aistudio.google.com — Google ปรับโควต้าได้โดยไม่แจ้งล่วงหน้า) ถ้าจะประหยัดโควต้ามากขึ้นอีก
-// เปลี่ยนเป็น 'gemini-2.5-flash-lite' ได้ แลกกับความแม่นยำที่ลดลงเล็กน้อย
-const GEMINI_MODEL = 'gemini-2.5-flash'
+// gemini-3.5-flash: อยู่ใน free tier ของ Google AI Studio ณ ปัจจุบัน (เช็คโควต้าจริงได้ที่
+// aistudio.google.com — Google ปรับโควต้า/เลิกซัพพอร์ตโมเดลได้โดยไม่แจ้งล่วงหน้า ถ้าเจอ error
+// 404 "no longer available" อีกในอนาคต ให้เช็ค https://ai.google.dev/gemini-api/docs/deprecations
+// แล้วเปลี่ยนชื่อโมเดลตรงนี้) ถ้าจะประหยัดโควต้ามากขึ้นอีก เปลี่ยนเป็น 'gemini-3.1-flash-lite' ได้
+// แลกกับความแม่นยำที่ลดลงเล็กน้อย
+const GEMINI_MODEL = 'gemini-3.5-flash'
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 const EXTRACTION_SYSTEM_PROMPT = `คุณช่วยอ่านตัวเลขจากรูปหน้าจอของอุปกรณ์ออกกำลังกาย (ลู่วิ่ง, นาฬิกาสมาร์ทวอทช์, แอปเช่น Strava/Garmin/Apple Health)
