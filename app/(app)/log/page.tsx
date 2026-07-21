@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
@@ -88,6 +88,17 @@ function LogPageInner() {
   const [prFlash, setPrFlash] = useState(false)
 
   const [today, setToday] = useState<Workout[]>([])
+
+  // รูปท่าออกกำลังกายจริง (ไม่ใช่ไดอะแกรมกล้ามเนื้อ) — เอาไว้โชว์คู่กับ MuscleDiagram ตอนเลือกท่า
+  // ใช้ exerciseLibraryId ก่อน (แม่นสุด, ตรงกับท่าที่เลือกจาก dropdown เป๊ะๆ) ถ้าไม่มีค่อย fallback
+  // ไปหาแบบชื่อ/นามแฝง เผื่อผู้ใช้พิมพ์ชื่อเองแต่ตรงกับท่าที่มีอยู่ในฐานข้อมูล
+  const selectedExercise = useMemo(() => {
+    if (exerciseLibraryId) {
+      const byId = exercises.find((e) => e.id === exerciseLibraryId)
+      if (byId) return byId
+    }
+    return exerciseName ? findExerciseByName(exercises, exerciseName) : null
+  }, [exercises, exerciseLibraryId, exerciseName])
   const [loadingToday, setLoadingToday] = useState(true)
   const [todayError, setTodayError] = useState<string | null>(null)
   const [lastEntry, setLastEntry] = useState<Workout | null>(null)
@@ -553,9 +564,21 @@ function LogPageInner() {
                 }}
                 onSelect={handleExerciseSelect}
               />
-              {highlighterMuscles.length > 0 && (
-                <div className="mt-2 rounded-xl bg-panel flex items-center justify-center py-2">
-                  <MuscleDiagram exerciseName={exerciseName} highlighterMuscles={highlighterMuscles} />
+              {(selectedExercise?.imageUrl || highlighterMuscles.length > 0) && (
+                <div className="mt-2 flex items-start gap-2">
+                  {selectedExercise?.imageUrl && (
+                    <img
+                      src={selectedExercise.imageUrl}
+                      alt={selectedExercise.name}
+                      loading="lazy"
+                      className="flex-1 min-w-0 rounded-xl bg-panel object-cover aspect-square"
+                    />
+                  )}
+                  {highlighterMuscles.length > 0 && (
+                    <div className="flex-1 min-w-0 rounded-xl bg-panel flex items-center justify-center py-2 self-stretch">
+                      <MuscleDiagram exerciseName={exerciseName} highlighterMuscles={highlighterMuscles} />
+                    </div>
+                  )}
                 </div>
               )}
               {secondaryMuscles.length > 0 && (
