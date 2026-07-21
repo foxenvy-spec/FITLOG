@@ -8,6 +8,7 @@ import { loadMuscleLabelLang, saveMuscleLabelLang } from '@/lib/muscleLabelPrefs
 import MuscleLangToggle from '@/components/MuscleLangToggle'
 import LoadingState from '@/components/LoadingState'
 import ErrorState from '@/components/ErrorState'
+import MuscleDiagram from '@/components/MuscleDiagram'
 
 export default function ExercisesPage() {
   const [query, setQuery] = useState('')
@@ -88,12 +89,21 @@ export default function ExercisesPage() {
                   onClick={() => setExpandedId(expanded ? null : ex.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
                 >
-                  <span
-                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base"
-                    style={{ backgroundColor: MUSCLE_GROUP_COLORS[ex.muscleGroup] + '33' }}
-                  >
-                    {ex.icon}
-                  </span>
+                  {ex.imageUrl ? (
+                    <img
+                      src={ex.imageUrl}
+                      alt={ex.nameTh}
+                      loading="lazy"
+                      className="shrink-0 w-11 h-11 rounded-lg object-cover bg-panel"
+                    />
+                  ) : (
+                    <span
+                      className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-lg"
+                      style={{ backgroundColor: MUSCLE_GROUP_COLORS[ex.muscleGroup] + '33' }}
+                    >
+                      {ex.icon}
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-ink truncate">{ex.name}</span>
                     <span className="block text-[11px] text-muted truncate">
@@ -125,6 +135,24 @@ export default function ExercisesPage() {
 function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }) {
   return (
     <div className="px-4 pb-4 -mt-1 space-y-3">
+      {(ex.imageUrl || ex.highlighterMuscles.length > 0) && (
+        <div className="grid grid-cols-2 gap-3">
+          {ex.imageUrl && (
+            <img
+              src={ex.imageUrl}
+              alt={ex.nameTh}
+              loading="lazy"
+              className="w-full aspect-square object-cover rounded-xl bg-panel"
+            />
+          )}
+          {ex.highlighterMuscles.length > 0 && (
+            <div className="rounded-xl bg-panel flex items-center justify-center py-2">
+              <MuscleDiagram exerciseName={ex.name} highlighterMuscles={ex.highlighterMuscles} />
+            </div>
+          )}
+        </div>
+      )}
+
       <div>
         <p className="text-[10px] tracked uppercase text-muted mb-1">กล้ามเนื้อหลัก</p>
         <span
