@@ -30,9 +30,9 @@ module.exports = {
         mossdim: '#2E3A26',
       },
       fontFamily: {
-        display: ['var(--font-oswald)'],
-        body: ['var(--font-inter)'],
-        mono: ['var(--font-mono)'],
+        display: ['var(--font-oswald)', 'var(--font-kanit)'],
+        body: ['var(--font-inter)', 'var(--font-plex-thai)'],
+        mono: ['var(--font-mono)', 'var(--font-plex-thai)'],
       },
       letterSpacing: {
         widest2: '0.2em',
