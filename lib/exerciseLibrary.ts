@@ -15,6 +15,10 @@ export interface ExerciseDef {
   icon: string
   aliases: string[]
   instructions: string[]
+  imageUrl: string | null
+  // slug ตามไลบรารี react-body-highlighter (เช่น 'chest', 'triceps', 'front-deltoids')
+  // ใช้ render ไดอะแกรมคนไฮไลต์กล้ามเนื้อ — ละเอียดกว่า muscleGroup/secondaryMuscles ที่เป็นกลุ่มใหญ่ภาษาไทย
+  highlighterMuscles: string[]
 }
 
 // แถวดิบตามคอลัมน์ในตาราง public.exercise_library (ดู supabase/migrations/007_exercise_library.sql)
@@ -28,6 +32,8 @@ interface ExerciseLibraryRow {
   equipment: string
   icon: string | null
   instructions: string[] | null
+  image_url: string | null
+  highlighter_muscles: string[] | null
 }
 
 function mapRow(row: ExerciseLibraryRow): ExerciseDef {
@@ -41,6 +47,8 @@ function mapRow(row: ExerciseLibraryRow): ExerciseDef {
     icon: row.icon ?? '🏋️',
     aliases: row.aliases ?? [],
     instructions: row.instructions ?? [],
+    imageUrl: row.image_url ?? null,
+    highlighterMuscles: row.highlighter_muscles ?? [],
   }
 }
 
