@@ -14,6 +14,7 @@ import { todayStr } from '@/lib/weekdays'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import Skeleton from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
+import MuscleDiagram from '@/components/MuscleDiagram'
 
 export default function ExerciseDetailPage() {
   const params = useParams<{ name: string }>()
@@ -85,6 +86,24 @@ export default function ExerciseDetailPage() {
           </div>
         </div>
       </div>
+
+      {known && (known.imageUrl || known.highlighterMuscles.length > 0) && (
+        <div className="grid grid-cols-2 gap-3">
+          {known.imageUrl && (
+            <img
+              src={known.imageUrl}
+              alt={known.nameTh}
+              className="w-full aspect-square object-cover rounded-xl bg-panel"
+              loading="lazy"
+            />
+          )}
+          {known.highlighterMuscles.length > 0 && (
+            <div className="rounded-xl bg-panel flex items-center justify-center py-2">
+              <MuscleDiagram exerciseName={known.name} highlighterMuscles={known.highlighterMuscles} />
+            </div>
+          )}
+        </div>
+      )}
 
       {error ? (
         <ErrorState title="โหลดข้อมูลท่านี้ไม่สำเร็จ" message={error} onRetry={load} />
