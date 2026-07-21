@@ -23,8 +23,13 @@ import {
   computeMissedMuscleInsights,
   suggestMuscleToTrain,
   recoveryRecommendationLabel,
+  computeBestVolumeIncrease,
+  computeGreetingContext,
+  computeWorkoutMotivationLabel,
   type PRSuggestion,
   type Insight,
+  type MuscleRecommendation,
+  type VolumeIncrease,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { saveDisplayName } from '@/lib/profile'
@@ -90,6 +95,14 @@ interface DashboardData {
   // ต่อกลุ่ม ก่อนเฉลี่ย) ใช้ตัวเลขเดียวสรุปภาพรวมสำหรับ hero card — รายละเอียดรายกล้ามเนื้อ
   // ยังดูได้เต็ม ๆ ที่ WeeklyVolume ด้านล่าง
   weeklyGoalPct: number
+  // ใช้ประกอบ dynamic greeting ด้านบนสุด — กล้ามเนื้อที่ฟื้นตัวมากที่สุด (สำหรับ "X ฟื้นตัวเต็มที่แล้ว")
+  // และกลุ่มที่วอลุ่มเพิ่มขึ้นเด่นที่สุดสัปดาห์นี้ (สำหรับ "วอลุ่มเพิ่มขึ้น X%")
+  muscleRecommendation: MuscleRecommendation | null
+  bestVolumeIncrease: VolumeIncrease | null
+  // ใช้กับการ์ด Weekly Goal แบบ motivation — จำนวนครั้งที่ฝึกแล้วสัปดาห์นี้ เทียบกับเป้าหมาย
+  // (เป้าหมายนับจากจำนวนวันที่ตั้งโปรแกรมไว้เอง ถ้ายังไม่ตั้งเลยใช้ 3 เป็นค่าเริ่มต้น)
+  thisWeekWorkoutDays: number
+  weeklyWorkoutGoal: number
 }
 
 async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exercises: ExerciseDef[]): Promise<DashboardData> {
@@ -192,6 +205,14 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
   })
   const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary)
   const pushPullBalance = computePushPullBalance(thisWeekSets)
+  const bestVolumeIncrease = computeBestVolumeIncrease(thisWeekSets, lastWeekSets)
+
+  // จำนวนครั้งที่ฝึกแล้วสัปดาห์นี้ (นับวันที่ต่างกัน ไม่ใช่จำนวนแถว) — ใช้ distinctDates ที่ดึงมาแล้ว
+  // สำหรับคำนวณ streak ด้านบน (ย้อนหลัง 400 วัน ครอบคลุมสัปดาห์นี้แน่นอน) ไม่ต้อง query ซ้ำ
+  const thisWeekWorkoutDays = distinctDates.filter((d) => d >= thisWeekStart && d <= thisWeekEnd).length
+  // เป้าหมายจำนวนครั้ง/สัปดาห์ นับจากจำนวนวันที่ผู้ใช้ตั้งโปรแกรมไว้เอง (program_days) — สะท้อน
+  // ตารางฝึกจริงของแต่ละคน ถ้ายังไม่ตั้งโปรแกรมเลย ใช้ 3 เป็นค่าเริ่มต้นทั่วไป
+  const weeklyWorkoutGoal = typedDays.length > 0 ? typedDays.length : 3
 
   const lastExerciseName = strengthRows.find((r) => r.exercise_name)?.exercise_name ?? null
   const currentDay = typedDays.find((d) => d.day_of_week === dow) ?? null
@@ -270,6 +291,10 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
     insights,
     aiDailySummary,
     weeklyGoalPct,
+    muscleRecommendation,
+    bestVolumeIncrease,
+    thisWeekWorkoutDays,
+    weeklyWorkoutGoal,
   }
 }
 
@@ -323,6 +348,14 @@ export default function DashboardPage() {
     [data?.programDays, dow]
   )
   const next = useMemo(() => (data ? findNextProgramDay(data.programDays, dow) : null), [data, dow])
+  // ประโยคทักทายแบบมีบริบท — ลองมีเรื่อง "วันนี้ทำอะไรต่อ" ก่อน ถ้าไม่มีค่อยลองมี "อะไรดีขึ้นบ้างสัปดาห์นี้"
+  const greetingContext = useMemo(
+    () =>
+      data
+        ? computeGreetingContext(scheduledDay?.title ?? null, data.muscleRecommendation, data.bestVolumeIncrease)
+        : { headline: null, detail: null },
+    [data, scheduledDay]
+  )
   const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
   const progressPct =
     data && data.todayExercises.length > 0 ? Math.round((data.completedCount / data.todayExercises.length) * 100) : null
@@ -355,6 +388,10 @@ export default function DashboardPage() {
           <p className="font-display text-lg tracked uppercase text-ink mt-0.5">
             {data.profileDisplayName || emailDisplayName(data.email)}
           </p>
+          {greetingContext.headline && (
+            <p className="font-display text-sm tracked uppercase text-amber mt-1.5">{greetingContext.headline}</p>
+          )}
+          {greetingContext.detail && <p className="text-[11px] text-muted mt-1">{greetingContext.detail}</p>}
         </div>
         <button
           type="button"
@@ -432,6 +469,15 @@ export default function DashboardPage() {
             </p>
           ) : null}
         </div>
+      </div>
+
+      {/* quick start actions — วางไว้ใต้ Today's Workout เสมอ กันผู้ใช้ใหม่ที่ยังไม่มีโปรแกรม/ประวัติ
+          ไม่รู้จะกดอะไรต่อ ต่างจาก quick actions ชุดล่างที่เป็นทางลัดทั่วไป (บันทึก/เทมเพลต/สถิติ) —
+          ชุดนี้เน้น 3 ทางเริ่มต้นที่ใช้บ่อยที่สุดตอนเปิดแอปครั้งแรก */}
+      <div className="grid grid-cols-3 gap-2">
+        <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" />
+        <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" />
+        <QuickAction href="/coach" label="ถาม AI" icon="🤖" />
       </div>
 
       {/* card 2: recovery */}
@@ -554,8 +600,21 @@ export default function DashboardPage() {
           >
             <AnimatedBarFill pct={data.weeklyGoalPct} color="#E8A33D" />
           </div>
-          <p className="text-[11px] text-muted mt-2">
-            🔥 <span className="text-ink font-mono">{data.streak}</span> Day Streak
+
+          <div className="flex items-start gap-2.5 mt-3">
+            <span className="text-xl leading-none shrink-0">🔥</span>
+            <div>
+              <p className="text-sm text-ink">
+                <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งสัปดาห์นี้
+              </p>
+              <p className="text-[11px] text-muted mt-0.5">
+                {computeWorkoutMotivationLabel(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal)}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted mt-2.5">
+            <span className="text-ink font-mono">{data.streak}</span> Day Streak
           </p>
         </div>
       </div>
