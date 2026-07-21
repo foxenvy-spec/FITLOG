@@ -1,16 +1,10 @@
 export interface DashboardPrefs {
-  showCalories: boolean
   showRecovery: boolean
-  showBodyWeight: boolean
-  showPR: boolean
   showAICoach: boolean
 }
 
 export const DEFAULT_DASHBOARD_PREFS: DashboardPrefs = {
-  showCalories: true,
   showRecovery: true,
-  showBodyWeight: false,
-  showPR: true,
   showAICoach: true,
 }
 
