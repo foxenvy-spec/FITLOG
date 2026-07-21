@@ -420,6 +420,6 @@ describe('recoveryRecommendationLabel', () => {
   })
 
   it('reframes as a next-session suggestion once today\'s plan is fully complete', () => {
-    expect(recoveryRecommendationLabel(100)).toBe('ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น')
+    expect(recoveryRecommendationLabel(100)).toBe('ฝึกวันนี้ไปแล้ว ✅\nครั้งหน้าแนะนำเล่น')
   })
 })

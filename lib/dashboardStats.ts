@@ -183,7 +183,7 @@ export function suggestMuscleToTrain(recoveryPctByMuscle: Record<string, number>
 // progressPct: null = ไม่มีแผนวันนี้ (บันทึกอิสระ ยังไม่ได้ล็อกอะไรเลย)
 export function recoveryRecommendationLabel(progressPct: number | null): string {
   if (progressPct === null) return 'วันนี้ควรเล่น'
-  if (progressPct >= 100) return 'ฝึกวันนี้ไปแล้ว ✅ ครั้งหน้าแนะนำเล่น'
+  if (progressPct >= 100) return 'ฝึกวันนี้ไปแล้ว ✅\nครั้งหน้าแนะนำเล่น'
   return `🟢 วันนี้ทำได้ ${progressPct}% ของเป้าหมายแล้ว\n🎯 ครั้งหน้าแนะนำเล่น`
 }
 
