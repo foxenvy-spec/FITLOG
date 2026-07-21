@@ -66,7 +66,7 @@ export default function ProfileView() {
 
       <div className="rounded-xl bg-surface border border-line divide-y divide-line overflow-hidden">
         {LINKS.map((item) => (
-          
+          <a
             key={item.href}
             href={item.href}
             className="flex items-center gap-3 px-4 py-3.5 active:bg-surface2 transition"

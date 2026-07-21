@@ -2,6 +2,10 @@
 
 import dynamic from 'next/dynamic'
 
+// เหมือนกับ /dashboard: หน้านี้ดึงข้อมูล user เฉพาะคน (auth, display_name) ผ่าน
+// Supabase ฝั่ง client ล้วนๆ ไม่มีประโยชน์ด้าน SEO และข้อมูลต่างกันทุกคนอยู่แล้ว
+// จึงปิด SSR (ssr: false) ไปเลย กัน hydration mismatch (React error #418/#423 ที่เจอ
+// ตอนดึงอีเมล/ชื่อผู้ใช้ระหว่าง server render กับ client render ไม่ตรงกัน)
 const ProfileView = dynamic(() => import('./ProfileView'), {
   ssr: false,
   loading: () => <ProfileSkeleton />,
