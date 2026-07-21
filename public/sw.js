@@ -1,9 +1,16 @@
-const CACHE_NAME = 'fitlog-cache-v2'
-const OFFLINE_URLS = ['/log', '/history', '/stats', '/manifest.json']
+// v3: precaching full page HTML at install time (previous versions) meant a user's
+// browser could end up combining an OLD cached HTML shell with a NEW deploy's JS
+// bundle (hashed filenames change every deploy) — a version-skew mismatch that made
+// React hydration fail catastrophically (duplicate <html> in the DOM, blank white
+// screen). The runtime fetch handler below already does network-first + cache-on-success
+// for page navigations, which safely builds up the same offline fallback over time
+// without ever locking in a stale page shell at install. Bumping CACHE_NAME also forces
+// every existing cache from earlier versions to be purged via the activate handler.
+const CACHE_NAME = 'fitlog-cache-v3'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_URLS)).catch(() => {})
+    caches.open(CACHE_NAME).then((cache) => cache.add('/manifest.json')).catch(() => {})
   )
   self.skipWaiting()
 })
