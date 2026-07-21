@@ -1,9 +1,5 @@
 'use client'
 
-// หน้า "Profile" — ฮับรวมข้อมูลผู้ใช้ + ทุกอย่างที่ไม่ใช่ core loop รายวัน (log/stats)
-// ไว้ที่เดียว: ข้อมูลตัว, Measures, Calendar, Achievements, ประวัติ, นำเข้า/ส่งออกข้อมูล, ตั้งค่า
-// เส้นทางเดิมทั้งหมดยังใช้งานได้ปกติ หน้านี้แค่รวมทางเข้าไว้ให้เจอง่ายขึ้น
-
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
@@ -30,7 +26,8 @@ export default function ProfileView() {
 
   useEffect(() => {
     let active = true
-    ;(async () => {
+
+    async function loadProfile() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -41,8 +38,13 @@ export default function ProfileView() {
         .select('display_name')
         .eq('user_id', user.id)
         .maybeSingle()
-      if (active) setDisplayName((data as { display_name: string | null } | null)?.display_name ?? null)
-    })()
+      if (active) {
+        setDisplayName((data as { display_name: string | null } | null)?.display_name ?? null)
+      }
+    }
+
+    loadProfile()
+
     return () => {
       active = false
     }
