@@ -80,7 +80,7 @@ export default function ExerciseDetailPage() {
             <h1 className="font-display text-xl tracked uppercase text-ink truncate">{exerciseName}</h1>
             {known && (
               <p className="text-[11px] text-muted">
-                {known.nameTh} · <span style={{ color }}>{known.muscleGroup}</span> · {known.equipment}
+                <span style={{ color }}>{known.muscleGroup}</span> · {known.equipment}
               </p>
             )}
           </div>
@@ -92,7 +92,7 @@ export default function ExerciseDetailPage() {
           {known.imageUrl && (
             <img
               src={known.imageUrl}
-              alt={known.nameTh}
+              alt={known.name}
               className="w-full aspect-square object-cover rounded-xl bg-panel"
               loading="lazy"
             />
