@@ -106,7 +106,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
                     {ex.imageUrl ? (
                       <img
                         src={ex.imageUrl}
-                        alt={ex.nameTh}
+                        alt={ex.name}
                         loading="lazy"
                         className="shrink-0 w-9 h-9 rounded-md object-cover bg-panel"
                       />
@@ -120,7 +120,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm text-ink truncate">{ex.name}</span>
-                      <span className="block text-[11px] text-muted truncate">{ex.nameTh}</span>
+                      <span className="block text-[11px] text-muted truncate">{ex.equipment}</span>
                     </span>
                     <span
                       className="shrink-0 text-[10px] px-2 py-0.5 rounded-full border"
