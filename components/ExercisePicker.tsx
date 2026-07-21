@@ -74,7 +74,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
         <div className="absolute z-30 mt-1.5 w-full rounded-lg bg-surface2 border border-line shadow-lg overflow-hidden">
           {!showSearch && (
             <div className="px-2 pt-2 pb-1.5 space-y-1.5">
-              <div className="flex gap-1 overflow-x-auto no-scrollbar">
+              <div className="flex flex-wrap gap-1">
                 <MuscleTab active={browseMuscle === null} onClick={() => setBrowseMuscle(null)} label="ทั้งหมด" />
                 {MUSCLE_GROUPS.map((mg) => (
                   <MuscleTab
