@@ -8,7 +8,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { Workout } from '@/lib/types'
 import { computeExerciseStats, type ExerciseStats } from '@/lib/exerciseStats'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
-import { MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
+import { MUSCLE_GROUP_COLORS, muscleGroupLabel } from '@/lib/muscle-groups'
+import { equipmentLabel } from '@/lib/exerciseLibrary'
 import { relativeDayLabel } from '@/lib/dashboardStats'
 import { todayStr } from '@/lib/weekdays'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
@@ -80,7 +81,7 @@ export default function ExerciseDetailPage() {
             <h1 className="font-display text-xl tracked uppercase text-ink truncate">{exerciseName}</h1>
             {known && (
               <p className="text-[11px] text-muted">
-                <span style={{ color }}>{known.muscleGroup}</span> · {known.equipment}
+                <span style={{ color }}>{muscleGroupLabel(known.muscleGroup, 'en')}</span> · {equipmentLabel(known.equipment)}
               </p>
             )}
           </div>
