@@ -92,7 +92,7 @@ export default function ExercisesPage() {
                   {ex.imageUrl ? (
                     <img
                       src={ex.imageUrl}
-                      alt={ex.nameTh}
+                      alt={ex.name}
                       loading="lazy"
                       className="shrink-0 w-11 h-11 rounded-lg object-cover bg-panel"
                     />
@@ -106,9 +106,7 @@ export default function ExercisesPage() {
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-ink truncate">{ex.name}</span>
-                    <span className="block text-[11px] text-muted truncate">
-                      {ex.nameTh} · {ex.equipment}
-                    </span>
+                    <span className="block text-[11px] text-muted truncate">{ex.equipment}</span>
                   </span>
                   <span
                     className="shrink-0 text-[10px] px-2 py-0.5 rounded-full border"
@@ -140,7 +138,7 @@ function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }
           {ex.imageUrl && (
             <img
               src={ex.imageUrl}
-              alt={ex.nameTh}
+              alt={ex.name}
               loading="lazy"
               className="w-full aspect-square object-cover rounded-xl bg-panel"
             />
