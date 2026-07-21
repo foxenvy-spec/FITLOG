@@ -287,9 +287,15 @@ export default function DashboardPage() {
 
   const [prefs, setPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // ค่าเริ่มต้นคงที่ (ไม่ขึ้นกับเวลา) เพื่อให้ตรงกับ HTML ที่ server render มาเป๊ะๆ —
+  // แล้วค่อยคำนวณคำทักทายจริงหลัง mount ฝั่ง client เท่านั้น เพราะ server (UTC) กับ
+  // เครื่องผู้ใช้ (เวลาไทย) คำนวณ new Date().getHours() ได้คนละค่า ถ้าคำนวณตรงๆ ตอน
+  // render จะทำให้ข้อความไม่ตรงกันระหว่าง server กับ client (hydration mismatch)
+  const [greetingText, setGreetingText] = useState('สวัสดี')
 
   useEffect(() => {
     setPrefs(loadDashboardPrefs())
+    setGreetingText(greeting())
   }, [])
 
   const { data: exercises = [] } = useExerciseLibrary()
@@ -352,7 +358,7 @@ export default function DashboardPage() {
         {/* greeting + streak */}
         <div className="px-4 pt-4 pb-3.5 flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-muted">👋 {greeting()}</p>
+            <p className="text-xs text-muted">👋 {greetingText}</p>
             <p className="font-display text-lg tracked uppercase text-ink mt-0.5">
               {data.profileDisplayName || emailDisplayName(data.email)}
             </p>
