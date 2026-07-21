@@ -90,6 +90,7 @@ interface DashboardData {
   programDays: ProgramDay[]
   todayExercises: ProgramExercise[]
   completedCount: number
+  completedExerciseIds: string[]
   recoveryDates: Record<string, string | null>
   prSuggestion: PRSuggestion | null
   lastWorkoutDate: string | null
@@ -237,6 +238,7 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
 
   const todayExercises = (exRows as ProgramExercise[]) ?? []
   let completedCount = 0
+  let completedExerciseIds: string[] = []
   if (todayExercises.length > 0) {
     const { data: completions } = await supabase
       .from('program_completions')
@@ -246,7 +248,8 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
         'program_exercise_id',
         todayExercises.map((e) => e.id)
       )
-    completedCount = completions?.length ?? 0
+    completedExerciseIds = (completions ?? []).map((c) => (c as { program_exercise_id: string }).program_exercise_id)
+    completedCount = completedExerciseIds.length
   }
 
   // % ความคืบหน้าของแผนวันนี้ ใช้ทั้งโชว์ตัวเลขในข้อความแนะนำ และตัดสินว่า "ฝึกวันนี้ไปแล้ว" หรือยัง
@@ -267,6 +270,7 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
     programDays: typedDays,
     todayExercises,
     completedCount,
+    completedExerciseIds,
     recoveryDates,
     prSuggestion,
     lastWorkoutDate,
@@ -332,6 +336,12 @@ export default function DashboardPage() {
   const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
   const progressPct =
     data && data.todayExercises.length > 0 ? Math.round((data.completedCount / data.todayExercises.length) * 100) : null
+  const nextExerciseName = useMemo(() => {
+    if (!data || data.todayExercises.length === 0) return null
+    const done = new Set(data.completedExerciseIds)
+    const remaining = [...data.todayExercises].sort((a, b) => a.position - b.position).find((e) => !done.has(e.id))
+    return remaining?.exercise_name ?? null
+  }, [data])
   const calories = useMemo(
     () => estimateCaloriesToday(data?.todayWorkouts ?? [], totals.durationMin, data?.bodyWeightKg ?? null),
     [data?.todayWorkouts, totals.durationMin, data?.bodyWeightKg]
@@ -400,14 +410,26 @@ export default function DashboardPage() {
           </div>
 
           {progressPct !== null ? (
-            <div className="mt-2.5 flex items-center gap-3">
-              <GoalRing pct={progressPct} size={56} strokeWidth={6} label="เสร็จแล้ว" />
-              <p className="text-xs text-muted">
-                <span className="text-ink font-mono">
-                  {data.completedCount}/{data.todayExercises.length}
-                </span>{' '}
-                Exercises เสร็จแล้ว
-              </p>
+            <div className="mt-2.5 space-y-1.5">
+              <div className="h-1.5 rounded-full bg-surface2 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-amber transition-all"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] text-muted">
+                  <span className="text-ink font-mono">
+                    {data.completedCount}/{data.todayExercises.length}
+                  </span>{' '}
+                  Exercises
+                </p>
+                {nextExerciseName && progressPct < 100 ? (
+                  <p className="text-[11px] text-muted truncate">
+                    Next: <span className="text-ink">{nextExerciseName}</span>
+                  </p>
+                ) : null}
+              </div>
             </div>
           ) : scheduledDay ? (
             <p className="text-[11px] text-muted mt-1.5">
