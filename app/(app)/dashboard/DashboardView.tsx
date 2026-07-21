@@ -5,17 +5,13 @@ import dynamic from 'next/dynamic'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
-import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import {
   computeCurrentStreak,
   computeTodayTotals,
   computeRecoveryPct,
   recoveryStatusColor,
-  estimateCaloriesToday,
   findNextProgramDay,
-  suggestNextPR,
-  relativeDayLabel,
   getWeekRange,
   getPreviousWeekRange,
   computeVolumeTrendInsights,
@@ -26,15 +22,12 @@ import {
   computeBestVolumeIncrease,
   computeGreetingContext,
   computeWorkoutMotivationLabel,
-  type PRSuggestion,
   type Insight,
   type MuscleRecommendation,
   type VolumeIncrease,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { saveDisplayName } from '@/lib/profile'
-import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
-import type { ExerciseDef } from '@/lib/exerciseLibrary'
 import { computePushPullBalance, computeAIDailySummary } from '@/lib/aiCoach'
 import { VOLUME_MUSCLES, RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
@@ -82,13 +75,6 @@ interface DashboardData {
   completedCount: number
   completedExerciseIds: string[]
   recoveryDates: Record<string, string | null>
-  prSuggestion: PRSuggestion | null
-  lastWorkoutDate: string | null
-  lastWorkoutTitle: string | null
-  lastWorkoutDurationMin: number | null
-  lastWorkoutVolumeKg: number
-  lastWorkoutCalories: number
-  bodyWeightKg: number | null
   insights: Insight[]
   aiDailySummary: string
   // เฉลี่ย % ของเป้าหมายเซ็ต/สัปดาห์ ข้ามทุกกล้ามเนื้อใน VOLUME_MUSCLES (เพดานที่ 100%
@@ -105,7 +91,7 @@ interface DashboardData {
   weeklyWorkoutGoal: number
 }
 
-async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exercises: ExerciseDef[]): Promise<DashboardData> {
+async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
   const dow = todayDayOfWeek()
   const today = todayStr()
 
@@ -127,7 +113,6 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
     { data: allDates },
     { data: dayRows },
     { data: recentStrength },
-    { data: latestMetric },
     { data: twoWeeksStrength },
     weeklyVolumeTargets,
     { data: profileRow },
@@ -145,7 +130,6 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
       .eq('type', 'strength')
       .order('performed_at', { ascending: false })
       .limit(1000),
-    supabase.from('body_metrics').select('weight_kg').order('measured_at', { ascending: false }).limit(1).maybeSingle(),
     supabase
       .from('workouts')
       .select('muscle_group, sets, performed_at')
@@ -164,8 +148,6 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
 
   const distinctDates = Array.from(new Set(((allDates as { performed_at: string }[]) ?? []).map((r) => r.performed_at)))
   const streak = computeCurrentStreak(distinctDates)
-  const lastWorkoutDate = distinctDates.filter((d) => d < today).sort().reverse()[0] ?? null
-  const bodyWeightKg = (latestMetric as { weight_kg: number | null } | null)?.weight_kg ?? null
 
   const typedDays = (dayRows as ProgramDay[]) ?? []
 
@@ -214,36 +196,11 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
   // ตารางฝึกจริงของแต่ละคน ถ้ายังไม่ตั้งโปรแกรมเลย ใช้ 3 เป็นค่าเริ่มต้นทั่วไป
   const weeklyWorkoutGoal = typedDays.length > 0 ? typedDays.length : 3
 
-  const lastExerciseName = strengthRows.find((r) => r.exercise_name)?.exercise_name ?? null
   const currentDay = typedDays.find((d) => d.day_of_week === dow) ?? null
 
-  // ทั้งสาม query นี้ไม่ได้ขึ้นกับกัน (คนละตาราง คนละเงื่อนไข) เดิมเรียง await ทีละตัว
-  // เสีย network round-trip ไปฟรีๆ ยิงพร้อมกันแทน
-  const [{ data: exerciseHistory }, { data: exRows }, { data: lastWorkoutRows }] = await Promise.all([
-    lastExerciseName
-      ? supabase.from('workouts').select('*').eq('type', 'strength').eq('exercise_name', lastExerciseName)
-      : Promise.resolve({ data: null as Workout[] | null }),
-    currentDay
-      ? supabase.from('program_exercises').select('*').eq('program_day_id', currentDay.id).order('position')
-      : Promise.resolve({ data: null as ProgramExercise[] | null }),
-    lastWorkoutDate
-      ? supabase.from('workouts').select('*').eq('performed_at', lastWorkoutDate).order('created_at')
-      : Promise.resolve({ data: null as Workout[] | null }),
-  ])
-
-  const prSuggestion = lastExerciseName
-    ? suggestNextPR(lastExerciseName, (exerciseHistory as Workout[]) ?? [], exercises)
-    : null
-
-  // ชื่อ "Last workout" เดาจากโปรแกรมที่ตั้งไว้สำหรับวันในสัปดาห์นั้น (heuristic เดียวกับที่ใช้กับ
-  // การ์ด "Today's Workout" ด้านบน) ถ้าวันนั้นไม่มีโปรแกรมตรงกัน ถือว่าเป็นการบันทึกอิสระ
-  const lastWorkoutEntries = (lastWorkoutRows as Workout[]) ?? []
-  const lastWorkoutTotals = computeTodayTotals(lastWorkoutEntries)
-  const lastWorkoutCalories = estimateCaloriesToday(lastWorkoutEntries, lastWorkoutTotals.durationMin, bodyWeightKg)
-  const lastWorkoutDow = lastWorkoutDate ? new Date(lastWorkoutDate + 'T00:00:00').getDay() : null
-  const lastWorkoutProgramDay =
-    lastWorkoutDow !== null ? typedDays.find((d) => d.day_of_week === lastWorkoutDow) ?? null : null
-  const lastWorkoutTitle = lastWorkoutDate ? lastWorkoutProgramDay?.title ?? 'บันทึกอิสระ' : null
+  const { data: exRows } = currentDay
+    ? await supabase.from('program_exercises').select('*').eq('program_day_id', currentDay.id).order('position')
+    : { data: null as ProgramExercise[] | null }
 
   const todayExercises = (exRows as ProgramExercise[]) ?? []
   let completedCount = 0
@@ -281,13 +238,6 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
     completedCount,
     completedExerciseIds,
     recoveryDates,
-    prSuggestion,
-    lastWorkoutDate,
-    lastWorkoutTitle,
-    lastWorkoutDurationMin: lastWorkoutTotals.durationMin,
-    lastWorkoutVolumeKg: lastWorkoutTotals.volumeKg,
-    lastWorkoutCalories,
-    bodyWeightKg,
     insights,
     aiDailySummary,
     weeklyGoalPct,
@@ -301,7 +251,6 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>, exe
 export default function DashboardPage() {
   const supabase = createClient()
   const queryClient = useQueryClient()
-  const { unit, toDisplay, format } = useWeightUnit()
   const today = todayStr()
 
   const [prefs, setPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS)
@@ -317,15 +266,13 @@ export default function DashboardPage() {
     setGreetingText(greeting())
   }, [])
 
-  const { data: exercises = [] } = useExerciseLibrary()
-
   const {
     data,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['dashboard', today, exercises.length],
-    queryFn: () => fetchDashboardData(supabase, exercises),
+    queryKey: ['dashboard', today],
+    queryFn: () => fetchDashboardData(supabase),
   })
 
   function updatePrefs(next: DashboardPrefs) {
@@ -543,46 +490,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* card 3: recent workout */}
-      <div className="rounded-lg bg-surface border border-line overflow-hidden">
-        <div className="px-5 py-5">
-          <p className="text-[10px] tracked uppercase text-muted mb-1">Recent Workout</p>
-          {data.lastWorkoutDate ? (
-            <>
-              <p className="text-sm text-ink">
-                {data.lastWorkoutTitle}
-                <span className="text-muted">
-                  {' • '}
-                  {relativeDayLabel(data.lastWorkoutDate)}
-                </span>
-              </p>
-              <div className="flex items-center gap-4 flex-wrap mt-2.5">
-                <StatRow icon="🕒" value={data.lastWorkoutDurationMin !== null ? `${data.lastWorkoutDurationMin} min` : '–'} />
-                {prefs.showCalories && (
-                  <StatRow icon="🔥" value={data.lastWorkoutCalories > 0 ? `${data.lastWorkoutCalories} kcal` : '–'} />
-                )}
-                <StatRow
-                  icon="🏋️"
-                  value={
-                    data.lastWorkoutVolumeKg > 0
-                      ? `${Math.round(toDisplay(data.lastWorkoutVolumeKg)).toLocaleString('th-TH')} ${unit}`
-                      : '–'
-                  }
-                />
-                {prefs.showBodyWeight && data.bodyWeightKg !== null && (
-                  <StatRow
-                    icon="⚖️"
-                    value={`${toDisplay(data.bodyWeightKg).toLocaleString('th-TH', { maximumFractionDigits: 1 })} ${unit}`}
-                  />
-                )}
-              </div>
-            </>
-          ) : (
-            <p className="text-[11px] text-muted">ยังไม่มีประวัติ</p>
-          )}
-        </div>
-      </div>
-
       {/* card 4: weekly goal */}
       <div className="rounded-lg bg-surface border border-line overflow-hidden">
         <div className="px-5 py-5">
@@ -634,65 +541,21 @@ export default function DashboardPage() {
 
       <WorkoutHeatmap />
 
-      {/* Next PR / Next up in program — below the heatmap so the hero cards above
-          stay focused on "what do I do now" (workout, recovery, recent workout, goal) */}
-      <div className="rounded-lg bg-surface border border-line overflow-hidden">
-        {prefs.showPR && (
-          <>
-            {data.prSuggestion ? (
-              <a
-                href={`/exercises/${encodeURIComponent(data.prSuggestion.exerciseName)}`}
-                className="block px-4 py-3.5 active:bg-surface2 transition"
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] tracked uppercase text-muted">Next PR</p>
-                  <span className="text-muted text-xs">โปรไฟล์ท่า →</span>
-                </div>
-                <p className="font-display text-base tracked uppercase text-ink mb-2">{data.prSuggestion.exerciseName}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-[10px] tracked uppercase text-muted">Last</p>
-                    <p className="font-mono text-base text-muted">
-                      {format(data.prSuggestion.lastWeight)} × {data.prSuggestion.lastReps}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] tracked uppercase text-muted">Target</p>
-                    <p className="font-mono text-base text-amber">
-                      {format(data.prSuggestion.targetWeight)} × {data.prSuggestion.targetReps}
-                    </p>
-                  </div>
-                </div>
-              </a>
-            ) : (
-              <div className="px-4 py-3.5">
-                <p className="text-[10px] tracked uppercase text-muted mb-1.5">Next PR</p>
-                <p className="text-[11px] text-muted">
-                  ยังไม่มีประวัติท่าเวท —{' '}
-                  <a href="/log" className="text-amber hover:underline">
-                    บันทึกเซ็ตแรก
-                  </a>
-                </p>
-              </div>
-            )}
-          </>
-        )}
-
-        {prefs.showPR && next && <Divider />}
-
-        {next && (
-          <>
-            <div className="px-4 py-3 flex items-center justify-between">
-              <p className="text-[11px] text-muted">
-                Next up: <span className="text-ink">{next.day.title}</span>
-              </p>
-              <span className="text-[11px] font-mono text-muted">
-                {next.daysAway === 1 ? 'พรุ่งนี้' : `อีก ${next.daysAway} วัน`}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
+      {/* Next up in program — below the heatmap so the hero cards above stay focused
+          on "what do I do now" (workout, recovery, goal). PR history/suggestions now
+          live on the Statistics page alongside the rest of the analytics. */}
+      {next && (
+        <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <p className="text-[11px] text-muted">
+              Next up: <span className="text-ink">{next.day.title}</span>
+            </p>
+            <span className="text-[11px] font-mono text-muted">
+              {next.daysAway === 1 ? 'พรุ่งนี้' : `อีก ${next.daysAway} วัน`}
+            </span>
+          </div>
+        </div>
+      )}
 
       {data.insights.length > 0 && (
         <div className="space-y-2">
@@ -724,21 +587,6 @@ export default function DashboardPage() {
         />
       )}
     </div>
-  )
-}
-
-function Divider() {
-  return <div className="border-t border-line" />
-}
-
-function StatRow({ icon, value }: { icon: string; value: string }) {
-  return (
-    <span className="flex items-center gap-1.5 font-mono text-sm text-ink">
-      <span className="text-xs" aria-hidden="true">
-        {icon}
-      </span>
-      {value}
-    </span>
   )
 }
 
