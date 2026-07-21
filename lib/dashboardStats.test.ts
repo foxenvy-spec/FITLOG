@@ -18,6 +18,9 @@ import {
   getPreviousWeekRange,
   suggestMuscleToTrain,
   recoveryRecommendationLabel,
+  computeBestVolumeIncrease,
+  computeGreetingContext,
+  computeWorkoutMotivationLabel,
 } from './dashboardStats'
 
 // ทุกฟังก์ชันที่อ้างอิง "วันนี้" ผ่าน todayStr()/new Date() ต้อง freeze เวลาไว้
@@ -421,5 +424,75 @@ describe('recoveryRecommendationLabel', () => {
 
   it('reframes as a next-session suggestion once today\'s plan is fully complete', () => {
     expect(recoveryRecommendationLabel(100)).toBe('ฝึกวันนี้ไปแล้ว ✅\nครั้งหน้าแนะนำเล่น')
+  })
+})
+
+describe('computeBestVolumeIncrease', () => {
+  it('picks the muscle group with the highest qualifying increase', () => {
+    const best = computeBestVolumeIncrease({ อก: 12, หลัง: 12 }, { อก: 10, หลัง: 6 })
+    // อก: +20% (12 vs 10), หลัง: +100% (12 vs 6) — หลังชนะเพราะ % เพิ่มขึ้นมากกว่า
+    expect(best?.muscleGroup).toBe('หลัง')
+    expect(best?.pct).toBe(100)
+  })
+
+  it('ignores muscle groups below the last-week sets floor (too little data to trust the %)', () => {
+    const best = computeBestVolumeIncrease({ อก: 4 }, { อก: 1 })
+    expect(best).toBeNull()
+  })
+
+  it('ignores increases below the minimum percent threshold', () => {
+    const best = computeBestVolumeIncrease({ อก: 11 }, { อก: 10 })
+    expect(best).toBeNull()
+  })
+
+  it('returns null when nothing qualifies', () => {
+    expect(computeBestVolumeIncrease({}, {})).toBeNull()
+  })
+})
+
+describe('computeGreetingContext', () => {
+  it('prioritizes today\'s scheduled workout over a volume increase', () => {
+    const ctx = computeGreetingContext('Pull Day', { muscleGroup: 'อก', pct: 95 }, { muscleGroup: 'หลัง', pct: 30 })
+    expect(ctx.headline).toBe('พร้อมสำหรับ Pull Day หรือยัง?')
+    expect(ctx.detail).toBe('อกฟื้นตัวเต็มที่แล้ว')
+  })
+
+  it('shows the raw recovery percentage when not yet fully recovered', () => {
+    const ctx = computeGreetingContext('Pull Day', { muscleGroup: 'อก', pct: 65 }, null)
+    expect(ctx.detail).toBe('อกฟื้นตัวแล้ว 65%')
+  })
+
+  it('has no detail line when there is no recovery data yet', () => {
+    const ctx = computeGreetingContext('Pull Day', null, null)
+    expect(ctx.headline).toBe('พร้อมสำหรับ Pull Day หรือยัง?')
+    expect(ctx.detail).toBeNull()
+  })
+
+  it('falls back to the volume increase when there is no scheduled day today', () => {
+    const ctx = computeGreetingContext(null, { muscleGroup: 'อก', pct: 95 }, { muscleGroup: 'หลัง', pct: 18 })
+    expect(ctx.headline).toBeNull()
+    expect(ctx.detail).toBe('วอลุ่มสัปดาห์นี้ของคุณเพิ่มขึ้น 18% จากสัปดาห์ที่แล้ว')
+  })
+
+  it('is silent when there is nothing to say', () => {
+    expect(computeGreetingContext(null, null, null)).toEqual({ headline: null, detail: null })
+  })
+})
+
+describe('computeWorkoutMotivationLabel', () => {
+  it('counts down the remaining workouts needed to hit the weekly goal', () => {
+    expect(computeWorkoutMotivationLabel(2, 3)).toBe('อีกแค่ 1 ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว')
+  })
+
+  it('celebrates once the goal is met', () => {
+    expect(computeWorkoutMotivationLabel(3, 3)).toBe('ถึงเป้าหมายรายสัปดาห์แล้ว เก่งมาก 🎉')
+  })
+
+  it('celebrates when the goal is exceeded', () => {
+    expect(computeWorkoutMotivationLabel(4, 3)).toBe('ถึงเป้าหมายรายสัปดาห์แล้ว เก่งมาก 🎉')
+  })
+
+  it('phrases the very first workout of the week without "แค่" since nothing has been done yet', () => {
+    expect(computeWorkoutMotivationLabel(0, 3)).toBe('อีก 3 ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว')
   })
 })

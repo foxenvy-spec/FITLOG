@@ -374,3 +374,75 @@ export function relativeDayLabel(dateStr: string): string {
   if (diff > 1) return `${diff} วันที่แล้ว`
   return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
 }
+
+// ==================== วอลุ่มกล้ามเนื้อที่เพิ่มขึ้นเด่นที่สุด (ใช้ทำ dynamic greeting) ====================
+// คนละหน้าที่กับ computeVolumeTrendInsights ด้านบน — ฟังก์ชันนั้นคืน Insight[] (การ์ดเต็ม, อาจได้หลายกลุ่ม)
+// ส่วนนี้ต้องการแค่ "กลุ่มเดียวที่เด่นที่สุด" เป็นตัวเลขดิบ ไปประกอบประโยคทักทายบนสุดของ dashboard
+export interface VolumeIncrease {
+  muscleGroup: string
+  pct: number
+}
+
+export function computeBestVolumeIncrease(
+  thisWeekSets: Record<string, number>,
+  lastWeekSets: Record<string, number>,
+  minLastWeekSets = 3,
+  minPctIncrease = 15
+): VolumeIncrease | null {
+  let best: VolumeIncrease | null = null
+  Object.keys(thisWeekSets).forEach((mg) => {
+    const cur = thisWeekSets[mg] ?? 0
+    const prev = lastWeekSets[mg] ?? 0
+    if (prev < minLastWeekSets || cur <= 0) return
+    const pct = Math.round(((cur - prev) / prev) * 100)
+    if (pct >= minPctIncrease && (!best || pct > best.pct)) {
+      best = { muscleGroup: mg, pct }
+    }
+  })
+  return best
+}
+
+// ==================== ประโยคทักทายแบบมีบริบท (dynamic greeting) ====================
+// แทนที่จะทักทายลอยๆ อย่างเดียว ประกอบประโยคที่บอกว่า "วันนี้ควรทำอะไรต่อ" หรือ "มีอะไรดีขึ้นบ้าง"
+// ลำดับความสำคัญ: มีโปรแกรมของวันนี้ (มีเรื่องให้ทำต่อ) > วอลุ่มสัปดาห์นี้เพิ่มขึ้นเด่นชัด > เงียบไว้ (ยังไม่มีข้อมูลพอ)
+export interface GreetingContext {
+  headline: string | null
+  detail: string | null
+}
+
+const FULLY_RECOVERED_PCT = 90
+
+export function computeGreetingContext(
+  scheduledDayTitle: string | null,
+  muscleRecommendation: MuscleRecommendation | null,
+  bestVolumeIncrease: VolumeIncrease | null
+): GreetingContext {
+  if (scheduledDayTitle) {
+    const detail =
+      muscleRecommendation === null
+        ? null
+        : muscleRecommendation.pct >= FULLY_RECOVERED_PCT
+          ? `${muscleRecommendation.muscleGroup}ฟื้นตัวเต็มที่แล้ว`
+          : `${muscleRecommendation.muscleGroup}ฟื้นตัวแล้ว ${muscleRecommendation.pct}%`
+    return { headline: `พร้อมสำหรับ ${scheduledDayTitle} หรือยัง?`, detail }
+  }
+
+  if (bestVolumeIncrease) {
+    return {
+      headline: null,
+      detail: `วอลุ่มสัปดาห์นี้ของคุณเพิ่มขึ้น ${bestVolumeIncrease.pct}% จากสัปดาห์ที่แล้ว`,
+    }
+  }
+
+  return { headline: null, detail: null }
+}
+
+// ==================== ข้อความให้กำลังใจแทนตัวเลขล้วนๆ (Motivation) ====================
+// ใช้กับการ์ด Weekly Goal — เปลี่ยนจาก "% เฉยๆ" เป็นประโยคที่บอกว่าเหลืออีกกี่ครั้งถึงเป้าหมาย
+// weeklyWorkoutGoal นับจากจำนวนวันที่ผู้ใช้ตั้งโปรแกรมไว้เอง (program_days) — ถ้ายังไม่ตั้งเลย ใช้ 3 เป็นค่าเริ่มต้นทั่วไป
+export function computeWorkoutMotivationLabel(workoutsThisWeek: number, weeklyWorkoutGoal: number): string {
+  const remaining = weeklyWorkoutGoal - workoutsThisWeek
+  if (remaining <= 0) return 'ถึงเป้าหมายรายสัปดาห์แล้ว เก่งมาก 🎉'
+  if (remaining === weeklyWorkoutGoal) return `อีก ${remaining} ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว`
+  return `อีกแค่ ${remaining} ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว`
+}
