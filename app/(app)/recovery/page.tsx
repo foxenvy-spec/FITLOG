@@ -193,7 +193,9 @@ export default function RecoveryPage() {
 
                 <p className="text-[10px] text-muted mt-1">
                   รอบพักฟื้นโดยประมาณ {RECOVERY_WINDOW_DAYS[mg] ?? 2} วัน
-                  {hoursLeft !== null && <> · พร้อมฝึกในอีก ~{hoursLeft} ชม.</>}
+                </p>
+                <p className="text-[10px] text-muted">
+                  {hoursLeft !== null ? `พร้อมฝึกในอีก ~${hoursLeft} ชม.` : 'พร้อมฝึกได้เลย'}
                 </p>
               </div>
             )
