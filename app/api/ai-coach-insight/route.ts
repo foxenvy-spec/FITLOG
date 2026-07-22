@@ -15,6 +15,7 @@ const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models
 const SYSTEM_PROMPT = `คุณคือผู้ช่วยโค้ชฟิตเนสของแอป FITLOG พูดภาษาไทย น้ำเสียงให้กำลังใจ กระชับ ตรงประเด็น
 กติกาสำคัญ:
 - ใช้ข้อมูลที่ให้มาเท่านั้น ห้ามเดา/แต่งตัวเลขหรือชื่อท่าที่ไม่มีในข้อมูล
+- ถ้าข้อมูลระบุว่ามีตารางโปรแกรมประจำสัปดาห์กำหนดกล้ามเนื้อไว้ชัดเจน ให้ยึดตามตารางนั้นเป็นหลักเสมอ ห้ามแนะนำกล้ามเนื้ออื่นสวนทางตาราง
 - ห้ามให้คำแนะนำทางการแพทย์ (เช่น การบาดเจ็บ, อาการปวด, โภชนาการเชิงคลินิก) — ถ้าข้อมูลชวนคิดเรื่องนี้ ให้แนะนำปรึกษาผู้เชี่ยวชาญแทน
 - ตอบเป็นข้อความล้วน ไม่ใช้ markdown, ไม่ใช้ bullet, ไม่เกิน 3-4 ประโยค
 - ถ้าข้อมูลไม่พอให้วิเคราะห์อะไรเลย ให้บอกตรงๆ ว่ายังไม่มีข้อมูลพอ พร้อมชวนบันทึกเพิ่ม`
@@ -34,6 +35,9 @@ interface CoachInsightPayload {
   skippedExercises: string[] | null
   streak: number
   todayProgressPct: number | null
+  // ถ้าตารางโปรแกรมประจำสัปดาห์ (program_days) ระบุกล้ามเนื้อของวันนี้/ครั้งหน้าไว้ชัดเจน — ส่งมาด้วย
+  // เพื่อให้ Gemini เรียบเรียงคำแนะนำอ้างอิงตารางจริง แทนที่จะพูดถึงแค่ recovery % เฉยๆ
+  scheduledMuscle: string | null
 }
 
 function buildUserPrompt(p: CoachInsightPayload): string {
@@ -42,7 +46,12 @@ function buildUserPrompt(p: CoachInsightPayload): string {
   lines.push(`ความคืบหน้าของแผนวันนี้: ${p.todayProgressPct === null ? 'ไม่มีแผนกำหนดไว้วันนี้' : `${p.todayProgressPct}%`}`)
 
   if (p.muscleRecommendation) {
-    lines.push(`กล้ามเนื้อที่ฟื้นตัวมากที่สุด (แนะนำเทรนต่อไป): ${p.muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${p.muscleRecommendation.pct}%)`)
+    const isFromSchedule = p.scheduledMuscle && p.scheduledMuscle === p.muscleRecommendation.muscleGroup
+    lines.push(
+      isFromSchedule
+        ? `ตามตารางโปรแกรมประจำสัปดาห์ วันนี้ (หรือครั้งหน้า) ควรเทรน: ${p.muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${p.muscleRecommendation.pct}%) — ให้ยึดตามตารางนี้เป็นหลัก อย่าแนะนำกล้ามเนื้ออื่นแทน`
+        : `กล้ามเนื้อที่ฟื้นตัวมากที่สุด (แนะนำเทรนต่อไป): ${p.muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${p.muscleRecommendation.pct}%)`
+    )
   } else {
     lines.push('ยังไม่มีข้อมูล recovery พอให้แนะนำกล้ามเนื้อ')
   }
