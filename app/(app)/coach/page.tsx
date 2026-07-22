@@ -11,6 +11,8 @@ import {
   suggestMuscleToTrain,
   computeImbalanceInsights,
   getWeekRange,
+  getScheduledMuscleForDay,
+  getNextScheduledMuscle,
   type Insight,
 } from '@/lib/dashboardStats'
 import {
@@ -46,6 +48,9 @@ interface CoachData {
   skippedExerciseNames: string[]
   muscleRecommendation: { muscleGroup: string; pct: number } | null
   todayProgressPct: number | null
+  // ถ้าตารางโปรแกรมประจำสัปดาห์ระบุกล้ามเนื้อของวันนี้/ครั้งหน้าไว้ชัดเจน (ดู getScheduledMuscleForDay) —
+  // ใช้บอก Gemini ว่าคำแนะนำนี้มาจากตาราง ไม่ใช่จาก recovery % ล้วนๆ ให้เรียบเรียงคำพูดได้ตรงบริบทขึ้น
+  scheduledMuscle: string | null
 }
 
 function topExerciseNames(rows: { exercise_name: string | null }[], limit: number): string[] {
@@ -89,7 +94,7 @@ export default function CoachPage() {
 
       const allEntries = (rows as Workout[]) ?? []
 
-      // --- Recovery + วันนี้ควรเล่นอะไร ---
+      // --- Recovery ของแต่ละกล้ามเนื้อ ---
       const lastTrainedByMuscle: Record<string, string> = {}
       allEntries.forEach((w) => {
         if (!w.muscle_group) return
@@ -99,7 +104,6 @@ export default function CoachPage() {
       MUSCLE_GROUPS.forEach((mg) => {
         recoveryPctMap[mg] = computeRecoveryPct(lastTrainedByMuscle[mg] ?? null, mg)
       })
-      const recommendation = suggestMuscleToTrain(recoveryPctMap)
 
       // --- สมดุลกล้ามเนื้อสัปดาห์นี้ ---
       const thisWeekSets: Record<string, number> = {}
@@ -121,16 +125,15 @@ export default function CoachPage() {
         .map((name) => computeProgressiveOverload(name, allEntries, exercises))
         .filter((p): p is OverloadPlan => p !== null)
 
+      // --- ตารางโปรแกรมทั้งสัปดาห์ (ใช้ยึดคำแนะนำให้ตรงตาราง แทนที่จะดู recovery % ล้วนๆ) ---
+      const { data: allProgramDayRows } = await supabase.from('program_days').select('id, day_of_week, title')
+      const allProgramDays = (allProgramDayRows as { id: string; day_of_week: number; title: string }[]) ?? []
+
       // --- % ความคืบหน้าของแผนวันนี้ (ใช้กับ dailySummary ด้านล่าง) ---
       const today = todayStr()
       const trainedAnyToday = allEntries.some((w) => w.performed_at?.slice(0, 10) === today)
       const todayDow = new Date(today + 'T00:00:00').getDay()
-      const { data: todayDayRow } = await supabase
-        .from('program_days')
-        .select('id')
-        .eq('day_of_week', todayDow)
-        .maybeSingle()
-      const todayDayId = (todayDayRow as { id: string } | null)?.id ?? null
+      const todayDayId = allProgramDays.find((d) => d.day_of_week === todayDow)?.id ?? null
 
       let todayProgressPct: number | null = null
       if (todayDayId) {
@@ -153,6 +156,17 @@ export default function CoachPage() {
         todayProgressPct = trainedAnyToday ? 100 : null
       }
 
+      // --- กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมก่อน ---
+      // ถ้าวันนี้ยังทำไม่ครบ (< 100%) และตารางระบุกล้ามเนื้อของ "วันนี้" ไว้ชัดเจน ให้ใช้ตัวนั้น
+      // ถ้าวันนี้ทำครบแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางที่ระบุไว้
+      // ถ้าไม่มีตารางเลย (ผู้ใช้ยังไม่ได้ตั้งโปรแกรม) ตกกลับไปใช้ recovery % สูงสุดเหมือนเดิมทั้งหมด
+      const todayScheduledMuscle = getScheduledMuscleForDay(allProgramDays, todayDow, MUSCLE_GROUPS)
+      const scheduledMuscle =
+        todayScheduledMuscle && (todayProgressPct === null || todayProgressPct < 100)
+          ? todayScheduledMuscle
+          : getNextScheduledMuscle(allProgramDays, todayDow, MUSCLE_GROUPS)
+
+      const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
       const dailySummary = computeAIDailySummary(recommendation, balance, todayProgressPct)
 
       // --- ท่าที่ข้ามไปในเซสชันโปรแกรมล่าสุด ---
@@ -198,6 +212,7 @@ export default function CoachPage() {
         skippedExerciseNames,
         muscleRecommendation: recommendation,
         todayProgressPct,
+        scheduledMuscle,
       })
     } catch (err) {
       console.error('Coach page load failed', err)
@@ -241,6 +256,7 @@ export default function CoachPage() {
           })),
           skippedExercises: data.skippedExerciseNames.length > 0 ? data.skippedExerciseNames : null,
           todayProgressPct: data.todayProgressPct,
+          scheduledMuscle: data.scheduledMuscle,
         }),
       })
       const json = await res.json()
