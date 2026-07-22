@@ -84,7 +84,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg bg-surface border border-line px-4 py-3 text-ink placeholder:text-muted/50 focus:border-amber outline-none"
+              className="w-full rounded-lg bg-surface border border-line shadow-elevated px-4 py-3 text-ink placeholder:text-muted/50 focus:border-amber outline-none"
               placeholder="you@email.com"
             />
           </div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg bg-surface border border-line px-4 py-3 text-ink placeholder:text-muted/50 focus:border-amber outline-none"
+              className="w-full rounded-lg bg-surface border border-line shadow-elevated px-4 py-3 text-ink placeholder:text-muted/50 focus:border-amber outline-none"
               placeholder="อย่างน้อย 6 ตัวอักษร"
             />
           </div>
