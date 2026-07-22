@@ -12,6 +12,8 @@ import {
   relativeDayLabel,
   suggestMuscleToTrain,
   recoveryRecommendationLabel,
+  getScheduledMuscleForDay,
+  getNextScheduledMuscle,
 } from '@/lib/dashboardStats'
 import { todayStr } from '@/lib/weekdays'
 import Skeleton from '@/components/Skeleton'
@@ -37,6 +39,8 @@ export default function RecoveryPage() {
   const [rows, setRows] = useState<MuscleRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [progressPct, setProgressPct] = useState<number | null>(null)
+  // กล้ามเนื้อที่ตารางโปรแกรมประจำสัปดาห์ระบุไว้ (ถ้ามี) — ใช้ยึดคำแนะนำให้ตรงตารางแทน recovery % ล้วนๆ
+  const [scheduledMuscle, setScheduledMuscle] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -55,12 +59,11 @@ export default function RecoveryPage() {
 
       // % ความคืบหน้าของแผนวันนี้ — เช็คแผนของวันนี้ (program_day ตาม day_of_week) แล้วเทียบจำนวนท่าที่ complete จริง
       const dow = new Date(today + 'T00:00:00').getDay()
-      const { data: todayDayRows } = await supabase
-        .from('program_days')
-        .select('id')
-        .eq('day_of_week', dow)
-        .limit(1)
-      const todayDayId = todayDayRows?.[0]?.id ?? null
+      const { data: allProgramDayRows } = await supabase.from('program_days').select('id, day_of_week, title')
+      const allProgramDays = (allProgramDayRows as { id: string; day_of_week: number; title: string }[]) ?? []
+      const todayDayId = allProgramDays.find((d) => d.day_of_week === dow)?.id ?? null
+
+      let currentProgressPct: number | null = null
 
       if (todayDayId) {
         const { data: todayExRows } = await supabase
@@ -76,15 +79,26 @@ export default function RecoveryPage() {
             .eq('completed_at', today)
             .in('program_exercise_id', todayExerciseIds)
           const completedCount = completions?.length ?? 0
-          setProgressPct(Math.round((completedCount / todayExerciseIds.length) * 100))
+          currentProgressPct = Math.round((completedCount / todayExerciseIds.length) * 100)
         } else {
           // วันนี้มีแผนแต่ไม่มีท่ากำหนดไว้ (แผนว่าง) — ยึดตามมี set log ไว้อย่างน้อย 1 รายการ
-          setProgressPct(trainedAnyToday ? 100 : null)
+          currentProgressPct = trainedAnyToday ? 100 : null
         }
       } else {
         // วันนี้ไม่มีแผนกำหนดไว้ (บันทึกอิสระ) — ยึดตามมี set log ไว้อย่างน้อย 1 รายการ
-        setProgressPct(trainedAnyToday ? 100 : null)
+        currentProgressPct = trainedAnyToday ? 100 : null
       }
+      setProgressPct(currentProgressPct)
+
+      // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) — ถ้าวันนี้ทำครบแล้วหรือเป็น
+      // วันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางแทน ไม่มีตารางเลยจึงตกกลับไปใช้ recovery % ล้วนๆ
+      const todayScheduledMuscle = getScheduledMuscleForDay(allProgramDays, dow, MUSCLE_GROUPS)
+      setScheduledMuscle(
+        todayScheduledMuscle && (currentProgressPct === null || currentProgressPct < 100)
+          ? todayScheduledMuscle
+          : getNextScheduledMuscle(allProgramDays, dow, MUSCLE_GROUPS)
+      )
+
       const lastTrainedByMuscle: Record<string, string> = {}
       strengthRows.forEach((r) => {
         if (!r.muscle_group) return
@@ -124,7 +138,7 @@ export default function RecoveryPage() {
         rows.forEach((r) => {
           recoveryPctMap[r.mg] = r.pct
         })
-        const recommendation = suggestMuscleToTrain(recoveryPctMap)
+        const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
         if (!recommendation) return null
         const recColor = recoveryStatusColor(recommendation.pct)
         return (
