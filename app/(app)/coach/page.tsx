@@ -43,6 +43,9 @@ interface CoachData {
   balanceInsights: Insight[]
   overloadPlans: OverloadPlan[]
   skippedInsight: Insight | null
+  skippedExerciseNames: string[]
+  muscleRecommendation: { muscleGroup: string; pct: number } | null
+  todayProgressPct: number | null
 }
 
 function topExerciseNames(rows: { exercise_name: string | null }[], limit: number): string[] {
@@ -64,6 +67,12 @@ export default function CoachPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<CoachData | null>(null)
+  // คำแนะนำเชิงลึกจาก Gemini — แยกจาก data.dailySummary (rule-based, คำนวณฟรีทันที) โดยตั้งใจ
+  // เพราะเป็น opt-in (ผู้ใช้กดขอเอง ไม่เรียกอัตโนมัติ) กันชนโควต้าฟรีของ Gemini — ถ้าพังให้ตกกลับไป
+  // ใช้ dailySummary เดิมเสมอ (ดู aiError ด้านล่าง ไม่แทนที่ dailySummary)
+  const [aiMessage, setAiMessage] = useState<string | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -148,6 +157,7 @@ export default function CoachPage() {
 
       // --- ท่าที่ข้ามไปในเซสชันโปรแกรมล่าสุด ---
       let skippedInsight: Insight | null = null
+      let skippedExerciseNames: string[] = []
       const { data: lastCompletionRow } = await supabase
         .from('program_completions')
         .select('completed_at')
@@ -173,16 +183,22 @@ export default function CoachPage() {
           const completedIds = new Set(
             ((completionRows as { program_exercise_id: string }[]) ?? []).map((c) => c.program_exercise_id)
           )
-          skippedInsight = buildSkippedExerciseInsight(
-            typedDay.title,
-            lastDate,
-            (planRows as { id: string; exercise_name: string; muscle_group: string | null }[]) ?? [],
-            completedIds
-          )
+          const typedPlanRows = (planRows as { id: string; exercise_name: string; muscle_group: string | null }[]) ?? []
+          skippedInsight = buildSkippedExerciseInsight(typedDay.title, lastDate, typedPlanRows, completedIds)
+          skippedExerciseNames = typedPlanRows.filter((ex) => !completedIds.has(ex.id)).map((ex) => ex.exercise_name)
         }
       }
 
-      setData({ dailySummary, balance, balanceInsights, overloadPlans, skippedInsight })
+      setData({
+        dailySummary,
+        balance,
+        balanceInsights,
+        overloadPlans,
+        skippedInsight,
+        skippedExerciseNames,
+        muscleRecommendation: recommendation,
+        todayProgressPct,
+      })
     } catch (err) {
       console.error('Coach page load failed', err)
       Sentry.captureException(err, { tags: { source: 'coach-page' } })
@@ -195,6 +211,51 @@ export default function CoachPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  // ข้อมูลเปลี่ยน (เช่นกด retry) แล้วคำแนะนำ AI เดิมอาจไม่ตรงกับข้อมูลใหม่แล้ว — เคลียร์ทิ้งเพื่อให้
+  // ผู้ใช้กดขอใหม่เอง (ไม่ auto-refetch อัตโนมัติ ตามหลัก opt-in เดิม)
+  useEffect(() => {
+    setAiMessage(null)
+    setAiError(null)
+  }, [data])
+
+  async function requestAiInsight() {
+    if (!data) return
+    setAiLoading(true)
+    setAiError(null)
+    try {
+      const res = await fetch('/api/ai-coach-insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          muscleRecommendation: data.muscleRecommendation,
+          balance: data.balance,
+          overloadPlans: data.overloadPlans.map((p) => ({
+            exerciseName: p.exerciseName,
+            action: p.action,
+            currentWeight: p.currentWeight,
+            currentReps: p.currentReps,
+            targetWeight: p.targetWeight,
+            targetReps: p.targetReps,
+            avgRpe: p.avgRpe,
+          })),
+          skippedExercises: data.skippedExerciseNames.length > 0 ? data.skippedExerciseNames : null,
+          todayProgressPct: data.todayProgressPct,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setAiError(json.error ?? 'ขอคำแนะนำจาก AI ไม่สำเร็จ ลองใหม่อีกครั้ง')
+        return
+      }
+      setAiMessage(json.message)
+    } catch (err) {
+      console.error('AI coach insight request failed', err)
+      setAiError('ขอคำแนะนำจาก AI ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองใหม่')
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -215,9 +276,33 @@ export default function CoachPage() {
         </div>
       ) : data ? (
         <>
-          <div className="flex items-start gap-2.5 rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5">
-            <span className="text-lg leading-none shrink-0">✨</span>
-            <p className="text-sm text-ink whitespace-pre-line">{data.dailySummary}</p>
+          <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <span className="text-lg leading-none shrink-0">✨</span>
+              <p className="text-sm text-ink whitespace-pre-line">{data.dailySummary}</p>
+            </div>
+
+            {aiMessage ? (
+              <div className="flex items-start gap-2.5 rounded-lg border border-violet/25 bg-violetdim/30 px-3 py-3">
+                <span className="text-base leading-none shrink-0">🔮</span>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-display tracked uppercase text-violet mb-1">Gemini Insight</p>
+                  <p className="text-sm text-ink whitespace-pre-line">{aiMessage}</p>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  onClick={requestAiInsight}
+                  disabled={aiLoading}
+                  className="text-xs font-display tracked uppercase text-violet border border-violet/40 rounded-lg px-3 py-2 active:scale-[0.99] transition disabled:opacity-50"
+                >
+                  {aiLoading ? 'กำลังวิเคราะห์...' : '🔮 ขอคำแนะนำเชิงลึกจาก AI'}
+                </button>
+                {aiError && <p className="text-[11px] text-rusttext mt-2">{aiError}</p>}
+              </div>
+            )}
           </div>
 
           {data.skippedInsight && <InsightCard insight={data.skippedInsight} />}
