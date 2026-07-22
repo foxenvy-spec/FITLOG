@@ -22,6 +22,8 @@ import {
   computeBestVolumeIncrease,
   computeGreetingContext,
   computeWorkoutMotivationLabel,
+  getScheduledMuscleForDay,
+  getNextScheduledMuscle,
   type Insight,
   type MuscleRecommendation,
   type VolumeIncrease,
@@ -29,7 +31,7 @@ import {
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary } from '@/lib/aiCoach'
-import { VOLUME_MUSCLES, RECOVERY_MUSCLES } from '@/lib/muscle-groups'
+import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
@@ -186,7 +188,6 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
   RECOVERY_MUSCLES.forEach((mg) => {
     recoveryPctForSummary[mg] = computeRecoveryPct(recoveryDates[mg] ?? null, mg)
   })
-  const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary)
   const pushPullBalance = computePushPullBalance(thisWeekSets)
   const bestVolumeIncrease = computeBestVolumeIncrease(thisWeekSets, lastWeekSets)
 
@@ -227,6 +228,17 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
       : todayList.length > 0
         ? 100
         : null
+
+  // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) แทนที่จะดู recovery % สูงสุดล้วนๆ
+  // เพื่อไม่ให้แนะนำสวนทางกับตาราง เช่น ตารางบอกวันนี้เป็นวันขา แต่ recovery ของอกดันสูงกว่า
+  // ถ้าวันนี้ทำครบตามแผนแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตาราง
+  const todayScheduledMuscle = getScheduledMuscleForDay(typedDays, dow, MUSCLE_GROUPS)
+  const scheduledMuscle =
+    todayScheduledMuscle && (progressPctForLabel === null || progressPctForLabel < 100)
+      ? todayScheduledMuscle
+      : getNextScheduledMuscle(typedDays, dow, MUSCLE_GROUPS)
+  const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary, scheduledMuscle)
+
   const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel)
 
   return {
@@ -482,7 +494,9 @@ export default function DashboardPage() {
               RECOVERY_MUSCLES.forEach((mg) => {
                 recoveryPctMap[mg] = computeRecoveryPct(data.recoveryDates[mg] ?? null, mg)
               })
-              const recommendation = suggestMuscleToTrain(recoveryPctMap)
+              // ใช้ตัวที่คำนวณไว้แล้วฝั่งบน (ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน ถ้ามี) แทนที่จะคำนวณใหม่
+              // จาก recovery % ล้วนๆ ตรงนี้ กันไม่ให้การ์ดนี้แนะนำสวนทางกับ hero message ด้านบน
+              const recommendation = data.muscleRecommendation
               return (
                 <>
                   {recommendation &&
