@@ -168,11 +168,57 @@ export interface MuscleRecommendation {
   pct: number
 }
 
-export function suggestMuscleToTrain(recoveryPctByMuscle: Record<string, number>): MuscleRecommendation | null {
+// scheduledMuscle: ถ้ามีตารางโปรแกรมประจำสัปดาห์ระบุไว้ (เช่น พฤหัส = "ขา") ให้ยึดตามตารางก่อนเสมอ
+// แทนที่จะเลือกจาก recovery % สูงสุดล้วนๆ — ป้องกันกรณีแนะนำสวนทางตาราง (เช่น ตารางบอกขา แต่ recovery
+// อกดันสูงกว่าเลยแนะนำอกแทน) ถ้า scheduledMuscle ไม่มีข้อมูล recovery ให้ตกกลับไปใช้ recovery สูงสุดตามเดิม
+export function suggestMuscleToTrain(
+  recoveryPctByMuscle: Record<string, number>,
+  scheduledMuscle?: string | null
+): MuscleRecommendation | null {
   const entries = Object.entries(recoveryPctByMuscle)
   if (entries.length === 0) return null
+
+  if (scheduledMuscle && scheduledMuscle in recoveryPctByMuscle) {
+    return { muscleGroup: scheduledMuscle, pct: recoveryPctByMuscle[scheduledMuscle] }
+  }
+
   const [muscleGroup, pct] = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])
   return { muscleGroup, pct }
+}
+
+// ==================== หากล้ามเนื้อที่ตารางโปรแกรมประจำสัปดาห์กำหนดไว้ ====================
+// programDays คือรายการวันในโปรแกรม (ทั้งสัปดาห์) — ใช้ title ของวันนั้นเป็นชื่อกลุ่มกล้ามเนื้อ
+// เฉพาะกรณีที่ title ตรงกับ MUSCLE_GROUPS พอดี (เช่น "ขา", "อก") ถ้าตั้งชื่อวันแบบอื่น (เช่น "Push Day",
+// "พัก") จะถือว่าวันนั้นไม่ได้ผูกกับกล้ามเนื้อกลุ่มเดียวชัดเจน แล้วคืนค่า null (ไม่เดา)
+export interface ScheduledDay {
+  day_of_week: number
+  title: string
+}
+
+export function getScheduledMuscleForDay(
+  programDays: ScheduledDay[],
+  dayOfWeek: number,
+  validMuscleGroups: readonly string[]
+): string | null {
+  const day = programDays.find((d) => d.day_of_week === dayOfWeek)
+  if (!day) return null
+  const title = day.title.trim()
+  return validMuscleGroups.includes(title) ? title : null
+}
+
+// หาโปรแกรมกล้ามเนื้อ "ครั้งหน้า" — ใช้เมื่อวันนี้ทำครบตามแผนแล้ว (progressPct >= 100) หรือวันนี้เป็นวันพัก
+// ไม่มีกล้ามเนื้อผูกไว้ — ไล่หาวันถัดไปในสัปดาห์ (วนสูงสุด 7 วัน) ที่ผูกกับกล้ามเนื้อกลุ่มเดียวชัดเจน
+export function getNextScheduledMuscle(
+  programDays: ScheduledDay[],
+  fromDayOfWeek: number,
+  validMuscleGroups: readonly string[]
+): string | null {
+  for (let offset = 1; offset <= 7; offset++) {
+    const dow = (fromDayOfWeek + offset) % 7
+    const muscle = getScheduledMuscleForDay(programDays, dow, validMuscleGroups)
+    if (muscle) return muscle
+  }
+  return null
 }
 
 // ข้อความนำหน้าคำแนะนำกล้ามเนื้อ — ถ้าวันนี้ทำครบทุกท่าตามแผนแล้ว การพูดว่า "วันนี้ควรเล่น" จะทำให้เข้าใจผิด
