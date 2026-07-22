@@ -28,6 +28,10 @@ module.exports = {
         // the rust/amber/steel palette instead of a saturated "traffic light" green
         moss: '#7A9B57',
         mossdim: '#2E3A26',
+        // reserved for PR / record-breaking highlights — a distinct 4th accent so
+        // personal records stand out from the everyday amber/steel/rust/moss usage
+        violet: '#9C7CC4',
+        violetdim: '#372B49',
       },
       fontFamily: {
         display: ['var(--font-oswald)', 'var(--font-kanit)'],
