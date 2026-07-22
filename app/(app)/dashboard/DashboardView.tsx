@@ -31,7 +31,6 @@ import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary } from '@/lib/aiCoach'
 import { VOLUME_MUSCLES, RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
-import AnimatedBarFill from '@/components/AnimatedBarFill'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCard from '@/components/InsightCard'
@@ -459,9 +458,9 @@ export default function DashboardPage() {
           ไม่รู้จะกดอะไรต่อ ต่างจาก quick actions ชุดล่างที่เป็นทางลัดทั่วไป (บันทึก/เทมเพลต/สถิติ) —
           ชุดนี้เน้น 3 ทางเริ่มต้นที่ใช้บ่อยที่สุดตอนเปิดแอปครั้งแรก */}
       <div className="grid grid-cols-3 gap-2 animate-rise" style={{ animationDelay: '120ms' }}>
-        <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" />
-        <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" />
-        <QuickAction href="/coach" label="ถาม AI" icon="🤖" />
+        <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
+        <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
+        <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />
       </div>
 
       {/* muscles trained today — heat-map chips built from today's workout rows */}
@@ -533,39 +532,33 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* card 4: weekly goal — secondary weight, matches recovery/AI-coach treatment */}
+      {/* card 4: weekly goal — secondary weight, matches recovery/AI-coach treatment.
+          uses the same ring as the hero card's daily progress so "goal completion" reads
+          consistently as a ring throughout the dashboard, instead of a ring in one place
+          and a flat percent-bar in another. */}
       <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise" style={{ animationDelay: '300ms' }}>
         <div className="px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] tracked uppercase text-muted">Weekly Goal</p>
-            <span className="font-mono text-xs text-ink">{data.weeklyGoalPct}%</span>
-          </div>
-          <div
-            className="h-2 rounded-full bg-surface2 overflow-hidden"
-            role="progressbar"
-            aria-valuenow={data.weeklyGoalPct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Weekly Goal"
-          >
-            <AnimatedBarFill pct={data.weeklyGoalPct} color="#E8A33D" />
-          </div>
+          <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
-          <div className="flex items-start gap-2.5 mt-3">
-            <span className="text-xl leading-none shrink-0">🔥</span>
-            <div>
-              <p className="text-sm text-ink">
-                <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งสัปดาห์นี้
-              </p>
-              <p className="text-[11px] text-muted mt-0.5">
-                {computeWorkoutMotivationLabel(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal)}
+          <div className="flex items-center gap-4">
+            <GoalRing pct={data.weeklyGoalPct} size={72} strokeWidth={7} label="Goal" ariaLabel="Weekly Goal" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-2.5">
+                <span className="text-xl leading-none shrink-0">🔥</span>
+                <div>
+                  <p className="text-sm text-ink">
+                    <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งสัปดาห์นี้
+                  </p>
+                  <p className="text-[11px] text-muted mt-0.5">
+                    {computeWorkoutMotivationLabel(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted mt-2.5">
+                <span className="text-ink font-mono">{data.streak}</span> Day Streak
               </p>
             </div>
           </div>
-
-          <p className="text-[11px] text-muted mt-2.5">
-            <span className="text-ink font-mono">{data.streak}</span> Day Streak
-          </p>
         </div>
       </div>
 
@@ -613,9 +606,9 @@ export default function DashboardPage() {
 
       {/* quick actions */}
       <div className="grid grid-cols-3 gap-2">
-        <QuickAction href="/log" label="บันทึก" icon="✚" />
-        <QuickAction href="/templates" label="เทมเพลต" icon="📋" />
-        <QuickAction href="/stats" label="สถิติ" icon="📈" />
+        <QuickAction href="/log" label="บันทึก" icon="✚" accent="moss" />
+        <QuickAction href="/templates" label="เทมเพลต" icon="📋" accent="steel" />
+        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="steel" />
       </div>
 
       {settingsOpen && (
@@ -633,14 +626,41 @@ export default function DashboardPage() {
   )
 }
 
-function QuickAction({ href, label, icon }: { href: string; label: string; icon: string }) {
+const QUICK_ACTION_ACCENTS = {
+  amber: '#E8A33D',
+  steel: '#6C8CA8',
+  moss: '#7A9B57',
+  violet: '#9C7CC4',
+} as const
+
+function QuickAction({
+  href,
+  label,
+  icon,
+  accent = 'amber',
+}: {
+  href: string
+  label: string
+  icon: string
+  accent?: keyof typeof QUICK_ACTION_ACCENTS
+}) {
+  const hex = QUICK_ACTION_ACCENTS[accent]
+  const glowStyle: React.CSSProperties & { '--glow-color'?: string; '--glow-color-soft'?: string } = {
+    borderColor: `${hex}2E`,
+    backgroundColor: '#1C1F24',
+    '--glow-color': `${hex}22`,
+    '--glow-color-soft': `${hex}17`,
+  }
   return (
     <a
       href={href}
-      className="rounded-lg bg-surface2/40 border border-line/60 flex flex-col items-center justify-center gap-1 py-3.5 text-muted hover:text-amber hover:border-amber/50 transition focus-visible:text-amber"
+      className="rounded-lg border flex flex-col items-center justify-center gap-1 py-3.5 shadow-glow transition active:scale-[0.99]"
+      style={glowStyle}
     >
       <span className="text-lg">{icon}</span>
-      <span className="text-[10px] font-display tracked uppercase">{label}</span>
+      <span className="text-[10px] font-display tracked uppercase" style={{ color: hex }}>
+        {label}
+      </span>
     </a>
   )
 }
