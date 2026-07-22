@@ -1,5 +1,7 @@
 'use client'
 
+import { useCountUp } from '@/lib/useCountUp'
+
 interface GoalRingProps {
   pct: number
   size?: number
@@ -22,16 +24,17 @@ export default function GoalRing({
   ariaLabel,
 }: GoalRingProps) {
   const clamped = Math.max(0, Math.min(100, pct))
+  const animatedPct = useCountUp(clamped)
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
-  const offset = circumference * (1 - clamped / 100)
+  const offset = circumference * (1 - animatedPct / 100)
 
   return (
     <div
       className="relative shrink-0"
       style={{ width: size, height: size }}
       role="progressbar"
-      aria-valuenow={Math.round(clamped)}
+      aria-valuenow={Math.round(animatedPct)}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={ariaLabel ?? label ?? 'ความคืบหน้า'}
@@ -48,12 +51,11 @@ export default function GoalRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="transition-all duration-500 ease-out"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-mono text-ink leading-none" style={{ fontSize: size * 0.24 }}>
-          {Math.round(clamped)}%
+          {Math.round(animatedPct)}%
         </span>
         {label && <span className="text-[9px] text-muted mt-0.5">{label}</span>}
       </div>

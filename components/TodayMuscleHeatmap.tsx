@@ -29,7 +29,7 @@ export default function TodayMuscleHeatmap({ todayWorkouts }: TodayMuscleHeatmap
   if (todayWorkouts.length === 0) return null
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-4">
+    <div className="rounded-lg bg-surface2/40 border border-line/60 px-4 py-4">
       <p className="text-[10px] tracked uppercase text-muted mb-3">กล้ามเนื้อที่เทรนวันนี้</p>
       <div className="grid grid-cols-3 gap-2">
         {VOLUME_MUSCLES.map((group) => {
