@@ -20,8 +20,18 @@ export function parseRestSeconds(raw: string | null, fallbackSec = 90): number {
   return Math.round(n <= 10 ? n * 60 : n)
 }
 
+// เซ็ตที่กด "เซ็ตนี้เสร็จแล้ว" ไปจริงๆ ระหว่างเทรน — เก็บ reps/น้ำหนักแยกทีละเซ็ต
+// (ก่อนหน้านี้ session flow เก็บ reps/weight เป็นค่าเดียวใช้ซ้ำทุกเซ็ต ทำให้ข้อมูลไม่ตรงกับที่ทำจริง
+// เช่น drop set หรือเซ็ตท้ายๆ ที่ reps ตกลง — ตอนนี้แต่ละเซ็ตที่กดเสร็จจะจำค่าจริงตอนกดไว้)
+export interface SessionSet {
+  reps: number
+  weightKg: number
+}
+
 export interface SessionSetState {
-  setsDone: number
+  // เซ็ตที่ทำเสร็จแล้วจริงในเซสชันนี้ ทีละเซ็ต — ความยาว array คือจำนวนเซ็ตที่ทำ (แทน setsDone เดิม)
+  setsLog: SessionSet[]
+  // ค่า reps/น้ำหนักที่กำลังจะใช้กับ "เซ็ตถัดไป" ที่ยังไม่กดเสร็จ (draft ก่อนกด ✅)
   reps: number | null
   weightKg: number | null
   rpe: number | null
@@ -35,7 +45,7 @@ export interface SessionSetState {
 // ที่ผู้ใช้ปรับได้ระหว่างเล่นจริง (ต่างจาก "log all today" ที่บันทึกค่าเป้าหมายตรงๆ โดยไม่ให้ปรับ)
 export function initSessionSet(ex: ProgramExercise): SessionSetState {
   return {
-    setsDone: 0,
+    setsLog: [],
     reps: parseRangeToNumber(ex.target_reps),
     weightKg: ex.default_weight_kg,
     rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
@@ -51,15 +61,15 @@ export interface SessionSummary {
 }
 
 // สรุปผลตอนจบเซสชัน จากท่าที่ถูกบันทึกแล้วเท่านั้น (ท่าที่ข้ามไม่นับ)
-export function computeSessionSummary(
-  logged: Pick<SessionSetState, 'setsDone' | 'reps' | 'weightKg'>[]
-): SessionSummary {
+// volume รวมจากค่าจริงทีละเซ็ต (reps x weight ต่อเซ็ต) ไม่ใช่ setsDone * ค่าเดียวเหมือนเดิม
+// เพื่อให้ตรงกับที่ทำจริงแม้ reps/น้ำหนักจะไม่เท่ากันทุกเซ็ต (เช่น drop set)
+export function computeSessionSummary(logged: Pick<SessionSetState, 'setsLog'>[]): SessionSummary {
   return logged.reduce(
     (acc, s) => {
-      const volume = s.setsDone && s.reps && s.weightKg ? s.setsDone * s.reps * s.weightKg : 0
+      const volume = s.setsLog.reduce((sum, set) => sum + set.reps * set.weightKg, 0)
       return {
         exerciseCount: acc.exerciseCount + 1,
-        totalSets: acc.totalSets + s.setsDone,
+        totalSets: acc.totalSets + s.setsLog.length,
         totalVolumeKg: acc.totalVolumeKg + volume,
       }
     },

@@ -53,7 +53,7 @@ function makeExercise(overrides: Partial<ProgramExercise> = {}): ProgramExercise
 describe('initSessionSet', () => {
   it('seeds actual values from the program targets', () => {
     const state = initSessionSet(makeExercise())
-    expect(state.setsDone).toBe(0)
+    expect(state.setsLog).toEqual([])
     expect(state.reps).toBe(7) // avg(6,8)
     expect(state.weightKg).toBe(60)
     expect(state.rpe).toBe(8.5) // rir avg 1.5 -> rpe 8.5
@@ -69,21 +69,23 @@ describe('initSessionSet', () => {
 })
 
 describe('computeSessionSummary', () => {
-  it('sums sets and estimates volume across logged exercises', () => {
+  it('sums sets and volume across logged exercises using each set\'s own reps/weight', () => {
     const summary = computeSessionSummary([
-      { setsDone: 4, reps: 8, weightKg: 60 },
-      { setsDone: 3, reps: 10, weightKg: 20 },
+      { setsLog: [{ reps: 8, weightKg: 60 }, { reps: 8, weightKg: 60 }, { reps: 8, weightKg: 60 }, { reps: 6, weightKg: 60 }] },
+      { setsLog: [{ reps: 10, weightKg: 20 }, { reps: 10, weightKg: 20 }, { reps: 10, weightKg: 20 }] },
     ])
     expect(summary.exerciseCount).toBe(2)
     expect(summary.totalSets).toBe(7)
-    expect(summary.totalVolumeKg).toBe(4 * 8 * 60 + 3 * 10 * 20)
+    expect(summary.totalVolumeKg).toBe((8 + 8 + 8 + 6) * 60 + 3 * 10 * 20)
   })
 
-  it('treats missing reps/weight as zero volume but still counts sets', () => {
-    const summary = computeSessionSummary([{ setsDone: 3, reps: null, weightKg: null }])
-    expect(summary.exerciseCount).toBe(1)
+  it('reflects a set-by-set drop in reps/weight instead of duplicating one value', () => {
+    // ก่อนแก้ไข: setsDone*reps*weight เดียวจะไม่แม่นสำหรับ drop set แบบนี้
+    const summary = computeSessionSummary([
+      { setsLog: [{ reps: 10, weightKg: 60 }, { reps: 8, weightKg: 50 }, { reps: 6, weightKg: 40 }] },
+    ])
     expect(summary.totalSets).toBe(3)
-    expect(summary.totalVolumeKg).toBe(0)
+    expect(summary.totalVolumeKg).toBe(10 * 60 + 8 * 50 + 6 * 40)
   })
 
   it('returns zeros for an empty session', () => {
