@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeDaySummary, computeExerciseProgress, formatDuration, workoutVolumeKg } from './workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRs, formatDuration, workoutVolumeKg } from './workoutDisplay'
 import type { Workout } from './types'
 
 function makeWorkout(overrides: Partial<Workout> = {}): Workout {
@@ -49,6 +49,15 @@ describe('computeDaySummary', () => {
     expect(summary.totalSets).toBe(7)
     expect(summary.totalVolumeKg).toBe(980 + 273)
     expect(summary.muscleGroups.sort()).toEqual(['อก', 'แขน'].sort())
+  })
+
+  it('sums calories across all entries', () => {
+    const summary = computeDaySummary([
+      makeWorkout({ id: 'a', calories_kcal: 320 }),
+      makeWorkout({ id: 'b', type: 'cardio', calories_kcal: 210 }),
+      makeWorkout({ id: 'c', calories_kcal: null }),
+    ])
+    expect(summary.caloriesKcal).toBe(530)
   })
 
   it('estimates duration from the spread of created_at timestamps', () => {
@@ -116,5 +125,35 @@ describe('computeExerciseProgress', () => {
     const sameDay = [makeWorkout({ id: 'same', performed_at: '2026-07-20', weight_kg: 20 })]
     const today = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 35 })
     expect(computeExerciseProgress(today, sameDay)).toEqual({ kind: 'none' })
+  })
+
+  it('flags reps up/down when weight ties the most recent session', () => {
+    const prior = [
+      makeWorkout({ id: 'p1', performed_at: '2026-07-01', weight_kg: 50, total_volume_kg: 3000 }),
+      makeWorkout({ id: 'p2', performed_at: '2026-07-15', weight_kg: 40, reps: 8, total_volume_kg: 1000 }),
+    ]
+    const moreReps = makeWorkout({ id: 't1', performed_at: '2026-07-20', weight_kg: 40, reps: 10, total_volume_kg: 900 })
+    expect(computeExerciseProgress(moreReps, prior)).toEqual({ kind: 'repsUp', deltaReps: 2 })
+
+    const fewerReps = makeWorkout({ id: 't2', performed_at: '2026-07-20', weight_kg: 40, reps: 6, total_volume_kg: 700 })
+    expect(computeExerciseProgress(fewerReps, prior)).toEqual({ kind: 'repsDown', deltaReps: 2 })
+  })
+
+  it('flags same when weight and reps both tie the most recent session', () => {
+    const prior = [
+      makeWorkout({ id: 'p1', performed_at: '2026-07-01', weight_kg: 50, total_volume_kg: 3000 }),
+      makeWorkout({ id: 'p2', performed_at: '2026-07-15', weight_kg: 40, reps: 8, total_volume_kg: 1000 }),
+    ]
+    const same = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 40, reps: 8, total_volume_kg: 900 })
+    expect(computeExerciseProgress(same, prior)).toEqual({ kind: 'same' })
+  })
+})
+
+describe('countDayPRs', () => {
+  it('counts entries that are a PR or best volume that day', () => {
+    const prior = [makeWorkout({ id: 'p1', performed_at: '2026-07-10', weight_kg: 30 })]
+    const pr = makeWorkout({ id: 'a', performed_at: '2026-07-20', weight_kg: 35 })
+    const notPr = makeWorkout({ id: 'b', performed_at: '2026-07-20', weight_kg: 20 })
+    expect(countDayPRs([pr, notPr], prior)).toBe(1)
   })
 })

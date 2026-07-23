@@ -10,6 +10,7 @@ export interface DaySummary {
   exerciseCount: number
   totalSets: number
   totalVolumeKg: number
+  caloriesKcal: number
   muscleGroups: string[]
   durationMin: number | null
 }
@@ -19,6 +20,7 @@ export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
   const strength = dayWorkouts.filter((w) => w.type === 'strength')
   const totalSets = strength.reduce((s, w) => s + (w.sets ?? 0), 0)
   const totalVolumeKg = strength.reduce((s, w) => s + workoutVolumeKg(w), 0)
+  const caloriesKcal = dayWorkouts.reduce((s, w) => s + (w.calories_kcal ?? 0), 0)
   const muscleGroups = Array.from(new Set(strength.map((w) => w.muscle_group).filter((m): m is string => !!m)))
 
   // ไม่มีฟิลด์ duration ต่อวันเก็บตรงๆ — ประมาณจากช่วงเวลา created_at แรกสุดถึงล่าสุดของวันนั้น
@@ -27,7 +29,15 @@ export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
   const durationMin =
     timestamps.length >= 2 ? Math.round((Math.max(...timestamps) - Math.min(...timestamps)) / 60000) : null
 
-  return { exerciseCount: dayWorkouts.length, totalSets, totalVolumeKg, muscleGroups, durationMin }
+  return { exerciseCount: dayWorkouts.length, totalSets, totalVolumeKg, caloriesKcal, muscleGroups, durationMin }
+}
+
+// ท่านี้ตัวไหนคือ "สถิติใหม่" ของวันนั้น (นับทั้ง pr น้ำหนักและ bestVolume) — ใช้โชว์ตัวนับ 🏆 PR ในสรุปวัน
+export function countDayPRs(dayWorkouts: Workout[], priorPool: Workout[]): number {
+  return dayWorkouts.filter((w) => {
+    const p = computeExerciseProgress(w, priorPool)
+    return p.kind === 'pr' || p.kind === 'bestVolume'
+  }).length
 }
 
 export function formatDuration(min: number): string {
@@ -42,6 +52,9 @@ export type ExerciseProgress =
   | { kind: 'bestVolume' }
   | { kind: 'up'; deltaKg: number }
   | { kind: 'down'; deltaKg: number }
+  | { kind: 'repsUp'; deltaReps: number }
+  | { kind: 'repsDown'; deltaReps: number }
+  | { kind: 'same' }
   | { kind: 'none' }
 
 // เทียบท่านี้กับประวัติก่อนหน้า (ไม่รวมวันเดียวกัน) — ใช้บอกว่าเปิดย้อนมาดูวันนี้แล้ว "หนักกว่าเดิม" แค่ไหน
@@ -70,5 +83,11 @@ export function computeExerciseProgress(w: Workout, priorPool: Workout[]): Exerc
   const lastWeight = lastSession.weight_kg ?? 0
   if (thisWeight > lastWeight) return { kind: 'up', deltaKg: Math.round((thisWeight - lastWeight) * 10) / 10 }
   if (thisWeight < lastWeight) return { kind: 'down', deltaKg: Math.round((lastWeight - thisWeight) * 10) / 10 }
-  return { kind: 'none' }
+
+  // น้ำหนักเท่าเดิม — เทียบ reps ต่อ เผื่อทำได้มากขึ้น/น้อยลงแม้น้ำหนักไม่เปลี่ยน
+  const thisReps = w.reps ?? 0
+  const lastReps = lastSession.reps ?? 0
+  if (thisReps > lastReps) return { kind: 'repsUp', deltaReps: thisReps - lastReps }
+  if (thisReps < lastReps) return { kind: 'repsDown', deltaReps: lastReps - thisReps }
+  return { kind: 'same' }
 }
