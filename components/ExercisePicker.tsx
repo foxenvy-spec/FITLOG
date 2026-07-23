@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { searchExercises, type ExerciseDef } from '@/lib/exercises'
 import { equipmentLabel } from '@/lib/exerciseLibrary'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
@@ -107,9 +108,11 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface transition"
                   >
                     {ex.imageUrl ? (
-                      <img
+                      <Image
                         src={ex.imageUrl}
                         alt={ex.name}
+                        width={36}
+                        height={36}
                         loading="lazy"
                         className="shrink-0 w-9 h-9 rounded-md object-cover bg-panel"
                       />
