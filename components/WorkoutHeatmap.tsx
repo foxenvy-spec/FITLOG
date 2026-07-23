@@ -5,8 +5,9 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { todayStr } from '@/lib/weekdays'
 import { useWeightUnit } from './WeightUnitProvider'
-import type { Workout, WorkoutSet } from '@/lib/types'
-import { computeDaySummary, computeExerciseProgress, formatDuration } from '@/lib/workoutDisplay'
+import type { BodyMetric, Workout, WorkoutSet } from '@/lib/types'
+import { computeDaySummary, computeExerciseProgress, countDayPRs, formatDuration } from '@/lib/workoutDisplay'
+import { HEATMAP_METRIC_LABEL, loadHeatmapMetric, saveHeatmapMetric, type HeatmapMetric } from '@/lib/heatmapPrefs'
 import ExerciseProgressBadge from './ExerciseProgressBadge'
 import Skeleton from './Skeleton'
 
@@ -19,11 +20,13 @@ function toIso(d: Date) {
   return local.toISOString().slice(0, 10)
 }
 
-// ระดับความเข้ม 0-3 ตามจำนวนรายการที่บันทึกในวันนั้น (ไม่ใช่วอลุ่มจริง เป็นตัวแทนคร่าวๆ ของปริมาณการฝึก)
-function intensityLevel(entryCount: number): 0 | 1 | 2 | 3 {
-  if (entryCount <= 0) return 0
-  if (entryCount <= 2) return 1
-  if (entryCount <= 5) return 2
+// ระดับความเข้ม 0-3 เทียบกับค่าสูงสุดที่เจอในเดือนนั้น (สัดส่วนกับ max แทนเกณฑ์ตายตัว
+// เพราะ metric ต่างกัน — volume/calories หลักพัน vs sets หลักสิบ — ใช้เกณฑ์เดียวกันไม่ได้)
+function intensityLevel(value: number, max: number): 0 | 1 | 2 | 3 {
+  if (value <= 0 || max <= 0) return 0
+  const ratio = value / max
+  if (ratio <= 1 / 3) return 1
+  if (ratio <= 2 / 3) return 2
   return 3
 }
 
@@ -76,7 +79,18 @@ export default function WorkoutHeatmap() {
         })
       }
 
-      return { counts, byDate, setsByWorkoutId }
+      // ดึง body_metrics ของเดือนนี้มาด้วย ใช้ทำ marker ❤️ Body Weight / 📏 Measurement บนปฏิทิน
+      const { data: metricRows } = await supabase
+        .from('body_metrics')
+        .select('*')
+        .gte('measured_at', toIso(monthStart))
+        .lte('measured_at', toIso(monthEnd))
+      const metricsByDate: Record<string, BodyMetric[]> = {}
+      ;((metricRows as BodyMetric[]) ?? []).forEach((m) => {
+        ;(metricsByDate[m.measured_at] ??= []).push(m)
+      })
+
+      return { counts, byDate, setsByWorkoutId, metricsByDate }
     },
     // เก็บ cache ของเดือนที่เคยดูไว้ ไม่ต้องยิง query ซ้ำเวลาเลื่อนกลับไปกลับมา
     staleTime: 60_000,
@@ -84,6 +98,7 @@ export default function WorkoutHeatmap() {
   const countByDate = data?.counts ?? {}
   const byDate = data?.byDate ?? {}
   const setsByWorkoutId = data?.setsByWorkoutId ?? {}
+  const metricsByDate = data?.metricsByDate ?? {}
 
   // ประวัติย้อนหลังกว้างกว่าหนึ่งเดือน — ใช้เทียบ PR/best volume/แนวโน้มของแต่ละท่า ไม่ผูกกับเดือนที่กำลังดูอยู่
   // (โหลดครั้งเดียว cache ไว้นาน ไม่ต้องยิงซ้ำทุกครั้งที่เปลี่ยนเดือนหรือเปิดดูวันใหม่)
@@ -103,8 +118,23 @@ export default function WorkoutHeatmap() {
   })
   const progressHistory = historyData ?? []
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [metric, setMetric] = useState<HeatmapMetric>(() => loadHeatmapMetric())
   const { unit, toDisplay, format } = useWeightUnit()
+
+  function chooseMetric(next: HeatmapMetric) {
+    setMetric(next)
+    saveHeatmapMetric(next)
+  }
+
+  function toggleExpanded(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const weeks = useMemo(() => {
     const leadingBlanks = (monthStart.getDay() + 6) % 7 // Monday-first
@@ -131,8 +161,58 @@ export default function WorkoutHeatmap() {
   function shiftMonth(delta: number) {
     setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
     setSelectedDate(null)
-    setExpandedId(null)
+    setExpandedIds(new Set())
   }
+
+  // ค่า metric ที่เลือกของวันหนึ่งๆ จาก DaySummary — ใช้ทั้งกำหนดสีเซลล์และโชว์ใน tooltip
+  function metricValue(summary: ReturnType<typeof computeDaySummary>): number {
+    switch (metric) {
+      case 'volume':
+        return summary.totalVolumeKg
+      case 'duration':
+        return summary.durationMin ?? 0
+      case 'calories':
+        return summary.caloriesKcal
+      case 'sets':
+        return summary.totalSets
+    }
+  }
+
+  // ค่าสูงสุดของ metric ที่เลือกในเดือนที่กำลังดู — ใช้ปรับสเกลสี ให้เดือนที่ฝึกหนักหรือเบา
+  // ต่างกันมากก็ยังเห็นความเข้ม-อ่อนสัมพัทธ์กันได้ชัดเจน แทนที่จะใช้เกณฑ์ตายตัว
+  const maxMetricValue = useMemo(() => {
+    let max = 0
+    Object.keys(byDate).forEach((iso) => {
+      const v = metricValue(computeDaySummary(byDate[iso] ?? []))
+      if (v > max) max = v
+    })
+    return max
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byDate, metric])
+
+  function metricDisplay(value: number): string {
+    switch (metric) {
+      case 'volume':
+        return `${Math.round(toDisplay(value)).toLocaleString()} ${unit}`
+      case 'duration':
+        return formatDuration(value)
+      case 'calories':
+        return `${Math.round(value).toLocaleString()} kcal`
+      case 'sets':
+        return `${value} เซ็ต`
+    }
+  }
+
+  // รายการ id ของท่าเวทในวันที่เลือกที่มีเซ็ตให้กางดูได้ — ใช้ตอนกด Expand All ให้กางพร้อมกันทีเดียว
+  const expandableWorkoutIds = useMemo(() => {
+    const dayWorkouts = selectedDate ? (byDate[selectedDate] ?? []) : []
+    return dayWorkouts
+      .filter((w) => {
+        const realSets = setsByWorkoutId[w.id] ?? []
+        return w.type === 'strength' && (realSets.length > 0 || !!w.sets)
+      })
+      .map((w) => w.id)
+  }, [selectedDate, byDate, setsByWorkoutId])
 
   return (
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
@@ -167,7 +247,25 @@ export default function WorkoutHeatmap() {
         </div>
       </div>
 
-      <div className="px-4 pb-4 pt-2 flex flex-col lg:flex-row lg:items-start gap-4">
+      <div className="px-4 pt-1 pb-2 flex items-center gap-1.5 flex-wrap">
+        <span className="text-[9px] tracked uppercase text-muted mr-0.5">Heatmap by</span>
+        {(Object.keys(HEATMAP_METRIC_LABEL) as HeatmapMetric[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => chooseMetric(m)}
+            className={`px-2 py-0.5 rounded-full text-[10px] tracked uppercase border transition ${
+              metric === m
+                ? 'bg-amber/15 border-amber/50 text-amber'
+                : 'border-line text-muted hover:text-ink hover:border-ink/30'
+            }`}
+          >
+            {HEATMAP_METRIC_LABEL[m]}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-4 pb-4 pt-0 flex flex-col lg:flex-row lg:items-start gap-4">
         <div className="max-w-md w-full shrink-0">
           <div className="grid grid-cols-7 gap-1.5 mb-1.5">
             {WEEKDAY_LABELS.map((w) => (
@@ -187,8 +285,27 @@ export default function WorkoutHeatmap() {
                   const isFuture = iso > today
                   const isToday = iso === today
                   const entryCount = countByDate[iso] ?? 0
-                  const level = intensityLevel(entryCount)
+                  const dayWorkouts = byDate[iso] ?? []
+                  const summary = computeDaySummary(dayWorkouts)
+                  const value = metricValue(summary)
+                  const level = intensityLevel(value, maxMetricValue)
                   const clickable = entryCount > 0
+
+                  // marker เล็กๆ แบบ GitHub contributions — บอกเหตุการณ์พิเศษของวันนั้นนอกเหนือจากสี
+                  const dayMetrics = metricsByDate[iso] ?? []
+                  const hasPR = countDayPRs(dayWorkouts, progressHistory) > 0
+                  const hasBodyWeight = dayMetrics.some((m) => m.weight_kg !== null)
+                  const hasMeasurement = dayMetrics.some(
+                    (m) => m.waist_cm !== null || m.chest_cm !== null || m.hip_cm !== null
+                  )
+                  const hasCardio = dayWorkouts.some((w) => w.type === 'cardio')
+                  const markers = [
+                    hasPR && '🏆',
+                    hasBodyWeight && '❤️',
+                    hasMeasurement && '📏',
+                    hasCardio && '🏃',
+                  ].filter((m): m is string => !!m)
+
                   return (
                     <button
                       key={di}
@@ -196,10 +313,10 @@ export default function WorkoutHeatmap() {
                       disabled={!clickable}
                       onClick={() => {
                         setSelectedDate(iso === selectedDate ? null : iso)
-                        setExpandedId(null)
+                        setExpandedIds(new Set())
                       }}
-                      title={`${date.getDate()} ${monthLabel}${entryCount ? ` · ${entryCount} รายการ` : ''}`}
-                      className={`aspect-square rounded-[4px] flex items-center justify-center text-[9px] font-mono transition ${
+                      title={`${date.getDate()} ${monthLabel}${entryCount ? ` · ${metricDisplay(value)}` : ''}`}
+                      className={`relative aspect-square rounded-[4px] flex items-center justify-center text-[9px] font-mono transition ${
                         isFuture ? 'border border-dashed border-line text-muted/50' : 'text-bg'
                       } ${isToday ? 'ring-1 ring-amber ring-offset-1 ring-offset-surface' : ''} ${
                         selectedDate === iso ? 'ring-2 ring-steel ring-offset-1 ring-offset-surface' : ''
@@ -207,6 +324,15 @@ export default function WorkoutHeatmap() {
                       style={!isFuture ? { backgroundColor: LEVEL_STYLE[level].bg } : undefined}
                     >
                       {level === 0 && !isFuture ? <span className="text-muted/60">{date.getDate()}</span> : null}
+                      {markers.length > 0 && (
+                        <span className="absolute -top-1 -right-1 flex text-[7px] leading-none drop-shadow-sm">
+                          {markers.slice(0, 3).map((m, mi) => (
+                            <span key={mi} className={mi > 0 ? '-ml-1' : ''}>
+                              {m}
+                            </span>
+                          ))}
+                        </span>
+                      )}
                     </button>
                   )
                 })}
@@ -214,12 +340,20 @@ export default function WorkoutHeatmap() {
             ))}
           </div>
 
-          <div className="flex items-center justify-end gap-1.5 mt-3">
-            <span className="text-[9px] text-muted">น้อย</span>
-            {[0, 1, 2, 3].map((lv) => (
-              <span key={lv} className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: LEVEL_STYLE[lv].bg }} />
-            ))}
-            <span className="text-[9px] text-muted">มาก</span>
+          <div className="flex items-center justify-between gap-2 mt-3 flex-wrap">
+            <div className="flex items-center gap-1.5 text-[9px] text-muted">
+              <span>🏆 PR</span>
+              <span>❤️ น้ำหนักตัว</span>
+              <span>📏 วัดรอบตัว</span>
+              <span>🏃 Cardio</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] text-muted">{HEATMAP_METRIC_LABEL[metric]} น้อย</span>
+              {[0, 1, 2, 3].map((lv) => (
+                <span key={lv} className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: LEVEL_STYLE[lv].bg }} />
+              ))}
+              <span className="text-[9px] text-muted">มาก</span>
+            </div>
           </div>
         </div>
 
@@ -228,22 +362,43 @@ export default function WorkoutHeatmap() {
             space (or look empty) the rest of the time */}
         {selectedDate && (
           <div className="flex-1 min-w-0 lg:border-l lg:border-line lg:pl-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-display tracked uppercase text-ink">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <p className="text-xs font-display tracked uppercase text-ink shrink-0">
                 {new Date(selectedDate + 'T00:00:00').toLocaleDateString('th-TH', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',
                 })}
               </p>
-              <button
-                type="button"
-                onClick={() => setSelectedDate(null)}
-                aria-label="ปิด"
-                className="text-muted hover:text-ink text-xs"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                {expandableWorkoutIds.length > 0 && (
+                  <div className="flex items-center gap-1 text-[10px] tracked uppercase">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedIds(new Set(expandableWorkoutIds))}
+                      className="text-muted hover:text-amber transition"
+                    >
+                      Expand All
+                    </button>
+                    <span className="text-muted/40">/</span>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedIds(new Set())}
+                      className="text-muted hover:text-amber transition"
+                    >
+                      Collapse All
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(null)}
+                  aria-label="ปิด"
+                  className="text-muted hover:text-ink text-xs"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <ul className="space-y-2">
               {(() => {
@@ -280,13 +435,13 @@ export default function WorkoutHeatmap() {
                         }))
                       : []
                 const hasSets = w.type === 'strength' && displaySets.length > 0
-                const expanded = expandedId === w.id
+                const expanded = expandedIds.has(w.id)
                 return (
                   <li key={w.id} className="rounded-md bg-surface2 overflow-hidden">
                     <button
                       type="button"
                       disabled={!hasSets}
-                      onClick={() => setExpandedId(expanded ? null : w.id)}
+                      onClick={() => toggleExpanded(w.id)}
                       className={`w-full text-left px-3 py-2 text-xs ${hasSets ? 'cursor-pointer hover:bg-surface2/60' : 'cursor-default'}`}
                     >
                       {w.type === 'strength' ? (
