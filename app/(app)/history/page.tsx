@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutSet } from '@/lib/types'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
-import { computeExerciseProgress } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
+import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import EmptyState from '@/components/EmptyState'
@@ -35,7 +36,7 @@ export default function HistoryPage() {
 
 function HistoryPageInner() {
   const supabase = createClient()
-  const { format } = useWeightUnit()
+  const { format, unit, toDisplay } = useWeightUnit()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [exerciseFilter, setExerciseFilter] = useState<string | null>(searchParams.get('exercise'))
@@ -297,6 +298,15 @@ function HistoryPageInner() {
           {dates.map((date) => (
             <div key={date}>
               <p className="text-xs font-mono tracked text-muted mb-2 uppercase">{formatThaiDate(date)}</p>
+              <DaySummaryHeader
+                summary={computeDaySummary(grouped[date])}
+                prCount={countDayPRs(
+                  grouped[date].filter((w) => w.type === 'strength'),
+                  workouts
+                )}
+                unit={unit}
+                toDisplay={toDisplay}
+              />
               <ul className="space-y-2">
                 {grouped[date].map((w) => (
                   <ExerciseCard

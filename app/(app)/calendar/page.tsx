@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, GoalStatus, GoalType, Workout, WorkoutSet } from '@/lib/types'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
-import { computeDaySummary, computeExerciseProgress, formatDuration } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
+import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 
@@ -306,23 +307,11 @@ export default function CalendarPage() {
             <>
               {(() => {
                 const summary = computeDaySummary(selectedWorkouts)
-                return (
-                  <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 mb-3 space-y-1.5">
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink">
-                      <span>🏋️ {summary.exerciseCount} Exercises</span>
-                      {summary.totalSets > 0 && <span>🔥 {summary.totalSets} Sets</span>}
-                      {summary.durationMin !== null && <span>⏱ {formatDuration(summary.durationMin)}</span>}
-                    </div>
-                    {summary.totalVolumeKg > 0 && (
-                      <p className="text-sm text-ink">
-                        🏋️ Volume {Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString()} {unit}
-                      </p>
-                    )}
-                    {summary.muscleGroups.length > 0 && (
-                      <p className="text-sm text-muted">💪 {summary.muscleGroups.join(' / ')}</p>
-                    )}
-                  </div>
+                const prCount = countDayPRs(
+                  selectedWorkouts.filter((w) => w.type === 'strength'),
+                  allWorkouts
                 )
+                return <DaySummaryHeader summary={summary} prCount={prCount} unit={unit} toDisplay={toDisplay} />
               })()}
 
               {selectedWorkouts.filter((w) => w.type === 'strength').length > 1 && (
