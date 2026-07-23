@@ -38,10 +38,12 @@ import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary } from '@/lib/aiCoach'
 import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
+import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCard from '@/components/InsightCard'
 import TodayMuscleHeatmap from '@/components/TodayMuscleHeatmap'
+import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
 
@@ -101,6 +103,9 @@ interface DashboardData {
   // strip ใต้คำทักทาย ให้เห็นครบภายในไม่กี่วินาทีโดยไม่ต้องเลื่อนหรือกดเข้าไปดูหน้าอื่น
   latestPR: LatestPR | null
   topMuscleThisWeek: TopMuscle | null
+  // ผู้ใช้ใหม่จริงๆ = ไม่เคยบันทึกอะไรเลย (400 วันย้อนหลัง) และยังไม่ได้ตั้งโปรแกรมเลยด้วย —
+  // ใช้ตัดสินว่าควรโชว์ first-run banner (OnboardingBanner) หรือไม่
+  hasAnyHistory: boolean
 }
 
 async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
@@ -276,6 +281,7 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
     weeklyWorkoutGoal,
     latestPR,
     topMuscleThisWeek,
+    hasAnyHistory: distinctDates.length > 0 || typedDays.length > 0,
   }
 }
 
@@ -291,11 +297,20 @@ export default function DashboardPage() {
   // เครื่องผู้ใช้ (เวลาไทย) คำนวณ new Date().getHours() ได้คนละค่า ถ้าคำนวณตรงๆ ตอน
   // render จะทำให้ข้อความไม่ตรงกันระหว่าง server กับ client (hydration mismatch)
   const [greetingText, setGreetingText] = useState('สวัสดี')
+  // เริ่มด้วย true (ซ่อนไว้ก่อน) กันไม่ให้ banner กระพริบโผล่มาแวบเดียวระหว่างรอเช็ค localStorage
+  // ตอน mount — ค่อยเปิดออกถ้าเช็คแล้วว่ายังไม่เคยปิด
+  const [bannerDismissed, setBannerDismissed] = useState(true)
 
   useEffect(() => {
     setPrefs(loadDashboardPrefs())
     setGreetingText(greeting())
+    setBannerDismissed(isOnboardingBannerDismissed())
   }, [])
+
+  function handleDismissBanner() {
+    dismissOnboardingBanner()
+    setBannerDismissed(true)
+  }
 
   const {
     data,
@@ -398,6 +413,8 @@ export default function DashboardPage() {
           ⚙️
         </button>
       </div>
+
+      {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 
       {/* quick-glance strip: answers "PR ล่าสุด" and "กล้ามเนื้อที่ฝึกมากที่สุดสัปดาห์นี้" —
           the two questions nothing else on this screen answers directly. "วันนี้เล่นไหม" and
@@ -532,10 +549,13 @@ export default function DashboardPage() {
       {/* quick start actions — วางไว้ใต้ Today's Workout เสมอ กันผู้ใช้ใหม่ที่ยังไม่มีโปรแกรม/ประวัติ
           ไม่รู้จะกดอะไรต่อ ต่างจาก quick actions ชุดล่างที่เป็นทางลัดทั่วไป (บันทึก/เทมเพลต/สถิติ) —
           ชุดนี้เน้น 3 ทางเริ่มต้นที่ใช้บ่อยที่สุดตอนเปิดแอปครั้งแรก */}
-      <div className="grid grid-cols-3 gap-2 animate-rise" style={{ animationDelay: '120ms' }}>
+      <div
+        className={`grid gap-2 animate-rise ${data.hasAnyHistory ? 'grid-cols-3' : 'grid-cols-2'}`}
+        style={{ animationDelay: '120ms' }}
+      >
         <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
-        <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />
+        {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />}
       </div>
 
       {/* muscles trained today — heat-map chips built from today's workout rows */}
