@@ -101,9 +101,17 @@ create table if not exists public.body_metrics (
   waist_cm numeric,
   chest_cm numeric,
   hip_cm numeric,
+  arm_cm numeric,
+  thigh_cm numeric,
   notes text,
   created_at timestamptz not null default now()
 );
+
+-- migrate existing installs that already have the table without these columns
+alter table public.body_metrics add column if not exists arm_cm numeric;
+alter table public.body_metrics add column if not exists thigh_cm numeric;
+comment on column public.body_metrics.arm_cm is 'รอบต้นแขน (ซม.)';
+comment on column public.body_metrics.thigh_cm is 'รอบต้นขา (ซม.)';
 
 create index if not exists body_metrics_user_id_idx on public.body_metrics (user_id);
 create index if not exists body_metrics_measured_at_idx on public.body_metrics (measured_at desc);
