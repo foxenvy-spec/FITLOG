@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, GoalStatus, GoalType, Workout } from '@/lib/types'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
+import { computeDaySummary, computeExerciseProgress, formatDuration } from '@/lib/workoutDisplay'
+import ExerciseProgressBadge from '@/components/ExerciseProgressBadge'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 
@@ -28,92 +30,6 @@ function toIsoDate(d: Date) {
   const offset = d.getTimezoneOffset()
   const local = new Date(d.getTime() - offset * 60000)
   return local.toISOString().slice(0, 10)
-}
-
-function workoutVolumeKg(w: Workout): number {
-  return w.total_volume_kg ?? (w.sets ?? 0) * (w.reps ?? 0) * (w.weight_kg ?? 0)
-}
-
-// สรุปภาพรวมของวันที่เลือก — โชว์ก่อนเห็นรายการละเอียด จะได้รู้ทันทีว่าวันนั้นหนักแค่ไหน
-interface DaySummary {
-  exerciseCount: number
-  totalSets: number
-  totalVolumeKg: number
-  muscleGroups: string[]
-  durationMin: number | null
-}
-
-function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
-  const strength = dayWorkouts.filter((w) => w.type === 'strength')
-  const totalSets = strength.reduce((s, w) => s + (w.sets ?? 0), 0)
-  const totalVolumeKg = strength.reduce((s, w) => s + workoutVolumeKg(w), 0)
-  const muscleGroups = Array.from(new Set(strength.map((w) => w.muscle_group).filter((m): m is string => !!m)))
-
-  // ไม่มีฟิลด์ duration ต่อวันเก็บตรงๆ — ประมาณจากช่วงเวลา created_at แรกสุดถึงล่าสุดของวันนั้น
-  // (ใกล้เคียงเวลาที่ใช้ในเซสชันจริง เพราะแต่ละท่าถูกบันทึกทันทีตอนกดเสร็จระหว่างเทรน)
-  const timestamps = dayWorkouts.map((w) => new Date(w.created_at).getTime()).filter((t) => !Number.isNaN(t))
-  const durationMin =
-    timestamps.length >= 2 ? Math.round((Math.max(...timestamps) - Math.min(...timestamps)) / 60000) : null
-
-  return { exerciseCount: dayWorkouts.length, totalSets, totalVolumeKg, muscleGroups, durationMin }
-}
-
-function formatDuration(min: number): string {
-  if (min < 60) return `${min}m`
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  return m > 0 ? `${h}h ${m}m` : `${h}h`
-}
-
-type ProgressBadge =
-  | { kind: 'pr'; deltaKg: number }
-  | { kind: 'bestVolume' }
-  | { kind: 'up'; deltaKg: number }
-  | { kind: 'down'; deltaKg: number }
-  | { kind: 'none' }
-
-// เทียบท่านี้กับประวัติก่อนหน้า (ไม่รวมวันเดียวกัน) — ใช้บอกว่าเปิดย้อนมาดูวันนี้แล้ว "หนักกว่าเดิม" แค่ไหน
-function computeExerciseProgress(w: Workout, allWorkouts: Workout[]): ProgressBadge {
-  if (w.type !== 'strength' || !w.exercise_name) return { kind: 'none' }
-  const prior = allWorkouts.filter(
-    (p) => p.type === 'strength' && p.exercise_name === w.exercise_name && p.performed_at < w.performed_at
-  )
-  if (prior.length === 0) return { kind: 'none' }
-
-  const thisWeight = w.weight_kg ?? 0
-  const thisVolume = workoutVolumeKg(w)
-  const prevBestWeight = Math.max(...prior.map((p) => p.weight_kg ?? 0))
-  const prevBestVolume = Math.max(...prior.map(workoutVolumeKg))
-
-  if (thisWeight > 0 && thisWeight > prevBestWeight) {
-    return { kind: 'pr', deltaKg: Math.round((thisWeight - prevBestWeight) * 10) / 10 }
-  }
-  if (thisVolume > 0 && thisVolume > prevBestVolume) {
-    return { kind: 'bestVolume' }
-  }
-
-  // ไม่ใช่สถิติใหม่ — เทียบกับครั้งล่าสุดก่อนหน้าแทน เพื่อโชว์แนวโน้มระยะสั้น
-  const lastSession = prior.reduce((a, b) => (a.performed_at > b.performed_at ? a : b))
-  const lastWeight = lastSession.weight_kg ?? 0
-  if (thisWeight > lastWeight) return { kind: 'up', deltaKg: Math.round((thisWeight - lastWeight) * 10) / 10 }
-  if (thisWeight < lastWeight) return { kind: 'down', deltaKg: Math.round((lastWeight - thisWeight) * 10) / 10 }
-  return { kind: 'none' }
-}
-
-function ProgressBadge({ badge, format }: { badge: ProgressBadge; format: (kg: number | null | undefined) => string }) {
-  if (badge.kind === 'pr') {
-    return <span className="text-[10px] font-mono text-amber shrink-0">PR 🎉 +{format(badge.deltaKg)}</span>
-  }
-  if (badge.kind === 'bestVolume') {
-    return <span className="text-[10px] font-mono text-amber shrink-0">Best Volume 🏆</span>
-  }
-  if (badge.kind === 'up') {
-    return <span className="text-[10px] font-mono text-steel shrink-0">▲ +{format(badge.deltaKg)}</span>
-  }
-  if (badge.kind === 'down') {
-    return <span className="text-[10px] font-mono text-muted shrink-0">▼ -{format(badge.deltaKg)}</span>
-  }
-  return null
 }
 
 export default function CalendarPage() {
@@ -366,7 +282,7 @@ export default function CalendarPage() {
                           <span className="text-steel mr-1.5">🏋️</span>
                           {w.exercise_name} — {w.sets}×{w.reps} @ {format(w.weight_kg)}
                         </span>
-                        <ProgressBadge badge={computeExerciseProgress(w, allWorkouts)} format={format} />
+                        <ExerciseProgressBadge progress={computeExerciseProgress(w, allWorkouts)} format={format} />
                       </>
                     ) : (
                       <span>
