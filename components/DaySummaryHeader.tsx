@@ -23,6 +23,9 @@ export default function DaySummaryHeader({
   if (summary.totalVolumeKg > 0) {
     stats.push({ value: Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString(), label: unit })
   }
+  if (summary.totalSets > 0) {
+    stats.push({ value: `${summary.totalSets}`, label: 'Sets' })
+  }
   if (summary.durationMin !== null) {
     stats.push({ value: formatDuration(summary.durationMin), label: 'เวลา' })
   }
@@ -36,7 +39,7 @@ export default function DaySummaryHeader({
             key={s.label}
             className={`flex-1 text-center px-2 ${i > 0 ? 'border-l border-line' : ''}`}
           >
-            <p className="font-mono text-lg font-bold text-ink tabular leading-tight">{s.value}</p>
+            <p className="font-mono text-base sm:text-lg font-bold text-ink tabular leading-tight">{s.value}</p>
             <p className="text-[9px] tracked uppercase text-muted mt-0.5">{s.label}</p>
           </div>
         ))}

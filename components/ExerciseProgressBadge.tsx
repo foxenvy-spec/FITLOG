@@ -13,33 +13,41 @@ export default function ExerciseProgressBadge({
   if (progress.kind === 'pr') {
     return (
       <div className="text-right shrink-0 leading-tight">
-        <p className="text-[11px] font-mono font-semibold text-moss tabular">▲ +{format(progress.deltaKg)}</p>
+        <span className="inline-block rounded-full bg-violetdim px-2.5 py-1">
+          <p className="text-[12px] font-semibold text-violet">PR 🎉</p>
+        </span>
+        <p className="text-[11px] font-mono font-semibold text-moss tabular mt-1">▲ +{format(progress.deltaKg)}</p>
         <p className="text-[9px] text-muted">vs Last Session</p>
-        <p className="text-[10px] font-semibold text-violet mt-0.5">PR 🎉</p>
       </div>
     )
   }
   if (progress.kind === 'bestVolume') {
     return (
       <div className="text-right shrink-0 leading-tight">
-        <p className="text-[10px] font-semibold text-violet">🏆 Best Volume</p>
-        {progress.topPercent !== null && <p className="text-[9px] text-muted mt-0.5">Top {progress.topPercent}%</p>}
+        <span className="inline-block rounded-full bg-violetdim px-2.5 py-1">
+          <p className="text-[12px] font-semibold text-violet">🏆 Best Volume</p>
+        </span>
+        {progress.topPercent !== null && <p className="text-[9px] text-muted mt-1">Top {progress.topPercent}%</p>}
       </div>
     )
   }
   if (progress.kind === 'up') {
     return (
       <div className="text-right shrink-0 leading-tight">
-        <p className="text-[11px] font-mono font-semibold text-moss tabular">▲ +{format(progress.deltaKg)}</p>
-        <p className="text-[9px] text-muted">vs Last Session</p>
+        <span className="inline-block rounded-full bg-mossdim px-2.5 py-1">
+          <p className="text-[12px] font-mono font-semibold text-moss tabular">▲ +{format(progress.deltaKg)}</p>
+        </span>
+        <p className="text-[9px] text-muted mt-1">vs Last Session</p>
       </div>
     )
   }
   if (progress.kind === 'down') {
     return (
       <div className="text-right shrink-0 leading-tight">
-        <p className="text-[11px] font-mono font-semibold text-rusttext tabular">▼ -{format(progress.deltaKg)}</p>
-        <p className="text-[9px] text-muted">vs Last Session</p>
+        <span className="inline-block rounded-full bg-rustdim px-2.5 py-1">
+          <p className="text-[12px] font-mono font-semibold text-rusttext tabular">▼ -{format(progress.deltaKg)}</p>
+        </span>
+        <p className="text-[9px] text-muted mt-1">vs Last Session</p>
       </div>
     )
   }
