@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
@@ -91,12 +92,16 @@ export default function ExerciseDetailPage() {
       {known && (known.imageUrl || known.highlighterMuscles.length > 0) && (
         <div className="grid grid-cols-2 gap-3">
           {known.imageUrl && (
-            <img
-              src={known.imageUrl}
-              alt={known.name}
-              className="w-full aspect-square object-cover rounded-xl bg-panel"
-              loading="lazy"
-            />
+            <div className="relative w-full aspect-square rounded-xl bg-panel overflow-hidden">
+              <Image
+                src={known.imageUrl}
+                alt={known.name}
+                fill
+                sizes="(max-width: 768px) 50vw, 300px"
+                loading="lazy"
+                className="object-cover"
+              />
+            </div>
           )}
           {known.highlighterMuscles.length > 0 && (
             <div className="rounded-xl bg-panel flex items-center justify-center py-2">
