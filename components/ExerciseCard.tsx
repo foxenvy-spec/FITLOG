@@ -78,7 +78,7 @@ export default function ExerciseCard({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[15px] font-semibold text-ink truncate leading-snug">
+            <p className="text-sm font-medium text-ink truncate leading-snug">
               <span className="mr-1.5">{w.type === 'strength' ? '🏋️' : '🏃'}</span>
               {nameHref ? (
                 <a href={nameHref} onClick={(e) => e.stopPropagation()} className="hover:text-amber hover:underline">
@@ -88,17 +88,22 @@ export default function ExerciseCard({
                 name
               )}
             </p>
-            <p className="font-mono text-sm font-semibold text-ink mt-1 tabular">
+            <div className="flex items-baseline gap-2 mt-1">
               {w.type === 'strength' ? (
                 <>
-                  {w.sets}×{w.reps} <span className="text-muted font-normal">@</span> {format(w.weight_kg)}
+                  <span className="font-mono text-2xl font-bold text-ink tabular">{format(w.weight_kg)}</span>
+                  <span className="font-mono text-xs text-muted tabular">
+                    {w.sets} × {w.reps}
+                  </span>
                 </>
               ) : (
                 <>
-                  {w.distance_km}km <span className="text-muted font-normal">/</span> {w.duration_min}min
+                  <span className="font-mono text-2xl font-bold text-ink tabular">{w.distance_km}km</span>
+                  <span className="font-mono text-xs text-muted tabular">{w.duration_min} min</span>
                 </>
               )}
-            </p>
+            </div>
+            {w.muscle_group && <p className="text-[11px] text-steel mt-1">{w.muscle_group}</p>}
             {w.notes && <p className="text-xs text-muted mt-1 truncate">{w.notes}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-0.5">
