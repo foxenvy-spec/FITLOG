@@ -135,6 +135,7 @@ export default function AchievementsPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {badges.map((b) => {
           const unlocked = b.current >= b.target
           const pct = Math.min(100, Math.round((b.current / b.target) * 100))
           return (
