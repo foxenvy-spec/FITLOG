@@ -213,7 +213,7 @@ export default function TemplatesPage() {
   if (loadError) return <ErrorState title="โหลดเทมเพลตไม่สำเร็จ" message={loadError} onRetry={load} />
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:max-w-3xl lg:mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl tracked uppercase">เทมเพลต</h1>

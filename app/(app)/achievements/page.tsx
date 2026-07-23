@@ -134,8 +134,7 @@ export default function AchievementsPage() {
         <StatBox label="วันฝึกรวม" value={`${stats.totalDays} วัน`} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {badges.map((b) => {
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           const unlocked = b.current >= b.target
           const pct = Math.min(100, Math.round((b.current / b.target) * 100))
           return (

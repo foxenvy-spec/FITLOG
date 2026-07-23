@@ -29,7 +29,7 @@ const SECONDARY = [
 
 export default function TrainPage() {
   return (
-    <div className="space-y-5 pb-4">
+    <div className="space-y-5 pb-4 lg:max-w-2xl lg:mx-auto">
       <div>
         <p className="text-[10px] tracked uppercase text-muted">Train</p>
         <h1 className="font-display text-xl tracked uppercase text-ink">เริ่มเล่นเลย</h1>

@@ -331,7 +331,7 @@ export default function StatsPage() {
     <div className="space-y-8">
       <h1 className="font-display text-2xl tracked uppercase">สถิติ · {RANGE_DAYS} วันล่าสุด</h1>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         <StatCard label="Total Volume" value={Math.round(toDisplay(totals.totalVolume)).toLocaleString()} unit={unit} accent="steel" />
         <StatCard label="Total Reps" value={totals.totalReps.toLocaleString()} unit="ครั้ง" accent="amber" />
         <StatCard label="Volume สัปดาห์นี้" value={Math.round(toDisplay(totals.thisWeekVolume)).toLocaleString()} unit={unit} accent="rust" />

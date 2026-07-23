@@ -44,7 +44,7 @@ export default function ExercisesPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:max-w-3xl lg:mx-auto">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl tracked uppercase">ฐานข้อมูลท่าออกกำลังกาย</h1>

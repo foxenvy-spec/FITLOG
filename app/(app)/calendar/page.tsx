@@ -305,7 +305,7 @@ export default function CalendarPage() {
             ยังไม่มีเป้าหมาย ลองตั้งเป้าหมายแรกดู
           </p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-3 md:items-start">
             {goals.map((g) => {
               const progress = goalProgress(g)
               return (

@@ -274,7 +274,7 @@ export default function CoachPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:max-w-2xl lg:mx-auto">
       <div>
         <h1 className="font-display text-2xl tracked uppercase">AI Coach</h1>
         <p className="text-xs text-muted mt-0.5">

@@ -472,7 +472,7 @@ function LogPageInner() {
     : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:max-w-2xl lg:mx-auto">
       <div>
         <h1 className="font-display text-2xl tracked uppercase">{editingId ? 'แก้ไขรายการ' : 'บันทึกวันนี้'}</h1>
         <input

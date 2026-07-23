@@ -24,7 +24,7 @@ export default function TimerPage() {
   const { enabled: voiceEnabled, toggle: toggleVoice } = useVoiceEnabled()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:max-w-xl lg:mx-auto">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl tracked uppercase">ไทม์เมอร์</h1>
         <button

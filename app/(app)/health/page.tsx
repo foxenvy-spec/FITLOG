@@ -136,7 +136,7 @@ export default function HealthPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:max-w-2xl lg:mx-auto">
       <h1 className="font-display text-2xl tracked uppercase">สุขภาพร่างกาย</h1>
 
       <div className="flex rounded-full bg-surface p-1 border border-line">

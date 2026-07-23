@@ -53,7 +53,7 @@ export default function ProfileView() {
   const name = displayName || emailDisplayName(email) || 'นักกีฬา'
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="space-y-5 pb-4 lg:max-w-2xl lg:mx-auto">
       <div className="flex items-center gap-3">
         <div className="shrink-0 w-14 h-14 rounded-full bg-surface2 border border-line flex items-center justify-center font-display text-lg tracked uppercase text-amber">
           {name.slice(0, 1).toUpperCase()}

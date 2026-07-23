@@ -466,7 +466,7 @@ export default function SessionPage() {
   const setsRemaining = Math.max(0, targetSets - currentState.setsDone)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 lg:max-w-2xl lg:mx-auto">
       <div className="flex items-center justify-between">
         <p className="text-[11px] tracked uppercase text-muted">
           ท่าที่ <span className="text-ink font-mono">{index + 1}</span>/{exercises.length}
