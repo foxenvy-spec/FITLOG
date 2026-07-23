@@ -23,6 +23,8 @@ import {
   computeWorkoutMotivationLabel,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
+  computeLatestPR,
+  computeTopMuscleThisWeek,
 } from './dashboardStats'
 import { MUSCLE_GROUPS } from './muscle-groups'
 
@@ -563,5 +565,45 @@ describe('computeWorkoutMotivationLabel', () => {
 
   it('phrases the very first workout of the week without "แค่" since nothing has been done yet', () => {
     expect(computeWorkoutMotivationLabel(0, 3)).toBe('อีก 3 ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว')
+  })
+})
+
+describe('computeLatestPR', () => {
+  it('returns the most recent weight PR across exercises', () => {
+    const rows = [
+      { exercise_name: 'Bench Press', weight_kg: 60, performed_at: '2026-07-01' },
+      { exercise_name: 'Bench Press', weight_kg: 65, performed_at: '2026-07-10' },
+      { exercise_name: 'Squat', weight_kg: 80, performed_at: '2026-07-05' },
+      { exercise_name: 'Squat', weight_kg: 90, performed_at: '2026-07-15' },
+    ]
+    expect(computeLatestPR(rows)).toEqual({ exerciseName: 'Squat', weightKg: 90, performedAt: '2026-07-15' })
+  })
+
+  it('does not count the first-ever session of an exercise as a PR', () => {
+    const rows = [{ exercise_name: 'Deadlift', weight_kg: 100, performed_at: '2026-07-01' }]
+    expect(computeLatestPR(rows)).toBeNull()
+  })
+
+  it('ignores a heavier weight that is not actually a new best (already matched earlier)', () => {
+    const rows = [
+      { exercise_name: 'Bench Press', weight_kg: 60, performed_at: '2026-07-01' },
+      { exercise_name: 'Bench Press', weight_kg: 60, performed_at: '2026-07-10' },
+    ]
+    expect(computeLatestPR(rows)).toBeNull()
+  })
+
+  it('returns null when there is no history', () => {
+    expect(computeLatestPR([])).toBeNull()
+  })
+})
+
+describe('computeTopMuscleThisWeek', () => {
+  it('picks the muscle group with the most sets this week', () => {
+    expect(computeTopMuscleThisWeek({ อก: 12, ขา: 18, หลัง: 9 })).toEqual({ muscleGroup: 'ขา', sets: 18 })
+  })
+
+  it('returns null when nothing has been trained this week', () => {
+    expect(computeTopMuscleThisWeek({})).toBeNull()
+    expect(computeTopMuscleThisWeek({ อก: 0 })).toBeNull()
   })
 })

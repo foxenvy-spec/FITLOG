@@ -448,6 +448,54 @@ export function computeBestVolumeIncrease(
   return best
 }
 
+// ==================== PR ล่าสุด (quick glance บน Dashboard) ====================
+// ไล่ประวัติ (ควรเรียงจากเก่าไปใหม่ก่อนเรียกฟังก์ชันนี้ ไม่งั้นผลลัพธ์ผิด) ทีละแถว พร้อมจำน้ำหนัก
+// สูงสุดที่เคยทำของแต่ละท่าไว้ (running best) — แถวไหนหนักกว่า running best เดิม (และเคยมีของเก่ามาก่อน
+// ไม่ใช่ครั้งแรกที่ทำท่านั้น) ถือเป็น PR แล้วอัปเดต running best ไปเรื่อยๆ ค่าสุดท้ายที่เจอคือ PR ล่าสุด
+export interface LatestPR {
+  exerciseName: string
+  weightKg: number
+  performedAt: string
+}
+
+export function computeLatestPR(
+  rowsNewestFirst: { exercise_name: string | null; weight_kg: number | null; performed_at: string }[]
+): LatestPR | null {
+  const sortedOldestFirst = [...rowsNewestFirst]
+    .filter((r) => r.exercise_name && r.weight_kg !== null && r.weight_kg > 0)
+    .sort((a, b) => a.performed_at.localeCompare(b.performed_at))
+
+  const bestSoFar: Record<string, number> = {}
+  let latest: LatestPR | null = null
+
+  for (const r of sortedOldestFirst) {
+    const name = r.exercise_name as string
+    const weight = r.weight_kg as number
+    const prevBest = bestSoFar[name] ?? 0
+    if (weight > prevBest) {
+      bestSoFar[name] = weight
+      if (prevBest > 0) {
+        latest = { exerciseName: name, weightKg: weight, performedAt: r.performed_at }
+      }
+    }
+  }
+  return latest
+}
+
+// ==================== กล้ามเนื้อที่ฝึกมากที่สุดในสัปดาห์นี้ (quick glance บน Dashboard) ====================
+// ใช้ thisWeekSets ที่คำนวณไว้แล้ว (รวมเซ็ตต่อกลุ่มกล้ามเนื้อของสัปดาห์นี้) — เลือกกลุ่มที่มีเซ็ตมากที่สุด
+export interface TopMuscle {
+  muscleGroup: string
+  sets: number
+}
+
+export function computeTopMuscleThisWeek(thisWeekSets: Record<string, number>): TopMuscle | null {
+  const entries = Object.entries(thisWeekSets).filter(([, sets]) => sets > 0)
+  if (entries.length === 0) return null
+  const [muscleGroup, sets] = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])
+  return { muscleGroup, sets }
+}
+
 // ==================== ประโยคทักทายแบบมีบริบท (dynamic greeting) ====================
 // แทนที่จะทักทายลอยๆ อย่างเดียว ประกอบประโยคที่บอกว่า "วันนี้ควรทำอะไรต่อ" หรือ "มีอะไรดีขึ้นบ้าง"
 // ลำดับความสำคัญ: มีโปรแกรมของวันนี้ (มีเรื่องให้ทำต่อ) > วอลุ่มสัปดาห์นี้เพิ่มขึ้นเด่นชัด > เงียบไว้ (ยังไม่มีข้อมูลพอ)
