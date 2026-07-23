@@ -49,13 +49,22 @@ export function formatDuration(min: number): string {
 
 export type ExerciseProgress =
   | { kind: 'pr'; deltaKg: number }
-  | { kind: 'bestVolume' }
+  | { kind: 'bestVolume'; topPercent: number | null }
   | { kind: 'up'; deltaKg: number }
   | { kind: 'down'; deltaKg: number }
   | { kind: 'repsUp'; deltaReps: number }
   | { kind: 'repsDown'; deltaReps: number }
   | { kind: 'same' }
   | { kind: 'none' }
+
+// อันดับ volume ของครั้งนี้เทียบกับประวัติทั้งหมดของท่านี้ — "Top 5%" หมายถึงดีกว่า 95% ของครั้งก่อนๆ
+// คืนค่า null ถ้าข้อมูลย้อนหลังน้อยเกินไป (ต่ำกว่า 3 ครั้ง) เพราะเปอร์เซ็นต์ไทล์จะไม่มีความหมาย
+function volumeTopPercent(thisVolume: number, prior: Workout[]): number | null {
+  if (prior.length < 3) return null
+  const beatCount = prior.filter((p) => workoutVolumeKg(p) <= thisVolume).length
+  const percentile = (beatCount / prior.length) * 100
+  return Math.max(1, Math.min(99, Math.round(100 - percentile)))
+}
 
 // เทียบท่านี้กับประวัติก่อนหน้า (ไม่รวมวันเดียวกัน) — ใช้บอกว่าเปิดย้อนมาดูวันนี้แล้ว "หนักกว่าเดิม" แค่ไหน
 // priorPool ควรเป็น workouts ประเภท strength ของ exercise ต่างๆ ย้อนหลังพอสมควร (ยิ่งยาวยิ่งแม่น สำหรับเช็ค PR)
@@ -75,7 +84,7 @@ export function computeExerciseProgress(w: Workout, priorPool: Workout[]): Exerc
     return { kind: 'pr', deltaKg: Math.round((thisWeight - prevBestWeight) * 10) / 10 }
   }
   if (thisVolume > 0 && thisVolume > prevBestVolume) {
-    return { kind: 'bestVolume' }
+    return { kind: 'bestVolume', topPercent: volumeTopPercent(thisVolume, prior) }
   }
 
   // ไม่ใช่สถิติใหม่ — เทียบกับครั้งล่าสุดก่อนหน้าแทน เพื่อโชว์แนวโน้มระยะสั้น

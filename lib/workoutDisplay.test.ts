@@ -98,7 +98,18 @@ describe('computeExerciseProgress', () => {
   it('flags best volume when weight is not a PR but volume is', () => {
     const prior = [makeWorkout({ id: 'p1', performed_at: '2026-07-10', weight_kg: 40, sets: 3, reps: 8, total_volume_kg: 960 })]
     const today = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 40, sets: 5, reps: 8, total_volume_kg: 1600 })
-    expect(computeExerciseProgress(today, prior)).toEqual({ kind: 'bestVolume' })
+    expect(computeExerciseProgress(today, prior)).toEqual({ kind: 'bestVolume', topPercent: null })
+  })
+
+  it('computes a topPercent for best volume once there is enough history', () => {
+    const prior = [
+      makeWorkout({ id: 'p1', performed_at: '2026-06-01', weight_kg: 40, total_volume_kg: 500 }),
+      makeWorkout({ id: 'p2', performed_at: '2026-06-08', weight_kg: 40, total_volume_kg: 700 }),
+      makeWorkout({ id: 'p3', performed_at: '2026-06-15', weight_kg: 40, total_volume_kg: 900 }),
+      makeWorkout({ id: 'p4', performed_at: '2026-06-22', weight_kg: 40, total_volume_kg: 950 }),
+    ]
+    const today = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 40, total_volume_kg: 1600 })
+    expect(computeExerciseProgress(today, prior)).toEqual({ kind: 'bestVolume', topPercent: 1 })
   })
 
   it('flags up/down relative to the most recent session when neither is a record', () => {
