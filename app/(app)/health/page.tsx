@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import {
   ResponsiveContainer,
   LineChart,
@@ -538,11 +539,15 @@ function PhotosTab({
           {beforePhoto?.url && afterPhoto?.url && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <img src={beforePhoto.url} alt="Before" className="w-full rounded-lg border border-line object-cover aspect-[3/4]" />
+                <div className="relative w-full aspect-[3/4] rounded-lg border border-line overflow-hidden">
+                  <Image src={beforePhoto.url} alt="Before" fill sizes="200px" className="object-cover" />
+                </div>
                 <p className="text-center text-[11px] text-muted mt-1">{shortLabel(beforePhoto.taken_at)}</p>
               </div>
               <div>
-                <img src={afterPhoto.url} alt="After" className="w-full rounded-lg border border-line object-cover aspect-[3/4]" />
+                <div className="relative w-full aspect-[3/4] rounded-lg border border-line overflow-hidden">
+                  <Image src={afterPhoto.url} alt="After" fill sizes="200px" className="object-cover" />
+                </div>
                 <p className="text-center text-[11px] text-muted mt-1">{shortLabel(afterPhoto.taken_at)}</p>
               </div>
             </div>
@@ -561,7 +566,9 @@ function PhotosTab({
             {photos.map((p) => (
               <div key={p.id} className="relative group">
                 {p.url && (
-                  <img src={p.url} alt={p.label ?? ''} className="w-full aspect-square object-cover rounded-lg border border-line" />
+                  <div className="relative w-full aspect-square rounded-lg border border-line overflow-hidden">
+                    <Image src={p.url} alt={p.label ?? ''} fill sizes="150px" className="object-cover" />
+                  </div>
                 )}
                 <button
                   type="button"
