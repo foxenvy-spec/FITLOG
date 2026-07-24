@@ -1,7 +1,16 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as Sentry from '@sentry/nextjs'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from 'recharts'
 import { createClient } from '@/lib/supabase/client'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, type MuscleGroup } from '@/lib/muscle-groups'
 import {
@@ -15,6 +24,7 @@ import {
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
 } from '@/lib/dashboardStats'
+import { computeRecoveryHistory } from '@/lib/trends'
 import { todayStr } from '@/lib/weekdays'
 import Skeleton from '@/components/Skeleton'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
@@ -25,6 +35,7 @@ interface MuscleRow {
   lastTrained: string | null
   pct: number
 }
+
 
 // เกณฑ์เดียวกับ recoveryStatusColor: 0-40% แดง (กำลังพักฟื้น), 41-75% เหลือง (ใกล้พร้อมแล้ว), 76-100% เขียว (พร้อมฝึกแล้ว)
 function statusLabel(pct: number) {
@@ -41,6 +52,9 @@ export default function RecoveryPage() {
   const [progressPct, setProgressPct] = useState<number | null>(null)
   // กล้ามเนื้อที่ตารางโปรแกรมประจำสัปดาห์ระบุไว้ (ถ้ามี) — ใช้ยึดคำแนะนำให้ตรงตารางแทน recovery % ล้วนๆ
   const [scheduledMuscle, setScheduledMuscle] = useState<string | null>(null)
+  // เก็บ log เวทเทรนนิ่งดิบ (muscle_group + performed_at) ไว้ใช้สร้างกราฟ Recovery Score ย้อนหลัง
+  const [strengthLogs, setStrengthLogs] = useState<{ muscle_group: string | null; performed_at: string }[]>([])
+  const [historyRangeDays, setHistoryRangeDays] = useState<30 | 90>(30)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -54,6 +68,7 @@ export default function RecoveryPage() {
         .limit(2000)
 
       const strengthRows = (data as { muscle_group: string | null; performed_at: string }[]) ?? []
+      setStrengthLogs(strengthRows)
       const today = todayStr()
       const trainedAnyToday = strengthRows.some((r) => r.performed_at?.slice(0, 10) === today)
 
@@ -123,6 +138,11 @@ export default function RecoveryPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  const recoveryHistory = useMemo(
+    () => computeRecoveryHistory(strengthLogs, historyRangeDays).map((p) => ({ label: relativeDayLabel(p.date), value: p.overallPct })),
+    [strengthLogs, historyRangeDays]
+  )
 
   return (
     <div className="space-y-5">
@@ -215,6 +235,63 @@ export default function RecoveryPage() {
             )
           })}
         </div>
+      )}
+
+      {!loading && !error && strengthLogs.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-display text-sm tracked uppercase text-muted">Recovery Score ย้อนหลัง</h2>
+            <div className="flex rounded-full bg-surface2 p-0.5 text-[11px]">
+              {(
+                [
+                  [30, '30 วัน'],
+                  [90, '90 วัน'],
+                ] as const
+              ).map(([days, label]) => (
+                <button
+                  key={days}
+                  onClick={() => setHistoryRangeDays(days)}
+                  className={`px-2.5 py-1 rounded-full tracked uppercase transition ${
+                    historyRangeDays === days ? 'bg-steel text-bg' : 'text-muted'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="h-44 bg-surface border border-line shadow-elevated rounded-lg p-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={recoveryHistory} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <CartesianGrid stroke="#2E333A" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: '#9498A0', fontSize: 10 }}
+                  interval={historyRangeDays === 90 ? 12 : 4}
+                  axisLine={{ stroke: '#2E333A' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: '#9498A0', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={32}
+                  domain={[0, 100]}
+                />
+                <Tooltip
+                  contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: '#9498A0' }}
+                  itemStyle={{ color: '#F3F0E8' }}
+                  formatter={(v: number) => [`${v}%`, 'Recovery เฉลี่ยรวม']}
+                />
+                <Line type="monotone" dataKey="value" stroke="#7A9B57" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-[10px] text-muted mt-2">
+            ค่าเฉลี่ยรวมทุกกลุ่มกล้ามเนื้อ คำนวณย้อนหลังจากวันที่ฝึกจริง — เป็นค่าประมาณเช่นเดียวกับตัวเลขด้านบน
+          </p>
+        </section>
       )}
 
       <a href="/log" className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2">
