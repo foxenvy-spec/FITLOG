@@ -40,6 +40,8 @@ export function computeHealthTrendInsights(params: {
   bodyFatPct?: { first: number; last: number }
   skeletalMuscle?: { first: number; last: number }
   bodyFatKg?: { first: number; last: number }
+  muscleMass?: { first: number; last: number }
+  bodyAge?: { first: number; last: number }
   minPct?: number
 }): Insight[] {
   const minPct = params.minPct ?? 1.5
@@ -98,6 +100,48 @@ export function computeHealthTrendInsights(params: {
         icon: pct < 0 ? '📉' : '📈',
         title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% จากช่วงที่แล้ว`,
+      })
+    }
+  }
+
+  if (params.muscleMass) {
+    const pct = pctChange(params.muscleMass.first, params.muscleMass.last)
+    if (pct >= minPct) {
+      insights.push({
+        id: 'trend-musclemass-up',
+        kind: 'positive',
+        icon: '💪',
+        title: 'มวลกล้ามเนื้อเพิ่มขึ้น',
+        detail: `มวลกล้ามเนื้อเพิ่มขึ้น ${pct.toFixed(1)}% รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+      })
+    } else if (pct <= -minPct) {
+      insights.push({
+        id: 'trend-musclemass-down',
+        kind: 'warning',
+        icon: '⚠️',
+        title: 'มวลกล้ามเนื้อลดลง',
+        detail: `มวลกล้ามเนื้อลดลง ${Math.abs(pct).toFixed(1)}% ลองเพิ่มการฝึกแรงต้าน`,
+      })
+    }
+  }
+
+  if (params.bodyAge) {
+    const pct = pctChange(params.bodyAge.first, params.bodyAge.last)
+    if (pct <= -minPct) {
+      insights.push({
+        id: 'trend-bodyage-down',
+        kind: 'positive',
+        icon: '❤️',
+        title: 'อายุร่างกายดีขึ้น',
+        detail: `อายุร่างกายลดลง ${Math.abs(pct).toFixed(1)}% จากช่วงที่แล้ว`,
+      })
+    } else if (pct >= minPct) {
+      insights.push({
+        id: 'trend-bodyage-up',
+        kind: 'warning',
+        icon: '⚠️',
+        title: 'อายุร่างกายเพิ่มขึ้น',
+        detail: `อายุร่างกายเพิ่มขึ้น ${pct.toFixed(1)}% จากช่วงที่แล้ว ลองทบทวนการนอนและการฝึก`,
       })
     }
   }

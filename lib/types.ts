@@ -77,6 +77,11 @@ export interface BodyMetric {
   skeletal_muscle_range_high: number | null
   fat_mass_range_low: number | null
   fat_mass_range_high: number | null
+  body_age_years: number | null
+  body_age_range_low: number | null
+  body_age_range_high: number | null
+  muscle_range_low: number | null
+  muscle_range_high: number | null
   notes: string | null
   created_at: string
 }
