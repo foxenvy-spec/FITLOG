@@ -62,7 +62,7 @@ export default function HealthPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useState<'overview' | 'trends' | 'log' | 'photos'>('overview')
   const [trendGroup, setTrendGroup] = useState<'comp' | 'measure'>('comp')
-  const [trendMetric, setTrendMetric] = useState(0)
+  const [trendMetric, setTrendMetric] = useState<number | 'all'>(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -303,7 +303,13 @@ export default function HealthPage() {
 
   const activeTrendList = trendGroup === 'comp' ? compTrends : measureTrends
   const availableTrendIdx = activeTrendList.findIndex((t) => t.data.length > 1)
-  const selectedTrend = activeTrendList[trendMetric]?.data.length > 1 ? activeTrendList[trendMetric] : activeTrendList[availableTrendIdx]
+  const selectedTrend =
+    trendMetric !== 'all'
+      ? (activeTrendList[trendMetric]?.data.length ?? 0) > 1
+        ? activeTrendList[trendMetric]
+        : activeTrendList[availableTrendIdx]
+      : undefined
+  const allTrendsWithData = activeTrendList.filter((t) => t.data.length > 1)
 
   if (loading) {
     return <LoadingState />
@@ -402,10 +408,11 @@ export default function HealthPage() {
           </div>
 
           <select
-            value={activeTrendList.findIndex((t) => t === selectedTrend)}
-            onChange={(e) => setTrendMetric(Number(e.target.value))}
+            value={trendMetric === 'all' ? 'all' : activeTrendList.findIndex((t) => t === selectedTrend)}
+            onChange={(e) => setTrendMetric(e.target.value === 'all' ? 'all' : Number(e.target.value))}
             className="input text-sm py-2"
           >
+            <option value="all">แสดงทั้งหมด</option>
             {activeTrendList.map((t, i) => (
               <option key={t.label} value={i} disabled={t.data.length < 2}>
                 แนวโน้ม{t.label}
@@ -414,7 +421,19 @@ export default function HealthPage() {
             ))}
           </select>
 
-          {selectedTrend && selectedTrend.data.length > 1 ? (
+          {trendMetric === 'all' ? (
+            allTrendsWithData.length > 0 ? (
+              <div className="space-y-6">
+                {allTrendsWithData.map((t) => (
+                  <MetricTrendChart key={t.label} title={`แนวโน้ม${t.label}`} data={t.data} color={t.color} unit={t.unit} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
+                ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มในหมวดนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งก่อน แล้วกราฟจะขึ้นให้อัตโนมัติ
+              </p>
+            )
+          ) : selectedTrend && selectedTrend.data.length > 1 ? (
             <MetricTrendChart
               title={`แนวโน้ม${selectedTrend.label}`}
               data={selectedTrend.data}
