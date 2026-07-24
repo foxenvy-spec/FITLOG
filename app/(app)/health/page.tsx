@@ -55,7 +55,7 @@ type TrendDef = {
   color: string
   unit: string
   data: { label: string; value: number }[]
-  iconKey?: 'weight' | 'fat' | 'muscle' | 'water' | 'bmi' | 'salt' | 'protein' | 'fire' | 'ruler' | 'heart'
+  iconKey?: 'weight' | 'fat' | 'muscle' | 'water' | 'bmi' | 'salt' | 'protein' | 'fire' | 'ruler' | 'heart' | 'bone'
   range?: { low: number; high: number; min: number; max: number; note?: string }
   direction?: Direction
   decimals?: number
@@ -260,6 +260,13 @@ export default function HealthPage() {
       .map((m) => ({ label: shortLabel(m.measured_at), value: m.body_age_years as number }))
   }, [periodMetrics])
 
+  const boneMassTrend = useMemo(() => {
+    return [...periodMetrics]
+      .filter((m) => m.bone_mass_kg !== null)
+      .reverse()
+      .map((m) => ({ label: shortLabel(m.measured_at), value: toDisplay(m.bone_mass_kg as number) }))
+  }, [periodMetrics, toDisplay])
+
   const bmiTrend = useMemo(() => {
     if (!profile?.height_cm) return []
     return [...periodMetrics]
@@ -281,6 +288,34 @@ export default function HealthPage() {
     }
     return null
   }
+
+  // ผลต่างของค่าล่าสุด vs ค่าที่กรอกไว้ก่อนหน้า (สแกนหาสองแถวล่าสุดที่มีค่านี้จริงๆ ไม่จำเป็นต้องเป็นแถวติดกัน)
+  function fieldDelta(field: keyof BodyMetric, toDisplayFn?: (v: number) => number): number | null {
+    const nonNull: number[] = []
+    for (const m of metrics) {
+      const v = m[field]
+      if (typeof v === 'number') {
+        nonNull.push(toDisplayFn ? toDisplayFn(v) : v)
+        if (nonNull.length === 2) break
+      }
+    }
+    if (nonNull.length < 2) return null
+    return nonNull[0] - nonNull[1]
+  }
+
+  // BMI จากค่าน้ำหนักที่กรอกไว้ก่อนหน้า (ใช้ส่วนสูงปัจจุบันเดียวกัน เพราะส่วนสูงไม่ค่อยเปลี่ยน)
+  const previousBmi = useMemo(() => {
+    if (!profile?.height_cm) return null
+    const nonNull: number[] = []
+    for (const m of metrics) {
+      if (typeof m.weight_kg === 'number') {
+        nonNull.push(m.weight_kg)
+        if (nonNull.length === 2) break
+      }
+    }
+    if (nonNull.length < 2) return null
+    return bmiOf(nonNull[1], profile.height_cm)
+  }, [metrics, profile?.height_cm])
 
   const muscleFatItems = useMemo(() => {
     const defs: { label: string; value: number | null; low: number | null; high: number | null }[] = [
@@ -322,6 +357,8 @@ export default function HealthPage() {
   const saltRangeHigh = latestNonNull('inorganic_salt_range_high')
   const proteinRangeLow = latestNonNull('protein_range_low')
   const proteinRangeHigh = latestNonNull('protein_range_high')
+  const boneMassRangeLow = latestNonNull('bone_mass_range_low')
+  const boneMassRangeHigh = latestNonNull('bone_mass_range_high')
 
   const compTrends: TrendDef[] = useMemo(
     () => [
@@ -448,6 +485,19 @@ export default function HealthPage() {
         range: { low: 18.5, high: 25, min: 10, max: 40, note: 'เกณฑ์อ้างอิงทั่วไป' },
       },
       {
+        key: 'boneMass',
+        label: 'มวลกระดูก',
+        color: '#B08968',
+        unit,
+        data: boneMassTrend,
+        iconKey: 'bone',
+        direction: 'neutral',
+        range:
+          boneMassRangeLow !== null && boneMassRangeHigh !== null
+            ? { low: toDisplay(boneMassRangeLow), high: toDisplay(boneMassRangeHigh), min: toDisplay(boneMassRangeLow) * 0.7, max: toDisplay(boneMassRangeHigh) * 1.3 }
+            : undefined,
+      },
+      {
         key: 'bmr',
         label: 'BMR',
         color: '#5FA85F',
@@ -503,6 +553,9 @@ export default function HealthPage() {
       saltRangeHigh,
       proteinRangeLow,
       proteinRangeHigh,
+      boneMassTrend,
+      boneMassRangeLow,
+      boneMassRangeHigh,
     ]
   )
 
@@ -555,6 +608,9 @@ export default function HealthPage() {
     if (latest?.protein_kg != null && proteinRangeLow !== null && proteinRangeHigh !== null) {
       items.push({ label: 'โปรตีน', status: classifyMetric(zoneOf(latest.protein_kg, proteinRangeLow, proteinRangeHigh), 'neutral') })
     }
+    if (latest?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
+      items.push({ label: 'มวลกระดูก', status: classifyMetric(zoneOf(latest.bone_mass_kg, boneMassRangeLow, boneMassRangeHigh), 'neutral') })
+    }
     return items
   }, [
     latest,
@@ -575,6 +631,8 @@ export default function HealthPage() {
     saltRangeHigh,
     proteinRangeLow,
     proteinRangeHigh,
+    boneMassRangeLow,
+    boneMassRangeHigh,
   ])
 
   const healthScore = useMemo(() => summarizeHealthScore(healthScoreItems), [healthScoreItems])
@@ -686,22 +744,148 @@ export default function HealthPage() {
 
       {tab === 'overview' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            <MiniStat label="น้ำหนักล่าสุด" value={latest?.weight_kg != null ? toDisplay(latest.weight_kg) : null} unit={unit} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+            <IconStatCard
+              label="น้ำหนัก"
+              subLabel="WEIGHT"
+              icon="weight"
+              color="#E8A33D"
+              value={latest?.weight_kg != null ? toDisplay(latest.weight_kg) : null}
+              unit={unit}
+              delta={fieldDelta('weight_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="neutral"
+            />
+            <IconStatCard
+              label="ดัชนีมวลกาย"
+              subLabel="BMI"
+              icon="bmi"
+              color="#6C8CA8"
+              value={bmi}
+              unit={bmi !== null ? bmiCategory(bmi) : undefined}
+              decimals={1}
+              delta={previousBmi !== null && bmi !== null ? bmi - previousBmi : null}
+              deltaUnit=""
+              direction="neutral"
+            />
+            <IconStatCard
+              label="ไขมันในร่างกาย"
+              subLabel="BODY FAT"
+              icon="fat"
+              color="#C1503A"
+              value={latest?.body_fat_pct ?? null}
+              unit="%"
+              delta={fieldDelta('body_fat_pct')}
+              deltaUnit="%"
+              direction="lowerBetter"
+            />
+            <IconStatCard
+              label="มวลกล้ามเนื้อ"
+              subLabel="MUSCLE MASS"
+              icon="muscle"
+              color="#5FA88C"
+              value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null}
+              unit={unit}
+              delta={fieldDelta('muscle_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="higherBetter"
+            />
+            <IconStatCard
+              label="มวลไขมัน"
+              subLabel="FAT MASS"
+              icon="fat"
+              color="#C1503A"
+              value={latest?.body_fat_kg != null ? toDisplay(latest.body_fat_kg) : null}
+              unit={unit}
+              delta={fieldDelta('body_fat_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="lowerBetter"
+            />
+            <IconStatCard
+              label="ไขมันช่องท้อง"
+              subLabel="VISCERAL FAT"
+              icon="fat"
+              color="#CF9A3D"
+              value={latest?.visceral_fat_grade ?? null}
+              unit="ระดับ"
+              decimals={0}
+              delta={fieldDelta('visceral_fat_grade')}
+              deltaUnit="ระดับ"
+              direction="lowerBetter"
+              note={latest?.visceral_fat_grade != null ? (latest.visceral_fat_grade <= 9 ? 'อยู่ในเกณฑ์ปกติ' : 'สูงกว่าเกณฑ์ปกติ') : undefined}
+            />
+            <IconStatCard
+              label="น้ำในร่างกาย"
+              subLabel="BODY WATER"
+              icon="water"
+              color="#3D8FE8"
+              value={latest?.body_water_kg != null ? toDisplay(latest.body_water_kg) : null}
+              unit={unit}
+              delta={fieldDelta('body_water_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="neutral"
+            />
+            <IconStatCard
+              label="โปรตีน"
+              subLabel="PROTEIN"
+              icon="protein"
+              color="#5FA8A0"
+              value={latest?.protein_kg != null ? toDisplay(latest.protein_kg) : null}
+              unit={unit}
+              delta={fieldDelta('protein_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="neutral"
+            />
+            <IconStatCard
+              label="กล้ามเนื้อโครงร่าง"
+              subLabel="SKELETAL MUSCLE"
+              icon="muscle"
+              color="#7FA85F"
+              value={latest?.skeletal_muscle_kg != null ? toDisplay(latest.skeletal_muscle_kg) : null}
+              unit={unit}
+              delta={fieldDelta('skeletal_muscle_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="higherBetter"
+            />
+            <IconStatCard
+              label="มวลกระดูก"
+              subLabel="BONE MASS"
+              icon="bone"
+              color="#B08968"
+              value={latest?.bone_mass_kg != null ? toDisplay(latest.bone_mass_kg) : null}
+              unit={unit}
+              delta={fieldDelta('bone_mass_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="neutral"
+            />
+            <IconStatCard
+              label="อายุร่างกาย"
+              subLabel="BODY AGE"
+              icon="heart"
+              color="#CF715F"
+              value={latest?.body_age_years ?? null}
+              unit="ปี"
+              decimals={0}
+              delta={fieldDelta('body_age_years')}
+              deltaUnit="ปี"
+              direction="lowerBetter"
+            />
+            <IconStatCard
+              label="อัตราการเผาผลาญ"
+              subLabel="BMR"
+              icon="fire"
+              color="#5FA85F"
+              value={latest?.bmr_kcal ?? null}
+              unit="kcal"
+              decimals={0}
+              delta={fieldDelta('bmr_kcal')}
+              deltaUnit="kcal"
+              direction="neutral"
+            />
+          </div>
+
+          <div className="max-w-[220px]">
             <HeightSetting key={profile?.height_cm ?? 'unset'} profile={profile} onSaved={(p) => setProfile(p)} />
-            <MiniStat label="BMI" value={bmi} unit={bmi !== null ? bmiCategory(bmi) : undefined} decimals={1} />
-            <MiniStat label="Body Fat" value={latest?.body_fat_pct} unit="%" />
-            <MiniStat label="Muscle Mass" value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null} unit={unit} />
-            <MiniStat label="ต้นแขนล่าสุด" value={latest?.arm_cm} unit="ซม." />
-            <MiniStat label="ต้นขาล่าสุด" value={latest?.thigh_cm} unit="ซม." />
-            <MiniStat label="มวลไขมัน" value={latest?.body_fat_kg != null ? toDisplay(latest.body_fat_kg) : null} unit={unit} />
-            <MiniStat label="น้ำในร่างกาย" value={latest?.body_water_kg != null ? toDisplay(latest.body_water_kg) : null} unit={unit} />
-            <MiniStat label="เกลือแร่" value={latest?.inorganic_salt_kg != null ? toDisplay(latest.inorganic_salt_kg) : null} unit={unit} />
-            <MiniStat label="โปรตีน" value={latest?.protein_kg != null ? toDisplay(latest.protein_kg) : null} unit={unit} />
-            <MiniStat label="กล้ามเนื้อโครงร่าง" value={latest?.skeletal_muscle_kg != null ? toDisplay(latest.skeletal_muscle_kg) : null} unit={unit} />
-            <MiniStat label="ไขมันช่องท้อง" value={latest?.visceral_fat_grade} unit="ระดับ" decimals={0} />
-            <MiniStat label="BMR" value={latest?.bmr_kcal} unit="kcal" decimals={0} />
-            <MiniStat label="อายุร่างกาย" value={latest?.body_age_years} unit="ปี" decimals={0} />
           </div>
 
           <div className="grid lg:grid-cols-2 gap-4 items-start">
@@ -717,6 +901,31 @@ export default function HealthPage() {
               </p>
             )}
           </div>
+
+          {healthInsights.length > 0 && (
+            <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+              <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
+                Insight &amp; Recommendation
+                <span className="text-muted">
+                  <InfoIcon />
+                </span>
+              </h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {healthInsights.slice(0, 4).map((insight) => (
+                  <InsightCard key={insight.id} insight={insight} />
+                ))}
+              </div>
+              {healthInsights.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setTab('trends')}
+                  className="mt-3 w-full text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2"
+                >
+                  ดูคำแนะนำเพิ่มเติม
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1061,6 +1270,14 @@ function HeartIcon() {
   )
 }
 
+function BoneIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17.5 6.5c1-1 1-2.5 0-3.5s-2.5-1-3.5 0c-.6.6-.8 1.4-.7 2.1L7.1 11.3c-.7-.1-1.5.1-2.1.7-1 1-1 2.5 0 3.5s2.5 1 3.5 0c.6-.6.8-1.4.7-2.1l6.2-6.2c.7.1 1.5-.1 2.1-.7z" />
+    </svg>
+  )
+}
+
 const TREND_ICONS: Record<string, () => JSX.Element> = {
   weight: ScaleIcon,
   fat: DropletsIcon,
@@ -1072,6 +1289,7 @@ const TREND_ICONS: Record<string, () => JSX.Element> = {
   fire: FireIcon,
   ruler: RulerIcon,
   heart: HeartIcon,
+  bone: BoneIcon,
 }
 
 // การ์ดสรุปตัวเลขล่าสุดด้านบน (พร้อม badge Low/Standard/High) — ใช้ค่า "ล่าสุดจริง" ไม่ขึ้นกับช่วงเวลาที่เลือกดูกราฟ
@@ -1503,14 +1721,59 @@ function MuscleFatBarRow({
   )
 }
 
-function MiniStat({ label, value, unit, decimals = 1 }: { label: string; value: number | null | undefined; unit?: string; decimals?: number }) {
+// การ์ดสรุปตัวเลขล่าสุดแบบใหม่ (ไอคอนวงกลม + ป้ายไทย/อังกฤษ + ค่า + ลูกศรเปลี่ยนแปลงจากครั้งก่อนหน้า)
+function IconStatCard({
+  label,
+  subLabel,
+  icon,
+  color,
+  value,
+  unit,
+  decimals = 1,
+  delta,
+  deltaUnit = '',
+  direction = 'neutral',
+  note,
+}: {
+  label: string
+  subLabel: string
+  icon: string
+  color: string
+  value: number | null | undefined
+  unit?: string
+  decimals?: number
+  delta: number | null
+  deltaUnit?: string
+  direction?: Direction
+  note?: string
+}) {
+  const Icon = TREND_ICONS[icon] ?? ScaleIcon
+  const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
+  const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
+  const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
+
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
-      <p className="text-[11px] tracked uppercase text-muted mb-1">{label}</p>
-      <p className="font-mono text-2xl tabular text-amber">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center" style={{ background: `${color}26`, color }}>
+          <Icon />
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs text-ink font-medium truncate">{label}</p>
+          <p className="text-[9px] tracked uppercase text-muted truncate">{subLabel}</p>
+        </div>
+      </div>
+      <p className="font-mono text-xl tabular text-ink">
         {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
         {unit && <span className="text-xs text-muted ml-1">{unit}</span>}
       </p>
+      {note ? (
+        <p className="text-[10px] text-muted mt-1">{note}</p>
+      ) : delta !== null ? (
+        <p className={`text-[11px] font-mono mt-1 ${deltaColor}`}>
+          {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)} {deltaUnit}
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -1603,6 +1866,7 @@ function MetricForm({
   const [bodyWater, setBodyWater] = useState('')
   const [inorganicSalt, setInorganicSalt] = useState('')
   const [protein, setProtein] = useState('')
+  const [boneMass, setBoneMass] = useState('')
   const [skeletalMuscle, setSkeletalMuscle] = useState('')
   const [visceralFat, setVisceralFat] = useState('')
   const [bmr, setBmr] = useState('')
@@ -1624,6 +1888,8 @@ function MetricForm({
   const [saltRangeHigh, setSaltRangeHigh] = useState('')
   const [proteinRangeLow, setProteinRangeLow] = useState('')
   const [proteinRangeHigh, setProteinRangeHigh] = useState('')
+  const [boneMassRangeLow, setBoneMassRangeLow] = useState('')
+  const [boneMassRangeHigh, setBoneMassRangeHigh] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [heightNote, setHeightNote] = useState<string | null>(null)
@@ -1655,6 +1921,7 @@ function MetricForm({
     if (data.body_water_kg !== null) setBodyWater(fmtKg(data.body_water_kg))
     if (data.inorganic_salt_kg !== null) setInorganicSalt(fmtKg(data.inorganic_salt_kg))
     if (data.protein_kg !== null) setProtein(fmtKg(data.protein_kg))
+    if (data.bone_mass_kg !== null) setBoneMass(fmtKg(data.bone_mass_kg))
     if (data.skeletal_muscle_kg !== null) setSkeletalMuscle(fmtKg(data.skeletal_muscle_kg))
     if (data.visceral_fat_grade !== null) setVisceralFat(String(data.visceral_fat_grade))
     if (data.bmr_kcal !== null) setBmr(String(data.bmr_kcal))
@@ -1669,7 +1936,15 @@ function MetricForm({
       data.muscle_range_low !== null ||
       data.muscle_range_high !== null ||
       data.body_age_range_low !== null ||
-      data.body_age_range_high !== null
+      data.body_age_range_high !== null ||
+      data.body_water_range_low !== null ||
+      data.body_water_range_high !== null ||
+      data.inorganic_salt_range_low !== null ||
+      data.inorganic_salt_range_high !== null ||
+      data.protein_range_low !== null ||
+      data.protein_range_high !== null ||
+      data.bone_mass_range_low !== null ||
+      data.bone_mass_range_high !== null
     if (hasRanges) {
       setShowRanges(true)
       if (data.weight_range_low !== null) setWeightRangeLow(fmtKg(data.weight_range_low))
@@ -1682,6 +1957,14 @@ function MetricForm({
       if (data.muscle_range_high !== null) setMuscleRangeHigh(fmtKg(data.muscle_range_high))
       if (data.body_age_range_low !== null) setBodyAgeRangeLow(String(data.body_age_range_low))
       if (data.body_age_range_high !== null) setBodyAgeRangeHigh(String(data.body_age_range_high))
+      if (data.body_water_range_low !== null) setBodyWaterRangeLow(fmtKg(data.body_water_range_low))
+      if (data.body_water_range_high !== null) setBodyWaterRangeHigh(fmtKg(data.body_water_range_high))
+      if (data.inorganic_salt_range_low !== null) setSaltRangeLow(fmtKg(data.inorganic_salt_range_low))
+      if (data.inorganic_salt_range_high !== null) setSaltRangeHigh(fmtKg(data.inorganic_salt_range_high))
+      if (data.protein_range_low !== null) setProteinRangeLow(fmtKg(data.protein_range_low))
+      if (data.protein_range_high !== null) setProteinRangeHigh(fmtKg(data.protein_range_high))
+      if (data.bone_mass_range_low !== null) setBoneMassRangeLow(fmtKg(data.bone_mass_range_low))
+      if (data.bone_mass_range_high !== null) setBoneMassRangeHigh(fmtKg(data.bone_mass_range_high))
     }
   }
 
@@ -1711,6 +1994,7 @@ function MetricForm({
       body_water_kg: bodyWater ? toKg(Number(bodyWater)) : null,
       inorganic_salt_kg: inorganicSalt ? toKg(Number(inorganicSalt)) : null,
       protein_kg: protein ? toKg(Number(protein)) : null,
+      bone_mass_kg: boneMass ? toKg(Number(boneMass)) : null,
       skeletal_muscle_kg: skeletalMuscle ? toKg(Number(skeletalMuscle)) : null,
       visceral_fat_grade: visceralFat ? Number(visceralFat) : null,
       bmr_kcal: bmr ? Number(bmr) : null,
@@ -1731,6 +2015,8 @@ function MetricForm({
       inorganic_salt_range_high: saltRangeHigh ? toKg(Number(saltRangeHigh)) : null,
       protein_range_low: proteinRangeLow ? toKg(Number(proteinRangeLow)) : null,
       protein_range_high: proteinRangeHigh ? toKg(Number(proteinRangeHigh)) : null,
+      bone_mass_range_low: boneMassRangeLow ? toKg(Number(boneMassRangeLow)) : null,
+      bone_mass_range_high: boneMassRangeHigh ? toKg(Number(boneMassRangeHigh)) : null,
     }
     const { data, error } = await supabase.from('body_metrics').insert(payload).select().single()
     setSaving(false)
@@ -1751,6 +2037,7 @@ function MetricForm({
     setBodyWater('')
     setInorganicSalt('')
     setProtein('')
+    setBoneMass('')
     setSkeletalMuscle('')
     setVisceralFat('')
     setBmr('')
@@ -1771,6 +2058,8 @@ function MetricForm({
     setSaltRangeHigh('')
     setProteinRangeLow('')
     setProteinRangeHigh('')
+    setBoneMassRangeLow('')
+    setBoneMassRangeHigh('')
   }
 
   return (
@@ -1801,6 +2090,7 @@ function MetricForm({
         <LabeledInput label={`น้ำในร่างกาย (${unit})`} value={bodyWater} onChange={setBodyWater} />
         <LabeledInput label={`เกลือแร่ (${unit})`} value={inorganicSalt} onChange={setInorganicSalt} />
         <LabeledInput label={`โปรตีน (${unit})`} value={protein} onChange={setProtein} />
+        <LabeledInput label={`มวลกระดูก (${unit})`} value={boneMass} onChange={setBoneMass} />
         <LabeledInput label={`กล้ามเนื้อโครงร่าง (${unit})`} value={skeletalMuscle} onChange={setSkeletalMuscle} />
         <LabeledInput label="ไขมันช่องท้อง (ระดับ)" value={visceralFat} onChange={setVisceralFat} />
         <LabeledInput label="BMR (kcal)" value={bmr} onChange={setBmr} />
@@ -1837,6 +2127,8 @@ function MetricForm({
               <LabeledInput label={`เกลือแร่ สูงสุด (${unit})`} value={saltRangeHigh} onChange={setSaltRangeHigh} />
               <LabeledInput label={`โปรตีน ต่ำสุด (${unit})`} value={proteinRangeLow} onChange={setProteinRangeLow} />
               <LabeledInput label={`โปรตีน สูงสุด (${unit})`} value={proteinRangeHigh} onChange={setProteinRangeHigh} />
+              <LabeledInput label={`มวลกระดูก ต่ำสุด (${unit})`} value={boneMassRangeLow} onChange={setBoneMassRangeLow} />
+              <LabeledInput label={`มวลกระดูก สูงสุด (${unit})`} value={boneMassRangeHigh} onChange={setBoneMassRangeHigh} />
             </div>
           </div>
         )}
