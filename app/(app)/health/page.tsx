@@ -55,7 +55,7 @@ type TrendDef = {
   color: string
   unit: string
   data: { label: string; value: number }[]
-  iconKey?: 'weight' | 'fat' | 'muscle' | 'water' | 'bmi' | 'salt' | 'protein' | 'fire' | 'ruler'
+  iconKey?: 'weight' | 'fat' | 'muscle' | 'water' | 'bmi' | 'salt' | 'protein' | 'fire' | 'ruler' | 'heart'
   range?: { low: number; high: number; min: number; max: number; note?: string }
   direction?: Direction
   decimals?: number
@@ -253,6 +253,13 @@ export default function HealthPage() {
       .map((m) => ({ label: shortLabel(m.measured_at), value: m.bmr_kcal as number }))
   }, [periodMetrics])
 
+  const bodyAgeTrend = useMemo(() => {
+    return [...periodMetrics]
+      .filter((m) => m.body_age_years !== null)
+      .reverse()
+      .map((m) => ({ label: shortLabel(m.measured_at), value: m.body_age_years as number }))
+  }, [periodMetrics])
+
   const bmiTrend = useMemo(() => {
     if (!profile?.height_cm) return []
     return [...periodMetrics]
@@ -305,6 +312,10 @@ export default function HealthPage() {
   const skeletalRangeHigh = latestNonNull('skeletal_muscle_range_high')
   const fatMassRangeLow = latestNonNull('fat_mass_range_low')
   const fatMassRangeHigh = latestNonNull('fat_mass_range_high')
+  const muscleRangeLow = latestNonNull('muscle_range_low')
+  const muscleRangeHigh = latestNonNull('muscle_range_high')
+  const bodyAgeRangeLow = latestNonNull('body_age_range_low')
+  const bodyAgeRangeHigh = latestNonNull('body_age_range_high')
 
   const compTrends: TrendDef[] = useMemo(
     () => [
@@ -331,7 +342,19 @@ export default function HealthPage() {
         direction: 'lowerBetter',
         range: { low: 18, high: 28, min: 8, max: 48, note: 'เกณฑ์อ้างอิงทั่วไป' },
       },
-      { key: 'muscleMass', label: 'มวลกล้ามเนื้อ', color: '#5FA88C', unit, data: muscleTrend, iconKey: 'muscle', direction: 'higherBetter' },
+      {
+        key: 'muscleMass',
+        label: 'มวลกล้ามเนื้อ',
+        color: '#5FA88C',
+        unit,
+        data: muscleTrend,
+        iconKey: 'muscle',
+        direction: 'higherBetter',
+        range:
+          muscleRangeLow !== null && muscleRangeHigh !== null
+            ? { low: toDisplay(muscleRangeLow), high: toDisplay(muscleRangeHigh), min: toDisplay(muscleRangeLow) * 0.85, max: toDisplay(muscleRangeHigh) * 1.15 }
+            : undefined,
+      },
       {
         key: 'bodyFatKg',
         label: 'มวลไขมัน',
@@ -392,6 +415,20 @@ export default function HealthPage() {
         decimals: 0,
         range: { low: 1400, high: 2000, min: 1000, max: 2500, note: 'ช่วงอ้างอิงทั่วไป ไม่ใช่ค่าคำนวณเฉพาะบุคคล' },
       },
+      {
+        key: 'bodyAge',
+        label: 'อายุร่างกาย',
+        color: '#CF715F',
+        unit: 'ปี',
+        data: bodyAgeTrend,
+        iconKey: 'heart',
+        direction: 'lowerBetter',
+        decimals: 0,
+        range:
+          bodyAgeRangeLow !== null && bodyAgeRangeHigh !== null
+            ? { low: bodyAgeRangeLow, high: bodyAgeRangeHigh, min: bodyAgeRangeLow * 0.6, max: bodyAgeRangeHigh * 1.3 }
+            : undefined,
+      },
     ],
     [
       unit,
@@ -407,12 +444,17 @@ export default function HealthPage() {
       visceralFatTrend,
       bmiTrend,
       bmrTrend,
+      bodyAgeTrend,
       weightRangeLow,
       weightRangeHigh,
       skeletalRangeLow,
       skeletalRangeHigh,
       fatMassRangeLow,
       fatMassRangeHigh,
+      muscleRangeLow,
+      muscleRangeHigh,
+      bodyAgeRangeLow,
+      bodyAgeRangeHigh,
     ]
   )
 
@@ -450,8 +492,27 @@ export default function HealthPage() {
     if (latest?.visceral_fat_grade != null) {
       items.push({ label: 'ไขมันช่องท้อง', status: classifyMetric(zoneOf(latest.visceral_fat_grade, 1, 9), 'lowerBetter') })
     }
+    if (latest?.muscle_kg != null && muscleRangeLow !== null && muscleRangeHigh !== null) {
+      items.push({ label: 'มวลกล้ามเนื้อ', status: classifyMetric(zoneOf(latest.muscle_kg, muscleRangeLow, muscleRangeHigh), 'higherBetter') })
+    }
+    if (latest?.body_age_years != null && bodyAgeRangeLow !== null && bodyAgeRangeHigh !== null) {
+      items.push({ label: 'อายุร่างกาย', status: classifyMetric(zoneOf(latest.body_age_years, bodyAgeRangeLow, bodyAgeRangeHigh), 'lowerBetter') })
+    }
     return items
-  }, [latest, bmi, weightRangeLow, weightRangeHigh, skeletalRangeLow, skeletalRangeHigh, fatMassRangeLow, fatMassRangeHigh])
+  }, [
+    latest,
+    bmi,
+    weightRangeLow,
+    weightRangeHigh,
+    skeletalRangeLow,
+    skeletalRangeHigh,
+    fatMassRangeLow,
+    fatMassRangeHigh,
+    muscleRangeLow,
+    muscleRangeHigh,
+    bodyAgeRangeLow,
+    bodyAgeRangeHigh,
+  ])
 
   const healthScore = useMemo(() => summarizeHealthScore(healthScoreItems), [healthScoreItems])
 
@@ -463,8 +524,10 @@ export default function HealthPage() {
       bodyFatPct: firstLast(bodyFatTrend),
       skeletalMuscle: firstLast(skeletalMuscleTrend),
       bodyFatKg: firstLast(bodyFatKgTrend),
+      muscleMass: firstLast(muscleTrend),
+      bodyAge: firstLast(bodyAgeTrend),
     })
-  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend])
+  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend])
 
   function goalCurrentValue(goal: Goal): number | null {
     if (goal.goal_type === 'weight') return latest?.weight_kg ?? null
@@ -498,9 +561,43 @@ export default function HealthPage() {
     return <ErrorState title="โหลดข้อมูลสุขภาพไม่สำเร็จ" message={loadError} onRetry={load} />
   }
 
+  async function handleShare() {
+    const shareText = `สุขภาพร่างกายของฉัน — น้ำหนัก ${latest?.weight_kg != null ? toDisplay(latest.weight_kg).toFixed(1) : '—'} ${unit}, BMI ${bmi !== null ? bmi.toFixed(1) : '—'}`
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: 'สุขภาพร่างกาย', text: shareText })
+      } catch {
+        // ผู้ใช้กดยกเลิก share sheet — ไม่ต้องทำอะไรต่อ
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(shareText)
+    }
+  }
+
   return (
     <div className="space-y-6 lg:max-w-2xl lg:mx-auto">
-      <h1 className="font-display text-2xl tracked uppercase">สุขภาพร่างกาย</h1>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl tracked uppercase">สุขภาพร่างกาย</h1>
+          <p className="text-xs text-muted mt-0.5">ติดตามและวิเคราะห์แนวโน้มสุขภาพของคุณ</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex items-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-2 active:scale-[0.99] transition"
+          >
+            <ShareIcon />
+            แชร์รายงาน
+          </button>
+          {latest?.measured_at && (
+            <span className="flex items-center gap-1.5 text-[11px] font-mono text-muted border border-line rounded-full px-3 py-2 whitespace-nowrap">
+              <CalendarIcon />
+              {shortLabel(latest.measured_at)}
+            </span>
+          )}
+        </div>
+      </div>
 
       <div className="flex rounded-full bg-surface p-1 border border-line">
         {(
@@ -541,6 +638,7 @@ export default function HealthPage() {
             <MiniStat label="กล้ามเนื้อโครงร่าง" value={latest?.skeletal_muscle_kg != null ? toDisplay(latest.skeletal_muscle_kg) : null} unit={unit} />
             <MiniStat label="ไขมันช่องท้อง" value={latest?.visceral_fat_grade} unit="ระดับ" decimals={0} />
             <MiniStat label="BMR" value={latest?.bmr_kcal} unit="kcal" decimals={0} />
+            <MiniStat label="อายุร่างกาย" value={latest?.body_age_years} unit="ปี" decimals={0} />
           </div>
 
           {(bmi !== null || latest?.body_fat_pct != null) && (
@@ -635,26 +733,27 @@ export default function HealthPage() {
 
           <div className="grid lg:grid-cols-3 gap-4 items-start">
             <div className="lg:col-span-2 space-y-4">
-              <select
-                value={trendMetric === 'all' ? 'all' : activeTrendList.findIndex((t) => t === selectedTrend)}
-                onChange={(e) => setTrendMetric(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                className="input text-sm py-2"
-              >
-                <option value="all">แสดงทั้งหมด</option>
-                {activeTrendList.map((t, i) => (
-                  <option key={t.key} value={i} disabled={t.data.length < 2}>
-                    แนวโน้ม{t.label}
-                    {t.data.length < 2 ? ' (ยังไม่มีข้อมูลพอ)' : ''}
-                  </option>
-                ))}
-              </select>
-
-              <h2 className="font-display text-sm tracked uppercase text-muted flex items-center gap-1.5">
-                แนวโน้มรายตัวชี้วัด
-                <span className="text-muted">
-                  <InfoIcon />
-                </span>
-              </h2>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <h2 className="font-display text-sm tracked uppercase text-muted flex items-center gap-1.5">
+                  แนวโน้มรายตัวชี้วัด
+                  <span className="text-muted">
+                    <InfoIcon />
+                  </span>
+                </h2>
+                <select
+                  value={trendMetric === 'all' ? 'all' : activeTrendList.findIndex((t) => t === selectedTrend)}
+                  onChange={(e) => setTrendMetric(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="input text-xs py-1.5 w-auto max-w-[55%] sm:max-w-[220px]"
+                >
+                  <option value="all">แสดงทั้งหมด</option>
+                  {activeTrendList.map((t, i) => (
+                    <option key={t.key} value={i} disabled={t.data.length < 2}>
+                      แนวโน้ม{t.label}
+                      {t.data.length < 2 ? ' (ยังไม่มีข้อมูลพอ)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {trendMetric === 'all' ? (
                 allTrendsWithData.length > 0 ? (
@@ -777,6 +876,26 @@ function InfoIcon() {
   )
 }
 
+function ShareIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="18" cy="5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="19" r="2.5" />
+      <path d="M8.3 10.7 15.7 6.3M8.3 13.3 15.7 17.7" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 9h18M8 3v4M16 3v4" />
+    </svg>
+  )
+}
+
 function ChevronRightIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -865,6 +984,14 @@ function DiamondIcon() {
   )
 }
 
+function HeartIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M12 20.5s-7.5-4.6-9.8-9.3C.8 7.7 2.6 4.5 6 4c2-.3 3.7.7 6 3 2.3-2.3 4-3.3 6-3 3.4.5 5.2 3.7 3.8 7.2-2.3 4.7-9.8 9.3-9.8 9.3z" />
+    </svg>
+  )
+}
+
 const TREND_ICONS: Record<string, () => JSX.Element> = {
   weight: ScaleIcon,
   fat: DropletsIcon,
@@ -875,6 +1002,7 @@ const TREND_ICONS: Record<string, () => JSX.Element> = {
   protein: LeafIcon,
   fire: FireIcon,
   ruler: RulerIcon,
+  heart: HeartIcon,
 }
 
 // การ์ดสรุปตัวเลขล่าสุดด้านบน (พร้อม badge Low/Standard/High) — ใช้ค่า "ล่าสุดจริง" ไม่ขึ้นกับช่วงเวลาที่เลือกดูกราฟ
@@ -1428,6 +1556,11 @@ function MetricForm({
   const [skeletalRangeHigh, setSkeletalRangeHigh] = useState('')
   const [fatMassRangeLow, setFatMassRangeLow] = useState('')
   const [fatMassRangeHigh, setFatMassRangeHigh] = useState('')
+  const [muscleRangeLow, setMuscleRangeLow] = useState('')
+  const [muscleRangeHigh, setMuscleRangeHigh] = useState('')
+  const [bodyAge, setBodyAge] = useState('')
+  const [bodyAgeRangeLow, setBodyAgeRangeLow] = useState('')
+  const [bodyAgeRangeHigh, setBodyAgeRangeHigh] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [heightNote, setHeightNote] = useState<string | null>(null)
@@ -1462,13 +1595,18 @@ function MetricForm({
     if (data.skeletal_muscle_kg !== null) setSkeletalMuscle(fmtKg(data.skeletal_muscle_kg))
     if (data.visceral_fat_grade !== null) setVisceralFat(String(data.visceral_fat_grade))
     if (data.bmr_kcal !== null) setBmr(String(data.bmr_kcal))
+    if (data.body_age_years !== null) setBodyAge(String(data.body_age_years))
     const hasRanges =
       data.weight_range_low !== null ||
       data.weight_range_high !== null ||
       data.skeletal_muscle_range_low !== null ||
       data.skeletal_muscle_range_high !== null ||
       data.fat_mass_range_low !== null ||
-      data.fat_mass_range_high !== null
+      data.fat_mass_range_high !== null ||
+      data.muscle_range_low !== null ||
+      data.muscle_range_high !== null ||
+      data.body_age_range_low !== null ||
+      data.body_age_range_high !== null
     if (hasRanges) {
       setShowRanges(true)
       if (data.weight_range_low !== null) setWeightRangeLow(fmtKg(data.weight_range_low))
@@ -1477,6 +1615,10 @@ function MetricForm({
       if (data.skeletal_muscle_range_high !== null) setSkeletalRangeHigh(fmtKg(data.skeletal_muscle_range_high))
       if (data.fat_mass_range_low !== null) setFatMassRangeLow(fmtKg(data.fat_mass_range_low))
       if (data.fat_mass_range_high !== null) setFatMassRangeHigh(fmtKg(data.fat_mass_range_high))
+      if (data.muscle_range_low !== null) setMuscleRangeLow(fmtKg(data.muscle_range_low))
+      if (data.muscle_range_high !== null) setMuscleRangeHigh(fmtKg(data.muscle_range_high))
+      if (data.body_age_range_low !== null) setBodyAgeRangeLow(String(data.body_age_range_low))
+      if (data.body_age_range_high !== null) setBodyAgeRangeHigh(String(data.body_age_range_high))
     }
   }
 
@@ -1515,6 +1657,11 @@ function MetricForm({
       skeletal_muscle_range_high: skeletalRangeHigh ? toKg(Number(skeletalRangeHigh)) : null,
       fat_mass_range_low: fatMassRangeLow ? toKg(Number(fatMassRangeLow)) : null,
       fat_mass_range_high: fatMassRangeHigh ? toKg(Number(fatMassRangeHigh)) : null,
+      muscle_range_low: muscleRangeLow ? toKg(Number(muscleRangeLow)) : null,
+      muscle_range_high: muscleRangeHigh ? toKg(Number(muscleRangeHigh)) : null,
+      body_age_years: bodyAge ? Number(bodyAge) : null,
+      body_age_range_low: bodyAgeRangeLow ? Number(bodyAgeRangeLow) : null,
+      body_age_range_high: bodyAgeRangeHigh ? Number(bodyAgeRangeHigh) : null,
     }
     const { data, error } = await supabase.from('body_metrics').insert(payload).select().single()
     setSaving(false)
@@ -1544,6 +1691,11 @@ function MetricForm({
     setSkeletalRangeHigh('')
     setFatMassRangeLow('')
     setFatMassRangeHigh('')
+    setMuscleRangeLow('')
+    setMuscleRangeHigh('')
+    setBodyAge('')
+    setBodyAgeRangeLow('')
+    setBodyAgeRangeHigh('')
   }
 
   return (
@@ -1577,6 +1729,7 @@ function MetricForm({
         <LabeledInput label={`กล้ามเนื้อโครงร่าง (${unit})`} value={skeletalMuscle} onChange={setSkeletalMuscle} />
         <LabeledInput label="ไขมันช่องท้อง (ระดับ)" value={visceralFat} onChange={setVisceralFat} />
         <LabeledInput label="BMR (kcal)" value={bmr} onChange={setBmr} />
+        <LabeledInput label="อายุร่างกาย (ปี)" value={bodyAge} onChange={setBodyAge} />
       </div>
 
       <div className="border-t border-line pt-3">
@@ -1599,6 +1752,10 @@ function MetricForm({
               <LabeledInput label={`กล้ามเนื้อโครงร่าง สูงสุด (${unit})`} value={skeletalRangeHigh} onChange={setSkeletalRangeHigh} />
               <LabeledInput label={`มวลไขมัน ต่ำสุด (${unit})`} value={fatMassRangeLow} onChange={setFatMassRangeLow} />
               <LabeledInput label={`มวลไขมัน สูงสุด (${unit})`} value={fatMassRangeHigh} onChange={setFatMassRangeHigh} />
+              <LabeledInput label={`มวลกล้ามเนื้อ ต่ำสุด (${unit})`} value={muscleRangeLow} onChange={setMuscleRangeLow} />
+              <LabeledInput label={`มวลกล้ามเนื้อ สูงสุด (${unit})`} value={muscleRangeHigh} onChange={setMuscleRangeHigh} />
+              <LabeledInput label="อายุร่างกาย ต่ำสุด (ปี)" value={bodyAgeRangeLow} onChange={setBodyAgeRangeLow} />
+              <LabeledInput label="อายุร่างกาย สูงสุด (ปี)" value={bodyAgeRangeHigh} onChange={setBodyAgeRangeHigh} />
             </div>
           </div>
         )}
