@@ -182,6 +182,8 @@ export default function SessionPage() {
       const typedPriorWorkouts =
         (priorWorkouts as { id: string; exercise_name: string | null; reps: number | null; weight_kg: number | null }[]) ??
         []
+      console.log('[fitlog-debug] planExerciseNames', planExerciseNames)
+      console.log('[fitlog-debug] typedPriorWorkouts count', typedPriorWorkouts.length, typedPriorWorkouts.slice(0, 5))
 
       const normalize = (s: string) => s.trim().toLowerCase()
       const planNamesNormalized = new Set(planExerciseNames.map(normalize))
@@ -222,6 +224,7 @@ export default function SessionPage() {
         }
       })
     }
+    console.log('[fitlog-debug] lastPerformanceByName', lastPerformanceByName)
 
     const initialStates = initSessionStates(
       combinedExercises,
@@ -280,8 +283,9 @@ export default function SessionPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+    console.log('[fitlog-debug] addExercise looking up last performance for name=', JSON.stringify(name))
     if (user) {
-      const { data: priorWorkout } = await supabase
+      const { data: priorWorkout, error: priorWorkoutError } = await supabase
         .from('workouts')
         .select('id, reps, weight_kg')
         .eq('user_id', user.id)
@@ -292,14 +296,16 @@ export default function SessionPage() {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
+      console.log('[fitlog-debug] addExercise priorWorkout=', priorWorkout, 'error=', priorWorkoutError)
       const typedPriorWorkout = priorWorkout as { id: string; reps: number | null; weight_kg: number | null } | null
       if (typedPriorWorkout) {
-        const { data: firstSet } = await supabase
+        const { data: firstSet, error: firstSetError } = await supabase
           .from('workout_sets')
           .select('reps, weight_kg')
           .eq('workout_id', typedPriorWorkout.id)
           .eq('set_number', 1)
           .maybeSingle()
+        console.log('[fitlog-debug] addExercise firstSet=', firstSet, 'error=', firstSetError)
         const typedFirstSet = firstSet as { reps: number; weight_kg: number } | null
         if (typedFirstSet) {
           last = { reps: typedFirstSet.reps, weightKg: typedFirstSet.weight_kg }
@@ -308,6 +314,7 @@ export default function SessionPage() {
         }
       }
     }
+    console.log('[fitlog-debug] addExercise final last=', last)
 
     setExercises((prev) => [...prev, newEx])
     setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx, last) }))
