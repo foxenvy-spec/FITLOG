@@ -62,7 +62,7 @@ export default function HealthPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useState<'overview' | 'trends' | 'log' | 'photos'>('overview')
   const [trendGroup, setTrendGroup] = useState<'comp' | 'measure'>('comp')
-  const [trendMetric, setTrendMetric] = useState<number | 'all'>(0)
+  const [trendMetric, setTrendMetric] = useState<number | 'all'>('all')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -385,7 +385,7 @@ export default function HealthPage() {
               type="button"
               onClick={() => {
                 setTrendGroup('comp')
-                setTrendMetric(0)
+                setTrendMetric('all')
               }}
               className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
                 trendGroup === 'comp' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
@@ -397,7 +397,7 @@ export default function HealthPage() {
               type="button"
               onClick={() => {
                 setTrendGroup('measure')
-                setTrendMetric(0)
+                setTrendMetric('all')
               }}
               className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
                 trendGroup === 'measure' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
