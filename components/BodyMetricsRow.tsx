@@ -58,7 +58,23 @@ export default function BodyMetricsRow() {
   }
 
   const { metrics, heightCm } = data
-  if (metrics.length === 0) return null
+
+  if (metrics.length === 0) {
+    return (
+      <a
+        href="/health"
+        className="flex items-center justify-between gap-3 rounded-lg bg-surface border border-line px-4 py-4 hover:border-amber/40 transition"
+      >
+        <div>
+          <p className="text-sm text-ink">ยังไม่มีข้อมูลสัดส่วนร่างกาย</p>
+          <p className="text-[11px] text-muted mt-0.5">
+            บันทึกน้ำหนัก/ไขมัน/กล้ามเนื้อครั้งแรกที่หน้าสุขภาพ แล้วการ์ดสรุปจะขึ้นตรงนี้
+          </p>
+        </div>
+        <span className="text-xs text-amber shrink-0">บันทึกเลย →</span>
+      </a>
+    )
+  }
 
   const summary = computeBodyMetricsSummary(metrics, heightCm)
 
