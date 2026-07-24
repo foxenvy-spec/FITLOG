@@ -88,6 +88,9 @@ export interface BodyMetric {
   inorganic_salt_range_high: number | null
   protein_range_low: number | null
   protein_range_high: number | null
+  bone_mass_kg: number | null
+  bone_mass_range_low: number | null
+  bone_mass_range_high: number | null
   notes: string | null
   created_at: string
 }
