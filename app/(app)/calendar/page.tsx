@@ -205,7 +205,7 @@ export default function CalendarPage() {
   const weekdayLabels = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 lg:max-w-2xl lg:mx-auto">
       <h1 className="font-display text-2xl tracked uppercase">ปฏิทิน</h1>
 
       {streak > 0 && (
