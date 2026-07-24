@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { searchExercises, type ExerciseDef } from '@/lib/exercises'
-import { equipmentLabel } from '@/lib/exerciseLibrary'
+import { equipmentLabel, EQUIPMENTS, type Equipment } from '@/lib/exerciseLibrary'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, muscleGroupLabel, type MuscleGroup, type MuscleLabelLang } from '@/lib/muscle-groups'
 import { loadMuscleLabelLang, saveMuscleLabelLang } from '@/lib/muscleLabelPrefs'
@@ -19,6 +19,7 @@ interface ExercisePickerProps {
 export default function ExercisePicker({ value, onChange, onSelect, placeholder }: ExercisePickerProps) {
   const [open, setOpen] = useState(false)
   const [browseMuscle, setBrowseMuscle] = useState<MuscleGroup | null>(null)
+  const [browseEquipment, setBrowseEquipment] = useState<Equipment | null>(null)
   const [lang, setLang] = useState<MuscleLabelLang>('th')
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { data: exercises = [], isLoading } = useExerciseLibrary()
@@ -34,13 +35,29 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
 
   const searchResults = useMemo(() => searchExercises(exercises, value, 8), [exercises, value])
 
+  const muscleFiltered = useMemo(
+    () => (browseMuscle ? exercises.filter((ex) => ex.muscleGroup === browseMuscle) : exercises),
+    [exercises, browseMuscle]
+  )
+
+  // แสดงเฉพาะอุปกรณ์ที่มีท่าอยู่จริงในกลุ่มกล้ามเนื้อที่เลือกไว้ ไม่โชว์ปุ่มที่กดแล้วว่างเปล่า
+  const availableEquipments = useMemo(
+    () => EQUIPMENTS.filter((eq) => muscleFiltered.some((ex) => ex.equipment === eq)),
+    [muscleFiltered]
+  )
+
   const browseResults = useMemo(() => {
-    const list = browseMuscle ? exercises.filter((ex) => ex.muscleGroup === browseMuscle) : exercises
+    const list = browseEquipment ? muscleFiltered.filter((ex) => ex.equipment === browseEquipment) : muscleFiltered
     return list.slice(0, 24)
-  }, [exercises, browseMuscle])
+  }, [muscleFiltered, browseEquipment])
 
   const showSearch = value.trim().length > 0
   const results = showSearch ? searchResults : browseResults
+
+  function selectBrowseMuscle(mg: MuscleGroup | null) {
+    setBrowseMuscle(mg)
+    setBrowseEquipment(null)
+  }
 
   function handlePick(ex: ExerciseDef) {
     onChange(ex.name)
@@ -76,17 +93,32 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
           {!showSearch && (
             <div className="px-2 pt-2 pb-1.5 space-y-1.5">
               <div className="flex flex-wrap gap-1">
-                <MuscleTab active={browseMuscle === null} onClick={() => setBrowseMuscle(null)} label="ทั้งหมด" />
+                <MuscleTab active={browseMuscle === null} onClick={() => selectBrowseMuscle(null)} label="ทั้งหมด" />
                 {MUSCLE_GROUPS.map((mg) => (
                   <MuscleTab
                     key={mg}
                     active={browseMuscle === mg}
-                    onClick={() => setBrowseMuscle(mg)}
+                    onClick={() => selectBrowseMuscle(mg)}
                     label={muscleGroupLabel(mg, lang)}
                     color={MUSCLE_GROUP_COLORS[mg]}
                   />
                 ))}
               </div>
+
+              {availableEquipments.length > 1 && (
+                <div className="flex flex-wrap gap-1">
+                  <MuscleTab active={browseEquipment === null} onClick={() => setBrowseEquipment(null)} label="อุปกรณ์ทั้งหมด" />
+                  {availableEquipments.map((eq) => (
+                    <MuscleTab
+                      key={eq}
+                      active={browseEquipment === eq}
+                      onClick={() => setBrowseEquipment(browseEquipment === eq ? null : eq)}
+                      label={equipmentLabel(eq)}
+                    />
+                  ))}
+                </div>
+              )}
+
               <div className="flex justify-end">
                 <MuscleLangToggle lang={lang} onChange={updateLang} />
               </div>
