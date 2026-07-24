@@ -58,6 +58,62 @@ export function initSessionSet(ex: ProgramExercise): SessionSetState {
   }
 }
 
+// หาท่าที่ log ไปแล้ว "วันนี้" แต่ไม่ได้อยู่ในแผนของวันนี้เลย (ผู้ใช้กด "เพิ่มท่า" เองระหว่างเซสชัน
+// ก่อนหน้านี้แล้วรีเฟรชหน้า) เอาไว้สร้างเป็นท่า ad-hoc ต่อท้ายรายการท่าตามแผน ไม่งั้นรีเฟรชแล้ว
+// ท่านี้จะหายไปจากหน้า session ทั้งที่มีแถวบันทึกจริงอยู่ในตาราง workouts แล้ว
+export interface TodaysWorkoutRow {
+  id: string
+  exercise_name: string
+  muscle_group: string | null
+}
+
+export function findExtraLoggedExercises(
+  todaysWorkouts: TodaysWorkoutRow[],
+  planExerciseNames: Set<string>
+): TodaysWorkoutRow[] {
+  const seen = new Set<string>()
+  return todaysWorkouts.filter((w) => {
+    if (planExerciseNames.has(w.exercise_name)) return false
+    if (seen.has(w.exercise_name)) return false
+    seen.add(w.exercise_name)
+    return true
+  })
+}
+
+// สร้าง ProgramExercise ปลอมสำหรับท่าที่ผู้ใช้กด "เพิ่มท่า" เองระหว่างเซสชัน (ไม่ได้อยู่ในแผนวันนี้)
+// ให้เข้า flow เดียวกับท่าอื่นทั้งหมดในหน้า session ได้ทันที (ล็อกเซ็ต/พัก/บันทึก/สรุปท้ายเซสชัน)
+// id ขึ้นต้นด้วย "adhoc:" เสมอ ใช้แยกว่าท่านี้ไม่ผูกกับแถวจริงใน program_exercises (ดู isAdhocExercise)
+// — สำคัญเพราะ program_completions.program_exercise_id มี FK ไปตาราง program_exercises เท่านั้น
+export function makeAdhocExercise(params: {
+  id: string
+  exerciseName: string
+  muscleGroup: string | null
+  position: number
+}): ProgramExercise {
+  return {
+    id: `adhoc:${params.id}`,
+    program_day_id: '',
+    user_id: '',
+    position: params.position,
+    exercise_name: params.exerciseName,
+    muscle_group: params.muscleGroup,
+    secondary_muscles: [],
+    exercise_library_id: null,
+    sets: 3,
+    target_reps: null,
+    target_rir: null,
+    rest: null,
+    rationale: null,
+    default_weight_kg: null,
+    notes: null,
+    created_at: new Date().toISOString(),
+  }
+}
+
+export function isAdhocExercise(ex: Pick<ProgramExercise, 'id'>): boolean {
+  return ex.id.startsWith('adhoc:')
+}
+
 export interface LoggedWorkoutRow {
   id: string
   exercise_name: string

@@ -5,6 +5,9 @@ import {
   initSessionStates,
   firstUnfinishedIndex,
   nextUnvisitedIndex,
+  findExtraLoggedExercises,
+  makeAdhocExercise,
+  isAdhocExercise,
   computeSessionSummary,
   aggregateMuscleLoads,
 } from './workoutSession'
@@ -186,6 +189,41 @@ describe('nextUnvisitedIndex', () => {
       'ex-3': { logged: false, skipped: false },
     }
     expect(nextUnvisitedIndex(exercises, states, 0)).toBe(1)
+  })
+})
+
+describe('makeAdhocExercise / isAdhocExercise', () => {
+  it('prefixes the id so it can be told apart from real program exercises', () => {
+    const ex = makeAdhocExercise({ id: 'w-1', exerciseName: 'เคเบิลฟลาย', muscleGroup: 'อก', position: 4 })
+    expect(ex.id).toBe('adhoc:w-1')
+    expect(ex.exercise_name).toBe('เคเบิลฟลาย')
+    expect(ex.program_day_id).toBe('')
+    expect(isAdhocExercise(ex)).toBe(true)
+    expect(isAdhocExercise(makeExercise({ id: 'ex-1' }))).toBe(false)
+  })
+})
+
+describe('findExtraLoggedExercises', () => {
+  it('finds today\'s logged exercises that are not part of the plan', () => {
+    const result = findExtraLoggedExercises(
+      [
+        { id: 'w-1', exercise_name: 'เบนช์เพรส', muscle_group: 'อก' },
+        { id: 'w-2', exercise_name: 'เคเบิลฟลาย', muscle_group: 'อก' },
+      ],
+      new Set(['เบนช์เพรส'])
+    )
+    expect(result).toEqual([{ id: 'w-2', exercise_name: 'เคเบิลฟลาย', muscle_group: 'อก' }])
+  })
+
+  it('deduplicates by exercise name so re-editing an extra exercise does not double it up', () => {
+    const result = findExtraLoggedExercises(
+      [
+        { id: 'w-1', exercise_name: 'เคเบิลฟลาย', muscle_group: 'อก' },
+        { id: 'w-1', exercise_name: 'เคเบิลฟลาย', muscle_group: 'อก' },
+      ],
+      new Set()
+    )
+    expect(result).toHaveLength(1)
   })
 })
 
