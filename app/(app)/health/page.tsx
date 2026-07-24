@@ -284,6 +284,10 @@ export default function HealthPage() {
 
           <HeightSetting profile={profile} onSaved={(p) => setProfile(p)} />
 
+          {(bmi !== null || latest?.body_fat_pct != null) && (
+            <ObesityAnalysisChart bmi={bmi} bodyFatPct={latest?.body_fat_pct ?? null} />
+          )}
+
           {muscleFatItems.length > 0 ? (
             <MuscleFatAnalysisChart items={muscleFatItems} unit={unit} />
           ) : (
@@ -427,6 +431,88 @@ function MetricTrendChart({
         </ResponsiveContainer>
       </div>
     </section>
+  )
+}
+
+function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFatPct: number | null }) {
+  return (
+    <section>
+      <h2 className="font-display text-sm tracked uppercase text-muted mb-3">Obesity Analysis</h2>
+      <div className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-5">
+        {bmi !== null && (
+          <ZoneBarRow label="BMI (kg/m²)" value={bmi} min={10} low={18.5} high={25} max={40} decimals={1} />
+        )}
+        {bodyFatPct !== null && (
+          <ZoneBarRow label="Body fat rate (%)" value={bodyFatPct} min={8} low={18} high={28} max={48} decimals={1} unit="%" />
+        )}
+      </div>
+    </section>
+  )
+}
+
+function ZoneBarRow({
+  label,
+  value,
+  min,
+  low,
+  high,
+  max,
+  decimals = 1,
+  unit = '',
+}: {
+  label: string
+  value: number
+  min: number
+  low: number
+  high: number
+  max: number
+  decimals?: number
+  unit?: string
+}) {
+  const pct = (v: number) => ((Math.min(Math.max(v, min), max) - min) / (max - min)) * 100
+  const lowPct = pct(low)
+  const highPct = pct(high)
+  const valuePct = pct(value)
+  const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
+  const zoneColor = value < low ? 'text-steel' : value > high ? 'text-rusttext' : 'text-moss'
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1.5">
+        <span className="text-xs text-ink">{label}</span>
+        <span className="text-sm font-mono tabular">
+          {value.toFixed(decimals)}
+          {unit}
+          <span className={`text-[10px] ml-1.5 ${zoneColor}`}>{zone}</span>
+        </span>
+      </div>
+      <div className="flex text-[9px] text-muted mb-1">
+        <span style={{ width: `${lowPct}%` }} className="truncate">
+          Low
+        </span>
+        <span style={{ width: `${highPct - lowPct}%` }} className="text-center truncate text-moss">
+          Standard
+        </span>
+        <span style={{ width: `${100 - highPct}%` }} className="text-right truncate">
+          High
+        </span>
+      </div>
+      <div className="relative h-2 rounded-full bg-surface2 overflow-hidden">
+        <div className="absolute inset-y-0 bg-line" style={{ left: 0, width: `${lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-moss/50" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-line" style={{ left: `${highPct}%`, right: 0 }} />
+        <div
+          className="absolute top-1/2 w-2.5 h-2.5 rounded-full bg-amber border-2 border-surface shadow"
+          style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
+        />
+      </div>
+      <div className="flex justify-between text-[9px] text-muted mt-1">
+        <span>{min.toFixed(decimals)}</span>
+        <span>{low.toFixed(decimals)}</span>
+        <span>{high.toFixed(decimals)}</span>
+        <span>{max.toFixed(decimals)}</span>
+      </div>
+    </div>
   )
 }
 
