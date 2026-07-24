@@ -548,14 +548,80 @@ function MetricTrendChart({
   )
 }
 
+function InfoIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="11" x2="12" y2="16" />
+      <circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <polyline points="9 6 15 12 9 18" />
+    </svg>
+  )
+}
+
+function ScaleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="3" y="10" width="18" height="10" rx="2" />
+      <circle cx="12" cy="15" r="2" />
+      <path d="M8 10 L12 4 L16 10" />
+    </svg>
+  )
+}
+
+function MuscleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M6 20c0-5 1-8 2-10 1-2 3-3 5-3 3 0 5 2 5 5 0 2-1 3-3 3-1 0-2-1-2-2" />
+      <path d="M8 20c0-3 .5-5 1.5-7" />
+    </svg>
+  )
+}
+
+function DropletsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="8" cy="9" r="2" />
+      <circle cx="16" cy="9" r="1.5" />
+      <circle cx="12" cy="16" r="2.5" />
+    </svg>
+  )
+}
+
+function ZoneBadge({ zone }: { zone: 'Low' | 'Standard' | 'High' }) {
+  const cls =
+    zone === 'Low' ? 'bg-steeldim text-steel' : zone === 'High' ? 'bg-rustdim text-rusttext' : 'bg-mossdim text-moss'
+  return (
+    <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>{zone}</span>
+  )
+}
+
+const MUSCLE_FAT_META: Record<string, { Icon: () => JSX.Element; bg: string; fg: string }> = {
+  Weight: { Icon: ScaleIcon, bg: 'bg-moss/15', fg: 'text-moss' },
+  'Skeletal Muscle': { Icon: MuscleIcon, bg: 'bg-violet/15', fg: 'text-violet' },
+  'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber' },
+}
+
 function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFatPct: number | null }) {
   return (
     <section>
-      <h2 className="font-display text-sm tracked uppercase text-muted mb-3">Obesity Analysis</h2>
+      <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
+        <ScaleIcon />
+        Obesity Analysis
+        <span className="text-muted">
+          <InfoIcon />
+        </span>
+      </h2>
       <div className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-5">
-        {bmi !== null && (
-          <ZoneBarRow label="BMI (kg/m²)" value={bmi} min={10} low={18.5} high={25} max={40} decimals={1} />
-        )}
+        {bmi !== null && <ZoneBarRow label="BMI (kg/m²)" value={bmi} min={10} low={18.5} high={25} max={40} decimals={1} />}
+        {bmi !== null && bodyFatPct !== null && <div className="border-t border-line" />}
         {bodyFatPct !== null && (
           <ZoneBarRow label="Body fat rate (%)" value={bodyFatPct} min={8} low={18} high={28} max={48} decimals={1} unit="%" />
         )}
@@ -588,39 +654,48 @@ function ZoneBarRow({
   const highPct = pct(high)
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
-  const zoneColor = value < low ? 'text-steel' : value > high ? 'text-rusttext' : 'text-moss'
 
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-1.5">
-        <span className="text-xs text-ink">{label}</span>
-        <span className="text-sm font-mono tabular">
-          {value.toFixed(decimals)}
-          {unit}
-          <span className={`text-[10px] ml-1.5 ${zoneColor}`}>{zone}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="flex items-center gap-1.5 text-sm text-ink font-medium">
+          {label}
+          <span className="text-muted">
+            <InfoIcon />
+          </span>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="font-mono text-lg tabular text-ink">
+            {value.toFixed(decimals)}
+            {unit && <span className="text-xs text-muted ml-0.5">{unit}</span>}
+          </span>
+          <ZoneBadge zone={zone} />
+          <span className="text-muted">
+            <ChevronRightIcon />
+          </span>
         </span>
       </div>
-      <div className="flex text-[9px] text-muted mb-1">
-        <span style={{ width: `${lowPct}%` }} className="truncate">
+      <div className="flex text-[10px] mb-1.5">
+        <span style={{ width: `${lowPct}%` }} className="truncate text-steel">
           Low
         </span>
         <span style={{ width: `${highPct - lowPct}%` }} className="text-center truncate text-moss">
           Standard
         </span>
-        <span style={{ width: `${100 - highPct}%` }} className="text-right truncate">
+        <span style={{ width: `${100 - highPct}%` }} className="text-right truncate text-rusttext">
           High
         </span>
       </div>
       <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
-        <div className="absolute inset-y-0 bg-steel/60" style={{ left: 0, width: `${lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-moss/60" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-rust/60" style={{ left: `${highPct}%`, right: 0 }} />
+        <div className="absolute inset-y-0 bg-steel/70" style={{ left: 0, width: `${lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-moss/70" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-rust/70" style={{ left: `${highPct}%`, right: 0 }} />
         <div
-          className="absolute top-1/2 w-2.5 h-2.5 rounded-full bg-amber border-2 border-surface shadow"
+          className="absolute top-1/2 w-3 h-3 rounded-full bg-bg border-[3px] border-ink"
           style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
         />
       </div>
-      <div className="flex justify-between text-[9px] text-muted mt-1">
+      <div className="flex justify-between text-[10px] text-muted mt-1.5">
         <span>{min.toFixed(decimals)}</span>
         <span>{low.toFixed(decimals)}</span>
         <span>{high.toFixed(decimals)}</span>
@@ -639,10 +714,18 @@ function MuscleFatAnalysisChart({
 }) {
   return (
     <section>
-      <h2 className="font-display text-sm tracked uppercase text-muted mb-3">Muscle Fat Analysis</h2>
-      <div className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-5">
+      <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
+        <MuscleIcon />
+        Muscle &amp; Fat Analysis
+        <span className="text-muted">
+          <InfoIcon />
+        </span>
+      </h2>
+      <div className="bg-surface border border-line shadow-elevated rounded-lg divide-y divide-line">
         {items.map((it) => (
-          <MuscleFatBarRow key={it.label} {...it} unit={unit} />
+          <div key={it.label} className="p-4">
+            <MuscleFatBarRow {...it} unit={unit} />
+          </div>
         ))}
       </div>
     </section>
@@ -670,29 +753,48 @@ function MuscleFatBarRow({
   const highPct = pct(high)
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
-  const zoneColor = value < low ? 'text-steel' : value > high ? 'text-rusttext' : 'text-moss'
+  const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel' }
+  const Icon = meta.Icon
 
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-1.5">
-        <span className="text-xs text-ink">{label}</span>
-        <span className="text-sm font-mono tabular">
-          {value.toFixed(1)} {unit}
-          <span className={`text-[10px] ml-1.5 ${zoneColor}`}>{zone}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="flex items-center gap-3">
+          <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${meta.bg} ${meta.fg}`}>
+            <Icon />
+          </span>
+          <span className="flex items-center gap-1.5 text-sm text-ink font-medium">
+            {label}
+            <span className="text-muted">
+              <InfoIcon />
+            </span>
+          </span>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="font-mono text-lg tabular text-ink">
+            {value.toFixed(1)}
+            <span className="text-xs text-muted ml-0.5">{unit}</span>
+          </span>
+          <ZoneBadge zone={zone} />
+          <span className="text-muted">
+            <ChevronRightIcon />
+          </span>
         </span>
       </div>
+      <p className="text-[11px] text-steel mb-1.5 ml-12">Low {low.toFixed(1)}</p>
       <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
-        <div className="absolute inset-y-0 bg-steel/60" style={{ left: 0, width: `${lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-moss/60" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-rust/60" style={{ left: `${highPct}%`, right: 0 }} />
+        <div className="absolute inset-y-0 bg-steel/70" style={{ left: 0, width: `${lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-moss/70" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-rust/70" style={{ left: `${highPct}%`, right: 0 }} />
         <div
-          className="absolute top-1/2 w-2.5 h-2.5 rounded-full bg-amber border-2 border-surface shadow"
+          className="absolute top-1/2 w-3 h-3 rounded-full bg-bg border-[3px] border-ink"
           style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
         />
       </div>
-      <div className="flex justify-between text-[9px] text-muted mt-1">
-        <span>Low {low.toFixed(1)}</span>
-        <span>High {high.toFixed(1)}</span>
+      <div className="flex justify-between text-[10px] text-muted mt-1.5">
+        <span>{low.toFixed(1)}</span>
+        <span className="italic">(ideal range)</span>
+        <span>{high.toFixed(1)}</span>
       </div>
     </div>
   )
