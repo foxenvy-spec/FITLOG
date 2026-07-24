@@ -97,6 +97,13 @@ export function makeAdhocExercise(params: {
   exerciseName: string
   muscleGroup: string | null
   position: number
+  // ค่า override เสริม — เดิมท่า "เพิ่มเอง" ระหว่างเซสชันไม่มีค่าพวกนี้ (ใช้ default ทั้งหมด)
+  // แต่ท่าที่มาจาก workoutGenerator.ts อยากตั้ง sets/reps/rest ที่คำนวณมาให้ ไม่ใช่ default เฉยๆ
+  sets?: number
+  targetReps?: string | null
+  targetRir?: string | null
+  rest?: string | null
+  rationale?: string | null
 }): ProgramExercise {
   return {
     id: `adhoc:${params.id}`,
@@ -107,11 +114,11 @@ export function makeAdhocExercise(params: {
     muscle_group: params.muscleGroup,
     secondary_muscles: [],
     exercise_library_id: null,
-    sets: 3,
-    target_reps: null,
-    target_rir: null,
-    rest: null,
-    rationale: null,
+    sets: params.sets ?? 3,
+    target_reps: params.targetReps ?? null,
+    target_rir: params.targetRir ?? null,
+    rest: params.rest ?? null,
+    rationale: params.rationale ?? null,
     default_weight_kg: null,
     notes: null,
     created_at: new Date().toISOString(),
