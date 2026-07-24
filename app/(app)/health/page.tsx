@@ -37,13 +37,6 @@ function bmiOf(weightKg: number | null, heightCm: number | null) {
   return weightKg / (h * h)
 }
 
-function bmiCategory(bmi: number) {
-  // ใช้เกณฑ์เดียวกับแถบ OBESITY ANALYSIS ด้านล่าง (WHO/สากล: ต่ำ < 18.5, มาตรฐาน 18.5-25, สูง > 25)
-  if (bmi < 18.5) return 'ต่ำ'
-  if (bmi <= 25) return 'มาตรฐาน'
-  return 'สูง'
-}
-
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import ImportBodyReportPhoto, { ExtractedBodyReport } from '@/components/ImportBodyReportPhoto'
@@ -773,11 +766,12 @@ export default function HealthPage() {
               icon="bmi"
               color="#6C8CA8"
               value={bmi}
-              unit={bmi !== null ? bmiCategory(bmi) : undefined}
               decimals={1}
               delta={previousBmi !== null && bmi !== null ? bmi - previousBmi : null}
               deltaUnit=""
               direction={weightDirection}
+              zone={bmi !== null ? zoneOf(bmi, 18.5, 25) : null}
+              zoneScheme="symmetric"
             />
             <IconStatCard
               label="ไขมันในร่างกาย"
@@ -836,6 +830,12 @@ export default function HealthPage() {
               delta={fieldDelta('body_water_kg', toDisplay)}
               deltaUnit={unit}
               direction="neutral"
+              zone={
+                latest?.body_water_kg != null && bodyWaterRangeLow !== null && bodyWaterRangeHigh !== null
+                  ? zoneOf(latest.body_water_kg, bodyWaterRangeLow, bodyWaterRangeHigh)
+                  : null
+              }
+              zoneScheme="higherOk"
             />
             <IconStatCard
               label="โปรตีน"
@@ -847,6 +847,12 @@ export default function HealthPage() {
               delta={fieldDelta('protein_kg', toDisplay)}
               deltaUnit={unit}
               direction="neutral"
+              zone={
+                latest?.protein_kg != null && proteinRangeLow !== null && proteinRangeHigh !== null
+                  ? zoneOf(latest.protein_kg, proteinRangeLow, proteinRangeHigh)
+                  : null
+              }
+              zoneScheme="higherOk"
             />
             <IconStatCard
               label="กล้ามเนื้อโครงร่าง"
@@ -1743,6 +1749,8 @@ function IconStatCard({
   direction = 'neutral',
   note,
   noteGood = true,
+  zone,
+  zoneScheme = 'symmetric',
 }: {
   label: string
   subLabel: string
@@ -1756,11 +1764,32 @@ function IconStatCard({
   direction?: Direction
   note?: string
   noteGood?: boolean
+  // zone: ผลจำแนกค่าปัจจุบันเทียบกับช่วงมาตรฐาน (ต่ำ/มาตรฐาน/สูง) — ไม่ระบุ = ไม่แสดงป้ายสถานะ
+  zone?: 'Low' | 'Standard' | 'High' | null
+  // zoneScheme กำหนดว่า "สูงกว่ามาตรฐาน" ควรตีความว่าดีหรือแย่:
+  // symmetric  = ทั้งต่ำและสูงกว่ามาตรฐานถือว่าไม่ดี (เช่น BMI)
+  // higherOk   = สูงกว่ามาตรฐานยังโอเค/ดีกว่า เฉพาะต่ำกว่าที่ไม่ดี (เช่น น้ำในร่างกาย, โปรตีน)
+  // lowerOk    = ต่ำกว่ามาตรฐานยังโอเค/ดีกว่า เฉพาะสูงกว่าที่ไม่ดี
+  zoneScheme?: 'symmetric' | 'higherOk' | 'lowerOk'
 }) {
   const Icon = TREND_ICONS[icon] ?? ScaleIcon
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
   const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
+
+  const zoneLabel = zone ? ZONE_LABEL_TH[zone] : null
+  const zoneColor =
+    zone === 'Standard'
+      ? 'text-moss'
+      : zone === 'High'
+        ? zoneScheme === 'higherOk'
+          ? 'text-emerald-500'
+          : 'text-rusttext'
+        : zone === 'Low'
+          ? zoneScheme === 'lowerOk'
+            ? 'text-emerald-500'
+            : 'text-rusttext'
+          : ''
 
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
@@ -1773,15 +1802,16 @@ function IconStatCard({
           <p className="text-[9px] tracked uppercase text-muted truncate">{subLabel}</p>
         </div>
       </div>
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="font-mono text-xl tabular text-ink">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <p className="font-mono text-xl tabular text-ink whitespace-nowrap">
           {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
           {unit && <span className="text-xs text-muted ml-1">{unit}</span>}
+          {zoneLabel && <span className={`text-xs font-medium ml-1 ${zoneColor}`}>{zoneLabel}</span>}
         </p>
         {note ? (
-          <span className={`text-[11px] whitespace-nowrap shrink-0 ${noteGood ? 'text-moss' : 'text-rusttext'}`}>{note}</span>
+          <span className={`text-[11px] whitespace-nowrap ${noteGood ? 'text-moss' : 'text-rusttext'}`}>{note}</span>
         ) : delta !== null ? (
-          <span className={`text-[11px] font-mono whitespace-nowrap shrink-0 ${deltaColor}`}>
+          <span className={`text-[11px] font-mono whitespace-nowrap ${deltaColor}`}>
             {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)}
             {deltaUnit ? ` ${deltaUnit}` : ''}
           </span>
