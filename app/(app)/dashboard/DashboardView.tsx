@@ -46,13 +46,13 @@ import TodayMuscleHeatmap from '@/components/TodayMuscleHeatmap'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
+import BodyMetricsRow from '@/components/BodyMetricsRow'
+import MuscleShareCard from '@/components/MuscleShareCard'
+import ConsistencyStrip from '@/components/ConsistencyStrip'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
 // first paint of the hero card on their JS or their network round-trip.
-const WorkoutHeatmap = dynamic(() => import('@/components/WorkoutHeatmap'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-lg" />,
-})
 const WeeklyMuscleHeatmap = dynamic(() => import('@/components/WeeklyMuscleHeatmap'), {
   loading: () => <Skeleton className="h-80 w-full rounded-lg" />,
 })
@@ -419,6 +419,13 @@ export default function DashboardPage() {
 
       {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 
+      {/* body composition snapshot — weight/body fat/skeletal muscle/fat mass/BMI with
+          week-over-week deltas, pulled from the same body_metrics rows as the /health page.
+          Sits above the fold since it's the first thing a user checks each morning. */}
+      <div className="lg:col-span-2 animate-rise" style={{ animationDelay: '15ms' }}>
+        <BodyMetricsRow />
+      </div>
+
       {/* quick-glance strip: answers "PR ล่าสุด" and "กล้ามเนื้อที่ฝึกมากที่สุดสัปดาห์นี้" —
           the two questions nothing else on this screen answers directly. "วันนี้เล่นไหม" and
           "เป้าหมายใกล้ถึงหรือยัง" are already the hero card / goal ring below, and "สัปดาห์นี้กี่ครั้ง"
@@ -686,7 +693,11 @@ export default function DashboardPage() {
           -> next-up + quick actions last. */}
       <div className="lg:col-span-2 space-y-6">
       <WeeklyMuscleHeatmap />
-      <WeeklyVolume />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <MuscleShareCard />
+        <WeeklyVolume />
+      </div>
 
       {data.insights.length > 0 && (
         <div className="space-y-2">
@@ -696,7 +707,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <WorkoutHeatmap />
+      <ConsistencyStrip />
 
       {/* Next up in program — kept near the end so the top-to-bottom flow reads as
           "what happened this week" before "what's coming up next". PR history lives
