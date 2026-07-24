@@ -10,6 +10,7 @@ import {
   toAdhocProgramExercises,
   candidateExercisesForMuscle,
   mapAiExercisesToWorkout,
+  swapExerciseAt,
   type GeneratedWorkout,
 } from '@/lib/workoutGenerator'
 import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
@@ -92,6 +93,9 @@ export default function CoachPage() {
   // ถ้าพัง ต้องไม่แทนที่ generatedWorkout เดิม (fallback กลับไปใช้ rule-based เสมอ)
   const [aiWorkoutLoading, setAiWorkoutLoading] = useState(false)
   const [aiWorkoutError, setAiWorkoutError] = useState<string | null>(null)
+  // สลับท่าเดียว (ไม่ใช่ทั้งโปรแกรม) — ใช้ตอนผู้ใช้เจอท่าที่เล่นไม่ได้ เก็บ error แยกจาก aiWorkoutError
+  // เพราะคนละ action กัน (สลับท่า vs ให้ AI ปรุงแต่งทั้งชุด)
+  const [swapError, setSwapError] = useState<string | null>(null)
   // คำแนะนำเชิงลึกจาก Gemini — แยกจาก data.dailySummary (rule-based, คำนวณฟรีทันที) โดยตั้งใจ
   // เพราะเป็น opt-in (ผู้ใช้กดขอเอง ไม่เรียกอัตโนมัติ) กันชนโควต้าฟรีของ Gemini — ถ้าพังให้ตกกลับไป
   // ใช้ dailySummary เดิมเสมอ (ดู aiError ด้านล่าง ไม่แทนที่ dailySummary)
@@ -254,6 +258,7 @@ export default function CoachPage() {
     setAiError(null)
     setGeneratedWorkout(null)
     setAiWorkoutError(null)
+    setSwapError(null)
   }, [data])
 
   async function requestAiInsight() {
@@ -300,6 +305,20 @@ export default function CoachPage() {
     const workout = generateWorkoutForMuscle(data.muscleRecommendation.muscleGroup as MuscleGroup, exercises)
     setGeneratedWorkout(workout)
     setAiWorkoutError(null)
+    setSwapError(null)
+  }
+
+  // สลับท่าเดียวที่ index นี้ — เผื่อผู้ใช้เจอท่าที่เล่นไม่ได้ (เช่น ยิมไม่มีอุปกรณ์) โดยไม่ต้อง
+  // สร้างทั้งโปรแกรมใหม่ ถ้าคลังท่าของกล้ามเนื้อนี้ไม่มีท่าอื่นเหลือแล้วจะแจ้ง error แทนสลับให้ท่าซ้ำ
+  function handleSwapExercise(index: number) {
+    if (!generatedWorkout) return
+    const swapped = swapExerciseAt(generatedWorkout, index, exercises)
+    if (!swapped) {
+      setSwapError('ไม่มีท่าอื่นเหลือให้สลับแล้วสำหรับกล้ามเนื้อกลุ่มนี้')
+      return
+    }
+    setSwapError(null)
+    setGeneratedWorkout(swapped)
   }
 
   async function handleEnhanceWithAi() {
@@ -394,20 +413,31 @@ export default function CoachPage() {
                       <p className="text-[9px] font-display tracked uppercase text-violet">🔮 ปรุงแต่งโดย Gemini</p>
                     )}
                     <ul className="space-y-1.5">
-                      {generatedWorkout.exercises.map((g) => (
+                      {generatedWorkout.exercises.map((g, i) => (
                         <li key={g.exerciseDef.id} className="text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="text-ink">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-ink min-w-0 truncate">
                               {g.exerciseDef.icon} {g.exerciseDef.name}
                             </span>
-                            <span className="font-mono text-muted">
-                              {g.sets}×{g.targetReps}
-                            </span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="font-mono text-muted">
+                                {g.sets}×{g.targetReps}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleSwapExercise(i)}
+                                title="สลับท่านี้ (เช่น ยิมไม่มีอุปกรณ์นี้)"
+                                className="text-[11px] text-muted hover:text-amber active:scale-[0.99] transition"
+                              >
+                                🔄
+                              </button>
+                            </div>
                           </div>
                           {g.rationale && <p className="text-[10px] text-violet/80 mt-0.5">{g.rationale}</p>}
                         </li>
                       ))}
                     </ul>
+                    {swapError && <p className="text-[11px] text-rusttext">{swapError}</p>}
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
