@@ -7,16 +7,22 @@ import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import {
   parseRestSeconds,
+  initSessionSet,
   initSessionStates,
   firstUnfinishedIndex,
   nextUnvisitedIndex,
   computeSessionSummary,
   aggregateMuscleLoads,
   getSkippedExercises,
+  findExtraLoggedExercises,
+  makeAdhocExercise,
+  isAdhocExercise,
   type SessionSetState,
   type LoggedWorkoutRow,
   type LoggedSetRow,
 } from '@/lib/workoutSession'
+import ExercisePicker from '@/components/ExercisePicker'
+import type { ExerciseDef } from '@/lib/exerciseLibrary'
 import { estimateCaloriesToday } from '@/lib/dashboardStats'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { computeSessionMuscleRecovery, tierForPct, type MuscleRecoveryScore } from '@/lib/recoveryScore'
@@ -57,6 +63,12 @@ export default function SessionPage() {
   const [summaryExtras, setSummaryExtras] = useState<SummaryExtras | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
+
+  // "เพิ่มท่า" เอง ระหว่างเซสชัน — ไว้สำหรับท่านอกแผนที่อยากแทรกเข้ามาเล่นเพิ่ม
+  const [showAddExercise, setShowAddExercise] = useState(false)
+  const [newExerciseName, setNewExerciseName] = useState('')
+  const [newExerciseDef, setNewExerciseDef] = useState<ExerciseDef | null>(null)
+  const [addExerciseError, setAddExerciseError] = useState<string | null>(null)
 
   // นาฬิกาเซสชันรวม — เดินตั้งแต่เปิดหน้า ใช้บอกเวลาที่ใช้ไปในสรุปตอนจบ
   const session = useStopwatch()
@@ -113,20 +125,32 @@ export default function SessionPage() {
       return
     }
 
-    // ดึงท่าที่บันทึกไปแล้ว "วันนี้" กลับมา (เผื่อกดออกจากหน้านี้/รีเฟรชระหว่างเล่น)
-    // ไม่งั้นทุกครั้งที่กลับเข้ามาใหม่ ระบบจะลืมว่าท่าไหนทำไปแล้วบ้างและเริ่มนับจากศูนย์เสมอ
-    const exerciseNames = typedExercises.map((ex) => ex.exercise_name)
+    // ดึงท่าที่บันทึกไปแล้ว "วันนี้" กลับมาทั้งหมด (เผื่อกดออกจากหน้านี้/รีเฟรชระหว่างเล่น) — ไม่กรองแค่
+    // ท่าที่อยู่ในแผน เพราะท่าที่กด "เพิ่มท่า" เองระหว่างเซสชันก็ต้องรอดจากการรีเฟรชด้วยเหมือนกัน
     const { data: workoutRows } = await supabase
       .from('workouts')
-      .select('id, exercise_name, rpe')
+      .select('id, exercise_name, muscle_group, rpe')
       .eq('user_id', user.id)
       .eq('type', 'strength')
       .eq('performed_at', todayStr())
-      .in('exercise_name', exerciseNames)
 
-    const typedWorkoutRows = (workoutRows as LoggedWorkoutRow[]) ?? []
+    const typedWorkoutRows = (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null })[]) ?? []
+
+    // ท่าที่ log ไปแล้ววันนี้แต่ไม่ได้อยู่ในแผน = ท่าที่เคย "เพิ่มท่า" เองมาก่อน — สร้างเป็นท่า ad-hoc
+    // ต่อท้ายรายการท่าตามแผน ไม่งั้นรีเฟรชแล้วท่านี้จะหายไปทั้งที่บันทึกจริงอยู่แล้ว
+    const planNames = new Set(typedExercises.map((ex) => ex.exercise_name))
+    const extraLogged = findExtraLoggedExercises(typedWorkoutRows, planNames)
+    const adhocExercises = extraLogged.map((w, i) =>
+      makeAdhocExercise({
+        id: w.id,
+        exerciseName: w.exercise_name,
+        muscleGroup: w.muscle_group,
+        position: typedExercises.length + i,
+      })
+    )
+    const combinedExercises = [...typedExercises, ...adhocExercises]
+
     const workoutIds = typedWorkoutRows.map((w) => w.id)
-
     const { data: setRows } =
       workoutIds.length > 0
         ? await supabase
@@ -135,12 +159,12 @@ export default function SessionPage() {
             .in('workout_id', workoutIds)
         : { data: [] as LoggedSetRow[] }
 
-    const initialStates = initSessionStates(typedExercises, typedWorkoutRows, (setRows as LoggedSetRow[]) ?? [])
+    const initialStates = initSessionStates(combinedExercises, typedWorkoutRows, (setRows as LoggedSetRow[]) ?? [])
 
     setDay(dayRow as ProgramDay)
-    setExercises(typedExercises)
+    setExercises(combinedExercises)
     setStates(initialStates)
-    setIndex(firstUnfinishedIndex(typedExercises, initialStates))
+    setIndex(firstUnfinishedIndex(combinedExercises, initialStates))
     setPhase('active')
   }, [supabase])
 
@@ -163,6 +187,29 @@ export default function SessionPage() {
   function updateCurrent(patch: Partial<SessionSetState>) {
     if (!current) return
     setStates((prev) => ({ ...prev, [current.id]: { ...prev[current.id], ...patch } }))
+  }
+
+  // "เพิ่มท่า" เอง ระหว่างเซสชัน — รับได้ทั้งเลือกจากคลังท่า (ExercisePicker) และพิมพ์ชื่อเองอิสระ
+  // ไม่ผูกกับ program_exercises จริง (ดู makeAdhocExercise) แต่เข้า flow เดียวกับท่าอื่นทุกอย่าง
+  function addExercise() {
+    const name = newExerciseName.trim()
+    if (!name) {
+      setAddExerciseError('กรุณาพิมพ์หรือเลือกชื่อท่าก่อน')
+      return
+    }
+    setAddExerciseError(null)
+    const newEx = makeAdhocExercise({
+      id: crypto.randomUUID(),
+      exerciseName: name,
+      muscleGroup: newExerciseDef?.muscleGroup ?? null,
+      position: exercises.length,
+    })
+    setExercises((prev) => [...prev, newEx])
+    setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx) }))
+    setIndex(exercises.length)
+    setNewExerciseName('')
+    setNewExerciseDef(null)
+    setShowAddExercise(false)
   }
 
   // กด "เซ็ตนี้เสร็จแล้ว" — จำ reps/น้ำหนักที่กรอกอยู่ ณ ตอนนี้เป็นเซ็ตจริงเซ็ตหนึ่ง (ไม่ใช่แค่นับจำนวน)
@@ -262,12 +309,16 @@ export default function SessionPage() {
           }
         }
 
-        await supabase
-          .from('program_completions')
-          .upsert(
-            { user_id: user.id, program_exercise_id: current.id, completed_at: todayStr() },
-            { onConflict: 'user_id,program_exercise_id,completed_at' }
-          )
+        // program_completions ผูก FK กับ program_exercises เท่านั้น — ท่าที่ผู้ใช้กด "เพิ่มท่า" เองระหว่าง
+        // เซสชัน (ไม่ได้อยู่ในแผน) จึงต้องข้ามขั้นตอนนี้ไป ไม่งั้น insert จะพังเพราะไม่มีแถวจริงให้ผูก
+        if (!isAdhocExercise(current)) {
+          await supabase
+            .from('program_completions')
+            .upsert(
+              { user_id: user.id, program_exercise_id: current.id, completed_at: todayStr() },
+              { onConflict: 'user_id,program_exercise_id,completed_at' }
+            )
+        }
 
         // ใช้ states ที่เพิ่งอัปเดตนี้ (ไม่ใช่ตัวแปร states เดิมจาก closure ที่ยังไม่ทันอัปเดต)
         // ไปคำนวณท่าถัดไปทันที กัน goNext เห็นค่า logged เก่าที่ยังเป็น false อยู่
@@ -592,6 +643,51 @@ export default function SessionPage() {
           />
         ))}
       </div>
+
+      {showAddExercise ? (
+        <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-2.5">
+          <p className="text-[10px] tracked uppercase text-muted">เพิ่มท่านอกแผน</p>
+          <ExercisePicker
+            value={newExerciseName}
+            onChange={(name) => {
+              setNewExerciseName(name)
+              setNewExerciseDef(null)
+            }}
+            onSelect={(ex) => setNewExerciseDef(ex)}
+            placeholder="พิมพ์ชื่อท่า หรือเลือกจากคลัง เช่น bench หรือ สควอท"
+          />
+          {addExerciseError && <p className="text-xs text-rusttext">{addExerciseError}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddExercise(false)
+                setNewExerciseName('')
+                setNewExerciseDef(null)
+                setAddExerciseError(null)
+              }}
+              className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2.5 text-xs transition"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              onClick={addExercise}
+              className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] transition"
+            >
+              เพิ่มท่านี้
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowAddExercise(true)}
+          className="w-full rounded-lg border border-dashed border-line text-muted hover:text-amber hover:border-amber/50 font-display tracked uppercase py-2.5 text-xs transition"
+        >
+          + เพิ่มท่า
+        </button>
+      )}
 
       <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
         <div className="px-4 py-3.5 border-b border-line">
