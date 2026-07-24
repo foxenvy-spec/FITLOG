@@ -369,12 +369,30 @@ export default function DashboardPage() {
   }, [data?.todayWorkouts])
   const progressPct =
     data && data.todayExercises.length > 0 ? Math.round((data.completedCount / data.todayExercises.length) * 100) : null
-  const nextExerciseName = useMemo(() => {
-    if (!data || data.todayExercises.length === 0) return null
-    const done = new Set(data.completedExerciseIds)
-    const remaining = [...data.todayExercises].sort((a, b) => a.position - b.position).find((e) => !done.has(e.id))
-    return remaining?.exercise_name ?? null
+  // กลุ่มกล้ามเนื้อของ "แผนวันนี้" (ไม่ใช่ที่เทรนไปแล้ว) — มาจาก program_exercises ถ้าตั้งโปรแกรมไว้,
+  // ไม่งั้น fallback ไปใช้ todayMuscleLabel (กลุ่มที่เทรนจริงวันนี้ กรณีบันทึกอิสระไม่มีโปรแกรม)
+  const plannedMuscleLabel = useMemo(() => {
+    if (!data) return null
+    const seen = new Set<string>()
+    const ordered: string[] = []
+    for (const e of data.todayExercises) {
+      if (e.muscle_group && (VOLUME_MUSCLES as readonly string[]).includes(e.muscle_group) && !seen.has(e.muscle_group)) {
+        seen.add(e.muscle_group)
+        ordered.push(e.muscle_group)
+      }
+    }
+    if (ordered.length > 0) return ordered.join(' • ')
+    return todayMuscleLabel ? todayMuscleLabel.replace(/ \+ /g, ' • ') : null
+  }, [data, todayMuscleLabel])
+  // จำนวนเซ็ตที่ตั้งเป้าไว้ทั้งหมดของวันนี้ (จากแผน) — ถ้าไม่มีแผน fallback ไปนับเซ็ตที่บันทึกจริงแล้ว
+  const plannedTotalSets = useMemo(() => {
+    if (!data) return 0
+    if (data.todayExercises.length > 0) return data.todayExercises.reduce((s, e) => s + (e.sets ?? 0), 0)
+    return data.todayWorkouts.reduce((s, w) => s + (w.sets ?? 0), 0)
   }, [data])
+  // เวลาที่ใช้จริงยังไม่มีจนกว่าจะเริ่มบันทึก (totals.durationMin เป็น null) — ระหว่างนั้นประมาณคร่าวๆ
+  // จากจำนวนเซ็ต (ราว 1.5 นาที/เซ็ต รวมพักระหว่างเซ็ต) แค่ให้พอเห็นภาพ ไม่ใช่ตัวเลขแม่นยำ
+  const estimatedMinutes = Math.max(10, Math.round((plannedTotalSets * 1.5) / 5) * 5)
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
   // % ความคืบหน้าที่ใช้กับข้อความแนะนำกล้ามเนื้อ (recoveryRecommendationLabel) — เหมือน progressPct
   // ของ ring ด้านบน แต่ถ้าวันนี้ไม่มีแผนกำหนดไว้ (บันทึกอิสระ) ให้ถือว่า 100% เมื่อมี log อย่างน้อย 1 รายการ
@@ -471,76 +489,91 @@ export default function DashboardPage() {
           everything else below is intentionally quieter (no shadow-hero, smaller type)
           so the eye has exactly one obvious place to land first. */}
       <div
-        className={`rounded-lg bg-surface border border-amber/25 shadow-hero overflow-hidden ${
+        className={`relative rounded-lg border border-amber/25 shadow-hero overflow-hidden ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
         style={totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }}
       >
-        <div className="px-5 py-6">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] tracked uppercase text-muted flex items-center gap-1.5">
-              <span aria-hidden="true">🔥</span> Today&apos;s Workout
-            </p>
-            {scheduledDay ? (
-              <a
-                href="/session"
-                className="shrink-0 text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg px-3 py-1.5 active:scale-[0.99] transition"
-              >
-                {totals.entryCount > 0 ? '▶ ไปต่อ' : '▶ เริ่มเลย'}
-              </a>
-            ) : (
-              <a
-                href="/log"
-                className="shrink-0 text-[11px] font-display tracked uppercase text-bg bg-steel rounded-lg px-3 py-1.5 active:scale-[0.99] transition"
-              >
-                + บันทึก
-              </a>
-            )}
-          </div>
+        {/* decorative background — dark vignette + abstract torso illustration on the right,
+            faded into the card's own bg on the left so text stays readable. Drop a real photo
+            at /public/images/workout-hero.jpg (any aspect ratio, dark/moody works best) and it
+            will layer on top automatically; without one this still looks intentional on its own. */}
+        <div className="absolute inset-0 bg-surface">
+          <div
+            className="absolute inset-y-0 right-0 w-full sm:w-2/3 opacity-90"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%), url('/images/workout-hero.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+          <HeroTorsoArt />
+        </div>
 
-          {progressPct !== null ? (
-            <div className="mt-4 flex items-center gap-5">
-              <GoalRing pct={progressPct} size={104} strokeWidth={9} ariaLabel="ความคืบหน้าวันนี้" />
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-base tracked uppercase text-ink truncate">
-                  {workoutTitle ?? 'ยังไม่ได้ตั้งโปรแกรม'}
-                </p>
-                {todayMuscleLabel && <p className="text-xs text-amber mt-0.5 truncate">{todayMuscleLabel}</p>}
-                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                  <p className="text-[11px] text-muted">
-                    <span className="text-ink font-mono">
-                      {data.completedCount}/{data.todayExercises.length}
-                    </span>{' '}
-                    Exercises
-                  </p>
-                  {totals.durationMin !== null && (
-                    <p className="text-[11px] text-muted">
-                      <span className="text-ink font-mono">{Math.round(totals.durationMin)}</span> นาที
+        <div className="relative z-10 px-5 py-6">
+          <p className="text-[10px] tracked uppercase text-muted flex items-center gap-1.5">
+            <span aria-hidden="true">🔥</span> Today&apos;s Workout
+          </p>
+
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {(() => {
+                const title = workoutTitle ?? 'ยังไม่ได้ตั้งโปรแกรม'
+                const splitAt = title.search(/\s[—-]\s/)
+                const dayLabel = splitAt >= 0 ? title.slice(0, splitAt) : null
+                const restLabel = splitAt >= 0 ? title.slice(splitAt + 3) : title
+                return (
+                  <>
+                    {dayLabel && (
+                      <p className="font-display text-lg tracked uppercase text-amber leading-tight">{dayLabel}</p>
+                    )}
+                    <p className="font-display text-2xl tracked uppercase text-ink leading-tight truncate">
+                      {restLabel}
                     </p>
-                  )}
+                  </>
+                )
+              })()}
+
+              {plannedMuscleLabel && (
+                <p className="text-xs text-amber mt-1.5 truncate">{plannedMuscleLabel}</p>
+              )}
+
+              <div className="flex items-center gap-4 mt-3 flex-wrap">
+                <div>
+                  <p className="font-mono text-lg text-ink leading-none">{data.todayExercises.length || totals.entryCount}</p>
+                  <p className="text-[10px] text-muted mt-0.5">Exercises</p>
                 </div>
-                {nextExerciseName && progressPct < 100 ? (
-                  <p className="text-[11px] text-muted truncate mt-0.5">
-                    Next: <span className="text-ink">{nextExerciseName}</span>
+                <div>
+                  <p className="font-mono text-lg text-ink leading-none">{plannedTotalSets}</p>
+                  <p className="text-[10px] text-muted mt-0.5">Sets</p>
+                </div>
+                <div>
+                  <p className="font-mono text-lg text-ink leading-none">
+                    {totals.durationMin !== null ? Math.round(totals.durationMin) : `~${estimatedMinutes}`}
                   </p>
-                ) : progressPct >= 100 ? (
-                  <p className="text-[11px] text-amber mt-0.5">ครบทุกท่าแล้ว 🎉</p>
-                ) : null}
+                  <p className="text-[10px] text-muted mt-0.5">นาที</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="mt-3">
-              <p className="font-display text-lg tracked uppercase text-ink truncate">
-                {workoutTitle ?? 'ยังไม่ได้ตั้งโปรแกรม'}
-              </p>
+
               {scheduledDay ? (
-                <p className="text-[11px] text-muted mt-1.5">
-                  <a href="/program" className="hover:text-amber hover:underline">
-                    ดูแผนทั้งหมด
-                  </a>
-                </p>
+                <a
+                  href="/session"
+                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition"
+                >
+                  {totals.entryCount > 0 ? 'ไปต่อ' : 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
+                </a>
               ) : (
-                <p className="text-[11px] text-muted mt-1.5">
+                <a
+                  href="/log"
+                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-steel rounded-full px-5 py-2.5 active:scale-[0.99] transition"
+                >
+                  + บันทึกอิสระ
+                </a>
+              )}
+
+              {!scheduledDay && (
+                <p className="text-[11px] text-muted mt-2">
                   ยังไม่มีโปรแกรมวันนี้ —{' '}
                   <a href="/program" className="text-amber hover:underline">
                     ตั้งโปรแกรม
@@ -552,7 +585,15 @@ export default function DashboardPage() {
                 </p>
               )}
             </div>
-          )}
+
+            <GoalRing
+              pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
+              size={128}
+              strokeWidth={10}
+              label="ความพร้อม"
+              ariaLabel="ความพร้อมของวันนี้"
+            />
+          </div>
         </div>
       </div>
 
@@ -747,6 +788,29 @@ export default function DashboardPage() {
         />
       )}
     </div>
+  )
+}
+
+// ภาพประกอบพื้นหลังการ์ด Today's Workout — เงาโครงร่างแบบ abstract/เรขาคณิต (ไม่ใช่รูปถ่ายคนจริง
+// เพราะไม่มีสิทธิ์ใช้ภาพถ่ายลิขสิทธิ์/บุคคลจริงในโค้ด) วางไว้เป็น fallback ให้การ์ดดูมีมิติแม้ยังไม่มี
+// รูปพื้นหลังจริงที่ /public/images/workout-hero.jpg — ถ้ามีไฟล์นั้นแล้ว มันจะซ้อนทับอยู่ด้านบนของภาพนี้
+function HeroTorsoArt() {
+  return (
+    <svg
+      className="absolute inset-y-0 right-0 h-full w-1/2 opacity-[0.14]"
+      viewBox="0 0 200 260"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <ellipse cx="100" cy="40" rx="34" ry="38" fill="#F3F0E8" />
+      <path d="M55 80 Q100 60 145 80 L150 170 Q100 200 50 170 Z" fill="#F3F0E8" />
+      <rect x="30" y="85" width="26" height="95" rx="13" fill="#F3F0E8" />
+      <rect x="144" y="85" width="26" height="95" rx="13" fill="#F3F0E8" />
+      <rect x="72" y="110" width="24" height="24" rx="4" fill="#14161A" />
+      <rect x="104" y="110" width="24" height="24" rx="4" fill="#14161A" />
+      <rect x="72" y="138" width="24" height="20" rx="4" fill="#14161A" />
+      <rect x="104" y="138" width="24" height="20" rx="4" fill="#14161A" />
+    </svg>
   )
 }
 
