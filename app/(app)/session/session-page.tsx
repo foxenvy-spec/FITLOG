@@ -249,7 +249,9 @@ export default function SessionPage() {
 
   // "เพิ่มท่า" เอง ระหว่างเซสชัน — รับได้ทั้งเลือกจากคลังท่า (ExercisePicker) และพิมพ์ชื่อเองอิสระ
   // ไม่ผูกกับ program_exercises จริง (ดู makeAdhocExercise) แต่เข้า flow เดียวกับท่าอื่นทุกอย่าง
-  function addExercise() {
+  // ท่านี้ไม่ผ่าน initSessionStates ตอนโหลดหน้า (ซึ่งดึงผลงานล่าสุดให้ทุกท่าในแผนไปแล้ว) — ต้อง
+  // ดึงผลงานล่าสุดของท่านี้เองแยกตรงนี้ ไม่งั้นท่าที่เพิ่มเองจะขึ้น 0/0 เสมอแม้เคยเล่นท่านี้มาก่อน
+  async function addExercise() {
     const name = newExerciseName.trim()
     if (!name) {
       setAddExerciseError('กรุณาพิมพ์หรือเลือกชื่อท่าก่อน')
@@ -262,8 +264,42 @@ export default function SessionPage() {
       muscleGroup: newExerciseDef?.muscleGroup ?? null,
       position: exercises.length,
     })
+
+    let last: LastPerformance | null = null
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (user) {
+      const { data: priorWorkout } = await supabase
+        .from('workouts')
+        .select('id, reps, weight_kg')
+        .eq('user_id', user.id)
+        .eq('type', 'strength')
+        .eq('exercise_name', name)
+        .lt('performed_at', todayStr())
+        .order('performed_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      const typedPriorWorkout = priorWorkout as { id: string; reps: number | null; weight_kg: number | null } | null
+      if (typedPriorWorkout) {
+        const { data: firstSet } = await supabase
+          .from('workout_sets')
+          .select('reps, weight_kg')
+          .eq('workout_id', typedPriorWorkout.id)
+          .eq('set_number', 1)
+          .maybeSingle()
+        const typedFirstSet = firstSet as { reps: number; weight_kg: number } | null
+        if (typedFirstSet) {
+          last = { reps: typedFirstSet.reps, weightKg: typedFirstSet.weight_kg }
+        } else if (typedPriorWorkout.reps !== null && typedPriorWorkout.weight_kg !== null) {
+          last = { reps: typedPriorWorkout.reps, weightKg: typedPriorWorkout.weight_kg }
+        }
+      }
+    }
+
     setExercises((prev) => [...prev, newEx])
-    setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx) }))
+    setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx, last) }))
     setIndex(exercises.length)
     setNewExerciseName('')
     setNewExerciseDef(null)
