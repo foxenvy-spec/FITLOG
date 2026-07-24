@@ -25,6 +25,7 @@ import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
 import { estimateCaloriesToday } from '@/lib/dashboardStats'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
+import WeightUnitToggle from '@/components/WeightUnitToggle'
 import { computeSessionMuscleRecovery, tierForPct, type MuscleRecoveryScore } from '@/lib/recoveryScore'
 import { useStopwatch, formatClock } from '@/lib/useStopwatch'
 import { beepFinish, beepTick } from '@/lib/beep'
@@ -734,6 +735,10 @@ export default function SessionPage() {
               ))}
             </ul>
           )}
+
+          <div className="flex justify-end">
+            <WeightUnitToggle />
+          </div>
 
           <div className="grid grid-cols-2 gap-2.5">
             <NumberStepper
