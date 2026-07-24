@@ -45,6 +45,13 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import ImportBodyReportPhoto, { ExtractedBodyReport } from '@/components/ImportBodyReportPhoto'
 
+type TrendDef = {
+  label: string
+  color: string
+  unit: string
+  data: { label: string; value: number }[]
+}
+
 export default function HealthPage() {
   const supabase = createClient()
   const { unit, toDisplay, format } = useWeightUnit()
@@ -53,7 +60,9 @@ export default function HealthPage() {
   const [photos, setPhotos] = useState<(ProgressPhoto & { url?: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [tab, setTab] = useState<'metrics' | 'photos'>('metrics')
+  const [tab, setTab] = useState<'overview' | 'trends' | 'log' | 'photos'>('overview')
+  const [trendGroup, setTrendGroup] = useState<'comp' | 'measure'>('comp')
+  const [trendMetric, setTrendMetric] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -254,6 +263,48 @@ export default function HealthPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metrics, latest, toDisplay])
 
+  const compTrends: TrendDef[] = useMemo(
+    () => [
+      { label: 'น้ำหนัก', color: '#E8A33D', unit, data: weightTrend },
+      { label: 'Body Fat', color: '#C1503A', unit: '%', data: bodyFatTrend },
+      { label: 'มวลกล้ามเนื้อ', color: '#5FA88C', unit, data: muscleTrend },
+      { label: 'มวลไขมัน', color: '#C1503A', unit, data: bodyFatKgTrend },
+      { label: 'น้ำในร่างกาย', color: '#3D8FE8', unit, data: bodyWaterTrend },
+      { label: 'เกลือแร่', color: '#A89F5F', unit, data: inorganicSaltTrend },
+      { label: 'โปรตีน', color: '#5FA8A0', unit, data: proteinTrend },
+      { label: 'กล้ามเนื้อโครงร่าง', color: '#7FA85F', unit, data: skeletalMuscleTrend },
+      { label: 'ไขมันช่องท้อง', color: '#C1503A', unit: 'ระดับ', data: visceralFatTrend },
+      { label: 'BMR', color: '#5FA85F', unit: 'kcal', data: bmrTrend },
+    ],
+    [
+      unit,
+      weightTrend,
+      bodyFatTrend,
+      muscleTrend,
+      bodyFatKgTrend,
+      bodyWaterTrend,
+      inorganicSaltTrend,
+      proteinTrend,
+      skeletalMuscleTrend,
+      visceralFatTrend,
+      bmrTrend,
+    ]
+  )
+
+  const measureTrends: TrendDef[] = useMemo(
+    () => [
+      { label: 'รอบเอว', color: '#6C8CA8', unit: 'ซม.', data: waistTrend },
+      { label: 'รอบอก', color: '#A87F5F', unit: 'ซม.', data: chestTrend },
+      { label: 'รอบต้นแขน', color: '#8C6CA8', unit: 'ซม.', data: armTrend },
+      { label: 'รอบต้นขา', color: '#5F8FA8', unit: 'ซม.', data: thighTrend },
+    ],
+    [waistTrend, chestTrend, armTrend, thighTrend]
+  )
+
+  const activeTrendList = trendGroup === 'comp' ? compTrends : measureTrends
+  const availableTrendIdx = activeTrendList.findIndex((t) => t.data.length > 1)
+  const selectedTrend = activeTrendList[trendMetric]?.data.length > 1 ? activeTrendList[trendMetric] : activeTrendList[availableTrendIdx]
+
   if (loading) {
     return <LoadingState />
   }
@@ -267,27 +318,28 @@ export default function HealthPage() {
       <h1 className="font-display text-2xl tracked uppercase">สุขภาพร่างกาย</h1>
 
       <div className="flex rounded-full bg-surface p-1 border border-line">
-        <button
-          type="button"
-          onClick={() => setTab('metrics')}
-          className={`flex-1 py-2.5 rounded-full text-sm font-display tracked uppercase transition ${
-            tab === 'metrics' ? 'bg-steel text-bg' : 'text-muted'
-          }`}
-        >
-          วัดผล
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('photos')}
-          className={`flex-1 py-2.5 rounded-full text-sm font-display tracked uppercase transition ${
-            tab === 'photos' ? 'bg-rust text-ink' : 'text-muted'
-          }`}
-        >
-          Progress Photo
-        </button>
+        {(
+          [
+            { key: 'overview', label: 'ภาพรวม' },
+            { key: 'trends', label: 'แนวโน้ม' },
+            { key: 'log', label: 'บันทึกข้อมูล' },
+            { key: 'photos', label: 'Photo' },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={`flex-1 py-2.5 rounded-full text-[11px] sm:text-sm font-display tracked uppercase transition ${
+              tab === t.key ? (t.key === 'photos' ? 'bg-rust text-ink' : 'bg-steel text-bg') : 'text-muted'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {tab === 'metrics' ? (
+      {tab === 'overview' && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3">
             <MiniStat label="น้ำหนักล่าสุด" value={latest?.weight_kg != null ? toDisplay(latest.weight_kg) : null} unit={unit} />
@@ -317,50 +369,68 @@ export default function HealthPage() {
               อยากดูกราฟ Muscle Fat Analysis (น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน เทียบช่วงมาตรฐาน) — กรอกช่วงมาตรฐานจากรายงานเครื่องชั่งในฟอร์มด้านล่าง (ช่อง &quot;ช่วงมาตรฐาน&quot;) สักครั้ง แล้วกราฟจะขึ้นให้อัตโนมัติ
             </p>
           )}
+        </div>
+      )}
 
-          {weightTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มน้ำหนัก" data={weightTrend} color="#E8A33D" unit={unit} />
-          )}
-          {bodyFatTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้ม Body Fat" data={bodyFatTrend} color="#C1503A" unit="%" />
-          )}
-          {muscleTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มมวลกล้ามเนื้อ" data={muscleTrend} color="#5FA88C" unit={unit} />
-          )}
-          {waistTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มรอบเอว" data={waistTrend} color="#6C8CA8" unit="ซม." />
-          )}
-          {chestTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มรอบอก" data={chestTrend} color="#A87F5F" unit="ซม." />
-          )}
-          {armTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มรอบต้นแขน" data={armTrend} color="#8C6CA8" unit="ซม." />
-          )}
-          {thighTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มรอบต้นขา" data={thighTrend} color="#5F8FA8" unit="ซม." />
-          )}
-          {bodyFatKgTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มมวลไขมัน" data={bodyFatKgTrend} color="#C1503A" unit={unit} />
-          )}
-          {bodyWaterTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มน้ำในร่างกาย" data={bodyWaterTrend} color="#3D8FE8" unit={unit} />
-          )}
-          {inorganicSaltTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มเกลือแร่" data={inorganicSaltTrend} color="#A89F5F" unit={unit} />
-          )}
-          {proteinTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มโปรตีน" data={proteinTrend} color="#5FA8A0" unit={unit} />
-          )}
-          {skeletalMuscleTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มกล้ามเนื้อโครงร่าง" data={skeletalMuscleTrend} color="#7FA85F" unit={unit} />
-          )}
-          {visceralFatTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้มไขมันช่องท้อง" data={visceralFatTrend} color="#C1503A" unit="ระดับ" />
-          )}
-          {bmrTrend.length > 1 && (
-            <MetricTrendChart title="แนวโน้ม BMR" data={bmrTrend} color="#5FA85F" unit="kcal" />
-          )}
+      {tab === 'trends' && (
+        <div className="space-y-4">
+          <div className="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => {
+                setTrendGroup('comp')
+                setTrendMetric(0)
+              }}
+              className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
+                trendGroup === 'comp' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
+              }`}
+            >
+              น้ำหนัก/ไขมัน/กล้ามเนื้อ
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTrendGroup('measure')
+                setTrendMetric(0)
+              }}
+              className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
+                trendGroup === 'measure' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
+              }`}
+            >
+              สัดส่วนร่างกาย
+            </button>
+          </div>
 
+          <select
+            value={activeTrendList.findIndex((t) => t === selectedTrend)}
+            onChange={(e) => setTrendMetric(Number(e.target.value))}
+            className="input text-sm py-2"
+          >
+            {activeTrendList.map((t, i) => (
+              <option key={t.label} value={i} disabled={t.data.length < 2}>
+                แนวโน้ม{t.label}
+                {t.data.length < 2 ? ' (ยังไม่มีข้อมูลพอ)' : ''}
+              </option>
+            ))}
+          </select>
+
+          {selectedTrend && selectedTrend.data.length > 1 ? (
+            <MetricTrendChart
+              title={`แนวโน้ม${selectedTrend.label}`}
+              data={selectedTrend.data}
+              color={selectedTrend.color}
+              unit={selectedTrend.unit}
+            />
+          ) : (
+            <p className="text-[11px] text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
+              ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มในหมวดนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งก่อน แล้วกราฟจะขึ้นให้อัตโนมัติ
+            </p>
+          )}
+        </div>
+      )}
+
+      {tab === 'log' && (
+        <div className="space-y-6">
           <MetricForm
             onSaved={(m) => setMetrics((prev) => [m, ...prev.filter((x) => x.id !== m.id)])}
             onHeightExtracted={saveHeight}
@@ -418,9 +488,9 @@ export default function HealthPage() {
             )}
           </section>
         </div>
-      ) : (
-        <PhotosTab photos={photos} onChanged={load} />
       )}
+
+      {tab === 'photos' && <PhotosTab photos={photos} onChanged={load} />}
     </div>
   )
 }
