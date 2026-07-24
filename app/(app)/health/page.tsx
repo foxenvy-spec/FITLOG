@@ -103,12 +103,19 @@ export default function HealthPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase
+      if (!user) {
+        console.error('saveHeight: ไม่พบ user ที่ล็อกอินอยู่')
+        throw new Error('กรุณาเข้าสู่ระบบใหม่')
+      }
+      const { data, error } = await supabase
         .from('profiles')
         .upsert({ user_id: user.id, height_cm: heightCm, updated_at: new Date().toISOString() })
         .select()
         .single()
+      if (error) {
+        console.error('saveHeight: บันทึกส่วนสูงไม่สำเร็จ', error)
+        throw error
+      }
       if (data) setProfile(data as Profile)
     },
     [supabase]
@@ -284,6 +291,7 @@ export default function HealthPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3">
             <MiniStat label="น้ำหนักล่าสุด" value={latest?.weight_kg != null ? toDisplay(latest.weight_kg) : null} unit={unit} />
+            <HeightSetting key={profile?.height_cm ?? 'unset'} profile={profile} onSaved={(p) => setProfile(p)} />
             <MiniStat label="BMI" value={bmi} unit={bmi !== null ? bmiCategory(bmi) : undefined} decimals={1} />
             <MiniStat label="Body Fat" value={latest?.body_fat_pct} unit="%" />
             <MiniStat label="Muscle Mass" value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null} unit={unit} />
@@ -297,8 +305,6 @@ export default function HealthPage() {
             <MiniStat label="ไขมันช่องท้อง" value={latest?.visceral_fat_grade} unit="ระดับ" decimals={0} />
             <MiniStat label="BMR" value={latest?.bmr_kcal} unit="kcal" decimals={0} />
           </div>
-
-          <HeightSetting key={profile?.height_cm ?? 'unset'} profile={profile} onSaved={(p) => setProfile(p)} />
 
           {(bmi !== null || latest?.body_fat_pct != null) && (
             <ObesityAnalysisChart bmi={bmi} bodyFatPct={latest?.body_fat_pct ?? null} />
@@ -641,33 +647,42 @@ function HeightSetting({ profile, onSaved }: { profile: Profile | null; onSaved:
 
   if (!editing) {
     return (
-      <p className="text-xs text-muted">
-        ส่วนสูง {profile?.height_cm} ซม.{' '}
-        <button type="button" onClick={() => setEditing(true)} className="text-amber underline">
-          แก้ไข
-        </button>
-      </p>
+      <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[11px] tracked uppercase text-muted">ส่วนสูง</p>
+          <button type="button" onClick={() => setEditing(true)} className="text-[10px] text-amber underline">
+            แก้ไข
+          </button>
+        </div>
+        <p className="font-mono text-2xl tabular text-amber">
+          {profile?.height_cm}
+          <span className="text-xs text-muted ml-1">ซม.</span>
+        </p>
+      </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <input
-        type="number"
-        inputMode="decimal"
-        value={height}
-        onChange={(e) => setHeight(e.target.value)}
-        placeholder="ส่วนสูง (ซม.) สำหรับคำนวณ BMI"
-        className="input font-mono"
-      />
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={saving || !height}
-        className="shrink-0 px-4 py-3 rounded-lg bg-steel text-bg text-sm font-display tracked uppercase disabled:opacity-50"
-      >
-        บันทึก
-      </button>
+    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
+      <p className="text-[11px] tracked uppercase text-muted mb-1.5">ส่วนสูง (ซม.)</p>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          value={height}
+          onChange={(e) => setHeight(e.target.value)}
+          placeholder="สำหรับคำนวณ BMI"
+          className="input font-mono text-sm py-2"
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || !height}
+          className="shrink-0 px-3 py-2 rounded-lg bg-steel text-bg text-xs font-display tracked uppercase disabled:opacity-50"
+        >
+          บันทึก
+        </button>
+      </div>
     </div>
   )
 }
@@ -677,7 +692,7 @@ function MetricForm({
   onHeightExtracted,
 }: {
   onSaved: (m: BodyMetric) => void
-  onHeightExtracted?: (heightCm: number) => void
+  onHeightExtracted?: (heightCm: number) => Promise<void>
 }) {
   const supabase = createClient()
   const { unit, toKg, toDisplay } = useWeightUnit()
@@ -706,14 +721,28 @@ function MetricForm({
   const [fatMassRangeHigh, setFatMassRangeHigh] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [heightNote, setHeightNote] = useState<string | null>(null)
 
   function fmtKg(v: number | null): string {
     return v !== null ? String(Math.round(toDisplay(v) * 10) / 10) : ''
   }
 
-  function handleExtracted(data: ExtractedBodyReport) {
+  async function handleExtracted(data: ExtractedBodyReport) {
+    // เปิด DevTools console ดูค่านี้ได้ ถ้าอยากเช็คว่าอ่านรูปได้ค่าอะไรบ้าง
+    console.log('extracted body report', data)
     if (data.measured_at) setDate(data.measured_at)
-    if (data.height_cm !== null) onHeightExtracted?.(data.height_cm)
+    if (data.height_cm !== null) {
+      setHeightNote(null)
+      try {
+        await onHeightExtracted?.(data.height_cm)
+        setHeightNote(`บันทึกส่วนสูง ${data.height_cm} ซม. ให้อัตโนมัติแล้ว`)
+      } catch (err) {
+        console.error('บันทึกส่วนสูงอัตโนมัติไม่สำเร็จ', err)
+        setHeightNote('อ่านส่วนสูงได้ แต่บันทึกลงโปรไฟล์ไม่สำเร็จ ลองกรอกเองด้านบน หรือดู console')
+      }
+    } else {
+      setHeightNote('รูปนี้อ่านส่วนสูงไม่ได้ — กรอกเองที่ช่อง "ส่วนสูง" ด้านบนสุดของหน้าแทน')
+    }
     if (data.weight_kg !== null) setWeight(fmtKg(data.weight_kg))
     if (data.body_fat_pct !== null) setBodyFat(String(data.body_fat_pct))
     if (data.muscle_kg !== null) setMuscle(fmtKg(data.muscle_kg))
@@ -821,6 +850,7 @@ function MetricForm({
       </div>
 
       <ImportBodyReportPhoto onExtracted={handleExtracted} />
+      {heightNote && <p className="text-[11px] text-muted -mt-1">{heightNote}</p>}
 
       <div className="grid grid-cols-3 gap-3">
         <LabeledInput label={`น้ำหนัก (${unit})`} value={weight} onChange={setWeight} />
