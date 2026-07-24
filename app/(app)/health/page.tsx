@@ -234,14 +234,14 @@ export default function HealthPage() {
 
   const muscleFatItems = useMemo(() => {
     const defs: { label: string; value: number | null; low: number | null; high: number | null }[] = [
-      { label: 'น้ำหนัก', value: latest?.weight_kg ?? null, low: latestNonNull('weight_range_low'), high: latestNonNull('weight_range_high') },
+      { label: 'Weight', value: latest?.weight_kg ?? null, low: latestNonNull('weight_range_low'), high: latestNonNull('weight_range_high') },
       {
-        label: 'กล้ามเนื้อโครงร่าง',
+        label: 'Skeletal Muscle',
         value: latest?.skeletal_muscle_kg ?? null,
         low: latestNonNull('skeletal_muscle_range_low'),
         high: latestNonNull('skeletal_muscle_range_high'),
       },
-      { label: 'มวลไขมัน', value: latest?.body_fat_kg ?? null, low: latestNonNull('fat_mass_range_low'), high: latestNonNull('fat_mass_range_high') },
+      { label: 'Fat Mass', value: latest?.body_fat_kg ?? null, low: latestNonNull('fat_mass_range_low'), high: latestNonNull('fat_mass_range_high') },
     ]
     return defs
       .filter((d) => d.value !== null && d.low !== null && d.high !== null && (d.high as number) > (d.low as number))
@@ -580,7 +580,7 @@ function MuscleFatBarRow({
   const lowPct = pct(low)
   const highPct = pct(high)
   const valuePct = pct(value)
-  const zone = value < low ? 'ต่ำ' : value > high ? 'สูง' : 'มาตรฐาน'
+  const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
   const zoneColor = value < low ? 'text-steel' : value > high ? 'text-rusttext' : 'text-moss'
 
   return (
@@ -602,8 +602,8 @@ function MuscleFatBarRow({
         />
       </div>
       <div className="flex justify-between text-[9px] text-muted mt-1">
-        <span>ต่ำสุด {low.toFixed(1)}</span>
-        <span>สูงสุด {high.toFixed(1)}</span>
+        <span>Low {low.toFixed(1)}</span>
+        <span>High {high.toFixed(1)}</span>
       </div>
     </div>
   )
