@@ -611,10 +611,10 @@ function ZoneBarRow({
           High
         </span>
       </div>
-      <div className="relative h-2 rounded-full bg-surface2 overflow-hidden">
-        <div className="absolute inset-y-0 bg-line" style={{ left: 0, width: `${lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-moss/50" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-line" style={{ left: `${highPct}%`, right: 0 }} />
+      <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
+        <div className="absolute inset-y-0 bg-steel/60" style={{ left: 0, width: `${lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-moss/60" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-rust/60" style={{ left: `${highPct}%`, right: 0 }} />
         <div
           className="absolute top-1/2 w-2.5 h-2.5 rounded-full bg-amber border-2 border-surface shadow"
           style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
@@ -681,10 +681,10 @@ function MuscleFatBarRow({
           <span className={`text-[10px] ml-1.5 ${zoneColor}`}>{zone}</span>
         </span>
       </div>
-      <div className="relative h-2 rounded-full bg-surface2 overflow-hidden">
-        <div className="absolute inset-y-0 bg-line" style={{ left: 0, width: `${lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-moss/50" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-line" style={{ left: `${highPct}%`, right: 0 }} />
+      <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
+        <div className="absolute inset-y-0 bg-steel/60" style={{ left: 0, width: `${lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-moss/60" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
+        <div className="absolute inset-y-0 bg-rust/60" style={{ left: `${highPct}%`, right: 0 }} />
         <div
           className="absolute top-1/2 w-2.5 h-2.5 rounded-full bg-amber border-2 border-surface shadow"
           style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
