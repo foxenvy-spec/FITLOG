@@ -26,6 +26,12 @@ export interface ExtractedBodyReport {
   body_age_range_high: number | null
   muscle_range_low: number | null
   muscle_range_high: number | null
+  body_water_range_low: number | null
+  body_water_range_high: number | null
+  inorganic_salt_range_low: number | null
+  inorganic_salt_range_high: number | null
+  protein_range_low: number | null
+  protein_range_high: number | null
 }
 
 const FIELD_LABEL: Record<keyof ExtractedBodyReport, string> = {
@@ -52,6 +58,12 @@ const FIELD_LABEL: Record<keyof ExtractedBodyReport, string> = {
   body_age_range_high: 'ช่วงอายุร่างกาย สูงสุด',
   muscle_range_low: 'ช่วงมวลกล้ามเนื้อ ต่ำสุด',
   muscle_range_high: 'ช่วงมวลกล้ามเนื้อ สูงสุด',
+  body_water_range_low: 'ช่วงน้ำในร่างกาย ต่ำสุด',
+  body_water_range_high: 'ช่วงน้ำในร่างกาย สูงสุด',
+  inorganic_salt_range_low: 'ช่วงเกลือแร่ ต่ำสุด',
+  inorganic_salt_range_high: 'ช่วงเกลือแร่ สูงสุด',
+  protein_range_low: 'ช่วงโปรตีน ต่ำสุด',
+  protein_range_high: 'ช่วงโปรตีน สูงสุด',
 }
 
 function fileToBase64(file: File): Promise<string> {
