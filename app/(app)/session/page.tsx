@@ -20,6 +20,7 @@ import {
   type SessionSetState,
   type LoggedWorkoutRow,
   type LoggedSetRow,
+  type LastPerformance,
 } from '@/lib/workoutSession'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
@@ -160,7 +161,77 @@ export default function SessionPage() {
             .in('workout_id', workoutIds)
         : { data: [] as LoggedSetRow[] }
 
-    const initialStates = initSessionStates(combinedExercises, typedWorkoutRows, (setRows as LoggedSetRow[]) ?? [])
+    // ผลงานล่าสุด "ครั้งก่อน" (ไม่ใช่วันนี้) ของแต่ละท่าในแผน — เอาไว้ตั้งค่าเริ่มต้น reps/น้ำหนัก
+    // ให้ท่าที่ยังไม่ได้ log วันนี้ แทนที่จะเริ่มจาก 0/ค่าเป้าหมายเฉยๆ (เดิมมีแค่ log วันนี้เท่านั้นที่จำได้)
+    const planExerciseNames = typedExercises.map((ex) => ex.exercise_name)
+    const lastPerformanceByName: Record<string, LastPerformance> = {}
+    if (planExerciseNames.length > 0) {
+      // ดึงกว้างๆ ไม่กรองชื่อท่าด้วย .in() ตรงๆ เพราะ exercise_name ระหว่างแผน (program_exercises)
+      // กับที่เคย log จริง (workouts) อาจตัวพิมพ์เล็ก/ใหญ่หรือช่องว่างหัวท้ายไม่ตรงกันเป๊ะ ทำให้ exact
+      // match แบบ .eq()/.in() หลุดเงียบๆ — เทียบแบบ trim+lowercase เอาเองแทน เหมือนที่หน้า /log
+      // ใช้ .ilike() กันเคสนี้อยู่แล้ว
+      const { data: priorWorkouts } = await supabase
+        .from('workouts')
+        .select('id, exercise_name, reps, weight_kg')
+        .eq('user_id', user.id)
+        .eq('type', 'strength')
+        .lt('performed_at', todayStr())
+        .order('performed_at', { ascending: false })
+        .order('created_at', { ascending: false })
+
+      const typedPriorWorkouts =
+        (priorWorkouts as { id: string; exercise_name: string | null; reps: number | null; weight_kg: number | null }[]) ??
+        []
+      console.log('[fitlog-debug] planExerciseNames', planExerciseNames)
+      console.log('[fitlog-debug] typedPriorWorkouts count', typedPriorWorkouts.length, typedPriorWorkouts.slice(0, 5))
+
+      const normalize = (s: string) => s.trim().toLowerCase()
+      const planNamesNormalized = new Set(planExerciseNames.map(normalize))
+
+      // เก็บแค่ครั้งล่าสุดสุดต่อชื่อท่า (normalize แล้ว) เพราะ query เรียง performed_at ล่าสุดก่อนแล้ว
+      const latestWorkoutByNormalizedName = new Map<string, (typeof typedPriorWorkouts)[number]>()
+      typedPriorWorkouts.forEach((w) => {
+        if (!w.exercise_name) return
+        const key = normalize(w.exercise_name)
+        if (planNamesNormalized.has(key) && !latestWorkoutByNormalizedName.has(key)) {
+          latestWorkoutByNormalizedName.set(key, w)
+        }
+      })
+
+      const priorWorkoutIds = Array.from(latestWorkoutByNormalizedName.values()).map((w) => w.id)
+      const { data: priorSets } =
+        priorWorkoutIds.length > 0
+          ? await supabase
+              .from('workout_sets')
+              .select('workout_id, set_number, reps, weight_kg')
+              .in('workout_id', priorWorkoutIds)
+              .eq('set_number', 1)
+          : { data: [] as LoggedSetRow[] }
+      const firstSetByWorkoutId = new Map(
+        ((priorSets as LoggedSetRow[]) ?? []).map((s) => [s.workout_id, s])
+      )
+
+      planExerciseNames.forEach((name) => {
+        const w = latestWorkoutByNormalizedName.get(normalize(name))
+        if (!w) return
+        // มี workout_sets (เซ็ตแรก) ให้ใช้ก่อน — แม่นกว่า เพราะเก็บทีละเซ็ตจริง ไม่ใช่ top set เดียว
+        // ถ้าเป็นแถวเก่าก่อนมี workout_sets ค่อย fallback ไปใช้ reps/weight_kg บนแถว workouts เอง
+        const firstSet = firstSetByWorkoutId.get(w.id)
+        if (firstSet) {
+          lastPerformanceByName[name] = { reps: firstSet.reps, weightKg: firstSet.weight_kg }
+        } else if (w.reps !== null && w.weight_kg !== null) {
+          lastPerformanceByName[name] = { reps: w.reps, weightKg: w.weight_kg }
+        }
+      })
+    }
+    console.log('[fitlog-debug] lastPerformanceByName', lastPerformanceByName)
+
+    const initialStates = initSessionStates(
+      combinedExercises,
+      typedWorkoutRows,
+      (setRows as LoggedSetRow[]) ?? [],
+      lastPerformanceByName
+    )
 
     setDay(dayRow as ProgramDay)
     setExercises(combinedExercises)
@@ -192,7 +263,9 @@ export default function SessionPage() {
 
   // "เพิ่มท่า" เอง ระหว่างเซสชัน — รับได้ทั้งเลือกจากคลังท่า (ExercisePicker) และพิมพ์ชื่อเองอิสระ
   // ไม่ผูกกับ program_exercises จริง (ดู makeAdhocExercise) แต่เข้า flow เดียวกับท่าอื่นทุกอย่าง
-  function addExercise() {
+  // ท่านี้ไม่ผ่าน initSessionStates ตอนโหลดหน้า (ซึ่งดึงผลงานล่าสุดให้ทุกท่าในแผนไปแล้ว) — ต้อง
+  // ดึงผลงานล่าสุดของท่านี้เองแยกตรงนี้ ไม่งั้นท่าที่เพิ่มเองจะขึ้น 0/0 เสมอแม้เคยเล่นท่านี้มาก่อน
+  async function addExercise() {
     const name = newExerciseName.trim()
     if (!name) {
       setAddExerciseError('กรุณาพิมพ์หรือเลือกชื่อท่าก่อน')
@@ -205,8 +278,46 @@ export default function SessionPage() {
       muscleGroup: newExerciseDef?.muscleGroup ?? null,
       position: exercises.length,
     })
+
+    let last: LastPerformance | null = null
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    console.log('[fitlog-debug] addExercise looking up last performance for name=', JSON.stringify(name))
+    if (user) {
+      const { data: priorWorkout, error: priorWorkoutError } = await supabase
+        .from('workouts')
+        .select('id, reps, weight_kg')
+        .eq('user_id', user.id)
+        .eq('type', 'strength')
+        .ilike('exercise_name', name)
+        .lt('performed_at', todayStr())
+        .order('performed_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      console.log('[fitlog-debug] addExercise priorWorkout=', priorWorkout, 'error=', priorWorkoutError)
+      const typedPriorWorkout = priorWorkout as { id: string; reps: number | null; weight_kg: number | null } | null
+      if (typedPriorWorkout) {
+        const { data: firstSet, error: firstSetError } = await supabase
+          .from('workout_sets')
+          .select('reps, weight_kg')
+          .eq('workout_id', typedPriorWorkout.id)
+          .eq('set_number', 1)
+          .maybeSingle()
+        console.log('[fitlog-debug] addExercise firstSet=', firstSet, 'error=', firstSetError)
+        const typedFirstSet = firstSet as { reps: number; weight_kg: number } | null
+        if (typedFirstSet) {
+          last = { reps: typedFirstSet.reps, weightKg: typedFirstSet.weight_kg }
+        } else if (typedPriorWorkout.reps !== null && typedPriorWorkout.weight_kg !== null) {
+          last = { reps: typedPriorWorkout.reps, weightKg: typedPriorWorkout.weight_kg }
+        }
+      }
+    }
+    console.log('[fitlog-debug] addExercise final last=', last)
+
     setExercises((prev) => [...prev, newEx])
-    setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx) }))
+    setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx, last) }))
     setIndex(exercises.length)
     setNewExerciseName('')
     setNewExerciseDef(null)
