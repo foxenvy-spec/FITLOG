@@ -1,10 +1,8 @@
 'use client'
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
-import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
 import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import {
@@ -28,6 +26,8 @@ import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
 import { estimateCaloriesToday } from '@/lib/dashboardStats'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
+import { dropSetWeightKg } from '@/lib/weightUnit'
+import { useToast } from '@/components/Toast'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import { computeSessionMuscleRecovery, tierForPct, type MuscleRecoveryScore } from '@/lib/recoveryScore'
 import { useStopwatch, formatClock } from '@/lib/useStopwatch'
@@ -53,13 +53,10 @@ interface SummaryExtras {
   recovery: { overall: number; byMuscle: MuscleRecoveryScore[] }
 }
 
-function SessionPageInner() {
+export default function SessionPage() {
   const supabase = createClient()
-  const searchParams = useSearchParams()
-  // มาจาก AI Coach ("Generate Workout" → "Start Workout") — อ่านโปรแกรมที่ generate ไว้จาก
-  // sessionStorage แทนที่จะ query program_days/program_exercises จาก DB (ดู CoachPage ฝั่งเขียน)
-  const isGeneratedSource = searchParams.get('source') === 'generated'
   const { unit, toDisplay, toKg, format } = useWeightUnit()
+  const { showToast } = useToast()
 
   const [phase, setPhase] = useState<Phase>('loading')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -98,71 +95,39 @@ function SessionPageInner() {
     }
 
     const dow = todayDayOfWeek()
+    const { data: dayRow, error: dayErr } = await supabase
+      .from('program_days')
+      .select('*')
+      .eq('day_of_week', dow)
+      .maybeSingle()
 
-    let dayRow: ProgramDay | null = null
-    let typedExercises: ProgramExercise[] = []
+    if (dayErr) {
+      setErrorMsg(dayErr.message)
+      setPhase('error')
+      return
+    }
 
-    if (isGeneratedSource) {
-      // มาจากปุ่ม "Start Workout" ของ AI Coach — ไม่มีแถวจริงใน program_days/program_exercises
-      // อ่านจาก sessionStorage แทน (เขียนไว้โดย CoachPage ตอนกด Generate → Start)
-      let stored: StoredGeneratedSession | null = null
-      try {
-        const raw = sessionStorage.getItem(GENERATED_SESSION_STORAGE_KEY)
-        stored = raw ? (JSON.parse(raw) as StoredGeneratedSession) : null
-      } catch {
-        stored = null
-      }
+    if (!dayRow) {
+      setPhase('empty')
+      return
+    }
 
-      if (!stored || stored.exercises.length === 0) {
-        // ไม่มีโปรแกรมค้างอยู่ (เช่น เข้า URL นี้ตรงๆ โดยไม่ได้ผ่านหน้า AI Coach) — ตกกลับไปหน้าว่างปกติ
-        setPhase('empty')
-        return
-      }
+    const { data: exRows, error: exErr } = await supabase
+      .from('program_exercises')
+      .select('*')
+      .eq('program_day_id', (dayRow as ProgramDay).id)
+      .order('position')
 
-      dayRow = {
-        id: 'generated',
-        user_id: user.id,
-        day_of_week: dow,
-        title: stored.title,
-        created_at: stored.createdAt,
-      }
-      typedExercises = stored.exercises
-    } else {
-      const { data: dayRowRes, error: dayErr } = await supabase
-        .from('program_days')
-        .select('*')
-        .eq('day_of_week', dow)
-        .maybeSingle()
+    if (exErr) {
+      setErrorMsg(exErr.message)
+      setPhase('error')
+      return
+    }
 
-      if (dayErr) {
-        setErrorMsg(dayErr.message)
-        setPhase('error')
-        return
-      }
-
-      if (!dayRowRes) {
-        setPhase('empty')
-        return
-      }
-
-      const { data: exRows, error: exErr } = await supabase
-        .from('program_exercises')
-        .select('*')
-        .eq('program_day_id', (dayRowRes as ProgramDay).id)
-        .order('position')
-
-      if (exErr) {
-        setErrorMsg(exErr.message)
-        setPhase('error')
-        return
-      }
-
-      dayRow = dayRowRes as ProgramDay
-      typedExercises = (exRows as ProgramExercise[]) ?? []
-      if (typedExercises.length === 0) {
-        setPhase('empty')
-        return
-      }
+    const typedExercises = (exRows as ProgramExercise[]) ?? []
+    if (typedExercises.length === 0) {
+      setPhase('empty')
+      return
     }
 
     // ดึงท่าที่บันทึกไปแล้ว "วันนี้" กลับมาทั้งหมด (เผื่อกดออกจากหน้านี้/รีเฟรชระหว่างเล่น) — ไม่กรองแค่
@@ -276,7 +241,7 @@ function SessionPageInner() {
     setStates(initialStates)
     setIndex(firstUnfinishedIndex(combinedExercises, initialStates))
     setPhase('active')
-  }, [supabase, isGeneratedSource])
+  }, [supabase])
 
   useEffect(() => {
     load()
@@ -477,6 +442,7 @@ function SessionPageInner() {
           [current.id]: { ...currentState, logged: true, workoutId },
         }
         setStates(merged)
+        showToast('บันทึกแล้ว ✓')
         goNext(merged)
         return
       }
@@ -907,6 +873,26 @@ function SessionPageInner() {
             />
           </div>
 
+          {/* Drop Set — ลดน้ำหนักด่วนสำหรับเซ็ตถัดไปโดยไม่ต้องกด stepper ทีละครั้ง ปัดเข้า step
+              เดียวกับ NumberStepper น้ำหนักด้านบน (2.5kg / 5lb) กันได้ตัวเลขแปลกๆ เช่น 63.75kg
+              ไม่ลดต่ำกว่า 0 — ใช้ currentState.weightKg (หน่วย kg เสมอ) เป็นฐานคำนวณเพื่อไม่ให้
+              ปัดเศษผิดพลาดจากการแปลงหน่วยไปมาซ้ำๆ ระหว่างเซ็ต */}
+          {(currentState.weightKg ?? 0) > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] tracked uppercase text-muted shrink-0">Drop Set</span>
+              {[10, 20].map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => updateCurrent({ weightKg: dropSetWeightKg(currentState.weightKg ?? 0, pct, unit) })}
+                  className="flex-1 rounded-lg border border-line text-muted hover:text-amber hover:border-amber/50 transition py-1.5 text-[11px] font-display tracked uppercase active:scale-[0.98]"
+                >
+                  −{pct}%
+                </button>
+              ))}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={logSet}
@@ -952,14 +938,6 @@ function SessionPageInner() {
         </button>
       </div>
     </div>
-  )
-}
-
-export default function SessionPage() {
-  return (
-    <Suspense fallback={<LoadingState />}>
-      <SessionPageInner />
-    </Suspense>
   )
 }
 
