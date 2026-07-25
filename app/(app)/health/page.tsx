@@ -10,6 +10,8 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  AreaChart,
+  Area,
 } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, Profile, ProgressPhoto } from '@/lib/types'
@@ -87,6 +89,7 @@ export default function HealthPage() {
   const [trendGroup, setTrendGroup] = useState<'comp' | 'measure'>('comp')
   const [trendMetric, setTrendMetric] = useState<number | 'all'>('all')
   const [trendPeriodDays, setTrendPeriodDays] = useState<7 | 30 | 90>(90)
+  const [showAllMetrics, setShowAllMetrics] = useState(false)
   const [goals, setGoals] = useState<Goal[]>([])
 
   const load = useCallback(async () => {
@@ -583,70 +586,102 @@ export default function HealthPage() {
     [waistTrend, chestTrend, armTrend, thighTrend]
   )
 
-  // สรุปภาพรวม (วงแหวน + ดีมาก/มาตรฐาน/ควรปรับปรุง) — ใช้ค่าล่าสุดจริง (ไม่ขึ้นกับช่วง 7/30/90 วันที่เลือกดูกราฟ)
-  const healthScoreItems = useMemo(() => {
+  // สรุปภาพรวม (วงแหวน + ดีมาก/มาตรฐาน/ควรปรับปรุง) — จำแนกตัวชี้วัดของแถวข้อมูลใดๆ เทียบกับช่วงมาตรฐาน
+  // แยกเป็นฟังก์ชันเพื่อใช้ซ้ำได้ทั้งกับ "ค่าล่าสุดจริง" และ "ค่าเมื่อประมาณ 1 เดือนก่อน" (ดูคะแนนเปลี่ยนแปลงย้อนหลัง)
+  function computeScoreItems(row: BodyMetric | null, rowBmi: number | null) {
     const items: { label: string; status: 'good' | 'standard' | 'needsWork' }[] = []
-    if (latest?.weight_kg != null && weightRangeLow !== null && weightRangeHigh !== null) {
-      items.push({ label: 'น้ำหนัก', status: classifyMetric(zoneOf(latest.weight_kg, weightRangeLow, weightRangeHigh), 'neutral') })
+    if (row?.weight_kg != null && weightRangeLow !== null && weightRangeHigh !== null) {
+      items.push({ label: 'น้ำหนัก', status: classifyMetric(zoneOf(row.weight_kg, weightRangeLow, weightRangeHigh), 'neutral') })
     }
-    if (latest?.body_fat_pct != null) {
-      items.push({ label: 'ไขมันในร่างกาย', status: classifyMetric(zoneOf(latest.body_fat_pct, 18, 28), 'lowerBetter') })
+    if (row?.body_fat_pct != null) {
+      items.push({ label: 'ไขมันในร่างกาย', status: classifyMetric(zoneOf(row.body_fat_pct, 18, 28), 'lowerBetter') })
     }
-    if (latest?.skeletal_muscle_kg != null && skeletalRangeLow !== null && skeletalRangeHigh !== null) {
+    if (row?.skeletal_muscle_kg != null && skeletalRangeLow !== null && skeletalRangeHigh !== null) {
       items.push({
         label: 'กล้ามเนื้อโครงร่าง',
-        status: classifyMetric(zoneOf(latest.skeletal_muscle_kg, skeletalRangeLow, skeletalRangeHigh), 'higherBetter'),
+        status: classifyMetric(zoneOf(row.skeletal_muscle_kg, skeletalRangeLow, skeletalRangeHigh), 'higherBetter'),
       })
     }
-    if (latest?.body_fat_kg != null && fatMassRangeLow !== null && fatMassRangeHigh !== null) {
-      items.push({ label: 'มวลไขมัน', status: classifyMetric(zoneOf(latest.body_fat_kg, fatMassRangeLow, fatMassRangeHigh), 'lowerBetter') })
+    if (row?.body_fat_kg != null && fatMassRangeLow !== null && fatMassRangeHigh !== null) {
+      items.push({ label: 'มวลไขมัน', status: classifyMetric(zoneOf(row.body_fat_kg, fatMassRangeLow, fatMassRangeHigh), 'lowerBetter') })
     }
-    if (bmi !== null) {
-      items.push({ label: 'BMI', status: classifyMetric(zoneOf(bmi, 18.5, 25), 'neutral') })
+    if (rowBmi !== null) {
+      items.push({ label: 'BMI', status: classifyMetric(zoneOf(rowBmi, 18.5, 25), 'neutral') })
     }
-    if (latest?.visceral_fat_grade != null) {
-      items.push({ label: 'ไขมันช่องท้อง', status: classifyMetric(zoneOf(latest.visceral_fat_grade, 1, 9), 'lowerBetter') })
+    if (row?.visceral_fat_grade != null) {
+      items.push({ label: 'ไขมันช่องท้อง', status: classifyMetric(zoneOf(row.visceral_fat_grade, 1, 9), 'lowerBetter') })
     }
-    if (latest?.muscle_kg != null && muscleRangeLow !== null && muscleRangeHigh !== null) {
-      items.push({ label: 'มวลกล้ามเนื้อ', status: classifyMetric(zoneOf(latest.muscle_kg, muscleRangeLow, muscleRangeHigh), 'higherBetter') })
+    if (row?.muscle_kg != null && muscleRangeLow !== null && muscleRangeHigh !== null) {
+      items.push({ label: 'มวลกล้ามเนื้อ', status: classifyMetric(zoneOf(row.muscle_kg, muscleRangeLow, muscleRangeHigh), 'higherBetter') })
     }
-    if (latest?.body_age_years != null && bodyAgeRangeLow !== null && bodyAgeRangeHigh !== null) {
-      items.push({ label: 'อายุร่างกาย', status: classifyMetric(zoneOf(latest.body_age_years, bodyAgeRangeLow, bodyAgeRangeHigh), 'lowerBetter') })
+    if (row?.body_age_years != null && bodyAgeRangeLow !== null && bodyAgeRangeHigh !== null) {
+      items.push({ label: 'อายุร่างกาย', status: classifyMetric(zoneOf(row.body_age_years, bodyAgeRangeLow, bodyAgeRangeHigh), 'lowerBetter') })
     }
-    if (latest?.body_water_kg != null && latest?.weight_kg != null) {
-      const zone = bodyWaterPctZone(latest.body_water_kg, latest.weight_kg, profile?.sex ?? null)
+    if (row?.body_water_kg != null && row?.weight_kg != null) {
+      const zone = bodyWaterPctZone(row.body_water_kg, row.weight_kg, profile?.sex ?? null)
       if (zone) items.push({ label: 'น้ำในร่างกาย', status: classifyMetric(zone, 'higherBetter') })
     }
-    if (latest?.inorganic_salt_kg != null && saltRangeLow !== null && saltRangeHigh !== null) {
-      items.push({ label: 'เกลือแร่', status: classifyMetric(zoneOf(latest.inorganic_salt_kg, saltRangeLow, saltRangeHigh), 'neutral') })
+    if (row?.inorganic_salt_kg != null && saltRangeLow !== null && saltRangeHigh !== null) {
+      items.push({ label: 'เกลือแร่', status: classifyMetric(zoneOf(row.inorganic_salt_kg, saltRangeLow, saltRangeHigh), 'neutral') })
     }
-    if (latest?.protein_kg != null && latest?.weight_kg != null) {
-      const zone = proteinPctZone(latest.protein_kg, latest.weight_kg)
+    if (row?.protein_kg != null && row?.weight_kg != null) {
+      const zone = proteinPctZone(row.protein_kg, row.weight_kg)
       if (zone) items.push({ label: 'โปรตีน', status: classifyMetric(zone, 'higherBetter') })
     }
-    if (latest?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
-      items.push({ label: 'มวลกระดูก', status: classifyMetric(zoneOf(latest.bone_mass_kg, boneMassRangeLow, boneMassRangeHigh), 'neutral') })
+    if (row?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
+      items.push({ label: 'มวลกระดูก', status: classifyMetric(zoneOf(row.bone_mass_kg, boneMassRangeLow, boneMassRangeHigh), 'neutral') })
     }
     return items
-  }, [
-    latest,
-    bmi,
-    profile?.sex,
-    weightRangeLow,
-    weightRangeHigh,
-    skeletalRangeLow,
-    skeletalRangeHigh,
-    fatMassRangeLow,
-    fatMassRangeHigh,
-    muscleRangeLow,
-    muscleRangeHigh,
-    bodyAgeRangeLow,
-    bodyAgeRangeHigh,
-    saltRangeLow,
-    saltRangeHigh,
-    boneMassRangeLow,
-    boneMassRangeHigh,
-  ])
+  }
+
+  const healthScoreItems = useMemo(
+    () => computeScoreItems(latest, bmi),
+    [
+      latest,
+      bmi,
+      profile?.sex,
+      weightRangeLow,
+      weightRangeHigh,
+      skeletalRangeLow,
+      skeletalRangeHigh,
+      fatMassRangeLow,
+      fatMassRangeHigh,
+      muscleRangeLow,
+      muscleRangeHigh,
+      bodyAgeRangeLow,
+      bodyAgeRangeHigh,
+      saltRangeLow,
+      saltRangeHigh,
+      boneMassRangeLow,
+      boneMassRangeHigh,
+    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  )
+
+  // แถวข้อมูลที่ใกล้เคียง "1 เดือนก่อน" มากที่สุด (ล่าสุดที่บันทึกไว้ ณ หรือก่อนวันนั้น) — ใช้เทียบคะแนนสุขภาพย้อนหลัง
+  const oneMonthAgoMetric = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 30)
+    const offset = cutoff.getTimezoneOffset()
+    const cutoffStr = new Date(cutoff.getTime() - offset * 60000).toISOString().slice(0, 10)
+    return metrics.find((m) => m.measured_at <= cutoffStr && m.id !== latest?.id) ?? null
+  }, [metrics, latest?.id])
+
+  const previousBmiForScore = bmiOf(oneMonthAgoMetric?.weight_kg ?? null, profile?.height_cm ?? null)
+
+  const healthScoreItemsPrevMonth = useMemo(
+    () => (oneMonthAgoMetric ? computeScoreItems(oneMonthAgoMetric, previousBmiForScore) : []),
+    [oneMonthAgoMetric, previousBmiForScore]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  )
+  const healthScorePrevMonth = useMemo(() => summarizeHealthScore(healthScoreItemsPrevMonth), [healthScoreItemsPrevMonth])
+
+  // ผลต่างคะแนนสุขภาพเทียบเดือนที่แล้ว เป็นเปอร์เซ็นต์แต้ม (กันกรณีจำนวนตัวชี้วัดที่มีข้อมูลในแต่ละช่วงไม่เท่ากัน)
+  const healthScoreMonthDeltaPct =
+    oneMonthAgoMetric && healthScorePrevMonth.total > 0 && healthScoreItems.length > 0
+      ? Math.round((healthScoreItems.filter((i) => i.status !== 'needsWork').length / healthScoreItems.length) * 100) -
+        Math.round((healthScorePrevMonth.score / healthScorePrevMonth.total) * 100)
+      : null
 
   const healthScore = useMemo(() => summarizeHealthScore(healthScoreItems), [healthScoreItems])
 
@@ -777,6 +812,7 @@ export default function HealthPage() {
               label="น้ำหนัก"
               subLabel="WEIGHT"
               icon="weight"
+              imageKey="weight"
               color="#E8A33D"
               value={latest?.weight_kg != null ? toDisplay(latest.weight_kg) : null}
               unit={unit}
@@ -788,6 +824,7 @@ export default function HealthPage() {
               label="ดัชนีมวลกาย"
               subLabel="BMI"
               icon="bmi"
+              imageKey="bmi"
               color="#6C8CA8"
               value={bmi}
               decimals={1}
@@ -800,7 +837,8 @@ export default function HealthPage() {
             <IconStatCard
               label="ไขมันในร่างกาย"
               subLabel="BODY FAT"
-              icon="bodyFat"
+              icon="fat"
+              imageKey="bodyFat"
               color="#C1503A"
               value={latest?.body_fat_pct ?? null}
               unit="%"
@@ -811,7 +849,8 @@ export default function HealthPage() {
             <IconStatCard
               label="มวลกล้ามเนื้อ"
               subLabel="MUSCLE MASS"
-              icon="muscleMass"
+              icon="muscle"
+              imageKey="muscleMass"
               color="#5FA88C"
               value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null}
               unit={unit}
@@ -822,7 +861,8 @@ export default function HealthPage() {
             <IconStatCard
               label="มวลไขมัน"
               subLabel="FAT MASS"
-              icon="fatMass"
+              icon="fat"
+              imageKey="fatMass"
               color="#C1503A"
               value={latest?.body_fat_kg != null ? toDisplay(latest.body_fat_kg) : null}
               unit={unit}
@@ -833,7 +873,8 @@ export default function HealthPage() {
             <IconStatCard
               label="ไขมันช่องท้อง"
               subLabel="VISCERAL FAT"
-              icon="visceralFat"
+              icon="fat"
+              imageKey="visceralFat"
               color="#CF9A3D"
               value={latest?.visceral_fat_grade ?? null}
               unit="ระดับ"
@@ -847,7 +888,8 @@ export default function HealthPage() {
             <IconStatCard
               label="น้ำในร่างกาย"
               subLabel="BODY WATER"
-              icon="bodyWater"
+              icon="water"
+              imageKey="bodyWater"
               color="#3D8FE8"
               value={latest?.body_water_kg != null ? toDisplay(latest.body_water_kg) : null}
               unit={unit}
@@ -865,6 +907,7 @@ export default function HealthPage() {
               label="โปรตีน"
               subLabel="PROTEIN"
               icon="protein"
+              imageKey="protein"
               color="#5FA8A0"
               value={latest?.protein_kg != null ? toDisplay(latest.protein_kg) : null}
               unit={unit}
@@ -881,7 +924,8 @@ export default function HealthPage() {
             <IconStatCard
               label="กล้ามเนื้อโครงร่าง"
               subLabel="SKELETAL MUSCLE"
-              icon="skeletalMuscle"
+              icon="muscle"
+              imageKey="skeletalMuscle"
               color="#7FA85F"
               value={latest?.skeletal_muscle_kg != null ? toDisplay(latest.skeletal_muscle_kg) : null}
               unit={unit}
@@ -892,7 +936,8 @@ export default function HealthPage() {
             <IconStatCard
               label="มวลกระดูก"
               subLabel="BONE MASS"
-              icon="boneMass"
+              icon="bone"
+              imageKey="boneMass"
               color="#B08968"
               value={latest?.bone_mass_kg != null ? toDisplay(latest.bone_mass_kg) : null}
               unit={unit}
@@ -903,7 +948,8 @@ export default function HealthPage() {
             <IconStatCard
               label="อายุร่างกาย"
               subLabel="BODY AGE"
-              icon="bodyAge"
+              icon="heart"
+              imageKey="bodyAge"
               color="#CF715F"
               value={latest?.body_age_years ?? null}
               unit="ปี"
@@ -915,7 +961,8 @@ export default function HealthPage() {
             <IconStatCard
               label="อัตราการเผาผลาญ"
               subLabel="BMR"
-              icon="bmr"
+              icon="fire"
+              imageKey="bmr"
               color="#5FA85F"
               value={latest?.bmr_kcal ?? null}
               unit="kcal"
@@ -1020,8 +1067,25 @@ export default function HealthPage() {
                 low={weightRangeLow != null ? toDisplay(weightRangeLow) : null}
                 high={weightRangeHigh != null ? toDisplay(weightRangeHigh) : null}
                 iconKey="weight"
+                imageKey="weight"
+                color="#E8A33D"
+                data={weightTrend}
+                direction="neutral"
+                periodLabel={`${trendPeriodDays} วัน`}
               />
-              <TopStatCard label="ไขมันในร่างกาย" value={latest?.body_fat_pct ?? null} unit="%" low={18} high={28} iconKey="fat" />
+              <TopStatCard
+                label="ไขมันในร่างกาย"
+                value={latest?.body_fat_pct ?? null}
+                unit="%"
+                low={18}
+                high={28}
+                iconKey="fat"
+                imageKey="bodyFat"
+                color="#C1503A"
+                data={bodyFatTrend}
+                direction="lowerBetter"
+                periodLabel={`${trendPeriodDays} วัน`}
+              />
               <TopStatCard
                 label="กล้ามเนื้อโครงร่าง"
                 value={latest?.skeletal_muscle_kg != null ? toDisplay(latest.skeletal_muscle_kg) : null}
@@ -1029,6 +1093,11 @@ export default function HealthPage() {
                 low={skeletalRangeLow != null ? toDisplay(skeletalRangeLow) : null}
                 high={skeletalRangeHigh != null ? toDisplay(skeletalRangeHigh) : null}
                 iconKey="muscle"
+                imageKey="skeletalMuscle"
+                color="#7FA85F"
+                data={skeletalMuscleTrend}
+                direction="higherBetter"
+                periodLabel={`${trendPeriodDays} วัน`}
               />
               <TopStatCard
                 label="มวลไขมัน"
@@ -1037,8 +1106,25 @@ export default function HealthPage() {
                 low={fatMassRangeLow != null ? toDisplay(fatMassRangeLow) : null}
                 high={fatMassRangeHigh != null ? toDisplay(fatMassRangeHigh) : null}
                 iconKey="fat"
+                imageKey="fatMass"
+                color="#CF9A3D"
+                data={bodyFatKgTrend}
+                direction="lowerBetter"
+                periodLabel={`${trendPeriodDays} วัน`}
               />
-              <TopStatCard label="BMI" value={bmi} unit="kg/m²" low={18.5} high={25} iconKey="bmi" />
+              <TopStatCard
+                label="BMI"
+                value={bmi}
+                unit="kg/m²"
+                low={18.5}
+                high={25}
+                iconKey="bmi"
+                imageKey="bmi"
+                color="#6C8CA8"
+                data={bmiTrend}
+                direction="neutral"
+                periodLabel={`${trendPeriodDays} วัน`}
+              />
             </div>
           )}
 
@@ -1069,9 +1155,21 @@ export default function HealthPage() {
               {trendMetric === 'all' ? (
                 allTrendsWithData.length > 0 ? (
                   <div className="space-y-4">
-                    {allTrendsWithData.map((t) => (
+                    {(showAllMetrics ? allTrendsWithData : allTrendsWithData.slice(0, 5)).map((t) => (
                       <MetricRowCard key={t.key} trend={t} periodLabel={`${trendPeriodDays} วัน`} />
                     ))}
+                    {allTrendsWithData.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllMetrics((v) => !v)}
+                        className="w-full flex items-center justify-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-lg py-2.5 active:scale-[0.99] transition"
+                      >
+                        {showAllMetrics ? 'แสดงน้อยลง' : 'ดูตัวชี้วัดเพิ่มเติม'}
+                        <span className={`transition-transform ${showAllMetrics ? '-rotate-90' : 'rotate-90'}`}>
+                          <ChevronRightIcon />
+                        </span>
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <p className="text-[11px] text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
@@ -1085,17 +1183,26 @@ export default function HealthPage() {
                   ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มในหมวดนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งก่อน แล้วกราฟจะขึ้นให้อัตโนมัติ
                 </p>
               )}
+
+              {trendGroup === 'comp' && <ForecastCard metrics={metrics} toDisplay={toDisplay} unit={unit} />}
             </div>
 
             <div className="space-y-4">
-              <HealthScoreCard score={healthScore} />
+              <HealthScoreCard score={healthScore} monthDeltaPct={healthScoreMonthDeltaPct} />
 
               <div className="space-y-2">
-                <h2 className="font-display text-sm tracked uppercase text-muted">Insight &amp; คำแนะนำ</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-sm tracked uppercase text-muted flex items-center gap-1.5">
+                    Insight &amp; วิเคราะห์
+                    <span className="text-muted">
+                      <InfoIcon />
+                    </span>
+                  </h2>
+                </div>
                 {healthInsights.length > 0 ? (
                   <div className="space-y-2">
                     {healthInsights.map((insight) => (
-                      <InsightCard key={insight.id} insight={insight} />
+                      <InsightCard key={insight.id} insight={insight} showChevron />
                     ))}
                   </div>
                 ) : (
@@ -1104,6 +1211,8 @@ export default function HealthPage() {
                   </p>
                 )}
               </div>
+
+              <RecommendationsCard insights={healthInsights} latestWeightKg={latest?.weight_kg ?? null} />
 
               <GoalsCard goals={goals} unit={unit} goalCurrentValue={goalCurrentValue} goalProgressPct={goalProgressPct} />
             </div>
@@ -1211,6 +1320,15 @@ function ChevronRightIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <polyline points="9 6 15 12 9 18" />
+    </svg>
+  )
+}
+
+function TrendUpIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="3 17 9 11 13 15 21 6" />
+      <polyline points="14 6 21 6 21 13" />
     </svg>
   )
 }
@@ -1330,9 +1448,9 @@ const TREND_ICONS: Record<string, () => JSX.Element> = {
 }
 
 // ===== Metric Icons: รูปจริงจากชุด "FITLOG – Metric Icons" ที่ผู้ใช้ส่งมา =====
-// ไฟล์ทั้งชุด (24 ไอคอน) อยู่ที่ /public/icons/*.png แล้ว — พื้นหลังถูกลบให้โปร่งใส
-// ด้านล่างคือ 12 ตัวที่ใช้ในหน้าสุขภาพตอนนี้ ส่วนที่เหลือ (activity, calories, goals, heart-rate,
-// history, hydration, metabolism, progress, settings, sleep, workouts, achievements) เตรียมไว้ใช้ในหน้าอื่นต่อได้เลย
+// ไฟล์ทั้งชุดอยู่ที่ /public/icons/*.png แล้ว — ด้านล่างคือ 12 ตัวที่ใช้ในหน้าสุขภาพตอนนี้
+// ส่วนที่เหลือ (activity, calories, goals, heart-rate, history, hydration, metabolism,
+// progress, settings, sleep, workouts, achievements) เตรียมไว้ใช้ในหน้าอื่นต่อได้เลย
 const STAT_ICON_IMAGES: Record<string, string> = {
   weight: '/icons/weight.png',
   bmi: '/icons/bmi.png',
@@ -1348,6 +1466,38 @@ const STAT_ICON_IMAGES: Record<string, string> = {
   bmr: '/icons/bmr.png',
 }
 
+// trend.key ส่วนใหญ่ตรงกับคีย์ใน STAT_ICON_IMAGES อยู่แล้ว (เช่น 'weight', 'bmi', 'skeletalMuscle')
+// ยกเว้นบางตัวที่ตั้งชื่อไม่ตรงกัน — ตารางนี้ไว้แปลงเฉพาะกรณีนั้น
+const TREND_KEY_TO_IMAGE_KEY: Record<string, string> = { bodyFatKg: 'fatMass' }
+
+// หา imageKey ที่ใช้ได้จริงจาก trend.key (คืน undefined ถ้าไม่มีรูปสำหรับตัวชี้วัดนั้น เช่น เกลือแร่/รอบเอว ฯลฯ)
+function imageKeyFor(trendKey: string): string | undefined {
+  const mapped = TREND_KEY_TO_IMAGE_KEY[trendKey] ?? trendKey
+  return STAT_ICON_IMAGES[mapped] ? mapped : undefined
+}
+
+// ไอคอนตัวชี้วัด — ใช้รูปจริงจากชุดไอคอนถ้ามี (ไม่ต้องมีวงกลมพื้นหลัง เพราะรูปมีสี/พื้นหลังในตัวอยู่แล้ว)
+// ถ้าตัวชี้วัดนั้นยังไม่มีรูป (เช่น เกลือแร่, รอบเอว) ใช้ไอคอนเส้น SVG เดิม + วงกลมสีพื้นหลังแทน
+function MetricIconChip({ iconKey, imageKey, color, size = 28 }: { iconKey: string; imageKey?: string; color: string; size?: number }) {
+  const src = imageKey ? STAT_ICON_IMAGES[imageKey] : undefined
+  if (src) {
+    return (
+      <span className="shrink-0 inline-block" style={{ width: size, height: size }}>
+        <Image src={src} alt="" width={size} height={size} className="w-full h-full object-contain" />
+      </span>
+    )
+  }
+  const Icon = TREND_ICONS[iconKey] ?? ScaleIcon
+  return (
+    <span
+      className="shrink-0 rounded-full flex items-center justify-center"
+      style={{ width: size, height: size, background: `${color}26`, color }}
+    >
+      <Icon />
+    </span>
+  )
+}
+
 // การ์ดสรุปตัวเลขล่าสุดด้านบน (พร้อม badge Low/Standard/High) — ใช้ค่า "ล่าสุดจริง" ไม่ขึ้นกับช่วงเวลาที่เลือกดูกราฟ
 function TopStatCard({
   label,
@@ -1357,6 +1507,11 @@ function TopStatCard({
   low,
   high,
   iconKey,
+  imageKey,
+  color = '#6C8CA8',
+  data,
+  direction = 'neutral',
+  periodLabel,
 }: {
   label: string
   value: number | null | undefined
@@ -1365,26 +1520,57 @@ function TopStatCard({
   low?: number | null
   high?: number | null
   iconKey: string
+  imageKey?: string
+  color?: string
+  data?: { label: string; value: number }[]
+  direction?: Direction
+  periodLabel?: string
 }) {
-  const Icon = TREND_ICONS[iconKey] ?? ScaleIcon
   const zone = value != null && low != null && high != null ? zoneOf(value, low, high) : null
+  const hasSpark = data && data.length > 1
+  const first = hasSpark ? data![0].value : null
+  const last = hasSpark ? data![data!.length - 1].value : null
+  const delta = first !== null && last !== null ? last - first : null
+  const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
+  const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
+  const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
+  const gradientId = `spark-${iconKey}-${label}`.replace(/[^a-zA-Z0-9-]/g, '')
+
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
       <div className="flex items-center gap-2 mb-1.5">
-        <span className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center bg-steel/15 text-steel">
-          <Icon />
-        </span>
+        <MetricIconChip iconKey={iconKey} imageKey={imageKey} color={color} size={24} />
         <span className="text-[11px] tracked uppercase text-muted truncate">{label}</span>
       </div>
       <p className="font-mono text-xl tabular text-ink">
         {value != null ? value.toFixed(decimals) : '—'}
         <span className="text-xs text-muted ml-1">{unit}</span>
+        {delta !== null && (
+          <span className={`text-[11px] font-mono ml-1.5 ${deltaColor}`}>
+            {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)}
+          </span>
+        )}
       </p>
-      {zone && (
+      {periodLabel && <p className="text-[10px] text-muted mt-0.5">จาก{periodLabel}ก่อน</p>}
+      {hasSpark ? (
+        <div className="h-8 -mx-1 mt-1.5">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} fill={`url(#${gradientId})`} dot={false} isAnimationActive={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      ) : zone ? (
         <div className="mt-1.5">
           <ZoneBadge zone={zone} />
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -1398,26 +1584,25 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
   const firstVal = data.length > 1 ? data[0].value : null
   const delta = latestVal !== null && firstVal !== null ? latestVal - firstVal : null
   const zone = trend.range && latestVal !== null ? zoneOf(latestVal, trend.range.low, trend.range.high) : null
-  const Icon = TREND_ICONS[trend.iconKey ?? 'ruler'] ?? ScaleIcon
   const deltaGood = delta !== null && (trend.direction === 'higherBetter' ? delta >= 0 : delta <= 0)
 
   return (
     <section className="bg-surface border border-line shadow-elevated rounded-lg p-4">
       <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,150px)_1fr_minmax(0,170px)] gap-3 sm:gap-4 sm:items-center">
-        {/* คอลัมน์ซ้าย: ไอคอน + ชื่อตัวชี้วัด (อยู่ข้างหน้า) + ค่าปัจจุบัน + badge */}
+        {/* คอลัมน์ซ้าย: ไอคอน + ชื่อตัวชี้วัด (อยู่ข้างหน้า) + ค่าปัจจุบัน + การเปลี่ยนแปลง (แสดงติดกับค่า) */}
         <div className="flex items-start gap-2 min-w-0">
-          <span
-            className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center"
-            style={{ background: `${trend.color}26`, color: trend.color }}
-          >
-            <Icon />
-          </span>
+          <MetricIconChip iconKey={trend.iconKey ?? 'ruler'} imageKey={imageKeyFor(trend.key)} color={trend.color} size={36} />
           <div className="min-w-0">
             <span className="block font-display text-xs tracked uppercase text-ink truncate">{trend.label}</span>
             <span className="font-mono text-lg tabular text-ink whitespace-nowrap">
               {latestVal !== null ? latestVal.toFixed(dec) : '—'}
               <span className="text-xs text-muted ml-1">{trend.unit}</span>
             </span>
+            {delta !== null && (
+              <span className={`block text-[11px] font-mono mt-0.5 ${deltaGood ? 'text-moss' : 'text-rusttext'}`}>
+                {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(dec)} {trend.unit}
+              </span>
+            )}
             {zone && (
               <div className="mt-1">
                 <ZoneBadge zone={zone} />
@@ -1426,37 +1611,31 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
           </div>
         </div>
 
-        {/* คอลัมน์กลาง: badge เปลี่ยนแปลง (ชิดขวา เหนือปลายกราฟ) + กราฟเส้น */}
+        {/* คอลัมน์กลาง: กราฟเส้น พร้อมป้ายวันที่แรก/ล่าสุดใต้กราฟ */}
         <div>
-          {delta !== null && (
-            <div className="flex justify-end mb-1">
-              <span
-                className={`text-[11px] font-mono px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
-                  deltaGood ? 'bg-mossdim text-moss' : 'bg-rustdim text-rusttext'
-                }`}
-              >
-                {delta > 0 ? '+' : ''}
-                {delta.toFixed(dec)} {trend.unit}
-              </span>
-            </div>
-          )}
           {data.length > 1 ? (
-            <div className="h-24">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="#2E333A" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#9498A0', fontSize: 9 }} axisLine={{ stroke: '#2E333A' }} tickLine={false} />
-                  <YAxis tick={{ fill: '#9498A0', fontSize: 9 }} axisLine={false} tickLine={false} width={26} domain={['auto', 'auto']} />
-                  <Tooltip
-                    contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
-                    labelStyle={{ color: '#9498A0' }}
-                    itemStyle={{ color: '#F3F0E8' }}
-                    formatter={(v: number) => [`${v} ${trend.unit}`, trend.label]}
-                  />
-                  <Line type="monotone" dataKey="value" stroke={trend.color} strokeWidth={2} dot={{ r: 2, fill: trend.color }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <>
+              <div className="h-24">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid stroke="#2E333A" vertical={false} />
+                    <XAxis dataKey="label" hide />
+                    <YAxis tick={{ fill: '#9498A0', fontSize: 9 }} axisLine={false} tickLine={false} width={26} domain={['auto', 'auto']} />
+                    <Tooltip
+                      contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: '#9498A0' }}
+                      itemStyle={{ color: '#F3F0E8' }}
+                      formatter={(v: number) => [`${v} ${trend.unit}`, trend.label]}
+                    />
+                    <Line type="monotone" dataKey="value" stroke={trend.color} strokeWidth={2} dot={{ r: 2, fill: trend.color }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-between text-[9px] text-muted mt-0.5">
+                <span>{data[0].label}</span>
+                <span>{data[data.length - 1].label}</span>
+              </div>
+            </>
           ) : (
             <p className="text-[11px] text-muted py-6 text-center">ยังไม่มีข้อมูลพอในช่วง{periodLabel} — บันทึกอย่างน้อย 2 ครั้ง</p>
           )}
@@ -1483,7 +1662,7 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
               <span>{trend.range.high.toFixed(dec)}</span>
             </div>
             <p className="text-[9px] text-muted mt-1">
-              ช่วงมาตรฐาน: {trend.range.low.toFixed(dec)} - {trend.range.high.toFixed(dec)} {trend.unit}
+              (Ideal {trend.range.low.toFixed(dec)} - {trend.range.high.toFixed(dec)})
             </p>
             {trend.range.note && <p className="text-[9px] text-muted mt-0.5 italic">{trend.range.note}</p>}
           </div>
@@ -1495,22 +1674,139 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
   )
 }
 
-// วงแหวนสรุป + สัดส่วน ดีมาก/มาตรฐาน/ควรปรับปรุง จากตัวชี้วัดล่าสุดที่มีช่วงอ้างอิงให้เทียบ
-function HealthScoreCard({ score }: { score: { good: number; standard: number; needsWork: number; total: number; score: number } }) {
-  const pct = score.total > 0 ? (score.score / score.total) * 100 : 0
+// ประมาณค่าล่วงหน้าแบบเส้นตรง (linear regression) จากจุดข้อมูล {t: เวลา (ms), value} — ใช้เทรนด์ปัจจุบันภายนอกช่วงข้อมูลจริง
+function linearForecast(rows: { t: number; value: number }[], daysAhead: number): number | null {
+  if (rows.length < 3) return null
+  const t0 = rows[0].t
+  const xs = rows.map((r) => (r.t - t0) / 86400000)
+  const ys = rows.map((r) => r.value)
+  const n = xs.length
+  const sumX = xs.reduce((a, b) => a + b, 0)
+  const sumY = ys.reduce((a, b) => a + b, 0)
+  const sumXY = xs.reduce((a, x, i) => a + x * ys[i], 0)
+  const sumXX = xs.reduce((a, x) => a + x * x, 0)
+  const denom = n * sumXX - sumX * sumX
+  if (denom === 0) return ys[ys.length - 1]
+  const slope = (n * sumXY - sumX * sumY) / denom
+  const intercept = (sumY - slope * sumX) / n
+  const lastX = xs[xs.length - 1]
+  return intercept + slope * (lastX + daysAhead)
+}
+
+// การ์ดคาดการณ์ 4 สัปดาห์ข้างหน้า — คำนวณจากแนวโน้มเชิงเส้นของข้อมูล 90 วันล่าสุด (ไม่ใช่การพยากรณ์ทางการแพทย์ เป็นเพียงการประมาณจากแนวโน้มที่ผ่านมา)
+function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toDisplay: (v: number) => number; unit: string }) {
+  const forecast = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 90)
+    const offset = cutoff.getTimezoneOffset()
+    const cutoffStr = new Date(cutoff.getTime() - offset * 60000).toISOString().slice(0, 10)
+    const within = metrics.filter((m) => m.measured_at >= cutoffStr)
+
+    function rowsFor(field: 'weight_kg' | 'body_fat_pct' | 'skeletal_muscle_kg' | 'body_fat_kg', display?: boolean) {
+      return [...within]
+        .filter((m) => m[field] !== null)
+        .reverse()
+        .map((m) => ({ t: new Date(m.measured_at + 'T00:00:00').getTime(), value: display ? toDisplay(m[field] as number) : (m[field] as number) }))
+    }
+
+    const weightRows = rowsFor('weight_kg', true)
+    const fatPctRows = rowsFor('body_fat_pct')
+    const muscleRows = rowsFor('skeletal_muscle_kg', true)
+    const fatKgRows = rowsFor('body_fat_kg', true)
+
+    const weight = linearForecast(weightRows, 28)
+    const fatPct = linearForecast(fatPctRows, 28)
+    const muscle = linearForecast(muscleRows, 28)
+    const fatKg = linearForecast(fatKgRows, 28)
+
+    const curWeight = weightRows.length > 0 ? weightRows[weightRows.length - 1].value : null
+    const curFatPct = fatPctRows.length > 0 ? fatPctRows[fatPctRows.length - 1].value : null
+    const curMuscle = muscleRows.length > 0 ? muscleRows[muscleRows.length - 1].value : null
+    const curFatKg = fatKgRows.length > 0 ? fatKgRows[fatKgRows.length - 1].value : null
+
+    const items = [
+      { label: 'น้ำหนัก', value: weight, delta: weight !== null && curWeight !== null ? weight - curWeight : null, unit },
+      { label: 'ไขมันในร่างกาย', value: fatPct, delta: fatPct !== null && curFatPct !== null ? fatPct - curFatPct : null, unit: '%' },
+      { label: 'กล้ามเนื้อโครงร่าง', value: muscle, delta: muscle !== null && curMuscle !== null ? muscle - curMuscle : null, unit },
+      { label: 'มวลไขมัน', value: fatKg, delta: fatKg !== null && curFatKg !== null ? fatKg - curFatKg : null, unit },
+    ].filter((it) => it.value !== null)
+
+    return items
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metrics, toDisplay, unit])
+
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
-      <h2 className="font-display text-sm tracked uppercase text-muted mb-3">สรุปภาพรวม</h2>
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-amber">
+          <TrendUpIcon />
+        </span>
+        <h2 className="font-display text-sm tracked uppercase text-ink">คาดการณ์ 4 สัปดาห์ข้างหน้า</h2>
+      </div>
+      {forecast.length === 0 ? (
+        <p className="text-[11px] text-muted mt-2">
+          ยังมีข้อมูลไม่พอสำหรับคาดการณ์ — บันทึกข้อมูลอย่างน้อย 3 ครั้งในช่วง 90 วันที่ผ่านมา แล้วระบบจะคาดการณ์แนวโน้มให้อัตโนมัติ
+        </p>
+      ) : (
+        <>
+          <p className="text-[11px] text-muted mb-3">หากทำตามแนวโน้มปัจจุบันต่อเนื่อง คาดว่าภายใน 4 สัปดาห์...</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {forecast.map((it) => (
+              <div key={it.label}>
+                <p className="text-[10px] tracked uppercase text-muted truncate">{it.label}</p>
+                <p className="font-mono text-base text-ink">
+                  {it.value!.toFixed(1)}
+                  <span className="text-[10px] text-muted ml-1">{it.unit}</span>
+                </p>
+                {it.delta !== null && (
+                  <p className={`text-[11px] font-mono ${it.delta < 0 ? 'text-moss' : it.delta > 0 ? 'text-rusttext' : 'text-muted'}`}>
+                    {it.delta > 0 ? '↑' : it.delta < 0 ? '↓' : '·'} {Math.abs(it.delta).toFixed(1)} {it.unit}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-[9px] text-muted mt-3 italic">
+            * ประมาณจากแนวโน้มข้อมูล 90 วันที่ผ่านมา ไม่ใช่คำแนะนำทางการแพทย์
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+// วงแหวนสรุป + สัดส่วน ดีมาก/มาตรฐาน/ควรปรับปรุง จากตัวชี้วัดล่าสุดที่มีช่วงอ้างอิงให้เทียบ
+function HealthScoreCard({
+  score,
+  monthDeltaPct,
+}: {
+  score: { good: number; standard: number; needsWork: number; total: number; score: number }
+  monthDeltaPct?: number | null
+}) {
+  const pct = score.total > 0 ? (score.score / score.total) * 100 : 0
+  const label = pct >= 85 ? 'ดีมาก' : pct >= 65 ? 'ดี' : pct >= 40 ? 'มาตรฐาน' : 'ควรปรับปรุง'
+  const ringColor = pct >= 85 ? '#7A9B57' : pct >= 65 ? '#7A9B57' : pct >= 40 ? '#E8A33D' : '#C1503A'
+  return (
+    <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+      <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คะแนนสุขภาพรวม</h2>
       {score.total === 0 ? (
-        <p className="text-[11px] text-muted">กรอกช่วงมาตรฐานในฟอร์มบันทึกข้อมูล เพื่อดูสรุปภาพรวมตรงนี้</p>
+        <p className="text-[11px] text-muted">กรอกช่วงมาตรฐานในฟอร์มบันทึกข้อมูล เพื่อดูคะแนนสุขภาพตรงนี้</p>
       ) : (
         <div className="flex items-center gap-4">
-          <GoalRing pct={pct} size={88} strokeWidth={8} color="#E8A33D" ariaLabel="สรุปเกณฑ์สุขภาพ" />
-          <div className="text-xs space-y-1.5">
-            <p className="font-mono text-ink text-sm mb-1">
-              {score.score} / {score.total} <span className="text-muted text-[11px]">อยู่ในเกณฑ์ดี</span>
+          <GoalRing pct={pct} size={88} strokeWidth={8} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
+          <div className="text-xs space-y-1.5 min-w-0">
+            <p className="font-display text-sm tracked uppercase" style={{ color: ringColor }}>
+              {label}
             </p>
-            <p className="flex items-center gap-1.5 text-muted">
+            {monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0 && (
+              <p className={`text-[11px] ${monthDeltaPct > 0 ? 'text-moss' : 'text-rusttext'}`}>
+                {monthDeltaPct > 0 ? 'ดีขึ้นจากเดือนที่แล้ว' : 'แย่ลงจากเดือนที่แล้ว'}{' '}
+                <span className="font-mono">
+                  {monthDeltaPct > 0 ? '↑' : '↓'} {Math.abs(monthDeltaPct)} คะแนน
+                </span>
+              </p>
+            )}
+            <p className="flex items-center gap-1.5 text-muted pt-0.5">
               <span className="w-2 h-2 rounded-full bg-moss inline-block" /> ดีมาก <span className="ml-auto text-ink">{score.good}</span>
             </p>
             <p className="flex items-center gap-1.5 text-muted">
@@ -1580,10 +1876,80 @@ function GoalsCard({
   )
 }
 
-const MUSCLE_FAT_META: Record<string, { src: string }> = {
-  Weight: { src: STAT_ICON_IMAGES.weight },
-  'Skeletal Muscle': { src: STAT_ICON_IMAGES.skeletalMuscle },
-  'Fat Mass': { src: STAT_ICON_IMAGES.fatMass },
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" />
+    </svg>
+  )
+}
+
+// การ์ดคำแนะนำ — ทิปหลักไฮไลต์ 1 อัน (อิงจาก insight เตือนล่าสุด ถ้ามี) + ทิปทั่วไปที่คำนวณจากค่าล่าสุด (น้ำ) และคำแนะนำมาตรฐาน (นอน)
+function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]; latestWeightKg: number | null }) {
+  const topWarning = insights.find((i) => i.kind === 'warning')
+  const isMuscleWarning = topWarning?.id === 'trend-muscle-down' || topWarning?.id === 'trend-musclemass-down'
+  const highlight = topWarning
+    ? {
+        title: isMuscleWarning ? 'เพิ่มการฝึกแรงต้าน' : 'เพิ่มการเผาผลาญไขมัน',
+        detail: isMuscleWarning ? 'ฝึกเวทหรือเวทเทรนนิ่งอย่างน้อย 2-3 ครั้ง/สัปดาห์ เน้นกล้ามเนื้อมัดใหญ่' : 'คาร์ดิโอ HIIT 2-3 ครั้ง/สัปดาห์ ช่วยเผาผลาญไขมันได้มากขึ้น 15-20%',
+      }
+    : null
+
+  // สูตรทั่วไปที่แอปสุขภาพใช้ประมาณปริมาณน้ำที่ควรดื่ม ~35 มล./น้ำหนักตัว 1 กก.
+  const waterLiters = latestWeightKg != null ? Math.round((latestWeightKg * 0.035) * 10) / 10 : null
+
+  return (
+    <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+      <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คำแนะนำสำหรับคุณ</h2>
+      <div className="space-y-2">
+        {highlight && (
+          <div className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-3">
+            <div className="flex items-start gap-2.5">
+              <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-amber/20 text-amber">
+                <FireIcon />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-display tracked uppercase text-ink">{highlight.title}</p>
+                <p className="text-[11px] text-muted mt-0.5">{highlight.detail}</p>
+                <a
+                  href="/program"
+                  className="inline-block mt-2 text-[10px] font-display tracked uppercase text-bg bg-amber rounded-full px-3 py-1.5"
+                >
+                  ดูโปรแกรมแนะนำ
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="flex items-start gap-2.5 px-1 py-1.5">
+          <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-steel/15 text-steel">
+            <DropletsIcon />
+          </span>
+          <div className="min-w-0 text-xs">
+            <p className="text-ink">ดื่มน้ำให้เพียงพอ</p>
+            <p className="text-[11px] text-muted mt-0.5">
+              {waterLiters !== null ? `อย่างน้อยวันละ ${waterLiters.toFixed(1)} ลิตร` : 'อย่างน้อยวันละ 2-2.5 ลิตร'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-2.5 px-1 py-1.5">
+          <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-violet/15 text-violet">
+            <MoonIcon />
+          </span>
+          <div className="min-w-0 text-xs">
+            <p className="text-ink">นอนหลับให้เพียงพอ</p>
+            <p className="text-[11px] text-muted mt-0.5">7-8 ชั่วโมงต่อคืน</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const MUSCLE_FAT_META: Record<string, { Icon: () => JSX.Element; bg: string; fg: string }> = {
+  Weight: { Icon: ScaleIcon, bg: 'bg-moss/15', fg: 'text-moss' },
+  'Skeletal Muscle': { Icon: MuscleIcon, bg: 'bg-violet/15', fg: 'text-violet' },
+  'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber' },
 }
 
 function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFatPct: number | null }) {
@@ -1730,19 +2096,16 @@ function MuscleFatBarRow({
   const highPct = pct(high)
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
-  const meta = MUSCLE_FAT_META[label]
+  const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel' }
+  const Icon = meta.Icon
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-3">
-          {meta ? (
-            <img src={meta.src} alt="" className="w-10 h-10 shrink-0 -m-0.5" />
-          ) : (
-            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center bg-steel/15 text-steel">
-              <ScaleIcon />
-            </span>
-          )}
+          <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${meta.bg} ${meta.fg}`}>
+            <Icon />
+          </span>
           <span className="flex items-center gap-1.5 text-sm text-ink font-medium">
             {label}
             <span className="text-muted">
@@ -1785,6 +2148,7 @@ function IconStatCard({
   label,
   subLabel,
   icon,
+  imageKey,
   color,
   value,
   unit,
@@ -1800,6 +2164,7 @@ function IconStatCard({
   label: string
   subLabel: string
   icon: string
+  imageKey?: string
   color: string
   value: number | null | undefined
   unit?: string
@@ -1817,8 +2182,6 @@ function IconStatCard({
   // lowerOk    = ต่ำกว่ามาตรฐานยังโอเค/ดีกว่า เฉพาะสูงกว่าที่ไม่ดี
   zoneScheme?: 'symmetric' | 'higherOk' | 'lowerOk'
 }) {
-  const iconSrc = STAT_ICON_IMAGES[icon]
-  const FallbackIcon = TREND_ICONS[icon] ?? ScaleIcon
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
   const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
@@ -1840,13 +2203,7 @@ function IconStatCard({
   return (
     <div className="h-full bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5 flex flex-col justify-between">
       <div className="flex items-start gap-2 mb-2">
-        {iconSrc ? (
-          <img src={iconSrc} alt="" className="w-10 h-10 shrink-0 -m-0.5" />
-        ) : (
-          <span className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center" style={{ background: `${color}26`, color }}>
-            <FallbackIcon />
-          </span>
-        )}
+        <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={32} />
         <div className="min-w-0">
           <p className="text-xs text-ink font-medium leading-snug">{label}</p>
           <p className="text-[9px] tracked uppercase text-muted leading-snug">{subLabel}</p>
