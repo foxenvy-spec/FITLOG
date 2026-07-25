@@ -409,15 +409,15 @@ export default function DashboardPage() {
 
   return (
     // < 1024px: flat vertical stack, unchanged from before.
-    // 1024–1279px: two-column dashboard — greeting spans both, "today" (hero/quick-start/
-    // heatmap) sits left, "status" (recovery/goal/AI coach) sits right, and the
-    // below-the-fold charts + insights span both columns again underneath.
-    // >= 1280px (xl): the two column wrappers below switch to `xl:contents` so their
+    // >= 1024px (lg): the two column wrappers below switch to `lg:contents` so their
     // children become direct items of this 12-col grid — actual row order is controlled
-    // per-item via `xl:order-*`, not by where the element sits in the JSX tree.
-    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-12 lg:gap-6 xl:gap-4 lg:items-start">
+    // per-item via `lg:order-*`, not by where the element sits in the JSX tree.
+    // (Single breakpoint on purpose — many 14" laptops report a CSS viewport width
+    // somewhere in the 1024–1280px range, so gating this on `xl` left that whole
+    // range stuck on an in-between 2-column layout that never really got tested.)
+    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start">
       {/* greeting + settings */}
-      <div className="lg:col-span-2 xl:col-span-12 xl:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
+      <div className="lg:col-span-12 lg:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
         <div>
           <p className="text-xs text-muted">👋 {greetingText}</p>
           <p className="font-display text-lg tracked uppercase text-ink mt-0.5">
@@ -439,7 +439,7 @@ export default function DashboardPage() {
       </div>
 
       {!data.hasAnyHistory && !bannerDismissed && (
-        <div className="xl:col-span-12 xl:order-2">
+        <div className="lg:col-span-12 lg:order-2">
           <OnboardingBanner onDismiss={handleDismissBanner} />
         </div>
       )}
@@ -447,7 +447,7 @@ export default function DashboardPage() {
       {/* body composition snapshot — weight/body fat/skeletal muscle/fat mass/BMI with
           week-over-week deltas, pulled from the same body_metrics rows as the /health page.
           Sits above the fold since it's the first thing a user checks each morning. */}
-      <div className="lg:col-span-2 xl:col-span-12 xl:order-3 animate-rise" style={{ animationDelay: '15ms' }}>
+      <div className="lg:col-span-12 lg:order-3 animate-rise" style={{ animationDelay: '15ms' }}>
         <BodyMetricsRow />
       </div>
 
@@ -457,7 +457,7 @@ export default function DashboardPage() {
           is in the Weekly Goal card — this strip fills the remaining gaps without duplicating them. */}
       {(data.latestPR || data.topMuscleThisWeek) && (
         <div
-          className="lg:col-span-2 xl:col-span-12 xl:order-4 grid grid-cols-2 gap-2 px-1 animate-rise"
+          className="lg:col-span-12 lg:order-4 grid grid-cols-2 gap-2 px-1 animate-rise"
           style={{ animationDelay: '30ms' }}
         >
           <div className="rounded-lg bg-surface2/40 border border-line/60 px-3 py-2.5">
@@ -491,14 +491,14 @@ export default function DashboardPage() {
       )}
 
       {/* left column (lg+): today's workout, quick start, muscle heatmap.
-          xl:contents removes this div's own box so its children become direct items of
-          the 12-col grid above — each child then places itself via xl:col-span/xl:order. */}
-      <div className="space-y-6 xl:contents">
+          lg:contents removes this div's own box so its children become direct items of
+          the 12-col grid above — each child then places itself via lg:col-span/lg:order. */}
+      <div className="space-y-6 lg:contents">
       {/* card 1: today's workout — the ONE dominant focal card on this screen.
           everything else below is intentionally quieter (no shadow-hero, smaller type)
           so the eye has exactly one obvious place to land first. */}
       <div
-        className={`relative rounded-lg border border-amber/25 shadow-hero overflow-hidden xl:col-span-5 xl:order-5 ${
+        className={`relative rounded-lg border border-amber/25 shadow-hero overflow-hidden lg:col-span-5 lg:order-5 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
         style={totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }}
@@ -610,7 +610,7 @@ export default function DashboardPage() {
           ไม่รู้จะกดอะไรต่อ ต่างจาก quick actions ชุดล่างที่เป็นทางลัดทั่วไป (บันทึก/เทมเพลต/สถิติ) —
           ชุดนี้เน้น 3 ทางเริ่มต้นที่ใช้บ่อยที่สุดตอนเปิดแอปครั้งแรก */}
       <div
-        className={`grid gap-2 animate-rise xl:hidden ${data.hasAnyHistory ? 'grid-cols-3' : 'grid-cols-2'}`}
+        className={`grid gap-2 animate-rise lg:hidden ${data.hasAnyHistory ? 'grid-cols-3' : 'grid-cols-2'}`}
         style={{ animationDelay: '120ms' }}
       >
         <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
@@ -619,18 +619,18 @@ export default function DashboardPage() {
       </div>
 
       {/* muscles trained today — heat-map chips built from today's workout rows */}
-      <div className="animate-rise xl:col-span-12 xl:order-9" style={{ animationDelay: '180ms' }}>
+      <div className="animate-rise lg:col-span-12 lg:order-9" style={{ animationDelay: '180ms' }}>
         <TodayMuscleHeatmap todayWorkouts={data.todayWorkouts} />
       </div>
       </div>
 
       {/* right column (lg+): recovery, weekly goal, AI coach.
-          xl:contents — same trick as the left column above. */}
-      <div className="space-y-6 xl:contents">
+          lg:contents — same trick as the left column above. */}
+      <div className="space-y-6 lg:contents">
       {/* card 2: recovery — secondary weight on purpose: quieter border, no shadow, tighter
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
-        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise xl:col-span-5 xl:order-6" style={{ animationDelay: '240ms' }}>
+        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-5 lg:order-6" style={{ animationDelay: '240ms' }}>
           <a href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] tracked uppercase text-muted">Recovery</p>
@@ -710,7 +710,7 @@ export default function DashboardPage() {
           uses the same ring as the hero card's daily progress so "goal completion" reads
           consistently as a ring throughout the dashboard, instead of a ring in one place
           and a flat percent-bar in another. */}
-      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise xl:col-span-2 xl:order-7" style={{ animationDelay: '300ms' }}>
+      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-2 lg:order-7" style={{ animationDelay: '300ms' }}>
         <div className="px-4 py-4">
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
@@ -739,7 +739,7 @@ export default function DashboardPage() {
       {/* card 5 (optional): AI coach — secondary weight */}
       {prefs.showAICoach && (
         <div
-          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise xl:col-span-2 xl:order-13"
+          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-2 lg:order-13"
           style={{ animationDelay: '360ms' }}
         >
           <a href="/coach" className="block px-4 py-4 active:bg-surface2 transition">
@@ -753,12 +753,12 @@ export default function DashboardPage() {
       )}
       </div>
 
-      {/* merged quick actions — xl only. Below xl, the two original quick-action groups
+      {/* merged quick actions — lg only. Below lg, the two original quick-action groups
           above/below (quick-start + log/templates/stats) stay as-is; at xl they're both
           hidden and replaced by this single deduplicated row so the 12-col grid doesn't
           show the same "บันทึก"/"เทมเพลต" shortcuts twice. */}
       <div
-        className={`hidden xl:grid xl:col-span-12 xl:order-8 gap-3 ${data.hasAnyHistory ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}
+        className={`hidden lg:grid lg:col-span-12 lg:order-8 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
       >
         <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
@@ -772,48 +772,48 @@ export default function DashboardPage() {
           heatmap (what got trained) -> volume (on track vs target) -> AI insights
           (what to do about it) -> consistency calendar (recent workouts / PRs per day)
           -> next-up + quick actions last. */}
-      <div className="lg:col-span-2 space-y-6 xl:contents">
-      <div className="xl:col-span-12 xl:order-10">
+      <div className="space-y-6 lg:contents">
+      <div className="lg:col-span-12 lg:order-10">
         <WeeklyMuscleHeatmap />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start xl:contents">
-        <div className="xl:col-span-6 xl:order-11">
+      <div className="grid grid-cols-1 gap-6 items-start lg:contents">
+        <div className="lg:col-span-6 lg:order-11">
           <MuscleShareCard />
         </div>
-        <div className="xl:col-span-4 xl:order-12">
+        <div className="lg:col-span-4 lg:order-12">
           <WeeklyVolume />
         </div>
       </div>
 
       {data.insights.length > 0 && (
-        <div className="space-y-2 xl:col-span-12 xl:order-14">
+        <div className="space-y-2 lg:col-span-12 lg:order-14">
           {data.insights.map((insight) => (
             <InsightCard key={insight.id} insight={insight} />
           ))}
         </div>
       )}
 
-      <div className="xl:col-span-8 xl:order-15">
+      <div className="lg:col-span-8 lg:order-15">
         <ConsistencyStrip />
       </div>
 
-      {/* stat mini-cards — xl only, sit next to Consistency to fill the 8/1/1/1/1 row.
+      {/* stat mini-cards — lg only, sit next to Consistency to fill the 8/1/1/1/1 row.
           Reuses data already shown higher up (streak, weekly days, PR, top muscle) so
-          nothing new needs fetching; below xl those live in their existing spots only. */}
-      <div className="hidden xl:block xl:col-span-1 xl:order-16 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
+          nothing new needs fetching; below lg those live in their existing spots only. */}
+      <div className="hidden lg:block lg:col-span-1 lg:order-16 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
         <p className="font-mono text-lg text-amber">{data.streak}</p>
         <p className="text-[10px] text-muted mt-0.5">Day Streak</p>
       </div>
-      <div className="hidden xl:block xl:col-span-1 xl:order-17 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
+      <div className="hidden lg:block lg:col-span-1 lg:order-17 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
         <p className="font-mono text-lg text-amber">{data.thisWeekWorkoutDays}</p>
         <p className="text-[10px] text-muted mt-0.5">ครั้งสัปดาห์นี้</p>
       </div>
-      <div className="hidden xl:block xl:col-span-1 xl:order-18 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
+      <div className="hidden lg:block lg:col-span-1 lg:order-18 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
         <p className="font-mono text-lg text-amber truncate">{data.latestPR ? `${data.latestPR.weightKg}kg` : '—'}</p>
         <p className="text-[10px] text-muted mt-0.5">PR ล่าสุด</p>
       </div>
-      <div className="hidden xl:block xl:col-span-1 xl:order-19 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
+      <div className="hidden lg:block lg:col-span-1 lg:order-19 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
         <p className="font-mono text-lg text-amber">{data.topMuscleThisWeek?.sets ?? '—'}</p>
         <p className="text-[10px] text-muted mt-0.5">เซ็ตสูงสุด</p>
       </div>
@@ -822,7 +822,7 @@ export default function DashboardPage() {
           "what happened this week" before "what's coming up next". PR history lives
           on the Statistics page alongside the rest of the analytics. */}
       {next && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden xl:col-span-12 xl:order-20">
+        <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden lg:col-span-12 lg:order-20">
           <div className="px-4 py-3 flex items-center justify-between">
             <p className="text-[11px] text-muted">
               Next up: <span className="text-ink">{next.day.title}</span>
@@ -834,12 +834,12 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="xl:col-span-12 xl:order-21">
+      <div className="lg:col-span-12 lg:order-21">
         <WeeklyCardioVolume />
       </div>
 
-      {/* quick actions — hidden at xl, superseded by the merged row placed with xl:order-8 above */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 xl:hidden">
+      {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-8 above */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:hidden">
         <QuickAction href="/log" label="บันทึก" icon="✚" accent="moss" />
         <QuickAction href="/templates" label="เทมเพลต" icon="📋" accent="steel" />
         <QuickAction href="/health" label="วิเคราะห์" icon="🔍" accent="amber" />
