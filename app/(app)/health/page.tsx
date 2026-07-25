@@ -358,6 +358,8 @@ export default function HealthPage() {
 
   // ช่วงมาตรฐานของน้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน มาจากค่าที่ผู้ใช้กรอกเองจากรายงานเครื่องชั่ง (ดู muscleFatItems ด้านบน)
   // ส่วน Body Fat%/BMI/ไขมันช่องท้อง ใช้เกณฑ์อ้างอิงทั่วไปที่ใช้กันแพร่หลาย (เช่นเดียวกับ ObesityAnalysisChart)
+  // น้ำในร่างกาย/โปรตีน ก็ใช้เกณฑ์ %ต่อน้ำหนักตัวแบบเดียวกับแท็บภาพรวม/คะแนนสุขภาพ (แทนที่จะใช้ช่วงที่นำเข้าจากรูปรายงาน)
+  // เพื่อให้สถานะ Low/Standard/High ตรงกันทั้งแอป ไม่ว่าจะดูจากแท็บไหน
   const weightRangeLow = latestNonNull('weight_range_low')
   const weightRangeHigh = latestNonNull('weight_range_high')
   const skeletalRangeLow = latestNonNull('skeletal_muscle_range_low')
@@ -368,14 +370,40 @@ export default function HealthPage() {
   const muscleRangeHigh = latestNonNull('muscle_range_high')
   const bodyAgeRangeLow = latestNonNull('body_age_range_low')
   const bodyAgeRangeHigh = latestNonNull('body_age_range_high')
-  const bodyWaterRangeLow = latestNonNull('body_water_range_low')
-  const bodyWaterRangeHigh = latestNonNull('body_water_range_high')
   const saltRangeLow = latestNonNull('inorganic_salt_range_low')
   const saltRangeHigh = latestNonNull('inorganic_salt_range_high')
-  const proteinRangeLow = latestNonNull('protein_range_low')
-  const proteinRangeHigh = latestNonNull('protein_range_high')
   const boneMassRangeLow = latestNonNull('bone_mass_range_low')
   const boneMassRangeHigh = latestNonNull('bone_mass_range_high')
+
+  // น้ำหนักตัวล่าสุด (kg ดิบ ไม่แปลงหน่วย) ใช้เป็นฐานคำนวณช่วง %ต่อน้ำหนักตัวของน้ำในร่างกาย/โปรตีน
+  const weightKgForPct = latest?.weight_kg ?? null
+
+  const bodyWaterUniversalRange = useMemo(() => {
+    if (weightKgForPct === null || !profile?.sex) return undefined
+    const [lowPct, highPct] = profile.sex === 'male' ? [55, 65] : [45, 60]
+    const low = (weightKgForPct * lowPct) / 100
+    const high = (weightKgForPct * highPct) / 100
+    return {
+      low: toDisplay(low),
+      high: toDisplay(high),
+      min: toDisplay(low) * 0.85,
+      max: toDisplay(high) * 1.15,
+      note: 'เกณฑ์ % น้ำต่อน้ำหนักตัว (มาตรฐานทั่วไป)',
+    }
+  }, [weightKgForPct, profile?.sex, toDisplay])
+
+  const proteinUniversalRange = useMemo(() => {
+    if (weightKgForPct === null) return undefined
+    const low = (weightKgForPct * 16) / 100
+    const high = (weightKgForPct * 20) / 100
+    return {
+      low: toDisplay(low),
+      high: toDisplay(high),
+      min: toDisplay(low) * 0.85,
+      max: toDisplay(high) * 1.15,
+      note: 'เกณฑ์ % โปรตีนต่อน้ำหนักตัว (มาตรฐานทั่วไป)',
+    }
+  }, [weightKgForPct, toDisplay])
 
   const compTrends: TrendDef[] = useMemo(
     () => [
@@ -436,10 +464,7 @@ export default function HealthPage() {
         data: bodyWaterTrend,
         iconKey: 'water',
         direction: 'neutral',
-        range:
-          bodyWaterRangeLow !== null && bodyWaterRangeHigh !== null
-            ? { low: toDisplay(bodyWaterRangeLow), high: toDisplay(bodyWaterRangeHigh), min: toDisplay(bodyWaterRangeLow) * 0.85, max: toDisplay(bodyWaterRangeHigh) * 1.15 }
-            : undefined,
+        range: bodyWaterUniversalRange,
       },
       {
         key: 'salt',
@@ -462,10 +487,7 @@ export default function HealthPage() {
         data: proteinTrend,
         iconKey: 'protein',
         direction: 'neutral',
-        range:
-          proteinRangeLow !== null && proteinRangeHigh !== null
-            ? { low: toDisplay(proteinRangeLow), high: toDisplay(proteinRangeHigh), min: toDisplay(proteinRangeLow) * 0.85, max: toDisplay(proteinRangeHigh) * 1.15 }
-            : undefined,
+        range: proteinUniversalRange,
       },
       {
         key: 'skeletalMuscle',
@@ -564,12 +586,10 @@ export default function HealthPage() {
       muscleRangeHigh,
       bodyAgeRangeLow,
       bodyAgeRangeHigh,
-      bodyWaterRangeLow,
-      bodyWaterRangeHigh,
+      bodyWaterUniversalRange,
       saltRangeLow,
       saltRangeHigh,
-      proteinRangeLow,
-      proteinRangeHigh,
+      proteinUniversalRange,
       boneMassTrend,
       boneMassRangeLow,
       boneMassRangeHigh,
