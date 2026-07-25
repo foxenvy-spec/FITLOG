@@ -42,6 +42,18 @@ export const MUSCLE_GROUP_LABELS_EN: Record<MuscleGroup, string> = {
   'อื่นๆ': 'Other',
 }
 
+// ชื่อไฟล์ (slug ภาษาอังกฤษ) ของแต่ละกลุ่ม — ใช้หา asset รูป diagram ใน
+// /public/images/muscle-diagram/{view}-mask-{slug}.png (ไม่ใช้ตัวอักษรไทยในชื่อไฟล์
+// เพื่อความเข้ากันได้ของ deploy pipeline / OS ต่างๆ). กลุ่ม 'ทั้งตัว'/'อื่นๆ' ไม่มี asset diagram
+export const MUSCLE_GROUP_DIAGRAM_SLUG: Partial<Record<MuscleGroup, string>> = {
+  'อก': 'chest',
+  'หลัง': 'back',
+  'ขา': 'legs',
+  'ไหล่': 'shoulders',
+  'แขน': 'arms',
+  'แกนกลางลำตัว': 'core',
+}
+
 export type MuscleLabelLang = 'th' | 'en'
 
 // คืนป้ายชื่อกลุ่มกล้ามเนื้อตามภาษาที่เลือก ใช้แทนการอ้าง mg ตรงๆ ในจุดที่โชว์ผู้ใช้
