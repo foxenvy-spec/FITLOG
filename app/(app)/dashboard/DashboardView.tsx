@@ -516,8 +516,7 @@ export default function DashboardPage() {
       {/* left column (lg+): today's workout, quick start, muscle heatmap.
           lg:contents removes this div's own box so its children become direct items of
           the 12-col grid above — each child then places itself via lg:col-span/lg:order. */}
-      <div className="space-y-6 lg:contents">
-      {/* card 1: today's workout — the ONE dominant focal card on this screen.
+      <div className="space-y-6 lg:space-y-0 lg:contents">
           everything else below is intentionally quieter (no shadow-hero, smaller type)
           so the eye has exactly one obvious place to land first. */}
       <div
@@ -654,11 +653,11 @@ export default function DashboardPage() {
 
       {/* right column (lg+): recovery, weekly goal, AI coach.
           lg:contents — same trick as the left column above. */}
-      <div className="space-y-6 lg:contents">
+      <div className="space-y-6 lg:space-y-0 lg:contents">
       {/* card 2: recovery — secondary weight on purpose: quieter border, no shadow, tighter
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
-        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-4 lg:order-6" style={{ animationDelay: '60ms' }}>
+        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-4 lg:order-6" style={{ animationDelay: '240ms' }}>
           <a href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] tracked uppercase text-muted">Recovery</p>
@@ -738,7 +737,7 @@ export default function DashboardPage() {
           uses the same ring as the hero card's daily progress so "goal completion" reads
           consistently as a ring throughout the dashboard, instead of a ring in one place
           and a flat percent-bar in another. */}
-      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-3 lg:order-7" style={{ animationDelay: '60ms' }}>
+      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-3 lg:order-7" style={{ animationDelay: '300ms' }}>
         <div className="px-4 py-4">
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
@@ -822,8 +821,7 @@ export default function DashboardPage() {
           heatmap (what got trained) -> volume (on track vs target) -> AI insights
           (what to do about it) -> consistency calendar (recent workouts / PRs per day)
           -> next-up + quick actions last. */}
-      <div className="space-y-6 lg:contents">
-      <div className="lg:col-span-12 lg:order-10">
+      <div className="space-y-6 lg:space-y-0 lg:contents">
         <WeeklyMuscleHeatmap />
       </div>
 
