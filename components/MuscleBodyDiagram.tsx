@@ -22,6 +22,9 @@ interface MuscleBodyDiagramProps {
   getOpacity: (group: MuscleGroup) => number
   getColor: (group: MuscleGroup) => string
   onClickGroup?: (group: MuscleGroup) => void
+  /** ความกว้าง (px) — ใช้เป็นค่าเริ่มต้น/ค่า fallback เท่านั้น ตัว SVG จริงๆ สเกลเต็มความกว้าง
+   * ของ parent เสมอ (width: 100%) เพื่อให้ผู้เรียกใช้คุมขนาดผ่าน className ของ wrapper แทนได้
+   * (เช่น กำหนด breakpoint ให้ใหญ่ขึ้นบนจอกว้าง) โดยที่สัดส่วน 500:667 ยังคงเดิมเสมอผ่าน viewBox */
   width?: number
 }
 
@@ -36,20 +39,17 @@ export default function MuscleBodyDiagram({
   onClickGroup,
   width = 168,
 }: MuscleBodyDiagramProps) {
-  const height = Math.round((width * IMG_H) / IMG_W)
-
   return (
     <div
-      className="relative rounded-lg overflow-hidden select-none"
-      style={{ width, height }}
+      className="relative rounded-lg overflow-hidden select-none w-full"
+      style={{ maxWidth: width, aspectRatio: `${IMG_W} / ${IMG_H}` }}
       role="img"
       aria-label={`ไดอะแกรมกล้ามเนื้อ ${view === 'front' ? 'ด้านหน้า' : 'ด้านหลัง'}`}
     >
       <svg
         viewBox={`0 0 ${IMG_W} ${IMG_H}`}
-        width={width}
-        height={height}
-        className="block"
+        className="block w-full h-full"
+        preserveAspectRatio="xMidYMid meet"
       >
         <defs>
           {regions.map((group) => {

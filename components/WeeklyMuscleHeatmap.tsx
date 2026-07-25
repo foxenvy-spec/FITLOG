@@ -25,6 +25,10 @@ interface GroupStat {
 const FRONT_REGIONS: MuscleGroup[] = ['ไหล่', 'อก', 'แขน', 'แกนกลางลำตัว', 'ขา']
 const BACK_REGIONS: MuscleGroup[] = ['ไหล่', 'หลัง', 'แขน', 'ขา']
 
+// ลำดับแสดงผลของรายการด้านขวา — จัดให้ตรงกับ reference (อก, หลัง, ไหล่, แขน, แกนกลางลำตัว, ขา)
+// แยกจาก VOLUME_MUSCLES ตัวหลัก (ซึ่งใช้ลำดับอื่นและถูกอ้างจากหลายที่ในแอป) เพื่อไม่กระทบจุดอื่น
+const DISPLAY_ORDER: MuscleGroup[] = ['อก', 'หลัง', 'ไหล่', 'แขน', 'แกนกลางลำตัว', 'ขา']
+
 const BALANCE_COLOR: Record<BalanceTier, string> = {
   good: '#7A9B57', // moss
   ok: '#E8A33D', // amber
@@ -161,25 +165,23 @@ export default function WeeklyMuscleHeatmap() {
         <div className="px-4 pb-4 flex flex-col sm:flex-row gap-4">
           {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ซ้อนติดกัน (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %) */}
           <div className="shrink-0 mx-auto sm:mx-0 flex items-start gap-2">
-            <div className="text-center">
+            <div className="text-center w-[110px] sm:w-[180px] lg:w-[210px]">
               <MuscleBodyDiagram
                 view="front"
                 regions={FRONT_REGIONS}
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
-                width={150}
               />
               <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหน้า</p>
             </div>
-            <div className="text-center">
+            <div className="text-center w-[110px] sm:w-[180px] lg:w-[210px]">
               <MuscleBodyDiagram
                 view="back"
                 regions={BACK_REGIONS}
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
-                width={150}
               />
               <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหลัง</p>
             </div>
@@ -190,7 +192,9 @@ export default function WeeklyMuscleHeatmap() {
             {!hasAnyData ? (
               <p className="text-xs text-muted text-center py-6">ยังไม่มีข้อมูลสัปดาห์นี้ — เริ่มบันทึกแล้วสัดส่วนจะขึ้นที่นี่</p>
             ) : (
-              stats.map((s) => {
+              DISPLAY_ORDER.map((group) => {
+                const s = statByGroup.get(group)
+                if (!s) return null
                 const isOpen = expanded === s.group
                 const color = MUSCLE_GROUP_COLORS[s.group]
                 return (
