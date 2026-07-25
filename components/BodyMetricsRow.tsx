@@ -7,7 +7,11 @@ import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor } from '@/lib/
 import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
 
-async function fetchBodyMetricsData(supabase: ReturnType<typeof createClient>) {
+export // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
+// dedupes by key — sharing this avoids a second network round-trip for the same data)
+export const BODY_METRICS_QUERY_KEY = ['body-metrics-summary']
+
+export async function fetchBodyMetricsData(supabase: ReturnType<typeof createClient>) {
   const [{ data: metricsRows }, { data: profileRow }] = await Promise.all([
     // ดึงย้อนหลังพอสำหรับใช้เอนทรีก่อนหน้าล่าสุดมาเทียบ delta เสมอ ไม่ว่าจะชั่งถี่หรือห่างแค่ไหน
     supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(30),
@@ -83,7 +87,7 @@ export default function BodyMetricsRow() {
   const { toDisplay, unit } = useWeightUnit()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['body-metrics-summary'],
+    queryKey: BODY_METRICS_QUERY_KEY,
     queryFn: () => fetchBodyMetricsData(supabase),
     staleTime: 60_000,
   })
