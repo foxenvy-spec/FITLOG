@@ -920,8 +920,7 @@ export default function HealthPage() {
               value={latest?.bmr_kcal ?? null}
               unit="kcal"
               decimals={0}
-              delta={fieldDelta('bmr_kcal')}
-              deltaUnit="kcal"
+              delta={null}
               direction="neutral"
             />
           </div>
@@ -1817,13 +1816,13 @@ function IconStatCard({
 
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-start gap-2 mb-2">
         <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center" style={{ background: `${color}26`, color }}>
           <Icon />
         </span>
         <div className="min-w-0">
-          <p className="text-xs text-ink font-medium truncate">{label}</p>
-          <p className="text-[9px] tracked uppercase text-muted truncate">{subLabel}</p>
+          <p className="text-xs text-ink font-medium leading-snug">{label}</p>
+          <p className="text-[9px] tracked uppercase text-muted leading-snug">{subLabel}</p>
         </div>
       </div>
       <div className="flex items-baseline justify-between gap-2">
