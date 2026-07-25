@@ -12,7 +12,6 @@ import MuscleBodyDiagram from './MuscleBodyDiagram'
 // Graphic Muscle Heatmap — ไดอะแกรมรูปร่างคน (วาดเองด้วย SVG ธรรมดา ไม่พึ่ง react-body-highlighter
 // เพราะไลบรารีนั้นไม่รองรับกล้ามเนื้อขา) ไล่สีตาม % สัดส่วนเซ็ตของกลุ่มกล้ามเนื้อนั้นเทียบกับ
 // เซ็ตทั้งหมดในสัปดาห์นี้ พร้อมด้านหลัง (back view) และรายการท่าที่โดนกลุ่มนั้นบ้าง
-type View = 'front' | 'back'
 type BalanceTier = 'good' | 'ok' | 'poor'
 
 interface GroupStat {
@@ -48,7 +47,6 @@ function intensityOpacity(pct: number): number {
 export default function WeeklyMuscleHeatmap() {
   const supabase = createClient()
   const { start, end } = getWeekRange()
-  const [view, setView] = useState<View>('front')
   const [expanded, setExpanded] = useState<MuscleGroup | null>(null)
 
   const { data, isLoading } = useQuery({
@@ -99,7 +97,6 @@ export default function WeeklyMuscleHeatmap() {
   }, [stats])
 
   const hasAnyData = stats.some((s) => s.sets > 0)
-  const regions = view === 'front' ? FRONT_REGIONS : BACK_REGIONS
 
   const totalSets = useMemo(() => stats.reduce((sum, s) => sum + s.sets, 0), [stats])
   const totalExercises = useMemo(() => {
@@ -151,25 +148,9 @@ export default function WeeklyMuscleHeatmap() {
 
   return (
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-      <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
-        <div>
-          <p className="text-[10px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
-          <p className="font-display text-base tracked uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0 mt-0.5">
-          {(['front', 'back'] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              className={`text-[10px] tracked uppercase px-2 py-1 rounded border transition ${
-                view === v ? 'border-amber text-amber bg-amber/10' : 'border-line text-muted hover:text-ink'
-              }`}
-            >
-              {v === 'front' ? 'ด้านหน้า' : 'ด้านหลัง'}
-            </button>
-          ))}
-        </div>
+      <div className="px-4 pt-3.5 pb-2">
+        <p className="text-[10px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
+        <p className="font-display text-base tracked uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
       </div>
 
       {isLoading ? (
@@ -178,16 +159,30 @@ export default function WeeklyMuscleHeatmap() {
         </div>
       ) : (
         <div className="px-4 pb-4 flex flex-col sm:flex-row gap-4">
-          {/* ไดอะแกรมร่างกาย (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %) */}
-          <div className="shrink-0 mx-auto sm:mx-0">
-            <MuscleBodyDiagram
-              view={view}
-              regions={regions}
-              getOpacity={groupOpacity}
-              getColor={groupColor}
-              onClickGroup={toggleExpand}
-              width={168}
-            />
+          {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ซ้อนติดกัน (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %) */}
+          <div className="shrink-0 mx-auto sm:mx-0 flex items-start gap-2">
+            <div className="text-center">
+              <MuscleBodyDiagram
+                view="front"
+                regions={FRONT_REGIONS}
+                getOpacity={groupOpacity}
+                getColor={groupColor}
+                onClickGroup={toggleExpand}
+                width={110}
+              />
+              <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหน้า</p>
+            </div>
+            <div className="text-center">
+              <MuscleBodyDiagram
+                view="back"
+                regions={BACK_REGIONS}
+                getOpacity={groupOpacity}
+                getColor={groupColor}
+                onClickGroup={toggleExpand}
+                width={110}
+              />
+              <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหลัง</p>
+            </div>
           </div>
 
           {/* รายการสัดส่วน + breakdown ท่า */}
@@ -195,46 +190,44 @@ export default function WeeklyMuscleHeatmap() {
             {!hasAnyData ? (
               <p className="text-xs text-muted text-center py-6">ยังไม่มีข้อมูลสัปดาห์นี้ — เริ่มบันทึกแล้วสัดส่วนจะขึ้นที่นี่</p>
             ) : (
-              stats
-                .filter((s) => regions.includes(s.group))
-                .map((s) => {
-                  const isOpen = expanded === s.group
-                  const color = MUSCLE_GROUP_COLORS[s.group]
-                  return (
-                    <div key={s.group} className="rounded-md bg-surface2 overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(s.group)}
-                        className="w-full flex flex-col gap-1 px-2.5 py-2 text-left"
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color, opacity: intensityOpacity(s.pct) }} />
-                          <span className="text-xs text-ink flex-1 min-w-0">
-                            {s.group} <span className="text-muted text-[10px]">({MUSCLE_GROUP_LABELS_EN[s.group]})</span>
-                          </span>
-                          <span className="text-[11px] font-mono font-bold shrink-0" style={{ color }}>
-                            {Math.round(s.pct)}%
-                          </span>
-                          <span className="text-[10px] font-mono text-muted shrink-0 w-14 text-right">{s.sets} เซ็ต</span>
-                          {s.topExercises.length > 0 && <span className="text-muted text-[10px] shrink-0">{isOpen ? '▲' : '▼'}</span>}
+              stats.map((s) => {
+                const isOpen = expanded === s.group
+                const color = MUSCLE_GROUP_COLORS[s.group]
+                return (
+                  <div key={s.group} className="rounded-md bg-surface2 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(s.group)}
+                      className="w-full flex flex-col gap-1 px-2.5 py-2 text-left"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color, opacity: intensityOpacity(s.pct) }} />
+                        <span className="text-xs text-ink flex-1 min-w-0">
+                          {s.group} <span className="text-muted text-[10px]">({MUSCLE_GROUP_LABELS_EN[s.group]})</span>
                         </span>
-                        <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
-                          <AnimatedBarFill pct={s.pct} color={color} />
+                        <span className="text-[11px] font-mono font-bold shrink-0" style={{ color }}>
+                          {Math.round(s.pct)}%
                         </span>
-                      </button>
-                      {isOpen && s.topExercises.length > 0 && (
-                        <ul className="px-2.5 pb-2 space-y-1">
-                          {s.topExercises.map((ex) => (
-                            <li key={ex.name} className="flex items-center justify-between text-[11px] text-muted pl-[18px]">
-                              <span className="truncate">{ex.name}</span>
-                              <span className="font-mono shrink-0 ml-2">{ex.sets} เซ็ต</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )
-                })
+                        <span className="text-[10px] font-mono text-muted shrink-0 w-14 text-right">{s.sets} เซ็ต</span>
+                        {s.topExercises.length > 0 && <span className="text-muted text-[10px] shrink-0">{isOpen ? '▲' : '▼'}</span>}
+                      </span>
+                      <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
+                        <AnimatedBarFill pct={s.pct} color={color} />
+                      </span>
+                    </button>
+                    {isOpen && s.topExercises.length > 0 && (
+                      <ul className="px-2.5 pb-2 space-y-1">
+                        {s.topExercises.map((ex) => (
+                          <li key={ex.name} className="flex items-center justify-between text-[11px] text-muted pl-[18px]">
+                            <span className="truncate">{ex.name}</span>
+                            <span className="font-mono shrink-0 ml-2">{ex.sets} เซ็ต</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })
             )}
           </div>
         </div>

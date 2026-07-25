@@ -39,6 +39,9 @@ export default function MuscleBodyDiagram({
       role="img"
       aria-label={`ไดอะแกรมกล้ามเนื้อ ${view === 'front' ? 'ด้านหน้า' : 'ด้านหลัง'}`}
     >
+      {/* unoptimized: รูปเหล่านี้เป็น static asset ในเครื่องอยู่แล้ว (ไม่ต้องผ่าน image optimizer)
+          — บาง environment การ deploy ไม่มี sharp ทำให้ /_next/image endpoint ล้มเหลวเงียบๆ
+          แล้วเห็นเป็นกล่องว่างเปล่า (บั๊กที่เจอ) การข้าม optimizer ไปเลยทำให้โหลดไฟล์ดิบตรงๆ เสมอ */}
       <Image
         src={`/images/muscle-diagram/${view}-base.jpg`}
         alt=""
@@ -46,6 +49,7 @@ export default function MuscleBodyDiagram({
         sizes={`${width}px`}
         className="object-cover"
         priority={false}
+        unoptimized
       />
       {regions.map((group) => {
         const slug = MUSCLE_GROUP_DIAGRAM_SLUG[group]
