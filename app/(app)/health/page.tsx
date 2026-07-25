@@ -17,7 +17,7 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import GoalRing from '@/components/GoalRing'
 import InsightCard from '@/components/InsightCard'
 import type { Insight } from '@/lib/dashboardStats'
-import { zoneOf, classifyMetric, summarizeHealthScore, computeHealthTrendInsights, type Direction } from '@/lib/healthInsights'
+import { zoneOf, classifyMetric, summarizeHealthScore, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
 
 function todayStr() {
   const d = new Date()
@@ -35,6 +35,28 @@ function bmiOf(weightKg: number | null, heightCm: number | null) {
   if (!weightKg || !heightCm) return null
   const h = heightCm / 100
   return weightKg / (h * h)
+}
+
+// สัดส่วนโปรตีนต่อน้ำหนักตัว (%) — เกณฑ์ทั่วไปที่แอปสุขภาพ/เครื่องชั่งอัจฉริยะใช้กัน:
+// ต่ำกว่ามาตรฐาน < 16%, มาตรฐาน 16-20%, สูง/ดีมาก > 20% — ไม่ต้องพึ่งค่าที่ผู้ใช้กรอกเอง
+function proteinPctZone(proteinKg: number, weightKg: number): Zone | null {
+  if (!weightKg) return null
+  const pct = (proteinKg / weightKg) * 100
+  if (pct < 16) return 'Low'
+  if (pct > 20) return 'High'
+  return 'Standard'
+}
+
+// สัดส่วนน้ำในร่างกายต่อน้ำหนักตัว (%) — เกณฑ์แยกตามเพศ (สรีระชาย/หญิงมีสัดส่วนไขมัน-กล้ามเนื้อต่างกัน):
+// ชาย: ต่ำ < 55%, มาตรฐาน 55-65%, สูง > 65% | หญิง: ต่ำ < 45%, มาตรฐาน 45-60%, สูง > 60%
+// ถ้ายังไม่ตั้งเพศไว้ในโปรไฟล์ จะคืนค่า null (ยังประเมินไม่ได้ ไม่เดาเพศให้)
+function bodyWaterPctZone(waterKg: number, weightKg: number, sex: 'male' | 'female' | null): Zone | null {
+  if (!weightKg || !sex) return null
+  const pct = (waterKg / weightKg) * 100
+  const [low, high] = sex === 'male' ? [55, 65] : [45, 60]
+  if (pct < low) return 'Low'
+  if (pct > high) return 'High'
+  return 'Standard'
 }
 
 import ErrorState from '@/components/ErrorState'
@@ -89,7 +111,7 @@ export default function HealthPage() {
     }
 
     setMetrics((metricsRes.data as BodyMetric[]) ?? [])
-    setProfile((profileRes.data as Profile) ?? (user ? { user_id: user.id, height_cm: null, updated_at: '' } : null))
+    setProfile((profileRes.data as Profile) ?? (user ? { user_id: user.id, height_cm: null, sex: null, updated_at: '' } : null))
     setGoals((goalsRes.data as Goal[]) ?? [])
 
     const photoRows = (photosRes.data as ProgressPhoto[]) ?? []
@@ -591,14 +613,16 @@ export default function HealthPage() {
     if (latest?.body_age_years != null && bodyAgeRangeLow !== null && bodyAgeRangeHigh !== null) {
       items.push({ label: 'อายุร่างกาย', status: classifyMetric(zoneOf(latest.body_age_years, bodyAgeRangeLow, bodyAgeRangeHigh), 'lowerBetter') })
     }
-    if (latest?.body_water_kg != null && bodyWaterRangeLow !== null && bodyWaterRangeHigh !== null) {
-      items.push({ label: 'น้ำในร่างกาย', status: classifyMetric(zoneOf(latest.body_water_kg, bodyWaterRangeLow, bodyWaterRangeHigh), 'neutral') })
+    if (latest?.body_water_kg != null && latest?.weight_kg != null) {
+      const zone = bodyWaterPctZone(latest.body_water_kg, latest.weight_kg, profile?.sex ?? null)
+      if (zone) items.push({ label: 'น้ำในร่างกาย', status: classifyMetric(zone, 'higherBetter') })
     }
     if (latest?.inorganic_salt_kg != null && saltRangeLow !== null && saltRangeHigh !== null) {
       items.push({ label: 'เกลือแร่', status: classifyMetric(zoneOf(latest.inorganic_salt_kg, saltRangeLow, saltRangeHigh), 'neutral') })
     }
-    if (latest?.protein_kg != null && proteinRangeLow !== null && proteinRangeHigh !== null) {
-      items.push({ label: 'โปรตีน', status: classifyMetric(zoneOf(latest.protein_kg, proteinRangeLow, proteinRangeHigh), 'neutral') })
+    if (latest?.protein_kg != null && latest?.weight_kg != null) {
+      const zone = proteinPctZone(latest.protein_kg, latest.weight_kg)
+      if (zone) items.push({ label: 'โปรตีน', status: classifyMetric(zone, 'higherBetter') })
     }
     if (latest?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
       items.push({ label: 'มวลกระดูก', status: classifyMetric(zoneOf(latest.bone_mass_kg, boneMassRangeLow, boneMassRangeHigh), 'neutral') })
@@ -607,6 +631,7 @@ export default function HealthPage() {
   }, [
     latest,
     bmi,
+    profile?.sex,
     weightRangeLow,
     weightRangeHigh,
     skeletalRangeLow,
@@ -617,12 +642,8 @@ export default function HealthPage() {
     muscleRangeHigh,
     bodyAgeRangeLow,
     bodyAgeRangeHigh,
-    bodyWaterRangeLow,
-    bodyWaterRangeHigh,
     saltRangeLow,
     saltRangeHigh,
-    proteinRangeLow,
-    proteinRangeHigh,
     boneMassRangeLow,
     boneMassRangeHigh,
   ])
@@ -748,6 +769,9 @@ export default function HealthPage() {
 
       {tab === 'overview' && (
         <div className="space-y-6">
+          {profile && !profile.sex && (
+            <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             <IconStatCard
               label="น้ำหนัก"
@@ -831,8 +855,8 @@ export default function HealthPage() {
               deltaUnit={unit}
               direction="neutral"
               zone={
-                latest?.body_water_kg != null && bodyWaterRangeLow !== null && bodyWaterRangeHigh !== null
-                  ? zoneOf(latest.body_water_kg, bodyWaterRangeLow, bodyWaterRangeHigh)
+                latest?.body_water_kg != null && latest?.weight_kg != null
+                  ? bodyWaterPctZone(latest.body_water_kg, latest.weight_kg, profile?.sex ?? null)
                   : null
               }
               zoneScheme="higherOk"
@@ -848,8 +872,8 @@ export default function HealthPage() {
               deltaUnit={unit}
               direction="neutral"
               zone={
-                latest?.protein_kg != null && proteinRangeLow !== null && proteinRangeHigh !== null
-                  ? zoneOf(latest.protein_kg, proteinRangeLow, proteinRangeHigh)
+                latest?.protein_kg != null && latest?.weight_kg != null
+                  ? proteinPctZone(latest.protein_kg, latest.weight_kg)
                   : null
               }
               zoneScheme="higherOk"
@@ -1816,6 +1840,54 @@ function IconStatCard({
             {deltaUnit ? ` ${deltaUnit}` : ''}
           </span>
         ) : null}
+      </div>
+    </div>
+  )
+}
+
+function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profile) => void }) {
+  const supabase = createClient()
+  const [saving, setSaving] = useState<'male' | 'female' | null>(null)
+  const [dismissed, setDismissed] = useState(false)
+
+  async function handlePick(sex: 'male' | 'female') {
+    setSaving(sex)
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert({ user_id: profile.user_id, sex, updated_at: new Date().toISOString() })
+      .select()
+      .single()
+    setSaving(null)
+    if (!error && data) onSaved(data as Profile)
+  }
+
+  if (dismissed) return null
+
+  return (
+    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+      <p className="text-xs text-muted">
+        ระบุเพศเพื่อประเมินเกณฑ์มาตรฐาน<span className="text-ink">น้ำในร่างกาย</span>ให้แม่นยำขึ้น
+      </p>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => handlePick('male')}
+          disabled={saving !== null}
+          className="px-3 py-1.5 rounded-lg bg-steeldim text-steel text-xs font-display tracked uppercase disabled:opacity-50"
+        >
+          {saving === 'male' ? '...' : 'ชาย'}
+        </button>
+        <button
+          type="button"
+          onClick={() => handlePick('female')}
+          disabled={saving !== null}
+          className="px-3 py-1.5 rounded-lg bg-rustdim text-rusttext text-xs font-display tracked uppercase disabled:opacity-50"
+        >
+          {saving === 'female' ? '...' : 'หญิง'}
+        </button>
+        <button type="button" onClick={() => setDismissed(true)} className="text-[10px] text-muted underline">
+          ข้าม
+        </button>
       </div>
     </div>
   )
