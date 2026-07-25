@@ -297,8 +297,11 @@ export default function WeeklyMuscleHeatmap() {
           <div className="text-center border-l border-line px-1 flex items-center justify-center">
             <p className="font-mono font-bold text-lg leading-tight flex items-center gap-1.5 flex-wrap justify-center" style={{ color: BALANCE_COLOR[balance.tier] }}>
               <span>Balance {balance.pct}%</span>
-              <span className="text-[11px] font-sans font-normal flex items-center gap-0.5">
-                <span>{BALANCE_TIER_ARROW[balance.tier]}</span>
+              <span
+                className="text-[11px] font-sans font-bold flex items-center gap-1 px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: `${BALANCE_COLOR[balance.tier]}26` }}
+              >
+                <span className="font-bold">{BALANCE_TIER_ARROW[balance.tier]}</span>
                 {BALANCE_TIER_LABEL[balance.tier]}
               </span>
             </p>
