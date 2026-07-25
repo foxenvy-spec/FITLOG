@@ -542,7 +542,7 @@ export default function DashboardPage() {
                     {dayLabel && (
                       <p className="font-display text-lg tracked uppercase text-amber leading-tight">{dayLabel}</p>
                     )}
-                    <p className="font-display text-2xl tracked uppercase text-ink leading-tight truncate">
+                    <p className="font-display text-xl tracked uppercase text-ink leading-tight truncate">
                       {restLabel}
                     </p>
                   </>
@@ -602,8 +602,8 @@ export default function DashboardPage() {
 
             <GoalRing
               pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-              size={128}
-              strokeWidth={10}
+              size={100}
+              strokeWidth={8}
               label="ความพร้อม"
               ariaLabel="ความพร้อมของวันนี้"
             />
