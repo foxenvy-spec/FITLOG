@@ -823,7 +823,7 @@ export default function DashboardPage() {
           heatmap (what got trained) -> volume (on track vs target) -> AI insights
           (what to do about it) -> consistency calendar (recent workouts / PRs per day)
           -> next-up + quick actions last. */}
-      <div className="space-y-6 lg:space-y-0 lg:contents">
+      <div className="lg:col-span-12 lg:order-10">
         <WeeklyMuscleHeatmap />
       </div>
 
