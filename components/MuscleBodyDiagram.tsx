@@ -31,6 +31,16 @@ interface MuscleBodyDiagramProps {
 const IMG_W = 500
 const IMG_H = 667
 
+// รูปต้นฉบับ (front-base.jpg / back-base.jpg) มีพื้นที่ว่างสีดำข้างตัวเยอะและไม่สมมาตร
+// (วัดจริง: front ตัวอยู่ที่ x 184–455 จาก 500, back ตัวอยู่ที่ x 77–341 จาก 500) ทำให้ถึงจะเอา
+// สองกล่องมาชิดกันแค่ไหน ตัวคนก็ยังดูห่างกันเพราะพื้นที่ว่างในรูปเอง — จึงครอบตัด "หน้าต่างที่มองเห็น"
+// (viewBox) ให้แคบลงเฉพาะแนวนอน โดยไม่ยุ่งกับ x/y/width/height ของ <image>/<mask> ที่ยังคง
+// 0,0,500,667 เท่าเดิมทั้งหมด (ตำแหน่ง mask ต่างๆ จึงยังตรงกับรูปเป๊ะ แค่ "กล้อง" ซูม/เลื่อนเข้ามาเท่านั้น)
+const VIEW_CROP: Record<DiagramView, { x: number; width: number }> = {
+  front: { x: 124, width: 341 }, // เหลือขอบซ้าย ~60px (จากเดิม 184), ขอบขวา ~10px (จากเดิม 45)
+  back: { x: 62, width: 345 }, // เหลือขอบซ้าย ~15px (จากเดิม 77), ขอบขวา ~60px (จากเดิม 159)
+}
+
 export default function MuscleBodyDiagram({
   view,
   regions,
@@ -39,15 +49,16 @@ export default function MuscleBodyDiagram({
   onClickGroup,
   width = 168,
 }: MuscleBodyDiagramProps) {
+  const crop = VIEW_CROP[view]
   return (
     <div
       className="relative rounded-lg overflow-hidden select-none w-full"
-      style={{ maxWidth: width, aspectRatio: `${IMG_W} / ${IMG_H}` }}
+      style={{ maxWidth: width, aspectRatio: `${crop.width} / ${IMG_H}` }}
       role="img"
       aria-label={`ไดอะแกรมกล้ามเนื้อ ${view === 'front' ? 'ด้านหน้า' : 'ด้านหลัง'}`}
     >
       <svg
-        viewBox={`0 0 ${IMG_W} ${IMG_H}`}
+        viewBox={`${crop.x} 0 ${crop.width} ${IMG_H}`}
         className="block w-full h-full"
         preserveAspectRatio="xMidYMid meet"
       >
