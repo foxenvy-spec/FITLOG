@@ -164,8 +164,8 @@ export default function WeeklyMuscleHeatmap() {
       ) : (
         <div className="px-4 pb-4 flex flex-col sm:flex-row gap-4">
           {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ซ้อนติดกัน (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %) */}
-          <div className="shrink-0 mx-auto sm:mx-0 flex items-start gap-2">
-            <div className="text-center w-[110px] sm:w-[180px] lg:w-[210px]">
+          <div className="shrink-0 mx-auto sm:mx-0 flex items-start gap-0.5">
+            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
               <MuscleBodyDiagram
                 view="front"
                 regions={FRONT_REGIONS}
@@ -173,9 +173,8 @@ export default function WeeklyMuscleHeatmap() {
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
               />
-              <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหน้า</p>
             </div>
-            <div className="text-center w-[110px] sm:w-[180px] lg:w-[210px]">
+            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
               <MuscleBodyDiagram
                 view="back"
                 regions={BACK_REGIONS}
@@ -183,7 +182,6 @@ export default function WeeklyMuscleHeatmap() {
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
               />
-              <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหลัง</p>
             </div>
           </div>
 
