@@ -516,7 +516,11 @@ export default function DashboardPage() {
               backgroundImage:
                 "linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%), url('/images/workout-hero.jpg')",
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              // Anchored to the right — the subject in workout-hero.jpg sits near the photo's
+              // right edge, with empty dark space on the left. 'center' cropped symmetrically
+              // and cut the subject down to a sliver of an arm; anchoring right instead crops
+              // away the empty left side and keeps the torso fully in frame.
+              backgroundPosition: 'right center',
             }}
           />
         </div>
@@ -576,9 +580,9 @@ export default function DashboardPage() {
               ) : (
                 <a
                   href="/log"
-                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-steel rounded-full px-5 py-2.5 active:scale-[0.99] transition"
+                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition"
                 >
-                  + บันทึกอิสระ
+                  เริ่มเทรนเลย <span aria-hidden="true">▶</span>
                 </a>
               )}
 
