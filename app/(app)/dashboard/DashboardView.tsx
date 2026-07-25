@@ -44,6 +44,7 @@ import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onbo
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCard from '@/components/InsightCard'
+import type { MetricIconName } from '@/components/MetricIcon'
 import TodayMuscleHeatmap from '@/components/TodayMuscleHeatmap'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
@@ -325,6 +326,14 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
     topMuscleThisWeek,
     hasAnyHistory: distinctDates.length > 0 || typedDays.length > 0,
   }
+}
+
+// ไอคอนเส้นชุดเดียวกับ BodyMetricsRow (การ์ดสรุปสัดส่วนร่างกายด้านบนสุดของหน้า) — ใช้แทน emoji
+// เดิม (📉/💪) เฉพาะ insight ที่เป็นเทรนด์สัดส่วนร่างกาย ให้ภาพลักษณ์ตรงกับการ์ดด้านบนเป๊ะๆ
+// insight อื่น (volume/imbalance/missed-muscle/workout-frequency) ยังใช้ emoji เดิมต่อไป
+const INSIGHT_METRIC_ICON: Record<string, MetricIconName> = {
+  'trend-body-fat': 'bodyFat',
+  'trend-muscle-mass': 'muscle',
 }
 
 export default function DashboardPage() {
@@ -842,7 +851,7 @@ export default function DashboardPage() {
           {combinedInsights.length > 0 ? (
             <div className="px-4 pb-4 space-y-2">
               {combinedInsights.map((insight) => (
-                <InsightCard key={insight.id} insight={insight} />
+                <InsightCard key={insight.id} insight={insight} metricIcon={INSIGHT_METRIC_ICON[insight.id]} />
               ))}
             </div>
           ) : (
