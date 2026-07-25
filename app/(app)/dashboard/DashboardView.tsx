@@ -64,6 +64,10 @@ const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume
 })
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
+// จ-อา (เริ่มจันทร์) ใช้กับแถวติ๊กถูกในการ์ด Weekly Goal — ตรงกับลำดับของ data.weekDayTicks
+// ที่คำนวณจาก getWeekRange() (สัปดาห์เริ่มวันจันทร์) ใน fetchDashboardData ด้านล่าง
+const WEEKDAY_LABELS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
+
 function greeting() {
   const h = new Date().getHours()
   if (h < 11) return 'สวัสดีตอนเช้า'
@@ -102,6 +106,8 @@ interface DashboardData {
   // (เป้าหมายนับจากจำนวนวันที่ตั้งโปรแกรมไว้เอง ถ้ายังไม่ตั้งเลยใช้ 3 เป็นค่าเริ่มต้น)
   thisWeekWorkoutDays: number
   weeklyWorkoutGoal: number
+  // แถวติ๊กถูกรายวัน (จ-อา) ของสัปดาห์นี้ — ใช้โชว์ในการ์ด Weekly Goal
+  weekDayTicks: { iso: string; trained: boolean; isFuture: boolean }[]
   // สองตัวนี้ตอบคำถาม "PR ล่าสุด" และ "กล้ามเนื้อที่ฝึกมากที่สุดสัปดาห์นี้" — โชว์เป็น quick-glance
   // strip ใต้คำทักทาย ให้เห็นครบภายในไม่กี่วินาทีโดยไม่ต้องเลื่อนหรือกดเข้าไปดูหน้าอื่น
   latestPR: LatestPR | null
@@ -222,6 +228,22 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
   // ตารางฝึกจริงของแต่ละคน ถ้ายังไม่ตั้งโปรแกรมเลย ใช้ 3 เป็นค่าเริ่มต้นทั่วไป
   const weeklyWorkoutGoal = typedDays.length > 0 ? typedDays.length : 3
 
+  // แถวติ๊กถูกรายวัน (จ-อา) สำหรับการ์ด Weekly Goal — ใช้ distinctDates ชุดเดียวกับที่คำนวณ
+  // streak/thisWeekWorkoutDays ด้านบน ไม่ต้อง query ซ้ำ
+  const trainedDateSet = new Set(distinctDates)
+  const toIsoLocal = (d: Date) => {
+    const offset = d.getTimezoneOffset()
+    const local = new Date(d.getTime() - offset * 60000)
+    return local.toISOString().slice(0, 10)
+  }
+  const monday = new Date(thisWeekStart + 'T00:00:00')
+  const weekDayTicks: { iso: string; trained: boolean; isFuture: boolean }[] = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    const iso = toIsoLocal(d)
+    return { iso, trained: trainedDateSet.has(iso), isFuture: iso > today }
+  })
+
   const currentDay = typedDays.find((d) => d.day_of_week === dow) ?? null
 
   const { data: exRows } = currentDay
@@ -282,6 +304,7 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
     bestVolumeIncrease,
     thisWeekWorkoutDays,
     weeklyWorkoutGoal,
+    weekDayTicks,
     latestPR,
     topMuscleThisWeek,
     hasAnyHistory: distinctDates.length > 0 || typedDays.length > 0,
@@ -635,7 +658,7 @@ export default function DashboardPage() {
       {/* card 2: recovery — secondary weight on purpose: quieter border, no shadow, tighter
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
-        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-5 lg:order-6" style={{ animationDelay: '240ms' }}>
+        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-4 lg:order-6" style={{ animationDelay: '240ms' }}>
           <a href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] tracked uppercase text-muted">Recovery</p>
@@ -715,7 +738,7 @@ export default function DashboardPage() {
           uses the same ring as the hero card's daily progress so "goal completion" reads
           consistently as a ring throughout the dashboard, instead of a ring in one place
           and a flat percent-bar in another. */}
-      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-2 lg:order-7" style={{ animationDelay: '300ms' }}>
+      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-3 lg:order-7" style={{ animationDelay: '300ms' }}>
         <div className="px-4 py-4">
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
@@ -726,7 +749,7 @@ export default function DashboardPage() {
                 <span className="text-xl leading-none shrink-0">🔥</span>
                 <div>
                   <p className="text-sm text-ink">
-                    <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งสัปดาห์นี้
+                    <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งแล้วในสัปดาห์นี้
                   </p>
                   <p className="text-[11px] text-muted mt-0.5">
                     {computeWorkoutMotivationLabel(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal)}
@@ -737,6 +760,28 @@ export default function DashboardPage() {
                 <span className="text-ink font-mono">{data.streak}</span> Day Streak
               </p>
             </div>
+          </div>
+
+          {/* day-tick row (จ-อา) — เช็คว่าวันไหนของสัปดาห์นี้ออกกำลังกายแล้วบ้าง */}
+          <div className="grid grid-cols-7 gap-1.5 mt-4">
+            {data.weekDayTicks.map((tick, i) => (
+              <div key={tick.iso} className="flex flex-col items-center gap-1">
+                <span
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0"
+                  style={
+                    tick.trained
+                      ? { backgroundColor: '#7A9B57', color: '#14161A' }
+                      : { backgroundColor: '#2E333A', color: '#9498A0' }
+                  }
+                  aria-hidden="true"
+                >
+                  {tick.trained ? '✓' : ''}
+                </span>
+                <span className={`text-[9px] ${tick.isFuture ? 'text-muted/50' : 'text-muted'}`}>
+                  {WEEKDAY_LABELS[i]}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
