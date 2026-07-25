@@ -9,7 +9,7 @@ import Skeleton from './Skeleton'
 
 async function fetchBodyMetricsData(supabase: ReturnType<typeof createClient>) {
   const [{ data: metricsRows }, { data: profileRow }] = await Promise.all([
-    // 60 วันย้อนหลังพอสำหรับหา entry ของ ~สัปดาห์ที่แล้วเทียบเสมอ ถึงจะไม่ได้ชั่งทุกวัน
+    // ดึงย้อนหลังพอสำหรับใช้เอนทรีก่อนหน้าล่าสุดมาเทียบ delta เสมอ ไม่ว่าจะชั่งถี่หรือห่างแค่ไหน
     supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(30),
     supabase.from('profiles').select('height_cm').maybeSingle(),
   ])
@@ -122,6 +122,9 @@ export default function BodyMetricsRow() {
   }
 
   const summary = computeBodyMetricsSummary(metrics, heightCm)
+  // label เดียวใช้ร่วมกันทุกการ์ด ปรับข้อความอัตโนมัติตามระยะเวลาจริงระหว่างสองเอนทรีล่าสุด
+  // (เช่น "จากเมื่อวาน" / "จาก 3 วันก่อน" / "จากสัปดาห์ที่แล้ว" / "จากเดือนที่แล้ว") แทนคำว่า "จากสัปดาห์ที่แล้ว" ตายตัว
+  const period = summary.periodLabel ?? 'จากครั้งก่อน'
 
   const cards: CardDef[] = [
     {
@@ -131,7 +134,7 @@ export default function BodyMetricsRow() {
       label: 'น้ำหนัก',
       valueText: summary.weight.value != null ? `${toDisplay(summary.weight.value).toFixed(1)} ${unit}` : '—',
       deltaText:
-        summary.weight.delta != null ? `${fmtSigned(toDisplay(summary.weight.delta), 1, ` ${unit}`)} จากสัปดาห์ที่แล้ว` : null,
+        summary.weight.delta != null ? `${fmtSigned(toDisplay(summary.weight.delta), 1, ` ${unit}`)} ${period}` : null,
       deltaColor: summary.weight.isGood == null ? '#9498A0' : summary.weight.isGood ? '#7A9B57' : '#C1503A',
       deltaDir: summary.weight.delta == null ? null : summary.weight.delta > 0 ? 'up' : summary.weight.delta < 0 ? 'down' : null,
     },
@@ -141,7 +144,7 @@ export default function BodyMetricsRow() {
       iconColor: '#C1503A',
       label: 'ไขมันในร่างกาย',
       valueText: summary.bodyFatPct.value != null ? `${summary.bodyFatPct.value.toFixed(1)} %` : '—',
-      deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} จากสัปดาห์ที่แล้ว` : null,
+      deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} ${period}` : null,
       deltaColor: summary.bodyFatPct.isGood == null ? '#9498A0' : summary.bodyFatPct.isGood ? '#7A9B57' : '#C1503A',
       deltaDir: summary.bodyFatPct.delta == null ? null : summary.bodyFatPct.delta > 0 ? 'up' : summary.bodyFatPct.delta < 0 ? 'down' : null,
     },
@@ -153,7 +156,7 @@ export default function BodyMetricsRow() {
       valueText: summary.skeletalMuscleKg.value != null ? `${toDisplay(summary.skeletalMuscleKg.value).toFixed(1)} ${unit}` : '—',
       deltaText:
         summary.skeletalMuscleKg.delta != null
-          ? `${fmtSigned(toDisplay(summary.skeletalMuscleKg.delta), 1, ` ${unit}`)} จากสัปดาห์ที่แล้ว`
+          ? `${fmtSigned(toDisplay(summary.skeletalMuscleKg.delta), 1, ` ${unit}`)} ${period}`
           : null,
       deltaColor: summary.skeletalMuscleKg.isGood == null ? '#9498A0' : summary.skeletalMuscleKg.isGood ? '#7A9B57' : '#C1503A',
       deltaDir:
@@ -166,7 +169,7 @@ export default function BodyMetricsRow() {
       label: 'มวลไขมัน',
       valueText: summary.fatMassKg.value != null ? `${toDisplay(summary.fatMassKg.value).toFixed(1)} ${unit}` : '—',
       deltaText:
-        summary.fatMassKg.delta != null ? `${fmtSigned(toDisplay(summary.fatMassKg.delta), 1, ` ${unit}`)} จากสัปดาห์ที่แล้ว` : null,
+        summary.fatMassKg.delta != null ? `${fmtSigned(toDisplay(summary.fatMassKg.delta), 1, ` ${unit}`)} ${period}` : null,
       deltaColor: summary.fatMassKg.isGood == null ? '#9498A0' : summary.fatMassKg.isGood ? '#7A9B57' : '#C1503A',
       deltaDir: summary.fatMassKg.delta == null ? null : summary.fatMassKg.delta > 0 ? 'up' : summary.fatMassKg.delta < 0 ? 'down' : null,
     },
