@@ -168,7 +168,7 @@ export default function WeeklyMuscleHeatmap() {
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
-                width={110}
+                width={150}
               />
               <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหน้า</p>
             </div>
@@ -179,7 +179,7 @@ export default function WeeklyMuscleHeatmap() {
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
-                width={110}
+                width={150}
               />
               <p className="text-[9px] tracked uppercase text-muted mt-1">ด้านหลัง</p>
             </div>

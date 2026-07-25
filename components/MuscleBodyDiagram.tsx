@@ -40,7 +40,7 @@ export default function MuscleBodyDiagram({
 
   return (
     <div
-      className="relative rounded-lg overflow-hidden bg-bg select-none"
+      className="relative rounded-lg overflow-hidden select-none"
       style={{ width, height }}
       role="img"
       aria-label={`ไดอะแกรมกล้ามเนื้อ ${view === 'front' ? 'ด้านหน้า' : 'ด้านหลัง'}`}
@@ -88,6 +88,7 @@ export default function MuscleBodyDiagram({
           width={IMG_W}
           height={IMG_H}
           preserveAspectRatio="xMidYMid slice"
+          style={{ mixBlendMode: 'lighten' }}
         />
 
         {regions.map((group) => {
