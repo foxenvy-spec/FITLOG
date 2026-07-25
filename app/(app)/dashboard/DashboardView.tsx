@@ -503,10 +503,12 @@ export default function DashboardPage() {
         }`}
         style={totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }}
       >
-        {/* decorative background — dark vignette + abstract torso illustration on the right,
-            faded into the card's own bg on the left so text stays readable. Drop a real photo
-            at /public/images/workout-hero.jpg (any aspect ratio, dark/moody works best) and it
-            will layer on top automatically; without one this still looks intentional on its own. */}
+        {/* decorative background — dark vignette + real photo on the right, faded into the
+            card's own bg on the left so text stays readable. Photo lives at
+            /public/images/workout-hero.jpg. (Previously an abstract <HeroTorsoArt /> SVG
+            silhouette rendered on top of this as a fallback for when no photo existed yet —
+            now that a real photo is in place, that overlay has been removed since it was
+            painting a gray shape over the photo with no way to condition it off.) */}
         <div className="absolute inset-0 bg-surface">
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3 opacity-90"
@@ -517,7 +519,6 @@ export default function DashboardPage() {
               backgroundPosition: 'center',
             }}
           />
-          <HeroTorsoArt />
         </div>
 
         <div className="relative z-10 px-5 py-6">
@@ -859,29 +860,6 @@ export default function DashboardPage() {
         />
       )}
     </div>
-  )
-}
-
-// ภาพประกอบพื้นหลังการ์ด Today's Workout — เงาโครงร่างแบบ abstract/เรขาคณิต (ไม่ใช่รูปถ่ายคนจริง
-// เพราะไม่มีสิทธิ์ใช้ภาพถ่ายลิขสิทธิ์/บุคคลจริงในโค้ด) วางไว้เป็น fallback ให้การ์ดดูมีมิติแม้ยังไม่มี
-// รูปพื้นหลังจริงที่ /public/images/workout-hero.jpg — ถ้ามีไฟล์นั้นแล้ว มันจะซ้อนทับอยู่ด้านบนของภาพนี้
-function HeroTorsoArt() {
-  return (
-    <svg
-      className="absolute inset-y-0 right-0 h-full w-1/2 opacity-[0.14]"
-      viewBox="0 0 200 260"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
-      <ellipse cx="100" cy="40" rx="34" ry="38" fill="#F3F0E8" />
-      <path d="M55 80 Q100 60 145 80 L150 170 Q100 200 50 170 Z" fill="#F3F0E8" />
-      <rect x="30" y="85" width="26" height="95" rx="13" fill="#F3F0E8" />
-      <rect x="144" y="85" width="26" height="95" rx="13" fill="#F3F0E8" />
-      <rect x="72" y="110" width="24" height="24" rx="4" fill="#14161A" />
-      <rect x="104" y="110" width="24" height="24" rx="4" fill="#14161A" />
-      <rect x="72" y="138" width="24" height="20" rx="4" fill="#14161A" />
-      <rect x="104" y="138" width="24" height="20" rx="4" fill="#14161A" />
-    </svg>
   )
 }
 
