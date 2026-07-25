@@ -35,6 +35,18 @@ const BALANCE_COLOR: Record<BalanceTier, string> = {
   poor: '#C1503A', // rust
 }
 
+// ป้ายข้อความ + ลูกศรของ balance tier — ใช้ในแถบสรุปด้านล่างการ์ด (แทนที่ข้อความ AI Coach เดิม)
+const BALANCE_TIER_LABEL: Record<BalanceTier, string> = {
+  good: 'ดีเยี่ยม',
+  ok: 'ปานกลาง',
+  poor: 'ควรปรับปรุง',
+}
+const BALANCE_TIER_ARROW: Record<BalanceTier, string> = {
+  good: '↑',
+  ok: '→',
+  poor: '↓',
+}
+
 function balanceTier(pct: number): BalanceTier {
   if (pct >= 80) return 'good'
   if (pct >= 50) return 'ok'
@@ -120,23 +132,16 @@ export default function WeeklyMuscleHeatmap() {
     return { pct, tier: balanceTier(pct) }
   }, [stats, hasAnyData])
 
-  // กลุ่มที่ฝึกน้อยที่สุด (หรือยังไม่ได้ฝึกเลย) — ใช้แนะนำในข้อความ AI Coach ด้านล่าง
-  const weakestGroup = useMemo(() => {
-    if (!hasAnyData) return null
-    return stats.reduce((min, s) => (s.pct < min.pct ? s : min), stats[0])
+  // กลุ่มเด่น/ด้อย — จัดอันดับตาม % ส่วนแบ่งเซ็ตของสัปดาห์นี้ (สมมติฐาน: เด่น = 3 อันดับบนสุด,
+  // ด้อย = 2 อันดับล่างสุด — ถ้าต้องการเกณฑ์อื่น เช่น เทียบกับเป้าหมายต่อกลุ่มแทน แจ้งได้)
+  const { topGroups, bottomGroups } = useMemo(() => {
+    if (!hasAnyData) return { topGroups: [] as MuscleGroup[], bottomGroups: [] as MuscleGroup[] }
+    const sorted = [...stats].sort((a, b) => b.pct - a.pct)
+    return {
+      topGroups: sorted.slice(0, 3).map((s) => s.group),
+      bottomGroups: sorted.slice(-2).map((s) => s.group),
+    }
   }, [stats, hasAnyData])
-
-  const coachMessage = useMemo(() => {
-    if (!balance || !weakestGroup) return null
-    const label = MUSCLE_GROUP_LABELS_EN[weakestGroup.group]
-    if (balance.tier === 'good') {
-      return { tier: 'good' as BalanceTier, text: 'ฝึกสมดุลดีมาก รักษาระดับนี้ไว้ต่อไป' }
-    }
-    if (balance.tier === 'ok') {
-      return { tier: 'ok' as BalanceTier, text: `แนะนำเพิ่ม ${weakestGroup.group} (${label}) เพื่อสมดุลที่ดีขึ้น` }
-    }
-    return { tier: 'poor' as BalanceTier, text: `ควรเพิ่ม ${weakestGroup.group} (${label}) โดยเร็ว ห่างจากกลุ่มอื่นมาก` }
-  }, [balance, weakestGroup])
 
   function groupOpacity(group: MuscleGroup) {
     return intensityOpacity(statByGroup.get(group)?.pct ?? 0)
@@ -239,34 +244,41 @@ export default function WeeklyMuscleHeatmap() {
         </div>
       )}
 
-      {!isLoading && hasAnyData && balance && coachMessage && (
-        <>
-          <div className="border-t border-line px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-            <span className="text-xs text-ink flex items-center gap-1.5">
-              <span className="text-muted">💪</span>
-              <span className="font-mono font-medium">{totalSets}</span> Sets
-            </span>
-            <span className="text-xs text-ink flex items-center gap-1.5">
-              <span className="text-muted">🏋</span>
-              <span className="font-mono font-medium">{totalExercises}</span> Exercises
-            </span>
-            <span
-              className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ml-auto"
-              style={{ color: BALANCE_COLOR[balance.tier], backgroundColor: `${BALANCE_COLOR[balance.tier]}22` }}
-            >
-              🎯 Balance {balance.pct}%
-            </span>
+      {!isLoading && hasAnyData && balance && (
+        <div className="border-t border-line px-2 py-3 grid grid-cols-5 gap-1">
+          <div className="text-center px-1">
+            <p className="font-mono font-bold text-lg text-ink leading-tight">
+              {totalSets} <span className="text-xs font-sans font-normal text-muted">เซ็ต</span>
+            </p>
+            <p className="text-[10px] text-muted mt-0.5">รวมสัปดาห์นี้</p>
           </div>
-          <div
-            className="px-4 py-2.5 text-xs flex items-start gap-1.5"
-            style={{ backgroundColor: `${BALANCE_COLOR[coachMessage.tier]}14`, color: BALANCE_COLOR[coachMessage.tier] }}
-          >
-            <span>💡</span>
-            <span>
-              <span className="font-medium">AI Coach:</span> {coachMessage.text}
-            </span>
+          <div className="text-center border-l border-line px-1">
+            <p className="font-mono font-bold text-lg text-ink leading-tight">
+              {totalExercises} <span className="text-xs font-sans font-normal text-muted">ท่า</span>
+            </p>
+            <p className="text-[10px] text-muted mt-0.5">รวมสัปดาห์นี้</p>
           </div>
-        </>
+          <div className="text-center border-l border-line px-1">
+            <p className="font-mono font-bold text-lg leading-tight" style={{ color: BALANCE_COLOR[balance.tier] }}>
+              Balance {balance.pct}%
+            </p>
+            <p className="text-[10px] mt-0.5 flex items-center justify-center gap-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>
+              <span>{BALANCE_TIER_ARROW[balance.tier]}</span> {BALANCE_TIER_LABEL[balance.tier]}
+            </p>
+          </div>
+          <div className="text-center border-l border-line px-1">
+            <p className="text-[11px] font-medium" style={{ color: BALANCE_COLOR.good }}>
+              กล้ามเนื้อเด่น
+            </p>
+            <p className="text-[10px] text-muted mt-0.5">{topGroups.join(', ')}</p>
+          </div>
+          <div className="text-center border-l border-line px-1">
+            <p className="text-[11px] font-medium" style={{ color: BALANCE_COLOR.poor }}>
+              กล้ามเนื้อด้อย
+            </p>
+            <p className="text-[10px] text-muted mt-0.5">{bottomGroups.join(', ')}</p>
+          </div>
+        </div>
       )}
     </div>
   )
