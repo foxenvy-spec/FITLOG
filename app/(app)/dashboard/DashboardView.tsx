@@ -438,6 +438,7 @@ export default function DashboardPage() {
     // (Single breakpoint on purpose — many 14" laptops report a CSS viewport width
     // somewhere in the 1024–1280px range, so gating this on `xl` left that whole
     // range stuck on an in-between 2-column layout that never really got tested.)
+    <>
     <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start">
       {/* greeting + settings */}
       <div className="lg:col-span-12 lg:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
@@ -517,8 +518,9 @@ export default function DashboardPage() {
           lg:contents removes this div's own box so its children become direct items of
           the 12-col grid above — each child then places itself via lg:col-span/lg:order. */}
       <div className="space-y-6 lg:space-y-0 lg:contents">
-          everything else below is intentionally quieter (no shadow-hero, smaller type)
-          so the eye has exactly one obvious place to land first. */}
+      {/* card 1: hero — today's workout. Sets the visual tone: everything else below is
+          intentionally quieter (no shadow-hero, smaller type) so the eye has exactly one
+          obvious place to land first. */}
       <div
         className={`relative rounded-lg border border-amber/25 shadow-hero overflow-hidden lg:col-span-5 lg:order-5 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
@@ -906,7 +908,7 @@ export default function DashboardPage() {
           onSaveDisplayName={handleSaveDisplayName}
         />
       )}
-    </div>
+    </>
   )
 }
 
