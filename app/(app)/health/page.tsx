@@ -772,7 +772,7 @@ export default function HealthPage() {
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3 items-stretch">
             <IconStatCard
               label="น้ำหนัก"
               subLabel="WEIGHT"
@@ -1815,7 +1815,7 @@ function IconStatCard({
           : ''
 
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
+    <div className="h-full bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5 flex flex-col justify-between">
       <div className="flex items-start gap-2 mb-2">
         <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center" style={{ background: `${color}26`, color }}>
           <Icon />
@@ -1842,6 +1842,7 @@ function IconStatCard({
         ) : null}
       </div>
     </div>
+  
   )
 }
 
