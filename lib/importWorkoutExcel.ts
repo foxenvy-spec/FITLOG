@@ -56,7 +56,8 @@ function guessMuscleGroup(text: string): MuscleGroup {
   const t = text.toLowerCase()
   if (/push|chest|อก/.test(t)) return 'อก'
   if (/pull|back|หลัง|lat|row|deadlift/.test(t)) return 'หลัง'
-  if (/leg|lower|quad|hamstring|glute|calf|ขา/.test(t)) return 'ขา'
+  if (/calf|calves|น่อง/.test(t)) return 'น่อง'
+  if (/leg|lower|quad|hamstring|glute|ขา/.test(t)) return 'ขา'
   if (/shoulder|delt|ไหล่/.test(t)) return 'ไหล่'
   if (/arm|bicep|tricep|แขน/.test(t)) return 'แขน'
   if (/core|ab(s)?|แกนกลาง/.test(t)) return 'แกนกลางลำตัว'

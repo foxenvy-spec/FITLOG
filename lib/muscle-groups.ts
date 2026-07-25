@@ -2,6 +2,7 @@ export const MUSCLE_GROUPS = [
   'อก',
   'หลัง',
   'ขา',
+  'น่อง',
   'ไหล่',
   'แขน',
   'แกนกลางลำตัว',
@@ -15,6 +16,7 @@ export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
   'อก': '#C1503A',
   'หลัง': '#6C8CA8',
   'ขา': '#E8A33D',
+  'น่อง': '#4FA6A6',
   'ไหล่': '#8B7FC7',
   'แขน': '#5FA88C',
   'แกนกลางลำตัว': '#C77FA8',
@@ -23,11 +25,12 @@ export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
 }
 
 // กลุ่มกล้ามเนื้อหลักที่ใช้เทียบวอลุ่มรายสัปดาห์ (ไม่รวม 'ทั้งตัว'/'อื่นๆ' ซึ่งกำกวมเกินกว่าจะเทียบได้ตรงๆ)
-export const VOLUME_MUSCLES = ['อก', 'หลัง', 'ขา', 'ไหล่', 'แขน', 'แกนกลางลำตัว'] as const
+// เพิ่ม 'น่อง' แยกจาก 'ขา' ตั้งแต่ 2026-07 — ก่อนหน้านี้ท่าเกี่ยวกับน่อง (calf raise ฯลฯ) ถูกนับรวมอยู่ใน 'ขา'
+export const VOLUME_MUSCLES = ['อก', 'หลัง', 'ขา', 'น่อง', 'ไหล่', 'แขน', 'แกนกลางลำตัว'] as const
 
 // กลุ่มกล้ามเนื้อที่ใช้ติดตาม "recovery" — รวมแกนกลางลำตัวด้วย (มี WEEKLY_VOLUME_TARGETS และ
 // ข้อมูล workouts รองรับอยู่แล้วเหมือนกลุ่มอื่น จึงคำนวณ % ฟื้นตัวได้แบบเดียวกันโดยไม่ต้องมี logic พิเศษ)
-export const RECOVERY_MUSCLES = ['อก', 'หลัง', 'ขา', 'ไหล่', 'แขน', 'แกนกลางลำตัว'] as const
+export const RECOVERY_MUSCLES = ['อก', 'หลัง', 'ขา', 'น่อง', 'ไหล่', 'แขน', 'แกนกลางลำตัว'] as const
 
 // ป้ายชื่อภาษาอังกฤษ — สำหรับตอนแสดงผล UI เท่านั้น (ไม่ใช่ค่าที่เก็บใน DB
 // ซึ่งยังเป็นภาษาไทยเหมือนเดิมทุกที่ เพื่อไม่กระทบข้อมูลเก่าที่บันทึกไว้แล้ว)
@@ -35,6 +38,7 @@ export const MUSCLE_GROUP_LABELS_EN: Record<MuscleGroup, string> = {
   'อก': 'Chest',
   'หลัง': 'Back',
   'ขา': 'Legs',
+  'น่อง': 'Calves',
   'ไหล่': 'Shoulders',
   'แขน': 'Arms',
   'แกนกลางลำตัว': 'Core',
@@ -49,6 +53,7 @@ export const MUSCLE_GROUP_DIAGRAM_SLUG: Partial<Record<MuscleGroup, string>> = {
   'อก': 'chest',
   'หลัง': 'back',
   'ขา': 'legs',
+  'น่อง': 'calves',
   'ไหล่': 'shoulders',
   'แขน': 'arms',
   'แกนกลางลำตัว': 'core',
@@ -105,6 +110,7 @@ const DEFAULT_SECONDARY_BY_PRIMARY: Record<MuscleGroup, MuscleGroup[]> = {
   'อก': ['ไหล่', 'แขน'],
   'หลัง': ['แขน'],
   'ขา': ['แกนกลางลำตัว'],
+  'น่อง': [],
   'ไหล่': ['แขน'],
   'แขน': [],
   'แกนกลางลำตัว': [],

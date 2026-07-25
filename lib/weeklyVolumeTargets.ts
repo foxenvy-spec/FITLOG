@@ -2,13 +2,14 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { DEFAULT_WEEKLY_VOLUME_TARGETS } from './dashboardStats'
 import { VOLUME_MUSCLES } from './muscle-groups'
 
-// ตาราง weekly_volume_targets เก็บเป็นคอลัมน์ภาษาอังกฤษ (ดู migration 005) ส่วนที่เหลือ
-// ของแอปยังอ้างกลุ่มกล้ามเนื้อเป็นภาษาไทยเหมือนเดิมทุกที่ (VOLUME_MUSCLES, WEEKLY_VOLUME_TARGETS
-// ฯลฯ) — mapping นี้จึงเป็นจุดเดียวที่แปลงไปมาระหว่างสองฝั่ง
+// ตาราง weekly_volume_targets เก็บเป็นคอลัมน์ภาษาอังกฤษ (ดู migration 005 และ 024 ที่เพิ่มคอลัมน์
+// calves ทีหลัง) ส่วนที่เหลือของแอปยังอ้างกลุ่มกล้ามเนื้อเป็นภาษาไทยเหมือนเดิมทุกที่ (VOLUME_MUSCLES,
+// WEEKLY_VOLUME_TARGETS ฯลฯ) — mapping นี้จึงเป็นจุดเดียวที่แปลงไปมาระหว่างสองฝั่ง
 export const VOLUME_TARGET_COLUMN: Record<(typeof VOLUME_MUSCLES)[number], string> = {
   'อก': 'chest',
   'หลัง': 'back',
   'ขา': 'legs',
+  'น่อง': 'calves',
   'ไหล่': 'shoulders',
   'แขน': 'arms',
   'แกนกลางลำตัว': 'core',
@@ -19,6 +20,7 @@ export type WeeklyVolumeTargetsRow = {
   chest: number | null
   back: number | null
   legs: number | null
+  calves: number | null
   shoulders: number | null
   arms: number | null
   core: number | null
@@ -30,7 +32,7 @@ export type WeeklyVolumeTargets = Record<(typeof VOLUME_MUSCLES)[number], number
 // รวมค่าจากแถวในตาราง (ถ้ามี) เข้ากับค่า default — คอลัมน์ไหนเป็น null/ไม่มีแถวเลย ใช้ default แทน
 // เพื่อให้ผู้ใช้ตั้งเป้าหมายเฉพาะบางกลุ่มกล้ามเนื้อได้โดยไม่ต้องกรอกครบทุกช่อง
 export function mergeWeeklyVolumeTargets(
-  row: Pick<WeeklyVolumeTargetsRow, 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core'> | null
+  row: Pick<WeeklyVolumeTargetsRow, 'chest' | 'back' | 'legs' | 'calves' | 'shoulders' | 'arms' | 'core'> | null
 ): WeeklyVolumeTargets {
   const merged = { ...DEFAULT_WEEKLY_VOLUME_TARGETS } as WeeklyVolumeTargets
   if (!row) return merged
