@@ -1,12 +1,23 @@
 'use client'
 
+import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Profile } from '@/lib/types'
 import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor } from '@/lib/bodyMetricsSummary'
 import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
-import MetricIcon, { type MetricIconName } from './MetricIcon'
+
+// ไอคอนรูปจริงชุดเดียวกับหน้าสุขภาพ (health/page.tsx: STAT_ICON_IMAGES) แทนไอคอนเส้น SVG เดิม
+// เพื่อให้การ์ดสรุปด้านบนสุดของหน้า Dashboard ใช้ภาษาภาพเดียวกับหน้าสุขภาพ
+type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
+const METRIC_ICON_IMAGES: Record<MetricIconImageKey, string> = {
+  weight: '/icons/weight.png',
+  bodyFat: '/icons/body-fat.png',
+  muscle: '/icons/skeletal-muscle.png',
+  fatMass: '/icons/fat-mass.png',
+  bmi: '/icons/bmi.png',
+}
 
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
 // dedupes by key — sharing this avoids a second network round-trip for the same data)
@@ -26,8 +37,7 @@ export async function fetchBodyMetricsData(supabase: ReturnType<typeof createCli
 
 interface CardDef {
   key: string
-  icon: MetricIconName
-  iconColor: string
+  icon: MetricIconImageKey
   label: string
   valueText: string
   deltaText: string | null
@@ -92,7 +102,6 @@ export default function BodyMetricsRow() {
     {
       key: 'weight',
       icon: 'weight',
-      iconColor: '#6C8CA8',
       label: 'น้ำหนัก',
       valueText: summary.weight.value != null ? `${toDisplay(summary.weight.value).toFixed(1)} ${unit}` : '—',
       deltaText:
@@ -103,7 +112,6 @@ export default function BodyMetricsRow() {
     {
       key: 'bodyFat',
       icon: 'bodyFat',
-      iconColor: '#C1503A',
       label: 'ไขมันในร่างกาย',
       valueText: summary.bodyFatPct.value != null ? `${summary.bodyFatPct.value.toFixed(1)} %` : '—',
       deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} ${period}` : null,
@@ -113,7 +121,6 @@ export default function BodyMetricsRow() {
     {
       key: 'muscle',
       icon: 'muscle',
-      iconColor: '#9C7CC4',
       label: 'กล้ามเนื้อโครงร่าง',
       valueText: summary.skeletalMuscleKg.value != null ? `${toDisplay(summary.skeletalMuscleKg.value).toFixed(1)} ${unit}` : '—',
       deltaText:
@@ -127,7 +134,6 @@ export default function BodyMetricsRow() {
     {
       key: 'fatMass',
       icon: 'fatMass',
-      iconColor: '#E8A33D',
       label: 'มวลไขมัน',
       valueText: summary.fatMassKg.value != null ? `${toDisplay(summary.fatMassKg.value).toFixed(1)} ${unit}` : '—',
       deltaText:
@@ -138,7 +144,6 @@ export default function BodyMetricsRow() {
     {
       key: 'bmi',
       icon: 'bmi',
-      iconColor: '#5FA88C',
       label: 'BMI',
       valueText: summary.bmi != null ? summary.bmi.toFixed(1) : '—',
       deltaText: summary.bmi != null ? bmiCategory(summary.bmi) : 'ยังไม่ได้กรอกส่วนสูง',
@@ -152,11 +157,8 @@ export default function BodyMetricsRow() {
       {cards.map((c) => (
         <div key={c.key} className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-4">
           <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
-            <span
-              className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${c.iconColor}22` }}
-            >
-              <MetricIcon name={c.icon} color={c.iconColor} />
+            <span className="w-6 h-6 shrink-0 inline-block" aria-hidden="true">
+              <Image src={METRIC_ICON_IMAGES[c.icon]} alt="" width={24} height={24} className="w-full h-full object-contain" />
             </span>
             {c.label}
           </p>
