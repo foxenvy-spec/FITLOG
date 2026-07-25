@@ -162,12 +162,12 @@ export default function WeeklyMuscleHeatmap() {
           <Skeleton className="h-64 w-full rounded-lg" />
         </div>
       ) : (
-        <div className="pb-4 flex flex-col sm:flex-row gap-3">
-          {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ชิดติดกัน — ขนาดกลับเป็นเท่าเดิม (130/205/240px) แต่ตัดขอบซ้าย
-              (pl-4 ของ container เดิม) ออกเฉพาะคอลัมน์นี้ ให้โมเดลชิดขอบซ้ายสุดของการ์ดแบบภาพอ้างอิง
-              ส่วน padding เดิมย้ายไปไว้ที่คอลัมน์ลิสต์ด้านขวาแทน (pl-2 ให้พอมีช่องหายใจเล็กน้อย ไม่ชนขอบเป๊ะ) */}
-          <div className="shrink-0 pl-2 flex items-center gap-0">
-            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
+        <div className="pb-4 flex flex-col sm:flex-row gap-3 sm:gap-1.5">
+          {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ชิดติดกัน — ขนาดลดลงจากเดิม (130/205/240px) ราว 28%
+              เหลือ 95/150/175px และดึงชิดคอลัมน์ลิสต์ด้านขวามากขึ้น (pl-1 แทน pl-2, gap-1.5 แทน gap-3
+              บนจอ sm ขึ้นไป — มือถือยังคง gap-3 เพราะเรียงเป็นคอลัมน์ ไม่ใช่แถว) ตามมอกอัพที่ยืนยันแล้ว */}
+          <div className="shrink-0 pl-1 flex items-center gap-0">
+            <div className="w-[95px] sm:w-[150px] lg:w-[175px]">
               <MuscleBodyDiagram
                 view="front"
                 regions={FRONT_REGIONS}
@@ -177,7 +177,7 @@ export default function WeeklyMuscleHeatmap() {
                 width={250}
               />
             </div>
-            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
+            <div className="w-[95px] sm:w-[150px] lg:w-[175px]">
               <MuscleBodyDiagram
                 view="back"
                 regions={BACK_REGIONS}
