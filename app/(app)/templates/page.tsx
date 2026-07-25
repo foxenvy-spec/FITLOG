@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
+import type { WorkoutTemplate, WorkoutTemplateExercise, ProgramDay } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
-import { todayStr } from '@/lib/weekdays'
+import { WEEKDAYS, WEEKDAYS_SHORT, todayStr } from '@/lib/weekdays'
 import { parseRangeToNumber, rirToRpe } from '@/lib/importWorkoutExcel'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exercises'
@@ -24,6 +24,9 @@ export default function TemplatesPage() {
   const [startingId, setStartingId] = useState<string | null>(null)
   const [startMessage, setStartMessage] = useState<string | null>(null)
   const [addingToId, setAddingToId] = useState<string | null>(null)
+  const [applyPickerId, setApplyPickerId] = useState<string | null>(null)
+  const [applyingId, setApplyingId] = useState<string | null>(null)
+  const [applyMessage, setApplyMessage] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -236,6 +239,94 @@ export default function TemplatesPage() {
     }
   }
 
+  async function ensureProgramDay(dow: number, userId: string): Promise<ProgramDay | null> {
+    const { data: existing, error: findErr } = await supabase
+      .from('program_days')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('day_of_week', dow)
+      .maybeSingle()
+
+    if (findErr) {
+      setError(findErr.message)
+      return null
+    }
+    if (existing) return existing as ProgramDay
+
+    const { data, error: err } = await supabase
+      .from('program_days')
+      .upsert({ user_id: userId, day_of_week: dow, title: `วัน${WEEKDAYS[dow]}` }, { onConflict: 'user_id,day_of_week' })
+      .select('*')
+      .single()
+
+    if (err || !data) {
+      setError(err?.message ?? 'สร้างวันไม่สำเร็จ')
+      return null
+    }
+    return data as ProgramDay
+  }
+
+  async function handleApplyToProgram(template: WorkoutTemplate, dow: number) {
+    const exercises = exercisesByTemplate[template.id] ?? []
+    if (exercises.length === 0) return
+
+    setApplyingId(template.id)
+    setApplyMessage(null)
+    setError(null)
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setError('กรุณาเข้าสู่ระบบใหม่')
+        return
+      }
+
+      const day = await ensureProgramDay(dow, user.id)
+      if (!day) return
+
+      const { count, error: countErr } = await supabase
+        .from('program_exercises')
+        .select('*', { count: 'exact', head: true })
+        .eq('program_day_id', day.id)
+
+      if (countErr) {
+        setError(countErr.message)
+        return
+      }
+      const startPosition = count ?? 0
+
+      const payload = exercises.map((ex, i) => ({
+        program_day_id: day.id,
+        user_id: user.id,
+        position: startPosition + i,
+        exercise_name: ex.exercise_name,
+        muscle_group: ex.muscle_group,
+        secondary_muscles: ex.secondary_muscles,
+        exercise_library_id: ex.exercise_library_id,
+        sets: ex.sets,
+        target_reps: ex.target_reps,
+        target_rir: ex.target_rir,
+        rest: ex.rest,
+        rationale: ex.notes,
+      }))
+
+      const { error: insErr } = await supabase.from('program_exercises').insert(payload)
+      if (insErr) {
+        setError(`ตั้งโปรแกรมไม่สำเร็จ: ${insErr.message}`)
+        return
+      }
+
+      setApplyMessage(`เพิ่ม ${payload.length} ท่าจาก "${template.title}" เข้าโปรแกรมวัน${WEEKDAYS[dow]}แล้ว`)
+      setApplyPickerId(null)
+    } catch (err) {
+      setError(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setApplyingId(null)
+    }
+  }
+
   if (loading) return <LoadingState />
   if (loadError) return <ErrorState title="โหลดเทมเพลตไม่สำเร็จ" message={loadError} onRetry={load} />
 
@@ -258,6 +349,7 @@ export default function TemplatesPage() {
 
       {error && <p className="text-sm text-rusttext">{error}</p>}
       {startMessage && <p className="text-sm text-steel">{startMessage}</p>}
+      {applyMessage && <p className="text-sm text-steel">{applyMessage}</p>}
 
       {templates.length === 0 && !creating && (
         <div className="rounded-lg bg-surface border border-line shadow-elevated border-dashed px-4 py-8 text-center">
@@ -305,10 +397,35 @@ export default function TemplatesPage() {
                     >
                       + เพิ่มท่า
                     </button>
+                    <button
+                      onClick={() => setApplyPickerId(applyPickerId === t.id ? null : t.id)}
+                      disabled={exercises.length === 0}
+                      className="text-xs font-display tracked uppercase text-muted hover:text-amber transition disabled:opacity-40"
+                    >
+                      📅 ตั้งโปรแกรม
+                    </button>
                     <button onClick={() => handleDeleteTemplate(t.id)} className="text-xs text-muted hover:text-rust transition">
                       ลบเทมเพลตนี้
                     </button>
                   </div>
+                  {applyPickerId === t.id && (
+                    <div className="px-4 pb-4 space-y-2">
+                      <p className="text-[11px] text-muted">เลือกวันในสัปดาห์ที่จะใส่ท่าจากเทมเพลตนี้เข้าไป (เพิ่มต่อท้ายถ้าวันนั้นมีท่าอยู่แล้ว)</p>
+                      <div className="grid grid-cols-7 gap-1">
+                        {WEEKDAYS_SHORT.map((label, dow) => (
+                          <button
+                            key={dow}
+                            onClick={() => handleApplyToProgram(t, dow)}
+                            disabled={applyingId === t.id}
+                            className="rounded-lg py-2.5 text-xs font-display tracked uppercase bg-surface2 text-ink border border-line hover:border-amber transition disabled:opacity-40"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {applyingId === t.id && <p className="text-[11px] text-muted">กำลังตั้งโปรแกรม...</p>}
+                    </div>
+                  )}
                   {addingToId === t.id && (
                     <div className="px-4 pb-4">
                       <AddExerciseForm onCancel={() => setAddingToId(null)} onSubmit={(fields) => handleAddExercise(t.id, fields)} />
