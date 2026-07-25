@@ -649,19 +649,32 @@ export default function DashboardPage() {
                   {recommendation &&
                     (() => {
                       const recColor = recoveryStatusColor(recommendation.pct)
+                      // 90 mirrors FULLY_RECOVERED_PCT in lib/dashboardStats.ts (not exported,
+                      // so re-checked here purely for the badge — doesn't change any computed pct)
+                      const isFullyReady = recommendation.pct >= 90
                       return (
                         <div
-                          className="flex items-center gap-2 rounded-md px-2.5 py-2 mb-3"
+                          className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 mb-3"
                           style={{ backgroundColor: recColor + '1A' }}
                         >
-                          <span className="text-sm">💪</span>
-                          <p className="text-xs text-ink whitespace-pre-line">
-                            {recoveryRecommendationLabel(recoveryLabelPct)}{' '}
-                            <span className="font-display tracked uppercase" style={{ color: recColor }}>
-                              {recommendation.muscleGroup}
-                            </span>{' '}
-                            <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
-                          </p>
+                          <span className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm shrink-0">💪</span>
+                            <p className="text-xs text-ink whitespace-pre-line">
+                              {recoveryRecommendationLabel(recoveryLabelPct)}{' '}
+                              <span className="font-display tracked uppercase" style={{ color: recColor }}>
+                                {recommendation.muscleGroup}
+                              </span>{' '}
+                              <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
+                            </p>
+                          </span>
+                          {isFullyReady && (
+                            <span
+                              className="shrink-0 text-[10px] font-display tracked uppercase rounded-full px-2.5 py-1"
+                              style={{ backgroundColor: recColor, color: '#14161A' }}
+                            >
+                              พร้อมลุย
+                            </span>
+                          )}
                         </div>
                       )
                     })()}
@@ -745,11 +758,12 @@ export default function DashboardPage() {
           hidden and replaced by this single deduplicated row so the 12-col grid doesn't
           show the same "บันทึก"/"เทมเพลต" shortcuts twice. */}
       <div
-        className={`hidden xl:grid xl:col-span-12 xl:order-8 gap-3 ${data.hasAnyHistory ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}
+        className={`hidden xl:grid xl:col-span-12 xl:order-8 gap-3 ${data.hasAnyHistory ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}
       >
         <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
-        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="steel" />
+        <QuickAction href="/health" label="วิเคราะห์ร่างกาย" icon="🔍" accent="amber" />
+        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" />
         {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />}
       </div>
 
@@ -825,10 +839,11 @@ export default function DashboardPage() {
       </div>
 
       {/* quick actions — hidden at xl, superseded by the merged row placed with xl:order-8 above */}
-      <div className="grid grid-cols-3 gap-2 xl:hidden">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 xl:hidden">
         <QuickAction href="/log" label="บันทึก" icon="✚" accent="moss" />
         <QuickAction href="/templates" label="เทมเพลต" icon="📋" accent="steel" />
-        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="steel" />
+        <QuickAction href="/health" label="วิเคราะห์" icon="🔍" accent="amber" />
+        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" />
       </div>
       </div>
 
@@ -875,6 +890,7 @@ const QUICK_ACTION_ACCENTS = {
   steel: '#6C8CA8',
   moss: '#7A9B57',
   violet: '#9C7CC4',
+  rust: '#C1503A',
 } as const
 
 function QuickAction({
@@ -889,22 +905,19 @@ function QuickAction({
   accent?: keyof typeof QUICK_ACTION_ACCENTS
 }) {
   const hex = QUICK_ACTION_ACCENTS[accent]
-  const glowStyle: React.CSSProperties & { '--glow-color'?: string; '--glow-color-soft'?: string } = {
-    borderColor: `${hex}2E`,
-    backgroundColor: '#1C1F24',
-    '--glow-color': `${hex}22`,
-    '--glow-color-soft': `${hex}17`,
-  }
   return (
     <a
       href={href}
-      className="rounded-lg border flex flex-col items-center justify-center gap-1 py-3.5 shadow-glow transition active:scale-[0.99]"
-      style={glowStyle}
+      className="rounded-lg border border-line bg-surface flex items-center gap-2.5 px-3 py-3 transition active:scale-[0.99] hover:border-line/40"
     >
-      <span className="text-lg">{icon}</span>
-      <span className="text-[10px] font-display tracked uppercase" style={{ color: hex }}>
-        {label}
+      <span
+        className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base"
+        style={{ backgroundColor: `${hex}22` }}
+        aria-hidden="true"
+      >
+        {icon}
       </span>
+      <span className="text-[11px] font-display tracked uppercase text-ink truncate">{label}</span>
     </a>
   )
 }
