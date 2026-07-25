@@ -44,6 +44,8 @@ export interface WorkoutSet {
 export interface Profile {
   user_id: string
   height_cm: number | null
+  // เพศ — ใช้แยกเกณฑ์มาตรฐาน "สัดส่วนน้ำในร่างกาย (%)" ที่ต่างกันระหว่างชาย/หญิง ดูหน้า Health
+  sex: 'male' | 'female' | null
   // ชีพจรสูงสุดโดยประมาณ (bpm) — ผู้ใช้กรอกเอง ใช้คำนวณ Heart Rate Zone ใน Weekly Cardio Volume
   // ถ้ายังไม่ตั้ง ระบบ fallback ไปใช้ค่าประมาณมาตรฐาน (ดู lib/heartRate.ts)
   max_heart_rate: number | null
