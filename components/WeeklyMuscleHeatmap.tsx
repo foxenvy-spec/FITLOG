@@ -22,12 +22,13 @@ interface GroupStat {
 }
 
 // กลุ่มที่ปรากฏในไดอะแกรมของแต่ละมุมมอง — ด้านหน้าไม่มี "หลัง", ด้านหลังไม่มี "อก"/"แกนกลางลำตัว"
-const FRONT_REGIONS: MuscleGroup[] = ['ไหล่', 'อก', 'แขน', 'แกนกลางลำตัว', 'ขา']
-const BACK_REGIONS: MuscleGroup[] = ['ไหล่', 'หลัง', 'แขน', 'ขา']
+// "น่อง" ใส่ไว้ทั้งสองมุมมอง (ใช้ mask ที่ครอบตั้งแต่ใต้เข่าลงไปทั้งด้านหน้า/หลัง)
+const FRONT_REGIONS: MuscleGroup[] = ['ไหล่', 'อก', 'แขน', 'แกนกลางลำตัว', 'ขา', 'น่อง']
+const BACK_REGIONS: MuscleGroup[] = ['ไหล่', 'หลัง', 'แขน', 'ขา', 'น่อง']
 
-// ลำดับแสดงผลของรายการด้านขวา — จัดให้ตรงกับ reference (อก, หลัง, ไหล่, แขน, แกนกลางลำตัว, ขา)
+// ลำดับแสดงผลของรายการด้านขวา — จัดให้ตรงกับ reference (อก, หลัง, ไหล่, แขน, แกนกลางลำตัว, ขา, น่อง)
 // แยกจาก VOLUME_MUSCLES ตัวหลัก (ซึ่งใช้ลำดับอื่นและถูกอ้างจากหลายที่ในแอป) เพื่อไม่กระทบจุดอื่น
-const DISPLAY_ORDER: MuscleGroup[] = ['อก', 'หลัง', 'ไหล่', 'แขน', 'แกนกลางลำตัว', 'ขา']
+const DISPLAY_ORDER: MuscleGroup[] = ['อก', 'หลัง', 'ไหล่', 'แขน', 'แกนกลางลำตัว', 'ขา', 'น่อง']
 
 const BALANCE_COLOR: Record<BalanceTier, string> = {
   good: '#7A9B57', // moss
@@ -64,6 +65,7 @@ export default function WeeklyMuscleHeatmap() {
   const supabase = createClient()
   const { start, end } = getWeekRange()
   const [expanded, setExpanded] = useState<MuscleGroup | null>(null)
+  const [view, setView] = useState<'volume' | 'balance'>('volume')
 
   const { data, isLoading } = useQuery({
     queryKey: ['weekly-muscle-heatmap', start, end],
@@ -143,6 +145,20 @@ export default function WeeklyMuscleHeatmap() {
     }
   }, [stats, hasAnyData])
 
+  // แท็บ "ความสมดุล" — ให้คะแนนความสมดุลรายกลุ่ม (เทียบ % ของกลุ่มนั้นกับสัดส่วนอุดมคติ 100/6 ≈ 16.7%
+  // แบบเดียวกับที่ใช้คำนวณ Balance score รวมด้านล่าง) แล้วเรียงกลุ่มที่เบี่ยงเบนมากสุดขึ้นบนสุด เพื่อชี้
+  // ให้เห็นจุดที่ควรปรับก่อน ต่างจากแท็บ "ปริมาณ" ที่เรียงลำดับคงที่ตาม DISPLAY_ORDER เสมอ
+  const idealPct = 100 / VOLUME_MUSCLES.length
+  function rowTier(pct: number): BalanceTier {
+    const score = Math.max(0, Math.min(100, Math.round(100 - (Math.abs(pct - idealPct) / idealPct) * 100)))
+    return balanceTier(score)
+  }
+
+  const displayGroups = useMemo(() => {
+    if (view === 'volume') return DISPLAY_ORDER
+    return [...stats].sort((a, b) => Math.abs(b.pct - idealPct) - Math.abs(a.pct - idealPct)).map((s) => s.group)
+  }, [view, stats, idealPct])
+
   function groupOpacity(group: MuscleGroup) {
     return intensityOpacity(statByGroup.get(group)?.pct ?? 0)
   }
@@ -157,9 +173,29 @@ export default function WeeklyMuscleHeatmap() {
 
   return (
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-      <div className="px-4 pt-3.5 pb-2">
-        <p className="text-[10px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
-        <p className="font-display text-base tracked uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
+      <div className="px-4 pt-3.5 pb-2 flex items-center justify-between gap-2">
+        <div>
+          <p className="text-[10px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
+          <p className="font-display text-base tracked uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
+        </div>
+        <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
+          <button
+            type="button"
+            onClick={() => setView('volume')}
+            className="px-3 py-1 rounded-full text-[11px] font-medium transition-colors"
+            style={view === 'volume' ? { backgroundColor: '#E8A33D22', color: '#E8A33D' } : { color: '#9498A0' }}
+          >
+            ปริมาณ
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('balance')}
+            className="px-3 py-1 rounded-full text-[11px] font-medium transition-colors"
+            style={view === 'balance' ? { backgroundColor: '#E8A33D22', color: '#E8A33D' } : { color: '#9498A0' }}
+          >
+            ความสมดุล
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -199,11 +235,11 @@ export default function WeeklyMuscleHeatmap() {
             {!hasAnyData ? (
               <p className="text-xs text-muted text-center py-6">ยังไม่มีข้อมูลสัปดาห์นี้ — เริ่มบันทึกแล้วสัดส่วนจะขึ้นที่นี่</p>
             ) : (
-              DISPLAY_ORDER.map((group) => {
+              displayGroups.map((group) => {
                 const s = statByGroup.get(group)
                 if (!s) return null
                 const isOpen = expanded === s.group
-                const color = MUSCLE_GROUP_COLORS[s.group]
+                const color = view === 'balance' ? BALANCE_COLOR[rowTier(s.pct)] : MUSCLE_GROUP_COLORS[s.group]
                 return (
                   <div key={s.group} className="rounded-md bg-surface2 overflow-hidden">
                     <button

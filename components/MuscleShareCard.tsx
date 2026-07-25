@@ -143,8 +143,11 @@ function BodySilhouette({ shares }: { shares: Partial<Record<MuscleGroup, number
       <rect x="34" y="34" width="6" height="76" rx="3" fill={fill('หลัง')} />
       <rect x="80" y="34" width="6" height="76" rx="3" fill={fill('หลัง')} />
       {/* legs / ขา — ยังไม่นับใน VOLUME_MUSCLES หลัก โชว์เป็นสีเทากลาง */}
-      <rect x="42" y="112" width="15" height="60" rx="7" fill="#2E333A" />
-      <rect x="63" y="112" width="15" height="60" rx="7" fill="#2E333A" />
+      <rect x="42" y="112" width="15" height="42" rx="7" fill="#2E333A" />
+      <rect x="63" y="112" width="15" height="42" rx="7" fill="#2E333A" />
+      {/* calves / น่อง — แยกจากขาตั้งแต่ 2026-07 */}
+      <rect x="43" y="154" width="13" height="18" rx="6" fill={fill('น่อง')} />
+      <rect x="64" y="154" width="13" height="18" rx="6" fill={fill('น่อง')} />
     </svg>
   )
 }

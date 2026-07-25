@@ -10,15 +10,15 @@ import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
 const PRESETS: { label: string; targets: WeeklyVolumeTargets }[] = [
   {
     label: 'Beginner',
-    targets: { อก: 6, หลัง: 6, ขา: 6, ไหล่: 4, แขน: 4, แกนกลางลำตัว: 4 },
+    targets: { อก: 6, หลัง: 6, ขา: 6, น่อง: 4, ไหล่: 4, แขน: 4, แกนกลางลำตัว: 4 },
   },
   {
     label: 'Intermediate',
-    targets: { อก: 10, หลัง: 10, ขา: 12, ไหล่: 8, แขน: 8, แกนกลางลำตัว: 6 },
+    targets: { อก: 10, หลัง: 10, ขา: 12, น่อง: 6, ไหล่: 8, แขน: 8, แกนกลางลำตัว: 6 },
   },
   {
     label: 'Advanced',
-    targets: { อก: 16, หลัง: 16, ขา: 18, ไหล่: 12, แขน: 12, แกนกลางลำตัว: 10 },
+    targets: { อก: 16, หลัง: 16, ขา: 18, น่อง: 8, ไหล่: 12, แขน: 12, แกนกลางลำตัว: 10 },
   },
 ]
 
