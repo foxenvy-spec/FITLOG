@@ -7,6 +7,7 @@ import { getWeekRange } from '@/lib/dashboardStats'
 import { VOLUME_MUSCLES, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
+import MuscleBodyDiagram from './MuscleBodyDiagram'
 
 // Graphic Muscle Heatmap — ไดอะแกรมรูปร่างคน (วาดเองด้วย SVG ธรรมดา ไม่พึ่ง react-body-highlighter
 // เพราะไลบรารีนั้นไม่รองรับกล้ามเนื้อขา) ไล่สีตาม % สัดส่วนเซ็ตของกลุ่มกล้ามเนื้อนั้นเทียบกับ
@@ -136,19 +137,12 @@ export default function WeeklyMuscleHeatmap() {
     return { tier: 'poor' as BalanceTier, text: `ควรเพิ่ม ${weakestGroup.group} (${label}) โดยเร็ว ห่างจากกลุ่มอื่นมาก` }
   }, [balance, weakestGroup])
 
-  function regionStyle(group: MuscleGroup) {
-    const stat = statByGroup.get(group)
-    const pct = stat?.pct ?? 0
-    const color = MUSCLE_GROUP_COLORS[group]
-    return {
-      fill: color,
-      fillOpacity: intensityOpacity(pct),
-      stroke: color,
-      strokeOpacity: 0.5,
-      strokeWidth: 1,
-      cursor: 'pointer',
-      transition: 'fill-opacity 0.3s ease',
-    } as const
+  function groupOpacity(group: MuscleGroup) {
+    return intensityOpacity(statByGroup.get(group)?.pct ?? 0)
+  }
+
+  function groupColor(group: MuscleGroup) {
+    return MUSCLE_GROUP_COLORS[group]
   }
 
   function toggleExpand(group: MuscleGroup) {
@@ -184,45 +178,16 @@ export default function WeeklyMuscleHeatmap() {
         </div>
       ) : (
         <div className="px-4 pb-4 flex flex-col sm:flex-row gap-4">
-          {/* ไดอะแกรม SVG */}
+          {/* ไดอะแกรมร่างกาย (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %) */}
           <div className="shrink-0 mx-auto sm:mx-0">
-            <svg viewBox="0 0 200 420" width="180" height="378" role="img" aria-label={`ไดอะแกรมกล้ามเนื้อ ${view === 'front' ? 'ด้านหน้า' : 'ด้านหลัง'}`}>
-              {/* หัว + คอ (ไม่ไฮไลต์) */}
-              <circle cx="100" cy="28" r="18" fill="#2E333A" />
-              <rect x="92" y="42" width="16" height="16" rx="4" fill="#2E333A" />
-
-              {view === 'front' ? (
-                <>
-                  {/* ไหล่ */}
-                  <ellipse cx="55" cy="78" rx="20" ry="15" style={regionStyle('ไหล่')} onClick={() => toggleExpand('ไหล่')} />
-                  <ellipse cx="145" cy="78" rx="20" ry="15" style={regionStyle('ไหล่')} onClick={() => toggleExpand('ไหล่')} />
-                  {/* แขน */}
-                  <rect x="24" y="88" width="24" height="115" rx="12" style={regionStyle('แขน')} onClick={() => toggleExpand('แขน')} />
-                  <rect x="152" y="88" width="24" height="115" rx="12" style={regionStyle('แขน')} onClick={() => toggleExpand('แขน')} />
-                  {/* อก */}
-                  <path d="M68 66 h64 v55 q-32 14 -64 0 z" style={regionStyle('อก')} onClick={() => toggleExpand('อก')} />
-                  {/* แกนกลางลำตัว */}
-                  <rect x="72" y="122" width="56" height="70" rx="10" style={regionStyle('แกนกลางลำตัว')} onClick={() => toggleExpand('แกนกลางลำตัว')} />
-                  {/* ขา */}
-                  <rect x="66" y="196" width="30" height="185" rx="14" style={regionStyle('ขา')} onClick={() => toggleExpand('ขา')} />
-                  <rect x="104" y="196" width="30" height="185" rx="14" style={regionStyle('ขา')} onClick={() => toggleExpand('ขา')} />
-                </>
-              ) : (
-                <>
-                  {/* ไหล่ */}
-                  <ellipse cx="55" cy="78" rx="20" ry="15" style={regionStyle('ไหล่')} onClick={() => toggleExpand('ไหล่')} />
-                  <ellipse cx="145" cy="78" rx="20" ry="15" style={regionStyle('ไหล่')} onClick={() => toggleExpand('ไหล่')} />
-                  {/* แขน */}
-                  <rect x="24" y="88" width="24" height="115" rx="12" style={regionStyle('แขน')} onClick={() => toggleExpand('แขน')} />
-                  <rect x="152" y="88" width="24" height="115" rx="12" style={regionStyle('แขน')} onClick={() => toggleExpand('แขน')} />
-                  {/* หลัง (บน+ล่าง รวมเป็นก้อนเดียว) */}
-                  <path d="M68 66 h64 v126 q-32 14 -64 0 z" style={regionStyle('หลัง')} onClick={() => toggleExpand('หลัง')} />
-                  {/* ขา (hamstring/calf) */}
-                  <rect x="66" y="196" width="30" height="185" rx="14" style={regionStyle('ขา')} onClick={() => toggleExpand('ขา')} />
-                  <rect x="104" y="196" width="30" height="185" rx="14" style={regionStyle('ขา')} onClick={() => toggleExpand('ขา')} />
-                </>
-              )}
-            </svg>
+            <MuscleBodyDiagram
+              view={view}
+              regions={regions}
+              getOpacity={groupOpacity}
+              getColor={groupColor}
+              onClickGroup={toggleExpand}
+              width={168}
+            />
           </div>
 
           {/* รายการสัดส่วน + breakdown ท่า */}
