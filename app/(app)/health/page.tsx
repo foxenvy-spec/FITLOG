@@ -39,14 +39,24 @@ function bmiOf(weightKg: number | null, heightCm: number | null) {
   return weightKg / (h * h)
 }
 
-// สัดส่วนโปรตีนต่อน้ำหนักตัว (%) — เกณฑ์ทั่วไปที่แอปสุขภาพ/เครื่องชั่งอัจฉริยะใช้กัน:
-// ต่ำกว่ามาตรฐาน < 16%, มาตรฐาน 16-20%, สูง/ดีมาก > 20% — ไม่ต้องพึ่งค่าที่ผู้ใช้กรอกเอง
-function proteinPctZone(proteinKg: number, weightKg: number): Zone | null {
-  if (!weightKg) return null
+// สัดส่วนโปรตีนต่อน้ำหนักตัว (%) — เกณฑ์แยกตามเพศ (มวลกล้ามเนื้อ/สัดส่วนร่างกายชาย-หญิงต่างกัน):
+// ชาย: ต่ำ < 18%, มาตรฐาน 18-22%, สูง > 22% | หญิง: ต่ำ < 14%, มาตรฐาน 14-18%, สูง > 18%
+// ถ้ายังไม่ตั้งเพศไว้ในโปรไฟล์ จะคืนค่า null (ยังประเมินไม่ได้ ไม่เดาเพศให้)
+function proteinPctZone(proteinKg: number, weightKg: number, sex: 'male' | 'female' | null): Zone | null {
+  if (!weightKg || !sex) return null
   const pct = (proteinKg / weightKg) * 100
-  if (pct < 16) return 'Low'
-  if (pct > 20) return 'High'
+  const [low, high] = sex === 'male' ? [18, 22] : [14, 18]
+  if (pct < low) return 'Low'
+  if (pct > high) return 'High'
   return 'Standard'
+}
+
+// เกณฑ์ % ไขมันในร่างกาย — แยกตามเพศ (สรีระชายมีสัดส่วนไขมันตามธรรมชาติต่ำกว่าหญิง):
+// ชาย: min 2, มาตรฐาน 10-20%, max 40 | หญิง: min 8, มาตรฐาน 18-28%, max 48
+// ถ้ายังไม่ตั้งเพศไว้ในโปรไฟล์ จะ fallback ไปใช้เกณฑ์ผู้หญิง (ช่วงกว้างกว่า จึงระมัดระวังกว่า)
+function bodyFatPctRange(sex: 'male' | 'female' | null): { min: number; low: number; high: number; max: number } {
+  if (sex === 'male') return { min: 2, low: 10, high: 20, max: 40 }
+  return { min: 8, low: 18, high: 28, max: 48 }
 }
 
 // สัดส่วนน้ำในร่างกายต่อน้ำหนักตัว (%) — เกณฑ์แยกตามเพศ (สรีระชาย/หญิงมีสัดส่วนไขมัน-กล้ามเนื้อต่างกัน):
@@ -614,7 +624,8 @@ export default function HealthPage() {
       items.push({ label: 'น้ำหนัก', status: classifyMetric(zoneOf(row.weight_kg, weightRangeLow, weightRangeHigh), 'neutral') })
     }
     if (row?.body_fat_pct != null) {
-      items.push({ label: 'ไขมันในร่างกาย', status: classifyMetric(zoneOf(row.body_fat_pct, 18, 28), 'lowerBetter') })
+      const bfRange = bodyFatPctRange(profile?.sex ?? null)
+      items.push({ label: 'ไขมันในร่างกาย', status: classifyMetric(zoneOf(row.body_fat_pct, bfRange.low, bfRange.high), 'lowerBetter') })
     }
     if (row?.skeletal_muscle_kg != null && skeletalRangeLow !== null && skeletalRangeHigh !== null) {
       items.push({
@@ -645,7 +656,7 @@ export default function HealthPage() {
       items.push({ label: 'เกลือแร่', status: classifyMetric(zoneOf(row.inorganic_salt_kg, saltRangeLow, saltRangeHigh), 'neutral') })
     }
     if (row?.protein_kg != null && row?.weight_kg != null) {
-      const zone = proteinPctZone(row.protein_kg, row.weight_kg)
+      const zone = proteinPctZone(row.protein_kg, row.weight_kg, profile?.sex ?? null)
       if (zone) items.push({ label: 'โปรตีน', status: classifyMetric(zone, 'higherBetter') })
     }
     if (row?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
@@ -952,7 +963,7 @@ export default function HealthPage() {
               direction="neutral"
               zone={
                 latest?.protein_kg != null && latest?.weight_kg != null
-                  ? proteinPctZone(latest.protein_kg, latest.weight_kg)
+                  ? proteinPctZone(latest.protein_kg, latest.weight_kg, profile?.sex ?? null)
                   : null
               }
               zoneScheme="higherOk"
@@ -1010,7 +1021,7 @@ export default function HealthPage() {
 
           <div className="grid lg:grid-cols-2 gap-4 items-start">
             {(bmi !== null || latest?.body_fat_pct != null) && (
-              <ObesityAnalysisChart bmi={bmi} bodyFatPct={latest?.body_fat_pct ?? null} />
+              <ObesityAnalysisChart bmi={bmi} bodyFatPct={latest?.body_fat_pct ?? null} sex={profile?.sex ?? null} />
             )}
 
             {muscleFatItems.length > 0 ? (
@@ -1113,8 +1124,8 @@ export default function HealthPage() {
                 label="ไขมันในร่างกาย"
                 value={latest?.body_fat_pct ?? null}
                 unit="%"
-                low={18}
-                high={28}
+                low={bodyFatPctRange(profile?.sex ?? null).low}
+                high={bodyFatPctRange(profile?.sex ?? null).high}
                 iconKey="fat"
                 imageKey="bodyFat"
                 color="#C1503A"
@@ -2020,7 +2031,16 @@ const MUSCLE_FAT_META: Record<string, { Icon: () => JSX.Element; bg: string; fg:
   'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber', color: '#E8A33D', imageKey: 'fatMass', iconKey: 'fat' },
 }
 
-function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFatPct: number | null }) {
+function ObesityAnalysisChart({
+  bmi,
+  bodyFatPct,
+  sex,
+}: {
+  bmi: number | null
+  bodyFatPct: number | null
+  sex: 'male' | 'female' | null
+}) {
+  const bf = bodyFatPctRange(sex)
   return (
     <section>
       <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
@@ -2039,10 +2059,10 @@ function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFat
           <ZoneBarRow
             label="Body fat rate (%)"
             value={bodyFatPct}
-            min={8}
-            low={18}
-            high={28}
-            max={48}
+            min={bf.min}
+            low={bf.low}
+            high={bf.high}
+            max={bf.max}
             decimals={1}
             unit="%"
             imageKey="bodyFatObesity"
@@ -2336,7 +2356,7 @@ function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profil
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
       <p className="text-xs text-muted">
-        ระบุเพศเพื่อประเมินเกณฑ์มาตรฐาน<span className="text-ink">น้ำในร่างกาย</span>ให้แม่นยำขึ้น
+        ระบุเพศเพื่อประเมินเกณฑ์มาตรฐาน<span className="text-ink">น้ำในร่างกาย โปรตีน และไขมันในร่างกาย</span>ให้แม่นยำขึ้น
       </p>
       <div className="flex items-center gap-2 shrink-0">
         <button
