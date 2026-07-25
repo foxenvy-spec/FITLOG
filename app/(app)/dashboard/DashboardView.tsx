@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
+import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import {
   computeCurrentStreak,
@@ -35,7 +35,9 @@ import {
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { saveDisplayName } from '@/lib/profile'
-import { computePushPullBalance, computeAIDailySummary } from '@/lib/aiCoach'
+import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
+import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
+import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
@@ -94,6 +96,9 @@ interface DashboardData {
   recoveryDates: Record<string, string | null>
   insights: Insight[]
   aiDailySummary: string
+  // เทรนด์น้ำหนัก/ไขมัน/กล้ามเนื้อล่าสุด (เทียบเอนทรีก่อนหน้า) — ใช้ให้การ์ด AI Coach
+  // วิเคราะห์สัดส่วนร่างกายเพิ่มจากเดิมที่มีแค่ recovery/push-pull balance
+  bodyMetricsSummary: BodyMetricsSummary
   // เฉลี่ย % ของเป้าหมายเซ็ต/สัปดาห์ ข้ามทุกกล้ามเนื้อใน VOLUME_MUSCLES (เพดานที่ 100%
   // ต่อกลุ่ม ก่อนเฉลี่ย) ใช้ตัวเลขเดียวสรุปภาพรวมสำหรับ hero card — รายละเอียดรายกล้ามเนื้อ
   // ยังดูได้เต็ม ๆ ที่ WeeklyVolume ด้านล่าง
@@ -142,6 +147,7 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
     { data: twoWeeksStrength },
     weeklyVolumeTargets,
     { data: profileRow },
+    { data: bodyMetricRows },
   ] = await Promise.all([
     supabase.from('workouts').select('*').eq('performed_at', today).order('created_at'),
     supabase
@@ -168,6 +174,9 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
     user
       ? supabase.from('profiles').select('display_name').eq('user_id', user.id).maybeSingle()
       : Promise.resolve({ data: null as { display_name: string | null } | null }),
+    // เอนทรีล่าสุด 2 รายการพอสำหรับคำนวณ delta (เทียบกับ BodyMetricsRow ที่ดึง 30 รายการ
+    // เพราะการ์ดนั้นโชว์ค่าปัจจุบันด้วย ส่วนตรงนี้ใช้แค่เทรนด์ล่าสุดไปทำ insight)
+    supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(2),
   ])
 
   const todayList = (todayRows as Workout[]) ?? []
@@ -211,7 +220,13 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
   const volumeInsights = computeVolumeTrendInsights(thisWeekSets, lastWeekSets)
   const imbalanceInsights = computeImbalanceInsights(thisWeekSets, VOLUME_MUSCLES)
   const missedInsights = computeMissedMuscleInsights(recoveryDates)
-  const insights = [...imbalanceInsights, ...volumeInsights, ...missedInsights].slice(0, 3)
+  // ไม่ slice ที่นี่แล้ว — คอมโพเนนต์เป็นคนรวมกับ body-composition/workout-frequency insight
+  // (ที่ต้อง useWeightUnit() ซึ่งเป็น hook เรียกในนี้ไม่ได้) แล้วค่อย slice ทีเดียวตอน render
+  const insights = [...imbalanceInsights, ...volumeInsights, ...missedInsights]
+
+  // เทรนด์สัดส่วนร่างกายล่าสุด — ใช้ทำ insight เพิ่มเติมในการ์ด AI Coach (ดู bodyFatTrendInsight/
+  // muscleMassTrendInsight ใน lib/aiCoach.ts) ไม่ต้องใช้ heightCm เพราะ insight พวกนี้ไม่ได้ใช้ BMI
+  const bodyMetricsSummary = computeBodyMetricsSummary((bodyMetricRows as BodyMetric[]) ?? [], null)
 
   const recoveryPctForSummary: Record<string, number> = {}
   RECOVERY_MUSCLES.forEach((mg) => {
@@ -299,6 +314,7 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
     recoveryDates,
     insights,
     aiDailySummary,
+    bodyMetricsSummary,
     weeklyGoalPct,
     muscleRecommendation,
     bestVolumeIncrease,
@@ -361,7 +377,25 @@ export default function DashboardPage() {
     queryClient.invalidateQueries({ queryKey: ['dashboard', today] })
   }
 
+  const { toDisplay, unit } = useWeightUnit()
   const dow = todayDayOfWeek()
+
+  // การ์ด AI Coach: รวม insight เทรนด์สัดส่วนร่างกาย (ไขมัน/กล้ามเนื้อ) + ความถี่การฝึก
+  // เข้ากับ insight เดิม (volume/imbalance/missed) — สามตัวแรกมาก่อนเพราะเป็นภาพรวมระดับ
+  // "ก้าวหน้าไหม" ที่ผู้ใช้อยากเห็นทันที ส่วนที่เหลือเป็นรายละเอียดระดับกล้ามเนื้อย่อย
+  const combinedInsights = useMemo(() => {
+    if (!data) return []
+    const { bodyMetricsSummary } = data
+    const muscleDeltaDisplay =
+      bodyMetricsSummary.skeletalMuscleKg.delta != null ? toDisplay(bodyMetricsSummary.skeletalMuscleKg.delta) : 0
+    const extra = [
+      bodyFatTrendInsight(bodyMetricsSummary.bodyFatPct, bodyMetricsSummary.periodLabel),
+      muscleMassTrendInsight(bodyMetricsSummary.skeletalMuscleKg, bodyMetricsSummary.periodLabel, muscleDeltaDisplay, unit),
+      workoutFrequencyInsight(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal, dow),
+    ].filter((i): i is Insight => i != null)
+    return [...extra, ...data.insights].slice(0, 4)
+  }, [data, toDisplay, unit, dow])
+
   const scheduledDay = useMemo(
     () => data?.programDays.find((d) => d.day_of_week === dow) ?? null,
     [data?.programDays, dow]
@@ -654,8 +688,10 @@ export default function DashboardPage() {
       </div>
 
       {/* right column (lg+): recovery, weekly goal, AI coach.
-          lg:contents — same trick as the left column above. */}
-      <div className="space-y-6 lg:space-y-0 lg:contents">
+          lg:contents — same trick as the left column above. space-y-3 (not -6) below lg so
+          Weekly Goal sits snug under Recovery/against AI Coach instead of floating with a
+          gap that reads like a missing card. */}
+      <div className="space-y-3 lg:space-y-0 lg:contents">
       {/* card 2: recovery — secondary weight on purpose: quieter border, no shadow, tighter
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
@@ -797,15 +833,15 @@ export default function DashboardPage() {
         >
           <div className="px-4 py-4 flex items-center justify-between">
             <p className="text-[10px] tracked uppercase text-muted">✨ AI Coach</p>
-            {data.insights.length > 0 && (
+            {combinedInsights.length > 0 && (
               <span className="text-[10px] tracked uppercase text-amber bg-amber/10 rounded-full px-2 py-0.5">
                 อัปเดต
               </span>
             )}
           </div>
-          {data.insights.length > 0 ? (
+          {combinedInsights.length > 0 ? (
             <div className="px-4 pb-4 space-y-2">
-              {data.insights.map((insight) => (
+              {combinedInsights.map((insight) => (
                 <InsightCard key={insight.id} insight={insight} />
               ))}
             </div>
