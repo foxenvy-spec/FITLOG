@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
@@ -163,6 +163,31 @@ export default function TemplatesPage() {
     }))
   }
 
+  async function handleUpdateExercise(ex: WorkoutTemplateExercise, patch: Partial<WorkoutTemplateExercise>) {
+    setError(null)
+    setExercisesByTemplate((prev) => ({
+      ...prev,
+      [ex.template_id]: (prev[ex.template_id] ?? []).map((e) => (e.id === ex.id ? { ...e, ...patch } : e)),
+    }))
+    const { error: err } = await supabase.from('workout_template_exercises').update(patch).eq('id', ex.id)
+    if (err) {
+      setError(`แก้ไขท่าไม่สำเร็จ: ${err.message}`)
+    }
+  }
+
+  async function handleReorderExercises(templateId: string, reordered: WorkoutTemplateExercise[]) {
+    setExercisesByTemplate((prev) => ({ ...prev, [templateId]: reordered }))
+    const { error: err } = await Promise.all(
+      reordered.map((ex, i) => supabase.from('workout_template_exercises').update({ position: i }).eq('id', ex.id))
+    ).then(
+      (results) => ({ error: results.find((r) => r.error)?.error ?? null }),
+      (e) => ({ error: e })
+    )
+    if (err) {
+      setError(`เรียงลำดับท่าไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
   async function handleStart(template: WorkoutTemplate) {
     const exercises = exercisesByTemplate[template.id] ?? []
     if (exercises.length === 0) return
@@ -265,22 +290,12 @@ export default function TemplatesPage() {
 
               {expanded && (
                 <>
-                  <ul>
-                    {exercises.map((ex) => (
-                      <li key={ex.id} className="tally-row px-4 py-2.5 flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm text-ink truncate">{ex.exercise_name}</p>
-                          <p className="text-[11px] text-muted">
-                            {ex.sets ?? '–'} เซ็ต × {ex.target_reps ?? '–'} reps
-                            {ex.target_rir && ` · RIR ${ex.target_rir}`}
-                          </p>
-                        </div>
-                        <button onClick={() => handleDeleteExercise(ex)} className="text-[11px] text-muted hover:text-rust shrink-0">
-                          ลบ
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  <ExerciseList
+                    exercises={exercises}
+                    onUpdate={handleUpdateExercise}
+                    onDelete={handleDeleteExercise}
+                    onReorder={(reordered) => handleReorderExercises(t.id, reordered)}
+                  />
                   <div className="px-4 py-3 border-t border-line flex items-center justify-between">
                     <button
                       onClick={() => setAddingToId(t.id)}
@@ -314,6 +329,211 @@ export default function TemplatesPage() {
 
       {creating && <NewTemplateForm onCancel={() => setCreating(false)} onSubmit={handleCreateTemplate} />}
     </div>
+  )
+}
+
+function ExerciseList({
+  exercises,
+  onUpdate,
+  onDelete,
+  onReorder,
+}: {
+  exercises: WorkoutTemplateExercise[]
+  onUpdate: (ex: WorkoutTemplateExercise, patch: Partial<WorkoutTemplateExercise>) => void
+  onDelete: (ex: WorkoutTemplateExercise) => void
+  onReorder: (reordered: WorkoutTemplateExercise[]) => void
+}) {
+  const [items, setItems] = useState(exercises)
+  const itemsRef = useRef(exercises)
+  const rowRefs = useRef<Map<string, HTMLLIElement>>(new Map())
+  const dragIndexRef = useRef<number | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setItems(exercises)
+    itemsRef.current = exercises
+  }, [exercises])
+
+  const handleMove = useCallback((e: PointerEvent) => {
+    const from = dragIndexRef.current
+    if (from === null) return
+    let to = from
+    rowRefs.current.forEach((el, id) => {
+      const rect = el.getBoundingClientRect()
+      if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        to = itemsRef.current.findIndex((it) => it.id === id)
+      }
+    })
+    if (to !== from && to >= 0) {
+      const next = [...itemsRef.current]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      itemsRef.current = next
+      dragIndexRef.current = to
+      setItems(next)
+    }
+  }, [])
+
+  const handleUp = useCallback(() => {
+    window.removeEventListener('pointermove', handleMove)
+    window.removeEventListener('pointerup', handleUp)
+    dragIndexRef.current = null
+    setDraggingId(null)
+    onReorder(itemsRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleMove])
+
+  function handleDown(e: React.PointerEvent, index: number, id: string) {
+    e.preventDefault()
+    dragIndexRef.current = index
+    setDraggingId(id)
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+  }
+
+  return (
+    <ul>
+      {items.map((ex, index) => (
+        <ExerciseRow
+          key={ex.id}
+          exercise={ex}
+          rowRef={(el) => {
+            if (el) rowRefs.current.set(ex.id, el)
+            else rowRefs.current.delete(ex.id)
+          }}
+          dragging={draggingId === ex.id}
+          editing={editingId === ex.id}
+          onDragHandleDown={(e) => handleDown(e, index, ex.id)}
+          onToggleEdit={() => setEditingId((cur) => (cur === ex.id ? null : ex.id))}
+          onUpdate={(patch) => onUpdate(ex, patch)}
+          onDelete={() => onDelete(ex)}
+        />
+      ))}
+    </ul>
+  )
+}
+
+function DragHandleIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {[3, 7, 11].map((cy) => (
+        <g key={cy}>
+          <circle cx="4" cy={cy} r="1.3" fill="currentColor" />
+          <circle cx="10" cy={cy} r="1.3" fill="currentColor" />
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+function ExerciseRow({
+  exercise,
+  rowRef,
+  dragging,
+  editing,
+  onDragHandleDown,
+  onToggleEdit,
+  onUpdate,
+  onDelete,
+}: {
+  exercise: WorkoutTemplateExercise
+  rowRef: (el: HTMLLIElement | null) => void
+  dragging: boolean
+  editing: boolean
+  onDragHandleDown: (e: React.PointerEvent) => void
+  onToggleEdit: () => void
+  onUpdate: (patch: Partial<WorkoutTemplateExercise>) => void
+  onDelete: () => void
+}) {
+  return (
+    <li
+      ref={rowRef}
+      className={`tally-row px-4 py-2.5 flex items-start gap-2 ${dragging ? 'opacity-50' : ''}`}
+    >
+      <span
+        onPointerDown={onDragHandleDown}
+        className="mt-0.5 text-muted hover:text-amber shrink-0 cursor-grab active:cursor-grabbing"
+        style={{ touchAction: 'none' }}
+      >
+        <DragHandleIcon />
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-ink truncate">{exercise.exercise_name}</p>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={onToggleEdit} className="text-[11px] text-muted hover:text-amber">
+              {editing ? 'เสร็จ' : 'แก้ไข'}
+            </button>
+            <button onClick={onDelete} className="text-[11px] text-muted hover:text-rust">
+              ลบ
+            </button>
+          </div>
+        </div>
+
+        {!editing && (
+          <p className="text-[11px] text-muted mt-0.5">
+            {exercise.sets ?? '–'} เซ็ต × {exercise.target_reps ?? '–'} reps
+            {exercise.target_rir && ` · RIR ${exercise.target_rir}`}
+            {exercise.rest && ` · พัก ${exercise.rest}`}
+          </p>
+        )}
+
+        {editing && (
+          <div className="mt-2 space-y-2">
+            <div className="grid grid-cols-2 gap-1.5">
+              <BlurField
+                label="เซ็ต"
+                value={exercise.sets != null ? String(exercise.sets) : ''}
+                onBlur={(v) => onUpdate({ sets: v ? Number(v) : null })}
+              />
+              <BlurField
+                label="Target Reps"
+                value={exercise.target_reps ?? ''}
+                onBlur={(v) => onUpdate({ target_reps: v || null })}
+              />
+              <BlurField
+                label="Target RIR"
+                value={exercise.target_rir ?? ''}
+                onBlur={(v) => onUpdate({ target_rir: v || null })}
+              />
+              <BlurField label="พัก" value={exercise.rest ?? ''} onBlur={(v) => onUpdate({ rest: v || null })} />
+            </div>
+            <label className="block">
+              <span className="block text-[9px] tracked uppercase text-muted mb-0.5">กลุ่มกล้ามเนื้อ</span>
+              <select
+                value={(exercise.muscle_group as MuscleGroup) ?? 'อื่นๆ'}
+                onChange={(e) => onUpdate({ muscle_group: e.target.value })}
+                className="w-full bg-surface2 text-ink text-xs rounded px-2 py-1.5 border border-line outline-none focus:border-amber"
+              >
+                {MUSCLE_GROUPS.map((mg) => (
+                  <option key={mg} value={mg}>
+                    {mg}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+      </div>
+    </li>
+  )
+}
+
+function BlurField({ label, value, onBlur }: { label: string; value: string; onBlur: (v: string) => void }) {
+  const [local, setLocal] = useState(value)
+  useEffect(() => setLocal(value), [value])
+  return (
+    <label className="block">
+      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <input
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={() => onBlur(local)}
+        className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
+      />
+    </label>
   )
 }
 
