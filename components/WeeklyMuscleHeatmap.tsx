@@ -162,25 +162,29 @@ export default function WeeklyMuscleHeatmap() {
           <Skeleton className="h-64 w-full rounded-lg" />
         </div>
       ) : (
-        <div className="px-4 pb-4 flex flex-col sm:flex-row gap-4">
-          {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ซ้อนติดกัน (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %) */}
-          <div className="shrink-0 mx-auto sm:mx-0 flex items-start gap-0.5">
-            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
+        <div className="px-4 pb-4 flex flex-col sm:flex-row gap-3">
+          {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ชิดติดกัน (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %)
+              — ขยายเพดานความกว้างต่อ breakpoint ขึ้นมาก (เดิม 130/205/240px → 150/220/260/300px) และลด gap
+              ระหว่างสองภาพเหลือ 1px (ชิดติดกันแบบภาพอ้างอิง) เพื่อให้ตัวคนใหญ่เต็มการ์ดขึ้น ลดพื้นที่ว่างรอบๆ */}
+          <div className="shrink-0 mx-auto sm:mx-0 flex items-center gap-px">
+            <div className="w-[150px] sm:w-[220px] lg:w-[260px] xl:w-[300px]">
               <MuscleBodyDiagram
                 view="front"
                 regions={FRONT_REGIONS}
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
+                width={320}
               />
             </div>
-            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
+            <div className="w-[150px] sm:w-[220px] lg:w-[260px] xl:w-[300px]">
               <MuscleBodyDiagram
                 view="back"
                 regions={BACK_REGIONS}
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
+                width={320}
               />
             </div>
           </div>
@@ -200,7 +204,7 @@ export default function WeeklyMuscleHeatmap() {
                     <button
                       type="button"
                       onClick={() => toggleExpand(s.group)}
-                      className="w-full flex flex-col gap-1 px-2.5 py-2 text-left"
+                      className="w-full flex flex-col gap-1 px-2.5 py-1.5 text-left"
                     >
                       <span className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color, opacity: intensityOpacity(s.pct) }} />
