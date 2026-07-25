@@ -281,7 +281,7 @@ export default function WeeklyMuscleHeatmap() {
       )}
 
       {!isLoading && hasAnyData && balance && (
-        <div className="border-t border-line px-2 py-3 grid grid-cols-5 gap-1">
+        <div className="border-t border-line px-2 py-3 grid grid-cols-[1fr_1fr_1.6fr_1fr_1fr] gap-1">
           <div className="text-center px-1">
             <p className="font-mono font-bold text-lg text-ink leading-tight">
               {totalSets} <span className="text-xs font-sans font-normal text-muted">เซ็ต</span>
@@ -294,12 +294,13 @@ export default function WeeklyMuscleHeatmap() {
             </p>
             <p className="text-[10px] text-muted mt-0.5">รวมสัปดาห์นี้</p>
           </div>
-          <div className="text-center border-l border-line px-1">
-            <p className="font-mono font-bold text-lg leading-tight" style={{ color: BALANCE_COLOR[balance.tier] }}>
-              Balance {balance.pct}%
-            </p>
-            <p className="text-[10px] mt-0.5 flex items-center justify-center gap-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>
-              <span>{BALANCE_TIER_ARROW[balance.tier]}</span> {BALANCE_TIER_LABEL[balance.tier]}
+          <div className="text-center border-l border-line px-1 flex items-center justify-center">
+            <p className="font-mono font-bold text-lg leading-tight flex items-center gap-1.5 flex-wrap justify-center" style={{ color: BALANCE_COLOR[balance.tier] }}>
+              <span>Balance {balance.pct}%</span>
+              <span className="text-[11px] font-sans font-normal flex items-center gap-0.5">
+                <span>{BALANCE_TIER_ARROW[balance.tier]}</span>
+                {BALANCE_TIER_LABEL[balance.tier]}
+              </span>
             </p>
           </div>
           <div className="text-center border-l border-line px-1">
