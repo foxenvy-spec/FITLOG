@@ -1012,7 +1012,7 @@ export default function HealthPage() {
               </h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {healthInsights.slice(0, 4).map((insight) => (
-                  <InsightCard key={insight.id} insight={insight} />
+                  <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]} />
                 ))}
               </div>
               {healthInsights.length > 4 && (
@@ -1218,7 +1218,7 @@ export default function HealthPage() {
                 {healthInsights.length > 0 ? (
                   <div className="space-y-2">
                     {healthInsights.map((insight) => (
-                      <InsightCard key={insight.id} insight={insight} showChevron />
+                      <InsightCard key={insight.id} insight={insight} showChevron imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]} />
                     ))}
                   </div>
                 ) : (
@@ -1480,6 +1480,24 @@ const STAT_ICON_IMAGES: Record<string, string> = {
   boneMass: '/icons/bone-mass.png',
   bodyAge: '/icons/body-age.png',
   bmr: '/icons/bmr.png',
+  // ไอคอนชุดที่ 2 เฉพาะสำหรับการ์ด Obesity Analysis (BMI / Body fat rate) — คนละรูปกับตัวชี้วัดด้านบน
+  // เพื่อไม่ให้ซ้ำหน้าตากับการ์ดสรุปด้านบนสุดของหน้าเดียวกัน
+  bmiObesity: '/icons/bmi-obesity.png',
+  bodyFatObesity: '/icons/body-fat-obesity.png',
+}
+
+// ไอคอนสำหรับการ์ด Insight แต่ละแบบ — คีย์เป็น "id|emoji เดิม" เพราะบาง insight (เช่น trend-weight)
+// ใช้ id เดียวกันทั้งสองทิศทาง (ขึ้น/ลง) แล้วแยกกันด้วย emoji แทน ต้องรวมสองอย่างถึงจะระบุแบบไม่ซ้ำได้
+// ถ้า id|emoji ไหนไม่มีรูป จะ fallback ไปใช้ emoji เดิมของ insight นั้น
+const INSIGHT_ICON_IMAGES: Record<string, string> = {
+  'trend-bodyfat-down|🔥': '/icons/trend-improved.png',
+  'trend-bodyfat-up|⚠️': '/icons/body-fat-high.png',
+  'trend-muscle-up|💪': '/icons/muscle-up-icon.png',
+  'trend-muscle-down|⚠️': '/icons/muscle-down-icon.png',
+  'trend-musclemass-up|💪': '/icons/muscle-up-icon.png',
+  'trend-musclemass-down|⚠️': '/icons/muscle-down-icon.png',
+  'trend-weight|📉': '/icons/weight-down.png',
+  'trend-weight|📈': '/icons/weight-good.png',
 }
 
 // trend.key ส่วนใหญ่ตรงกับคีย์ใน STAT_ICON_IMAGES อยู่แล้ว (เช่น 'weight', 'bmi', 'skeletalMuscle')
@@ -1921,6 +1939,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
     ? {
         title: isMuscleWarning ? 'เพิ่มการฝึกแรงต้าน' : 'เพิ่มการเผาผลาญไขมัน',
         detail: isMuscleWarning ? 'ฝึกเวทหรือเวทเทรนนิ่งอย่างน้อย 2-3 ครั้ง/สัปดาห์ เน้นกล้ามเนื้อมัดใหญ่' : 'คาร์ดิโอ HIIT 2-3 ครั้ง/สัปดาห์ ช่วยเผาผลาญไขมันได้มากขึ้น 15-20%',
+        imageSrc: isMuscleWarning ? '/icons/increase-muscle-training.png' : '/icons/increase-training.png',
       }
     : null
 
@@ -1934,8 +1953,8 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
         {highlight && (
           <div className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-amber/20 text-amber">
-                <FireIcon />
+              <span className="w-8 h-8 shrink-0 inline-block">
+                <Image src={highlight.imageSrc} alt="" width={32} height={32} className="w-full h-full object-contain" />
               </span>
               <div className="min-w-0">
                 <p className="text-xs font-display tracked uppercase text-ink">{highlight.title}</p>
@@ -1975,10 +1994,10 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
   )
 }
 
-const MUSCLE_FAT_META: Record<string, { Icon: () => JSX.Element; bg: string; fg: string }> = {
-  Weight: { Icon: ScaleIcon, bg: 'bg-moss/15', fg: 'text-moss' },
-  'Skeletal Muscle': { Icon: MuscleIcon, bg: 'bg-violet/15', fg: 'text-violet' },
-  'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber' },
+const MUSCLE_FAT_META: Record<string, { Icon: () => JSX.Element; bg: string; fg: string; color: string; imageKey?: string; iconKey: string }> = {
+  Weight: { Icon: ScaleIcon, bg: 'bg-moss/15', fg: 'text-moss', color: '#7A9B57', imageKey: 'weight', iconKey: 'weight' },
+  'Skeletal Muscle': { Icon: MuscleIcon, bg: 'bg-violet/15', fg: 'text-violet', color: '#9C7CC4', imageKey: 'skeletalMuscle', iconKey: 'muscle' },
+  'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber', color: '#E8A33D', imageKey: 'fatMass', iconKey: 'fat' },
 }
 
 function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFatPct: number | null }) {
@@ -1992,10 +2011,23 @@ function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFat
         </span>
       </h2>
       <div className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-5">
-        {bmi !== null && <ZoneBarRow label="BMI (kg/m²)" value={bmi} min={10} low={18.5} high={25} max={40} decimals={1} />}
+        {bmi !== null && (
+          <ZoneBarRow label="BMI (kg/m²)" value={bmi} min={10} low={18.5} high={25} max={40} decimals={1} imageKey="bmiObesity" iconKey="bmi" />
+        )}
         {bmi !== null && bodyFatPct !== null && <div className="border-t border-line" />}
         {bodyFatPct !== null && (
-          <ZoneBarRow label="Body fat rate (%)" value={bodyFatPct} min={8} low={18} high={28} max={48} decimals={1} unit="%" />
+          <ZoneBarRow
+            label="Body fat rate (%)"
+            value={bodyFatPct}
+            min={8}
+            low={18}
+            high={28}
+            max={48}
+            decimals={1}
+            unit="%"
+            imageKey="bodyFatObesity"
+            iconKey="fat"
+          />
         )}
       </div>
     </section>
@@ -2011,6 +2043,8 @@ function ZoneBarRow({
   max,
   decimals = 1,
   unit = '',
+  imageKey,
+  iconKey,
 }: {
   label: string
   value: number
@@ -2020,6 +2054,8 @@ function ZoneBarRow({
   max: number
   decimals?: number
   unit?: string
+  imageKey?: string
+  iconKey?: string
 }) {
   const pct = (v: number) => ((Math.min(Math.max(v, min), max) - min) / (max - min)) * 100
   const lowPct = pct(low)
@@ -2030,10 +2066,13 @@ function ZoneBarRow({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="flex items-center gap-1.5 text-sm text-ink font-medium">
-          {label}
-          <span className="text-muted">
-            <InfoIcon />
+        <span className="flex items-center gap-2 text-sm text-ink font-medium">
+          {imageKey && <MetricIconChip iconKey={iconKey ?? 'ruler'} imageKey={imageKey} color="#6C8CA8" size={28} />}
+          <span className="flex items-center gap-1.5">
+            {label}
+            <span className="text-muted">
+              <InfoIcon />
+            </span>
           </span>
         </span>
         <span className="flex items-center gap-2">
@@ -2125,16 +2164,13 @@ function MuscleFatBarRow({
   const highPct = pct(high)
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
-  const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel' }
-  const Icon = meta.Icon
+  const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel', color: '#6C8CA8', iconKey: 'ruler' }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-3">
-          <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${meta.bg} ${meta.fg}`}>
-            <Icon />
-          </span>
+          <MetricIconChip iconKey={meta.iconKey} imageKey={meta.imageKey} color={meta.color} size={36} />
           <span className="flex items-center gap-1.5 text-sm text-ink font-medium">
             {label}
             <span className="text-muted">
