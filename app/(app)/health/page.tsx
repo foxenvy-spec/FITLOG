@@ -685,6 +685,22 @@ export default function HealthPage() {
 
   const healthScore = useMemo(() => summarizeHealthScore(healthScoreItems), [healthScoreItems])
 
+  // เปอร์เซ็นต์ไทล์ของคะแนนวันนี้ เทียบกับ "ประวัติคะแนนของตัวเองย้อนหลัง" (ไม่ใช่เทียบกับผู้ใช้คนอื่น
+  // เพราะแอปนี้ยังไม่มีข้อมูลรวมของผู้ใช้ทุกคนให้เทียบแบบนั้นได้จริง) ต้องมีประวัติอย่างน้อย 6 ครั้งถึงจะมีความหมาย
+  const healthScorePercentile = useMemo(() => {
+    const history = metrics
+      .map((m) => {
+        const items = computeScoreItems(m, bmiOf(m.weight_kg, profile?.height_cm ?? null))
+        return items.length > 0 ? (items.filter((i) => i.status !== 'needsWork').length / items.length) * 100 : null
+      })
+      .filter((v): v is number => v !== null)
+    if (history.length < 6 || healthScore.total === 0) return null
+    const currentPct = (healthScore.score / healthScore.total) * 100
+    const beatCount = history.filter((v) => v <= currentPct).length
+    return Math.max(1, Math.min(100, Math.round((beatCount / history.length) * 100)))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metrics, profile?.height_cm, healthScore])
+
   // Insight ที่คำนวณจากการเปลี่ยนแปลงจริงในช่วงเวลาที่เลือกดู (ไม่ใช่คำแนะนำทั่วไปที่ไม่มีข้อมูลรองรับ)
   const healthInsights: Insight[] = useMemo(() => {
     const firstLast = (data: { value: number }[]) => (data.length > 1 ? { first: data[0].value, last: data[data.length - 1].value } : undefined)
@@ -1188,7 +1204,7 @@ export default function HealthPage() {
             </div>
 
             <div className="space-y-4">
-              <HealthScoreCard score={healthScore} monthDeltaPct={healthScoreMonthDeltaPct} />
+              <HealthScoreCard score={healthScore} monthDeltaPct={healthScoreMonthDeltaPct} selfPercentile={healthScorePercentile} />
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -1779,9 +1795,11 @@ function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toD
 function HealthScoreCard({
   score,
   monthDeltaPct,
+  selfPercentile,
 }: {
   score: { good: number; standard: number; needsWork: number; total: number; score: number }
   monthDeltaPct?: number | null
+  selfPercentile?: number | null
 }) {
   const pct = score.total > 0 ? (score.score / score.total) * 100 : 0
   const label = pct >= 85 ? 'ดีมาก' : pct >= 65 ? 'ดี' : pct >= 40 ? 'มาตรฐาน' : 'ควรปรับปรุง'
@@ -1794,27 +1812,38 @@ function HealthScoreCard({
       ) : (
         <div className="flex items-center gap-4">
           <GoalRing pct={pct} size={88} strokeWidth={8} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
-          <div className="text-xs space-y-1.5 min-w-0">
+          <div className="text-xs min-w-0 flex-1">
             <p className="font-display text-sm tracked uppercase" style={{ color: ringColor }}>
               {label}
             </p>
             {monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0 && (
-              <p className={`text-[11px] ${monthDeltaPct > 0 ? 'text-moss' : 'text-rusttext'}`}>
+              <p className={`text-[11px] mt-1 ${monthDeltaPct > 0 ? 'text-moss' : 'text-rusttext'}`}>
                 {monthDeltaPct > 0 ? 'ดีขึ้นจากเดือนที่แล้ว' : 'แย่ลงจากเดือนที่แล้ว'}{' '}
                 <span className="font-mono">
                   {monthDeltaPct > 0 ? '↑' : '↓'} {Math.abs(monthDeltaPct)} คะแนน
                 </span>
               </p>
             )}
-            <p className="flex items-center gap-1.5 text-muted pt-0.5">
-              <span className="w-2 h-2 rounded-full bg-moss inline-block" /> ดีมาก <span className="ml-auto text-ink">{score.good}</span>
-            </p>
-            <p className="flex items-center gap-1.5 text-muted">
-              <span className="w-2 h-2 rounded-full bg-steel inline-block" /> มาตรฐาน <span className="ml-auto text-ink">{score.standard}</span>
-            </p>
-            <p className="flex items-center gap-1.5 text-muted">
-              <span className="w-2 h-2 rounded-full bg-rust inline-block" /> ควรปรับปรุง <span className="ml-auto text-ink">{score.needsWork}</span>
-            </p>
+            <div className="mt-2.5">
+              <div className="relative h-1.5 rounded-full" style={{ background: 'linear-gradient(90deg, #C1503A, #E8A33D, #7A9B57)' }}>
+                <div
+                  className="absolute top-1/2 w-3 h-3 rounded-full bg-ink border-2"
+                  style={{ left: `${Math.max(2, Math.min(98, pct))}%`, transform: 'translate(-50%, -50%)', borderColor: ringColor }}
+                />
+              </div>
+              <div className="flex justify-between text-[9px] text-muted mt-1">
+                <span>แย่</span>
+                <span>ดีเยี่ยม</span>
+              </div>
+            </div>
+            {selfPercentile !== null && selfPercentile !== undefined && (
+              <p className="flex items-start gap-1.5 text-[11px] text-muted mt-2">
+                <span>🏆</span>
+                <span>
+                  คุณอยู่ใน <span className="text-ink">{selfPercentile}%</span> แรก เมื่อเทียบกับข้อมูลย้อนหลังของคุณเอง
+                </span>
+              </p>
+            )}
           </div>
         </div>
       )}
