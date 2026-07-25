@@ -108,6 +108,7 @@ export default function TemplatesPage() {
       reps: string
       rir: string
       rest: string
+      notes: string
       muscleGroup: MuscleGroup
       secondaryMuscles: string[]
       exerciseLibraryId: string | null
@@ -134,6 +135,7 @@ export default function TemplatesPage() {
         target_reps: fields.reps || null,
         target_rir: fields.rir || null,
         rest: fields.rest || null,
+        notes: fields.notes || null,
       })
       .select('*')
       .single()
@@ -479,6 +481,7 @@ function ExerciseRow({
             {exercise.rest && ` · พัก ${exercise.rest}`}
           </p>
         )}
+        {!editing && exercise.notes && <p className="text-[11px] text-muted/70 mt-1 italic">{exercise.notes}</p>}
 
         {editing && (
           <div className="mt-2 space-y-2">
@@ -514,6 +517,7 @@ function ExerciseRow({
                 ))}
               </select>
             </label>
+            <BlurTextArea label="Rationale (คำแนะนำในการเล่น)" value={exercise.notes ?? ''} onBlur={(v) => onUpdate({ notes: v || null })} />
           </div>
         )}
       </div>
@@ -532,6 +536,24 @@ function BlurField({ label, value, onBlur }: { label: string; value: string; onB
         onChange={(e) => setLocal(e.target.value)}
         onBlur={() => onBlur(local)}
         className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
+      />
+    </label>
+  )
+}
+
+function BlurTextArea({ label, value, onBlur }: { label: string; value: string; onBlur: (v: string) => void }) {
+  const [local, setLocal] = useState(value)
+  useEffect(() => setLocal(value), [value])
+  return (
+    <label className="block">
+      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <textarea
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={() => onBlur(local)}
+        rows={2}
+        placeholder="เช่น เกร็งแกนกลางลำตัว ควบคุมจังหวะขาลง ไม่ใช้แรงเหวี่ยง"
+        className="w-full bg-surface2 text-ink text-xs rounded px-2 py-1.5 border border-line outline-none focus:border-amber resize-none"
       />
     </label>
   )
@@ -574,6 +596,7 @@ function AddExerciseForm({
     reps: string
     rir: string
     rest: string
+    notes: string
     muscleGroup: MuscleGroup
     secondaryMuscles: string[]
     exerciseLibraryId: string | null
@@ -584,6 +607,7 @@ function AddExerciseForm({
   const [reps, setReps] = useState('')
   const [rir, setRir] = useState('')
   const [rest, setRest] = useState('')
+  const [notes, setNotes] = useState('')
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('อื่นๆ')
   const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([])
   const [exerciseLibraryId, setExerciseLibraryId] = useState<string | null>(null)
@@ -620,12 +644,24 @@ function AddExerciseForm({
           </option>
         ))}
       </select>
+      <label className="block">
+        <span className="block text-[9px] tracked uppercase text-muted mb-0.5">Rationale (คำแนะนำในการเล่น)</span>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={2}
+          placeholder="เช่น เกร็งแกนกลางลำตัว ควบคุมจังหวะขาลง ไม่ใช้แรงเหวี่ยง"
+          className="w-full bg-surface text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-amber resize-none"
+        />
+      </label>
       <div className="flex gap-2">
         <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2 text-[11px]">
           ยกเลิก
         </button>
         <button
-          onClick={() => name.trim() && onSubmit({ name: name.trim(), sets, reps, rir, rest, muscleGroup, secondaryMuscles, exerciseLibraryId })}
+          onClick={() =>
+            name.trim() && onSubmit({ name: name.trim(), sets, reps, rir, rest, notes, muscleGroup, secondaryMuscles, exerciseLibraryId })
+          }
           className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2 text-[11px] active:scale-[0.99]"
         >
           เพิ่มท่านี้
