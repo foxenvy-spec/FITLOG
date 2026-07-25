@@ -1580,10 +1580,10 @@ function GoalsCard({
   )
 }
 
-const MUSCLE_FAT_META: Record<string, { Icon: () => JSX.Element; bg: string; fg: string }> = {
-  Weight: { Icon: ScaleIcon, bg: 'bg-moss/15', fg: 'text-moss' },
-  'Skeletal Muscle': { Icon: MuscleIcon, bg: 'bg-violet/15', fg: 'text-violet' },
-  'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber' },
+const MUSCLE_FAT_META: Record<string, { src: string }> = {
+  Weight: { src: STAT_ICON_IMAGES.weight },
+  'Skeletal Muscle': { src: STAT_ICON_IMAGES.skeletalMuscle },
+  'Fat Mass': { src: STAT_ICON_IMAGES.fatMass },
 }
 
 function ObesityAnalysisChart({ bmi, bodyFatPct }: { bmi: number | null; bodyFatPct: number | null }) {
@@ -1730,16 +1730,19 @@ function MuscleFatBarRow({
   const highPct = pct(high)
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
-  const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel' }
-  const Icon = meta.Icon
+  const meta = MUSCLE_FAT_META[label]
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-3">
-          <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${meta.bg} ${meta.fg}`}>
-            <Icon />
-          </span>
+          {meta ? (
+            <img src={meta.src} alt="" className="w-10 h-10 shrink-0 -m-0.5" />
+          ) : (
+            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center bg-steel/15 text-steel">
+              <ScaleIcon />
+            </span>
+          )}
           <span className="flex items-center gap-1.5 text-sm text-ink font-medium">
             {label}
             <span className="text-muted">
