@@ -174,6 +174,7 @@ export default function WeeklyMuscleHeatmap() {
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
+                width={250}
               />
             </div>
             <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
@@ -183,6 +184,7 @@ export default function WeeklyMuscleHeatmap() {
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
+                width={250}
               />
             </div>
           </div>
