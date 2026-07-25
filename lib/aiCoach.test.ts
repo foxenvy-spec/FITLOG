@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Workout } from './types'
-import { computePushPullBalance, pushPullInsight, computeProgressiveOverload, computeAIDailySummary, buildSkippedExerciseInsight } from './aiCoach'
+import { computePushPullBalance, pushPullInsight, computeProgressiveOverload, computeAIDailySummary, buildSkippedExerciseInsight, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from './aiCoach'
 
 function makeWorkout(overrides: Partial<Workout>): Workout {
   return {
@@ -231,5 +231,84 @@ describe('buildSkippedExerciseInsight', () => {
     expect(insight?.title).toContain('2 ท่า')
     expect(insight?.detail).toContain('Incline Press')
     expect(insight?.detail).toContain('Fly')
+  })
+})
+
+describe('bodyFatTrendInsight', () => {
+  it('returns null when there is no previous entry to compare against', () => {
+    const insight = bodyFatTrendInsight({ value: 24.2, delta: null, isGood: null }, null)
+    expect(insight).toBeNull()
+  })
+
+  it('reports a positive trend when body fat % dropped', () => {
+    const insight = bodyFatTrendInsight({ value: 24.2, delta: -0.8, isGood: true }, 'จากเดือนที่แล้ว')
+    expect(insight).not.toBeNull()
+    expect(insight?.kind).toBe('positive')
+    expect(insight?.title).toBe('แนวโน้มดีขึ้น')
+    expect(insight?.detail).toContain('ลดลง 0.8%')
+    expect(insight?.detail).toContain('จากเดือนที่แล้ว')
+  })
+
+  it('warns when body fat % rose', () => {
+    const insight = bodyFatTrendInsight({ value: 25.5, delta: 1.3, isGood: false }, 'จากสัปดาห์ที่แล้ว')
+    expect(insight).not.toBeNull()
+    expect(insight?.kind).toBe('warning')
+    expect(insight?.detail).toContain('เพิ่มขึ้น 1.3%')
+  })
+
+  it('falls back to a generic period label when none is given', () => {
+    const insight = bodyFatTrendInsight({ value: 24.2, delta: -0.5, isGood: true }, null)
+    expect(insight?.detail).toContain('จากครั้งก่อน')
+  })
+})
+
+describe('muscleMassTrendInsight', () => {
+  it('returns null when there is no previous entry to compare against', () => {
+    const insight = muscleMassTrendInsight({ value: 27.7, delta: null, isGood: null }, null, 0, 'kg')
+    expect(insight).toBeNull()
+  })
+
+  it('celebrates muscle mass gains and encourages consistency', () => {
+    const insight = muscleMassTrendInsight({ value: 27.7, delta: 0.8, isGood: true }, 'จากเดือนที่แล้ว', 0.8, 'kg')
+    expect(insight).not.toBeNull()
+    expect(insight?.kind).toBe('positive')
+    expect(insight?.title).toBe('กล้ามเนื้อเพิ่มขึ้น')
+    expect(insight?.detail).toContain('เพิ่มขึ้น 0.8 kg')
+    expect(insight?.detail).toContain('จากเดือนที่แล้ว')
+  })
+
+  it('warns when muscle mass dropped, using the display unit passed in', () => {
+    const insight = muscleMassTrendInsight({ value: 26.9, delta: -0.6, isGood: false }, 'จากสัปดาห์ที่แล้ว', -1.3, 'lb')
+    expect(insight).not.toBeNull()
+    expect(insight?.kind).toBe('warning')
+    expect(insight?.title).toBe('กล้ามเนื้อลดลง')
+    expect(insight?.detail).toContain('ลดลง 1.3 lb')
+  })
+})
+
+describe('workoutFrequencyInsight', () => {
+  it('returns null once the weekly goal is already met', () => {
+    const insight = workoutFrequencyInsight(5, 5, 7)
+    expect(insight).toBeNull()
+  })
+
+  it('returns null when there is no weekly goal set', () => {
+    const insight = workoutFrequencyInsight(0, 0, 3)
+    expect(insight).toBeNull()
+  })
+
+  it('returns null when still on pace for the week (prorated)', () => {
+    // day 3 of 7, goal 5 -> prorated target ~2.14, done 2 is within 80% tolerance
+    const insight = workoutFrequencyInsight(2, 5, 3)
+    expect(insight).toBeNull()
+  })
+
+  it('warns and states remaining sessions when behind pace', () => {
+    // day 7 (end of week), only 2 of 5 done — clearly behind
+    const insight = workoutFrequencyInsight(2, 5, 7)
+    expect(insight).not.toBeNull()
+    expect(insight?.kind).toBe('warning')
+    expect(insight?.title).toBe('ควรเพิ่มการฝึก')
+    expect(insight?.detail).toContain('3 ครั้ง/สัปดาห์')
   })
 })

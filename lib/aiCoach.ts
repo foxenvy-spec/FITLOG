@@ -2,6 +2,7 @@ import type { Workout } from './types'
 import type { ExerciseDef } from './exerciseLibrary'
 import type { Insight, MuscleRecommendation } from './dashboardStats'
 import { recoveryRecommendationLabel, relativeDayLabel } from './dashboardStats'
+import type { MetricDelta } from './bodyMetricsSummary'
 
 // ==================================================================
 // AI Coach — วิเคราะห์สมดุลกล้ามเนื้อ + แนะนำ Progressive Overload
@@ -214,5 +215,88 @@ export function buildSkippedExerciseInsight(
     icon: '⏭️',
     title: `ข้ามไป ${skipped.length} ท่าจาก "${dayTitle}"`,
     detail: `${names} — ลองแทรกในเซสชันหน้า (${relativeDayLabel(dayDate)})`,
+  }
+}
+
+// ==================== สัดส่วนร่างกาย -> Insight ====================
+// เดิม AI Coach card มีแค่ประโยคสรุปเดียว (computeAIDailySummary) ไม่ได้ดึงเทรนด์น้ำหนัก/
+// ไขมัน/กล้ามเนื้อจากหน้า Health มาแสดงเลย — สามฟังก์ชันนี้แปลง MetricDelta (จาก
+// lib/bodyMetricsSummary) เป็น Insight การ์ดเดียวกับที่ dashboard ใช้อยู่แล้ว เพื่อให้ AI Coach
+// วิเคราะห์ "แนวโน้มร่างกาย" ได้เหมือนกับตัวเลขที่ BodyMetricsRow โชว์อยู่ด้านบนสุดของหน้า
+// คืนค่า null เมื่อยังไม่มี delta ให้เทียบ (ข้อมูลจุดเดียว) กันไม่ให้เตือนเปล่าๆ
+
+// ไขมันในร่างกาย: ลดลง = แนวโน้มดีขึ้น, เพิ่มขึ้น = เตือนให้จับตา
+export function bodyFatTrendInsight(bodyFatPct: MetricDelta, periodLabel: string | null): Insight | null {
+  if (bodyFatPct.delta == null || bodyFatPct.isGood == null) return null
+  const period = periodLabel ?? 'จากครั้งก่อน'
+  const absDelta = Math.abs(bodyFatPct.delta).toFixed(1)
+
+  if (bodyFatPct.isGood) {
+    return {
+      id: 'trend-body-fat',
+      kind: 'positive',
+      icon: '📉',
+      title: 'แนวโน้มดีขึ้น',
+      detail: `ไขมันในร่างกายลดลง ${absDelta}% ${period}`,
+    }
+  }
+  return {
+    id: 'trend-body-fat',
+    kind: 'warning',
+    icon: '📈',
+    title: 'ไขมันในร่างกายเพิ่มขึ้น',
+    detail: `เพิ่มขึ้น ${absDelta}% ${period} — ลองทบทวนอาหาร/คาร์ดิโอ`,
+  }
+}
+
+// กล้ามเนื้อโครงร่าง: เพิ่มขึ้น = ดี (ชม + ให้กำลังใจทำต่อ), ลดลง = เตือน
+export function muscleMassTrendInsight(
+  skeletalMuscleKg: MetricDelta,
+  periodLabel: string | null,
+  displayDelta: number,
+  unit: string
+): Insight | null {
+  if (skeletalMuscleKg.delta == null || skeletalMuscleKg.isGood == null) return null
+  const period = periodLabel ?? 'จากครั้งก่อน'
+  const absDelta = Math.abs(displayDelta).toFixed(1)
+
+  if (skeletalMuscleKg.isGood) {
+    return {
+      id: 'trend-muscle-mass',
+      kind: 'positive',
+      icon: '💪',
+      title: 'กล้ามเนื้อเพิ่มขึ้น',
+      detail: `กล้ามเนื้อโครงร่างเพิ่มขึ้น ${absDelta} ${unit} ${period} — รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+    }
+  }
+  return {
+    id: 'trend-muscle-mass',
+    kind: 'warning',
+    icon: '💪',
+    title: 'กล้ามเนื้อลดลง',
+    detail: `กล้ามเนื้อโครงร่างลดลง ${absDelta} ${unit} ${period} — เช็คว่ากินโปรตีน/เทรนพอไหม`,
+  }
+}
+
+// ==================== ความถี่การฝึกรายสัปดาห์ -> Insight ====================
+// เทียบจำนวนวันที่ฝึกแล้วสัปดาห์นี้กับเป้าหมายรายสัปดาห์ — เตือนเฉพาะตอนที่ยังตามหลังเป้าจริงๆ
+// (เผื่อสัดส่วนวันที่ผ่านไปแล้วของสัปดาห์ ไม่เตือนทันทีตั้งแต่ต้นสัปดาห์)
+export function workoutFrequencyInsight(
+  thisWeekWorkoutDays: number,
+  weeklyWorkoutGoal: number,
+  dayOfWeek1to7: number
+): Insight | null {
+  if (weeklyWorkoutGoal <= 0 || thisWeekWorkoutDays >= weeklyWorkoutGoal) return null
+
+  const proratedGoal = (weeklyWorkoutGoal * dayOfWeek1to7) / 7
+  if (thisWeekWorkoutDays >= proratedGoal * 0.8) return null // ยังตามเป้าอยู่ ไม่ต้องเตือน
+
+  const remaining = weeklyWorkoutGoal - thisWeekWorkoutDays
+  return {
+    id: 'workout-frequency',
+    kind: 'warning',
+    icon: '🏋️',
+    title: 'ควรเพิ่มการฝึก',
+    detail: `ออกกำลังกายเพิ่มอีก ${remaining} ครั้ง/สัปดาห์ เพื่อให้ถึงเป้าหมายรายสัปดาห์`,
   }
 }
