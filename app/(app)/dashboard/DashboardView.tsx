@@ -648,7 +648,7 @@ export default function DashboardPage() {
       </div>
 
       {/* muscles trained today — heat-map chips built from today's workout rows */}
-      <div className="animate-rise lg:col-span-12 lg:order-9" style={{ animationDelay: '180ms' }}>
+      <div className="animate-rise lg:col-span-9 lg:order-11" style={{ animationDelay: '180ms' }}>
         <TodayMuscleHeatmap todayWorkouts={data.todayWorkouts} />
       </div>
       </div>
@@ -787,19 +787,33 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* card 5 (optional): AI coach — secondary weight */}
+      {/* card 5 (optional): AI coach — sits under Weekly Goal in the rightmost column and
+          spans down alongside the quick-actions/heatmap rows (lg:row-span-3), showing the
+          same insights as before but as a proper card instead of a one-line summary. */}
       {prefs.showAICoach && (
         <div
-          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-2 lg:order-13"
+          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-span-3 lg:order-8"
           style={{ animationDelay: '360ms' }}
         >
-          <a href="/coach" className="block px-4 py-4 active:bg-surface2 transition">
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-[10px] tracked uppercase text-muted">✨ AI Coach</p>
-              <span className="text-muted text-xs">ดูรายละเอียด →</span>
+          <div className="px-4 py-4 flex items-center justify-between">
+            <p className="text-[10px] tracked uppercase text-muted">✨ AI Coach</p>
+            {data.insights.length > 0 && (
+              <span className="text-[10px] tracked uppercase text-amber bg-amber/10 rounded-full px-2 py-0.5">
+                อัปเดต
+              </span>
+            )}
+          </div>
+          {data.insights.length > 0 ? (
+            <div className="px-4 pb-4 space-y-2">
+              {data.insights.map((insight) => (
+                <InsightCard key={insight.id} insight={insight} />
+              ))}
             </div>
-            <p className="text-xs text-ink whitespace-pre-line">{data.aiDailySummary}</p>
-          </a>
+          ) : (
+            <div className="px-4 pb-4">
+              <p className="text-xs text-ink whitespace-pre-line">{data.aiDailySummary}</p>
+            </div>
+          )}
         </div>
       )}
       </div>
@@ -807,9 +821,10 @@ export default function DashboardPage() {
       {/* merged quick actions — lg only. Below lg, the two original quick-action groups
           above/below (quick-start + log/templates/stats) stay as-is; at xl they're both
           hidden and replaced by this single deduplicated row so the 12-col grid doesn't
-          show the same "บันทึก"/"เทมเพลต" shortcuts twice. */}
+          show the same "บันทึก"/"เทมเพลต" shortcuts twice. Narrowed to col-span-9 (from 12)
+          so it sits beside the AI Coach card instead of running underneath it. */}
       <div
-        className={`hidden lg:grid lg:col-span-12 lg:order-8 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
+        className={`hidden lg:grid lg:col-span-9 lg:order-9 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
       >
         <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
@@ -822,27 +837,20 @@ export default function DashboardPage() {
           Order follows a "what happened -> am I on track -> what's next" reading flow:
           heatmap (what got trained) -> volume (on track vs target) -> AI insights
           (what to do about it) -> consistency calendar (recent workouts / PRs per day)
-          -> next-up + quick actions last. */}
-      <div className="lg:col-span-12 lg:order-10">
+          -> next-up + quick actions last. Narrowed to col-span-9 (from 12), same reason
+          as the quick-actions row above — leaves room 10-12 for the AI Coach card. */}
+      <div className="lg:col-span-9 lg:order-10">
         <WeeklyMuscleHeatmap />
       </div>
 
       <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-span-6 lg:order-11">
+        <div className="lg:col-span-6 lg:order-12">
           <MuscleShareCard />
         </div>
-        <div className="lg:col-span-4 lg:order-12">
+        <div className="lg:col-span-3 lg:order-13">
           <WeeklyVolume />
         </div>
       </div>
-
-      {data.insights.length > 0 && (
-        <div className="space-y-2 lg:col-span-12 lg:order-14">
-          {data.insights.map((insight) => (
-            <InsightCard key={insight.id} insight={insight} />
-          ))}
-        </div>
-      )}
 
       <div className="lg:col-span-8 lg:order-15">
         <ConsistencyStrip />
@@ -888,7 +896,7 @@ export default function DashboardPage() {
         <WeeklyCardioVolume />
       </div>
 
-      {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-8 above */}
+      {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-9 above */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:hidden">
         <QuickAction href="/log" label="บันทึก" icon="✚" accent="moss" />
         <QuickAction href="/templates" label="เทมเพลต" icon="📋" accent="steel" />
