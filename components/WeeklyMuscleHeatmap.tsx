@@ -166,7 +166,7 @@ export default function WeeklyMuscleHeatmap() {
           {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ชิดติดกัน — ขนาดกลับเป็นเท่าเดิม (130/205/240px) แต่ตัดขอบซ้าย
               (pl-4 ของ container เดิม) ออกเฉพาะคอลัมน์นี้ ให้โมเดลชิดขอบซ้ายสุดของการ์ดแบบภาพอ้างอิง
               ส่วน padding เดิมย้ายไปไว้ที่คอลัมน์ลิสต์ด้านขวาแทน (pl-2 ให้พอมีช่องหายใจเล็กน้อย ไม่ชนขอบเป๊ะ) */}
-          <div className="shrink-0 pl-2 flex items-center gap-px">
+          <div className="shrink-0 pl-2 flex items-center gap-0">
             <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
               <MuscleBodyDiagram
                 view="front"
