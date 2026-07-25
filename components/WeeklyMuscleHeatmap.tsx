@@ -162,35 +162,33 @@ export default function WeeklyMuscleHeatmap() {
           <Skeleton className="h-64 w-full rounded-lg" />
         </div>
       ) : (
-        <div className="px-4 pb-4 flex flex-col sm:flex-row gap-3">
-          {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ชิดติดกัน (ภาพจริง + mask layer ต่อกลุ่ม ไล่ opacity ตาม %)
-              — ขยายเพดานความกว้างต่อ breakpoint ขึ้นมาก (เดิม 130/205/240px → 150/220/260/300px) และลด gap
-              ระหว่างสองภาพเหลือ 1px (ชิดติดกันแบบภาพอ้างอิง) เพื่อให้ตัวคนใหญ่เต็มการ์ดขึ้น ลดพื้นที่ว่างรอบๆ */}
-          <div className="shrink-0 mx-auto sm:mx-0 flex items-center gap-px">
-            <div className="w-[150px] sm:w-[220px] lg:w-[260px] xl:w-[300px]">
+        <div className="pb-4 flex flex-col sm:flex-row gap-3">
+          {/* ไดอะแกรมร่างกาย ด้านหน้า+ด้านหลัง ชิดติดกัน — ขนาดกลับเป็นเท่าเดิม (130/205/240px) แต่ตัดขอบซ้าย
+              (pl-4 ของ container เดิม) ออกเฉพาะคอลัมน์นี้ ให้โมเดลชิดขอบซ้ายสุดของการ์ดแบบภาพอ้างอิง
+              ส่วน padding เดิมย้ายไปไว้ที่คอลัมน์ลิสต์ด้านขวาแทน (pl-2 ให้พอมีช่องหายใจเล็กน้อย ไม่ชนขอบเป๊ะ) */}
+          <div className="shrink-0 pl-2 flex items-center gap-px">
+            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
               <MuscleBodyDiagram
                 view="front"
                 regions={FRONT_REGIONS}
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
-                width={320}
               />
             </div>
-            <div className="w-[150px] sm:w-[220px] lg:w-[260px] xl:w-[300px]">
+            <div className="w-[130px] sm:w-[205px] lg:w-[240px]">
               <MuscleBodyDiagram
                 view="back"
                 regions={BACK_REGIONS}
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
-                width={320}
               />
             </div>
           </div>
 
           {/* รายการสัดส่วน + breakdown ท่า */}
-          <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex-1 min-w-0 space-y-1.5 px-4 sm:pl-0">
             {!hasAnyData ? (
               <p className="text-xs text-muted text-center py-6">ยังไม่มีข้อมูลสัปดาห์นี้ — เริ่มบันทึกแล้วสัดส่วนจะขึ้นที่นี่</p>
             ) : (
