@@ -1,20 +1,26 @@
 import Image from 'next/image'
 import type { Insight } from '@/lib/dashboardStats'
+import MetricIcon, { type MetricIconName } from './MetricIcon'
 
-const KIND_STYLE: Record<Insight['kind'], { border: string; accent: string; chipBg: string }> = {
-  positive: { border: 'border-l-amber', accent: 'text-amber', chipBg: '#7A9B5722' },
-  warning: { border: 'border-l-rust', accent: 'text-rusttext', chipBg: '#C1503A22' },
+const KIND_STYLE: Record<Insight['kind'], { border: string; accent: string; chipBg: string; chipColor: string }> = {
+  positive: { border: 'border-l-amber', accent: 'text-amber', chipBg: '#7A9B5722', chipColor: '#7A9B57' },
+  warning: { border: 'border-l-rust', accent: 'text-rusttext', chipBg: '#C1503A22', chipColor: '#C1503A' },
 }
 
 export default function InsightCard({
   insight,
   showChevron = false,
   imageSrc,
+  metricIcon,
 }: {
   insight: Insight
   showChevron?: boolean
   // รูปไอคอนจริง (ถ้ามีสำหรับ insight นี้) — ไม่ระบุ = ใช้ emoji เดิมของ insight แทน
   imageSrc?: string
+  // ไอคอนเส้นชุดเดียวกับ BodyMetricsRow (น้ำหนัก/ไขมัน/กล้ามเนื้อ/มวลไขมัน/BMI) — ใช้กับ insight
+  // ที่เป็นเทรนด์สัดส่วนร่างกาย แทน emoji เดิม ให้ภาพลักษณ์ตรงกับการ์ดสรุปด้านบนสุดของหน้า
+  // ลำดับความสำคัญ: imageSrc > metricIcon > emoji ของ insight เดิม
+  metricIcon?: MetricIconName
 }) {
   const style = KIND_STYLE[insight.kind]
   return (
@@ -22,6 +28,14 @@ export default function InsightCard({
       {imageSrc ? (
         <span className="w-8 h-8 shrink-0 inline-block" aria-hidden="true">
           <Image src={imageSrc} alt="" width={32} height={32} className="w-full h-full object-contain" />
+        </span>
+      ) : metricIcon ? (
+        <span
+          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: style.chipBg }}
+          aria-hidden="true"
+        >
+          <MetricIcon name={metricIcon} color={style.chipColor} />
         </span>
       ) : (
         <span
