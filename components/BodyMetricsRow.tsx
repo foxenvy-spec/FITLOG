@@ -7,7 +7,7 @@ import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor } from '@/lib/
 import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
 
-export // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
+// exported so DashboardView's AI Coach card can reuse the exact same query (react-query
 // dedupes by key — sharing this avoids a second network round-trip for the same data)
 export const BODY_METRICS_QUERY_KEY = ['body-metrics-summary']
 
