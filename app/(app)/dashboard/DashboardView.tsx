@@ -693,7 +693,7 @@ export default function DashboardPage() {
       </div>
 
       {/* muscles trained today — heat-map chips built from today's workout rows */}
-      <div className="animate-rise lg:col-span-9 lg:order-11" style={{ animationDelay: '180ms' }}>
+      <div className="animate-rise lg:col-span-9 lg:order-12" style={{ animationDelay: '180ms' }}>
         <TodayMuscleHeatmap todayWorkouts={data.todayWorkouts} />
       </div>
       </div>
@@ -882,21 +882,22 @@ export default function DashboardPage() {
 
       {/* full width (lg+): below-the-fold charts, insights, quick actions
           Order follows a "what happened -> am I on track -> what's next" reading flow:
-          heatmap (what got trained) -> volume (on track vs target) -> AI insights
-          (what to do about it) -> consistency calendar (recent workouts / PRs per day)
-          -> next-up + quick actions last. Narrowed to col-span-9 (from 12), same reason
-          as the quick-actions row above — leaves room 10-12 for the AI Coach card. */}
-      <div className="lg:col-span-9 lg:order-10">
-        <WeeklyMuscleHeatmap />
-      </div>
-
+          full graphic heatmap + weekly volume (side by side, lined up with AI Coach) ->
+          today's trained-muscle heatmap -> muscle share card -> consistency calendar
+          (recent workouts / PRs per day) -> next-up + quick actions last.
+          Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
+          leaves room 10-12 for the AI Coach card. */}
       <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-span-6 lg:order-12">
-          <MuscleShareCard />
+        <div className="lg:col-span-6 lg:order-10">
+          <WeeklyMuscleHeatmap />
         </div>
-        <div className="lg:col-span-3 lg:order-13">
+        <div className="lg:col-span-3 lg:order-11">
           <WeeklyVolume />
         </div>
+      </div>
+
+      <div className="lg:col-span-12 lg:order-13">
+        <MuscleShareCard />
       </div>
 
       <div className="lg:col-span-8 lg:order-15">
