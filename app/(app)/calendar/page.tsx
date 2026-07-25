@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { BodyMetric, Goal, GoalStatus, GoalType, Workout, WorkoutSet } from '@/lib/types'
+import type { BodyMetric, Goal, GoalStatus, GoalType, ProgramDay, ProgramExercise, Workout, WorkoutSet } from '@/lib/types'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
 import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
@@ -48,6 +48,7 @@ export default function CalendarPage() {
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([])
   const [latestMetric, setLatestMetric] = useState<BodyMetric | null>(null)
   const [showGoalForm, setShowGoalForm] = useState(false)
+  const [programByDow, setProgramByDow] = useState<Record<number, { day: ProgramDay; exercises: ProgramExercise[] }>>({})
 
   const monthStart = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor])
   const monthEnd = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0), [cursor])
@@ -82,6 +83,29 @@ export default function CalendarPage() {
     setLatestMetric(((metricRes.data as BodyMetric[]) ?? [])[0] ?? null)
   }, [supabase])
 
+  const loadProgram = useCallback(async () => {
+    const { data: dayRows, error: dayErr } = await supabase.from('program_days').select('*')
+    if (dayErr || !dayRows || dayRows.length === 0) {
+      setProgramByDow({})
+      return
+    }
+    const days = dayRows as ProgramDay[]
+    const { data: exRows } = await supabase
+      .from('program_exercises')
+      .select('*')
+      .in(
+        'program_day_id',
+        days.map((d) => d.id)
+      )
+      .order('position')
+    const exercises = (exRows as ProgramExercise[]) ?? []
+    const map: Record<number, { day: ProgramDay; exercises: ProgramExercise[] }> = {}
+    days.forEach((d) => {
+      map[d.day_of_week] = { day: d, exercises: exercises.filter((e) => e.program_day_id === d.id) }
+    })
+    setProgramByDow(map)
+  }, [supabase])
+
   useEffect(() => {
     loadMonth()
   }, [loadMonth])
@@ -89,6 +113,10 @@ export default function CalendarPage() {
   useEffect(() => {
     loadGoalsData()
   }, [loadGoalsData])
+
+  useEffect(() => {
+    loadProgram()
+  }, [loadProgram])
 
   const dayMap = useMemo(() => {
     const map = new Map<string, { strength: boolean; cardio: boolean; pr: boolean }>()
@@ -131,6 +159,7 @@ export default function CalendarPage() {
   }, [monthStart, monthEnd, cursor])
 
   const selectedWorkouts = selectedDate ? monthWorkouts.filter((w) => w.performed_at === selectedDate) : []
+  const scheduledProgram = selectedDate ? programByDow[new Date(selectedDate + 'T00:00:00').getDay()] ?? null : null
 
   useEffect(() => {
     setExpandedIds(new Set())
@@ -258,6 +287,7 @@ export default function CalendarPage() {
                 const marks = dayMap.get(iso)
                 const isToday = iso === toIsoDate(new Date())
                 const isSelected = iso === selectedDate
+                const hasProgram = (programByDow[d.getDay()]?.exercises.length ?? 0) > 0
                 return (
                   <button
                     key={iso}
@@ -274,6 +304,11 @@ export default function CalendarPage() {
                     {marks?.pr && (
                       <span className="absolute -top-1 -right-1 text-[10px] leading-none" aria-label="ทำสถิติใหม่วันนี้">
                         ⭐
+                      </span>
+                    )}
+                    {hasProgram && (
+                      <span className="absolute -top-1 -left-1 text-[10px] leading-none" aria-label="มีโปรแกรมตั้งไว้วันนี้">
+                        📋
                       </span>
                     )}
                     <span className="font-mono">{d.getDate()}</span>
@@ -299,6 +334,23 @@ export default function CalendarPage() {
               year: 'numeric',
             })}
           </p>
+          {scheduledProgram && (
+            <div className="bg-surface2 border border-line rounded-lg px-4 py-3 mb-3">
+              <p className="text-[11px] text-muted tracked uppercase mb-1.5">📋 โปรแกรมที่ตั้งไว้ · {scheduledProgram.day.title}</p>
+              <ul className="space-y-1">
+                {scheduledProgram.exercises.map((ex) => (
+                  <li key={ex.id} className="text-xs text-ink">
+                    {ex.exercise_name}
+                    <span className="text-muted">
+                      {' — '}
+                      {ex.sets ?? '–'} เซ็ต × {ex.target_reps ?? '–'} reps
+                      {ex.target_rir && ` · RIR ${ex.target_rir}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {selectedWorkouts.length === 0 ? (
             <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-6 text-center">
               ไม่มีรายการวันนี้
