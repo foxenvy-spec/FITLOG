@@ -800,7 +800,7 @@ export default function HealthPage() {
             <IconStatCard
               label="ไขมันในร่างกาย"
               subLabel="BODY FAT"
-              icon="fat"
+              icon="bodyFat"
               color="#C1503A"
               value={latest?.body_fat_pct ?? null}
               unit="%"
@@ -811,7 +811,7 @@ export default function HealthPage() {
             <IconStatCard
               label="มวลกล้ามเนื้อ"
               subLabel="MUSCLE MASS"
-              icon="muscle"
+              icon="muscleMass"
               color="#5FA88C"
               value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null}
               unit={unit}
@@ -822,7 +822,7 @@ export default function HealthPage() {
             <IconStatCard
               label="มวลไขมัน"
               subLabel="FAT MASS"
-              icon="fat"
+              icon="fatMass"
               color="#C1503A"
               value={latest?.body_fat_kg != null ? toDisplay(latest.body_fat_kg) : null}
               unit={unit}
@@ -833,7 +833,7 @@ export default function HealthPage() {
             <IconStatCard
               label="ไขมันช่องท้อง"
               subLabel="VISCERAL FAT"
-              icon="fat"
+              icon="visceralFat"
               color="#CF9A3D"
               value={latest?.visceral_fat_grade ?? null}
               unit="ระดับ"
@@ -847,7 +847,7 @@ export default function HealthPage() {
             <IconStatCard
               label="น้ำในร่างกาย"
               subLabel="BODY WATER"
-              icon="water"
+              icon="bodyWater"
               color="#3D8FE8"
               value={latest?.body_water_kg != null ? toDisplay(latest.body_water_kg) : null}
               unit={unit}
@@ -881,7 +881,7 @@ export default function HealthPage() {
             <IconStatCard
               label="กล้ามเนื้อโครงร่าง"
               subLabel="SKELETAL MUSCLE"
-              icon="muscle"
+              icon="skeletalMuscle"
               color="#7FA85F"
               value={latest?.skeletal_muscle_kg != null ? toDisplay(latest.skeletal_muscle_kg) : null}
               unit={unit}
@@ -892,7 +892,7 @@ export default function HealthPage() {
             <IconStatCard
               label="มวลกระดูก"
               subLabel="BONE MASS"
-              icon="bone"
+              icon="boneMass"
               color="#B08968"
               value={latest?.bone_mass_kg != null ? toDisplay(latest.bone_mass_kg) : null}
               unit={unit}
@@ -903,7 +903,7 @@ export default function HealthPage() {
             <IconStatCard
               label="อายุร่างกาย"
               subLabel="BODY AGE"
-              icon="heart"
+              icon="bodyAge"
               color="#CF715F"
               value={latest?.body_age_years ?? null}
               unit="ปี"
@@ -915,7 +915,7 @@ export default function HealthPage() {
             <IconStatCard
               label="อัตราการเผาผลาญ"
               subLabel="BMR"
-              icon="fire"
+              icon="bmr"
               color="#5FA85F"
               value={latest?.bmr_kcal ?? null}
               unit="kcal"
@@ -1327,6 +1327,25 @@ const TREND_ICONS: Record<string, () => JSX.Element> = {
   ruler: RulerIcon,
   heart: HeartIcon,
   bone: BoneIcon,
+}
+
+// ===== Metric Icons: รูปจริงจากชุด "FITLOG – Metric Icons" ที่ผู้ใช้ส่งมา =====
+// ไฟล์ทั้งชุด (24 ไอคอน) อยู่ที่ /public/icons/*.png แล้ว — พื้นหลังถูกลบให้โปร่งใส
+// ด้านล่างคือ 12 ตัวที่ใช้ในหน้าสุขภาพตอนนี้ ส่วนที่เหลือ (activity, calories, goals, heart-rate,
+// history, hydration, metabolism, progress, settings, sleep, workouts, achievements) เตรียมไว้ใช้ในหน้าอื่นต่อได้เลย
+const STAT_ICON_IMAGES: Record<string, string> = {
+  weight: '/icons/weight.png',
+  bmi: '/icons/bmi.png',
+  bodyFat: '/icons/body-fat.png',
+  muscleMass: '/icons/muscle-mass.png',
+  fatMass: '/icons/fat-mass.png',
+  visceralFat: '/icons/visceral-fat.png',
+  bodyWater: '/icons/body-water.png',
+  protein: '/icons/protein.png',
+  skeletalMuscle: '/icons/skeletal-muscle.png',
+  boneMass: '/icons/bone-mass.png',
+  bodyAge: '/icons/body-age.png',
+  bmr: '/icons/bmr.png',
 }
 
 // การ์ดสรุปตัวเลขล่าสุดด้านบน (พร้อม badge Low/Standard/High) — ใช้ค่า "ล่าสุดจริง" ไม่ขึ้นกับช่วงเวลาที่เลือกดูกราฟ
@@ -1795,7 +1814,8 @@ function IconStatCard({
   // lowerOk    = ต่ำกว่ามาตรฐานยังโอเค/ดีกว่า เฉพาะสูงกว่าที่ไม่ดี
   zoneScheme?: 'symmetric' | 'higherOk' | 'lowerOk'
 }) {
-  const Icon = TREND_ICONS[icon] ?? ScaleIcon
+  const iconSrc = STAT_ICON_IMAGES[icon]
+  const FallbackIcon = TREND_ICONS[icon] ?? ScaleIcon
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
   const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
@@ -1817,9 +1837,13 @@ function IconStatCard({
   return (
     <div className="h-full bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5 flex flex-col justify-between">
       <div className="flex items-start gap-2 mb-2">
-        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center" style={{ background: `${color}26`, color }}>
-          <Icon />
-        </span>
+        {iconSrc ? (
+          <img src={iconSrc} alt="" className="w-10 h-10 shrink-0 -m-0.5" />
+        ) : (
+          <span className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center" style={{ background: `${color}26`, color }}>
+            <FallbackIcon />
+          </span>
+        )}
         <div className="min-w-0">
           <p className="text-xs text-ink font-medium leading-snug">{label}</p>
           <p className="text-[9px] tracked uppercase text-muted leading-snug">{subLabel}</p>
