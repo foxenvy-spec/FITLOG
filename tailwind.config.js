@@ -55,6 +55,27 @@ module.exports = {
       animation: {
         toast: 'toast 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       },
+      // Tailwind's default `order` scale only goes up to 12 (order-1..order-12,
+      // plus order-first/last/none). The dashboard grid (app/(app)/dashboard/
+      // DashboardView.tsx) uses a single flat 12-col grid with `lg:contents`
+      // wrappers so every card can be repositioned purely via `lg:order-N`,
+      // and that grid needs values up to 21 (AI Coach, Consistency, the mini
+      // stat cards, Next Up, and Weekly Cardio Volume all sit past order-12).
+      // Without this extension those classes generate no CSS at all, so the
+      // affected cards silently fall back to the browser default `order: 0`
+      // and jump to the front of the grid, ahead of order-1..order-12 — which
+      // is exactly the "cards showing in the wrong order" bug this fixes.
+      order: {
+        13: '13',
+        14: '14',
+        15: '15',
+        16: '16',
+        17: '17',
+        18: '18',
+        19: '19',
+        20: '20',
+        21: '21',
+      },
     },
   },
   plugins: [],
