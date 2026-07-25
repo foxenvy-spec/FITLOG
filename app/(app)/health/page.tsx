@@ -1825,17 +1825,17 @@ function IconStatCard({
           <p className="text-[9px] tracked uppercase text-muted leading-snug">{subLabel}</p>
         </div>
       </div>
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="font-mono text-xl tabular text-ink truncate min-w-0">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <p className="font-mono text-xl tabular text-ink shrink-0 whitespace-nowrap">
           {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
           {unit && <span className="text-xs text-muted ml-1">{unit}</span>}
         </p>
         {zoneLabel ? (
-          <span className={`text-[11px] font-medium whitespace-nowrap shrink-0 ${zoneColor}`}>{zoneLabel}</span>
+          <span className={`text-[11px] font-medium whitespace-nowrap shrink-0 ml-auto ${zoneColor}`}>{zoneLabel}</span>
         ) : note ? (
-          <span className={`text-[11px] whitespace-nowrap shrink-0 ${noteGood ? 'text-moss' : 'text-rusttext'}`}>{note}</span>
+          <span className={`text-[11px] whitespace-nowrap shrink-0 ml-auto ${noteGood ? 'text-moss' : 'text-rusttext'}`}>{note}</span>
         ) : delta !== null ? (
-          <span className={`text-[11px] font-mono whitespace-nowrap shrink-0 ${deltaColor}`}>
+          <span className={`text-[11px] font-mono whitespace-nowrap shrink-0 ml-auto ${deltaColor}`}>
             {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)}
             {deltaUnit ? ` ${deltaUnit}` : ''}
           </span>
