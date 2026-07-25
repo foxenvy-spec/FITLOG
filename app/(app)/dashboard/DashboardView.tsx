@@ -44,7 +44,6 @@ import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onbo
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCard from '@/components/InsightCard'
-import type { MetricIconName } from '@/components/MetricIcon'
 import TodayMuscleHeatmap from '@/components/TodayMuscleHeatmap'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
@@ -328,12 +327,15 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
   }
 }
 
-// ไอคอนเส้นชุดเดียวกับ BodyMetricsRow (การ์ดสรุปสัดส่วนร่างกายด้านบนสุดของหน้า) — ใช้แทน emoji
-// เดิม (📉/💪) เฉพาะ insight ที่เป็นเทรนด์สัดส่วนร่างกาย ให้ภาพลักษณ์ตรงกับการ์ดด้านบนเป๊ะๆ
+// ไอคอนรูปจริงชุดเดียวกับหน้าสุขภาพ (health/page.tsx) — ใช้แทน emoji เดิม (📉/📈/💪) เฉพาะ insight
+// ที่เป็นเทรนด์สัดส่วนร่างกาย ให้ภาพลักษณ์ตรงกับหน้าสุขภาพเป๊ะๆ คีย์เป็น "id|kind" เพราะ insight
+// กล้ามเนื้อใช้ emoji 💪 ตัวเดียวกันทั้งขึ้นและลง แยกทิศทางไม่ได้ด้วย emoji ต้องแยกด้วย kind แทน
 // insight อื่น (volume/imbalance/missed-muscle/workout-frequency) ยังใช้ emoji เดิมต่อไป
-const INSIGHT_METRIC_ICON: Record<string, MetricIconName> = {
-  'trend-body-fat': 'bodyFat',
-  'trend-muscle-mass': 'muscle',
+const INSIGHT_IMAGE: Record<string, string> = {
+  'trend-body-fat|positive': '/icons/trend-improved.png',
+  'trend-body-fat|warning': '/icons/body-fat-high.png',
+  'trend-muscle-mass|positive': '/icons/muscle-up-icon.png',
+  'trend-muscle-mass|warning': '/icons/muscle-down-icon.png',
 }
 
 export default function DashboardPage() {
@@ -851,7 +853,7 @@ export default function DashboardPage() {
           {combinedInsights.length > 0 ? (
             <div className="px-4 pb-4 space-y-2">
               {combinedInsights.map((insight) => (
-                <InsightCard key={insight.id} insight={insight} metricIcon={INSIGHT_METRIC_ICON[insight.id]} />
+                <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_IMAGE[`${insight.id}|${insight.kind}`]} />
               ))}
             </div>
           ) : (
