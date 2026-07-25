@@ -6,19 +6,19 @@ export function bmiOf(weightKg: number | null | undefined, heightCm: number | nu
   return weightKg / (h * h)
 }
 
+// เกณฑ์สากลทั่วไป (WHO general cutoffs) — ให้ตรงกับหน้า Health/ObesityAnalysisChart
 export function bmiCategory(bmi: number): string {
   if (bmi < 18.5) return 'น้ำหนักน้อยกว่าเกณฑ์'
-  if (bmi < 23) return 'อยู่ในเกณฑ์มาตรฐาน'
-  if (bmi < 25) return 'ท้วม'
-  if (bmi < 30) return 'อ้วน'
-  return 'อ้วนมาก'
+  if (bmi < 25) return 'อยู่ในเกณฑ์มาตรฐาน'
+  if (bmi < 30) return 'ท้วม'
+  return 'อ้วน'
 }
 
 // เขียวเมื่ออยู่ในเกณฑ์ปกติ, อำพันเมื่อสูง/ต่ำกว่าเล็กน้อย, แดงเมื่อเสี่ยง
 export function bmiCategoryColor(bmi: number): string {
   if (bmi < 18.5) return '#E8A33D'
-  if (bmi < 23) return '#7A9B57'
-  if (bmi < 25) return '#E8A33D'
+  if (bmi < 25) return '#7A9B57'
+  if (bmi < 30) return '#E8A33D'
   return '#C1503A'
 }
 
