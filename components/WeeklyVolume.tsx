@@ -85,15 +85,17 @@ export default function WeeklyVolume() {
         </button>
       </div>
 
-      <div className="px-4 pb-4 space-y-3">
+      <div className="px-4 pb-4 space-y-1.5">
         {loading ? (
           VOLUME_MUSCLES.map((mg) => (
-            <div key={mg} className="space-y-1">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-3 w-12" />
-                <Skeleton className="h-3 w-14" />
+            <div key={mg} className="rounded-md bg-surface2 overflow-hidden">
+              <div className="flex flex-col gap-1 px-2.5 py-1.5">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-3 w-14" />
+                </div>
+                <Skeleton className="h-1.5 w-full rounded-full" />
               </div>
-              <Skeleton className="h-2.5 w-full rounded-full" />
             </div>
           ))
         ) : (
@@ -104,24 +106,28 @@ export default function WeeklyVolume() {
             const diff = sets - target
             const color = STATUS_COLOR[status]
             return (
-              <div key={mg}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-ink">{mg}</span>
-                  <span className="text-[11px] font-mono text-muted">
-                    {sets}
-                    <span className="text-muted/60">/{target} sets</span>
+              <div key={mg} className="rounded-md bg-surface2 overflow-hidden">
+                <div className="flex flex-col gap-1 px-2.5 py-1.5">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    <span className="text-xs text-ink flex-1 min-w-0">{mg}</span>
+                    <span className="text-[11px] font-mono font-bold shrink-0" style={{ color }}>
+                      {sets}
+                      <span className="text-muted/60 font-normal">/{target}</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-muted shrink-0 w-14 text-right">sets</span>
+                  </span>
+                  <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
+                    <AnimatedBarFill pct={barPct} color={color} />
+                    <div
+                      className="absolute top-0 h-full w-px bg-ink/40"
+                      style={{ left: `${targetPct}%` }}
+                      title={`เป้าหมาย ${target} เซ็ต/สัปดาห์`}
+                    />
                   </span>
                 </div>
-                <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
-                  <AnimatedBarFill pct={barPct} color={color} />
-                  <div
-                    className="absolute top-0 h-full w-px bg-ink/40"
-                    style={{ left: `${targetPct}%` }}
-                    title={`เป้าหมาย ${target} เซ็ต/สัปดาห์`}
-                  />
-                </div>
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-[11px] font-mono font-medium" style={{ color }}>
+                <div className="px-2.5 pb-1.5 space-y-0.5">
+                  <p className="text-[11px] font-mono font-bold" style={{ color }}>
                     {status === 'met' ? (diff > 0 ? `+${diff} sets` : `${pct}%`) : `${pct}%`}
                   </p>
                   <p className="text-[11px]" style={{ color }}>
