@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getWeekRange } from '@/lib/dashboardStats'
@@ -37,6 +37,10 @@ const LEVEL_LABEL: Record<Level, string> = {
   none: 'ไม่มีข้อมูล',
 }
 
+// รายละเอียดพอสำหรับ tooltip/แผงสรุปวัน — ไม่ต้อง fetch ซ้ำตอนคลิก
+const WINDOW_ROW_SELECT =
+  'performed_at, sets, reps, weight_kg, total_volume_kg, type, exercise_name, muscle_group, cardio_type, duration_min, calories_kcal'
+
 async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   const today = new Date()
   const windowStart = new Date(today)
@@ -44,18 +48,17 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   const { start: weekStart, end: weekEnd } = getWeekRange()
 
   const [{ data: windowRows }, { data: weekRows }] = await Promise.all([
-    supabase
-      .from('workouts')
-      .select('performed_at, sets, type')
-      .gte('performed_at', toIso(windowStart))
-      .lte('performed_at', toIso(today)),
+    supabase.from('workouts').select(WINDOW_ROW_SELECT).gte('performed_at', toIso(windowStart)).lte('performed_at', toIso(today)),
     supabase.from('workouts').select('exercise_name, type, sets, reps, weight_kg, total_volume_kg').gte('performed_at', weekStart).lte('performed_at', weekEnd),
   ])
 
+  const windowWorkouts = (windowRows as Workout[]) ?? []
+
   const setsByDay: Record<string, number> = {}
-  ;((windowRows as { performed_at: string; sets: number | null; type: string }[]) ?? []).forEach((r) => {
-    if (r.type !== 'strength') return
-    setsByDay[r.performed_at] = (setsByDay[r.performed_at] ?? 0) + (r.sets ?? 0)
+  const workoutsByDay: Record<string, Workout[]> = {}
+  windowWorkouts.forEach((r) => {
+    if (r.type === 'strength') setsByDay[r.performed_at] = (setsByDay[r.performed_at] ?? 0) + (r.sets ?? 0)
+    ;(workoutsByDay[r.performed_at] ??= []).push(r)
   })
 
   const weekWorkouts = (weekRows as Workout[]) ?? []
@@ -64,6 +67,7 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
 
   return {
     setsByDay,
+    workoutsByDay,
     windowStartIso: toIso(windowStart),
     todayIso: toIso(today),
     weekVolumeKg,
@@ -71,8 +75,22 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   }
 }
 
+// สรุปแถวเดียวเป็นข้อความสั้นๆ ใช้ทั้งใน title (hover) และแผงรายละเอียด
+function describeWorkout(w: Workout): string {
+  if (w.type === 'strength') {
+    const parts = [w.exercise_name ?? 'ท่าออกกำลังกาย']
+    if (w.sets && w.reps) parts.push(`${w.sets}x${w.reps}`)
+    if (w.weight_kg) parts.push(`${w.weight_kg}กก.`)
+    return parts.join(' ')
+  }
+  const parts = [w.cardio_type ?? 'คาร์ดิโอ']
+  if (w.duration_min) parts.push(`${w.duration_min} นาที`)
+  return parts.join(' ')
+}
+
 export default function ConsistencyStrip() {
   const supabase = createClient()
+  const [selectedDayIso, setSelectedDayIso] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['consistency-strip'],
@@ -80,12 +98,14 @@ export default function ConsistencyStrip() {
     staleTime: 60_000,
   })
 
+  const selectedDayWorkouts = selectedDayIso ? data?.workoutsByDay[selectedDayIso] ?? [] : null
+
   const grid = useMemo(() => {
     if (!data) return null
-    const { setsByDay, windowStartIso } = data
+    const { setsByDay, workoutsByDay, windowStartIso } = data
     const maxSets = Math.max(1, ...Object.values(setsByDay))
 
-    const days: { iso: string; level: Level }[] = []
+    const days: { iso: string; level: Level; workouts: Workout[] }[] = []
     const start = new Date(windowStartIso + 'T00:00:00')
     for (let i = 0; i < WINDOW_DAYS; i++) {
       const d = new Date(start)
@@ -97,12 +117,12 @@ export default function ConsistencyStrip() {
         const ratio = sets / maxSets
         level = ratio > 2 / 3 ? 'high' : ratio > 1 / 3 ? 'mid' : 'low'
       }
-      days.push({ iso, level })
+      days.push({ iso, level, workouts: workoutsByDay[iso] ?? [] })
     }
 
     // เรียงเป็นแถวตามสัปดาห์ (จ-อา) — วันแรกของช่วงอาจไม่ใช่วันจันทร์ จึงเติมช่องว่างข้างหน้าแถวแรก
     const firstDow = (new Date(days[0].iso + 'T00:00:00').getDay() + 6) % 7 // 0=จันทร์
-    const padded: ({ iso: string; level: Level } | null)[] = Array(firstDow).fill(null)
+    const padded: (typeof days[number] | null)[] = Array(firstDow).fill(null)
     padded.push(...days)
     while (padded.length % 7 !== 0) padded.push(null)
 
@@ -157,18 +177,28 @@ export default function ConsistencyStrip() {
               </div>
             ) : (
               <div className="grid grid-cols-7 gap-1.5">
-                {grid.padded.map((day, i) =>
-                  day ? (
-                    <div
+                {grid.padded.map((day, i) => {
+                  if (!day) return <div key={`pad-${i}`} className="aspect-square" />
+                  const hasData = day.workouts.length > 0
+                  const tooltip = hasData
+                    ? `${shortThaiDate(day.iso)} — ${day.workouts.map(describeWorkout).join(', ')}`
+                    : `${shortThaiDate(day.iso)} — ${LEVEL_LABEL[day.level]}`
+                  const isSelected = selectedDayIso === day.iso
+                  return (
+                    <button
                       key={day.iso}
-                      title={`${shortThaiDate(day.iso)} — ${LEVEL_LABEL[day.level]}`}
-                      className="aspect-square rounded-md"
-                      style={{ backgroundColor: LEVEL_COLOR[day.level] }}
+                      type="button"
+                      title={tooltip}
+                      disabled={!hasData}
+                      onClick={() => setSelectedDayIso((cur) => (cur === day.iso ? null : day.iso))}
+                      className="aspect-square rounded-md disabled:cursor-default enabled:cursor-pointer transition-shadow"
+                      style={{
+                        backgroundColor: LEVEL_COLOR[day.level],
+                        boxShadow: isSelected ? '0 0 0 2px #E8A33D' : 'none',
+                      }}
                     />
-                  ) : (
-                    <div key={`pad-${i}`} className="aspect-square" />
                   )
-                )}
+                })}
               </div>
             )}
           </div>
@@ -184,13 +214,51 @@ export default function ConsistencyStrip() {
         </div>
       </div>
 
-      {/* right: 4 stat tiles as a 2x2 block on lg+ (falls back to a 4-across row below the
-          calendar on smaller screens, same as before) */}
-      <div className="border-t border-line lg:border-t-0 grid grid-cols-2 divide-x divide-y divide-line lg:col-span-1">
-        <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
-        <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
-        <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
-        <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
+      {/* right: day detail (when a day is clicked) or 4 stat tiles as a 2x2 block on lg+
+          (falls back to a 4-across row below the calendar on smaller screens) */}
+      {selectedDayIso && selectedDayWorkouts ? (
+        <DayDetail iso={selectedDayIso} workouts={selectedDayWorkouts} onClose={() => setSelectedDayIso(null)} />
+      ) : (
+        <div className="border-t border-line lg:border-t-0 grid grid-cols-2 divide-x divide-y divide-line lg:col-span-1">
+          <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
+          <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
+          <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
+          <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[]; onClose: () => void }) {
+  const totalSets = workouts.filter((w) => w.type === 'strength').reduce((s, w) => s + (w.sets ?? 0), 0)
+  const totalVolumeKg = workouts.filter((w) => w.type === 'strength').reduce((s, w) => s + workoutVolumeKg(w), 0)
+
+  return (
+    <div className="border-t border-line lg:border-t-0 lg:col-span-1 flex flex-col">
+      <div className="px-3 pt-3 pb-2 flex items-start justify-between gap-2 border-b border-line">
+        <div>
+          <p className="text-[11px] text-ink font-medium">{shortThaiDate(iso)}</p>
+          <p className="text-[9px] text-muted mt-0.5">
+            {workouts.length} รายการ • {totalSets} เซ็ต • {Math.round(totalVolumeKg).toLocaleString('th-TH')} กก.
+          </p>
+        </div>
+        <button type="button" onClick={onClose} className="text-[11px] text-muted hover:text-ink shrink-0 leading-none px-1" aria-label="ปิด">
+          ✕
+        </button>
+      </div>
+      <div className="px-3 py-2 overflow-y-auto max-h-[180px] flex-1">
+        {workouts.length === 0 ? (
+          <p className="text-[11px] text-muted py-2">ไม่มีข้อมูลวันนี้</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {workouts.map((w, i) => (
+              <li key={i} className="text-[11px] text-ink">
+                {describeWorkout(w)}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )
