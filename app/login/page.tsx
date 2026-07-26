@@ -68,7 +68,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 py-10 safe-top safe-bottom">
+    <main className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 py-6 safe-top safe-bottom">
       {/* full-bleed hero photo — /public/images/login-hero.png — the photo itself is already
           dark and vignetted (lit only by the gold rim-light), so the overlay here just needs
           to darken the very center a touch more for text contrast, not blanket the whole shot
@@ -80,22 +80,22 @@ export default function LoginPage() {
             backgroundImage:
               "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
             backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundPosition: 'center top',
           }}
         />
       </div>
 
       <div className="relative z-10 w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/images/logo.png"
             alt="FITLOG"
-            className="w-[150px] sm:w-[170px] h-auto select-none"
+            className="w-[110px] sm:w-[125px] h-auto select-none"
             draggable={false}
           />
-          <p className="mt-2 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
-          <p className="mt-3 text-sm text-ink/90 font-body text-center">
+          <p className="mt-1.5 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+          <p className="mt-2 text-sm text-ink/90 font-body text-center">
             Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
           </p>
         </div>
@@ -204,7 +204,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="hidden sm:grid grid-cols-3 gap-3 mt-8 text-center">
+        <div className="hidden sm:grid grid-cols-3 gap-3 mt-6 text-center">
           <Feature icon={<TrendIcon />} title="ติดตามความก้าวหน้า" subtitle="บันทึกทุกการฝึก ทุกความก้าวหน้า" />
           <Feature icon={<TargetIcon />} title="บรรลุเป้าหมาย" subtitle="วางแผนและไปให้ถึงเป้าหมาย" />
           <Feature icon={<MuscleIcon />} title="แข็งแรงขึ้นทุกวัน" subtitle="สร้างวินัยเพื่อผลลัพธ์ที่ดีกว่า" />
