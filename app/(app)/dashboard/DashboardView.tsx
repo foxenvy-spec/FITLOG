@@ -44,7 +44,7 @@ import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onbo
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCard from '@/components/InsightCard'
-import TodayMuscleHeatmap from '@/components/TodayMuscleHeatmap'
+import TodayMuscleChips from '@/components/TodayMuscleChips'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
@@ -645,6 +645,10 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* กล้ามเนื้อที่เทรนวันนี้ — ฝังเป็นชิปเล็กในการ์ดนี้เลย แทนที่จะแยกเป็นการ์ดใหญ่
+                  ต่างหาก (เคยซ้ำซ้อนกับการ์ด "สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)" ด้านล่าง) */}
+              <TodayMuscleChips todayWorkouts={data.todayWorkouts} />
+
               {scheduledDay ? (
                 <a
                   href="/session"
@@ -698,10 +702,6 @@ export default function DashboardPage() {
         {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />}
       </div>
 
-      {/* muscles trained today — heat-map chips built from today's workout rows */}
-      <div className="animate-rise lg:col-start-1 lg:col-span-9 lg:row-start-4" style={{ animationDelay: '180ms' }}>
-        <TodayMuscleHeatmap todayWorkouts={data.todayWorkouts} />
-      </div>
       </div>
 
       {/* right column (lg+): recovery, weekly goal, AI coach.
@@ -841,11 +841,12 @@ export default function DashboardPage() {
       </div>
 
       {/* card 5 (optional): AI coach — sits under Weekly Goal in the rightmost column and
-          spans down alongside the quick-actions/heatmap rows (lg:row-span-3), showing the
-          same insights as before but as a proper card instead of a one-line summary. */}
+          spans down alongside the quick-actions/heatmap rows (lg:row-span-2 — the cluster is
+          now only 3 rows tall since the standalone "today muscle" row was folded into the
+          hero card above), showing the same insights as before but as a proper card. */}
       {prefs.showAICoach && (
         <div
-          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2 lg:row-span-3"
+          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2 lg:row-span-2"
           style={{ animationDelay: '360ms' }}
         >
           <div className="px-4 py-4 flex items-center justify-between">
