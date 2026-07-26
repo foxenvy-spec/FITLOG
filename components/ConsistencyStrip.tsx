@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getWeekRange } from '@/lib/dashboardStats'
 import { workoutVolumeKg } from '@/lib/workoutDisplay'
-import type { Workout } from '@/lib/types'
+import { buildDisplaySets } from '@/components/ExerciseCard'
+import type { Workout, WorkoutSet } from '@/lib/types'
 
 const WEEKDAY_LABELS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
 const WINDOW_DAYS = 21 // 3 สัปดาห์เต็ม (จ-อา) ย้อนหลัง — พอเห็นแพทเทิร์นโดยไม่ยาวเทอะทะ
@@ -214,7 +215,12 @@ export default function ConsistencyStrip() {
 
           {/* detail of a clicked day — sits in the space beside the calendar, only rendered once a day is selected */}
           {selectedDayIso && selectedDayWorkouts && (
-            <DayDetail iso={selectedDayIso} workouts={selectedDayWorkouts} onClose={() => setSelectedDayIso(null)} />
+            <DayDetail
+              key={selectedDayIso}
+              iso={selectedDayIso}
+              workouts={selectedDayWorkouts}
+              onClose={() => setSelectedDayIso(null)}
+            />
           )}
         </div>
       </div>
@@ -232,8 +238,36 @@ export default function ConsistencyStrip() {
 }
 
 function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[]; onClose: () => void }) {
+  const supabase = createClient()
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+
+  const strengthIds = useMemo(() => workouts.filter((w) => w.type === 'strength').map((w) => w.id), [workouts])
+
+  const { data: setsByWorkoutId } = useQuery({
+    queryKey: ['consistency-strip-day-sets', iso, strengthIds.join(',')],
+    queryFn: async () => {
+      const { data } = await supabase.from('workout_sets').select('*').in('workout_id', strengthIds).order('set_number')
+      const byId: Record<string, WorkoutSet[]> = {}
+      ;((data as WorkoutSet[]) ?? []).forEach((s) => {
+        ;(byId[s.workout_id] ??= []).push(s)
+      })
+      return byId
+    },
+    enabled: strengthIds.length > 0,
+    staleTime: 60_000,
+  })
+
   const totalSets = workouts.filter((w) => w.type === 'strength').reduce((s, w) => s + (w.sets ?? 0), 0)
   const totalVolumeKg = workouts.filter((w) => w.type === 'strength').reduce((s, w) => s + workoutVolumeKg(w), 0)
+
+  function toggle(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   return (
     <div className="flex-1 min-w-[180px] border-l border-line pl-4 flex flex-col">
@@ -248,16 +282,49 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
           ✕
         </button>
       </div>
-      <div className="mt-2 overflow-y-auto max-h-[150px]">
+      <div className="mt-2 overflow-y-auto max-h-[220px]">
         {workouts.length === 0 ? (
           <p className="text-[11px] text-muted py-2">ไม่มีข้อมูลวันนี้</p>
         ) : (
-          <ul className="space-y-1.5">
-            {workouts.map((w, i) => (
-              <li key={i} className="text-[11px] text-ink">
-                {describeWorkout(w)}
-              </li>
-            ))}
+          <ul className="space-y-1">
+            {workouts.map((w, i) => {
+              const displaySets = w.type === 'strength' ? buildDisplaySets(w, setsByWorkoutId?.[w.id] ?? []) : []
+              const canExpand = w.type === 'strength' && displaySets.length > 0
+              const isOpen = expandedIds.has(w.id)
+              return (
+                <li key={w.id ?? i}>
+                  <button
+                    type="button"
+                    disabled={!canExpand}
+                    onClick={() => toggle(w.id)}
+                    className="w-full text-left text-[11px] text-ink py-0.5 flex items-center justify-between gap-2 disabled:cursor-default enabled:cursor-pointer group"
+                  >
+                    <span>{describeWorkout(w)}</span>
+                    {canExpand && (
+                      <span
+                        className="text-muted text-[9px] shrink-0 transition-transform group-hover:text-amber"
+                        style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}
+                        aria-hidden="true"
+                      >
+                        ▼
+                      </span>
+                    )}
+                  </button>
+                  {isOpen && canExpand && (
+                    <div className="grid grid-cols-3 gap-1 mb-1.5 mt-1">
+                      {displaySets.map((s) => (
+                        <div key={s.id} className="rounded-md bg-surface2 px-1.5 py-1 text-center">
+                          <p className="text-[8px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
+                          <p className="font-mono text-[10px] font-semibold text-ink tabular">
+                            {s.weight_kg ?? '—'}กก. × {s.reps ?? '—'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>
