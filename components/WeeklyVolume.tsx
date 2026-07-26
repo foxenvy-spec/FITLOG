@@ -11,6 +11,10 @@ import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import VolumeTargetsSettings from './VolumeTargetsSettings'
 
+// ลำดับแสดงผล — จัดให้ตรงกับ Graphic Muscle Heatmap (อก, หลัง, ไหล่, แขน, แกนกลางลำตัว, ขา, น่อง)
+// แยกจาก VOLUME_MUSCLES ตัวหลัก (ซึ่งใช้ลำดับอื่นและถูกอ้างจากหลายที่ในแอป) เพื่อไม่กระทบจุดอื่น
+const DISPLAY_ORDER = ['อก', 'หลัง', 'ไหล่', 'แขน', 'แกนกลางลำตัว', 'ขา', 'น่อง'] as const
+
 const STATUS_COLOR: Record<VolumeStatus, string> = {
   behind: '#C1503A', // rust — ตามหลัง
   onTrack: '#E8A33D', // amber — กำลังไปได้ดี
@@ -60,7 +64,7 @@ export default function WeeklyVolume() {
     : 1
 
   const rows = targets
-    ? VOLUME_MUSCLES.map((mg) => {
+    ? DISPLAY_ORDER.map((mg) => {
         const sets = setsByMuscle[mg] ?? 0
         const target = targets[mg]
         const status = volumeStatus(sets, target, dayOfWeek1to7)
@@ -86,7 +90,7 @@ export default function WeeklyVolume() {
 
       <div className="px-4 pb-2 space-y-1.5">
         {loading ? (
-          VOLUME_MUSCLES.map((mg) => (
+          DISPLAY_ORDER.map((mg) => (
             <div key={mg} className="rounded-md bg-surface2 px-2.5 py-2">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-3 w-12" />
