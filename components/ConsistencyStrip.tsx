@@ -141,35 +141,37 @@ export default function ConsistencyStrip() {
         </div>
 
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-7 gap-1.5 mb-1.5">
-            {WEEKDAY_LABELS.map((d) => (
-              <p key={d} className="text-[10px] text-muted text-center">
-                {d}
-              </p>
-            ))}
-          </div>
-          {isLoading || !grid ? (
-            <div className="grid grid-cols-7 gap-1.5">
-              {Array.from({ length: 21 }).map((_, i) => (
-                <div key={i} className="aspect-square rounded-md bg-surface2 animate-pulse" />
+          <div className="max-w-[220px]">
+            <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+              {WEEKDAY_LABELS.map((d) => (
+                <p key={d} className="text-[10px] text-muted text-center">
+                  {d}
+                </p>
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-7 gap-1.5">
-              {grid.padded.map((day, i) =>
-                day ? (
-                  <div
-                    key={day.iso}
-                    title={`${shortThaiDate(day.iso)} — ${LEVEL_LABEL[day.level]}`}
-                    className="aspect-square rounded-md"
-                    style={{ backgroundColor: LEVEL_COLOR[day.level] }}
-                  />
-                ) : (
-                  <div key={`pad-${i}`} className="aspect-square" />
-                )
-              )}
-            </div>
-          )}
+            {isLoading || !grid ? (
+              <div className="grid grid-cols-7 gap-1.5">
+                {Array.from({ length: 21 }).map((_, i) => (
+                  <div key={i} className="aspect-square rounded-md bg-surface2 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-7 gap-1.5">
+                {grid.padded.map((day, i) =>
+                  day ? (
+                    <div
+                      key={day.iso}
+                      title={`${shortThaiDate(day.iso)} — ${LEVEL_LABEL[day.level]}`}
+                      className="aspect-square rounded-md"
+                      style={{ backgroundColor: LEVEL_COLOR[day.level] }}
+                    />
+                  ) : (
+                    <div key={`pad-${i}`} className="aspect-square" />
+                  )
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-3 mt-3 flex-wrap">
             {(['high', 'mid', 'low', 'none'] as Level[]).map((level) => (
