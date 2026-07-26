@@ -68,146 +68,156 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 py-6 safe-top safe-bottom">
-      {/* full-bleed hero photo — /public/images/login-hero.png — the photo itself is already
-          dark and vignetted (lit only by the gold rim-light), so the overlay here just needs
-          to darken the very center a touch more for text contrast, not blanket the whole shot
-          the way a brighter photo would need. */}
-      <div className="absolute inset-0 bg-bg">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center top',
-          }}
-        />
-      </div>
+    <main className="relative min-h-screen bg-bg overflow-hidden safe-top safe-bottom">
+      {/* Hero photo — /public/images/login-hero.png.
+          Mobile: a fixed-height band across just the top of the page (like the reference
+          mockup), fading into the flat bg-bg below so the form/features sit on solid ground.
+          sm and up: the same photo goes full-bleed behind the whole page, as before. */}
+      <div
+        className="absolute inset-x-0 top-0 h-[clamp(340px,44vh,460px)] sm:inset-0 sm:h-auto"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+        }}
+      />
+      {/* mobile-only fade from the hero band down into the flat background */}
+      <div className="absolute inset-x-0 top-0 h-[clamp(340px,44vh,460px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
 
-      <div className="relative z-10 w-full max-w-sm">
-        <div className="flex flex-col items-center mb-5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/logo.png"
-            alt="FITLOG"
-            className="w-[110px] sm:w-[125px] h-auto select-none"
-            draggable={false}
-          />
-          <p className="mt-1.5 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
-          <p className="mt-2 text-sm text-ink/90 font-body text-center">
-            Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
-          </p>
-        </div>
+      <div className="relative z-10 flex flex-col items-center px-6 pt-10 pb-12 sm:min-h-screen sm:justify-center sm:py-6">
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center mb-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logo.png"
+              alt="FITLOG"
+              className="w-[110px] sm:w-[125px] h-auto select-none"
+              draggable={false}
+            />
+            <p className="mt-1.5 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+            <p className="mt-2 text-sm text-ink/90 font-body text-center">
+              Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
+            </p>
+          </div>
 
-        <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-6">
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                <MailIcon />
-              </span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input pl-11"
-                style={{ paddingLeft: '2.75rem' }}
-                placeholder="อีเมล"
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                <LockIcon />
-              </span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input pl-11 pr-11"
-                style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem' }}
-                placeholder="รหัสผ่าน"
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition"
-                aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
-              >
-                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between pt-0.5 text-xs">
-              <label className="flex items-center gap-2 text-muted cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="peer sr-only"
-                />
-                <span className="w-4 h-4 rounded border border-line bg-surface flex items-center justify-center peer-checked:bg-amber peer-checked:border-amber transition">
-                  {rememberMe && <CheckIcon />}
+          <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-6">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
+                  <MailIcon />
                 </span>
-                จดจำฉัน
-              </label>
-              {mode === 'signin' && (
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input pl-11"
+                  style={{ paddingLeft: '2.75rem' }}
+                  placeholder="อีเมล"
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
+                  <LockIcon />
+                </span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input pl-11 pr-11"
+                  style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem' }}
+                  placeholder="รหัสผ่าน"
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                />
                 <button
                   type="button"
-                  onClick={handleForgotPassword}
-                  className="text-amber hover:underline"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition"
+                  aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
                 >
-                  ลืมรหัสผ่าน?
+                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-0.5 text-xs">
+                <label className="flex items-center gap-2 text-muted cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <span className="w-4 h-4 rounded border border-line bg-surface flex items-center justify-center peer-checked:bg-amber peer-checked:border-amber transition">
+                    {rememberMe && <CheckIcon />}
+                  </span>
+                  จดจำฉัน
+                </label>
+                {mode === 'signin' && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-amber hover:underline"
+                  >
+                    ลืมรหัสผ่าน?
+                  </button>
+                )}
+              </div>
+
+              {error && (
+                <p className="text-sm text-rusttext bg-rustdim/40 border border-rust/40 rounded-lg px-3 py-2">{error}</p>
               )}
+              {notice && (
+                <p className="text-sm text-steel bg-steeldim/30 border border-steel/40 rounded-lg px-3 py-2">{notice}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-lg disabled:opacity-50 active:scale-[0.99] transition"
+              >
+                {loading ? 'กำลังโหลด...' : mode === 'signin' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+              </button>
+            </form>
+
+            <div className="flex items-center gap-3 mt-5 mb-1">
+              <div className="flex-1 h-px bg-line" />
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null)
+                  setNotice(null)
+                  setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
+                }}
+                className="text-xs text-muted whitespace-nowrap"
+              >
+                {mode === 'signin' ? (
+                  <>ยังไม่มีบัญชี? <span className="text-amber font-medium">สมัครสมาชิก</span></>
+                ) : (
+                  <>มีบัญชีแล้ว? <span className="text-amber font-medium">เข้าสู่ระบบ</span></>
+                )}
+              </button>
+              <div className="flex-1 h-px bg-line" />
             </div>
-
-            {error && (
-              <p className="text-sm text-rusttext bg-rustdim/40 border border-rust/40 rounded-lg px-3 py-2">{error}</p>
-            )}
-            {notice && (
-              <p className="text-sm text-steel bg-steeldim/30 border border-steel/40 rounded-lg px-3 py-2">{notice}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-2 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-lg disabled:opacity-50 active:scale-[0.99] transition"
-            >
-              {loading ? 'กำลังโหลด...' : mode === 'signin' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
-            </button>
-          </form>
-
-          <div className="flex items-center gap-3 mt-5 mb-1">
-            <div className="flex-1 h-px bg-line" />
-            <button
-              type="button"
-              onClick={() => {
-                setError(null)
-                setNotice(null)
-                setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
-              }}
-              className="text-xs text-muted whitespace-nowrap"
-            >
-              {mode === 'signin' ? (
-                <>ยังไม่มีบัญชี? <span className="text-amber font-medium">สมัครสมาชิก</span></>
-              ) : (
-                <>มีบัญชีแล้ว? <span className="text-amber font-medium">เข้าสู่ระบบ</span></>
-              )}
-            </button>
-            <div className="flex-1 h-px bg-line" />
           </div>
-        </div>
 
-        <div className="hidden sm:grid grid-cols-3 gap-3 mt-6 text-center">
-          <Feature icon={<TrendIcon />} title="ติดตามความก้าวหน้า" subtitle="บันทึกทุกการฝึก ทุกความก้าวหน้า" />
-          <Feature icon={<TargetIcon />} title="บรรลุเป้าหมาย" subtitle="วางแผนและไปให้ถึงเป้าหมาย" />
-          <Feature icon={<MuscleIcon />} title="แข็งแรงขึ้นทุกวัน" subtitle="สร้างวินัยเพื่อผลลัพธ์ที่ดีกว่า" />
+          {/* Desktop / tablet: 3-column feature grid */}
+          <div className="hidden sm:grid grid-cols-3 gap-3 mt-6 text-center">
+            <Feature icon={<TrendIcon />} title="ติดตามความก้าวหน้า" subtitle="บันทึกทุกการฝึก ทุกความก้าวหน้า" />
+            <Feature icon={<TargetIcon />} title="บรรลุเป้าหมาย" subtitle="วางแผนและไปให้ถึงเป้าหมาย" />
+            <Feature icon={<MuscleIcon />} title="แข็งแรงขึ้นทุกวัน" subtitle="สร้างวินัยเพื่อผลลัพธ์ที่ดีกว่า" />
+          </div>
+
+          {/* Mobile: stacked feature list with icon tiles, matching the reference mockup */}
+          <div className="sm:hidden mt-8 divide-y divide-line/60">
+            <FeatureRow icon={<TrendIcon />} title="ติดตามความก้าวหน้า" subtitle="บันทึกทุกการฝึก ทุกความก้าวหน้า" first />
+            <FeatureRow icon={<TargetIcon />} title="บรรลุเป้าหมาย" subtitle="วางแผนและไปให้ถึงเป้าหมาย" />
+            <FeatureRow icon={<MuscleIcon />} title="แข็งแรงขึ้นทุกวัน" subtitle="สร้างวินัยเพื่อผลลัพธ์ที่ดีกว่า" />
+          </div>
         </div>
       </div>
     </main>
@@ -220,6 +230,30 @@ function Feature({ icon, title, subtitle }: { icon: React.ReactNode; title: stri
       <span className="text-amber">{icon}</span>
       <p className="text-xs font-display tracked uppercase text-ink">{title}</p>
       <p className="text-[11px] text-muted leading-snug">{subtitle}</p>
+    </div>
+  )
+}
+
+function FeatureRow({
+  icon,
+  title,
+  subtitle,
+  first,
+}: {
+  icon: React.ReactNode
+  title: string
+  subtitle: string
+  first?: boolean
+}) {
+  return (
+    <div className={`flex items-center gap-4 py-4 ${first ? 'pt-0' : ''}`}>
+      <span className="shrink-0 w-14 h-14 rounded-xl border border-line bg-bg/60 flex items-center justify-center text-amber">
+        {icon}
+      </span>
+      <div>
+        <p className="text-sm font-display tracked uppercase text-amber">{title}</p>
+        <p className="text-xs text-ink/80 leading-snug mt-0.5">{subtitle}</p>
+      </div>
     </div>
   )
 }
