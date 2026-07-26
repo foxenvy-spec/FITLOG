@@ -49,7 +49,6 @@ import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
-import MuscleShareCard from '@/components/MuscleShareCard'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
@@ -927,10 +926,6 @@ export default function DashboardPage() {
       </div>
       </div>
       {/* end cards cluster sub-grid */}
-
-      <div className="lg:col-span-12 lg:order-13">
-        <MuscleShareCard />
-      </div>
 
       <div className="lg:col-span-8 lg:order-15">
         <ConsistencyStrip />
