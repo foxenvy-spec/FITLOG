@@ -68,7 +68,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-bg overflow-hidden safe-top safe-bottom">
+    <main className="relative min-h-screen bg-bg overflow-x-hidden safe-top safe-bottom">
       {/* Hero photo — /public/images/login-hero.png.
           Mobile: a fixed-height band across just the top of the page, fading into the flat
           bg-bg below so the form/features sit on solid ground.
