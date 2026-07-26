@@ -857,8 +857,31 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="px-4 pb-4">
-              <p className="text-xs text-ink whitespace-pre-line">{data.aiDailySummary}</p>
+            <div className="px-4 pb-4 space-y-2">
+              {/* ยังไม่มี insight คำนวณได้ (เช่น ข้อมูลยังน้อยเกินไป) — โชว์เป็นการ์ดสไตล์เดียวกับ
+                  InsightCard แทนที่จะเป็นข้อความลอยบรรทัดเดียว กันไม่ให้การ์ดดูโล่งว่างเปล่า */}
+              <div className="rounded-lg bg-surface border border-line shadow-elevated border-l-[3px] border-l-amber px-4 py-3 flex items-start gap-3">
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-base leading-none"
+                  style={{ backgroundColor: '#E8A33D22' }}
+                  aria-hidden="true"
+                >
+                  🤖
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] tracked uppercase text-muted">Insight</p>
+                  <p className="font-display text-sm tracked uppercase mt-0.5 text-amber">แนะนำวันนี้</p>
+                  <p className="text-xs text-muted mt-0.5 whitespace-pre-line">{data.aiDailySummary}</p>
+                </div>
+              </div>
+              <div className="rounded-lg bg-surface2/60 border border-line/60 px-4 py-3">
+                <p className="text-xs text-ink">
+                  สัปดาห์นี้ฝึกไปแล้ว{' '}
+                  <span className="font-mono text-amber">{data.thisWeekWorkoutDays}</span>
+                  <span className="text-muted">/{data.weeklyWorkoutGoal} ครั้ง</span> — เฉลี่ยเป้าหมายรวม{' '}
+                  <span className="font-mono text-amber">{data.weeklyGoalPct}%</span>
+                </p>
+              </div>
             </div>
           )}
         </div>
