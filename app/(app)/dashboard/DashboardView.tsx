@@ -559,15 +559,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* left column (lg+): today's workout, quick start, muscle heatmap.
-          lg:contents removes this div's own box so its children become direct items of
-          the 12-col grid above — each child then places itself via lg:col-span/lg:order. */}
+      {/* Cards cluster (lg+): hero, recovery, weekly goal, AI coach, quick actions, heatmaps.
+          This is its own nested grid (lg:grid, not lg:contents) so row numbers below (row-start-1..4)
+          are LOCAL to this cluster — mixing an explicit-column item (AI Coach, col-start-10) with
+          fully-automatic items (quick actions row, heatmaps) in the outer grid's auto-placement
+          flow was leaving phantom empty rows before AI Coach and before the quick-actions row
+          (an auto-placement cursor quirk). Explicit col-start / row-start classes on every item
+          below sidestep that entirely — placement no longer depends on auto-placement order. */}
+      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start">
+      {/* left column (lg+): today's workout, quick start, muscle heatmap. */}
       <div className="space-y-6 lg:space-y-0 lg:contents">
       {/* card 1: hero — today's workout. Sets the visual tone: everything else below is
           intentionally quieter (no shadow-hero, smaller type) so the eye has exactly one
           obvious place to land first. */}
       <div
-        className={`relative rounded-lg border border-amber/25 shadow-hero overflow-hidden lg:col-span-5 lg:order-5 ${
+        className={`relative rounded-lg border border-amber/25 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
         style={totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }}
@@ -693,7 +699,7 @@ export default function DashboardPage() {
       </div>
 
       {/* muscles trained today — heat-map chips built from today's workout rows */}
-      <div className="animate-rise lg:col-span-9 lg:order-12" style={{ animationDelay: '180ms' }}>
+      <div className="animate-rise lg:col-start-1 lg:col-span-9 lg:row-start-4" style={{ animationDelay: '180ms' }}>
         <TodayMuscleHeatmap todayWorkouts={data.todayWorkouts} />
       </div>
       </div>
@@ -706,7 +712,7 @@ export default function DashboardPage() {
       {/* card 2: recovery — secondary weight on purpose: quieter border, no shadow, tighter
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
-        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-4 lg:order-6" style={{ animationDelay: '240ms' }}>
+        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1" style={{ animationDelay: '240ms' }}>
           <a href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] tracked uppercase text-muted">Recovery</p>
@@ -786,7 +792,7 @@ export default function DashboardPage() {
           uses the same ring as the hero card's daily progress so "goal completion" reads
           consistently as a ring throughout the dashboard, instead of a ring in one place
           and a flat percent-bar in another. */}
-      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-span-3 lg:order-7" style={{ animationDelay: '300ms' }}>
+      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1" style={{ animationDelay: '300ms' }}>
         <div className="px-4 py-4">
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
@@ -839,7 +845,7 @@ export default function DashboardPage() {
           same insights as before but as a proper card instead of a one-line summary. */}
       {prefs.showAICoach && (
         <div
-          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-span-3 lg:order-8"
+          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2 lg:row-span-3"
           style={{ animationDelay: '360ms' }}
         >
           <div className="px-4 py-4 flex items-center justify-between">
@@ -894,7 +900,7 @@ export default function DashboardPage() {
           show the same "บันทึก"/"เทมเพลต" shortcuts twice. Narrowed to col-span-9 (from 12)
           so it sits beside the AI Coach card instead of running underneath it. */}
       <div
-        className={`hidden lg:grid lg:col-span-9 lg:order-9 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
+        className={`hidden lg:grid lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
       >
         <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
@@ -911,13 +917,15 @@ export default function DashboardPage() {
           Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
           leaves room 10-12 for the AI Coach card. */}
       <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-span-6 lg:order-10">
+        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-3">
           <WeeklyMuscleHeatmap />
         </div>
-        <div className="lg:col-span-3 lg:order-11">
+        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-3">
           <WeeklyVolume />
         </div>
       </div>
+      </div>
+      {/* end cards cluster sub-grid */}
 
       <div className="lg:col-span-12 lg:order-13">
         <MuscleShareCard />
