@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(true)
+  const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -69,14 +69,16 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 py-10 safe-top safe-bottom">
-      {/* full-bleed hero photo — /public/images/login-hero.png — with a dark vignette so the
-          form card stays readable no matter where the subjects in the photo land. */}
+      {/* full-bleed hero photo — /public/images/login-hero.png — the photo itself is already
+          dark and vignetted (lit only by the gold rim-light), so the overlay here just needs
+          to darken the very center a touch more for text contrast, not blanket the whole shot
+          the way a brighter photo would need. */}
       <div className="absolute inset-0 bg-bg">
         <div
-          className="absolute inset-0 opacity-80"
+          className="absolute inset-0"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 50% 45%, rgba(20,22,26,0.92) 0%, rgba(20,22,26,0.75) 32%, rgba(20,22,26,0.35) 58%, rgba(20,22,26,0.15) 100%), url('/images/login-hero.png')",
+              "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -85,10 +87,17 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <BarbellMark />
-          <h1 className="mt-4 font-display text-4xl tracked-lg text-ink uppercase">FITLOG</h1>
-          <p className="mt-1.5 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
-          <p className="mt-2 text-sm text-muted font-body">บันทึกทุกเซ็ต ทุกระยะทาง</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/logo.png"
+            alt="FITLOG"
+            className="w-[150px] sm:w-[170px] h-auto select-none"
+            draggable={false}
+          />
+          <p className="mt-2 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+          <p className="mt-3 text-sm text-ink/90 font-body text-center">
+            Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
+          </p>
         </div>
 
         <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-6">
@@ -103,6 +112,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input pl-11"
+                style={{ paddingLeft: '2.75rem' }}
                 placeholder="อีเมล"
                 autoComplete="email"
               />
@@ -119,6 +129,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input pl-11 pr-11"
+                style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem' }}
                 placeholder="รหัสผ่าน"
                 autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               />
@@ -210,18 +221,6 @@ function Feature({ icon, title, subtitle }: { icon: React.ReactNode; title: stri
       <p className="text-xs font-display tracked uppercase text-ink">{title}</p>
       <p className="text-[11px] text-muted leading-snug">{subtitle}</p>
     </div>
-  )
-}
-
-function BarbellMark() {
-  return (
-    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-      <rect x="14" y="26" width="28" height="4" rx="2" fill="#F3F0E8" />
-      <rect x="6" y="18" width="6" height="20" rx="2" fill="#E8A33D" />
-      <rect x="9" y="21" width="4" height="14" rx="1.5" fill="#6C8CA8" />
-      <rect x="44" y="18" width="6" height="20" rx="2" fill="#E8A33D" />
-      <rect x="43" y="21" width="4" height="14" rx="1.5" fill="#6C8CA8" />
-    </svg>
   )
 }
 
