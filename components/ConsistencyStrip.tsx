@@ -122,65 +122,71 @@ export default function ConsistencyStrip() {
   }, [data])
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-      <div className="px-4 pt-3.5 pb-3 flex items-start justify-between gap-2">
-        <div>
-          <p className="text-[10px] tracked uppercase text-muted">Consistency</p>
-          {data && (
-            <p className="text-[11px] text-muted mt-0.5">
-              ย้อนหลัง {WINDOW_DAYS} วัน • {shortThaiDate(data.windowStartIso)} - {shortThaiDate(data.todayIso)}
-            </p>
-          )}
-        </div>
-        <a href="/calendar" className="text-[11px] text-amber shrink-0">
-          ดูปฏิทินทั้งหมด →
-        </a>
-      </div>
-
-      <div className="px-4 pb-3">
-        <div className="grid grid-cols-7 gap-1.5 mb-1.5">
-          {WEEKDAY_LABELS.map((d) => (
-            <p key={d} className="text-[10px] text-muted text-center">
-              {d}
-            </p>
-          ))}
-        </div>
-        {isLoading || !grid ? (
-          <div className="grid grid-cols-7 gap-1.5">
-            {Array.from({ length: 21 }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-md bg-surface2 animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-7 gap-1.5">
-            {grid.padded.map((day, i) =>
-              day ? (
-                <div
-                  key={day.iso}
-                  title={`${shortThaiDate(day.iso)} — ${LEVEL_LABEL[day.level]}`}
-                  className="aspect-square rounded-md"
-                  style={{ backgroundColor: LEVEL_COLOR[day.level] }}
-                />
-              ) : (
-                <div key={`pad-${i}`} className="aspect-square" />
-              )
+    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden lg:grid lg:grid-cols-3">
+      {/* left: calendar grid + legend — spans 2/3 on lg+ so the 4 stat tiles can sit
+          beside it as a 2x2 block instead of stacking in a row underneath */}
+      <div className="lg:col-span-2 lg:border-r lg:border-line">
+        <div className="px-4 pt-3.5 pb-3 flex items-start justify-between gap-2">
+          <div>
+            <p className="text-[10px] tracked uppercase text-muted">Consistency</p>
+            {data && (
+              <p className="text-[11px] text-muted mt-0.5">
+                ย้อนหลัง {WINDOW_DAYS} วัน • {shortThaiDate(data.windowStartIso)} - {shortThaiDate(data.todayIso)}
+              </p>
             )}
           </div>
-        )}
+          <a href="/calendar" className="text-[11px] text-amber shrink-0">
+            ดูปฏิทินทั้งหมด →
+          </a>
+        </div>
 
-        <div className="flex items-center gap-3 mt-3 flex-wrap">
-          {(['high', 'mid', 'low', 'none'] as Level[]).map((level) => (
-            <span key={level} className="flex items-center gap-1.5 text-[10px] text-muted">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: LEVEL_COLOR[level] }} />
-              {LEVEL_LABEL[level]}
-            </span>
-          ))}
+        <div className="px-4 pb-4">
+          <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+            {WEEKDAY_LABELS.map((d) => (
+              <p key={d} className="text-[10px] text-muted text-center">
+                {d}
+              </p>
+            ))}
+          </div>
+          {isLoading || !grid ? (
+            <div className="grid grid-cols-7 gap-1.5">
+              {Array.from({ length: 21 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-md bg-surface2 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-7 gap-1.5">
+              {grid.padded.map((day, i) =>
+                day ? (
+                  <div
+                    key={day.iso}
+                    title={`${shortThaiDate(day.iso)} — ${LEVEL_LABEL[day.level]}`}
+                    className="aspect-square rounded-md"
+                    style={{ backgroundColor: LEVEL_COLOR[day.level] }}
+                  />
+                ) : (
+                  <div key={`pad-${i}`} className="aspect-square" />
+                )
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            {(['high', 'mid', 'low', 'none'] as Level[]).map((level) => (
+              <span key={level} className="flex items-center gap-1.5 text-[10px] text-muted">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: LEVEL_COLOR[level] }} />
+                {LEVEL_LABEL[level]}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="border-t border-line grid grid-cols-2 sm:grid-cols-4 divide-x divide-line">
+      {/* right: 4 stat tiles as a 2x2 block on lg+ (falls back to a 4-across row below the
+          calendar on smaller screens, same as before) */}
+      <div className="border-t border-line lg:border-t-0 grid grid-cols-2 divide-x divide-y divide-line lg:col-span-1">
         <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
-        <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="ในช่วงนี้" />
+        <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
         <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
         <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
       </div>
@@ -190,7 +196,7 @@ export default function ConsistencyStrip() {
 
 function StatTile({ value, label, caption }: { value: number | string; label: string; caption: string }) {
   return (
-    <div className="px-3 py-3.5 text-center">
+    <div className="px-3 py-3.5 text-center flex flex-col items-center justify-center">
       <p className="font-mono text-lg text-amber">{value}</p>
       <p className="text-[10px] text-ink mt-0.5">{label}</p>
       <p className="text-[9px] text-muted">{caption}</p>
