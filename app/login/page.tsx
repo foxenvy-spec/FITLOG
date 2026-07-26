@@ -70,11 +70,17 @@ export default function LoginPage() {
   return (
     <main className="relative min-h-screen bg-bg overflow-hidden safe-top safe-bottom">
       {/* Hero photo — /public/images/login-hero.png.
-          Mobile: a fixed-height band across just the top of the page (like the reference
-          mockup), fading into the flat bg-bg below so the form/features sit on solid ground.
-          sm and up: the same photo goes full-bleed behind the whole page, as before. */}
+          Mobile: a fixed-height band across just the top of the page, fading into the flat
+          bg-bg below so the form/features sit on solid ground.
+          Desktop/sm+: a SEPARATE layer, scaled by height only (not `cover` on both axes) —
+          on wide 16:9-ish laptop screens, `cover` has to crop a lot off the top+bottom to fill
+          the extra width, which zoomed in past what the reference mockup showed (missing the
+          lower half of the dumbbells / more of each figure). Locking the scale to the
+          container's height keeps the full vertical frame — and therefore the full figures —
+          always visible, matching the reference; any leftover strip at the very left/right
+          edges blends into bg-bg since the photo is already near-black out there. */}
       <div
-        className="absolute inset-x-0 top-0 h-[clamp(340px,44vh,460px)] sm:inset-0 sm:h-auto"
+        className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden"
         style={{
           backgroundImage:
             "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
@@ -82,8 +88,18 @@ export default function LoginPage() {
           backgroundPosition: 'center top',
         }}
       />
+      <div
+        className="hidden sm:block absolute inset-0 bg-bg"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
+          backgroundSize: 'auto 100%',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
       {/* mobile-only fade from the hero band down into the flat background */}
-      <div className="absolute inset-x-0 top-0 h-[clamp(340px,44vh,460px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
+      <div className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
 
       <div className="relative z-10 flex flex-col items-center px-6 pt-10 pb-12 sm:min-h-screen sm:justify-center sm:py-6">
         <div className="w-full max-w-sm">
