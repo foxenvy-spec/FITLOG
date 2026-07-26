@@ -160,8 +160,8 @@ export default function ConsistencyStrip() {
           </a>
         </div>
 
-        <div className="px-4 pb-4">
-          <div className="max-w-[220px]">
+        <div className="px-4 pb-4 flex gap-4 flex-wrap">
+          <div className="max-w-[220px] shrink-0">
             <div className="grid grid-cols-7 gap-1.5 mb-1.5">
               {WEEKDAY_LABELS.map((d) => (
                 <p key={d} className="text-[10px] text-muted text-center">
@@ -201,31 +201,32 @@ export default function ConsistencyStrip() {
                 })}
               </div>
             )}
+
+            <div className="flex items-center gap-3 mt-3 flex-wrap">
+              {(['high', 'mid', 'low', 'none'] as Level[]).map((level) => (
+                <span key={level} className="flex items-center gap-1.5 text-[10px] text-muted">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: LEVEL_COLOR[level] }} />
+                  {LEVEL_LABEL[level]}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 mt-3 flex-wrap">
-            {(['high', 'mid', 'low', 'none'] as Level[]).map((level) => (
-              <span key={level} className="flex items-center gap-1.5 text-[10px] text-muted">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: LEVEL_COLOR[level] }} />
-                {LEVEL_LABEL[level]}
-              </span>
-            ))}
-          </div>
+          {/* detail of a clicked day — sits in the space beside the calendar, only rendered once a day is selected */}
+          {selectedDayIso && selectedDayWorkouts && (
+            <DayDetail iso={selectedDayIso} workouts={selectedDayWorkouts} onClose={() => setSelectedDayIso(null)} />
+          )}
         </div>
       </div>
 
-      {/* right: day detail (when a day is clicked) or 4 stat tiles as a 2x2 block on lg+
-          (falls back to a 4-across row below the calendar on smaller screens) */}
-      {selectedDayIso && selectedDayWorkouts ? (
-        <DayDetail iso={selectedDayIso} workouts={selectedDayWorkouts} onClose={() => setSelectedDayIso(null)} />
-      ) : (
-        <div className="border-t border-line lg:border-t-0 grid grid-cols-2 divide-x divide-y divide-line lg:col-span-1">
-          <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
-          <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
-          <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
-          <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
-        </div>
-      )}
+      {/* right: 4 stat tiles as a 2x2 block on lg+ (falls back to a 4-across row below the
+          calendar on smaller screens, same as before) */}
+      <div className="border-t border-line lg:border-t-0 grid grid-cols-2 divide-x divide-y divide-line lg:col-span-1">
+        <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
+        <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
+        <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
+        <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
+      </div>
     </div>
   )
 }
@@ -235,8 +236,8 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
   const totalVolumeKg = workouts.filter((w) => w.type === 'strength').reduce((s, w) => s + workoutVolumeKg(w), 0)
 
   return (
-    <div className="border-t border-line lg:border-t-0 lg:col-span-1 flex flex-col">
-      <div className="px-3 pt-3 pb-2 flex items-start justify-between gap-2 border-b border-line">
+    <div className="flex-1 min-w-[180px] border-l border-line pl-4 flex flex-col">
+      <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-[11px] text-ink font-medium">{shortThaiDate(iso)}</p>
           <p className="text-[9px] text-muted mt-0.5">
@@ -247,7 +248,7 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
           ✕
         </button>
       </div>
-      <div className="px-3 py-2 overflow-y-auto max-h-[180px] flex-1">
+      <div className="mt-2 overflow-y-auto max-h-[150px]">
         {workouts.length === 0 ? (
           <p className="text-[11px] text-muted py-2">ไม่มีข้อมูลวันนี้</p>
         ) : (
