@@ -36,42 +36,43 @@ export default function TodayMuscleHeatmap({ todayWorkouts }: TodayMuscleHeatmap
           <span className="text-[10px] font-mono text-muted">{trainedSet.size}/{VOLUME_MUSCLES.length}</span>
         )}
       </div>
-      {hasTrainedToday ? (
-        <div className="grid grid-cols-3 gap-2">
-          {VOLUME_MUSCLES.map((group) => {
-            const active = trainedSet.has(group)
-            const color = MUSCLE_GROUP_COLORS[group]
-            return (
+      {/* กริดแสดงทุกกลุ่มกล้ามเนื้อเสมอ (ไม่ใช่แค่ตอนเทรนแล้ว) กันการ์ดดูโล่ง/ว่างเปล่าตอนยังไม่ได้
+          บันทึกอะไรวันนี้เลย — กลุ่มที่ยังไม่เทรนจะเป็นสีเทาจาง ส่วนที่เทรนแล้วจะติดสีเรืองแสง */}
+      <div className="grid grid-cols-3 gap-2">
+        {VOLUME_MUSCLES.map((group) => {
+          const active = trainedSet.has(group)
+          const color = MUSCLE_GROUP_COLORS[group]
+          return (
+            <div
+              key={group}
+              className="rounded-lg border px-2.5 py-2.5 text-center transition-all"
+              style={
+                active
+                  ? {
+                      borderColor: color,
+                      backgroundColor: `${color}33`,
+                      boxShadow: `0 0 0 1px ${color}44, 0 4px 14px -4px ${color}66`,
+                    }
+                  : { borderColor: '#2E333A', backgroundColor: 'transparent', opacity: 0.4 }
+              }
+            >
               <div
-                key={group}
-                className="rounded-lg border px-2.5 py-2.5 text-center transition-all"
-                style={
-                  active
-                    ? {
-                        borderColor: color,
-                        backgroundColor: `${color}33`,
-                        boxShadow: `0 0 0 1px ${color}44, 0 4px 14px -4px ${color}66`,
-                      }
-                    : { borderColor: '#2E333A', backgroundColor: 'transparent', opacity: 0.4 }
-                }
-              >
-                <div
-                  className="w-2.5 h-2.5 rounded-full mx-auto mb-1.5"
-                  style={{
-                    backgroundColor: active ? color : '#9498A0',
-                    boxShadow: active ? `0 0 8px ${color}99` : 'none',
-                  }}
-                />
-                <p className="text-[11px] font-display tracked uppercase" style={{ color: active ? color : '#9498A0' }}>
-                  {group}
-                </p>
-                <p className="text-[9px] text-muted">{MUSCLE_GROUP_LABELS_EN[group]}</p>
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <p className="text-xs text-muted text-center py-3">ยังไม่ได้เทรนวันนี้ — เริ่มบันทึกแล้วกล้ามเนื้อจะติดสีที่นี่</p>
+                className="w-2.5 h-2.5 rounded-full mx-auto mb-1.5"
+                style={{
+                  backgroundColor: active ? color : '#9498A0',
+                  boxShadow: active ? `0 0 8px ${color}99` : 'none',
+                }}
+              />
+              <p className="text-[11px] font-display tracked uppercase" style={{ color: active ? color : '#9498A0' }}>
+                {group}
+              </p>
+              <p className="text-[9px] text-muted">{MUSCLE_GROUP_LABELS_EN[group]}</p>
+            </div>
+          )
+        })}
+      </div>
+      {!hasTrainedToday && (
+        <p className="text-xs text-muted text-center mt-3">ยังไม่ได้เทรนวันนี้ — เริ่มบันทึกแล้วกล้ามเนื้อจะติดสีที่นี่</p>
       )}
     </div>
   )
