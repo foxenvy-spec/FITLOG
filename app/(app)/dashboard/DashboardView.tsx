@@ -894,10 +894,10 @@ export default function DashboardPage() {
           Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
           leaves room 10-12 for the AI Coach card. */}
       <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-start-1 lg:col-span-5 lg:row-start-3">
+        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-3">
           <WeeklyMuscleHeatmap />
         </div>
-        <div className="lg:col-start-6 lg:col-span-4 lg:row-start-3">
+        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-3">
           <WeeklyVolume />
         </div>
       </div>
