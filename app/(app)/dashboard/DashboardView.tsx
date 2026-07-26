@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import {
@@ -343,11 +345,15 @@ export default function DashboardPage() {
   const today = todayStr()
 
   const [prefs, setPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  // ตั้งค่า Dashboard modal ยกไป context กลาง (DashboardSettingsProvider) แล้ว เพราะปุ่มเปิดย้ายไป
+  // อยู่ที่ท้าย Sidebar (เห็นได้ทุกหน้า) ไม่ใช่ไอคอนเฟืองในหน้านี้อีกต่อไป
+  const { open: settingsOpen, setOpen: setSettingsOpen } = useDashboardSettings()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   // ค่าเริ่มต้นคงที่ (ไม่ขึ้นกับเวลา) เพื่อให้ตรงกับ HTML ที่ server render มาเป๊ะๆ —
   // แล้วค่อยคำนวณคำทักทายจริงหลัง mount ฝั่ง client เท่านั้น เพราะ server (UTC) กับ
   // เครื่องผู้ใช้ (เวลาไทย) คำนวณ new Date().getHours() ได้คนละค่า ถ้าคำนวณตรงๆ ตอน
-  // render จะทำให้ข้อความไม่ตรงกันระหว่าง server กับ client (hydration mismatch)
+  // render จะทำให้ข้อความไม่ตรงกันระหว่างเซิร์ฟเวอร์กับ client (hydration mismatch)
   const [greetingText, setGreetingText] = useState('สวัสดี')
   // เริ่มด้วย true (ซ่อนไว้ก่อน) กันไม่ให้ banner กระพริบโผล่มาแวบเดียวระหว่างรอเช็ค localStorage
   // ตอน mount — ค่อยเปิดออกถ้าเช็คแล้วว่ายังไม่เคยปิด
@@ -358,6 +364,15 @@ export default function DashboardPage() {
     setGreetingText(greeting())
     setBannerDismissed(isOnboardingBannerDismissed())
   }, [])
+
+  // มาจากปุ่ม "ตั้งค่า" ใน Sidebar ตอนอยู่หน้าอื่น (เช่น /dashboard?settings=1) — เปิด modal ให้เลย
+  // แล้วล้าง query param ทิ้งไม่ให้ค้างอยู่ใน URL
+  useEffect(() => {
+    if (searchParams.get('settings') === '1') {
+      setSettingsOpen(true)
+      router.replace('/dashboard')
+    }
+  }, [searchParams, setSettingsOpen, router])
 
   function handleDismissBanner() {
     dismissOnboardingBanner()
@@ -501,14 +516,6 @@ export default function DashboardPage() {
             📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
           <NotificationBell latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            aria-label="ปรับแต่ง Dashboard"
-            className="shrink-0 text-muted hover:text-amber transition p-1"
-          >
-            ⚙️
-          </button>
         </div>
       </div>
 
