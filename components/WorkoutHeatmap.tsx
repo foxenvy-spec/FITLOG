@@ -257,7 +257,7 @@ export default function WorkoutHeatmap() {
           {loading ? (
             <Skeleton className="h-5 w-40 mt-1" />
           ) : (
-            <p className="font-display text-base tracked uppercase text-ink mt-0.5">
+            <p className="font-display text-sm uppercase text-ink mt-0.5">
               {`ซ้อม ${daysTrained} วัน`}
               <span className="text-muted text-xs normal-case tracking-normal"> / {daysElapsed} วัน · {monthLabel}</span>
             </p>

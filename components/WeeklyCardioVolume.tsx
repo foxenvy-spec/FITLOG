@@ -122,7 +122,7 @@ export default function WeeklyCardioVolume() {
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Weekly Cardio Volume</p>
-          <p className="font-display text-base tracked uppercase text-ink mt-0.5">คาร์ดิโอสัปดาห์นี้</p>
+          <p className="font-display text-sm uppercase text-ink mt-0.5">คาร์ดิโอสัปดาห์นี้</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
           <button

@@ -92,7 +92,7 @@ export default function WeeklyVolume() {
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Weekly Volume</p>
-          <p className="font-display text-base tracked uppercase text-ink mt-0.5">เซ็ตต่อกลุ่มกล้ามเนื้อ (สัปดาห์นี้)</p>
+          <p className="font-display text-sm uppercase text-ink mt-0.5">เซ็ตต่อกลุ่มกล้ามเนื้อ (สัปดาห์นี้)</p>
         </div>
         <button
           type="button"

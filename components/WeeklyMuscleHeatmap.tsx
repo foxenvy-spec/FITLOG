@@ -176,7 +176,7 @@ export default function WeeklyMuscleHeatmap() {
       <div className="px-4 pt-3.5 pb-2 flex items-center justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
-          <p className="font-display text-base tracked uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
+          <p className="font-display text-sm uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
         </div>
         <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
           <button
