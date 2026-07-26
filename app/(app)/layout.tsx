@@ -3,6 +3,7 @@ import SidebarNav from '@/components/SidebarNav'
 import QueryProvider from '@/components/QueryProvider'
 import { WeightUnitProvider } from '@/components/WeightUnitProvider'
 import { ToastProvider } from '@/components/Toast'
+import { DashboardSettingsProvider } from '@/components/DashboardSettingsProvider'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function AppLayout({
@@ -28,6 +29,7 @@ export default async function AppLayout({
           >= 1024px: sidebar replaces the header + bottom bar entirely; content gets the
           remaining width to lay out as a multi-column dashboard. */}
         <div className="min-h-screen flex lg:flex-row">
+          <DashboardSettingsProvider>
           <SidebarNav />
 
           <div className="flex-1 flex flex-col min-w-0">
@@ -50,6 +52,7 @@ export default async function AppLayout({
 
             <BottomNav />
           </div>
+          </DashboardSettingsProvider>
         </div>
       </ToastProvider>
     </WeightUnitProvider>
