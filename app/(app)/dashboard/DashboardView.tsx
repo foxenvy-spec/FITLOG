@@ -26,7 +26,6 @@ import {
   getNextScheduledMuscle,
   computeLatestPR,
   computeTopMuscleThisWeek,
-  relativeDayLabel,
   type Insight,
   type MuscleRecommendation,
   type VolumeIncrease,
@@ -50,6 +49,7 @@ import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
+import NotificationBell from '@/components/NotificationBell'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
@@ -500,6 +500,7 @@ export default function DashboardPage() {
           <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[11px] text-ink">
             📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
+          <NotificationBell latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -524,44 +525,8 @@ export default function DashboardPage() {
         <BodyMetricsRow />
       </div>
 
-      {/* quick-glance strip: answers "PR ล่าสุด" and "กล้ามเนื้อที่ฝึกมากที่สุดสัปดาห์นี้" —
-          the two questions nothing else on this screen answers directly. "วันนี้เล่นไหม" and
-          "เป้าหมายใกล้ถึงหรือยัง" are already the hero card / goal ring below, and "สัปดาห์นี้กี่ครั้ง"
-          is in the Weekly Goal card — this strip fills the remaining gaps without duplicating them. */}
-      {(data.latestPR || data.topMuscleThisWeek) && (
-        <div
-          className="lg:col-span-12 lg:order-4 grid grid-cols-2 gap-2 px-1 animate-rise"
-          style={{ animationDelay: '30ms' }}
-        >
-          <div className="rounded-lg bg-surface2/40 border border-line/60 px-3 py-2.5">
-            <p className="text-[9px] tracked uppercase text-muted">🏆 PR ล่าสุด</p>
-            {data.latestPR ? (
-              <>
-                <p className="text-sm text-ink truncate mt-0.5">{data.latestPR.exerciseName}</p>
-                <p className="text-[11px] text-violet mt-0.5">
-                  <span className="font-mono font-semibold">{data.latestPR.weightKg}kg</span>{' '}
-                  <span className="text-muted">· {relativeDayLabel(data.latestPR.performedAt)}</span>
-                </p>
-              </>
-            ) : (
-              <p className="text-[11px] text-muted mt-1.5">ยังไม่มี PR — ลุยเลย</p>
-            )}
-          </div>
-          <div className="rounded-lg bg-surface2/40 border border-line/60 px-3 py-2.5">
-            <p className="text-[9px] tracked uppercase text-muted">💪 ฝึกมากสุดสัปดาห์นี้</p>
-            {data.topMuscleThisWeek ? (
-              <>
-                <p className="text-sm text-ink truncate mt-0.5">{data.topMuscleThisWeek.muscleGroup}</p>
-                <p className="text-[11px] text-muted mt-0.5">
-                  <span className="font-mono text-ink">{data.topMuscleThisWeek.sets}</span> Sets
-                </p>
-              </>
-            ) : (
-              <p className="text-[11px] text-muted mt-1.5">ยังไม่ได้บันทึกสัปดาห์นี้</p>
-            )}
-          </div>
-        </div>
-      )}
+      {/* PR ล่าสุด / ฝึกมากสุดสัปดาห์นี้ ย้ายไปอยู่ในกระดิ่งแจ้งเตือนที่ header แล้ว (ดู NotificationBell)
+          แทนที่จะกินพื้นที่แถวเต็มความกว้างตรงนี้ */}
 
       {/* Cards cluster (lg+): hero, recovery, weekly goal, AI coach, quick actions, heatmaps.
           This is its own nested grid (lg:grid, not lg:contents) so row numbers below (row-start-1..4)
