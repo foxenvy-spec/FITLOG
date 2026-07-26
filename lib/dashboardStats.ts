@@ -413,6 +413,34 @@ export function volumeStatus(setsDone: number, weeklyTarget: number, dayOfWeek1t
   if (setsDone >= proratedTarget * 0.8) return 'onTrack'
   return 'behind'
 }
+
+// วัดความสมดุลของการกระจายเซ็ตข้ามกลุ่มกล้ามเนื้อ — ใช้สัมประสิทธิ์การแปรผัน (coefficient of
+// variation) ของสัดส่วน แล้วแปลงกลับเป็น 0-100 (100 = กระจายเท่ากันทุกกลุ่มเป๊ะ, ต่ำ = กระจุกตัว)
+// เป็นตัวชี้วัดคร่าวๆ ให้เห็นภาพรวม ไม่ใช่คำแนะนำทางการแพทย์/โภชนาการ
+// (เดิมอยู่ใน MuscleShareCard.tsx — ย้ายมาไว้ตรงกลางเพื่อให้ WeeklyVolume เรียกใช้ได้ด้วย)
+export function computeMuscleBalance(shares: number[]): number {
+  const nonZero = shares.filter((s) => s > 0)
+  if (nonZero.length <= 1) return nonZero.length === 0 ? 0 : 100
+  const mean = nonZero.reduce((a, b) => a + b, 0) / nonZero.length
+  const variance = nonZero.reduce((a, b) => a + (b - mean) ** 2, 0) / nonZero.length
+  const cv = Math.sqrt(variance) / mean
+  return Math.max(0, Math.round(100 - cv * 100))
+}
+
+export type BalanceStatusTier = 'good' | 'ok' | 'poor'
+
+export const BALANCE_STATUS_LABEL: Record<BalanceStatusTier, string> = {
+  good: 'สมดุลดี',
+  ok: 'ปานกลาง',
+  poor: 'ควรปรับปรุง',
+}
+
+export function balanceStatusTier(score: number): BalanceStatusTier {
+  if (score >= 80) return 'good'
+  if (score >= 50) return 'ok'
+  return 'poor'
+}
+
 export function relativeDayLabel(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   const today = new Date(todayStr() + 'T00:00:00')
