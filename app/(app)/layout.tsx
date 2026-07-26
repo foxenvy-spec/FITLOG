@@ -44,7 +44,7 @@ export default async function AppLayout({
               </div>
             </header>
 
-            <main className="flex-1 w-full max-w-sm md:max-w-2xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-[1600px] mx-auto px-5 pt-5 pb-24 lg:pb-10">
+            <main className="flex-1 w-full max-w-sm md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-24 lg:pb-10">
               <QueryProvider>{children}</QueryProvider>
             </main>
 
