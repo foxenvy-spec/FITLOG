@@ -210,7 +210,7 @@ export default function WeeklyMuscleHeatmap() {
               lg ลดอีกครั้งจาก 175px เหลือ 130px เพราะการ์ดนี้แคบลง (col-span-6 แทน col-span-9 ในหน้า
               dashboard) ทำให้คอลัมน์ลิสต์ด้านขวาแน่นและชื่อกลุ่มกล้ามเนื้อ เช่น "แกนกลางลำตัว" ตัดคำ */}
           <div className="shrink-0 pl-1 flex items-center gap-0">
-            <div className="w-[95px] sm:w-[150px] lg:w-[130px]">
+            <div className="w-[95px] sm:w-[150px] lg:w-[105px]">
               <MuscleBodyDiagram
                 view="front"
                 regions={FRONT_REGIONS}
@@ -220,7 +220,7 @@ export default function WeeklyMuscleHeatmap() {
                 width={250}
               />
             </div>
-            <div className="w-[95px] sm:w-[150px] lg:w-[130px]">
+            <div className="w-[95px] sm:w-[150px] lg:w-[105px]">
               <MuscleBodyDiagram
                 view="back"
                 regions={BACK_REGIONS}
@@ -249,15 +249,15 @@ export default function WeeklyMuscleHeatmap() {
                       onClick={() => toggleExpand(s.group)}
                       className="w-full flex flex-col gap-1 px-2.5 py-1.5 text-left"
                     >
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color, opacity: intensityOpacity(s.pct) }} />
-                        <span className="text-xs text-ink flex-1 min-w-0">
+                        <span className="text-xs text-ink flex-1 min-w-0 truncate">
                           {s.group} <span className="text-muted text-[10px]">({MUSCLE_GROUP_LABELS_EN[s.group]})</span>
                         </span>
                         <span className="text-[11px] font-mono font-bold shrink-0" style={{ color }}>
                           {Math.round(s.pct)}%
                         </span>
-                        <span className="text-[10px] font-mono text-muted shrink-0 w-14 text-right">{s.sets} เซ็ต</span>
+                        <span className="text-[10px] font-mono text-muted shrink-0">{s.sets} เซ็ต</span>
                         {s.topExercises.length > 0 && <span className="text-muted text-[10px] shrink-0">{isOpen ? '▲' : '▼'}</span>}
                       </span>
                       <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
