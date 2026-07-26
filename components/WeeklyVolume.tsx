@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, volumeStatus, type VolumeStatus } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
-import { MUSCLE_GROUP_COLORS, VOLUME_MUSCLES } from '@/lib/muscle-groups'
+import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import VolumeTargetsSettings from './VolumeTargetsSettings'
@@ -22,6 +22,7 @@ export default function WeeklyVolume() {
   const queryClient = useQueryClient()
   const { start, end } = getWeekRange()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   const { data: setsByMuscle = {}, isLoading: loadingSets } = useQuery({
     queryKey: ['weekly-volume', start, end],
@@ -67,8 +68,6 @@ export default function WeeklyVolume() {
       })
     : []
 
-  const behindList = rows.filter((r) => r.status === 'behind')
-
   return (
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
@@ -85,16 +84,13 @@ export default function WeeklyVolume() {
         </button>
       </div>
 
-      <div className="px-4 pb-4 space-y-1.5">
+      <div className="px-4 pb-2 space-y-1.5">
         {loading ? (
           VOLUME_MUSCLES.map((mg) => (
-            <div key={mg} className="rounded-md bg-surface2 overflow-hidden">
-              <div className="flex flex-col gap-1 px-2.5 py-1.5">
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-3 w-12" />
-                  <Skeleton className="h-3 w-14" />
-                </div>
-                <Skeleton className="h-1.5 w-full rounded-full" />
+            <div key={mg} className="rounded-md bg-surface2 px-2.5 py-2">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-12" />
+                <Skeleton className="h-3 w-14" />
               </div>
             </div>
           ))
@@ -105,56 +101,64 @@ export default function WeeklyVolume() {
             const pct = target > 0 ? Math.round((sets / target) * 100) : 0
             const diff = sets - target
             const color = STATUS_COLOR[status]
+            // แถวย่อ ๆ บรรทัดเดียว: จุดสี + ชื่อ + จำนวนเซ็ต/เป้าหมาย + เส้นคั่นบาง ๆ + ป้ายสถานะ
+            // (met -> +diff, onTrack -> เปอร์เซ็นต์, behind -> -diff) — แถบ progress และคำอธิบาย
+            // จะโผล่มาเฉพาะตอนกด "ดูรายละเอียดทั้งหมด" เท่านั้น
+            // ไฮไลต์พื้นหลังเขียวจาง ๆ เฉพาะแถวที่ทำถึง/เกินเป้าหมายแล้ว (status === 'met') ให้เด่น
+            // ส่วนแถวอื่นไม่มีพื้นหลัง (ตามการ์ดต้นแบบ) เพื่อไม่ให้แน่นเกินไป
             return (
-              <div key={mg} className="rounded-md bg-surface2 overflow-hidden">
-                <div className="flex flex-col gap-1 px-2.5 py-1.5">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                    <span className="text-xs text-ink flex-1 min-w-0">{mg}</span>
-                    <span className="text-[11px] font-mono font-bold shrink-0" style={{ color }}>
-                      {sets}
-                      <span className="text-muted/60 font-normal">/{target}</span>
+              <div
+                key={mg}
+                className={status === 'met' ? 'rounded-md' : 'rounded-md bg-surface2'}
+                style={status === 'met' ? { backgroundColor: `${color}1A` } : undefined}
+              >
+                <div className="flex items-center gap-2 px-2.5 py-2">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                  <span className="text-xs text-ink flex-1 min-w-0">{mg}</span>
+                  <span className="text-[11px] font-mono text-muted shrink-0">
+                    {sets}
+                    <span className="text-muted/60"> / {target} เซ็ต</span>
+                  </span>
+                  <span className="w-px h-4 bg-line shrink-0" />
+                  <span className="text-[11px] font-mono font-bold shrink-0 w-14 text-right" style={{ color }}>
+                    {status === 'behind' ? `${diff} เซ็ต` : status === 'met' && diff > 0 ? `+${diff} เซ็ต` : `${pct}%`}
+                  </span>
+                </div>
+                {detailsOpen && (
+                  <div className="px-2.5 pb-2 space-y-1">
+                    <span className="relative block h-1.5 rounded-full bg-bg/60 overflow-hidden">
+                      <AnimatedBarFill pct={barPct} color={color} />
+                      <div
+                        className="absolute top-0 h-full w-px bg-ink/40"
+                        style={{ left: `${targetPct}%` }}
+                        title={`เป้าหมาย ${target} เซ็ต/สัปดาห์`}
+                      />
                     </span>
-                    <span className="text-[10px] font-mono text-muted shrink-0 w-14 text-right">sets</span>
-                  </span>
-                  <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
-                    <AnimatedBarFill pct={barPct} color={color} />
-                    <div
-                      className="absolute top-0 h-full w-px bg-ink/40"
-                      style={{ left: `${targetPct}%` }}
-                      title={`เป้าหมาย ${target} เซ็ต/สัปดาห์`}
-                    />
-                  </span>
-                </div>
-                <div className="px-2.5 pb-1.5 space-y-0.5">
-                  <p className="text-[11px] font-mono font-bold" style={{ color }}>
-                    {status === 'met' ? (diff > 0 ? `+${diff} sets` : `${pct}%`) : `${pct}%`}
-                  </p>
-                  <p className="text-[11px]" style={{ color }}>
-                    {status === 'met'
-                      ? diff > 0
-                        ? 'ยอดเยี่ยม'
-                        : 'ถึงเป้าหมายพอดี'
-                      : `อีก ${target - sets} เซ็ตถึงเป้าหมาย`}
-                  </p>
-                </div>
+                    <p className="text-[11px]" style={{ color }}>
+                      {status === 'met'
+                        ? diff > 0
+                          ? 'ยอดเยี่ยม'
+                          : 'ถึงเป้าหมายพอดี'
+                        : `อีก ${target - sets} เซ็ตถึงเป้าหมาย`}
+                    </p>
+                  </div>
+                )}
               </div>
             )
           })
         )}
       </div>
 
-      {!loading && behindList.length > 0 && (
-        <div className="border-t border-line px-4 py-3 space-y-1.5">
-          {behindList.map(({ mg, sets, target }) => (
-            <p key={mg} className="text-[11px] flex items-start gap-1.5">
-              <span style={{ color: STATUS_COLOR.behind }}>⚠</span>
-              <span className="text-muted">
-                <span style={{ color: MUSCLE_GROUP_COLORS[mg] }}>{mg}</span> volume ต่ำกว่าเป้าหมาย ({sets}/{target}{' '}
-                เซ็ต)
-              </span>
-            </p>
-          ))}
+      {!loading && (
+        <div className="px-4 pb-3.5 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((v) => !v)}
+            className="text-[11px] font-medium"
+            style={{ color: '#E8A33D' }}
+          >
+            {detailsOpen ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียดทั้งหมด'} {detailsOpen ? '↑' : '→'}
+          </button>
         </div>
       )}
 
