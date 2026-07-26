@@ -101,24 +101,29 @@ export default function LoginPage() {
       {/* mobile-only fade from the hero band down into the flat background */}
       <div className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
 
-      <div className="relative z-10 flex flex-col items-center px-6 pt-10 pb-12 sm:min-h-screen sm:justify-center sm:py-6">
+      <div className="relative z-10 flex flex-col items-center px-6 pt-10 pb-12 sm:min-h-screen sm:justify-center sm:py-[clamp(0.5rem,2vh,1.5rem)]">
+        {/* sm+ (desktop): every vertical gap below uses clamp(min, Nvh, max) instead of a fixed
+            size, so the whole card+features stack shrinks automatically to fit short viewports
+            (common on 14" laptops running 125–150% OS display scaling) without ever needing to
+            scroll — while still capping out at the original, more spacious sizes on tall/large
+            monitors. Mobile keeps its original fixed sizes (mb-5, mt-2, etc. — no sm: prefix). */}
         <div className="w-full max-w-sm">
-          <div className="flex flex-col items-center mb-5">
+          <div className="flex flex-col items-center mb-5 sm:mb-[clamp(0.5rem,1.4vh,1.25rem)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/logo.png"
               alt="FITLOG"
-              className="w-[110px] sm:w-[125px] h-auto select-none"
+              className="w-[110px] sm:w-[clamp(60px,8vh,125px)] h-auto select-none"
               draggable={false}
             />
-            <p className="mt-1.5 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
-            <p className="mt-2 text-sm text-ink/90 font-body text-center">
+            <p className="mt-1.5 sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+            <p className="mt-2 sm:mt-[clamp(0.25rem,0.6vh,0.5rem)] text-sm text-ink/90 font-body text-center">
               Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
             </p>
           </div>
 
-          <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-6">
-            <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-6 sm:p-[clamp(0.75rem,2.2vh,1.5rem)]">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-[clamp(0.4rem,1vh,0.75rem)]">
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
                   <MailIcon />
@@ -129,7 +134,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="input pl-11"
-                  style={{ paddingLeft: '2.75rem' }}
+                  style={{ paddingLeft: '2.75rem', paddingTop: 'clamp(0.5rem,1.6vh,0.75rem)', paddingBottom: 'clamp(0.5rem,1.6vh,0.75rem)' }}
                   placeholder="อีเมล"
                   autoComplete="email"
                 />
@@ -146,7 +151,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="input pl-11 pr-11"
-                  style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem' }}
+                  style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem', paddingTop: 'clamp(0.5rem,1.6vh,0.75rem)', paddingBottom: 'clamp(0.5rem,1.6vh,0.75rem)' }}
                   placeholder="รหัสผ่าน"
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 />
@@ -194,13 +199,13 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-lg disabled:opacity-50 active:scale-[0.99] transition"
+                className="w-full mt-2 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 sm:py-[clamp(0.5rem,1.3vh,0.75rem)] text-lg disabled:opacity-50 active:scale-[0.99] transition"
               >
                 {loading ? 'กำลังโหลด...' : mode === 'signin' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
               </button>
             </form>
 
-            <div className="flex items-center gap-3 mt-5 mb-1">
+            <div className="flex items-center gap-3 mt-5 sm:mt-[clamp(0.5rem,1.2vh,1.25rem)] mb-1">
               <div className="flex-1 h-px bg-line" />
               <button
                 type="button"
@@ -222,7 +227,7 @@ export default function LoginPage() {
           </div>
 
           {/* Desktop / tablet: 3-column feature grid */}
-          <div className="hidden sm:grid grid-cols-3 gap-3 mt-6 text-center">
+          <div className="hidden sm:grid grid-cols-3 gap-3 sm:gap-[clamp(0.4rem,0.8vh,0.75rem)] mt-6 sm:mt-[clamp(0.5rem,1.5vh,1.5rem)] text-center">
             <Feature icon={<TrendIcon />} title="ติดตามความก้าวหน้า" subtitle="บันทึกทุกการฝึก ทุกความก้าวหน้า" />
             <Feature icon={<TargetIcon />} title="บรรลุเป้าหมาย" subtitle="วางแผนและไปให้ถึงเป้าหมาย" />
             <Feature icon={<MuscleIcon />} title="แข็งแรงขึ้นทุกวัน" subtitle="สร้างวินัยเพื่อผลลัพธ์ที่ดีกว่า" />
