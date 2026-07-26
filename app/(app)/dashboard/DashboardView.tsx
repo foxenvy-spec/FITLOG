@@ -500,7 +500,7 @@ export default function DashboardPage() {
     <>
     <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start">
       {/* greeting + settings */}
-      <div className="lg:col-span-12 lg:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
+      <div className="relative z-20 lg:col-span-12 lg:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
         <div>
           <p className="text-xs text-muted">👋 {greetingText}</p>
           <p className="font-display text-lg tracked uppercase text-ink mt-0.5">
