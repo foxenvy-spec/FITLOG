@@ -496,14 +496,19 @@ export default function DashboardPage() {
           )}
           {greetingContext.detail && <p className="text-[11px] text-muted mt-1">{greetingContext.detail}</p>}
         </div>
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          aria-label="ปรับแต่ง Dashboard"
-          className="shrink-0 text-muted hover:text-amber transition p-1 -mr-1 -mt-1"
-        >
-          ⚙️
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[11px] text-ink">
+            📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="ปรับแต่ง Dashboard"
+            className="shrink-0 text-muted hover:text-amber transition p-1"
+          >
+            ⚙️
+          </button>
+        </div>
       </div>
 
       {!data.hasAnyHistory && !bannerDismissed && (
@@ -696,7 +701,7 @@ export default function DashboardPage() {
         className={`grid gap-2 animate-rise lg:hidden ${data.hasAnyHistory ? 'grid-cols-3' : 'grid-cols-2'}`}
         style={{ animationDelay: '120ms' }}
       >
-        <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
+        <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
         {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />}
       </div>
@@ -902,7 +907,7 @@ export default function DashboardPage() {
       <div
         className={`hidden lg:grid lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
       >
-        <QuickAction href="/log" label="บันทึกอิสระ" icon="➕" accent="moss" />
+        <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
         <QuickAction href="/health" label="วิเคราะห์ร่างกาย" icon="🔍" accent="amber" />
         <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" />
@@ -917,38 +922,22 @@ export default function DashboardPage() {
           Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
           leaves room 10-12 for the AI Coach card. */}
       <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-3">
+        <div className="lg:col-start-1 lg:col-span-5 lg:row-start-3">
           <WeeklyMuscleHeatmap />
         </div>
-        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-3">
+        <div className="lg:col-start-6 lg:col-span-4 lg:row-start-3">
           <WeeklyVolume />
         </div>
       </div>
       </div>
       {/* end cards cluster sub-grid */}
 
-      <div className="lg:col-span-8 lg:order-15">
+      {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
+          weeks, weekly volume, weekly exercise count) render beside the calendar grid inside
+          ConsistencyStrip itself (two-column on lg+), matching the reference layout instead
+          of duplicating streak/PR numbers in separate cards next to it. */}
+      <div className="lg:col-span-12 lg:order-15">
         <ConsistencyStrip />
-      </div>
-
-      {/* stat mini-cards — lg only, sit next to Consistency to fill the 8/1/1/1/1 row.
-          Reuses data already shown higher up (streak, weekly days, PR, top muscle) so
-          nothing new needs fetching; below lg those live in their existing spots only. */}
-      <div className="hidden lg:block lg:col-span-1 lg:order-16 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
-        <p className="font-mono text-lg text-amber">{data.streak}</p>
-        <p className="text-[10px] text-muted mt-0.5">Day Streak</p>
-      </div>
-      <div className="hidden lg:block lg:col-span-1 lg:order-17 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
-        <p className="font-mono text-lg text-amber">{data.thisWeekWorkoutDays}</p>
-        <p className="text-[10px] text-muted mt-0.5">ครั้งสัปดาห์นี้</p>
-      </div>
-      <div className="hidden lg:block lg:col-span-1 lg:order-18 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
-        <p className="font-mono text-lg text-amber truncate">{data.latestPR ? `${data.latestPR.weightKg}kg` : '—'}</p>
-        <p className="text-[10px] text-muted mt-0.5">PR ล่าสุด</p>
-      </div>
-      <div className="hidden lg:block lg:col-span-1 lg:order-19 rounded-lg bg-surface2/40 border border-line/60 px-3 py-3 text-center">
-        <p className="font-mono text-lg text-amber">{data.topMuscleThisWeek?.sets ?? '—'}</p>
-        <p className="text-[10px] text-muted mt-0.5">เซ็ตสูงสุด</p>
       </div>
 
       {/* Next up in program — kept near the end so the top-to-bottom flow reads as
@@ -973,7 +962,7 @@ export default function DashboardPage() {
 
       {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-9 above */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:hidden">
-        <QuickAction href="/log" label="บันทึก" icon="✚" accent="moss" />
+        <QuickAction href="/log" label="บันทึกสถิติ" icon="✚" accent="moss" />
         <QuickAction href="/templates" label="เทมเพลต" icon="📋" accent="steel" />
         <QuickAction href="/health" label="วิเคราะห์" icon="🔍" accent="amber" />
         <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" />
