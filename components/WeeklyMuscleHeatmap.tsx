@@ -285,16 +285,16 @@ export default function WeeklyMuscleHeatmap() {
       {!isLoading && hasAnyData && balance && (
         <div className="border-t border-line px-2 py-3 grid grid-cols-[1fr_1fr_1.6fr_1fr_1fr] gap-1">
           <div className="text-center px-1">
-            <p className="font-mono font-bold text-lg text-ink leading-tight">
+            <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
+            <p className="font-mono font-bold text-lg text-ink leading-tight mt-0.5">
               {totalSets} <span className="text-xs font-sans font-normal text-muted">เซ็ต</span>
             </p>
-            <p className="text-[10px] text-muted mt-0.5">รวมสัปดาห์นี้</p>
           </div>
           <div className="text-center border-l border-line px-1">
-            <p className="font-mono font-bold text-lg text-ink leading-tight">
+            <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
+            <p className="font-mono font-bold text-lg text-ink leading-tight mt-0.5">
               {totalExercises} <span className="text-xs font-sans font-normal text-muted">ท่า</span>
             </p>
-            <p className="text-[10px] text-muted mt-0.5">รวมสัปดาห์นี้</p>
           </div>
           <div className="text-center border-l border-line px-1 flex items-center justify-center">
             <p className="font-mono font-bold text-lg leading-tight flex items-center gap-1.5 flex-wrap justify-center" style={{ color: BALANCE_COLOR[balance.tier] }}>

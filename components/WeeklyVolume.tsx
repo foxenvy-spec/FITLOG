@@ -172,10 +172,10 @@ export default function WeeklyVolume() {
         <div className="px-4 pb-3.5">
           <div className="grid grid-cols-3 gap-2 pt-3 border-t border-line/60">
             <div className="text-center">
-              <p className="font-mono text-sm text-ink">
+              <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
+              <p className="font-mono text-sm text-ink mt-0.5">
                 {totalSets} <span className="text-[10px] text-muted font-sans">เซ็ต</span>
               </p>
-              <p className="text-[10px] text-muted mt-0.5">รวมสัปดาห์นี้</p>
             </div>
             <div className="text-center">
               <p className="font-mono text-sm text-ink">
@@ -184,10 +184,10 @@ export default function WeeklyVolume() {
               <p className="text-[10px] text-muted mt-0.5">Balance Score</p>
             </div>
             <div className="text-center">
-              <p className="font-display text-xs tracked uppercase" style={{ color: balanceColor }}>
+              <p className="text-[10px] text-muted">สถานะ</p>
+              <p className="font-display text-xs tracked uppercase mt-0.5" style={{ color: balanceColor }}>
                 {BALANCE_STATUS_LABEL[balanceTier]}
               </p>
-              <p className="text-[10px] text-muted mt-0.5">สถานะ</p>
             </div>
           </div>
 
