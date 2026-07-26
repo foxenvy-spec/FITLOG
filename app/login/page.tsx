@@ -11,6 +11,8 @@ export default function LoginPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -46,78 +48,168 @@ export default function LoginPage() {
     setLoading(false)
   }
 
+  async function handleForgotPassword() {
+    setError(null)
+    setNotice(null)
+    if (!email) {
+      setError('กรุณากรอกอีเมลก่อน แล้วกดลืมรหัสผ่านอีกครั้ง')
+      return
+    }
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    })
+    if (error) {
+      setError(error.message)
+    } else {
+      setNotice('ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลของคุณแล้ว')
+    }
+    setLoading(false)
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 safe-top safe-bottom">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-10">
+    <main className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 py-10 safe-top safe-bottom">
+      {/* full-bleed hero photo — /public/images/login-hero.png — with a dark vignette so the
+          form card stays readable no matter where the subjects in the photo land. */}
+      <div className="absolute inset-0 bg-bg">
+        <div
+          className="absolute inset-0 opacity-80"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 50% 45%, rgba(20,22,26,0.92) 0%, rgba(20,22,26,0.75) 32%, rgba(20,22,26,0.35) 58%, rgba(20,22,26,0.15) 100%), url('/images/login-hero.png')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="flex flex-col items-center mb-8">
           <BarbellMark />
           <h1 className="mt-4 font-display text-4xl tracked-lg text-ink uppercase">FITLOG</h1>
-          <p className="mt-1 text-sm text-muted font-body">บันทึกทุกเซ็ต ทุกระยะทาง</p>
+          <p className="mt-1.5 text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+          <p className="mt-2 text-sm text-muted font-body">บันทึกทุกเซ็ต ทุกระยะทาง</p>
         </div>
 
-        <div className="flex rounded-full bg-surface p-1 mb-6 border border-line">
-          <button
-            type="button"
-            onClick={() => setMode('signin')}
-            className={`flex-1 py-2 rounded-full text-sm font-display tracked uppercase transition ${
-              mode === 'signin' ? 'bg-amber text-bg' : 'text-muted'
-            }`}
-          >
-            เข้าสู่ระบบ
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('signup')}
-            className={`flex-1 py-2 rounded-full text-sm font-display tracked uppercase transition ${
-              mode === 'signup' ? 'bg-amber text-bg' : 'text-muted'
-            }`}
-          >
-            สมัครสมาชิก
-          </button>
+        <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-6">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+                <MailIcon />
+              </span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input pl-11"
+                placeholder="อีเมล"
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+                <LockIcon />
+              </span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input pl-11 pr-11"
+                placeholder="รหัสผ่าน"
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition"
+                aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
+              >
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between pt-0.5 text-xs">
+              <label className="flex items-center gap-2 text-muted cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <span className="w-4 h-4 rounded border border-line bg-surface flex items-center justify-center peer-checked:bg-amber peer-checked:border-amber transition">
+                  {rememberMe && <CheckIcon />}
+                </span>
+                จดจำฉัน
+              </label>
+              {mode === 'signin' && (
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-amber hover:underline"
+                >
+                  ลืมรหัสผ่าน?
+                </button>
+              )}
+            </div>
+
+            {error && (
+              <p className="text-sm text-rusttext bg-rustdim/40 border border-rust/40 rounded-lg px-3 py-2">{error}</p>
+            )}
+            {notice && (
+              <p className="text-sm text-steel bg-steeldim/30 border border-steel/40 rounded-lg px-3 py-2">{notice}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-2 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-lg disabled:opacity-50 active:scale-[0.99] transition"
+            >
+              {loading ? 'กำลังโหลด...' : mode === 'signin' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+            </button>
+          </form>
+
+          <div className="flex items-center gap-3 mt-5 mb-1">
+            <div className="flex-1 h-px bg-line" />
+            <button
+              type="button"
+              onClick={() => {
+                setError(null)
+                setNotice(null)
+                setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
+              }}
+              className="text-xs text-muted whitespace-nowrap"
+            >
+              {mode === 'signin' ? (
+                <>ยังไม่มีบัญชี? <span className="text-amber font-medium">สมัครสมาชิก</span></>
+              ) : (
+                <>มีบัญชีแล้ว? <span className="text-amber font-medium">เข้าสู่ระบบ</span></>
+              )}
+            </button>
+            <div className="flex-1 h-px bg-line" />
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-xs tracked uppercase text-muted mb-1.5">อีเมล</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg bg-surface border border-line shadow-elevated px-4 py-3 text-ink placeholder:text-muted/50 focus:border-amber outline-none"
-              placeholder="you@email.com"
-            />
-          </div>
-          <div>
-            <label className="block text-xs tracked uppercase text-muted mb-1.5">รหัสผ่าน</label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg bg-surface border border-line shadow-elevated px-4 py-3 text-ink placeholder:text-muted/50 focus:border-amber outline-none"
-              placeholder="อย่างน้อย 6 ตัวอักษร"
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-rusttext bg-rustdim/40 border border-rust/40 rounded-lg px-3 py-2">{error}</p>
-          )}
-          {notice && (
-            <p className="text-sm text-steel bg-steeldim/30 border border-steel/40 rounded-lg px-3 py-2">{notice}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-lg disabled:opacity-50 active:scale-[0.99] transition"
-          >
-            {loading ? 'กำลังโหลด...' : mode === 'signin' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
-          </button>
-        </form>
+        <div className="hidden sm:grid grid-cols-3 gap-3 mt-8 text-center">
+          <Feature icon={<TrendIcon />} title="ติดตามความก้าวหน้า" subtitle="บันทึกทุกการฝึก ทุกความก้าวหน้า" />
+          <Feature icon={<TargetIcon />} title="บรรลุเป้าหมาย" subtitle="วางแผนและไปให้ถึงเป้าหมาย" />
+          <Feature icon={<MuscleIcon />} title="แข็งแรงขึ้นทุกวัน" subtitle="สร้างวินัยเพื่อผลลัพธ์ที่ดีกว่า" />
+        </div>
       </div>
     </main>
+  )
+}
+
+function Feature({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5 px-1">
+      <span className="text-amber">{icon}</span>
+      <p className="text-xs font-display tracked uppercase text-ink">{title}</p>
+      <p className="text-[11px] text-muted leading-snug">{subtitle}</p>
+    </div>
   )
 }
 
@@ -129,6 +221,79 @@ function BarbellMark() {
       <rect x="9" y="21" width="4" height="14" rx="1.5" fill="#6C8CA8" />
       <rect x="44" y="18" width="6" height="20" rx="2" fill="#E8A33D" />
       <rect x="43" y="21" width="4" height="14" rx="1.5" fill="#6C8CA8" />
+    </svg>
+  )
+}
+
+function MailIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  )
+}
+
+function LockIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="11" width="16" height="9" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  )
+}
+
+function EyeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a17.4 17.4 0 0 1-3.19 4.16m-3.29 2.02A9.36 9.36 0 0 1 12 19c-7 0-11-7-11-7a17.5 17.5 0 0 1 4.06-5.19" />
+      <path d="M9.53 9.53a3 3 0 0 0 4.24 4.24" />
+      <path d="m1 1 22 22" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#14161A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  )
+}
+
+function TrendIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m3 17 6-6 4 4 8-8" />
+      <path d="M17 7h4v4" />
+    </svg>
+  )
+}
+
+function TargetIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+    </svg>
+  )
+}
+
+function MuscleIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6.5 6.5c-2 1-3 3-2.5 5.5.5 2.5 2.5 4 5 4h6c2.5 0 4.5-1.5 5-4 .5-2.5-.5-4.5-2.5-5.5" />
+      <path d="M9 16v3M15 16v3M6 19h12" />
     </svg>
   )
 }
