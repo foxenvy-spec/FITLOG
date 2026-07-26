@@ -178,10 +178,10 @@ export default function WeeklyVolume() {
               </p>
             </div>
             <div className="text-center">
-              <p className="font-mono text-sm text-ink">
+              <p className="text-[10px] text-muted">Balance Score</p>
+              <p className="font-mono text-sm text-ink mt-0.5">
                 {balanceScore} <span className="text-[10px] text-muted font-sans">/100</span>
               </p>
-              <p className="text-[10px] text-muted mt-0.5">Balance Score</p>
             </div>
             <div className="text-center">
               <p className="text-[10px] text-muted">สถานะ</p>
