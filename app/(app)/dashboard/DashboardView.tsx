@@ -72,7 +72,7 @@ const DashboardSettings = dynamic(() => import('@/components/DashboardSettings')
 // ที่คำนวณจาก getWeekRange() (สัปดาห์เริ่มวันจันทร์) ใน fetchDashboardData ด้านล่าง
 const WEEKDAY_LABELS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
 
-function greeting() {
+export function greeting() {
   const h = new Date().getHours()
   if (h < 11) return 'สวัสดีตอนเช้า'
   if (h < 17) return 'สวัสดีตอนบ่าย'
@@ -80,13 +80,13 @@ function greeting() {
 }
 
 // Fallback เมื่อผู้ใช้ยังไม่ได้ตั้ง display_name เอง — ตัดจาก email เหมือนพฤติกรรมเดิม
-function emailDisplayName(email: string | undefined | null) {
+export function emailDisplayName(email: string | undefined | null) {
   if (!email) return 'นักยก'
   const prefix = email.split('@')[0]
   return prefix.charAt(0).toUpperCase() + prefix.slice(1)
 }
 
-interface DashboardData {
+export interface DashboardData {
   email: string | null
   profileDisplayName: string | null
   todayWorkouts: Workout[]
@@ -124,7 +124,7 @@ interface DashboardData {
   hasAnyHistory: boolean
 }
 
-async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
+export async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
   const dow = todayDayOfWeek()
   const today = todayStr()
 
@@ -333,7 +333,7 @@ async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Pr
 // ที่เป็นเทรนด์สัดส่วนร่างกาย ให้ภาพลักษณ์ตรงกับหน้าสุขภาพเป๊ะๆ คีย์เป็น "id|kind" เพราะ insight
 // กล้ามเนื้อใช้ emoji 💪 ตัวเดียวกันทั้งขึ้นและลง แยกทิศทางไม่ได้ด้วย emoji ต้องแยกด้วย kind แทน
 // insight อื่น (volume/imbalance/missed-muscle/workout-frequency) ยังใช้ emoji เดิมต่อไป
-const INSIGHT_IMAGE: Record<string, string> = {
+export const INSIGHT_IMAGE: Record<string, string> = {
   'trend-body-fat|positive': '/icons/trend-improved.png',
   'trend-body-fat|warning': '/icons/body-fat-high.png',
   'trend-muscle-mass|positive': '/icons/muscle-up-icon.png',
