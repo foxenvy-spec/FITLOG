@@ -19,14 +19,14 @@ const METRIC_ICON_IMAGES: Record<MetricIconImageKey, string> = {
   bmi: '/icons/bmi.png',
 }
 
-// glow สีล้อตามไอคอนของแต่ละการ์ด (เขียว/แดง-ชมพู/เขียว/ส้ม/ฟ้า) ตามมอคอัพ v3 —
-// ใช้ทั้งกับ border และ box-shadow เพื่อให้แต่ละใบมีสีเฉพาะตัวแทนขอบเทาเรียบแบบเดิม
-const METRIC_GLOW_COLORS: Record<MetricIconImageKey, string> = {
-  weight: '#34D399',
-  bodyFat: '#FB7185',
-  muscle: '#4ADE80',
-  fatMass: '#FB923C',
-  bmi: '#60A5FA',
+// ธีมสีต่อการ์ด (main + second) ตามสเปคที่ให้มา — มี 4 ธีม (เขียว/แดง/ส้ม/ฟ้า) แต่ 5 การ์ด
+// น้ำหนักกับกล้ามเนื้อโครงร่างใช้ธีมเขียวร่วมกัน (ทั้งคู่เป็นโทนเขียวอยู่แล้วก่อนหน้านี้)
+const METRIC_THEME: Record<MetricIconImageKey, { main: string; second: string }> = {
+  weight: { main: '#00ff88', second: '#00d0ff' },
+  muscle: { main: '#00ff88', second: '#00d0ff' },
+  bodyFat: { main: '#ff2f5d', second: '#ff00c8' },
+  fatMass: { main: '#ff9d00', second: '#ff6600' },
+  bmi: { main: '#1b8cff', second: '#3f6cff' },
 }
 
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
@@ -56,29 +56,42 @@ interface CardDef {
   series: number[]
 }
 
-// เส้นกราฟจิ๋วมุมขวาล่างของการ์ด ตามที่ขอ — ขนาดคงที่ วางคู่กับตัวเลข/delta แทนที่จะยืดเต็มความกว้าง
+// เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
+// เติมสีจางๆ (15% alpha) ล้อสีเดียวกับเส้น ตามสเปคที่ขอ (คล้าย Chart.js: borderColor / backgroundColor / tension)
 function Sparkline({ series, color }: { series: number[]; color: string }) {
   if (series.length < 2) return null
   const w = 64
   const h = 30
   const pad = 3 // กันเส้นชนขอบบน-ล่างตอนค่าสูงสุด/ต่ำสุด
+  const tension = 0.45
   const min = Math.min(...series)
   const max = Math.max(...series)
   const range = max - min || 1
   const step = w / (series.length - 1)
-  const points = series
-    .map((v, i) => `${(i * step).toFixed(1)},${(h - pad - ((v - min) / range) * (h - pad * 2)).toFixed(1)}`)
-    .join(' ')
+  const points: [number, number][] = series.map((v, i) => [
+    i * step,
+    h - pad - ((v - min) / range) * (h - pad * 2),
+  ])
+
+  const n = points.length
+  let linePath = `M ${points[0][0].toFixed(2)},${points[0][1].toFixed(2)}`
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i === 0 ? 0 : i - 1]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[i + 2 < n ? i + 2 : n - 1]
+    const cp1x = p1[0] + ((p2[0] - p0[0]) / 6) * tension
+    const cp1y = p1[1] + ((p2[1] - p0[1]) / 6) * tension
+    const cp2x = p2[0] - ((p3[0] - p1[0]) / 6) * tension
+    const cp2y = p2[1] - ((p3[1] - p1[1]) / 6) * tension
+    linePath += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`
+  }
+  const areaPath = `${linePath} L ${points[n - 1][0].toFixed(2)},${h} L ${points[0][0].toFixed(2)},${h} Z`
+
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-hidden="true">
-      <polyline
-        points={points}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d={areaPath} fill={color} fillOpacity={0.15} stroke="none" />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -213,23 +226,26 @@ export default function BodyMetricsRow() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {cards.map((c) => {
-        const glow = METRIC_GLOW_COLORS[c.icon]
+        const theme = METRIC_THEME[c.icon]
         return (
           <div
             key={c.key}
-            className="rounded-lg border shadow-elevated px-4 py-4"
+            className="rounded-lg px-4 py-4"
             style={{
-              // ไล่สีอ่อนๆ จากมุมบนซ้าย (ตรงไอคอน) ลงมาผสมกับพื้นหลังการ์ดปกติ (#1C1F24)
-              // แทนพื้นทึบสีเดียว ให้ดูมีมิติ/เรืองแสงจากภายในตามโทน v3
-              background: `radial-gradient(130% 110% at 12% -10%, ${glow}29 0%, #1C1F24 60%)`,
-              borderColor: glow + '4D',
-              boxShadow: `0 0 10px ${glow}33`,
+              border: '1.5px solid transparent',
+              // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (แทนพื้นดำล้วน) วาดถึงแค่ padding-box
+              // ชั้นนอกเป็นไล่สี main->second ของ theme วาดถึง border-box — ได้ผลลัพธ์เป็น "ขอบไล่สี"
+              // รอบการ์ด โดยไม่ต้องแก้ CSS อื่นเลย แค่เปลี่ยนค่า main/second ต่อการ์ด
+              backgroundImage: `linear-gradient(180deg, rgba(20,28,45,.95), rgba(8,12,20,.98)), linear-gradient(90deg, ${theme.main}, ${theme.second})`,
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              boxShadow: `0 0 10px ${theme.main}33`,
             }}
           >
             <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
               <span
                 className="w-8 h-8 shrink-0 inline-block"
-                style={{ filter: `drop-shadow(0 0 4px ${glow}CC)` }}
+                style={{ filter: `drop-shadow(0 0 4px ${theme.main}CC)` }}
                 aria-hidden="true"
               >
                 <Image src={METRIC_ICON_IMAGES[c.icon]} alt="" width={32} height={32} className="w-full h-full object-contain" />
@@ -246,7 +262,7 @@ export default function BodyMetricsRow() {
                   </p>
                 )}
               </div>
-              <Sparkline series={c.series} color={glow} />
+              <Sparkline series={c.series} color={theme.main} />
             </div>
           </div>
         )
