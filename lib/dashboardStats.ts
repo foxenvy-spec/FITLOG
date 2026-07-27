@@ -22,6 +22,16 @@ export function computeCurrentStreak(performedDates: string[]): number {
   return streak
 }
 
+// แปลง % ความพร้อมของวันนี้ (GoalRing บน hero card) เป็นข้อความที่ตีความแทนผู้ใช้ทันที
+// แทนที่จะโชว์แค่ตัวเลข % เฉยๆ แล้วให้ผู้ใช้ไปนั่งตีความเองว่า 43% แปลว่าอะไร
+export function readinessStatusLabel(pct: number): string {
+  if (pct <= 0) return 'ยังไม่เริ่ม'
+  if (pct <= 30) return 'เริ่มแล้ว'
+  if (pct <= 70) return 'กำลังทำ'
+  if (pct < 100) return 'ใกล้ครบ'
+  return 'สำเร็จ'
+}
+
 export interface TodayTotals {
   volumeKg: number
   sets: number
