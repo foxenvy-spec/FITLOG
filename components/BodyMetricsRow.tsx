@@ -272,14 +272,16 @@ export default function BodyMetricsRow() {
   ]
 
   return (
+    <>
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {cards.map((c) => {
         const theme = METRIC_THEME[c.icon]
         return (
           <div
             key={c.key}
-            className="relative overflow-hidden rounded-lg flex flex-col justify-between h-[124px] 2xl:h-[128px]"
+            className="metric-card relative overflow-hidden rounded-lg flex flex-col justify-between h-[124px] 2xl:h-[128px]"
             style={{
+              transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
               padding: '16px 18px 12px', // ลด padding-bottom ลงอีกนิด ให้บรรทัดเดลต้าที่ถูกดันไปด้วย margin-top:auto ชิดขอบล่างเห็นผลชัดขึ้น
               border: '1.5px solid transparent',
               // 4 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
@@ -404,5 +406,17 @@ export default function BodyMetricsRow() {
         )
       })}
     </div>
+    {/* Hover effect เฉพาะเว็บ/เดสก์ท็อป (@media hover:hover กันไม่ให้ค้างบนมือถือที่ไม่มี hover จริง)
+        scale 1.00→1.015 + translateY -2px ตามสเปคที่ขอ, ส่วน "shadow/glow เพิ่ม 10%" ใช้ brightness+contrast
+        แทนการคำนวณ alpha สีธีมทีละใบ (ง่ายกว่า/เสถียรกว่า แต่ให้ความรู้สึกใกล้เคียงกัน คือการ์ดดู "เด่นขึ้น" เมื่อชี้เมาส์) */}
+    <style jsx>{`
+      @media (hover: hover) {
+        .metric-card:hover {
+          transform: translateY(-2px) scale(1.015);
+          filter: brightness(1.06) contrast(1.04);
+        }
+      }
+    `}</style>
+    </>
   )
 }
