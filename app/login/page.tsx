@@ -71,18 +71,18 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen bg-bg overflow-x-hidden safe-top safe-bottom">
-      {/* Hero photo — /public/images/login-hero.png (16:9, composed with safe margins so
-          background-size: cover never crops into the figures on typical screen ratios).
-          Mobile: a height band across just the top of the page, fading into the flat
-          bg-bg below so the form/features sit on solid ground. Floor is 220px (not 400px)
-          so short-height viewports — landscape phones, ~350-400px tall — don't get a band
-          that eats the whole screen and pushes the login form below the fold.
-          Desktop/sm+: single `cover` layer — fills the viewport edge-to-edge with no void. */}
+      {/* Mobile hero — /public/images/login-hero-mobile.png (portrait, two figures at the
+          left/right edges with empty space between them, already fading to near-black at
+          the bottom). Floor is 220px so short-height viewports — landscape phones, ~350-400px
+          tall — don't get a band that eats the whole screen and pushes the login form below
+          the fold. `top center` keeps both figures + the dumbbells in frame; the near-black
+          tail below them blends into the fade div beneath.
+          Desktop/sm+: separate 16:9 photo, `cover` layer filling the viewport edge-to-edge. */}
       <div
         className="absolute inset-x-0 top-0 h-[clamp(220px,55vh,560px)] sm:hidden"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
+            "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero-mobile.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
         }}
