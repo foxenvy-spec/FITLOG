@@ -272,16 +272,16 @@ export default function BodyMetricsRow() {
                 style={{ color: 'rgba(255,255,255,.65)' }}
               >
                 <span
-                  className="relative w-9 h-9 shrink-0 inline-flex items-center justify-center rounded-[10px]"
+                  className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px]"
                   style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40`, top: -6, left: -4 }}
                   aria-hidden="true"
                 >
                   <Image
                     src={METRIC_ICON_IMAGES[c.icon]}
                     alt=""
-                    width={30}
-                    height={30}
-                    className="w-[30px] h-[30px] object-contain"
+                    width={38}
+                    height={38}
+                    className="w-[38px] h-[38px] object-contain"
                     style={{ filter: `drop-shadow(0 0 4px ${theme.main}CC)` }}
                   />
                 </span>
