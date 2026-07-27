@@ -251,9 +251,9 @@ export default function BodyMetricsRow() {
               backgroundImage: `linear-gradient(180deg, #13233A, #08121F), linear-gradient(90deg, ${theme.main}, color-mix(in srgb, ${theme.main} 55%, white), ${theme.second})`,
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
-              // 3 ชั้นซ้อนกัน: outer drop shadow (ยกการ์ดลอยจากพื้นหลัง) + inset highlight บนขอบบน (ผิวมีไฮไลต์)
-              // + glow สีธีมฟุ้งรอบนอก แทน shadow บางชั้นเดียวแบบเดิม
-              boxShadow: `0 12px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05), 0 0 25px ${theme.main}26, 0 0 10px ${theme.main}59`,
+              // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
+              // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + glow สีธีม 2 ระดับ (ฟุ้งกว้าง/ชิดขอบ)
+              boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 12px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05), 0 0 25px ${theme.main}26, 0 0 10px ${theme.main}59`,
             }}
           >
             {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
