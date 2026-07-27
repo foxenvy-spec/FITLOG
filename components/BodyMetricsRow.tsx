@@ -287,25 +287,25 @@ export default function BodyMetricsRow() {
                 </span>
                 {c.label}
               </p>
-              {/* pr-14: กันไม่ให้ตัวเลข/เดลต้าไปทับกราฟที่ลอยอยู่มุมขวาล่างแบบ absolute ด้านล่าง */}
-              <div className="min-w-0 pr-14" style={{ marginTop: 8 }}>
-                <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
-                {c.deltaText && (
-                  <p
-                    className="text-[11px] flex items-center gap-1"
-                    style={{ color: c.deltaColor, marginTop: 6 }}
-                  >
-                    {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
-                    {c.deltaText}
-                  </p>
-                )}
+              <div className="flex items-center justify-between gap-2" style={{ marginTop: 8 }}>
+                <div className="min-w-0">
+                  <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
+                  {c.deltaText && (
+                    <p
+                      className="text-[11px] flex items-center gap-1"
+                      style={{ color: c.deltaColor, marginTop: 6 }}
+                    >
+                      {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
+                      {c.deltaText}
+                    </p>
+                  )}
+                </div>
+                {/* กราฟจิ๋วอยู่กึ่งกลางแนวตั้งระหว่างบรรทัดค่า (65.4 kg) กับบรรทัดเดลต้า (↓ -2.1 kg...)
+                    ใช้ items-center ของแถวนี้แทนการลอย absolute มุมล่างการ์ดแบบเดิม */}
+                <Sparkline series={c.series} color={theme.main} />
               </div>
             </div>
-            {/* กราฟจิ๋วลอยเป็น absolute มุมขวาล่างของการ์ด แยกออกจาก flow เดิม
-                จะได้ไม่ดันข้อความ/เดลต้าให้ต่ำลงเวลาข้อความสั้นหรือยาวไม่เท่ากัน */}
-            <div className="absolute" style={{ right: 16, bottom: 12 }}>
-              <Sparkline series={c.series} color={theme.main} />
-            </div>
+          </div>
           </div>
         )
       })}
