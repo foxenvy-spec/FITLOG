@@ -230,11 +230,8 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="relative overflow-hidden rounded-lg flex flex-col justify-between"
+            className="relative overflow-hidden rounded-lg flex flex-col justify-between h-[108px] 2xl:h-[128px]"
             style={{
-              // ล็อกความสูงการ์ดไว้เท่ากับตอนที่ margin-top ของบรรทัดเดลต้ายังเป็น 6px (ก่อนที่จะขยับเป็น 10px/18px)
-              // ต่อไปนี้ต่อให้ปรับ margin/spacing ข้างในอีก การ์ดจะไม่สูงขึ้น-ต่ำลงตาม เพราะถูกตรึงความสูงไว้แล้ว
-              height: 136,
               padding: '16px 18px 16px', // padding-top 16px ตามที่แนะนำ (จากที่เคยลองสูงกว่านี้)
               border: '1.5px solid transparent',
               // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
