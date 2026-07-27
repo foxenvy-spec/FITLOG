@@ -298,18 +298,21 @@ export default function BodyMetricsRow() {
                 <span
                   className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px] overflow-hidden"
                   style={{
-                    // gradient เข้ม→อ่อนตามธีมสี (แทนสีเรียบเดิม) + inner shadow 2 ทิศ (ไฮไลต์บนซ้าย, เงาล่างขวา)
-                    // จำลองพื้นผิวโค้งนูนแบบไอคอน iOS/glass icon แทนที่จะแบนราบ
-                    background: `linear-gradient(145deg, ${theme.main}, ${theme.second})`,
-                    boxShadow: `inset 0 1px rgba(255,255,255,.5), inset 0 -3px 6px rgba(0,0,0,.35), 0 0 15px ${theme.main}40`,
+                    // ฐานเป็นกระจกเข้มเป็นกลาง (ไม่ใช่ theme สีสดเต็มกล่องแบบเดิม) + จุดสีธีมจางๆ ที่มุมบนซ้าย
+                    // แค่ "แต้ม" สี ไม่ "ย้อม" ทั้งกล่อง ไอคอนสีสดที่วางทับด้านบนจะได้เด่นแยกออกจากพื้นหลังชัดเจน
+                    background: `linear-gradient(145deg, #1C2333, #0D1220)`,
+                    backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), linear-gradient(145deg, #1C2333, #0D1220)`,
+                    boxShadow: `inset 0 1px rgba(255,255,255,.35), inset 0 -3px 6px rgba(0,0,0,.4), 0 0 15px ${theme.main}40`,
                   }}
                   aria-hidden="true"
                 >
-                  {/* glass reflection: แถบไฮไลต์ทแยงมุมจางๆ พาดครึ่งบนของกล่อง ให้ความรู้สึกผิวมันวาวแบบกระจก */}
+                  {/* glass reflection: แถบไฮไลต์บางๆ เฉพาะ "แถบบนสุด" ของกล่องเท่านั้น (ไม่ทแยงผ่านกลางไอคอนแล้ว)
+                      ป้องกันไม่ให้ไปทับตัวไอคอนจนดูเหมือนคราบเปื้อนแบบก่อนหน้า */}
                   <span
-                    className="pointer-events-none absolute inset-0"
+                    className="pointer-events-none absolute inset-x-0 top-0"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.12) 35%, transparent 55%)',
+                      height: '45%',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,.28), transparent)',
                     }}
                   />
                   <Image
@@ -318,7 +321,7 @@ export default function BodyMetricsRow() {
                     width={38}
                     height={38}
                     className="relative w-[38px] h-[38px] object-contain"
-                    style={{ filter: `drop-shadow(0 1px 2px rgba(0,0,0,.35))` }}
+                    style={{ filter: `drop-shadow(0 1px 2px rgba(0,0,0,.5))` }}
                   />
                 </span>
                 {c.label}
