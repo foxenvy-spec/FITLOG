@@ -217,8 +217,14 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="rounded-lg bg-surface border shadow-elevated px-4 py-4"
-            style={{ borderColor: glow + '4D', boxShadow: `0 0 10px ${glow}33` }}
+            className="rounded-lg border shadow-elevated px-4 py-4"
+            style={{
+              // ไล่สีอ่อนๆ จากมุมบนซ้าย (ตรงไอคอน) ลงมาผสมกับพื้นหลังการ์ดปกติ (#1C1F24)
+              // แทนพื้นทึบสีเดียว ให้ดูมีมิติ/เรืองแสงจากภายในตามโทน v3
+              background: `radial-gradient(130% 110% at 12% -10%, ${glow}29 0%, #1C1F24 60%)`,
+              borderColor: glow + '4D',
+              boxShadow: `0 0 10px ${glow}33`,
+            }}
           >
             <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
               <span
