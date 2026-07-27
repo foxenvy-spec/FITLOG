@@ -100,7 +100,7 @@ export default function LoginPage() {
       {/* mobile-only fade from the hero band down into the flat background */}
       <div className="absolute inset-x-0 top-0 h-[clamp(220px,55vh,560px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
 
-      <div className="relative z-10 flex flex-col items-center px-6 pt-[clamp(1.25rem,6vh,2.5rem)] pb-[clamp(1.5rem,4vh,3rem)] sm:min-h-screen sm:justify-start sm:pt-[clamp(1.5rem,7vh,4.5rem)] sm:pb-[clamp(0.5rem,2vh,1.5rem)]">
+      <div className="relative z-10 flex flex-col items-center px-6 pt-[clamp(1rem,4vh,1.75rem)] pb-[clamp(1rem,2.5vh,2rem)] sm:min-h-screen sm:justify-start sm:pt-[clamp(1.5rem,7vh,4.5rem)] sm:pb-[clamp(0.5rem,2vh,1.5rem)]">
         {/* Every vertical gap below uses clamp(min, Nvh, max) instead of a fixed size, on both
             mobile and sm+ (desktop), so the whole logo+card+features stack shrinks automatically
             to fit short viewports without ever needing to scroll — while still capping out at
@@ -109,22 +109,22 @@ export default function LoginPage() {
             viewport instead of dead-center, so the logo sits higher with more breathing room
             below the feature grid. */}
         <div className="w-full max-w-sm">
-          <div className="flex flex-col items-center mb-[clamp(0.75rem,3vh,1.25rem)] sm:mb-[clamp(0.5rem,1.4vh,1.25rem)]">
+          <div className="flex flex-col items-center mb-[clamp(0.5rem,2vh,0.875rem)] sm:mb-[clamp(0.5rem,1.4vh,1.25rem)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/logo.png"
               alt="FITLOG"
-              className="w-[clamp(130px,26vh,220px)] sm:w-[clamp(120px,18vh,260px)] h-auto select-none"
+              className="w-[clamp(110px,20vh,180px)] sm:w-[clamp(120px,18vh,260px)] h-auto select-none"
               draggable={false}
             />
-            <p className="mt-[clamp(0.25rem,1vh,0.375rem)] sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
-            <p className="mt-[clamp(0.375rem,1.2vh,0.5rem)] sm:mt-[clamp(0.25rem,0.6vh,0.5rem)] text-sm text-ink/90 font-body text-center">
+            <p className="mt-[clamp(0.2rem,0.8vh,0.3rem)] sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+            <p className="mt-[clamp(0.3rem,1vh,0.4rem)] sm:mt-[clamp(0.25rem,0.6vh,0.5rem)] text-sm text-ink/90 font-body text-center">
               Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
             </p>
           </div>
 
-          <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-[clamp(1rem,3vh,1.5rem)] sm:p-[clamp(0.75rem,2.2vh,1.5rem)]">
-            <form onSubmit={handleSubmit} className="space-y-[clamp(0.5rem,1.4vh,0.75rem)] sm:space-y-[clamp(0.4rem,1vh,0.75rem)]">
+          <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-[clamp(0.75rem,2.2vh,1.125rem)] sm:p-[clamp(0.75rem,2.2vh,1.5rem)]">
+            <form onSubmit={handleSubmit} className="space-y-[clamp(0.4rem,1.1vh,0.625rem)] sm:space-y-[clamp(0.4rem,1vh,0.75rem)]">
               <div className="relative">
                 <label htmlFor="login-email" className="sr-only">อีเมล</label>
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
@@ -213,7 +213,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="flex items-center gap-3 mt-[clamp(0.75rem,2vh,1.25rem)] sm:mt-[clamp(0.5rem,1.2vh,1.25rem)] mb-1">
+            <div className="flex items-center gap-3 mt-[clamp(0.5rem,1.5vh,0.875rem)] sm:mt-[clamp(0.5rem,1.2vh,1.25rem)] mb-1">
               <div className="flex-1 h-px bg-line" />
               <button
                 type="button"
@@ -243,7 +243,7 @@ export default function LoginPage() {
           </div>
 
           {/* Mobile: stacked feature list with icon tiles, matching the reference mockup */}
-          <div className="sm:hidden mt-[clamp(1rem,3vh,2rem)] divide-y divide-line/60">
+          <div className="sm:hidden mt-[clamp(0.75rem,2vh,1.25rem)] divide-y divide-line/60">
             <FeatureRow icon={<TrendIcon />} title="ติดตามความก้าวหน้า" subtitle="บันทึกทุกการฝึก ทุกความก้าวหน้า" first />
             <FeatureRow icon={<TargetIcon />} title="บรรลุเป้าหมาย" subtitle="วางแผนและไปให้ถึงเป้าหมาย" />
             <FeatureRow icon={<MuscleIcon />} title="แข็งแรงขึ้นทุกวัน" subtitle="สร้างวินัยเพื่อผลลัพธ์ที่ดีกว่า" />
@@ -276,8 +276,8 @@ function FeatureRow({
   first?: boolean
 }) {
   return (
-    <div className={`flex items-center gap-4 py-[clamp(0.5rem,1.6vh,1rem)] ${first ? 'pt-0' : ''}`}>
-      <span className="shrink-0 w-[clamp(2.5rem,6vh,3.5rem)] h-[clamp(2.5rem,6vh,3.5rem)] rounded-xl border border-line bg-bg/60 flex items-center justify-center text-amber">
+    <div className={`flex items-center gap-4 py-[clamp(0.375rem,1.2vh,0.625rem)] ${first ? 'pt-0' : ''}`}>
+      <span className="shrink-0 w-[clamp(2.25rem,5vh,2.875rem)] h-[clamp(2.25rem,5vh,2.875rem)] rounded-xl border border-line bg-bg/60 flex items-center justify-center text-amber">
         {icon}
       </span>
       <div>
