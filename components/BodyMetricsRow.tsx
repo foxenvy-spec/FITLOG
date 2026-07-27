@@ -192,7 +192,7 @@ export default function BodyMetricsRow() {
       valueText: summary.weight.value != null ? `${toDisplay(summary.weight.value).toFixed(1)} ${unit}` : '—',
       deltaText:
         summary.weight.delta != null ? `${fmtSigned(toDisplay(summary.weight.delta), 1, ` ${unit}`)} ${period}` : null,
-      deltaColor: summary.weight.isGood == null ? '#9498A0' : summary.weight.isGood ? '#7A9B57' : '#C1503A',
+      deltaColor: summary.weight.isGood == null ? '#9498A0' : summary.weight.isGood ? '#8CB264' : '#C1503A',
       deltaDir: summary.weight.delta == null ? null : summary.weight.delta > 0 ? 'up' : summary.weight.delta < 0 ? 'down' : null,
       series: weightSeries,
     },
@@ -202,7 +202,7 @@ export default function BodyMetricsRow() {
       label: 'ไขมันในร่างกาย',
       valueText: summary.bodyFatPct.value != null ? `${summary.bodyFatPct.value.toFixed(1)} %` : '—',
       deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} ${period}` : null,
-      deltaColor: summary.bodyFatPct.isGood == null ? '#9498A0' : summary.bodyFatPct.isGood ? '#7A9B57' : '#C1503A',
+      deltaColor: summary.bodyFatPct.isGood == null ? '#9498A0' : summary.bodyFatPct.isGood ? '#8CB264' : '#C1503A',
       deltaDir: summary.bodyFatPct.delta == null ? null : summary.bodyFatPct.delta > 0 ? 'up' : summary.bodyFatPct.delta < 0 ? 'down' : null,
       series: bodyFatSeries,
     },
@@ -215,7 +215,7 @@ export default function BodyMetricsRow() {
         summary.skeletalMuscleKg.delta != null
           ? `${fmtSigned(toDisplay(summary.skeletalMuscleKg.delta), 1, ` ${unit}`)} ${period}`
           : null,
-      deltaColor: summary.skeletalMuscleKg.isGood == null ? '#9498A0' : summary.skeletalMuscleKg.isGood ? '#7A9B57' : '#C1503A',
+      deltaColor: summary.skeletalMuscleKg.isGood == null ? '#9498A0' : summary.skeletalMuscleKg.isGood ? '#8CB264' : '#C1503A',
       deltaDir:
         summary.skeletalMuscleKg.delta == null ? null : summary.skeletalMuscleKg.delta > 0 ? 'up' : summary.skeletalMuscleKg.delta < 0 ? 'down' : null,
       series: muscleSeries,
@@ -227,7 +227,7 @@ export default function BodyMetricsRow() {
       valueText: summary.fatMassKg.value != null ? `${toDisplay(summary.fatMassKg.value).toFixed(1)} ${unit}` : '—',
       deltaText:
         summary.fatMassKg.delta != null ? `${fmtSigned(toDisplay(summary.fatMassKg.delta), 1, ` ${unit}`)} ${period}` : null,
-      deltaColor: summary.fatMassKg.isGood == null ? '#9498A0' : summary.fatMassKg.isGood ? '#7A9B57' : '#C1503A',
+      deltaColor: summary.fatMassKg.isGood == null ? '#9498A0' : summary.fatMassKg.isGood ? '#8CB264' : '#C1503A',
       deltaDir: summary.fatMassKg.delta == null ? null : summary.fatMassKg.delta > 0 ? 'up' : summary.fatMassKg.delta < 0 ? 'down' : null,
       series: fatMassSeries,
     },
@@ -266,7 +266,7 @@ export default function BodyMetricsRow() {
               // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
               // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + glow สีธีมเยื้อง offset ไปมุมซ้ายบน/ขวาล่าง
               // (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
-              boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 12px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05), -6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
+              boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.05), -6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
             }}
           >
             {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
@@ -293,7 +293,7 @@ export default function BodyMetricsRow() {
             <div className="relative h-full">
               <p
                 className="flex items-center gap-2 text-[11px] font-semibold"
-                style={{ color: 'rgba(255,255,255,.85)' }}
+                style={{ color: 'rgba(255,255,255,.88)' }}
               >
                 <span
                   className="w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px]"
