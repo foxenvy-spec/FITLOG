@@ -279,9 +279,9 @@ export default function BodyMetricsRow() {
                   <Image
                     src={METRIC_ICON_IMAGES[c.icon]}
                     alt=""
-                    width={22}
-                    height={22}
-                    className="w-[22px] h-[22px] object-contain"
+                    width={30}
+                    height={30}
+                    className="w-[30px] h-[30px] object-contain"
                     style={{ filter: `drop-shadow(0 0 4px ${theme.main}CC)` }}
                   />
                 </span>
