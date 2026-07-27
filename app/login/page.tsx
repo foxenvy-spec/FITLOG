@@ -111,7 +111,7 @@ export default function LoginPage() {
             <img
               src="/images/logo.png"
               alt="FITLOG"
-              className="w-[320px] sm:w-[clamp(180px,26vh,400px)] h-auto select-none"
+              className="w-[220px] sm:w-[clamp(120px,18vh,260px)] h-auto select-none"
               draggable={false}
             />
             <p className="mt-1.5 sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
