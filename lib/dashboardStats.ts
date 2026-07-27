@@ -29,6 +29,65 @@ export interface TodayTotals {
   entryCount: number
 }
 
+export interface DetectedActivity {
+  /** ชื่อกิจกรรมที่ขึ้นบน hero card เช่น "วิ่ง", "เวทเทรนนิ่ง", "กิจกรรมอิสระ" */
+  title: string
+  /** ข้อความบนปุ่ม CTA เช่น "เริ่มวิ่ง", "เริ่มเทรน" */
+  buttonLabel: string
+  /** อิโมจิหัวการ์ด แทน 🔥 ตายตัว — ให้สื่อประเภทกิจกรรมที่ตรวจจับได้ */
+  icon: string
+  /** true = คาร์ดิโอ (ใช้ระยะทาง/แคลอรี่แทน Exercises/Sets บน hero card) */
+  isCardio: boolean
+}
+
+// map cardio_type ที่ AI อ่านจากรูป (เป็นภาษาไทยเป็นหลัก แต่กันเหนียวรับคำอังกฤษด้วย) ไปเป็น label
+// ที่โชว์บน UI — ลำดับรายการมีผล: เช็ค "เดิน" ก่อน "วิ่ง" เพราะ "เดินเร็ว" ไม่ควรเข้าเงื่อนไขวิ่ง
+const CARDIO_ACTIVITY_RULES: { match: (t: string) => boolean; title: string; buttonLabel: string; icon: string }[] = [
+  { match: (t) => t.includes('เดิน') || t.includes('walk'), title: 'เดิน', buttonLabel: 'เริ่มเดิน', icon: '🚶' },
+  { match: (t) => t.includes('วิ่ง') || t.includes('run') || t.includes('jog'), title: 'วิ่ง', buttonLabel: 'เริ่มวิ่ง', icon: '🏃' },
+  {
+    match: (t) => t.includes('ปั่น') || t.includes('จักรยาน') || t.includes('bike') || t.includes('cycl'),
+    title: 'ปั่นจักรยาน',
+    buttonLabel: 'เริ่มปั่น',
+    icon: '🚴',
+  },
+  { match: (t) => t.includes('ว่ายน้ำ') || t.includes('swim'), title: 'ว่ายน้ำ', buttonLabel: 'เริ่มว่ายน้ำ', icon: '🏊' },
+  { match: (t) => t.includes('hiit'), title: 'HIIT', buttonLabel: 'เริ่ม HIIT', icon: '🔥' },
+  { match: (t) => t.includes('โยคะ') || t.includes('yoga'), title: 'โยคะ', buttonLabel: 'เริ่มฝึก', icon: '🧘' },
+  { match: (t) => t.includes('พิลาทิส') || t.includes('pilates'), title: 'พิลาทิส', buttonLabel: 'เริ่มฝึก', icon: '🤸' },
+  { match: (t) => t.includes('crossfit'), title: 'CrossFit', buttonLabel: 'เริ่มเทรน', icon: '🏋️' },
+]
+
+function labelForCardioType(cardioType: string | null): DetectedActivity {
+  const t = (cardioType ?? '').trim().toLowerCase()
+  if (t) {
+    for (const rule of CARDIO_ACTIVITY_RULES) {
+      if (rule.match(t)) return { ...rule, isCardio: true }
+    }
+    // AI อ่านค่ามาได้แต่ไม่ตรงกับ mapping ไหนเลย — โชว์ค่าดิบที่ AI ให้มาแทนที่จะทิ้งข้อมูล
+    return { title: cardioType!.trim(), buttonLabel: 'เริ่มกิจกรรม', icon: '⚡', isCardio: true }
+  }
+  return { title: 'กิจกรรมอิสระ', buttonLabel: 'เริ่มกิจกรรม', icon: '⚡', isCardio: true }
+}
+
+// ตรวจว่าวันนี้ (ที่ยังไม่มีโปรแกรมกำหนดไว้) เป็นกิจกรรมประเภทไหนจาก workouts ที่บันทึกไปแล้ว
+// เพื่อเอามาแทนชื่อ "บันทึกอิสระ" ตายตัวบน hero card — ใช้ตอนไม่มี scheduledDay เท่านั้น
+export function detectTodayActivity(todayWorkouts: Workout[]): DetectedActivity | null {
+  if (todayWorkouts.length === 0) return null
+  const hasStrength = todayWorkouts.some((w) => w.type === 'strength')
+  const cardioWorkouts = todayWorkouts.filter((w) => w.type === 'cardio')
+
+  if (hasStrength && cardioWorkouts.length === 0) {
+    return { title: 'เวทเทรนนิ่ง', buttonLabel: 'เริ่มเทรน', icon: '🏋️', isCardio: false }
+  }
+  if (!hasStrength && cardioWorkouts.length > 0) {
+    // ใช้รายการคาร์ดิโอแรกของวัน (ปกติวันที่ import จากรูปจะมีรายการเดียว)
+    return labelForCardioType(cardioWorkouts[0].cardio_type ?? null)
+  }
+  // ผสมทั้งเวทและคาร์ดิโอวันเดียวกัน — ยังไม่มี label เดี่ยวที่สื่อได้ครบ ใช้คำกลาง
+  return { title: 'กิจกรรมอิสระ', buttonLabel: 'เริ่มกิจกรรม', icon: '⚡', isCardio: false }
+}
+
 // รวมข้อมูลของวันนี้จากรายการ workouts ที่บันทึกไว้
 // duration เป็นค่าประมาณ: ถ้ามีหลายรายการ ใช้ช่วงเวลาตั้งแต่รายการแรกถึงรายการสุดท้าย
 // ถ้ามีคาร์ดิโอที่ระบุเวลาไว้ ใช้ค่าที่มากกว่าระหว่างสองแบบ
