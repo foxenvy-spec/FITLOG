@@ -92,23 +92,37 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" style={{ overflow: 'visible' }} aria-hidden="true">
       <defs>
-        {/* filter แบบ native SVG (feGaussianBlur) แทน CSS style filter เดิม — เชื่อถือได้กว่าข้ามเบราว์เซอร์
-            stdDeviation ~2.6 ≈ blur 5-6px ตามที่ขอ, filter region ขยาย 300% กัน blur โดน bounding box ตัดขอบ */}
-        <filter id={`sparkline-glow-${glowId}`} x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="2.6" />
+        {/* 2 filter: อันแรก blur แคบ (ใกล้เส้น) อันที่สอง blur กว้างกว่า (ฟุ้งไกลกว่า) ซ้อนกัน
+            ให้ glow มีมิติ/รู้สึกได้ชัดขึ้นที่ขนาดกราฟจิ๋วนี้ โดยรวม opacity ยังต่ำเท่าเดิม ไม่รก */}
+        <filter id={`sparkline-glow-tight-${glowId}`} x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="2.2" />
+        </filter>
+        <filter id={`sparkline-glow-wide-${glowId}`} x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur stdDeviation="4.5" />
         </filter>
       </defs>
       <path d={areaPath} fill={color} fillOpacity={0.15} stroke="none" />
-      {/* เส้น glow เรืองแสงจางๆ (opacity 20%) อยู่หลังเส้นจริง สีเดียวกับเส้น ให้ความรู้สึกแบบ Apple Health */}
+      {/* glow ชั้นกว้าง (ฟุ้งไกล, opacity ต่ำสุด) วาดก่อน อยู่ล่างสุด */}
       <path
         d={linePath}
         fill="none"
         stroke={color}
-        strokeOpacity={0.2}
+        strokeOpacity={0.12}
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter={`url(#sparkline-glow-wide-${glowId})`}
+      />
+      {/* glow ชั้นชิด (สว่างกว่าเล็กน้อย, blur น้อยกว่า) อยู่หลังเส้นจริง สีเดียวกับเส้น */}
+      <path
+        d={linePath}
+        fill="none"
+        stroke={color}
+        strokeOpacity={0.25}
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
-        filter={`url(#sparkline-glow-${glowId})`}
+        filter={`url(#sparkline-glow-tight-${glowId})`}
       />
       <path d={linePath} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
