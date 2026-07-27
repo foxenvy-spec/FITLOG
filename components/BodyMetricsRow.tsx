@@ -265,6 +265,16 @@ export default function BodyMetricsRow() {
                 opacity: 0.12,
               }}
             />
+            {/* ลายน้ำไอคอนขนาดใหญ่จางๆ มุมขวาล่าง — ทดลองตามมอกอัพที่ขอ ถ้าไม่ชอบลบ block นี้ทิ้งได้เลย */}
+            <div aria-hidden="true" className="pointer-events-none absolute" style={{ right: -24, bottom: -24, width: 130, height: 130, opacity: 0.12 }}>
+              <Image
+                src={METRIC_ICON_IMAGES[c.icon]}
+                alt=""
+                width={130}
+                height={130}
+                className="w-full h-full object-contain"
+              />
+            </div>
 
             <div className="relative h-full">
               <p
