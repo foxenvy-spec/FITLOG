@@ -30,6 +30,7 @@ import {
   computeLatestPR,
   computeTopMuscleThisWeek,
   detectTodayActivity,
+  readinessStatusLabel,
   type Insight,
   type MuscleRecommendation,
   type VolumeIncrease,
@@ -708,14 +709,19 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <GoalRing
-              pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-              size={100}
-              strokeWidth={8}
-              color="#E8A33D"
-              label="ความพร้อม"
-              ariaLabel="ความพร้อมของวันนี้"
-            />
+            {(() => {
+              const readinessPct = progressPct ?? (totals.entryCount > 0 ? 100 : 0)
+              return (
+                <GoalRing
+                  pct={readinessPct}
+                  size={100}
+                  strokeWidth={8}
+                  color="#E8A33D"
+                  label={readinessStatusLabel(readinessPct)}
+                  ariaLabel={`ความพร้อมของวันนี้: ${readinessStatusLabel(readinessPct)}`}
+                />
+              )
+            })()}
           </div>
         </div>
       </div>
