@@ -230,7 +230,7 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="relative overflow-hidden rounded-lg flex flex-col justify-between h-[108px] 2xl:h-[128px]"
+            className="relative overflow-hidden rounded-lg flex flex-col justify-between h-[124px] 2xl:h-[128px]"
             style={{
               padding: '16px 18px 16px', // padding-top 16px ตามที่แนะนำ (จากที่เคยลองสูงกว่านี้)
               border: '1.5px solid transparent',
