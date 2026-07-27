@@ -296,17 +296,29 @@ export default function BodyMetricsRow() {
                 style={{ color: 'rgba(255,255,255,.88)' }}
               >
                 <span
-                  className="w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px]"
-                  style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40` }}
+                  className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px] overflow-hidden"
+                  style={{
+                    // gradient เข้ม→อ่อนตามธีมสี (แทนสีเรียบเดิม) + inner shadow 2 ทิศ (ไฮไลต์บนซ้าย, เงาล่างขวา)
+                    // จำลองพื้นผิวโค้งนูนแบบไอคอน iOS/glass icon แทนที่จะแบนราบ
+                    background: `linear-gradient(145deg, ${theme.main}, ${theme.second})`,
+                    boxShadow: `inset 0 1px rgba(255,255,255,.5), inset 0 -3px 6px rgba(0,0,0,.35), 0 0 15px ${theme.main}40`,
+                  }}
                   aria-hidden="true"
                 >
+                  {/* glass reflection: แถบไฮไลต์ทแยงมุมจางๆ พาดครึ่งบนของกล่อง ให้ความรู้สึกผิวมันวาวแบบกระจก */}
+                  <span
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.12) 35%, transparent 55%)',
+                    }}
+                  />
                   <Image
                     src={METRIC_ICON_IMAGES[c.icon]}
                     alt=""
                     width={38}
                     height={38}
-                    className="w-[38px] h-[38px] object-contain"
-                    style={{ filter: `drop-shadow(0 0 4px ${theme.main}CC)` }}
+                    className="relative w-[38px] h-[38px] object-contain"
+                    style={{ filter: `drop-shadow(0 1px 2px rgba(0,0,0,.35))` }}
                   />
                 </span>
                 {c.label}
