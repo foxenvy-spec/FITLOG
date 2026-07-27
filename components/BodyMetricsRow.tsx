@@ -63,7 +63,7 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
   const w = 64
   const h = 30
   const pad = 3 // กันเส้นชนขอบบน-ล่างตอนค่าสูงสุด/ต่ำสุด
-  const tension = 0.45
+  const tension = 0.6 // ยกจาก 0.45 ให้เส้นโค้งมนขึ้น (ลดความรู้สึกหักมุมแข็งๆ แบบเส้นตรงต่อกัน)
   const min = Math.min(...series)
   const max = Math.max(...series)
   const range = max - min || 1
@@ -91,7 +91,7 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-hidden="true">
       <path d={areaPath} fill={color} fillOpacity={0.15} stroke="none" />
-      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -230,8 +230,9 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="relative overflow-hidden rounded-lg px-4 py-4"
+            className="relative overflow-hidden rounded-lg"
             style={{
+              padding: 22, // เว้นพื้นที่รอบการ์ดมากขึ้นแทน px-4 py-4 (16px) เดิม ให้หายใจสะดวกขึ้น
               border: '1.5px solid transparent',
               // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
               // ชั้นนอกเป็นไล่สี main->second ของ theme วาดถึง border-box — ได้ผลลัพธ์เป็น "ขอบไล่สี"
@@ -239,8 +240,9 @@ export default function BodyMetricsRow() {
               backgroundImage: `linear-gradient(180deg, #13233A, #08121F), linear-gradient(90deg, ${theme.main}, ${theme.second})`,
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
-              // border หนาขึ้น + glow สองชั้น (ชิด + ฟุ้ง) แทน shadow บางชั้นเดียวเดิม
-              boxShadow: `0 0 10px ${theme.main}59, 0 0 30px ${theme.main}26`,
+              // 3 ชั้นซ้อนกัน: outer drop shadow (ยกการ์ดลอยจากพื้นหลัง) + inset highlight บนขอบบน (ผิวมีไฮไลต์)
+              // + glow สีธีมฟุ้งรอบนอก แทน shadow บางชั้นเดียวแบบเดิม
+              boxShadow: `0 12px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05), 0 0 25px ${theme.main}26, 0 0 10px ${theme.main}59`,
             }}
           >
             {/* ไล่เฉดจากมุมซ้ายบนซ้อนอยู่หลังเนื้อหา ช่วยให้พื้นหลังมีมิติแทนที่จะแบนทึบ */}
@@ -265,7 +267,10 @@ export default function BodyMetricsRow() {
             />
 
             <div className="relative">
-              <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
+              <p
+                className="flex items-center gap-2 text-[11px] mb-3.5"
+                style={{ color: 'rgba(255,255,255,.65)' }}
+              >
                 <span
                   className="w-[34px] h-[34px] shrink-0 inline-flex items-center justify-center rounded-[10px]"
                   style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40` }}
