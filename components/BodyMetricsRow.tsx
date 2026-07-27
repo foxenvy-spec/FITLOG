@@ -245,15 +245,18 @@ export default function BodyMetricsRow() {
             style={{
               padding: '16px 18px 12px', // ลด padding-bottom ลงอีกนิด ให้บรรทัดเดลต้าที่ถูกดันไปด้วย margin-top:auto ชิดขอบล่างเห็นผลชัดขึ้น
               border: '1.5px solid transparent',
-              // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
-              // ชั้นนอกเป็นไล่สี "เข้ม → อ่อน → เข้ม" (แทนที่จะเป็น main->second เรียบๆ 2 สี) วาดถึง border-box
-              // — ใช้ color-mix ผสม main กับสีขาว 55% เป็นสต็อปตรงกลางที่อ่อนกว่า ทำให้ขอบดูมีมิติ/แพงขึ้น
-              backgroundImage: `linear-gradient(180deg, #13233A, #08121F), linear-gradient(90deg, ${theme.main}, color-mix(in srgb, ${theme.main} 55%, white), ${theme.second})`,
+              // 4 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
+              // 1) ไล่สีเข้มพรีเมียมด้านใน วาดถึงแค่ padding-box (คือพื้นการ์ดจริง ทับซ่อนกลางของ 2-4 ไว้)
+              // 2) radial glow ที่มุมซ้ายบน (สี main) 3) radial glow ที่มุมขวาล่าง (สี second)
+              // 4) สีพื้นจางๆ สม่ำเสมอ กันไม่ให้ขอบตรงกลาง/มุมอื่นหายไปเป็นค่าว่างเปล่าเกินไป
+              // ผลคือขอบเรืองแสงชัดเฉพาะ 2 มุมตรงข้ามกัน แทนที่จะสว่างเท่ากันทั้ง 4 ด้านแบบเดิม
+              backgroundImage: `linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), ${theme.main}30`,
               backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
+              backgroundClip: 'padding-box, border-box, border-box, border-box',
               // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
-              // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + glow สีธีม 2 ระดับ (ฟุ้งกว้าง/ชิดขอบ)
-              boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 12px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05), 0 0 25px ${theme.main}26, 0 0 10px ${theme.main}59`,
+              // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + glow สีธีมเยื้อง offset ไปมุมซ้ายบน/ขวาล่าง
+              // (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
+              boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 12px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05), -6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
             }}
           >
             {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
