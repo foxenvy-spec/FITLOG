@@ -69,13 +69,11 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen bg-bg overflow-x-hidden safe-top safe-bottom">
-      {/* Hero photo — /public/images/login-hero.png.
+      {/* Hero photo — /public/images/login-hero.png (16:9, composed with safe margins so
+          background-size: cover never crops into the figures on typical screen ratios).
           Mobile: a fixed-height band across just the top of the page, fading into the flat
           bg-bg below so the form/features sit on solid ground.
-          Desktop/sm+: uses `cover` so the photo always fills the viewport edge-to-edge with no
-          black void on the sides — on very wide/ultra-wide windows this crops some off the top
-          and bottom of the figures, which is an acceptable trade-off vs. leaving visible bars
-          of flat background down the left/right edges. */}
+          Desktop/sm+: single `cover` layer — fills the viewport edge-to-edge with no void. */}
       <div
         className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden"
         style={{
