@@ -266,7 +266,7 @@ export default function BodyMetricsRow() {
               }}
             />
 
-            <div className="relative flex-1 flex flex-col justify-between min-h-0">
+            <div className="relative flex-1 flex flex-col min-h-0">
               <p
                 className="flex items-center gap-2 text-[11px]"
                 style={{ color: 'rgba(255,255,255,.65)' }}
@@ -287,7 +287,7 @@ export default function BodyMetricsRow() {
                 </span>
                 {c.label}
               </p>
-              <div className="flex items-center justify-between gap-2" style={{ marginTop: 8 }}>
+              <div className="flex items-center justify-between gap-2" style={{ marginTop: 2 }}>
                 <div className="min-w-0">
                   <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
                   {c.deltaText && (
