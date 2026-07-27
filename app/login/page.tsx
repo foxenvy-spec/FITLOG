@@ -19,6 +19,7 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (loading) return // pressing Enter fires form submit directly, bypassing the disabled submit button
     setError(null)
     setNotice(null)
     setLoading(true)
@@ -49,6 +50,7 @@ export default function LoginPage() {
   }
 
   async function handleForgotPassword() {
+    if (loading) return
     setError(null)
     setNotice(null)
     if (!email) {
@@ -71,11 +73,13 @@ export default function LoginPage() {
     <main className="relative min-h-screen bg-bg overflow-x-hidden safe-top safe-bottom">
       {/* Hero photo — /public/images/login-hero.png (16:9, composed with safe margins so
           background-size: cover never crops into the figures on typical screen ratios).
-          Mobile: a fixed-height band across just the top of the page, fading into the flat
-          bg-bg below so the form/features sit on solid ground.
+          Mobile: a height band across just the top of the page, fading into the flat
+          bg-bg below so the form/features sit on solid ground. Floor is 220px (not 400px)
+          so short-height viewports — landscape phones, ~350-400px tall — don't get a band
+          that eats the whole screen and pushes the login form below the fold.
           Desktop/sm+: single `cover` layer — fills the viewport edge-to-edge with no void. */}
       <div
-        className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden"
+        className="absolute inset-x-0 top-0 h-[clamp(220px,55vh,560px)] sm:hidden"
         style={{
           backgroundImage:
             "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
@@ -94,7 +98,7 @@ export default function LoginPage() {
         }}
       />
       {/* mobile-only fade from the hero band down into the flat background */}
-      <div className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
+      <div className="absolute inset-x-0 top-0 h-[clamp(220px,55vh,560px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
 
       <div className="relative z-10 flex flex-col items-center px-6 pt-10 pb-12 sm:min-h-screen sm:justify-start sm:pt-[clamp(1.5rem,7vh,4.5rem)] sm:pb-[clamp(0.5rem,2vh,1.5rem)]">
         {/* sm+ (desktop): every vertical gap below uses clamp(min, Nvh, max) instead of a fixed
@@ -123,10 +127,13 @@ export default function LoginPage() {
           <div className="rounded-2xl border border-line bg-bg/70 backdrop-blur-md shadow-hero p-6 sm:p-[clamp(0.75rem,2.2vh,1.5rem)]">
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-[clamp(0.4rem,1vh,0.75rem)]">
               <div className="relative">
+                <label htmlFor="login-email" className="sr-only">อีเมล</label>
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
                   <MailIcon />
                 </span>
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
                   required
                   value={email}
@@ -139,10 +146,13 @@ export default function LoginPage() {
               </div>
 
               <div className="relative">
+                <label htmlFor="login-password" className="sr-only">รหัสผ่าน</label>
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
                   <LockIcon />
                 </span>
                 <input
+                  id="login-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   minLength={6}
@@ -171,7 +181,7 @@ export default function LoginPage() {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="peer sr-only"
                   />
-                  <span className="w-4 h-4 rounded border border-line bg-surface flex items-center justify-center peer-checked:bg-amber peer-checked:border-amber transition">
+                  <span className="w-4 h-4 rounded border border-line bg-surface flex items-center justify-center peer-checked:bg-amber peer-checked:border-amber peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber transition">
                     {rememberMe && <CheckIcon />}
                   </span>
                   จดจำฉัน
@@ -180,7 +190,8 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={handleForgotPassword}
-                    className="text-amber hover:underline"
+                    disabled={loading}
+                    className="text-amber hover:underline disabled:opacity-50 disabled:pointer-events-none"
                   >
                     ลืมรหัสผ่าน?
                   </button>
@@ -188,10 +199,10 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p className="text-sm text-rusttext bg-rustdim/40 border border-rust/40 rounded-lg px-3 py-2">{error}</p>
+                <p role="alert" className="text-sm text-rusttext bg-rustdim/40 border border-rust/40 rounded-lg px-3 py-2">{error}</p>
               )}
               {notice && (
-                <p className="text-sm text-steel bg-steeldim/30 border border-steel/40 rounded-lg px-3 py-2">{notice}</p>
+                <p role="status" aria-live="polite" className="text-sm text-steel bg-steeldim/30 border border-steel/40 rounded-lg px-3 py-2">{notice}</p>
               )}
 
               <button
@@ -212,7 +223,8 @@ export default function LoginPage() {
                   setNotice(null)
                   setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
                 }}
-                className="text-xs text-muted whitespace-nowrap"
+                disabled={loading}
+                className="text-xs text-muted whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none"
               >
                 {mode === 'signin' ? (
                   <>ยังไม่มีบัญชี? <span className="text-amber font-medium">สมัครสมาชิก</span></>
