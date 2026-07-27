@@ -323,7 +323,7 @@ export default function BodyMetricsRow() {
                 style={{ color: 'rgba(255,255,255,.94)', fontWeight: 700 }}
               >
                 <span
-                  className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px] overflow-hidden"
+                  className="relative w-10 h-10 shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden"
                   style={{
                     // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                     // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -347,14 +347,14 @@ export default function BodyMetricsRow() {
                       background: 'radial-gradient(circle at 15% 15%, rgba(255,255,255,.3), transparent 80%)',
                     }}
                   />
-                  {/* ไอคอนเดิมเป็น PNG สีเดียวล้วน — recolor ด้วย CSS mask ให้เป็น gradient สว่าง(บน)→เข้ม(ล่าง)
-                      ตามสีธีมของการ์ดนั้นๆ (ไม่ได้เพิ่ม glow ใดๆ ตามที่ขอ แค่ไล่สีในตัวไอคอนเอง) */}
+                  {/* แนวทาง A: กลึบไอคอนเป็นสีขาว/อ่อนล้วน (แทนไล่สีธีมเดิมที่กลืนกับพื้นหลังธีมเดียวกัน) ตัดกับพื้นหลัง
+                      navy เข้มชัดเจนกว่าเดิมมาก โดยไม่ต้องเพิ่ม glow/shadow ใหม่ใดๆ — แค่เปลี่ยนสีของสิ่งที่มีอยู่แล้ว */}
                   <span
                     className="relative block"
                     style={{
-                      width: 38,
-                      height: 38,
-                      backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
+                      width: 30,
+                      height: 30,
+                      backgroundImage: 'linear-gradient(180deg, #FFFFFF, #D8DEE8)',
                       WebkitMaskImage: `url(${METRIC_ICON_IMAGES[c.icon]})`,
                       maskImage: `url(${METRIC_ICON_IMAGES[c.icon]})`,
                       WebkitMaskSize: 'contain',
