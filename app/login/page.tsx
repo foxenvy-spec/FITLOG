@@ -96,19 +96,22 @@ export default function LoginPage() {
       {/* mobile-only fade from the hero band down into the flat background */}
       <div className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden bg-gradient-to-b from-transparent via-transparent to-bg" />
 
-      <div className="relative z-10 flex flex-col items-center px-6 pt-10 pb-12 sm:min-h-screen sm:justify-center sm:py-[clamp(0.5rem,2vh,1.5rem)]">
+      <div className="relative z-10 flex flex-col items-center px-6 pt-10 pb-12 sm:min-h-screen sm:justify-start sm:pt-[clamp(1.5rem,7vh,4.5rem)] sm:pb-[clamp(0.5rem,2vh,1.5rem)]">
         {/* sm+ (desktop): every vertical gap below uses clamp(min, Nvh, max) instead of a fixed
             size, so the whole card+features stack shrinks automatically to fit short viewports
             (common on 14" laptops running 125–150% OS display scaling) without ever needing to
             scroll — while still capping out at the original, more spacious sizes on tall/large
-            monitors. Mobile keeps its original fixed sizes (mb-5, mt-2, etc. — no sm: prefix). */}
+            monitors. Mobile keeps its original fixed sizes (mb-5, mt-2, etc. — no sm: prefix).
+            justify-start + pt (instead of justify-center) pins the block nearer the top of the
+            viewport instead of dead-center, so the logo sits higher with more breathing room
+            below the feature grid. */}
         <div className="w-full max-w-sm">
           <div className="flex flex-col items-center mb-5 sm:mb-[clamp(0.5rem,1.4vh,1.25rem)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/logo.png"
               alt="FITLOG"
-              className="w-[110px] sm:w-[clamp(60px,8vh,125px)] h-auto select-none"
+              className="w-[130px] sm:w-[clamp(70px,10vh,155px)] h-auto select-none"
               draggable={false}
             />
             <p className="mt-1.5 sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
