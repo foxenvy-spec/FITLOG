@@ -72,13 +72,10 @@ export default function LoginPage() {
       {/* Hero photo — /public/images/login-hero.png.
           Mobile: a fixed-height band across just the top of the page, fading into the flat
           bg-bg below so the form/features sit on solid ground.
-          Desktop/sm+: a SEPARATE layer, scaled by height only (not `cover` on both axes) —
-          on wide 16:9-ish laptop screens, `cover` has to crop a lot off the top+bottom to fill
-          the extra width, which zoomed in past what the reference mockup showed (missing the
-          lower half of the dumbbells / more of each figure). Locking the scale to the
-          container's height keeps the full vertical frame — and therefore the full figures —
-          always visible, matching the reference; any leftover strip at the very left/right
-          edges blends into bg-bg since the photo is already near-black out there. */}
+          Desktop/sm+: uses `cover` so the photo always fills the viewport edge-to-edge with no
+          black void on the sides — on very wide/ultra-wide windows this crops some off the top
+          and bottom of the figures, which is an acceptable trade-off vs. leaving visible bars
+          of flat background down the left/right edges. */}
       <div
         className="absolute inset-x-0 top-0 h-[clamp(400px,55vh,560px)] sm:hidden"
         style={{
@@ -93,7 +90,7 @@ export default function LoginPage() {
         style={{
           backgroundImage:
             "radial-gradient(circle at 50% 40%, rgba(20,22,26,0.55) 0%, rgba(20,22,26,0.35) 30%, rgba(20,22,26,0.1) 55%, rgba(20,22,26,0) 80%), url('/images/login-hero.png')",
-          backgroundSize: 'auto 100%',
+          backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
         }}
