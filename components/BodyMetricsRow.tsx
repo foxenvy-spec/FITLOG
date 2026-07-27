@@ -293,7 +293,7 @@ export default function BodyMetricsRow() {
                   {c.deltaText && (
                     <p
                       className="text-[11px] font-semibold whitespace-nowrap flex items-center gap-1"
-                      style={{ color: c.deltaColor, marginTop: 6 }}
+                      style={{ color: c.deltaColor, marginTop: 10 }}
                     >
                       {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
                       {c.deltaText}
