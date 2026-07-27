@@ -550,10 +550,13 @@ export default function DashboardPage() {
           intentionally quieter (no shadow-hero, smaller type) so the eye has exactly one
           obvious place to land first. */}
       <div
-        className={`relative rounded-lg border border-amber/25 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
+        className={`relative rounded-lg border border-amber/60 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
-        style={totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }}
+        style={{
+          boxShadow: '0 0 14px #E8A33D40, 0 0 1px #E8A33D',
+          ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
+        }}
       >
         {/* decorative background — dark vignette + real photo on the right, faded into the
             card's own bg on the left so text stays readable. Photo lives at
@@ -656,16 +659,14 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div style={{ filter: 'drop-shadow(0 0 8px #E8A33D88)' }}>
-              <GoalRing
-                pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-                size={100}
-                strokeWidth={8}
-                color="#E8A33D"
-                label="ความพร้อม"
-                ariaLabel="ความพร้อมของวันนี้"
-              />
-            </div>
+            <GoalRing
+              pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
+              size={100}
+              strokeWidth={8}
+              color="#E8A33D"
+              label="ความพร้อม"
+              ariaLabel="ความพร้อมของวันนี้"
+            />
           </div>
         </div>
       </div>
