@@ -93,22 +93,28 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" style={{ overflow: 'visible' }} aria-hidden="true">
       <defs>
         {/* 2 filter: อันแรก blur แคบ (ใกล้เส้น) อันที่สอง blur กว้างกว่า (ฟุ้งไกลกว่า) ซ้อนกัน
-            ให้ glow มีมิติ/รู้สึกได้ชัดขึ้นที่ขนาดกราฟจิ๋วนี้ โดยรวม opacity ยังต่ำเท่าเดิม ไม่รก */}
+            ให้ glow มีมิติ/รู้สึกได้ชัดขึ้นที่ขนาดกราฟจิ๋วนี้ รวม opacity อยู่ในช่วง 15-20% ตามที่ขอ */}
         <filter id={`sparkline-glow-tight-${glowId}`} x="-100%" y="-100%" width="300%" height="300%">
           <feGaussianBlur stdDeviation="2.2" />
         </filter>
         <filter id={`sparkline-glow-wide-${glowId}`} x="-150%" y="-150%" width="400%" height="400%">
           <feGaussianBlur stdDeviation="4.5" />
         </filter>
+        {/* พื้นที่ใต้กราฟเป็น gradient จาง (เข้มใกล้เส้น ค่อยๆ จางหายไปด้านล่าง) แทนสีเรียบ fillOpacity เดิม
+            ให้เข้าชุดกับ icon/card ที่เป็น gradient ทั้งหมดแล้ว */}
+        <linearGradient id={`sparkline-area-${glowId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
       </defs>
-      <path d={areaPath} fill={color} fillOpacity={0.15} stroke="none" />
+      <path d={areaPath} fill={`url(#sparkline-area-${glowId})`} stroke="none" />
       {/* glow ชั้นกว้าง (ฟุ้งไกล, opacity ต่ำสุด) วาดก่อน อยู่ล่างสุด */}
       <path
         d={linePath}
         fill="none"
         stroke={color}
-        strokeOpacity={0.12}
-        strokeWidth="4"
+        strokeOpacity={0.15}
+        strokeWidth="4.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         filter={`url(#sparkline-glow-wide-${glowId})`}
@@ -118,13 +124,14 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
         d={linePath}
         fill="none"
         stroke={color}
-        strokeOpacity={0.25}
-        strokeWidth="3"
+        strokeOpacity={0.2}
+        strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         filter={`url(#sparkline-glow-tight-${glowId})`}
       />
-      <path d={linePath} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      {/* เส้นจริง หนาขึ้นจาก 3px เป็น 3.5px (+0.5px ตามที่ขอ) */}
+      <path d={linePath} fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -288,6 +295,13 @@ export default function BodyMetricsRow() {
               className="pointer-events-none absolute inset-0 rounded-lg"
               style={{ backgroundImage: `radial-gradient(circle at top left, ${theme.main}14, transparent 45%)` }}
             />
+            {/* ชั้นเพิ่มเติมบางเบามาก (opacity 4%) สีขาวล้วน (ไม่ใช่สีธีม) จากมุมซ้ายบน — เพิ่มมิติแบบผู้ใช้แทบไม่รู้ตัว
+                แยกจากชั้นสีธีมด้านบน เพราะอันนี้ให้ความรู้สึก "แสงทั่วไป" ไม่ใช่ "แสงจากไอคอน" */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 rounded-lg"
+              style={{ backgroundImage: `radial-gradient(circle at top left, rgba(255,255,255,.04), transparent 50%)` }}
+            />
             {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — blur กว้างขึ้น + opacity ~8% ตามที่ขอ ให้ดูลึกขึ้น */}
             <div
               aria-hidden="true"
@@ -306,7 +320,7 @@ export default function BodyMetricsRow() {
             <div className="relative h-full">
               <p
                 className="flex items-center gap-2 text-[11px] font-semibold"
-                style={{ color: 'rgba(255,255,255,.88)' }}
+                style={{ color: 'rgba(255,255,255,.94)', fontWeight: 650 }}
               >
                 <span
                   className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px] overflow-hidden"
@@ -330,7 +344,7 @@ export default function BodyMetricsRow() {
                     style={{
                       width: '65%',
                       height: '45%',
-                      background: 'radial-gradient(circle at 15% 15%, rgba(255,255,255,.55), transparent 70%)',
+                      background: 'radial-gradient(circle at 15% 15%, rgba(255,255,255,.3), transparent 80%)',
                     }}
                   />
                   {/* ไอคอนเดิมเป็น PNG สีเดียวล้วน — recolor ด้วย CSS mask ให้เป็น gradient สว่าง(บน)→เข้ม(ล่าง)
