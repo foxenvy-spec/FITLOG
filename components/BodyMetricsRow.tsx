@@ -300,7 +300,7 @@ export default function BodyMetricsRow() {
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 rounded-lg"
-              style={{ backgroundImage: `radial-gradient(circle at top left, rgba(255,255,255,.04), transparent 50%)` }}
+              style={{ backgroundImage: `radial-gradient(circle at top left, rgba(255,255,255,.03), transparent 50%)` }}
             />
             {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — blur กว้างขึ้น + opacity ~8% ตามที่ขอ ให้ดูลึกขึ้น */}
             <div
@@ -320,7 +320,7 @@ export default function BodyMetricsRow() {
             <div className="relative h-full">
               <p
                 className="flex items-center gap-2 text-[11px] font-semibold"
-                style={{ color: 'rgba(255,255,255,.94)', fontWeight: 650 }}
+                style={{ color: 'rgba(255,255,255,.94)', fontWeight: 700 }}
               >
                 <span
                   className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px] overflow-hidden"
