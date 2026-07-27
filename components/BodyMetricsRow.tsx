@@ -268,12 +268,12 @@ export default function BodyMetricsRow() {
 
             <div className="relative h-full">
               <p
-                className="flex items-center gap-2 text-[11px]"
-                style={{ color: 'rgba(255,255,255,.65)' }}
+                className="flex items-center gap-2 text-[11px] font-semibold"
+                style={{ color: 'rgba(255,255,255,.85)' }}
               >
                 <span
-                  className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px]"
-                  style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40`, top: -6, left: -4 }}
+                  className="w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px]"
+                  style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40` }}
                   aria-hidden="true"
                 >
                   <Image
@@ -287,22 +287,22 @@ export default function BodyMetricsRow() {
                 </span>
                 {c.label}
               </p>
-              {/* แถวตัวเลข+เดลต้า+กราฟ ตรึงด้วย position:absolute ชิดขอบล่าง/ซ้าย/ขวาของการ์ดโดยตรง
-                  แทนการพึ่ง margin-top:auto ในโครง flex ซ้อนกันหลายชั้น (ที่ผลลัพธ์ไม่นิ่งเวลาความสูงเนื้อหาใกล้เคียงความสูงการ์ด) */}
-              <div className="absolute left-0 right-0 bottom-0 flex items-end justify-between gap-2">
-                <div className="min-w-0">
+              {/* ตรึงด้วย position:absolute ชิดขอบล่าง/ซ้าย/ขวาของการ์ดโดยตรง แทนการพึ่ง margin-top:auto
+                  แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
+              <div className="absolute left-0 right-0 bottom-0">
+                <div className="flex items-center justify-between gap-2">
                   <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
-                  {c.deltaText && (
-                    <p
-                      className="text-[11px] font-semibold whitespace-nowrap flex items-center gap-1"
-                      style={{ color: c.deltaColor, marginTop: 6 }}
-                    >
-                      {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
-                      {c.deltaText}
-                    </p>
-                  )}
+                  <Sparkline series={c.series} color={theme.main} />
                 </div>
-                <Sparkline series={c.series} color={theme.main} />
+                {c.deltaText && (
+                  <p
+                    className="text-[11px] font-semibold whitespace-nowrap flex items-center gap-1"
+                    style={{ color: c.deltaColor, marginTop: 6 }}
+                  >
+                    {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
+                    {c.deltaText}
+                  </p>
+                )}
               </div>
             </div>
           </div>
