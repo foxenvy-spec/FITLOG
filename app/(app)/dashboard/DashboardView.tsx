@@ -29,6 +29,7 @@ import {
   getNextScheduledMuscle,
   computeLatestPR,
   computeTopMuscleThisWeek,
+  detectTodayActivity,
   type Insight,
   type MuscleRecommendation,
   type VolumeIncrease,
@@ -476,7 +477,13 @@ export default function DashboardPage() {
   // เวลาที่ใช้จริงยังไม่มีจนกว่าจะเริ่มบันทึก (totals.durationMin เป็น null) — ระหว่างนั้นประมาณคร่าวๆ
   // จากจำนวนเซ็ต (ราว 1.5 นาที/เซ็ต รวมพักระหว่างเซ็ต) แค่ให้พอเห็นภาพ ไม่ใช่ตัวเลขแม่นยำ
   const estimatedMinutes = Math.max(10, Math.round((plannedTotalSets * 1.5) / 5) * 5)
-  const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
+  // ถ้าวันนี้ไม่มีโปรแกรมกำหนดไว้ ลองเดาว่าเป็นกิจกรรมอะไรจาก workouts ที่บันทึกไปแล้ว
+  // (เช่น cardio_type ที่ AI อ่านได้ตอน import รูป) แทนที่จะใช้ชื่อ "บันทึกอิสระ" ตายตัวทุกครั้ง
+  const todayActivity = useMemo(
+    () => (scheduledDay ? null : detectTodayActivity(data?.todayWorkouts ?? [])),
+    [scheduledDay, data?.todayWorkouts]
+  )
+  const workoutTitle = scheduledDay?.title ?? todayActivity?.title ?? null
   // % ความคืบหน้าที่ใช้กับข้อความแนะนำกล้ามเนื้อ (recoveryRecommendationLabel) — เหมือน progressPct
   // ของ ring ด้านบน แต่ถ้าวันนี้ไม่มีแผนกำหนดไว้ (บันทึกอิสระ) ให้ถือว่า 100% เมื่อมี log อย่างน้อย 1 รายการ
   const recoveryLabelPct =
@@ -592,7 +599,7 @@ export default function DashboardPage() {
 
         <div className="relative z-10 px-5 py-6">
           <p className="text-[10px] tracked uppercase text-muted flex items-center gap-1.5">
-            <span aria-hidden="true">🔥</span> Today&apos;s Workout
+            <span aria-hidden="true">{todayActivity?.icon ?? '🔥'}</span> Today&apos;s Workout
           </p>
 
           <div className="mt-4 flex items-center justify-between gap-4">
@@ -619,20 +626,52 @@ export default function DashboardPage() {
               )}
 
               <div className="flex items-center gap-4 mt-3 flex-wrap">
-                <div>
-                  <p className="font-mono text-lg text-ink leading-none">{data.todayExercises.length || totals.entryCount}</p>
-                  <p className="text-[10px] text-muted mt-0.5">Exercises</p>
-                </div>
-                <div>
-                  <p className="font-mono text-lg text-ink leading-none">{plannedTotalSets}</p>
-                  <p className="text-[10px] text-muted mt-0.5">Sets</p>
-                </div>
-                <div>
-                  <p className="font-mono text-lg text-ink leading-none">
-                    {totals.durationMin !== null ? Math.round(totals.durationMin) : `~${estimatedMinutes}`}
-                  </p>
-                  <p className="text-[10px] text-muted mt-0.5">นาที</p>
-                </div>
+                {todayActivity?.isCardio ? (
+                  <>
+                    {(() => {
+                      const cardio = (data?.todayWorkouts ?? []).find((w) => w.type === 'cardio')
+                      return (
+                        <>
+                          <div>
+                            <p className="font-mono text-lg text-ink leading-none">
+                              {cardio?.distance_km !== null && cardio?.distance_km !== undefined ? cardio.distance_km : '—'}
+                            </p>
+                            <p className="text-[10px] text-muted mt-0.5">km</p>
+                          </div>
+                          <div>
+                            <p className="font-mono text-lg text-ink leading-none">
+                              {totals.durationMin !== null ? Math.round(totals.durationMin) : `~${estimatedMinutes}`}
+                            </p>
+                            <p className="text-[10px] text-muted mt-0.5">นาที</p>
+                          </div>
+                          <div>
+                            <p className="font-mono text-lg text-ink leading-none">
+                              {cardio?.calories_kcal !== null && cardio?.calories_kcal !== undefined ? cardio.calories_kcal : '—'}
+                            </p>
+                            <p className="text-[10px] text-muted mt-0.5">kcal</p>
+                          </div>
+                        </>
+                      )
+                    })()}
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <p className="font-mono text-lg text-ink leading-none">{data.todayExercises.length || totals.entryCount}</p>
+                      <p className="text-[10px] text-muted mt-0.5">Exercises</p>
+                    </div>
+                    <div>
+                      <p className="font-mono text-lg text-ink leading-none">{plannedTotalSets}</p>
+                      <p className="text-[10px] text-muted mt-0.5">Sets</p>
+                    </div>
+                    <div>
+                      <p className="font-mono text-lg text-ink leading-none">
+                        {totals.durationMin !== null ? Math.round(totals.durationMin) : `~${estimatedMinutes}`}
+                      </p>
+                      <p className="text-[10px] text-muted mt-0.5">นาที</p>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* กล้ามเนื้อที่เทรนวันนี้ — ฝังเป็นชิปเล็กในการ์ดนี้เลย แทนที่จะแยกเป็นการ์ดใหญ่
@@ -651,7 +690,7 @@ export default function DashboardPage() {
                   href="/log"
                   className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition"
                 >
-                  เริ่มเทรนเลย <span aria-hidden="true">▶</span>
+                  {todayActivity?.buttonLabel ?? 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
                 </Link>
               )}
 
