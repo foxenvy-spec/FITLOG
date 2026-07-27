@@ -232,7 +232,7 @@ export default function BodyMetricsRow() {
             key={c.key}
             className="relative overflow-hidden rounded-lg"
             style={{
-              padding: 22, // เว้นพื้นที่รอบการ์ดมากขึ้นแทน px-4 py-4 (16px) เดิม ให้หายใจสะดวกขึ้น
+              padding: '16px 18px', // ลดจาก 22px รอบด้าน ให้เนื้อหาไม่ถูกันแน่นเกินไปในการ์ดเตี้ย
               border: '1.5px solid transparent',
               // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
               // ชั้นนอกเป็นไล่สี main->second ของ theme วาดถึง border-box — ได้ผลลัพธ์เป็น "ขอบไล่สี"
@@ -256,19 +256,19 @@ export default function BodyMetricsRow() {
               aria-hidden="true"
               className="pointer-events-none absolute rounded-full"
               style={{
-                width: 140,
-                height: 140,
-                left: -60,
-                top: -60,
+                width: 90,
+                height: 90,
+                left: -40,
+                top: -40,
                 background: theme.main,
-                filter: 'blur(65px)',
-                opacity: 0.16,
+                filter: 'blur(40px)',
+                opacity: 0.12,
               }}
             />
 
             <div className="relative">
               <p
-                className="flex items-center gap-2 text-[11px] mb-3.5"
+                className="flex items-center gap-2 text-[11px]"
                 style={{ color: 'rgba(255,255,255,.65)' }}
               >
                 <span
@@ -287,18 +287,24 @@ export default function BodyMetricsRow() {
                 </span>
                 {c.label}
               </p>
-              <div className="flex items-end justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-mono text-2xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
-                  {c.deltaText && (
-                    <p className="text-[11px] mt-2 flex items-center gap-1" style={{ color: c.deltaColor }}>
-                      {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
-                      {c.deltaText}
-                    </p>
-                  )}
-                </div>
-                <Sparkline series={c.series} color={theme.main} />
+              {/* pr-14: กันไม่ให้ตัวเลข/เดลต้าไปทับกราฟที่ลอยอยู่มุมขวาล่างแบบ absolute ด้านล่าง */}
+              <div className="min-w-0 pr-14" style={{ marginTop: 8 }}>
+                <p className="font-mono text-2xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
+                {c.deltaText && (
+                  <p
+                    className="text-[11px] flex items-center gap-1"
+                    style={{ color: c.deltaColor, marginTop: 6 }}
+                  >
+                    {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
+                    {c.deltaText}
+                  </p>
+                )}
               </div>
+            </div>
+            {/* กราฟจิ๋วลอยเป็น absolute มุมขวาล่างของการ์ด แยกออกจาก flow เดิม
+                จะได้ไม่ดันข้อความ/เดลต้าให้ต่ำลงเวลาข้อความสั้นหรือยาวไม่เท่ากัน */}
+            <div className="absolute" style={{ right: 16, bottom: 12 }}>
+              <Sparkline series={c.series} color={theme.main} />
             </div>
           </div>
         )
