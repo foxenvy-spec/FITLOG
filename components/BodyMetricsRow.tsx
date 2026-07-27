@@ -287,7 +287,7 @@ export default function BodyMetricsRow() {
                 </span>
                 {c.label}
               </p>
-              <div className="flex items-center justify-between gap-2" style={{ marginTop: 2 }}>
+              <div className="flex items-center justify-between gap-2" style={{ marginTop: 'auto' }}>
                 <div className="min-w-0">
                   <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
                   {c.deltaText && (
