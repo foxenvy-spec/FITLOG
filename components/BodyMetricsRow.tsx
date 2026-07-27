@@ -19,6 +19,16 @@ const METRIC_ICON_IMAGES: Record<MetricIconImageKey, string> = {
   bmi: '/icons/bmi.png',
 }
 
+// glow สีล้อตามไอคอนของแต่ละการ์ด (เขียว/แดง-ชมพู/เขียว/ส้ม/ฟ้า) ตามมอคอัพ v3 —
+// ใช้ทั้งกับ border และ box-shadow เพื่อให้แต่ละใบมีสีเฉพาะตัวแทนขอบเทาเรียบแบบเดิม
+const METRIC_GLOW_COLORS: Record<MetricIconImageKey, string> = {
+  weight: '#34D399',
+  bodyFat: '#FB7185',
+  muscle: '#4ADE80',
+  fatMass: '#FB923C',
+  bmi: '#60A5FA',
+}
+
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
 // dedupes by key — sharing this avoids a second network round-trip for the same data)
 export const BODY_METRICS_QUERY_KEY = ['body-metrics-summary']
@@ -154,23 +164,30 @@ export default function BodyMetricsRow() {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {cards.map((c) => (
-        <div key={c.key} className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-4">
-          <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
-            <span className="w-6 h-6 shrink-0 inline-block" aria-hidden="true">
-              <Image src={METRIC_ICON_IMAGES[c.icon]} alt="" width={24} height={24} className="w-full h-full object-contain" />
-            </span>
-            {c.label}
-          </p>
-          <p className="font-mono text-xl text-ink">{c.valueText}</p>
-          {c.deltaText && (
-            <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: c.deltaColor }}>
-              {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
-              {c.deltaText}
+      {cards.map((c) => {
+        const glow = METRIC_GLOW_COLORS[c.icon]
+        return (
+          <div
+            key={c.key}
+            className="rounded-lg bg-surface border shadow-elevated px-4 py-4"
+            style={{ borderColor: glow + '4D', boxShadow: `0 0 10px ${glow}33` }}
+          >
+            <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
+              <span className="w-6 h-6 shrink-0 inline-block" aria-hidden="true">
+                <Image src={METRIC_ICON_IMAGES[c.icon]} alt="" width={24} height={24} className="w-full h-full object-contain" />
+              </span>
+              {c.label}
             </p>
-          )}
-        </div>
-      ))}
+            <p className="font-mono text-xl text-ink">{c.valueText}</p>
+            {c.deltaText && (
+              <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: c.deltaColor }}>
+                {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
+                {c.deltaText}
+              </p>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
