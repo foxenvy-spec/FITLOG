@@ -17,7 +17,7 @@ export function bmiCategory(bmi: number): string {
 // เขียวเมื่ออยู่ในเกณฑ์ปกติ, อำพันเมื่อสูง/ต่ำกว่าเล็กน้อย, แดงเมื่อเสี่ยง
 export function bmiCategoryColor(bmi: number): string {
   if (bmi < 18.5) return '#E8A33D'
-  if (bmi < 25) return '#7A9B57'
+  if (bmi < 25) return '#8CB264'
   if (bmi < 30) return '#E8A33D'
   return '#C1503A'
 }
