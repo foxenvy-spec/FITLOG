@@ -656,13 +656,16 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <GoalRing
-              pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-              size={100}
-              strokeWidth={8}
-              label="ความพร้อม"
-              ariaLabel="ความพร้อมของวันนี้"
-            />
+            <div style={{ filter: 'drop-shadow(0 0 8px #E8A33D88)' }}>
+              <GoalRing
+                pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
+                size={100}
+                strokeWidth={8}
+                color="#E8A33D"
+                label="ความพร้อม"
+                ariaLabel="ความพร้อมของวันนี้"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -746,14 +749,18 @@ export default function DashboardPage() {
                     )
                     return (
                       <div className="flex items-center gap-4">
-                        <GoalRing
-                          pct={overallRecoveryPct}
-                          size={84}
-                          strokeWidth={8}
-                          color={recoveryStatusColor(overallRecoveryPct)}
-                          label="พื้นตัวรวม"
-                          ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
-                        />
+                        {/* สีฟ้าไซแอน + glow ตามมอคอัพ v3 — เดิมใช้ recoveryStatusColor() ที่เปลี่ยนสีตามเปอร์เซ็นต์
+                            (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ */}
+                        <div style={{ filter: 'drop-shadow(0 0 8px #22D3EE88)' }}>
+                          <GoalRing
+                            pct={overallRecoveryPct}
+                            size={84}
+                            strokeWidth={8}
+                            color="#22D3EE"
+                            label="พื้นตัวรวม"
+                            ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
+                          />
+                        </div>
                         <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
                           {RECOVERY_MUSCLES.map((mg) => {
                             const pct = recoveryPctMap[mg]
