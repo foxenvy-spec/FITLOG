@@ -230,39 +230,70 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="rounded-lg px-4 py-4"
+            className="relative overflow-hidden rounded-lg px-4 py-4"
             style={{
               border: '1.5px solid transparent',
-              // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (แทนพื้นดำล้วน) วาดถึงแค่ padding-box
+              // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
               // ชั้นนอกเป็นไล่สี main->second ของ theme วาดถึง border-box — ได้ผลลัพธ์เป็น "ขอบไล่สี"
               // รอบการ์ด โดยไม่ต้องแก้ CSS อื่นเลย แค่เปลี่ยนค่า main/second ต่อการ์ด
-              backgroundImage: `linear-gradient(180deg, rgba(20,28,45,.95), rgba(8,12,20,.98)), linear-gradient(90deg, ${theme.main}, ${theme.second})`,
+              backgroundImage: `linear-gradient(180deg, #13233A, #08121F), linear-gradient(90deg, ${theme.main}, ${theme.second})`,
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
-              boxShadow: `0 0 10px ${theme.main}33`,
+              // border หนาขึ้น + glow สองชั้น (ชิด + ฟุ้ง) แทน shadow บางชั้นเดียวเดิม
+              boxShadow: `0 0 10px ${theme.main}59, 0 0 30px ${theme.main}26`,
             }}
           >
-            <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
-              <span
-                className="w-8 h-8 shrink-0 inline-block"
-                style={{ filter: `drop-shadow(0 0 4px ${theme.main}CC)` }}
-                aria-hidden="true"
-              >
-                <Image src={METRIC_ICON_IMAGES[c.icon]} alt="" width={32} height={32} className="w-full h-full object-contain" />
-              </span>
-              {c.label}
-            </p>
-            <div className="flex items-end justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-mono text-xl text-ink">{c.valueText}</p>
-                {c.deltaText && (
-                  <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: c.deltaColor }}>
-                    {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
-                    {c.deltaText}
-                  </p>
-                )}
+            {/* ไล่เฉดจากมุมซ้ายบนซ้อนอยู่หลังเนื้อหา ช่วยให้พื้นหลังมีมิติแทนที่จะแบนทึบ */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 rounded-lg"
+              style={{ backgroundImage: `radial-gradient(circle at top left, ${theme.main}14, transparent 45%)` }}
+            />
+            {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute rounded-full"
+              style={{
+                width: 140,
+                height: 140,
+                left: -60,
+                top: -60,
+                background: theme.main,
+                filter: 'blur(65px)',
+                opacity: 0.16,
+              }}
+            />
+
+            <div className="relative">
+              <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
+                <span
+                  className="w-[34px] h-[34px] shrink-0 inline-flex items-center justify-center rounded-[10px]"
+                  style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40` }}
+                  aria-hidden="true"
+                >
+                  <Image
+                    src={METRIC_ICON_IMAGES[c.icon]}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 object-contain"
+                    style={{ filter: `drop-shadow(0 0 4px ${theme.main}CC)` }}
+                  />
+                </span>
+                {c.label}
+              </p>
+              <div className="flex items-end justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-mono text-2xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
+                  {c.deltaText && (
+                    <p className="text-[11px] mt-2 flex items-center gap-1" style={{ color: c.deltaColor }}>
+                      {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
+                      {c.deltaText}
+                    </p>
+                  )}
+                </div>
+                <Sparkline series={c.series} color={theme.main} />
               </div>
-              <Sparkline series={c.series} color={theme.main} />
             </div>
           </div>
         )
