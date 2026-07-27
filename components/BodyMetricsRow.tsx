@@ -298,11 +298,14 @@ export default function BodyMetricsRow() {
                 <span
                   className="relative w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-[12px] overflow-hidden"
                   style={{
-                    // ฐานเป็นกระจกเข้มเป็นกลาง (ไม่ใช่ theme สีสดเต็มกล่องแบบเดิม) + จุดสีธีมจางๆ ที่มุมบนซ้าย
-                    // แค่ "แต้ม" สี ไม่ "ย้อม" ทั้งกล่อง ไอคอนสีสดที่วางทับด้านบนจะได้เด่นแยกออกจากพื้นหลังชัดเจน
-                    background: `linear-gradient(145deg, #1C2333, #0D1220)`,
-                    backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), linear-gradient(145deg, #1C2333, #0D1220)`,
-                    boxShadow: `inset 0 1px rgba(255,255,255,.35), inset 0 -3px 6px rgba(0,0,0,.4), 0 0 15px ${theme.main}40`,
+                    // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
+                    // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
+                    // + จุดสีธีมจางๆ ที่มุมบนซ้าย เป็นการ "แต้ม" สี ไม่ใช่ "ย้อม" ทั้งกล่อง
+                    background: `linear-gradient(180deg, #232C40, #0A0E18)`,
+                    backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), linear-gradient(180deg, #232C40, #0A0E18)`,
+                    // ลด glow รอบกล่องลง ~20% (จาก alpha 40 hex เหลือ 33 hex) ไม่ให้แข่งความสนใจกับตัวเลข (value)
+                    // เพิ่ม inset shadow ด้านล่างให้เข้มขึ้นอีกนิด คู่กับ background ที่ contrast มากขึ้นแล้ว
+                    boxShadow: `inset 0 1px rgba(255,255,255,.35), inset 0 -3px 6px rgba(0,0,0,.5), 0 0 15px ${theme.main}33`,
                   }}
                   aria-hidden="true"
                 >
