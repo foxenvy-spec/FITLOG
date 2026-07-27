@@ -141,6 +141,14 @@ function fmtSigned(n: number, decimals: number, suffix: string): string {
   return `${sign}${n.toFixed(decimals)}${suffix}`
 }
 
+// แยก "65.4 kg" หรือ "24.2 %" ออกเป็นตัวเลข + หน่วย (แยกที่ช่องว่างแรก) เพื่อให้ใส่ font-weight/ขนาด
+// ต่างกันได้ (ตัวเลขหนัก 800 เด่นกว่า, หน่วยเบา 500 เล็กกว่า) — ถ้าไม่มีช่องว่างเลย (เช่น BMI "23.2") ให้ unit เป็นค่าว่าง
+function splitValueUnit(text: string): { num: string; unit: string } {
+  const spaceIdx = text.indexOf(' ')
+  if (spaceIdx === -1) return { num: text, unit: '' }
+  return { num: text.slice(0, spaceIdx), unit: text.slice(spaceIdx + 1) }
+}
+
 export default function BodyMetricsRow() {
   const supabase = createClient()
   const { toDisplay, unit } = useWeightUnit()
@@ -323,7 +331,7 @@ export default function BodyMetricsRow() {
                 style={{ color: 'rgba(255,255,255,.94)', fontWeight: 700 }}
               >
                 <span
-                  className="relative w-10 h-10 shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden"
+                  className="relative w-[42px] h-[42px] shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden"
                   style={{
                     // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                     // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -347,14 +355,14 @@ export default function BodyMetricsRow() {
                       background: 'radial-gradient(circle at 15% 15%, rgba(255,255,255,.3), transparent 80%)',
                     }}
                   />
-                  {/* แนวทาง A: กลึบไอคอนเป็นสีขาว/อ่อนล้วน (แทนไล่สีธีมเดิมที่กลืนกับพื้นหลังธีมเดียวกัน) ตัดกับพื้นหลัง
-                      navy เข้มชัดเจนกว่าเดิมมาก โดยไม่ต้องเพิ่ม glow/shadow ใหม่ใดๆ — แค่เปลี่ยนสีของสิ่งที่มีอยู่แล้ว */}
+                  {/* ไอคอนเดิมเป็น PNG สีเดียวล้วน — recolor ด้วย CSS mask ให้เป็น gradient สว่าง(บน)→เข้ม(ล่าง)
+                      ตามสีธีมของการ์ดนั้นๆ (ไม่ได้เพิ่ม glow ใดๆ ตามที่ขอ แค่ไล่สีในตัวไอคอนเอง) */}
                   <span
                     className="relative block"
                     style={{
-                      width: 30,
-                      height: 30,
-                      backgroundImage: 'linear-gradient(180deg, #FFFFFF, #D8DEE8)',
+                      width: 38,
+                      height: 38,
+                      backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                       WebkitMaskImage: `url(${METRIC_ICON_IMAGES[c.icon]})`,
                       maskImage: `url(${METRIC_ICON_IMAGES[c.icon]})`,
                       WebkitMaskSize: 'contain',
@@ -373,7 +381,12 @@ export default function BodyMetricsRow() {
                   แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
               <div className="absolute left-0 right-0 bottom-0">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
+                  <p className="font-mono text-xl tracking-tight leading-none text-ink">
+                    <span style={{ fontWeight: 800 }}>{splitValueUnit(c.valueText).num}</span>
+                    {splitValueUnit(c.valueText).unit && (
+                      <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(c.valueText).unit}</span>
+                    )}
+                  </p>
                   <Sparkline series={c.series} color={theme.main} />
                 </div>
                 {c.deltaText && (
