@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useId } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
@@ -303,28 +302,41 @@ export default function BodyMetricsRow() {
                     // + จุดสีธีมจางๆ ที่มุมบนซ้าย เป็นการ "แต้ม" สี ไม่ใช่ "ย้อม" ทั้งกล่อง
                     background: `linear-gradient(180deg, #232C40, #0A0E18)`,
                     backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), linear-gradient(180deg, #232C40, #0A0E18)`,
-                    // ลด glow รอบกล่องลง ~20% (จาก alpha 40 hex เหลือ 33 hex) ไม่ให้แข่งความสนใจกับตัวเลข (value)
-                    // เพิ่ม inset shadow ด้านล่างให้เข้มขึ้นอีกนิด คู่กับ background ที่ contrast มากขึ้นแล้ว
-                    boxShadow: `inset 0 1px rgba(255,255,255,.35), inset 0 -3px 6px rgba(0,0,0,.5), 0 0 15px ${theme.main}33`,
+                    // border บาง 1px สีธีม (คมชัด แทนเส้นหนาๆ) + inset highlight ลดความสว่างลง (.35→.15) ให้เป็น
+                    // แค่ "ผิวมัน" บางๆ ไม่ใช่เส้นขอบขาวหนา ปล่อยให้ glow ด้านนอกทำหน้าที่เน้นความเด่นแทน
+                    border: `1px solid ${theme.main}55`,
+                    boxShadow: `inset 0 1px rgba(255,255,255,.15), inset 0 -3px 6px rgba(0,0,0,.5), 0 0 15px ${theme.main}33`,
                   }}
                   aria-hidden="true"
                 >
-                  {/* glass reflection: แถบไฮไลต์บางๆ เฉพาะ "แถบบนสุด" ของกล่องเท่านั้น (ไม่ทแยงผ่านกลางไอคอนแล้ว)
-                      ป้องกันไม่ให้ไปทับตัวไอคอนจนดูเหมือนคราบเปื้อนแบบก่อนหน้า */}
+                  {/* glass reflection: ย้ายจากแถบเต็มความกว้างด้านบน มาเป็นจุดไฮไลต์เล็กๆ แค่มุมซ้ายบน (~15-20% ของพื้นที่)
+                      จำลองแสงตกกระทบจากมุมเดียวแบบของจริง แทนที่จะสว่างเท่ากันทั้งแถบบน */}
                   <span
-                    className="pointer-events-none absolute inset-x-0 top-0"
+                    className="pointer-events-none absolute top-0 left-0"
                     style={{
+                      width: '65%',
                       height: '45%',
-                      background: 'linear-gradient(180deg, rgba(255,255,255,.28), transparent)',
+                      background: 'radial-gradient(circle at 15% 15%, rgba(255,255,255,.55), transparent 70%)',
                     }}
                   />
-                  <Image
-                    src={METRIC_ICON_IMAGES[c.icon]}
-                    alt=""
-                    width={38}
-                    height={38}
-                    className="relative w-[38px] h-[38px] object-contain"
-                    style={{ filter: `drop-shadow(0 1px 2px rgba(0,0,0,.5))` }}
+                  {/* ไอคอนเดิมเป็น PNG สีเดียวล้วน — recolor ด้วย CSS mask ให้เป็น gradient สว่าง(บน)→เข้ม(ล่าง)
+                      ตามสีธีมของการ์ดนั้นๆ (ไม่ได้เพิ่ม glow ใดๆ ตามที่ขอ แค่ไล่สีในตัวไอคอนเอง) */}
+                  <span
+                    className="relative block"
+                    style={{
+                      width: 38,
+                      height: 38,
+                      backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
+                      WebkitMaskImage: `url(${METRIC_ICON_IMAGES[c.icon]})`,
+                      maskImage: `url(${METRIC_ICON_IMAGES[c.icon]})`,
+                      WebkitMaskSize: 'contain',
+                      maskSize: 'contain',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskPosition: 'center',
+                      maskPosition: 'center',
+                      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.5))',
+                    }}
                   />
                 </span>
                 {c.label}
