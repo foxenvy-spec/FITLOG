@@ -289,7 +289,7 @@ export default function BodyMetricsRow() {
               </p>
               {/* pr-14: กันไม่ให้ตัวเลข/เดลต้าไปทับกราฟที่ลอยอยู่มุมขวาล่างแบบ absolute ด้านล่าง */}
               <div className="min-w-0 pr-14" style={{ marginTop: 8 }}>
-                <p className="font-mono text-2xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
+                <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
                 {c.deltaText && (
                   <p
                     className="text-[11px] flex items-center gap-1"
