@@ -232,7 +232,7 @@ export default function BodyMetricsRow() {
             key={c.key}
             className="relative overflow-hidden rounded-lg"
             style={{
-              padding: '16px 18px', // ลดจาก 22px รอบด้าน ให้เนื้อหาไม่ถูกันแน่นเกินไปในการ์ดเตี้ย
+              padding: '14px 18px 16px', // ลด padding-top ลงอีกนิด ให้แถวไอคอน+ชื่อขยับขึ้นชิดขอบบนของการ์ดมากขึ้น
               border: '1.5px solid transparent',
               // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
               // ชั้นนอกเป็นไล่สี main->second ของ theme วาดถึง border-box — ได้ผลลัพธ์เป็น "ขอบไล่สี"
@@ -272,16 +272,16 @@ export default function BodyMetricsRow() {
                 style={{ color: 'rgba(255,255,255,.65)' }}
               >
                 <span
-                  className="w-[34px] h-[34px] shrink-0 inline-flex items-center justify-center rounded-[10px]"
+                  className="w-7 h-7 shrink-0 inline-flex items-center justify-center rounded-[8px]"
                   style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40` }}
                   aria-hidden="true"
                 >
                   <Image
                     src={METRIC_ICON_IMAGES[c.icon]}
                     alt=""
-                    width={20}
-                    height={20}
-                    className="w-5 h-5 object-contain"
+                    width={16}
+                    height={16}
+                    className="w-4 h-4 object-contain"
                     style={{ filter: `drop-shadow(0 0 4px ${theme.main}CC)` }}
                   />
                 </span>
