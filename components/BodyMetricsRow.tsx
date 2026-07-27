@@ -306,7 +306,6 @@ export default function BodyMetricsRow() {
               </div>
             </div>
           </div>
-          </div>
         )
       })}
     </div>
