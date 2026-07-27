@@ -273,7 +273,7 @@ export default function BodyMetricsRow() {
               >
                 <span
                   className="relative w-7 h-7 shrink-0 inline-flex items-center justify-center rounded-[8px]"
-                  style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40`, top: -4 }}
+                  style={{ background: `${theme.main}1F`, boxShadow: `0 0 15px ${theme.main}40`, top: -6, left: -4 }}
                   aria-hidden="true"
                 >
                   <Image
