@@ -289,7 +289,7 @@ export default function BodyMetricsRow() {
               </p>
               {/* แถวตัวเลข+เดลต้า+กราฟ ตรึงด้วย position:absolute ชิดขอบล่าง/ซ้าย/ขวาของการ์ดโดยตรง
                   แทนการพึ่ง margin-top:auto ในโครง flex ซ้อนกันหลายชั้น (ที่ผลลัพธ์ไม่นิ่งเวลาความสูงเนื้อหาใกล้เคียงความสูงการ์ด) */}
-              <div className="absolute left-0 right-0 bottom-0 flex items-center justify-between gap-2" style={{ background: 'red' }}>
+              <div className="absolute left-0 right-0 bottom-0 flex items-end justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-mono text-xl font-bold tracking-tight leading-none text-ink">{c.valueText}</p>
                   {c.deltaText && (
