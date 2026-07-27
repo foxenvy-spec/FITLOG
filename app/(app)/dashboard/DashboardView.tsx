@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -626,31 +627,31 @@ export default function DashboardPage() {
               <TodayMuscleChips todayWorkouts={data.todayWorkouts} />
 
               {scheduledDay ? (
-                <a
+                <Link
                   href="/session"
                   className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition"
                 >
                   {totals.entryCount > 0 ? 'ไปต่อ' : 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
-                </a>
+                </Link>
               ) : (
-                <a
+                <Link
                   href="/log"
                   className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition"
                 >
                   เริ่มเทรนเลย <span aria-hidden="true">▶</span>
-                </a>
+                </Link>
               )}
 
               {!scheduledDay && (
                 <p className="text-[11px] text-muted mt-2">
                   ยังไม่มีโปรแกรมวันนี้ —{' '}
-                  <a href="/program" className="text-amber hover:underline">
+                  <Link href="/program" className="text-amber hover:underline">
                     ตั้งโปรแกรม
-                  </a>{' '}
+                  </Link>{' '}
                   หรือ{' '}
-                  <a href="/templates" className="text-amber hover:underline">
+                  <Link href="/templates" className="text-amber hover:underline">
                     เริ่มจากเทมเพลต
-                  </a>
+                  </Link>
                 </p>
               )}
             </div>
@@ -670,7 +671,7 @@ export default function DashboardPage() {
           ไม่รู้จะกดอะไรต่อ ต่างจาก quick actions ชุดล่างที่เป็นทางลัดทั่วไป (บันทึก/เทมเพลต/สถิติ) —
           ชุดนี้เน้น 3 ทางเริ่มต้นที่ใช้บ่อยที่สุดตอนเปิดแอปครั้งแรก */}
       <div
-        className={`grid gap-2 animate-rise lg:hidden ${data.hasAnyHistory ? 'grid-cols-3' : 'grid-cols-2'}`}
+        className={`grid gap-2 animate-rise lg:hidden ${data.hasAnyHistory ? 'grid-cols-2 min-[380px]:grid-cols-3' : 'grid-cols-2'}`}
         style={{ animationDelay: '120ms' }}
       >
         <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" />
@@ -689,7 +690,7 @@ export default function DashboardPage() {
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
         <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1" style={{ animationDelay: '240ms' }}>
-          <a href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
+          <Link href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] tracked uppercase text-muted">Recovery</p>
             </div>
@@ -716,7 +717,7 @@ export default function DashboardPage() {
                           style={{ backgroundColor: recColor + '1A' }}
                         >
                           <span className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm shrink-0">💪</span>
+                            <span className="text-sm shrink-0" aria-hidden="true">💪</span>
                             <p className="text-xs text-ink whitespace-pre-line">
                               {recoveryRecommendationLabel(recoveryLabelPct)}{' '}
                               <span className="font-display tracked uppercase" style={{ color: recColor }}>
@@ -760,7 +761,7 @@ export default function DashboardPage() {
                 </>
               )
             })()}
-          </a>
+          </Link>
         </div>
       )}
 
@@ -776,7 +777,7 @@ export default function DashboardPage() {
             <GoalRing pct={data.weeklyGoalPct} size={72} strokeWidth={7} label="Goal" ariaLabel="Weekly Goal" />
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-2.5">
-                <span className="text-xl leading-none shrink-0">🔥</span>
+                <span className="text-xl leading-none shrink-0" aria-hidden="true">🔥</span>
                 <div>
                   <p className="text-sm text-ink">
                     <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งแล้วในสัปดาห์นี้
@@ -795,7 +796,12 @@ export default function DashboardPage() {
           {/* day-tick row (จ-อา) — เช็คว่าวันไหนของสัปดาห์นี้ออกกำลังกายแล้วบ้าง */}
           <div className="grid grid-cols-7 gap-1.5 mt-4">
             {data.weekDayTicks.map((tick, i) => (
-              <div key={tick.iso} className="flex flex-col items-center gap-1">
+              <div
+                key={tick.iso}
+                className="flex flex-col items-center gap-1"
+                role="img"
+                aria-label={`${WEEKDAY_LABELS[i]}: ${tick.trained ? 'ฝึกแล้ว' : tick.isFuture ? 'ยังไม่ถึงวัน' : 'ยังไม่ได้ฝึก'}`}
+              >
                 <span
                   className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0"
                   style={
@@ -807,7 +813,7 @@ export default function DashboardPage() {
                 >
                   {tick.trained ? '✓' : ''}
                 </span>
-                <span className={`text-[9px] ${tick.isFuture ? 'text-muted/50' : 'text-muted'}`}>
+                <span className={`text-[9px] ${tick.isFuture ? 'text-muted/50' : 'text-muted'}`} aria-hidden="true">
                   {WEEKDAY_LABELS[i]}
                 </span>
               </div>
@@ -977,7 +983,7 @@ function QuickAction({
 }) {
   const hex = QUICK_ACTION_ACCENTS[accent]
   return (
-    <a
+    <Link
       href={href}
       className="rounded-lg border border-line bg-surface flex items-center gap-2.5 px-3 py-3 transition active:scale-[0.99] hover:border-line/40"
     >
@@ -989,6 +995,6 @@ function QuickAction({
         {icon}
       </span>
       <span className="text-[11px] font-display tracked uppercase text-ink truncate">{label}</span>
-    </a>
+    </Link>
   )
 }
