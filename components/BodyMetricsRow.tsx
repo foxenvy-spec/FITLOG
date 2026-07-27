@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Profile } from '@/lib/types'
-import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor } from '@/lib/bodyMetricsSummary'
+import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor, bmiOf } from '@/lib/bodyMetricsSummary'
 import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
 
@@ -53,6 +53,27 @@ interface CardDef {
   deltaText: string | null
   deltaColor: string
   deltaDir: 'up' | 'down' | null
+  series: number[]
+}
+
+// เส้นกราฟจิ๋วท้ายการ์ด ตามมอคอัพ v3 — วาดเองด้วย polyline ธรรมดา ไม่พึ่ง chart lib
+// เพราะแค่ต้องการโชว์ทิศทางเทรนด์คร่าวๆ ไม่ใช่กราฟที่ต้อง interact ได้
+function Sparkline({ series, color }: { series: number[]; color: string }) {
+  if (series.length < 2) return null
+  const w = 64
+  const h = 28
+  const min = Math.min(...series)
+  const max = Math.max(...series)
+  const range = max - min || 1
+  const step = w / (series.length - 1)
+  const points = series
+    .map((v, i) => `${(i * step).toFixed(1)},${(h - ((v - min) / range) * h).toFixed(1)}`)
+    .join(' ')
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-hidden="true">
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 function fmtSigned(n: number, decimals: number, suffix: string): string {
@@ -108,6 +129,21 @@ export default function BodyMetricsRow() {
   // (เช่น "จากเมื่อวาน" / "จาก 3 วันก่อน" / "จากสัปดาห์ที่แล้ว" / "จากเดือนที่แล้ว") แทนคำว่า "จากสัปดาห์ที่แล้ว" ตายตัว
   const period = summary.periodLabel ?? 'จากครั้งก่อน'
 
+  // metrics เรียงใหม่->เก่า (measured_at desc) กลับด้านเป็นเก่า->ใหม่ ให้กราฟไล่จากซ้ายไปขวาตามเวลา
+  const chronological = [...metrics].reverse()
+  const seriesFor = (pick: (m: BodyMetric) => number | null): number[] =>
+    chronological.map(pick).filter((v): v is number => v != null)
+
+  const weightSeries = seriesFor((m) => m.weight_kg)
+  const bodyFatSeries = seriesFor((m) => m.body_fat_pct)
+  const muscleSeries = seriesFor((m) => m.skeletal_muscle_kg ?? m.muscle_kg ?? null)
+  const fatMassSeries = seriesFor((m) => {
+    if (m.body_fat_kg != null) return m.body_fat_kg
+    if (m.weight_kg != null && m.body_fat_pct != null) return (m.weight_kg * m.body_fat_pct) / 100
+    return null
+  })
+  const bmiSeries = seriesFor((m) => bmiOf(m.weight_kg, heightCm))
+
   const cards: CardDef[] = [
     {
       key: 'weight',
@@ -118,6 +154,7 @@ export default function BodyMetricsRow() {
         summary.weight.delta != null ? `${fmtSigned(toDisplay(summary.weight.delta), 1, ` ${unit}`)} ${period}` : null,
       deltaColor: summary.weight.isGood == null ? '#9498A0' : summary.weight.isGood ? '#7A9B57' : '#C1503A',
       deltaDir: summary.weight.delta == null ? null : summary.weight.delta > 0 ? 'up' : summary.weight.delta < 0 ? 'down' : null,
+      series: weightSeries,
     },
     {
       key: 'bodyFat',
@@ -127,6 +164,7 @@ export default function BodyMetricsRow() {
       deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} ${period}` : null,
       deltaColor: summary.bodyFatPct.isGood == null ? '#9498A0' : summary.bodyFatPct.isGood ? '#7A9B57' : '#C1503A',
       deltaDir: summary.bodyFatPct.delta == null ? null : summary.bodyFatPct.delta > 0 ? 'up' : summary.bodyFatPct.delta < 0 ? 'down' : null,
+      series: bodyFatSeries,
     },
     {
       key: 'muscle',
@@ -140,6 +178,7 @@ export default function BodyMetricsRow() {
       deltaColor: summary.skeletalMuscleKg.isGood == null ? '#9498A0' : summary.skeletalMuscleKg.isGood ? '#7A9B57' : '#C1503A',
       deltaDir:
         summary.skeletalMuscleKg.delta == null ? null : summary.skeletalMuscleKg.delta > 0 ? 'up' : summary.skeletalMuscleKg.delta < 0 ? 'down' : null,
+      series: muscleSeries,
     },
     {
       key: 'fatMass',
@@ -150,6 +189,7 @@ export default function BodyMetricsRow() {
         summary.fatMassKg.delta != null ? `${fmtSigned(toDisplay(summary.fatMassKg.delta), 1, ` ${unit}`)} ${period}` : null,
       deltaColor: summary.fatMassKg.isGood == null ? '#9498A0' : summary.fatMassKg.isGood ? '#7A9B57' : '#C1503A',
       deltaDir: summary.fatMassKg.delta == null ? null : summary.fatMassKg.delta > 0 ? 'up' : summary.fatMassKg.delta < 0 ? 'down' : null,
+      series: fatMassSeries,
     },
     {
       key: 'bmi',
@@ -159,6 +199,7 @@ export default function BodyMetricsRow() {
       deltaText: summary.bmi != null ? bmiCategory(summary.bmi) : 'ยังไม่ได้กรอกส่วนสูง',
       deltaColor: summary.bmi != null ? bmiCategoryColor(summary.bmi) : '#9498A0',
       deltaDir: null,
+      series: bmiSeries,
     },
   ]
 
@@ -169,22 +210,25 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="rounded-lg bg-surface border shadow-elevated px-4 py-4"
+            className="rounded-lg bg-surface border shadow-elevated px-4 py-4 flex items-start justify-between gap-2"
             style={{ borderColor: glow + '4D', boxShadow: `0 0 10px ${glow}33` }}
           >
-            <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
-              <span className="w-6 h-6 shrink-0 inline-block" aria-hidden="true">
-                <Image src={METRIC_ICON_IMAGES[c.icon]} alt="" width={24} height={24} className="w-full h-full object-contain" />
-              </span>
-              {c.label}
-            </p>
-            <p className="font-mono text-xl text-ink">{c.valueText}</p>
-            {c.deltaText && (
-              <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: c.deltaColor }}>
-                {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
-                {c.deltaText}
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-[11px] text-muted mb-2.5">
+                <span className="w-6 h-6 shrink-0 inline-block" aria-hidden="true">
+                  <Image src={METRIC_ICON_IMAGES[c.icon]} alt="" width={24} height={24} className="w-full h-full object-contain" />
+                </span>
+                {c.label}
               </p>
-            )}
+              <p className="font-mono text-xl text-ink">{c.valueText}</p>
+              {c.deltaText && (
+                <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: c.deltaColor }}>
+                  {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
+                  {c.deltaText}
+                </p>
+              )}
+            </div>
+            <Sparkline series={c.series} color={glow} />
           </div>
         )
       })}
