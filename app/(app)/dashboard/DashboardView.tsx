@@ -513,7 +513,17 @@ export default function DashboardPage() {
           {greetingContext.detail && <p className="text-[11px] text-muted mt-1">{greetingContext.detail}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[11px] text-ink">
+          <span
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-full text-[11px] text-ink px-3 py-1.5"
+            style={{
+              border: '1.5px solid transparent',
+              backgroundImage:
+                'linear-gradient(180deg, #13233A, #08121F), linear-gradient(135deg, #E8A33D14, #E8A33D40, #E8A33D14)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 12px #E8A33D33',
+            }}
+          >
             📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
           <NotificationBell latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
