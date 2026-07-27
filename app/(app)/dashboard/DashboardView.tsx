@@ -737,26 +737,46 @@ export default function DashboardPage() {
                         </div>
                       )
                     })()}
-                  <div className="grid grid-cols-2 gap-2">
-                    {RECOVERY_MUSCLES.map((mg) => {
-                      const pct = recoveryPctMap[mg]
-                      const color = recoveryStatusColor(pct)
-                      return (
-                        <div
-                          key={mg}
-                          className="flex items-center justify-between gap-2 rounded-md bg-surface2 px-2.5 py-2"
-                        >
-                          <span className="flex items-center gap-1.5 text-xs text-ink">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                            {mg}
-                          </span>
-                          <span className="font-mono text-xs shrink-0" style={{ color }}>
-                            {pct}%
-                          </span>
+                  {(() => {
+                    // ฟื้นตัวรวม — ค่าเฉลี่ยของทุกกลุ่มกล้ามเนื้อ แสดงเป็นวงแหวนคู่กับลิสต์รายกลุ่ม
+                    // (ตามมอคอัพ v3: ring "พื้นตัวรวม" ข้างๆ list แทนที่จะโชว์แค่ list เดี่ยวๆ)
+                    const overallRecoveryPct = Math.round(
+                      RECOVERY_MUSCLES.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) /
+                        RECOVERY_MUSCLES.length
+                    )
+                    return (
+                      <div className="flex items-center gap-4">
+                        <GoalRing
+                          pct={overallRecoveryPct}
+                          size={84}
+                          strokeWidth={8}
+                          color={recoveryStatusColor(overallRecoveryPct)}
+                          label="พื้นตัวรวม"
+                          ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
+                        />
+                        <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
+                          {RECOVERY_MUSCLES.map((mg) => {
+                            const pct = recoveryPctMap[mg]
+                            const color = recoveryStatusColor(pct)
+                            return (
+                              <div
+                                key={mg}
+                                className="flex items-center justify-between gap-2 rounded-md bg-surface2 px-2.5 py-2"
+                              >
+                                <span className="flex items-center gap-1.5 text-xs text-ink">
+                                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                  {mg}
+                                </span>
+                                <span className="font-mono text-xs shrink-0" style={{ color }}>
+                                  {pct}%
+                                </span>
+                              </div>
+                            )
+                          })}
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })()}
                   <p className="mt-3 text-right text-xs text-amber">View Detail →</p>
                 </>
               )
@@ -774,7 +794,17 @@ export default function DashboardPage() {
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
           <div className="flex items-center gap-4">
-            <GoalRing pct={data.weeklyGoalPct} size={72} strokeWidth={7} label="Goal" ariaLabel="Weekly Goal" />
+            {/* สีม่วงชมพูนีออน + glow ตามมอคอัพ v3 (เดิมใช้สี amber ปกติเหมือนวงแหวนอื่นๆ) */}
+            <div style={{ filter: 'drop-shadow(0 0 8px #E339A688)' }}>
+              <GoalRing
+                pct={data.weeklyGoalPct}
+                size={72}
+                strokeWidth={7}
+                color="#E339A6"
+                label="Goal"
+                ariaLabel="Weekly Goal"
+              />
+            </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-2.5">
                 <span className="text-xl leading-none shrink-0" aria-hidden="true">🔥</span>
