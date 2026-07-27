@@ -230,8 +230,11 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="relative overflow-hidden rounded-lg"
+            className="relative overflow-hidden rounded-lg flex flex-col justify-between"
             style={{
+              // ล็อกความสูงการ์ดไว้เท่ากับตอนที่ margin-top ของบรรทัดเดลต้ายังเป็น 6px (ก่อนที่จะขยับเป็น 10px/18px)
+              // ต่อไปนี้ต่อให้ปรับ margin/spacing ข้างในอีก การ์ดจะไม่สูงขึ้น-ต่ำลงตาม เพราะถูกตรึงความสูงไว้แล้ว
+              height: 136,
               padding: '16px 18px 16px', // padding-top 16px ตามที่แนะนำ (จากที่เคยลองสูงกว่านี้)
               border: '1.5px solid transparent',
               // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
@@ -266,7 +269,7 @@ export default function BodyMetricsRow() {
               }}
             />
 
-            <div className="relative">
+            <div className="relative flex-1 flex flex-col justify-between min-h-0">
               <p
                 className="flex items-center gap-2 text-[11px]"
                 style={{ color: 'rgba(255,255,255,.65)' }}
@@ -293,7 +296,7 @@ export default function BodyMetricsRow() {
                   {c.deltaText && (
                     <p
                       className="text-[11px] font-semibold whitespace-nowrap flex items-center gap-1"
-                      style={{ color: c.deltaColor, marginTop: 18 }}
+                      style={{ color: c.deltaColor, marginTop: 6 }}
                     >
                       {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
                       {c.deltaText}
