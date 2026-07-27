@@ -89,8 +89,19 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
   const areaPath = `${linePath} L ${points[n - 1][0].toFixed(2)},${h} L ${points[0][0].toFixed(2)},${h} Z`
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-hidden="true">
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" style={{ overflow: 'visible' }} aria-hidden="true">
       <path d={areaPath} fill={color} fillOpacity={0.15} stroke="none" />
+      {/* เส้น glow ฟุ้งบางๆ อยู่หลังเส้นจริง — วาดเส้นเดิมซ้ำแล้ว blur 6px ให้ดู premium ขึ้น (overflow:visible กันไม่ให้ glow โดน viewport ของ svg ตัดขอบ) */}
+      <path
+        d={linePath}
+        fill="none"
+        stroke={color}
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.6}
+        style={{ filter: 'blur(6px)' }}
+      />
       <path d={linePath} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
@@ -235,9 +246,9 @@ export default function BodyMetricsRow() {
               padding: '16px 18px 12px', // ลด padding-bottom ลงอีกนิด ให้บรรทัดเดลต้าที่ถูกดันไปด้วย margin-top:auto ชิดขอบล่างเห็นผลชัดขึ้น
               border: '1.5px solid transparent',
               // สอง background ซ้อนกัน: ชั้นในเป็นไล่สีเข้มพรีเมียม (ลึกขึ้น มีมิติกว่าพื้นดำล้วน) วาดถึงแค่ padding-box
-              // ชั้นนอกเป็นไล่สี main->second ของ theme วาดถึง border-box — ได้ผลลัพธ์เป็น "ขอบไล่สี"
-              // รอบการ์ด โดยไม่ต้องแก้ CSS อื่นเลย แค่เปลี่ยนค่า main/second ต่อการ์ด
-              backgroundImage: `linear-gradient(180deg, #13233A, #08121F), linear-gradient(90deg, ${theme.main}, ${theme.second})`,
+              // ชั้นนอกเป็นไล่สี "เข้ม → อ่อน → เข้ม" (แทนที่จะเป็น main->second เรียบๆ 2 สี) วาดถึง border-box
+              // — ใช้ color-mix ผสม main กับสีขาว 55% เป็นสต็อปตรงกลางที่อ่อนกว่า ทำให้ขอบดูมีมิติ/แพงขึ้น
+              backgroundImage: `linear-gradient(180deg, #13233A, #08121F), linear-gradient(90deg, ${theme.main}, color-mix(in srgb, ${theme.main} 55%, white), ${theme.second})`,
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
               // 3 ชั้นซ้อนกัน: outer drop shadow (ยกการ์ดลอยจากพื้นหลัง) + inset highlight บนขอบบน (ผิวมีไฮไลต์)
@@ -245,36 +256,26 @@ export default function BodyMetricsRow() {
               boxShadow: `0 12px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05), 0 0 25px ${theme.main}26, 0 0 10px ${theme.main}59`,
             }}
           >
-            {/* ไล่เฉดจากมุมซ้ายบนซ้อนอยู่หลังเนื้อหา ช่วยให้พื้นหลังมีมิติแทนที่จะแบนทึบ */}
+            {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 rounded-lg"
               style={{ backgroundImage: `radial-gradient(circle at top left, ${theme.main}14, transparent 45%)` }}
             />
-            {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด */}
+            {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — blur กว้างขึ้น + opacity ~8% ตามที่ขอ ให้ดูลึกขึ้น */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute rounded-full"
               style={{
-                width: 90,
-                height: 90,
-                left: -40,
-                top: -40,
+                width: 160,
+                height: 160,
+                left: -60,
+                top: -60,
                 background: theme.main,
-                filter: 'blur(40px)',
-                opacity: 0.12,
+                filter: 'blur(60px)',
+                opacity: 0.08,
               }}
             />
-            {/* ลายน้ำไอคอนขนาดใหญ่จางๆ มุมขวาล่าง — ทดลองตามมอกอัพที่ขอ ถ้าไม่ชอบลบ block นี้ทิ้งได้เลย */}
-            <div aria-hidden="true" className="pointer-events-none absolute" style={{ right: -24, bottom: -24, width: 130, height: 130, opacity: 0.12 }}>
-              <Image
-                src={METRIC_ICON_IMAGES[c.icon]}
-                alt=""
-                width={130}
-                height={130}
-                className="w-full h-full object-contain"
-              />
-            </div>
 
             <div className="relative h-full">
               <p
