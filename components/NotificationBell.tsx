@@ -62,7 +62,15 @@ export default function NotificationBell({
         onClick={() => setOpen((v) => !v)}
         aria-label="การแจ้งเตือน"
         aria-expanded={open}
-        className="relative w-9 h-9 rounded-full border border-line bg-surface flex items-center justify-center text-muted hover:text-amber transition"
+        className="relative w-9 h-9 rounded-full flex items-center justify-center text-muted hover:text-amber transition"
+        style={{
+          border: '1.5px solid transparent',
+          backgroundImage:
+            'linear-gradient(180deg, #13233A, #08121F), linear-gradient(135deg, #E8A33D14, #E8A33D40, #E8A33D14)',
+          backgroundOrigin: 'border-box',
+          backgroundClip: 'padding-box, border-box',
+          boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 12px #E8A33D33',
+        }}
       >
         🔔
         {items.length > 0 && (

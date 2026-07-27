@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { useId } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Profile } from '@/lib/types'
@@ -59,6 +60,7 @@ interface CardDef {
 // เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
 // เติมสีจางๆ (15% alpha) ล้อสีเดียวกับเส้น ตามสเปคที่ขอ (คล้าย Chart.js: borderColor / backgroundColor / tension)
 function Sparkline({ series, color }: { series: number[]; color: string }) {
+  const glowId = useId()
   if (series.length < 2) return null
   const w = 64
   const h = 30
@@ -90,17 +92,24 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
 
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" style={{ overflow: 'visible' }} aria-hidden="true">
+      <defs>
+        {/* filter แบบ native SVG (feGaussianBlur) แทน CSS style filter เดิม — เชื่อถือได้กว่าข้ามเบราว์เซอร์
+            stdDeviation ~2.6 ≈ blur 5-6px ตามที่ขอ, filter region ขยาย 300% กัน blur โดน bounding box ตัดขอบ */}
+        <filter id={`sparkline-glow-${glowId}`} x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="2.6" />
+        </filter>
+      </defs>
       <path d={areaPath} fill={color} fillOpacity={0.15} stroke="none" />
-      {/* เส้น glow ฟุ้งบางๆ อยู่หลังเส้นจริง — วาดเส้นเดิมซ้ำแล้ว blur 6px ให้ดู premium ขึ้น (overflow:visible กันไม่ให้ glow โดน viewport ของ svg ตัดขอบ) */}
+      {/* เส้น glow เรืองแสงจางๆ (opacity 20%) อยู่หลังเส้นจริง สีเดียวกับเส้น ให้ความรู้สึกแบบ Apple Health */}
       <path
         d={linePath}
         fill="none"
         stroke={color}
+        strokeOpacity={0.2}
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity={0.6}
-        style={{ filter: 'blur(6px)' }}
+        filter={`url(#sparkline-glow-${glowId})`}
       />
       <path d={linePath} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
