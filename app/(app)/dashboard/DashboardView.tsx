@@ -693,7 +693,14 @@ export default function DashboardPage() {
       {/* card 2: recovery — secondary weight on purpose: quieter border, no shadow, tighter
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
-        <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1" style={{ animationDelay: '240ms' }}>
+        <div
+          className="rounded-lg bg-surface2/40 border overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1"
+          style={{
+            animationDelay: '240ms',
+            borderColor: '#60A5FA4D',
+            boxShadow: '0 0 10px #60A5FA33',
+          }}
+        >
           <Link href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] tracked uppercase text-muted">Recovery</p>
@@ -797,7 +804,14 @@ export default function DashboardPage() {
           uses the same ring as the hero card's daily progress so "goal completion" reads
           consistently as a ring throughout the dashboard, instead of a ring in one place
           and a flat percent-bar in another. */}
-      <div className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1" style={{ animationDelay: '300ms' }}>
+      <div
+        className="rounded-lg bg-surface2/40 border overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
+        style={{
+          animationDelay: '300ms',
+          borderColor: '#60A5FA4D',
+          boxShadow: '0 0 10px #60A5FA33',
+        }}
+      >
         <div className="px-4 py-4">
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
