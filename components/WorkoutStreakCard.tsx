@@ -26,7 +26,7 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
           </span>
           <div>
             <p className="text-[9px] tracked uppercase text-muted leading-none">Workout Streak</p>
-            <p className="font-mono text-base text-amber leading-none mt-1">{streak} วัน</p>
+            <p className="font-mono text-amber leading-none mt-1" style={{ fontSize: 13 }}>{streak} วัน</p>
           </div>
         </div>
 

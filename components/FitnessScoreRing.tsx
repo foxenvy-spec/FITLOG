@@ -10,8 +10,10 @@ interface FitnessScoreRingProps {
 // วงแหวน Fitness Score — คะแนนรวมใหม่ (ไม่มีอยู่ใน FITLOG เดิม) ดูสูตรคำนวณเต็มที่ lib/fitnessScore.ts
 // ลิงก์ไปหน้า /stats เพราะยังไม่มีหน้ารายละเอียดคะแนนนี้โดยเฉพาะ — /stats คือที่ที่ใกล้เคียงที่สุด
 export default function FitnessScoreRing({ score }: FitnessScoreRingProps) {
-  const size = 76
-  const strokeWidth = 7
+  // Mobile Dashboard v2.1: ลดขนาดวงแหวนลง (76 -> 60) ให้ความสูงรวม (วงแหวน + label ด้านล่าง)
+  // อยู่ที่ประมาณ 88px ตาม Design Token ใหม่ (เดิม ~110px) — วงกลมยังคง strokeWidth สัดส่วนใกล้เคียงเดิม
+  const size = 60
+  const strokeWidth = 6
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - score.score / 100)
@@ -35,7 +37,7 @@ export default function FitnessScoreRing({ score }: FitnessScoreRingProps) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-mono text-xl text-ink leading-none">{score.score}</span>
+          <span className="font-mono text-ink leading-none" style={{ fontSize: 16 }}>{score.score}</span>
           <span className="text-[10px] text-muted leading-none mt-0.5">/100</span>
         </div>
       </div>

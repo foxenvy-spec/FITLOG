@@ -43,11 +43,11 @@ export interface MetricCardProps {
 
 // เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
 // เติมสีจางๆ (15% alpha) ล้อสีเดียวกับเส้น ตามสเปคที่ขอ (คล้าย Chart.js: borderColor / backgroundColor / tension)
-function Sparkline({ series, color }: { series: number[]; color: string }) {
+function Sparkline({ series, color, height = 30 }: { series: number[]; color: string; height?: number }) {
   const glowId = useId()
   if (series.length < 2) return null
   const w = 64
-  const h = 30
+  const h = height
   const pad = 3 // กันเส้นชนขอบบน-ล่างตอนค่าสูงสุด/ต่ำสุด
   const tension = 0.6 // ยกจาก 0.45 ให้เส้นโค้งมนขึ้น (ลดความรู้สึกหักมุมแข็งๆ แบบเส้นตรงต่อกัน)
   const min = Math.min(...series)
@@ -144,14 +144,16 @@ export default function MetricCard({
   radius = 'lg',
   compact = false,
 }: MetricCardProps) {
-  const radiusClass = radius === 'xl20' ? 'rounded-[20px]' : 'rounded-lg'
+  // Mobile Dashboard v2.1: compact (มือถือ) ใช้ border-radius 18px แยกจากเดสก์ท็อป (xl20 = 20px)
+  // ตาม Design Token ที่ให้มาใหม่ — เดสก์ท็อป (compact=false) ยังได้ 20px เหมือนเดิมทุกประการ
+  const radiusClass = radius === 'xl20' ? (compact ? 'rounded-[18px]' : 'rounded-[20px]') : 'rounded-lg'
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[128px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[118px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
-          padding: compact ? '12px 14px 10px' : '16px 18px 12px', // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") ลด padding ลงอีก
+          padding: compact ? '14px' : '16px 18px 12px', // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — Mobile Dashboard v2.1: padding เท่ากันทุกด้าน 14px ตาม token ใหม่
           border: '1.5px solid transparent',
           // 4 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
           // 1) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด (radial, #1B2230 ~5%) กันไม่ให้กลางการ์ดดำตันเกินไป
@@ -198,11 +200,11 @@ export default function MetricCard({
 
         <div className="relative h-full">
           <p
-            className="flex items-center gap-2 text-[11px] font-semibold"
-            style={{ color: 'rgba(255,255,255,.94)', fontWeight: 700 }}
+            className="flex items-center gap-2 font-semibold"
+            style={{ color: 'rgba(255,255,255,.94)', fontWeight: 700, fontSize: compact ? 13 : 11 }}
           >
             <span
-              className="relative w-[42px] h-[42px] shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden"
+              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[38px] h-[38px]' : 'w-[42px] h-[42px]'}`}
               style={{
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -231,8 +233,8 @@ export default function MetricCard({
               <span
                 className="relative block"
                 style={{
-                  width: 38,
-                  height: 38,
+                  width: compact ? 34 : 38,
+                  height: compact ? 34 : 38,
                   backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                   WebkitMaskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
                   maskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
@@ -252,19 +254,19 @@ export default function MetricCard({
               แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
           <div className="absolute left-0 right-0 bottom-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-mono text-xl tracking-tight leading-none text-ink">
+              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 28 : 20 }}>
                 <span style={{ fontWeight: 800 }}>{splitValueUnit(valueText).num}</span>
                 {splitValueUnit(valueText).unit && (
                   <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
                 )}
               </p>
-              <Sparkline series={series} color={theme.main} />
+              <Sparkline series={series} color={theme.main} height={compact ? 26 : 30} />
             </div>
             {deltaText && (
               <>
                 <p
-                  className="text-[11px] font-semibold whitespace-nowrap flex items-center gap-1"
-                  style={{ color: deltaColor, marginTop: 6 }}
+                  className="font-semibold whitespace-nowrap flex items-center gap-1"
+                  style={{ color: deltaColor, marginTop: 6, fontSize: compact ? 12 : 11 }}
                 >
                   {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
                   {deltaText}
