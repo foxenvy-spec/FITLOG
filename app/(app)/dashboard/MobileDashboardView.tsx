@@ -41,6 +41,9 @@ import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationBell from '@/components/NotificationBell'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
+import WeeklyVolumeRecoveryCard from '@/components/WeeklyVolumeRecoveryCard'
+import TipCard from '@/components/TipCard'
+import RecommendedProgramCard from '@/components/RecommendedProgramCard'
 import type { Insight } from '@/lib/dashboardStats'
 
 // การ์ดหนักๆ ที่ไม่จำเป็นต้องเห็นทันทีตอนเปิดหน้า — โหลดแยก bundle เหมือนฝั่งเดสก์ท็อป
@@ -377,13 +380,19 @@ export default function MobileDashboardView() {
               ดูทั้งหมด →
             </Link>
           </div>
-          <BodyMetricsRow />
+          <BodyMetricsRow showLastMeasuredDate />
         </div>
 
         {/* streak + weekly goal — สองการ์ดแยกเดี่ยว (ไม่รวมกับแถบปัด Recovery/AI Coach ด้านล่าง)
             เพราะเป็นข้อมูลที่อยากให้เห็นทันทีโดยไม่ต้องปัด ตามดีไซน์ที่เลือก */}
         <WorkoutStreakCard streak={data.streak} weekDayTicks={data.weekDayTicks} today={today} />
-        <WeeklyGoalMuscleCard />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <WeeklyGoalMuscleCard />
+          <WeeklyVolumeRecoveryCard recoveryPct={overallRecoveryPct} />
+        </div>
+
+        <TipCard summary={data.aiDailySummary} />
 
         {/* hero — today's workout, ตัวชี้นำหลักของหน้า วางแนวตั้ง (ring อยู่บนสุด) ต่างจาก
             เดสก์ท็อปที่วาง ring ข้างข้อความ เพื่อให้อ่านง่ายบนจอแคบ */}
@@ -533,6 +542,8 @@ export default function MobileDashboardView() {
         )}
 
         <WeeklyCardioVolume />
+
+        <RecommendedProgramCard recommendedMuscle={data.muscleRecommendation?.muscleGroup ?? null} />
       </div>
 
       {settingsOpen && (
