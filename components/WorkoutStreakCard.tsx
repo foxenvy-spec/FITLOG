@@ -21,7 +21,7 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
         : 'เริ่มสถิติใหม่วันนี้กันเถอะ'
 
   return (
-    <div className="rounded-lg bg-surface border border-amber/40 shadow-elevated overflow-hidden animate-rise px-4 py-4">
+    <div className="rounded-[20px] bg-surface border border-amber/40 shadow-elevated overflow-hidden animate-rise px-4 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span

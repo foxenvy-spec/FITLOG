@@ -25,7 +25,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
     return (
       <Link
         href="/profile"
-        className="rounded-lg bg-surface border border-line border-dashed px-4 py-3.5 flex items-center justify-between gap-3 active:bg-surface2 transition"
+        className="rounded-[20px] bg-surface border border-line border-dashed px-4 py-4 flex items-center justify-between gap-3 active:bg-surface2 transition"
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-base shrink-0" aria-hidden="true">🔥👣🌙</span>
@@ -52,7 +52,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
         const meta = METRIC_META[key]
         const pct = metric.value != null && metric.goal != null && metric.goal > 0 ? Math.min(100, (metric.value / metric.goal) * 100) : 0
         return (
-          <div key={key} className="rounded-lg bg-surface border border-line px-3 py-3">
+          <div key={key} className="rounded-[20px] bg-surface border border-line px-3 py-3">
             <span className="text-sm" aria-hidden="true">{meta.icon}</span>
             <p className="font-mono text-base text-ink mt-1 leading-none">
               {valueLabel}

@@ -13,7 +13,7 @@ export default function AICoachCompactCard({ message, href = '/coach' }: AICoach
   return (
     <Link
       href={href}
-      className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden flex items-center gap-3 px-4 py-3.5 active:bg-surface2 transition"
+      className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden flex items-center gap-3 px-4 py-4 active:bg-surface2 transition"
     >
       <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-surface2 flex items-center justify-center text-xl" aria-hidden="true">
         🤖

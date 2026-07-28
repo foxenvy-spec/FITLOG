@@ -208,6 +208,7 @@ export default function BodyMetricsRow({
           theme={colorScheme === 'vibrant' ? METRIC_THEME_VIBRANT[c.icon] : METRIC_THEME[c.icon]}
           lastMeasuredText={lastMeasuredText}
           tall={showLastMeasuredDate}
+          radius={colorScheme === 'vibrant' ? 'xl20' : 'lg'}
         />
       ))}
     </div>

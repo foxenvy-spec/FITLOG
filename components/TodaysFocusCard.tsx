@@ -14,7 +14,7 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between gap-3 rounded-lg border border-amber/40 bg-surface px-4 py-3 active:bg-surface2 transition"
+      className="flex items-center justify-between gap-3 rounded-[20px] border border-amber/40 bg-surface px-4 py-3 active:bg-surface2 transition"
     >
       <div className="flex items-center gap-3 min-w-0">
         <span

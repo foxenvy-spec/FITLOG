@@ -60,7 +60,7 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
 
   if (isLoading || !data) {
     return (
-      <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden px-4 py-4">
+      <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden px-4 py-4">
         <Skeleton className="h-3 w-28 mb-3" />
         <Skeleton className="h-5 w-40 mb-2" />
         <Skeleton className="h-9 w-full" />
@@ -74,7 +74,7 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
     return (
       <Link
         href="/templates"
-        className="flex items-center justify-between gap-3 rounded-lg bg-surface border border-line px-4 py-4 hover:border-amber/40 transition"
+        className="flex items-center justify-between gap-3 rounded-[20px] bg-surface border border-line px-4 py-4 hover:border-amber/40 transition"
       >
         <div>
           <p className="font-display text-xs tracked uppercase text-amber">แนะนำสำหรับคุณ</p>
@@ -149,7 +149,7 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
   }
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
+    <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
       <div className="px-4 pt-4 flex items-center justify-between">
         <p className="font-display text-xs tracked uppercase text-amber">แนะนำสำหรับคุณ</p>
         <Link href="/templates" className="text-muted" aria-label="เทมเพลตทั้งหมด">

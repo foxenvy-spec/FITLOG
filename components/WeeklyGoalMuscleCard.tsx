@@ -49,7 +49,7 @@ export default function WeeklyGoalMuscleCard() {
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden px-4 py-4">
+      <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden px-4 py-4">
         <Skeleton className="h-3 w-28 mb-4" />
         <div className="flex items-center gap-4">
           <Skeleton className="h-20 w-20 rounded-full shrink-0" />
@@ -72,7 +72,7 @@ export default function WeeklyGoalMuscleCard() {
   const pct = rows.length > 0 ? Math.round((metCount / rows.length) * 100) : 0
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
+    <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
       <div className="px-4 pt-4 flex items-center justify-between">
         <p className="font-display text-sm tracked uppercase text-ink">เป้าหมายรายสัปดาห์</p>
         <Link href="/stats" className="text-[11px] text-amber hover:underline shrink-0">

@@ -64,7 +64,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden px-4 py-4">
+      <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden px-4 py-4">
         <Skeleton className="h-3 w-24 mb-3" />
         <Skeleton className="h-6 w-32 mb-4" />
         <Skeleton className="h-16 w-full" />
@@ -89,7 +89,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
   const recoveryColor = recoveryPct >= 80 ? COLORS.moss : recoveryPct >= 60 ? COLORS.cyan : recoveryPct >= 40 ? COLORS.amber : COLORS.rust
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
+    <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
       <div className="grid grid-cols-2 divide-x divide-line">
         {/* Weekly Volume */}
         <div className="px-4 py-4">

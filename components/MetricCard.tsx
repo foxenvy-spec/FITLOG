@@ -32,6 +32,9 @@ export interface MetricCardProps {
   lastMeasuredText?: string | null
   // การ์ดสูงขึ้นอีกนิด เผื่อพื้นที่บรรทัด lastMeasuredText ไม่ให้ชนกับแถวไอคอน/ป้ายชื่อด้านบน
   tall?: boolean
+  // มุมโค้งการ์ด — default 'lg' (8px, เดิม) สำหรับเดสก์ท็อป, มือถือใช้ 'xl20' (20px, ดูพรีเมียมกว่า
+  // ตาม design-system ที่กำหนด "Card Radius 20px") ผ่าน colorScheme="vibrant" ใน BodyMetricsRow
+  radius?: 'lg' | 'xl20'
 }
 
 // เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
@@ -134,11 +137,13 @@ export default function MetricCard({
   theme,
   lastMeasuredText,
   tall = false,
+  radius = 'lg',
 }: MetricCardProps) {
+  const radiusClass = radius === 'xl20' ? 'rounded-[20px]' : 'rounded-lg'
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden rounded-lg flex flex-col justify-between ${tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
           padding: '16px 18px 12px', // ลด padding-bottom ลงอีกนิด ให้บรรทัดเดลต้าที่ถูกดันไปด้วย margin-top:auto ชิดขอบล่างเห็นผลชัดขึ้น
@@ -161,14 +166,14 @@ export default function MetricCard({
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-lg"
+          className={`pointer-events-none absolute inset-0 ${radiusClass}`}
           style={{ backgroundImage: `radial-gradient(circle at top left, ${theme.main}14, transparent 45%)` }}
         />
         {/* ชั้นเพิ่มเติมบางเบามาก (opacity 4%) สีขาวล้วน (ไม่ใช่สีธีม) จากมุมซ้ายบน — เพิ่มมิติแบบผู้ใช้แทบไม่รู้ตัว
             แยกจากชั้นสีธีมด้านบน เพราะอันนี้ให้ความรู้สึก "แสงทั่วไป" ไม่ใช่ "แสงจากไอคอน" */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-lg"
+          className={`pointer-events-none absolute inset-0 ${radiusClass}`}
           style={{ backgroundImage: `radial-gradient(circle at top left, rgba(255,255,255,.03), transparent 50%)` }}
         />
         {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — blur กว้างขึ้น + opacity ~8% ตามที่ขอ ให้ดูลึกขึ้น */}

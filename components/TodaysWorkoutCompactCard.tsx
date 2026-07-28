@@ -16,7 +16,7 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
   return (
     <Link
       href={href}
-      className="relative rounded-lg border border-amber/40 bg-surface overflow-hidden flex items-center gap-3 px-4 py-4 active:bg-surface2 transition"
+      className="relative rounded-[20px] border border-amber/40 bg-surface overflow-hidden flex items-center gap-3 px-4 py-4 active:bg-surface2 transition"
     >
       <div className="min-w-0 flex-1">
         <p className="text-[10px] tracked uppercase text-muted">Today&apos;s Workout</p>
@@ -30,7 +30,7 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         </div>
       </div>
       <div
-        className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0"
+        className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0"
         style={{ backgroundImage: "url('/images/workout-hero.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}
         aria-hidden="true"
       >
