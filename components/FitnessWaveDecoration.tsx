@@ -34,16 +34,15 @@ export default function FitnessWaveDecoration({ color }: FitnessWaveDecorationPr
         d="M0,32 C50,8 90,42 140,20 C190,-2 230,38 280,16 C310,4 340,10 400,6"
         fill="none"
         stroke={color}
-        strokeWidth="4"
-        strokeOpacity="0.08"
+        strokeWidth="6"
+        strokeOpacity="0.16"
         filter={`url(#${glowId})`}
       />
-      {/* เส้นหลัก: คงความหนา 2px ไว้เหมือนเดิม (ตรงกับสเปคที่ขอพอดีอยู่แล้ว ไม่ต้องแก้) */}
       <path
         d="M0,32 C50,8 90,42 140,20 C190,-2 230,38 280,16 C310,4 340,10 400,6"
         fill="none"
         stroke={`url(#${gradId})`}
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinecap="round"
       />
     </svg>

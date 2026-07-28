@@ -19,7 +19,7 @@ export default function FitnessScoreRing({ score }: FitnessScoreRingProps) {
   const offset = circumference * (1 - score.score / 100)
 
   return (
-    <Link href="/stats" className="flex flex-col items-center shrink-0 gap-1" aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh}`}>
+    <Link href="/stats" className="flex flex-col items-end shrink-0 gap-1" aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh}`}>
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
           <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#23272D" strokeWidth={strokeWidth} />
@@ -41,11 +41,14 @@ export default function FitnessScoreRing({ score }: FitnessScoreRingProps) {
           <span className="text-[11px] text-muted leading-none mt-0.5">/100</span>
         </div>
       </div>
-      <div className="text-center mt-1">
-        <p className="text-[10px] tracked uppercase text-muted leading-none">Fitness Score</p>
-        <p className="text-sm font-display font-bold tracked uppercase leading-tight mt-1" style={{ color: score.color }}>
-          {score.tierLabel}
-        </p>
+      <div className="text-right mt-1 flex items-center gap-1">
+        <div>
+          <p className="text-[10px] tracked uppercase text-muted leading-none">Fitness Score</p>
+          <p className="text-sm font-display font-bold tracked uppercase leading-tight mt-1" style={{ color: score.color }}>
+            {score.tierLabel}
+          </p>
+        </div>
+        <span className="text-muted shrink-0 text-base" aria-hidden="true">›</span>
       </div>
     </Link>
   )
