@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ตัวแปร gradient "ไฟ" ที่ใช้ร่วมกันทั่วแอป (Fitness Score Ring, Wave, FAB, progress bar หลัก) —
+   ค่าต้องตรงกับ FIRE_GRADIENT_CSS ใน lib/theme.ts เป๊ะๆ (คนละที่แต่คนละภาษา: อันนี้ให้ปลั๊กอิน CSS/
+   Tailwind arbitrary value ธรรมดาเรียกใช้ได้ ส่วนใน .tsx ที่ต้องการ stop สีแยกทีละจุด (เช่น SVG
+   <linearGradient>) ให้ import FIRE_GRADIENT_STOPS จาก lib/theme.ts แทน อย่าพิมพ์ hex ซ้ำเอง) */
+:root {
+  --fitness-gradient: linear-gradient(
+    90deg,
+    #D96A00 0%,
+    #FF8A00 25%,
+    #FFD166 45%,
+    #FFF4CC 50%,
+    #FFD166 55%,
+    #FF8A00 75%,
+    #D96A00 100%
+  );
+}
+
 @layer base {
   html {
     color-scheme: dark;
