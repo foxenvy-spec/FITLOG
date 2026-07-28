@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useId } from 'react'
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
-import { lighten } from '@/lib/theme'
+import { FIRE_ACCENT, lighten } from '@/lib/theme'
 
 interface FitnessScoreProps {
   score: FitnessScoreResult
@@ -14,10 +14,9 @@ interface FitnessScoreProps {
 // วงแหวน Fitness Score — คะแนนรวมใหม่ (ไม่มีอยู่ใน FITLOG เดิม) ดูสูตรคำนวณเต็มที่ lib/fitnessScore.ts
 // ลิงก์ไปหน้า /stats เพราะยังไม่มีหน้ารายละเอียดคะแนนนี้โดยเฉพาะ — /stats คือที่ที่ใกล้เคียงที่สุด
 //
-// v5 (ตามฟีดแบ็ก "อยากให้ดูไฟลุก 3 มิติ"): เปลี่ยน gradient จาก "สีเดียวไล่แค่ความโปร่งใส" เป็น
-// ไล่เฉดสว่าง/เข้มของสีเดียวกัน (hot spot ตรงกลางส่วนโค้ง) ผ่าน lighten() — ให้ดูมีมิติ/สว่างจ้า
-// ตรงหัวเข็มคล้ายปลายเปลวไฟ โดยยังคงสีตาม tier จริง (ไม่ hardcode ส้ม) + เพิ่มเส้น highlight
-// บางๆ ผิวด้านนอกให้ดูเป็นผิวมันวาว/3 มิติ (glossy rim)
+// v6: สีของวง + label เปลี่ยนเป็น FIRE_ACCENT คงที่ (ไม่ dynamic ตาม tier อีกต่อไป) ตามฟีดแบ็กให้
+// ตรงกับสีในรูปตัวอย่าง — ตัวเลขคะแนนกับคำว่า tier (Excellent/Good/...) ยังบอกความหมายจริงอยู่
+// แค่ "สี" ไม่ได้ผูกกับ tier แล้ว
 export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
   const strokeWidth = Math.round(size * 0.08)
   const radius = (size - strokeWidth) / 2
@@ -26,7 +25,8 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
   const gradId = useId()
   const glowId = useId()
 
-  const hot = lighten(score.color, 0.5)
+  const color = FIRE_ACCENT
+  const hot = lighten(color, 0.5)
 
   return (
     <Link
@@ -40,9 +40,9 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
             {/* gradient stroke แบบ "ไฟ" — เข้มตรงจุดเริ่ม (12 นาฬิกา) ไล่สว่างจ้าตรงกลางส่วนโค้ง
                 แล้วเข้มลงอีกครั้งใกล้ปลายเข็ม ให้ความรู้สึกมีแกนสว่างพุ่งอยู่ตรงกลางเส้น */}
             <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={score.color} stopOpacity="0.75" />
+              <stop offset="0%" stopColor={color} stopOpacity="0.75" />
               <stop offset="45%" stopColor={hot} stopOpacity="1" />
-              <stop offset="100%" stopColor={score.color} stopOpacity="1" />
+              <stop offset="100%" stopColor={color} stopOpacity="1" />
             </linearGradient>
             {/* outer glow — blur แล้ว merge กลับเข้ากับเส้นจริง ให้ฟุ้งแบบมีแกนสว่างชัดตรงกลาง
                 ไม่ใช่แค่จางๆ แบบ drop-shadow เฉยๆ */}
@@ -69,6 +69,7 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             filter={`url(#${glowId})`}
+            style={{ mixBlendMode: 'screen' }}
           />
           {/* glossy rim — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก (รัศมีเล็กกว่าเส้นหลักนิดหน่อย)
               ให้ความรู้สึกผิวมันวาว/3 มิติ เหมือนแสงสะท้อนขอบท่อไฟ ไม่ใช่วงแบนสีทึบเดียว */}
@@ -77,12 +78,13 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
             cy={size / 2}
             r={radius - strokeWidth * 0.32}
             fill="none"
-            stroke={lighten(score.color, 0.8)}
+            stroke={lighten(color, 0.8)}
             strokeWidth={Math.max(1, strokeWidth * 0.12)}
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeOpacity={0.55}
+            style={{ mixBlendMode: 'screen' }}
           />
         </svg>
         {/* inner shadow บางๆ ด้านในวง ให้ตัวเลขตรงกลางดูจมลงไปนิดหนึ่งแทนที่จะลอยแบน */}
@@ -106,7 +108,7 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
         </p>
         <p
           className="font-display font-bold tracked uppercase leading-tight mt-1"
-          style={{ fontSize: 14, color: score.color }}
+          style={{ fontSize: 14, color }}
         >
           {score.tierLabel}
         </p>
