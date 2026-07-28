@@ -15,7 +15,7 @@ const METRIC_META = {
   sleepHours: { icon: '🌙', title: 'Sleep', unit: 'ชม.', color: COLORS.purple },
 } as const
 
-// เส้นคลื่นจิ๋วตกแต่ง (decorative only, ไม่มีความหมายเชิงข้อมูล — เหมือน FitnessWaveDecoration)
+// เส้นคลื่นจิ๋วตกแต่ง (decorative only, ไม่มีความหมายเชิงข้อมูล — เหมือน AnimatedWave)
 // เพราะ HealthMetric ไม่มี series ย้อนหลังให้พล็อตจริง (FITLOG ยังไม่เชื่อมต่อ health app ใดๆ)
 // รูปทรงคงที่ทุกครั้ง แค่เปลี่ยนสีตามธีมของแต่ละเมตริก ให้ความรู้สึก "มีกราฟ" ตามมอคอัพ
 function MiniHealthWave({ color }: { color: string }) {
