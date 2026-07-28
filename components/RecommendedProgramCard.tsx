@@ -136,7 +136,11 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
         return
       }
       setStartedMessage(`บันทึก "${chosen.title}" (${payload.length} ท่า) เข้า Log วันนี้แล้ว`)
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      // ยิงคำสั่งบันทึกครั้งนี้กระทบแทบทุกการ์ดในหน้า dashboard (Today's Workout, Weekly Volume,
+      // Recovery, Weekly Goal, heatmap, consistency strip ฯลฯ) ซึ่งแต่ละอันมี query key ของตัวเอง
+      // แยกกัน — invalidate เฉพาะ ['dashboard'] เหมือนตอนแรกจะเหลือการ์ดอื่นๆ ค้างข้อมูลเก่าอยู่
+      // (กว่าจะรีเฟรชเองต้อง staleTime 60s หมดอายุก่อน) จึง invalidate ทั้งหมดแทนเพื่อความถูกต้อง
+      queryClient.invalidateQueries()
     } catch (err) {
       setErrorMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
