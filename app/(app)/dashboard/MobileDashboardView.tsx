@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -16,8 +16,6 @@ import {
   recoveryRecommendationLabel,
 } from '@/lib/dashboardStats'
 import { saveDisplayName } from '@/lib/profile'
-import { bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
-import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
@@ -25,13 +23,11 @@ import {
   fetchDashboardData,
   greeting,
   emailDisplayName,
-  INSIGHT_IMAGE,
   type DashboardData,
 } from './DashboardView'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
-import InsightCard from '@/components/InsightCard'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
@@ -49,7 +45,6 @@ import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
 import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
 import { useHealthSnapshot } from '@/lib/healthIntegration'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
-import type { Insight } from '@/lib/dashboardStats'
 
 // การ์ดหนักๆ ที่ไม่จำเป็นต้องเห็นทันทีตอนเปิดหน้า — โหลดแยก bundle เหมือนฝั่งเดสก์ท็อป
 const WeeklyMuscleHeatmap = dynamic(() => import('@/components/WeeklyMuscleHeatmap'), {
@@ -92,9 +87,7 @@ export default function MobileDashboardView() {
   const searchParams = useSearchParams()
   const [greetingText, setGreetingText] = useState('สวัสดี')
   const [bannerDismissed, setBannerDismissed] = useState(true)
-  const [carouselIndex, setCarouselIndex] = useState(0)
   const [showMore, setShowMore] = useState(false)
-  const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setPrefs(loadDashboardPrefs())
@@ -133,22 +126,8 @@ export default function MobileDashboardView() {
     queryClient.invalidateQueries({ queryKey: ['dashboard', today] })
   }
 
-  const { toDisplay, unit } = useWeightUnit()
   const health = useHealthSnapshot()
   const dow = todayDayOfWeek()
-
-  const combinedInsights = useMemo(() => {
-    if (!data) return []
-    const { bodyMetricsSummary } = data
-    const muscleDeltaDisplay =
-      bodyMetricsSummary.skeletalMuscleKg.delta != null ? toDisplay(bodyMetricsSummary.skeletalMuscleKg.delta) : 0
-    const extra = [
-      bodyFatTrendInsight(bodyMetricsSummary.bodyFatPct, bodyMetricsSummary.periodLabel),
-      muscleMassTrendInsight(bodyMetricsSummary.skeletalMuscleKg, bodyMetricsSummary.periodLabel, muscleDeltaDisplay, unit),
-      workoutFrequencyInsight(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal, dow),
-    ].filter((i): i is Insight => i != null)
-    return [...extra, ...data.insights].slice(0, 4)
-  }, [data, toDisplay, unit, dow])
 
   const scheduledDay = useMemo(
     () => data?.programDays.find((d) => d.day_of_week === dow) ?? null,
@@ -176,23 +155,9 @@ export default function MobileDashboardView() {
     return map
   }, [data])
 
-  // muscleRecommendation และ aiDailySummary คำนวณมาแล้วใน fetchDashboardData (ชุดเดียวกับ
-  // เดสก์ท็อป) — ใช้ตรงจาก data ได้เลย ไม่ต้องคำนวณซ้ำฝั่ง client
+  // muscleRecommendation คำนวณมาแล้วใน fetchDashboardData (ชุดเดียวกับเดสก์ท็อป) — ใช้ตรงจาก
+  // data ได้เลย ไม่ต้องคำนวณซ้ำฝั่ง client
   const muscleRecommendation = data?.muscleRecommendation ?? null
-  const aiDailySummary = data?.aiDailySummary ?? ''
-
-  function handleCarouselScroll() {
-    const el = carouselRef.current
-    if (!el) return
-    const idx = Math.round(el.scrollLeft / el.clientWidth)
-    setCarouselIndex(idx)
-  }
-
-  function scrollToCarouselIndex(idx: number) {
-    const el = carouselRef.current
-    if (!el) return
-    el.scrollTo({ left: idx * el.clientWidth, behavior: 'smooth' })
-  }
 
   if (isLoading || !data) {
     return <DashboardSkeleton />
@@ -222,13 +187,13 @@ export default function MobileDashboardView() {
     { key: 'activityToday', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
   ])
 
-  // ลำดับการ์ดในแถบปัด — ซ่อนการ์ดที่ผู้ใช้ปิดไว้ใน DashboardSettings เหมือนเดสก์ท็อป
-  const carouselCards: { key: string; node: React.ReactNode }[] = []
-  if (prefs.showRecovery) {
-    carouselCards.push({
-      key: 'recovery',
-      node: (
-        <Link href="/recovery" className="block h-full px-5 py-4 active:bg-surface2 transition">
+  // การ์ด Recovery แบบละเอียด (ต่อกล้ามเนื้อ) — ย้ายไปไว้ในส่วน "ดูสถิติเพิ่มเติม" ด้านล่างแทน
+  // เพราะมีวงแหวน Recovery แบบย่อ (ภาพรวมเฉลี่ย) อยู่ใน WeeklyVolumeRecoveryCard ด้านบนแล้ว
+  // อันนี้คือ "รายละเอียดเต็ม" สำหรับคนที่อยากดูเจาะจงเป็นกล้ามเนื้อ ไม่ต้องโชว์ตลอดเวลา
+  // (เดิมเคยอยู่ในแถบปัด (carousel) คู่กับ AI Coach — แต่ AI Coach มี AICoachCompactCard
+  // แสดงอยู่แล้วด้านบน โชว์ซ้ำสองที่จึงตัดออกจากแถบปัดไปเลย ไม่ย้ายไปไว้ที่ไหนอีก)
+  const recoveryDetailCard = prefs.showRecovery ? (
+    <Link href="/recovery" className="block rounded-lg bg-surface2/40 border overflow-hidden px-5 py-4 active:bg-surface2 transition" style={{ borderColor: '#60A5FA4D', boxShadow: '0 0 10px #60A5FA33' }}>
           <p className="text-[10px] tracked uppercase text-muted mb-3">Recovery</p>
           {muscleRecommendation &&
             (() => {
@@ -275,39 +240,7 @@ export default function MobileDashboardView() {
             </div>
           </div>
         </Link>
-      ),
-    })
-  }
-  if (prefs.showAICoach) {
-    carouselCards.push({
-      key: 'ai-coach',
-      node: (
-        <div className="h-full px-5 py-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] tracked uppercase text-muted">✨ AI Coach</p>
-            {combinedInsights.length > 0 && (
-              <span className="text-[10px] tracked uppercase text-amber bg-amber/10 rounded-full px-2 py-0.5">อัปเดต</span>
-            )}
-          </div>
-          {combinedInsights.length > 0 ? (
-            <div className="space-y-2">
-              {combinedInsights.slice(0, 2).map((insight) => (
-                <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_IMAGE[`${insight.id}|${insight.kind}`]} />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg bg-surface border border-line shadow-elevated border-l-[3px] border-l-amber px-4 py-3 flex items-start gap-3">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: '#E8A33D22' }} aria-hidden="true">🤖</span>
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-sm tracked uppercase text-amber">แนะนำวันนี้</p>
-                <p className="text-xs text-muted mt-0.5 whitespace-pre-line">{aiDailySummary}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      ),
-    })
-  }
+  ) : null
 
   return (
     <>
@@ -390,43 +323,6 @@ export default function MobileDashboardView() {
           <WeeklyVolumeRecoveryCard recoveryPct={overallRecoveryPct} />
         </div>
 
-        {/* การ์ดปัดได้ (scroll-snap) — Recovery / Weekly Goal / AI Coach ในพื้นที่เดียว ปัดซ้ายขวา
-            แทนที่จะเรียงเป็นการ์ดแยกยาวๆ ลงมา ประหยัดพื้นที่แนวตั้งบนจอมือถือ */}
-        {carouselCards.length > 0 && (
-          <div className="animate-rise" style={{ animationDelay: '120ms' }}>
-            <div
-              ref={carouselRef}
-              onScroll={handleCarouselScroll}
-              className="flex overflow-x-auto snap-x snap-mandatory rounded-lg bg-surface2/40 border"
-              style={{ borderColor: '#60A5FA4D', boxShadow: '0 0 10px #60A5FA33', scrollbarWidth: 'none' }}
-            >
-              {carouselCards.map((card) => (
-                <div key={card.key} className="snap-start shrink-0 w-full min-w-full">
-                  {card.node}
-                </div>
-              ))}
-            </div>
-            {carouselCards.length > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-2">
-                {carouselCards.map((card, i) => (
-                  <button
-                    key={card.key}
-                    type="button"
-                    aria-label={`การ์ด ${i + 1}`}
-                    onClick={() => scrollToCarouselIndex(i)}
-                    className="rounded-full transition"
-                    style={{
-                      width: i === carouselIndex ? 16 : 6,
-                      height: 6,
-                      backgroundColor: i === carouselIndex ? '#E8A33D' : '#3A3F47',
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม */}
         <div className="flex gap-2 overflow-x-auto animate-rise" style={{ animationDelay: '160ms', scrollbarWidth: 'none' }}>
           {QUICK_ACTIONS.filter((a) => a.href !== '/coach' || data.hasAnyHistory).map((action) => (
@@ -459,6 +355,7 @@ export default function MobileDashboardView() {
 
         {showMore && (
           <div className="space-y-5">
+            {recoveryDetailCard}
             <WeeklyMuscleHeatmap />
             <WeeklyVolume />
             <ConsistencyStrip />
