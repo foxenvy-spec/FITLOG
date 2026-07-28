@@ -1,6 +1,7 @@
 'use client'
 
 import { WEEKDAY_LABELS } from '@/app/(app)/dashboard/DashboardView'
+import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
 
 interface WorkoutStreakCardProps {
   streak: number
@@ -25,7 +26,7 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
         <div className="flex items-center gap-2.5">
           <span
             className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base"
-            style={{ backgroundColor: '#E8A33D22' }}
+            style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
             aria-hidden="true"
           >
             🔥
@@ -50,9 +51,9 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0"
                 style={{
                   ...(tick.trained
-                    ? { backgroundColor: '#E8A33D', color: '#14161A' }
-                    : { backgroundColor: '#2E333A', color: '#9498A0' }),
-                  ...(isToday ? { boxShadow: '0 0 0 2px #E8A33D, 0 0 10px #E8A33D88' } : {}),
+                    ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
+                    : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }),
+                  ...(isToday ? { boxShadow: `0 0 0 2px ${COLORS.amber}, 0 0 10px ${withAlpha(COLORS.amber, '88')}` } : {}),
                 }}
                 aria-hidden="true"
               >

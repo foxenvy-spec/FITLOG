@@ -2,15 +2,16 @@
 
 import Link from 'next/link'
 import type { HealthSnapshot } from '@/lib/healthIntegration'
+import { COLORS } from '@/lib/theme'
 
 interface TodayHealthStatsRowProps {
   health: HealthSnapshot
 }
 
 const METRIC_META = {
-  calories: { icon: '🔥', label: 'kcal', color: '#E8A33D' },
-  steps: { icon: '👣', label: 'ก้าว', color: '#7A9B57' },
-  sleepHours: { icon: '🌙', label: 'นอนหลับ', color: '#8B7FC7' },
+  calories: { icon: '🔥', label: 'kcal', color: COLORS.amber },
+  steps: { icon: '👣', label: 'ก้าว', color: COLORS.moss },
+  sleepHours: { icon: '🌙', label: 'นอนหลับ', color: COLORS.purple },
 } as const
 
 /**

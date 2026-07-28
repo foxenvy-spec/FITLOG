@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { COLORS, NEUTRAL } from '@/lib/theme'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -35,15 +36,15 @@ export default function BottomNav() {
                 <span
                   className="absolute -top-8 w-[76px] h-[76px] rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
                   style={{
-                    background: 'radial-gradient(circle at 35% 30%, #FFC069, #E8A33D 55%, #C1503A 100%)',
-                    boxShadow: '0 6px 18px rgba(0,0,0,.45), 0 0 22px #E8A33D88, inset 0 1px rgba(255,255,255,.35)',
-                    border: '3px solid #14161A',
+                    background: `radial-gradient(circle at 35% 30%, #FFC069, ${COLORS.amber} 55%, ${COLORS.rust} 100%)`,
+                    boxShadow: `0 6px 18px rgba(0,0,0,.45), 0 0 22px ${COLORS.amber}88, inset 0 1px rgba(255,255,255,.35)`,
+                    border: `3px solid ${NEUTRAL.onAmberText}`,
                   }}
                 >
                   <DumbbellIcon />
                   <span
                     className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center"
-                    style={{ color: '#14161A' }}
+                    style={{ color: NEUTRAL.onAmberText }}
                     aria-hidden="true"
                   >
                     START
@@ -74,7 +75,7 @@ function DumbbellIcon() {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M2 12h2M5 9v6M8 7v10M16 7v10M19 9v6M22 12h-2M8 12h8"
-        stroke="#14161A"
+        stroke={NEUTRAL.onAmberText}
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -84,7 +85,7 @@ function DumbbellIcon() {
 }
 
 function HomeIcon({ active }: { active: boolean }) {
-  const c = active ? '#E8A33D' : '#9498A0'
+  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path d="M4 11.5 12 4l8 7.5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -95,7 +96,7 @@ function HomeIcon({ active }: { active: boolean }) {
 }
 
 function ProgramIcon({ active }: { active: boolean }) {
-  const c = active ? '#E8A33D' : '#9498A0'
+  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <rect x="4" y="5" width="16" height="15" rx="2" stroke={c} strokeWidth="1.8" />
@@ -107,7 +108,7 @@ function ProgramIcon({ active }: { active: boolean }) {
 }
 
 function ChartIcon({ active }: { active: boolean }) {
-  const c = active ? '#E8A33D' : '#9498A0'
+  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path d="M5 19V10M12 19V5M19 19v-7" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
@@ -116,7 +117,7 @@ function ChartIcon({ active }: { active: boolean }) {
 }
 
 function ProfileIcon({ active }: { active: boolean }) {
-  const c = active ? '#E8A33D' : '#9498A0'
+  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="8" r="3.6" stroke={c} strokeWidth="1.8" />

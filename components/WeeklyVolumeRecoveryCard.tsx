@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, getPreviousWeekRange } from '@/lib/dashboardStats'
 import GoalRing from './GoalRing'
 import Skeleton from './Skeleton'
+import { COLORS } from '@/lib/theme'
 
 type VolumeRow = { performed_at: string; sets: number | null; reps: number | null; weight_kg: number | null; total_volume_kg: number | null }
 
@@ -85,7 +86,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
   const maxDaily = Math.max(1, ...dailyTotals)
 
   const recoveryLabel = recoveryScoreLabel(recoveryPct)
-  const recoveryColor = recoveryPct >= 80 ? '#7A9B57' : recoveryPct >= 60 ? '#22D3EE' : recoveryPct >= 40 ? '#E8A33D' : '#C1503A'
+  const recoveryColor = recoveryPct >= 80 ? COLORS.moss : recoveryPct >= 60 ? COLORS.cyan : recoveryPct >= 40 ? COLORS.amber : COLORS.rust
 
   return (
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
@@ -97,7 +98,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
             {Math.round(totalThisWeek).toLocaleString()} <span className="text-xs text-muted">kg</span>
           </p>
           {pctChange != null && (
-            <p className="text-[11px] mt-0.5" style={{ color: pctChange >= 0 ? '#8CB264' : '#C1503A' }}>
+            <p className="text-[11px] mt-0.5" style={{ color: pctChange >= 0 ? COLORS.deltaGood : COLORS.rust }}>
               {pctChange >= 0 ? '↑' : '↓'}{Math.abs(pctChange)}% จากสัปดาห์ที่แล้ว
             </p>
           )}
@@ -108,7 +109,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
                 className="flex-1 rounded-sm"
                 style={{
                   height: `${Math.max(8, (v / maxDaily) * 100)}%`,
-                  backgroundColor: '#6C8CA8',
+                  backgroundColor: COLORS.steel,
                   opacity: v > 0 ? 1 : 0.25,
                 }}
               />

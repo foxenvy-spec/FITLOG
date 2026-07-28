@@ -8,6 +8,7 @@ import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { VOLUME_MUSCLES, MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
 import GoalRing from './GoalRing'
 import Skeleton from './Skeleton'
+import { COLORS, withAlpha } from '@/lib/theme'
 
 // แถบสรุป "เป้าหมายรายสัปดาห์" แบบมือถือ ตามมอคอัพ: วงแหวนซ้าย (นับกลุ่มกล้ามเนื้อที่ทำเซ็ต
 // ครบเป้าแล้วกี่ใน 7 กลุ่ม) + ลิสต์ขวา (จุดสีต่อกลุ่ม + เซ็ตที่ทำแล้ว/เป้าหมาย)
@@ -79,12 +80,12 @@ export default function WeeklyGoalMuscleCard() {
         </Link>
       </div>
       <div className="px-4 pb-4 pt-3 flex items-center gap-4">
-        <div style={{ filter: 'drop-shadow(0 0 8px #E339A688)' }}>
+        <div style={{ filter: `drop-shadow(0 0 8px ${withAlpha(COLORS.pink, '88')})` }}>
           <GoalRing
             pct={pct}
             size={92}
             strokeWidth={9}
-            color="#E339A6"
+            color={COLORS.pink}
             valueLabel={`${metCount}/${rows.length}`}
             label="บรรลุเป้าหมาย"
             ariaLabel={`บรรลุเป้าหมายแล้ว ${metCount} จาก ${rows.length} กลุ่มกล้ามเนื้อ`}

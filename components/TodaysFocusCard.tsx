@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { COLORS, withAlpha } from '@/lib/theme'
 
 interface TodaysFocusCardProps {
   label: string | null
@@ -18,7 +19,7 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
       <div className="flex items-center gap-3 min-w-0">
         <span
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base"
-          style={{ backgroundColor: '#E8A33D22' }}
+          style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
           aria-hidden="true"
         >
           🎯
