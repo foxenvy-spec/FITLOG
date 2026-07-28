@@ -18,6 +18,33 @@ export default function BottomNav() {
       <div className="max-w-sm md:max-w-2xl mx-auto grid grid-cols-4">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
+
+          // เทรน (/train) — ปุ่มลอยวงกลมใหญ่กลาง bottom nav แทนไอคอนเล็กปกติ (ตามมอคอัพ
+          // "START WORKOUT") ยังเป็น tab เดิม เส้นทางเดิมทุกอย่าง แค่เปลี่ยนดีไซน์การแสดงผล
+          // เฉพาะ tab นี้ — ไม่ได้เพิ่ม/ลด tab ใดๆ ในแอป จึงไม่กระทบ routing ที่อื่น
+          if (href === '/train') {
+            return (
+              <Link key={href} href={href} className="relative flex items-start justify-center" aria-label={label}>
+                <span
+                  className="absolute -top-7 w-16 h-16 rounded-full flex items-center justify-center shrink-0 active:scale-[0.97] transition"
+                  style={{
+                    background: 'radial-gradient(circle at 35% 30%, #FFC069, #E8A33D 55%, #C1503A 100%)',
+                    boxShadow: '0 6px 18px rgba(0,0,0,.45), 0 0 22px #E8A33D88, inset 0 1px rgba(255,255,255,.35)',
+                    border: '3px solid #14161A',
+                  }}
+                >
+                  <DumbbellIcon />
+                </span>
+                <span
+                  className={`text-[8px] font-display tracked uppercase mt-9 ${active ? 'text-amber' : 'text-muted'}`}
+                  aria-hidden="true"
+                >
+                  เทรน
+                </span>
+              </Link>
+            )
+          }
+
           return (
             <Link
               key={href}
@@ -37,6 +64,20 @@ export default function BottomNav() {
         })}
       </div>
     </nav>
+  )
+}
+
+function DumbbellIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2 12h2M5 9v6M8 7v10M16 7v10M19 9v6M22 12h-2M8 12h8"
+        stroke="#14161A"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
