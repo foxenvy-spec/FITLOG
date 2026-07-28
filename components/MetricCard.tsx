@@ -127,6 +127,16 @@ function splitValueUnit(text: string): { num: string; unit: string } {
   return { num: text.slice(0, spaceIdx), unit: text.slice(spaceIdx + 1) }
 }
 
+// เฉพาะมือถือ (compact): แยกข้อความเดลต้าที่ BodyMetricsRow รวม "ตัวเลข + ช่วงเวลา" มาในสตริงเดียว
+// (เช่น "-2.1 kg จาก 2 เดือนก่อน") ออกเป็น trend ("-2.1 kg") กับ caption ("จาก 2 เดือนก่อน") เพื่อโชว์
+// คนละบรรทัด/คนละน้ำหนักตามดีไซน์ — ถ้าข้อความไม่มีคำว่า "จาก" (เช่น การ์ด BMI ที่โชว์แค่หมวดหมู่
+// ไม่มีช่วงเวลาเทียบ) ให้ caption เป็น null แล้วโชว์ข้อความเดิมทั้งหมดเป็น trend บรรทัดเดียวเหมือนเดิม
+function splitDeltaCaption(text: string): { trend: string; caption: string | null } {
+  const idx = text.indexOf(' จาก')
+  if (idx === -1) return { trend: text, caption: null }
+  return { trend: text.slice(0, idx), caption: text.slice(idx + 1) }
+}
+
 // การ์ดเมตริกเดี่ยว (น้ำหนัก/ไขมัน/กล้ามเนื้อ/มวลไขมัน/BMI ฯลฯ) — สกัดออกมาจาก BodyMetricsRow
 // เดิม ให้เป็น component แยกที่ reuse ได้ ต่อไปถ้าอยากมีการ์ดสไตล์เดียวกันในหน้าอื่น
 // (เช่น หน้า /health) แค่เปลี่ยน props ไม่ต้องเขียน JSX/gradient/glow ใหม่ทั้งหมด
@@ -150,7 +160,7 @@ export default function MetricCard({
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[118px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[132px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
           padding: compact ? '14px' : '16px 18px 12px', // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — Mobile Dashboard v2.1: padding เท่ากันทุกด้าน 14px ตาม token ใหม่
@@ -255,29 +265,45 @@ export default function MetricCard({
           <div className="absolute left-0 right-0 bottom-0">
             <div className="flex items-center justify-between gap-2">
               <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 28 : 20 }}>
-                <span style={{ fontWeight: 800 }}>{splitValueUnit(valueText).num}</span>
+                {/* Value font weight: ดีไซน์ระบุ Semibold (600) — ใช้เฉพาะมือถือ (compact) ตามสเปค
+                    เดสก์ท็อป (compact=false) คงน้ำหนัก 800 (Bold) เดิมไว้ทุกประการ ไม่กระทบ */}
+                <span style={{ fontWeight: compact ? 600 : 800 }}>{splitValueUnit(valueText).num}</span>
                 {splitValueUnit(valueText).unit && (
                   <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
                 )}
               </p>
               <Sparkline series={series} color={theme.main} height={compact ? 26 : 30} />
             </div>
-            {deltaText && (
-              <>
-                <p
-                  className="font-semibold whitespace-nowrap flex items-center gap-1"
-                  style={{ color: deltaColor, marginTop: 6, fontSize: compact ? 12 : 11 }}
-                >
-                  {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
-                  {deltaText}
-                </p>
-                {lastMeasuredText && (
-                  <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
-                    {lastMeasuredText}
+            {deltaText && (() => {
+              // Trend/Caption แยกบรรทัด: เฉพาะมือถือ (compact) — "↓2.1 kg" (trend) กับ "จาก 2 เดือนก่อน"
+              // (caption) เป็นคนละบรรทัด/คนละน้ำหนักสีตามดีไซน์ (Caption 11px Regular, สีจางกว่า)
+              // เดสก์ท็อป (compact=false) ยังคงโชว์รวมกันบรรทัดเดียวเหมือนเดิมทุกประการ ไม่กระทบ
+              const { trend, caption } = compact ? splitDeltaCaption(deltaText) : { trend: deltaText, caption: null }
+              return (
+                <>
+                  <p
+                    className="font-semibold whitespace-nowrap flex items-center gap-1"
+                    style={{ color: deltaColor, marginTop: 6, fontSize: compact ? 12 : 11 }}
+                  >
+                    {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
+                    {trend}
                   </p>
-                )}
-              </>
-            )}
+                  {caption && (
+                    <p
+                      className="whitespace-nowrap truncate"
+                      style={{ color: 'rgba(255,255,255,.5)', fontWeight: 400, fontSize: 11, marginTop: 2 }}
+                    >
+                      {caption}
+                    </p>
+                  )}
+                  {lastMeasuredText && (
+                    <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
+                      {lastMeasuredText}
+                    </p>
+                  )}
+                </>
+              )
+            })()}
           </div>
         </div>
       </div>
