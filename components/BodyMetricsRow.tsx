@@ -29,6 +29,17 @@ const METRIC_THEME: Record<MetricIconImageKey, { main: string; second: string }>
   bmi: { main: '#1b8cff', second: '#3f6cff' },
 }
 
+// ธีมสีชุดที่ 2 (colorScheme="vibrant") — ตามมอคอัพใหม่: น้ำหนัก=ส้ม, ไขมัน=ชมพู, กล้ามเนื้อ=ฟ้า,
+// มวลไขมัน=เขียว ต่างจากชุดเดิมด้านบนไปเลย (ที่ยังใช้กับเดสก์ท็อปอยู่) จึงแยกเป็นอีกชุดแทนที่จะ
+// แก้ของเดิม — ป้องกันไม่ให้กระทบหน้าเดสก์ท็อปที่ยังอ้างอิง METRIC_THEME ชุดแรก
+const METRIC_THEME_VIBRANT: Record<MetricIconImageKey, { main: string; second: string }> = {
+  weight: { main: '#FFA23D', second: '#FF7A1A' },
+  bodyFat: { main: '#ff2f5d', second: '#ff00c8' },
+  muscle: { main: '#3DA5FF', second: '#1B6EFF' },
+  fatMass: { main: '#4ADE80', second: '#22C55E' },
+  bmi: { main: '#1b8cff', second: '#3f6cff' },
+}
+
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
 // dedupes by key — sharing this avoids a second network round-trip for the same data)
 export const BODY_METRICS_QUERY_KEY = ['body-metrics-summary']
@@ -149,7 +160,10 @@ function splitValueUnit(text: string): { num: string; unit: string } {
   return { num: text.slice(0, spaceIdx), unit: text.slice(spaceIdx + 1) }
 }
 
-export default function BodyMetricsRow({ showLastMeasuredDate = false }: { showLastMeasuredDate?: boolean } = {}) {
+export default function BodyMetricsRow({
+  showLastMeasuredDate = false,
+  colorScheme = 'default',
+}: { showLastMeasuredDate?: boolean; colorScheme?: 'default' | 'vibrant' } = {}) {
   const supabase = createClient()
   const { toDisplay, unit } = useWeightUnit()
 
@@ -280,7 +294,7 @@ export default function BodyMetricsRow({ showLastMeasuredDate = false }: { showL
     <>
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {cards.map((c) => {
-        const theme = METRIC_THEME[c.icon]
+        const theme = colorScheme === 'vibrant' ? METRIC_THEME_VIBRANT[c.icon] : METRIC_THEME[c.icon]
         return (
           <div
             key={c.key}
