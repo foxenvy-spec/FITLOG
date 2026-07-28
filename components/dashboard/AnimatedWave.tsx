@@ -6,45 +6,44 @@ interface AnimatedWaveProps {
   color: string
 }
 
-// เส้นคลื่นเรืองแสงตกแต่งใต้ชื่อผู้ใช้ — ไม่มีความหมายเชิงข้อมูลใดๆ (decorative only) สีเปลี่ยนตาม
-// เฉดสีของ Fitness Score tier ปัจจุบัน ให้ความรู้สึกเชื่อมโยงกับคะแนนด้านบน
+// เส้นคลื่นเรืองแสงตกแต่งของ header — decorative only (ไม่มีความหมายเชิงข้อมูล) สีเปลี่ยนตาม
+// เฉดสีของ Fitness Score tier ปัจจุบัน ให้ความรู้สึกเชื่อมโยงกับคะแนนบนวงแหวน
+//
+// v3 (ตามสเปก mockup): สูงขึ้นชัดเจน (20px -> 90px) มีจุดยอด/หุบชัดเจนแบบ "/\___/  \_____/\"
+// แทนที่จะเป็นเส้นลูกคลื่นราบเรียบเดิม, เพิ่มเป็น 3 ชั้น (glow กว้างสุดด้านหลัง, glow กลาง,
+// เส้นแกนสว่างชัดด้านหน้า) ให้ความรู้สึก "หลายชั้น" ตามที่ขอ — วางเป็น background layer
+// (ดู Header.tsx) ให้ลอดผ่านด้านหลังข้อความชื่อผู้ใช้ได้ ไม่ใช่เส้นแบนอยู่ใต้บรรทัดสุดท้าย
 export default function AnimatedWave({ color }: AnimatedWaveProps) {
   const gradId = useId()
-  const glowId = useId()
+  const glowWideId = useId()
+  const glowCoreId = useId()
+
+  // จุดยอด-หุบชัดเจนขึ้นกว่าเดิมมาก (amplitude ~45 จาก 100 เทียบสัดส่วน h-[90px]) ให้เห็นเป็น
+  // คลื่นจริงๆ ไม่ใช่เส้นหยักบางๆ เหมือนเวอร์ชันก่อน
+  const path = 'M0,55 C40,15 70,85 110,45 C150,5 180,80 230,35 C270,0 300,70 340,30 C365,10 385,25 400,20'
 
   return (
-    // ลดพื้นที่ Wave ลงเหลือ ~20px (จาก h-6/24px เดิม) ตามที่ขอ (18-20px) — ให้ดูเป็น background
-    // element เบาๆ มากกว่าเส้นเด่น (viewBox เดิม 400x48 คงไว้ ให้สัดส่วนโค้งเหมือนเดิมทุกจุด
-    // แค่บีบสูงลงตามกรอบ SVG ที่เล็กลง เพราะ preserveAspectRatio="none")
-    <svg viewBox="0 0 400 48" className="w-full h-5" preserveAspectRatio="none" aria-hidden="true">
+    <svg viewBox="0 0 400 100" className="w-full h-[90px]" preserveAspectRatio="none" aria-hidden="true">
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor={color} stopOpacity="0" />
-          <stop offset="45%" stopColor={color} stopOpacity="0.95" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="35%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.35" />
         </linearGradient>
-        {/* blur แคบลง (3.5 → 2.5) ให้ glow ฟุ้งน้อยลง เข้ากับที่ต้องลดความเด่นลง ไม่ใช่แค่จางลงอย่างเดียว */}
-        <filter id={glowId} x="-50%" y="-150%" width="200%" height="400%">
-          <feGaussianBlur stdDeviation="2.5" />
+        <filter id={glowWideId} x="-60%" y="-150%" width="220%" height="400%">
+          <feGaussianBlur stdDeviation="9" />
+        </filter>
+        <filter id={glowCoreId} x="-60%" y="-150%" width="220%" height="400%">
+          <feGaussianBlur stdDeviation="3.5" />
         </filter>
       </defs>
-      {/* เส้น glow ด้านหลัง: ความหนา 6→4 (แผ่แคบลง) + opacity 0.22→0.08 (เหลือ ~35% ของเดิม
-          ตามสเปคที่ขอ "ลดลงเหลือ 30-40%") ให้เป็นแค่แสงจางๆ คลอเบาๆ ไม่ใช่จุดเด่นของหน้าจอ */}
-      <path
-        d="M0,32 C50,8 90,42 140,20 C190,-2 230,38 280,16 C310,4 340,10 400,6"
-        fill="none"
-        stroke={color}
-        strokeWidth="6"
-        strokeOpacity="0.16"
-        filter={`url(#${glowId})`}
-      />
-      <path
-        d="M0,32 C50,8 90,42 140,20 C190,-2 230,38 280,16 C310,4 340,10 400,6"
-        fill="none"
-        stroke={`url(#${gradId})`}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
+
+      {/* ชั้น 1: glow กว้างสุด ฟุ้งมาก ให้ความรู้สึก "แสงลอดพื้นหลัง" */}
+      <path d={path} fill="none" stroke={color} strokeWidth="14" strokeOpacity="0.18" filter={`url(#${glowWideId})`} />
+      {/* ชั้น 2: glow ระดับกลาง แคบกว่าและเข้มกว่าชั้นแรก */}
+      <path d={path} fill="none" stroke={color} strokeWidth="6" strokeOpacity="0.35" filter={`url(#${glowCoreId})`} />
+      {/* ชั้น 3: เส้นแกนสว่างชัด อยู่หน้าสุด */}
+      <path d={path} fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   )
 }
