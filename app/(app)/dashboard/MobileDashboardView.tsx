@@ -13,7 +13,6 @@ import {
   computeRecoveryPct,
   recoveryStatusColor,
   findNextProgramDay,
-  computeWorkoutMotivationLabel,
   recoveryRecommendationLabel,
   computeGreetingContext,
 } from '@/lib/dashboardStats'
@@ -40,6 +39,8 @@ import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationBell from '@/components/NotificationBell'
+import WorkoutStreakCard from '@/components/WorkoutStreakCard'
+import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
 import type { Insight } from '@/lib/dashboardStats'
 
 // การ์ดหนักๆ ที่ไม่จำเป็นต้องเห็นทันทีตอนเปิดหน้า — โหลดแยก bundle เหมือนฝั่งเดสก์ท็อป
@@ -284,28 +285,6 @@ export default function MobileDashboardView() {
       ),
     })
   }
-  carouselCards.push({
-    key: 'weekly-goal',
-    node: (
-      <div className="h-full px-5 py-4">
-        <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
-        <div className="flex items-center gap-4">
-          <div style={{ filter: 'drop-shadow(0 0 8px #E339A688)' }}>
-            <GoalRing pct={data.weeklyGoalPct} size={68} strokeWidth={7} color="#E339A6" label="Goal" ariaLabel="Weekly Goal" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-ink">
-              <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งแล้วในสัปดาห์นี้
-            </p>
-            <p className="text-[11px] text-muted mt-0.5">{computeWorkoutMotivationLabel(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal)}</p>
-            <p className="text-[11px] text-muted mt-2">
-              <span className="text-ink font-mono">{data.streak}</span> Day Streak
-            </p>
-          </div>
-        </div>
-      </div>
-    ),
-  })
   if (prefs.showAICoach) {
     carouselCards.push({
       key: 'ai-coach',
@@ -392,8 +371,19 @@ export default function MobileDashboardView() {
 
         {/* body composition snapshot */}
         <div className="animate-rise" style={{ animationDelay: '15ms' }}>
+          <div className="flex items-center justify-between px-1 mb-2">
+            <p className="font-display text-sm tracked uppercase text-ink">ภาพรวมร่างกาย</p>
+            <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
+              ดูทั้งหมด →
+            </Link>
+          </div>
           <BodyMetricsRow />
         </div>
+
+        {/* streak + weekly goal — สองการ์ดแยกเดี่ยว (ไม่รวมกับแถบปัด Recovery/AI Coach ด้านล่าง)
+            เพราะเป็นข้อมูลที่อยากให้เห็นทันทีโดยไม่ต้องปัด ตามดีไซน์ที่เลือก */}
+        <WorkoutStreakCard streak={data.streak} weekDayTicks={data.weekDayTicks} today={today} />
+        <WeeklyGoalMuscleCard />
 
         {/* hero — today's workout, ตัวชี้นำหลักของหน้า วางแนวตั้ง (ring อยู่บนสุด) ต่างจาก
             เดสก์ท็อปที่วาง ring ข้างข้อความ เพื่อให้อ่านง่ายบนจอแคบ */}
