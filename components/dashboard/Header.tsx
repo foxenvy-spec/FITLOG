@@ -46,7 +46,11 @@ export default function Header({
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <AmbientGlow color={fitnessScore.color} />
         </div>
-        <div className="absolute inset-x-0 z-0 pointer-events-none animate-header-wave" style={{ top: 85 }} aria-hidden="true">
+        <div
+          className="absolute left-0 z-0 pointer-events-none animate-header-wave"
+          style={{ top: 85, right: 130 }} // 130 = Ring's right:20 + size:110 → wave จบที่ขอบซ้ายของวงพอดี
+          aria-hidden="true"
+        >
           <AnimatedWave />
         </div>
 

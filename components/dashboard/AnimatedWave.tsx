@@ -19,6 +19,7 @@ export default function AnimatedWave() {
   const coreGradId = useId()
   const glowWideId = useId()
   const glowCoreId = useId()
+  const endGlowId = useId()
 
   const color = FIRE_ACCENT
   const hot = lighten(color, 0.55)
@@ -62,6 +63,11 @@ export default function AnimatedWave() {
         <filter id={glowCoreId} x="-70%" y="-300%" width="240%" height="700%">
           <feGaussianBlur stdDeviation="6" />
         </filter>
+        {/* blur ใหญ่กว่าชั้นอื่นทั้งหมด เฉพาะจุดปลายเส้น (ที่ตอนนี้ไปจบพอดีที่ขอบวง Ring) ให้ดู
+            เหมือนพลังงานสะสม/ลุกจ้าตรงจุดที่ไหลเข้าวง ตามฟีดแบ็ก */}
+        <filter id={endGlowId} x="-300%" y="-300%" width="700%" height="700%">
+          <feGaussianBlur stdDeviation="10" />
+        </filter>
       </defs>
 
       {/* ชั้น 1-2: glow (screen blend ให้สะสมความสว่างแทนที่จะทึบขึ้นเฉยๆ) */}
@@ -100,6 +106,11 @@ export default function AnimatedWave() {
           style={{ mixBlendMode: 'screen', animationDelay: `${i * 0.4}s` }}
         />
       ))}
+
+      {/* จุด glow เข้มพิเศษตรงปลายเส้น (ที่ตอนนี้ไปจบพอดีที่ขอบวง Ring แล้ว) — จำลองพลังงานไหล
+          เข้าไปสะสมในวง ตามฟีดแบ็ก ใช้ animate-header-glow (pulse เบาๆ) ตัวเดียวกับ AmbientGlow */}
+      <circle cx={398} cy={21} r={16} fill={core} filter={`url(#${endGlowId})`} className="animate-header-glow" style={{ mixBlendMode: 'screen' }} />
+      <circle cx={398} cy={21} r={6} fill="#FFFFFF" filter={`url(#${glowCoreId})`} style={{ mixBlendMode: 'screen' }} />
     </svg>
   )
 }
