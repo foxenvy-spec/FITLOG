@@ -43,10 +43,10 @@ export interface MetricCardProps {
 
 // เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
 // เติมสีจางๆ (15% alpha) ล้อสีเดียวกับเส้น ตามสเปคที่ขอ (คล้าย Chart.js: borderColor / backgroundColor / tension)
-function Sparkline({ series, color, height = 30 }: { series: number[]; color: string; height?: number }) {
+function Sparkline({ series, color, height = 30, width = 64 }: { series: number[]; color: string; height?: number; width?: number }) {
   const glowId = useId()
   if (series.length < 2) return null
-  const w = 64
+  const w = width
   const h = height
   const pad = 3 // กันเส้นชนขอบบน-ล่างตอนค่าสูงสุด/ต่ำสุด
   const tension = 0.6 // ยกจาก 0.45 ให้เส้นโค้งมนขึ้น (ลดความรู้สึกหักมุมแข็งๆ แบบเส้นตรงต่อกัน)
@@ -160,7 +160,7 @@ export default function MetricCard({
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[124px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[116px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
           padding: compact ? '14px' : '16px 18px 12px', // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — Mobile Dashboard v2.1: padding เท่ากันทุกด้าน 14px ตาม token ใหม่
@@ -270,7 +270,7 @@ export default function MetricCard({
               แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
           <div className="absolute left-0 right-0 bottom-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 30 : 20 }}>
+              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 22 : 20 }}>
                 {/* Value font weight: ดีไซน์ระบุ Semibold (600) — ใช้เฉพาะมือถือ (compact) ตามสเปค
                     เดสก์ท็อป (compact=false) คงน้ำหนัก 800 (Bold) เดิมไว้ทุกประการ ไม่กระทบ */}
                 <span style={{ fontWeight: compact ? 600 : 800 }}>{splitValueUnit(valueText).num}</span>
@@ -278,7 +278,7 @@ export default function MetricCard({
                   <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
                 )}
               </p>
-              <Sparkline series={series} color={theme.main} height={compact ? 26 : 30} />
+              <Sparkline series={series} color={theme.main} height={compact ? 24 : 30} width={compact ? 42 : 64} />
             </div>
             {deltaText && (() => {
               // Trend/Caption แยกบรรทัด: เฉพาะมือถือ (compact) — "↓2.1 kg" (trend) กับ "จาก 2 เดือนก่อน"
