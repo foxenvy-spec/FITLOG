@@ -12,6 +12,9 @@ interface GoalRingProps {
   // ข้อความสำหรับ screen reader เท่านั้น ใช้ตอนที่มี caption แสดงอยู่นอกวงแล้ว (เช่น header ด้านบน)
   // และไม่อยากให้ label ไปแสดงซ้ำข้างในวงอีกที ถ้าไม่ระบุจะ fallback ไปใช้ label แทน
   ariaLabel?: string
+  // ข้อความกลางวงแทนที่ "{pct}%" ตายตัว — ใช้ตอนอยากโชว์เป็นเศษส่วน (เช่น "7/10") แทน %
+  // เช่นการ์ด Weekly Goal แบบมือถือที่นับ "กี่กลุ่มกล้ามเนื้อบรรลุเป้าหมายแล้ว" ไม่ใช่เปอร์เซ็นต์
+  valueLabel?: string
 }
 
 export default function GoalRing({
@@ -22,6 +25,7 @@ export default function GoalRing({
   trackColor = '#23272D',
   label,
   ariaLabel,
+  valueLabel,
 }: GoalRingProps) {
   const clamped = Math.max(0, Math.min(100, pct))
   const animatedPct = useCountUp(clamped)
@@ -55,7 +59,7 @@ export default function GoalRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-mono text-ink leading-none" style={{ fontSize: size * 0.24 }}>
-          {Math.round(animatedPct)}%
+          {valueLabel ?? `${Math.round(animatedPct)}%`}
         </span>
         {label && <span className="text-[9px] text-muted mt-0.5">{label}</span>}
       </div>
