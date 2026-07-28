@@ -244,7 +244,7 @@ export default function MobileDashboardView() {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-[10px]">
         {/* greeting + Fitness Score + settings */}
         <div className="relative z-20 px-1 animate-rise">
           <div className="flex items-start justify-between gap-3">
@@ -294,8 +294,8 @@ export default function MobileDashboardView() {
 
         {/* body composition snapshot */}
         <div className="animate-rise" style={{ animationDelay: '15ms' }}>
-          <div className="flex items-center justify-between px-1 mb-2">
-            <p className="font-display text-sm tracked uppercase text-ink">ภาพรวมร่างกาย</p>
+          <div className="flex items-center justify-between px-1 mb-[10px]">
+            <p className="font-display tracked uppercase text-ink" style={{ fontSize: 12 }}>ภาพรวมร่างกาย</p>
             <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
               ดูทั้งหมด →
             </Link>
