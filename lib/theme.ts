@@ -34,3 +34,18 @@ export const NEUTRAL = {
 export function withAlpha(hex: string, alpha: string): string {
   return `${hex}${alpha}`
 }
+
+// ผสมสีเข้ากับสีขาว ให้ได้เฉด "สว่างกว่าเดิม" ของสีเดียวกัน (ไม่ใช่แทนที่ด้วยสีอื่น) — ใช้ทำจุด
+// hot-spot/highlight บน gradient หรือ glow ที่ต้อง "ดูสว่างจ้าขึ้น" แต่ยังคงโทนสีเดิมไว้ เช่น
+// วงแหวน Fitness Score หรือเส้นคลื่นตกแต่งที่สีเปลี่ยนตาม tier — ให้เอฟเฟกต์ไฟ/glow ทำงานถูกต้อง
+// ไม่ว่า tier สีจะเป็นเขียว (Elite) เหลือง (Good) หรือส้ม/แดง (Fair/Recovery) ก็ตาม
+// amount: 0 = สีเดิม, 1 = ขาวล้วน
+export function lighten(hex: string, amount: number): string {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.substring(0, 2), 16)
+  const g = parseInt(clean.substring(2, 4), 16)
+  const b = parseInt(clean.substring(4, 6), 16)
+  const mix = (channel: number) => Math.round(channel + (255 - channel) * amount)
+  const toHex = (n: number) => n.toString(16).padStart(2, '0')
+  return `#${toHex(mix(r))}${toHex(mix(g))}${toHex(mix(b))}`
+}
