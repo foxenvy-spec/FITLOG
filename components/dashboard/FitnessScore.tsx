@@ -3,26 +3,30 @@
 import Link from 'next/link'
 import { useId } from 'react'
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
+import { lighten } from '@/lib/theme'
 
 interface FitnessScoreProps {
   score: FitnessScoreResult
-  /** เส้นผ่านศูนย์กลางวงแหวน (px) — สเปก mockup ล่าสุดขอ 112–120px, ดีฟอลต์ 116 */
+  /** เส้นผ่านศูนย์กลางวงแหวน (px) — สเปก mockup ล่าสุดขอ 110–120px, ดีฟอลต์ 110 */
   size?: number
 }
 
 // วงแหวน Fitness Score — คะแนนรวมใหม่ (ไม่มีอยู่ใน FITLOG เดิม) ดูสูตรคำนวณเต็มที่ lib/fitnessScore.ts
 // ลิงก์ไปหน้า /stats เพราะยังไม่มีหน้ารายละเอียดคะแนนนี้โดยเฉพาะ — /stats คือที่ที่ใกล้เคียงที่สุด
 //
-// v3 (ตามสเปก mockup): วงใหญ่ขึ้น (80 -> 112–120) + เส้น stroke เป็น gradient (ไม่ใช่สีทึบเดียว) +
-// glow ฟุ้งรอบวง (SVG filter, ไม่ใช่แค่ drop-shadow ธรรมดา) + inner shadow บางๆ ให้ดูมีมิติ +
-// label "Fitness Score / tier" อยู่กึ่งกลางใต้วงทันที (ไม่ชิดขวาแบบเวอร์ชันก่อน)
-export default function FitnessScore({ score, size = 116 }: FitnessScoreProps) {
-  const strokeWidth = Math.round(size * 0.075) // ~8-9px ที่ size 112-120
+// v5 (ตามฟีดแบ็ก "อยากให้ดูไฟลุก 3 มิติ"): เปลี่ยน gradient จาก "สีเดียวไล่แค่ความโปร่งใส" เป็น
+// ไล่เฉดสว่าง/เข้มของสีเดียวกัน (hot spot ตรงกลางส่วนโค้ง) ผ่าน lighten() — ให้ดูมีมิติ/สว่างจ้า
+// ตรงหัวเข็มคล้ายปลายเปลวไฟ โดยยังคงสีตาม tier จริง (ไม่ hardcode ส้ม) + เพิ่มเส้น highlight
+// บางๆ ผิวด้านนอกให้ดูเป็นผิวมันวาว/3 มิติ (glossy rim)
+export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
+  const strokeWidth = Math.round(size * 0.08)
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - score.score / 100)
   const gradId = useId()
   const glowId = useId()
+
+  const hot = lighten(score.color, 0.5)
 
   return (
     <Link
@@ -33,16 +37,21 @@ export default function FitnessScore({ score, size = 116 }: FitnessScoreProps) {
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
           <defs>
-            {/* gradient stroke — ปลายอ่อนกว่าต้นเล็กน้อย ให้วงดูมีความลึกแทนที่จะเป็นสีทึบแบน */}
+            {/* gradient stroke แบบ "ไฟ" — เข้มตรงจุดเริ่ม (12 นาฬิกา) ไล่สว่างจ้าตรงกลางส่วนโค้ง
+                แล้วเข้มลงอีกครั้งใกล้ปลายเข็ม ให้ความรู้สึกมีแกนสว่างพุ่งอยู่ตรงกลางเส้น */}
             <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={score.color} stopOpacity="0.65" />
+              <stop offset="0%" stopColor={score.color} stopOpacity="0.75" />
+              <stop offset="45%" stopColor={hot} stopOpacity="1" />
               <stop offset="100%" stopColor={score.color} stopOpacity="1" />
             </linearGradient>
             {/* outer glow — blur แล้ว merge กลับเข้ากับเส้นจริง ให้ฟุ้งแบบมีแกนสว่างชัดตรงกลาง
                 ไม่ใช่แค่จางๆ แบบ drop-shadow เฉยๆ */}
-            <filter id={glowId} x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation={strokeWidth * 0.6} result="blur" />
+            <filter id={glowId} x="-70%" y="-70%" width="240%" height="240%">
+              <feGaussianBlur stdDeviation={strokeWidth * 0.7} result="blur" />
+              {/* วาง blur ซ้ำสองชั้นก่อน SourceGraphic ให้แสง glow เข้มขึ้นอีกนิด (alpha compositing
+                  ซ้อนกัน) โดยไม่ต้องเพิ่ม stdDeviation จนฟุ้งเกินไป */}
               <feMerge>
+                <feMergeNode in="blur" />
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
@@ -60,6 +69,20 @@ export default function FitnessScore({ score, size = 116 }: FitnessScoreProps) {
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             filter={`url(#${glowId})`}
+          />
+          {/* glossy rim — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก (รัศมีเล็กกว่าเส้นหลักนิดหน่อย)
+              ให้ความรู้สึกผิวมันวาว/3 มิติ เหมือนแสงสะท้อนขอบท่อไฟ ไม่ใช่วงแบนสีทึบเดียว */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius - strokeWidth * 0.32}
+            fill="none"
+            stroke={lighten(score.color, 0.8)}
+            strokeWidth={Math.max(1, strokeWidth * 0.12)}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeOpacity={0.55}
           />
         </svg>
         {/* inner shadow บางๆ ด้านในวง ให้ตัวเลขตรงกลางดูจมลงไปนิดหนึ่งแทนที่จะลอยแบน */}
