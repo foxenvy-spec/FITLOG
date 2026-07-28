@@ -244,7 +244,7 @@ export default function MobileDashboardView() {
 
   return (
     <>
-      <div className="space-y-5">
+      <div className="space-y-4">
         {/* greeting + Fitness Score + settings */}
         <div className="relative z-20 px-1 animate-rise">
           <div className="flex items-start justify-between gap-3">
@@ -256,12 +256,12 @@ export default function MobileDashboardView() {
                 </div>
               </div>
               <p
-                className="uppercase mt-1"
+                className="uppercase mt-0.5"
                 style={{
                   fontFamily: 'var(--font-oswald), var(--font-kanit)',
-                  fontSize: 34,
+                  fontSize: 28,
                   fontWeight: 800,
-                  letterSpacing: '1.5px',
+                  letterSpacing: '1.2px',
                   lineHeight: 1,
                   backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
                   WebkitBackgroundClip: 'text',
@@ -271,7 +271,7 @@ export default function MobileDashboardView() {
               >
                 {data.profileDisplayName || emailDisplayName(data.email)}
               </p>
-              <p className="text-xs text-muted mt-1">Personalized Fitness</p>
+              <p className="text-xs text-muted mt-0.5">Personalized Fitness</p>
             </div>
             <FitnessScoreRing score={fitnessScore} />
           </div>
@@ -280,7 +280,7 @@ export default function MobileDashboardView() {
 
           <p className="text-xs text-ink">วันนี้พร้อมสำหรับการออกกำลังกาย 💪</p>
 
-          <div className="mt-3">
+          <div className="mt-2">
             <TodaysFocusCard
               label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
               href={scheduledDay ? '/session' : '/log'}
@@ -298,7 +298,7 @@ export default function MobileDashboardView() {
               ดูทั้งหมด →
             </Link>
           </div>
-          <BodyMetricsRow showLastMeasuredDate colorScheme="vibrant" />
+          <BodyMetricsRow colorScheme="vibrant" maxCards={4} />
         </div>
 
         {/* Today's Workout (แบบย่อ) + สถิติย่อวันนี้ — ใช้ข้อมูลจริงที่คำนวณได้ (เซ็ต/นาที/recovery)
@@ -354,7 +354,7 @@ export default function MobileDashboardView() {
         </button>
 
         {showMore && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {recoveryDetailCard}
             <WeeklyMuscleHeatmap />
             <WeeklyVolume />
