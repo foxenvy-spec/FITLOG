@@ -65,7 +65,8 @@ function fmtSigned(n: number, decimals: number, suffix: string): string {
 export default function BodyMetricsRow({
   showLastMeasuredDate = false,
   colorScheme = 'default',
-}: { showLastMeasuredDate?: boolean; colorScheme?: 'default' | 'vibrant' } = {}) {
+  maxCards,
+}: { showLastMeasuredDate?: boolean; colorScheme?: 'default' | 'vibrant'; maxCards?: number } = {}) {
   const supabase = createClient()
   const { toDisplay, unit } = useWeightUnit()
 
@@ -195,7 +196,7 @@ export default function BodyMetricsRow({
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {cards.map((c) => (
+      {cards.slice(0, maxCards ?? cards.length).map((c) => (
         <MetricCard
           key={c.key}
           icon={c.icon}

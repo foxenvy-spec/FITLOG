@@ -150,7 +150,7 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
 
   return (
     <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
-      <div className="px-4 pt-4 flex items-center justify-between">
+      <div className="px-4 pt-3 flex items-center justify-between">
         <p className="font-display text-xs tracked uppercase text-amber">แนะนำสำหรับคุณ</p>
         <Link href="/templates" className="text-muted" aria-label="เทมเพลตทั้งหมด">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -159,54 +159,53 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
         </Link>
       </div>
 
-      <div className="px-4 pb-4 pt-1.5">
-        <p className="font-display text-lg tracked uppercase text-ink leading-tight">{chosen.title}</p>
+      <div className="px-4 pb-4 pt-1">
+        <p className="font-display text-base tracked uppercase text-ink leading-tight truncate">{chosen.title}</p>
         {matched && (
-          <p className="text-[11px] text-amber mt-1">ตรงกับกล้ามเนื้อที่แนะนำวันนี้ ({recommendedMuscle})</p>
+          <p className="text-[10px] text-amber mt-0.5 truncate">ตรงกับกล้ามเนื้อที่แนะนำวันนี้ ({recommendedMuscle})</p>
         )}
 
-        <div className="flex items-center gap-4 mt-3">
-          <div>
-            <p className="font-mono text-base text-ink leading-none">{exercises.length}</p>
-            <p className="text-[10px] text-muted mt-0.5">ท่า</p>
+        <div className="flex items-center justify-between gap-3 mt-2.5">
+          <div className="flex items-center gap-3 shrink-0">
+            <div>
+              <p className="font-mono text-sm text-ink leading-none">{exercises.length}</p>
+              <p className="text-[9px] text-muted mt-0.5">ท่า</p>
+            </div>
+            <div>
+              <p className="font-mono text-sm text-ink leading-none">{totalSets}</p>
+              <p className="text-[9px] text-muted mt-0.5">เซ็ต</p>
+            </div>
+            <div>
+              <p className="font-mono text-sm text-ink leading-none">~{estimatedMinutes}</p>
+              <p className="text-[9px] text-muted mt-0.5">นาที</p>
+            </div>
           </div>
-          <div>
-            <p className="font-mono text-base text-ink leading-none">{totalSets}</p>
-            <p className="text-[10px] text-muted mt-0.5">เซ็ต</p>
-          </div>
-          <div>
-            <p className="font-mono text-base text-ink leading-none">~{estimatedMinutes}</p>
-            <p className="text-[10px] text-muted mt-0.5">นาที</p>
-          </div>
+
+          {muscleGroups.length > 0 && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {muscleGroups.slice(0, 5).map((mg) => (
+                <span
+                  key={mg}
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }}
+                  title={mg}
+                  aria-label={mg}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {muscleGroups.length > 0 && (
-          <div className="flex items-center gap-3 mt-3">
-            {muscleGroups.slice(0, 5).map((mg) => (
-              <div key={mg} className="flex flex-col items-center gap-1">
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${MUSCLE_GROUP_COLORS[mg]}22`, border: `1px solid ${MUSCLE_GROUP_COLORS[mg]}55` }}
-                  aria-hidden="true"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }} />
-                </span>
-                <span className="text-[9px] text-muted">{mg}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {errorMessage && <p className="text-[11px] text-rusttext mt-3">{errorMessage}</p>}
+        {errorMessage && <p className="text-[11px] text-rusttext mt-2">{errorMessage}</p>}
 
         {startedMessage ? (
-          <p className="text-xs text-moss mt-4 flex items-center gap-1.5">✓ {startedMessage}</p>
+          <p className="text-xs text-moss mt-3 flex items-center gap-1.5">✓ {startedMessage}</p>
         ) : (
           <button
             type="button"
             onClick={handleStart}
             disabled={starting || exercises.length === 0}
-            className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition disabled:opacity-50 w-full justify-center"
+            className="inline-flex items-center gap-1.5 mt-3 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2 active:scale-[0.99] transition disabled:opacity-50 w-full justify-center"
           >
             {starting ? '...' : 'เริ่มโปรแกรม'} <span aria-hidden="true">▶</span>
           </button>
