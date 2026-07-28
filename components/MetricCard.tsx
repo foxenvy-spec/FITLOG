@@ -160,7 +160,7 @@ export default function MetricCard({
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[132px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[124px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
           padding: compact ? '14px' : '16px 18px 12px', // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — Mobile Dashboard v2.1: padding เท่ากันทุกด้าน 14px ตาม token ใหม่
@@ -210,8 +210,14 @@ export default function MetricCard({
 
         <div className="relative h-full">
           <p
-            className="flex items-center gap-2 font-semibold"
-            style={{ color: 'rgba(255,255,255,.94)', fontWeight: 700, fontSize: compact ? 13 : 11 }}
+            className="flex items-center gap-2"
+            style={{
+              color: 'rgba(255,255,255,.94)',
+              // ป้ายชื่อ Metric: มือถือ (compact) ลดจาก 700/13px → 500 (Medium) / 12px ตามสเปคที่ขอ
+              // (การ์ดเตี้ยลง ต้องประหยัดพื้นที่แนวตั้ง) — เดสก์ท็อป (compact=false) ยังคง 700/11px เดิม
+              fontWeight: compact ? 500 : 700,
+              fontSize: compact ? 12 : 11,
+            }}
           >
             <span
               className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[36px] h-[36px]' : 'w-[42px] h-[42px]'}`}
@@ -264,7 +270,7 @@ export default function MetricCard({
               แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
           <div className="absolute left-0 right-0 bottom-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 28 : 20 }}>
+              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 30 : 20 }}>
                 {/* Value font weight: ดีไซน์ระบุ Semibold (600) — ใช้เฉพาะมือถือ (compact) ตามสเปค
                     เดสก์ท็อป (compact=false) คงน้ำหนัก 800 (Bold) เดิมไว้ทุกประการ ไม่กระทบ */}
                 <span style={{ fontWeight: compact ? 600 : 800 }}>{splitValueUnit(valueText).num}</span>
@@ -282,16 +288,16 @@ export default function MetricCard({
               return (
                 <>
                   <p
-                    className="font-semibold whitespace-nowrap flex items-center gap-1"
-                    style={{ color: deltaColor, marginTop: 6, fontSize: compact ? 12 : 11 }}
+                    className={`font-semibold whitespace-nowrap flex items-center gap-1 ${compact ? 'leading-none' : ''}`}
+                    style={{ color: deltaColor, marginTop: compact ? 4 : 6, fontSize: compact ? 12 : 11 }}
                   >
                     {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
                     {trend}
                   </p>
                   {caption && (
                     <p
-                      className="whitespace-nowrap truncate"
-                      style={{ color: 'rgba(255,255,255,.5)', fontWeight: 400, fontSize: 11, marginTop: 2 }}
+                      className="whitespace-nowrap truncate leading-none"
+                      style={{ color: 'rgba(255,255,255,.5)', fontWeight: 400, fontSize: 11, marginTop: 3 }}
                     >
                       {caption}
                     </p>
