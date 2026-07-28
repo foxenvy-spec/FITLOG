@@ -204,7 +204,7 @@ export default function MetricCard({
             style={{ color: 'rgba(255,255,255,.94)', fontWeight: 700, fontSize: compact ? 13 : 11 }}
           >
             <span
-              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[38px] h-[38px]' : 'w-[42px] h-[42px]'}`}
+              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[36px] h-[36px]' : 'w-[42px] h-[42px]'}`}
               style={{
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -233,8 +233,8 @@ export default function MetricCard({
               <span
                 className="relative block"
                 style={{
-                  width: compact ? 34 : 38,
-                  height: compact ? 34 : 38,
+                  width: compact ? 32 : 38,
+                  height: compact ? 32 : 38,
                   backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                   WebkitMaskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
                   maskImage: `url(${METRIC_ICON_IMAGES[icon]})`,

@@ -202,7 +202,7 @@ export default function BodyMetricsRow({
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? 'gap-2' : 'gap-3'}`}>
       {cards.slice(0, maxCards ?? cards.length).map((c) => (
         <MetricCard
           key={c.key}
