@@ -42,7 +42,6 @@ import NotificationBell from '@/components/NotificationBell'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
 import WeeklyVolumeRecoveryCard from '@/components/WeeklyVolumeRecoveryCard'
-import TipCard from '@/components/TipCard'
 import RecommendedProgramCard from '@/components/RecommendedProgramCard'
 import type { Insight } from '@/lib/dashboardStats'
 
@@ -88,6 +87,7 @@ export default function MobileDashboardView() {
   const [greetingText, setGreetingText] = useState('สวัสดี')
   const [bannerDismissed, setBannerDismissed] = useState(true)
   const [carouselIndex, setCarouselIndex] = useState(0)
+  const [showMore, setShowMore] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -392,8 +392,6 @@ export default function MobileDashboardView() {
           <WeeklyVolumeRecoveryCard recoveryPct={overallRecoveryPct} />
         </div>
 
-        <TipCard summary={data.aiDailySummary} />
-
         {/* hero — today's workout, ตัวชี้นำหลักของหน้า วางแนวตั้ง (ring อยู่บนสุด) ต่างจาก
             เดสก์ท็อปที่วาง ring ข้างข้อความ เพื่อให้อ่านง่ายบนจอแคบ */}
         <div
@@ -526,22 +524,40 @@ export default function MobileDashboardView() {
           ))}
         </div>
 
-        <WeeklyMuscleHeatmap />
-        <WeeklyVolume />
-        <ConsistencyStrip />
+        {/* สถิติเชิงลึก — พับซ่อนไว้เป็นค่าเริ่มต้น เพราะข้อมูลซ้ำซ้อนกับการ์ดสรุปด้านบน
+            (Weekly Goal/Volume/Recovery) อยู่แล้วในระดับ "ภาพรวม" ส่วนนี้คือ "รายละเอียดเต็ม"
+            สำหรับคนที่อยากเจาะลึกจริงๆ เท่านั้น — กดดูทีหลังได้ ไม่ต้องเลื่อนผ่านทุกครั้งที่เปิดแอป */}
+        <button
+          type="button"
+          onClick={() => setShowMore((v) => !v)}
+          className="flex items-center justify-center gap-1.5 text-xs text-muted border border-line rounded-lg py-2.5 active:bg-surface2 transition"
+        >
+          {showMore ? 'ซ่อนสถิติเพิ่มเติม' : 'ดูสถิติเพิ่มเติม'}
+          <span aria-hidden="true" style={{ transform: showMore ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 150ms' }}>
+            ⌄
+          </span>
+        </button>
 
-        {next && (
-          <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-            <div className="px-4 py-3 flex items-center justify-between">
-              <p className="text-[11px] text-muted">
-                Next up: <span className="text-ink">{next.day.title}</span>
-              </p>
-              <span className="text-[11px] font-mono text-muted">{next.daysAway === 1 ? 'พรุ่งนี้' : `อีก ${next.daysAway} วัน`}</span>
-            </div>
+        {showMore && (
+          <div className="space-y-5">
+            <WeeklyMuscleHeatmap />
+            <WeeklyVolume />
+            <ConsistencyStrip />
+
+            {next && (
+              <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <p className="text-[11px] text-muted">
+                    Next up: <span className="text-ink">{next.day.title}</span>
+                  </p>
+                  <span className="text-[11px] font-mono text-muted">{next.daysAway === 1 ? 'พรุ่งนี้' : `อีก ${next.daysAway} วัน`}</span>
+                </div>
+              </div>
+            )}
+
+            <WeeklyCardioVolume />
           </div>
         )}
-
-        <WeeklyCardioVolume />
 
         <RecommendedProgramCard recommendedMuscle={data.muscleRecommendation?.muscleGroup ?? null} />
       </div>
