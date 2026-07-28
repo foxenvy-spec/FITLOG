@@ -62,17 +62,25 @@ export default function NotificationButton({
         onClick={() => setOpen((v) => !v)}
         aria-label="การแจ้งเตือน"
         aria-expanded={open}
-        className="relative w-11 h-11 rounded-full flex items-center justify-center text-muted hover:text-amber transition backdrop-blur-md text-lg"
+        className="relative w-11 h-11 rounded-full flex items-center justify-center hover:brightness-110 transition backdrop-blur-md"
         style={{
           border: '1.5px solid transparent',
           backgroundImage:
-            'linear-gradient(180deg, #13233Acc, #08121Fcc), linear-gradient(135deg, #E8A33D14, #E8A33D40, #E8A33D14)',
+            'linear-gradient(180deg, #13233Acc, #08121Fcc), linear-gradient(135deg, #FF8A0014, #FF8A0040, #FF8A0014)',
           backgroundOrigin: 'border-box',
           backgroundClip: 'padding-box, border-box',
-          boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 16px #E8A33D40',
+          boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 16px rgba(255,170,0,.45)',
         }}
       >
-        🔔
+        {/* SVG แทน emoji 🔔 เดิม — emoji บังคับสีตามสเปกไม่ได้ (มีสีของตัวเองมากับฟอนต์/แพลตฟอร์ม)
+            ใช้ currentColor ผ่าน fill ตรงๆ ให้ตรงสเปก icon #FFD24A ได้จริง */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 3a4 4 0 0 0-4 4v2.2c0 .9-.32 1.77-.9 2.45L5.6 13.8c-.63.74-.12 1.87.85 1.87h11.1c.97 0 1.48-1.13.85-1.87l-1.5-2.15A3.75 3.75 0 0 1 16 9.2V7a4 4 0 0 0-4-4Z"
+            fill="#FFD24A"
+          />
+          <path d="M9.5 18a2.5 2.5 0 0 0 5 0h-5Z" fill="#FFD24A" />
+        </svg>
         {items.length > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rust text-[9px] font-mono font-bold text-white flex items-center justify-center leading-none">
             {items.length}

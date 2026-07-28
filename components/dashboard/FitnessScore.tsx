@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useId } from 'react'
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
-import { FIRE_ACCENT, lighten } from '@/lib/theme'
+import { FIRE_GRADIENT_STOPS, FIRE_ACCENT, NEUTRAL } from '@/lib/theme'
 
 interface FitnessScoreProps {
   score: FitnessScoreResult
@@ -14,9 +14,10 @@ interface FitnessScoreProps {
 // วงแหวน Fitness Score — คะแนนรวมใหม่ (ไม่มีอยู่ใน FITLOG เดิม) ดูสูตรคำนวณเต็มที่ lib/fitnessScore.ts
 // ลิงก์ไปหน้า /stats เพราะยังไม่มีหน้ารายละเอียดคะแนนนี้โดยเฉพาะ — /stats คือที่ที่ใกล้เคียงที่สุด
 //
-// v6: สีของวง + label เปลี่ยนเป็น FIRE_ACCENT คงที่ (ไม่ dynamic ตาม tier อีกต่อไป) ตามฟีดแบ็กให้
-// ตรงกับสีในรูปตัวอย่าง — ตัวเลขคะแนนกับคำว่า tier (Excellent/Good/...) ยังบอกความหมายจริงอยู่
-// แค่ "สี" ไม่ได้ผูกกับ tier แล้ว
+// v7: gradient ของวงเปลี่ยนมาใช้ FIRE_GRADIENT_STOPS ชุดเดียวกับ AnimatedWave เป๊ะๆ (ไม่ใช่แค่
+// เฉดสว่าง/เข้มของสีเดียวแบบ v6) ให้ Wave กับ Ring เป็นงานออกแบบชิ้นเดียวกันจริงๆ ตามฟีดแบ็ก
+// พื้นหลังวง (track) เปลี่ยนเป็นโทนอุ่น NEUTRAL.ringTrackWarm (แทน #23272D เทาเย็นเดิม) ให้วง
+// สีส้ม/ทองตัดกับพื้นหลังชัดขึ้น
 export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
   const strokeWidth = Math.round(size * 0.08)
   const radius = (size - strokeWidth) / 2
@@ -24,9 +25,6 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
   const offset = circumference * (1 - score.score / 100)
   const gradId = useId()
   const glowId = useId()
-
-  const color = FIRE_ACCENT
-  const hot = lighten(color, 0.5)
 
   return (
     <Link
@@ -37,19 +35,15 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
           <defs>
-            {/* gradient stroke แบบ "ไฟ" — เข้มตรงจุดเริ่ม (12 นาฬิกา) ไล่สว่างจ้าตรงกลางส่วนโค้ง
-                แล้วเข้มลงอีกครั้งใกล้ปลายเข็ม ให้ความรู้สึกมีแกนสว่างพุ่งอยู่ตรงกลางเส้น */}
+            {/* gradient เดียวกับ AnimatedWave เป๊ะ — วนรอบวงผ่าน linearGradient แนวทแยง */}
             <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={color} stopOpacity="0.75" />
-              <stop offset="45%" stopColor={hot} stopOpacity="1" />
-              <stop offset="100%" stopColor={color} stopOpacity="1" />
+              {FIRE_GRADIENT_STOPS.map((s) => (
+                <stop key={s.offset} offset={s.offset} stopColor={s.color} />
+              ))}
             </linearGradient>
-            {/* outer glow — blur แล้ว merge กลับเข้ากับเส้นจริง ให้ฟุ้งแบบมีแกนสว่างชัดตรงกลาง
-                ไม่ใช่แค่จางๆ แบบ drop-shadow เฉยๆ */}
+            {/* outer glow — ส้ม/ทอง เบลอ 24-32px ตามสเปก (คำนวณสัดส่วนกับขนาดวงจริง) */}
             <filter id={glowId} x="-70%" y="-70%" width="240%" height="240%">
-              <feGaussianBlur stdDeviation={strokeWidth * 0.7} result="blur" />
-              {/* วาง blur ซ้ำสองชั้นก่อน SourceGraphic ให้แสง glow เข้มขึ้นอีกนิด (alpha compositing
-                  ซ้อนกัน) โดยไม่ต้องเพิ่ม stdDeviation จนฟุ้งเกินไป */}
+              <feGaussianBlur stdDeviation={Math.max(8, strokeWidth * 0.9)} result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="blur" />
@@ -57,7 +51,7 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
               </feMerge>
             </filter>
           </defs>
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#23272D" strokeWidth={strokeWidth} />
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={NEUTRAL.ringTrackWarm} strokeWidth={strokeWidth} />
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -71,14 +65,13 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
             filter={`url(#${glowId})`}
             style={{ mixBlendMode: 'screen' }}
           />
-          {/* glossy rim — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก (รัศมีเล็กกว่าเส้นหลักนิดหน่อย)
-              ให้ความรู้สึกผิวมันวาว/3 มิติ เหมือนแสงสะท้อนขอบท่อไฟ ไม่ใช่วงแบนสีทึบเดียว */}
+          {/* glossy rim — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก ให้ความรู้สึกผิวมันวาว/3 มิติ */}
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius - strokeWidth * 0.32}
             fill="none"
-            stroke={lighten(color, 0.8)}
+            stroke="#FFF4CC"
             strokeWidth={Math.max(1, strokeWidth * 0.12)}
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -108,7 +101,7 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
         </p>
         <p
           className="font-display font-bold tracked uppercase leading-tight mt-1"
-          style={{ fontSize: 14, color }}
+          style={{ fontSize: 14, color: FIRE_ACCENT }}
         >
           {score.tierLabel}
         </p>

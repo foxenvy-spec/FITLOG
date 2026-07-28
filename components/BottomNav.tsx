@@ -36,8 +36,8 @@ export default function BottomNav() {
                 <span
                   className="absolute -top-8 w-[76px] h-[76px] rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
                   style={{
-                    background: `radial-gradient(circle at 35% 30%, #FFC069, ${COLORS.amber} 55%, ${COLORS.rust} 100%)`,
-                    boxShadow: `0 6px 18px rgba(0,0,0,.45), 0 0 22px ${COLORS.amber}88, inset 0 1px rgba(255,255,255,.35)`,
+                    background: `radial-gradient(circle at 35% 30%, #FFF4CC, #FFD166 35%, #FF8A00 70%, #D96A00 100%)`,
+                    boxShadow: `0 6px 18px rgba(0,0,0,.45), 0 0 22px rgba(255,170,0,.55), inset 0 1px rgba(255,255,255,.35)`,
                     border: `3px solid ${NEUTRAL.onAmberText}`,
                   }}
                 >
