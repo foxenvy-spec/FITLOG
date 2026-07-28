@@ -256,7 +256,7 @@ export default function MobileDashboardView() {
                 </div>
               </div>
               <p
-                className="uppercase mt-0.5"
+                className="uppercase mt-1.5"
                 style={{
                   fontFamily: 'var(--font-oswald), var(--font-kanit)',
                   fontSize: 32,
@@ -277,7 +277,9 @@ export default function MobileDashboardView() {
             <FitnessScoreRing score={fitnessScore} />
           </div>
 
-          <FitnessWaveDecoration color={fitnessScore.color} />
+          <div className="mt-2">
+            <FitnessWaveDecoration color={fitnessScore.color} />
+          </div>
 
           {/* Mobile Dashboard v2: ตัดบรรทัด tagline "วันนี้พร้อมสำหรับการออกกำลังกาย 💪" ออก และ
               ลด margin-top ก่อน Today's Focus ลง (mt-2 -> mt-1.5) ให้ Today's Focus อยู่ใต้ Header
