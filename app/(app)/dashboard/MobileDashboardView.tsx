@@ -34,6 +34,7 @@ import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationBell from '@/components/NotificationBell'
+import HeaderBackgroundFX from '@/components/HeaderBackgroundFX'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
 import WeeklyVolumeRecoveryCard from '@/components/WeeklyVolumeRecoveryCard'
@@ -245,8 +246,11 @@ export default function MobileDashboardView() {
   return (
     <>
       <div className="space-y-[12px]">
-        {/* greeting + Fitness Score + settings */}
-        <div className="relative z-20 px-1 animate-rise">
+        {/* greeting + Fitness Score + settings — Stack: BackgroundFX (glow+particles, z-0) เป็น
+            ชั้นล่างสุด, เนื้อหาจริง (z-20) อยู่ทับด้านบน เหมือนแนวคิด Stack ของ Flutter */}
+        <div className="relative">
+          <HeaderBackgroundFX color={fitnessScore.color} />
+          <div className="relative z-20 px-1 animate-rise">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
@@ -277,7 +281,8 @@ export default function MobileDashboardView() {
             <FitnessScoreRing score={fitnessScore} />
           </div>
 
-          <div className="mt-2">
+          {/* wave ขยับช้าๆ (~5s/รอบ) ตามที่ขอ — ใช้ CSS keyframes ธรรมดา ไม่ต้องพึ่ง animation library */}
+          <div className="mt-2 animate-header-wave">
             <FitnessWaveDecoration color={fitnessScore.color} />
           </div>
 
@@ -289,6 +294,7 @@ export default function MobileDashboardView() {
               label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
               href={scheduledDay ? '/session' : '/log'}
             />
+          </div>
           </div>
         </div>
 
