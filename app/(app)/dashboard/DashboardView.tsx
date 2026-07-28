@@ -122,6 +122,8 @@ export interface DashboardData {
   // ผู้ใช้ใหม่จริงๆ = ไม่เคยบันทึกอะไรเลย (400 วันย้อนหลัง) และยังไม่ได้ตั้งโปรแกรมเลยด้วย —
   // ใช้ตัดสินว่าควรโชว์ first-run banner (OnboardingBanner) หรือไม่
   hasAnyHistory: boolean
+  // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) 0-7 — ใช้คำนวณ Fitness Score เท่านั้น
+  last7DaysTrainedCount: number
 }
 
 export async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
@@ -304,6 +306,11 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
 
   const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel)
 
+  // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) — ใช้สำหรับ Fitness Score เท่านั้น ใช้ distinctDates
+  // ชุดเดียวกับที่คำนวณ streak ด้านบน ไม่ต้อง query ซ้ำ
+  const sevenDaysAgo = daysAgoStr(6)
+  const last7DaysTrainedCount = distinctDates.filter((d) => d >= sevenDaysAgo && d <= today).length
+
   return {
     email: user?.email ?? null,
     profileDisplayName: (profileRow as { display_name: string | null } | null)?.display_name ?? null,
@@ -326,6 +333,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     latestPR,
     topMuscleThisWeek,
     hasAnyHistory: distinctDates.length > 0 || typedDays.length > 0,
+    last7DaysTrainedCount,
   }
 }
 

@@ -14,12 +14,11 @@ import {
   recoveryStatusColor,
   findNextProgramDay,
   recoveryRecommendationLabel,
-  computeGreetingContext,
 } from '@/lib/dashboardStats'
 import { saveDisplayName } from '@/lib/profile'
 import { bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
-import { VOLUME_MUSCLES, RECOVERY_MUSCLES } from '@/lib/muscle-groups'
+import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import {
@@ -29,10 +28,10 @@ import {
   INSIGHT_IMAGE,
   type DashboardData,
 } from './DashboardView'
+import { computeFitnessScore } from '@/lib/fitnessScore'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCard from '@/components/InsightCard'
-import TodayMuscleChips from '@/components/TodayMuscleChips'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
@@ -43,6 +42,13 @@ import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
 import WeeklyVolumeRecoveryCard from '@/components/WeeklyVolumeRecoveryCard'
 import RecommendedProgramCard from '@/components/RecommendedProgramCard'
+import FitnessScoreRing from '@/components/FitnessScoreRing'
+import FitnessWaveDecoration from '@/components/FitnessWaveDecoration'
+import TodaysFocusCard from '@/components/TodaysFocusCard'
+import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
+import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
+import { useHealthSnapshot } from '@/lib/healthIntegration'
+import AICoachCompactCard from '@/components/AICoachCompactCard'
 import type { Insight } from '@/lib/dashboardStats'
 
 // การ์ดหนักๆ ที่ไม่จำเป็นต้องเห็นทันทีตอนเปิดหน้า — โหลดแยก bundle เหมือนฝั่งเดสก์ท็อป
@@ -128,6 +134,7 @@ export default function MobileDashboardView() {
   }
 
   const { toDisplay, unit } = useWeightUnit()
+  const health = useHealthSnapshot()
   const dow = todayDayOfWeek()
 
   const combinedInsights = useMemo(() => {
@@ -148,41 +155,8 @@ export default function MobileDashboardView() {
     [data?.programDays, dow]
   )
   const next = useMemo(() => (data ? findNextProgramDay(data.programDays, dow) : null), [data, dow])
-  const greetingContext = useMemo(
-    () =>
-      data
-        ? computeGreetingContext(scheduledDay?.title ?? null, data.muscleRecommendation, data.bestVolumeIncrease)
-        : { headline: null, detail: null },
-    [data, scheduledDay]
-  )
   const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
 
-  const plannedMuscleLabel = useMemo(() => {
-    if (!data) return null
-    const seen = new Set<string>()
-    const ordered: string[] = []
-    for (const e of data.todayExercises) {
-      if (e.muscle_group && (VOLUME_MUSCLES as readonly string[]).includes(e.muscle_group) && !seen.has(e.muscle_group)) {
-        seen.add(e.muscle_group)
-        ordered.push(e.muscle_group)
-      }
-    }
-    if (ordered.length > 0) return ordered.join(' • ')
-    for (const w of data.todayWorkouts) {
-      if (w.muscle_group && (VOLUME_MUSCLES as readonly string[]).includes(w.muscle_group) && !seen.has(w.muscle_group)) {
-        seen.add(w.muscle_group)
-        ordered.push(w.muscle_group)
-      }
-    }
-    return ordered.length > 0 ? ordered.join(' • ') : null
-  }, [data])
-
-  const plannedTotalSets = useMemo(() => {
-    if (!data) return 0
-    if (data.todayExercises.length > 0) return data.todayExercises.reduce((s, e) => s + (e.sets ?? 0), 0)
-    return data.todayWorkouts.reduce((s, w) => s + (w.sets ?? 0), 0)
-  }, [data])
-  const estimatedMinutes = Math.max(10, Math.round((plannedTotalSets * 1.5) / 5) * 5)
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
   const progressPct =
     data && data.todayExercises.length > 0 ? Math.round((data.completedCount / data.todayExercises.length) * 100) : null
@@ -231,6 +205,22 @@ export default function MobileDashboardView() {
   const overallRecoveryPct = Math.round(
     RECOVERY_MUSCLES.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / RECOVERY_MUSCLES.length
   )
+
+  // Fitness Score — สูตรตามที่กำหนด: Workout Completion 30% / Streak 20% / Sleep 20% /
+  // Recovery 15% / Weekly Goal 10% / Activity วันนี้ 5% — FITLOG ไม่มีข้อมูลการนอนเลย (ไม่ได้
+  // เชื่อมต่อ Apple Health/Google Fit) จึง Sleep เป็น null เสมอ แล้วให้ computeFitnessScore
+  // กระจายน้ำหนัก 20% นั้นไปให้ปัจจัยอื่นตามสัดส่วนเดิมแทน (ดู lib/fitnessScore.ts)
+  // - Workout Completion: ฝึกกี่วันใน 7 วันล่าสุด (data.last7DaysTrainedCount) แปลงเป็น 0-100
+  // - Streak: จำกัดเพดานที่ 14 วัน = เต็ม 100% (ยาวกว่านั้นก็ยังนับเต็ม)
+  // - Activity วันนี้: ใช้ตัวเดียวกับ ring ในการ์ด Today's Workout (progressPct)
+  const fitnessScore = computeFitnessScore([
+    { key: 'workout', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
+    { key: 'streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
+    { key: 'sleep', value: null, weight: 20 },
+    { key: 'recovery', value: overallRecoveryPct, weight: 15 },
+    { key: 'weeklyGoal', value: data.weeklyGoalPct, weight: 10 },
+    { key: 'activityToday', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
+  ])
 
   // ลำดับการ์ดในแถบปัด — ซ่อนการ์ดที่ผู้ใช้ปิดไว้ใน DashboardSettings เหมือนเดสก์ท็อป
   const carouselCards: { key: string; node: React.ReactNode }[] = []
@@ -322,51 +312,46 @@ export default function MobileDashboardView() {
   return (
     <>
       <div className="space-y-5">
-        {/* greeting + settings */}
-        <div className="relative z-20 flex items-start justify-between gap-3 px-1 animate-rise">
-          <div>
-            <p className="text-xs text-muted">👋 {greetingText}</p>
-            <p
-              className="uppercase mt-1"
-              style={{
-                fontFamily: 'var(--font-oswald), var(--font-kanit)',
-                fontSize: 34,
-                fontWeight: 800,
-                letterSpacing: '1.5px',
-                lineHeight: 1,
-                backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-              }}
-            >
-              {data.profileDisplayName || emailDisplayName(data.email)}
-            </p>
-            <div className="mt-2">
-              {(() => {
-                const bf = data.bodyMetricsSummary.bodyFatPct
-                if (bf.delta != null && bf.isGood) {
-                  return (
-                    <p className="text-xs">
-                      <span style={{ color: '#8CB264' }}>📉 ↓{Math.abs(bf.delta).toFixed(1)}% Body Fat — ยอดเยี่ยม! 🎉</span>
-                    </p>
-                  )
-                }
-                if (data.streak > 0) {
-                  return (
-                    <p className="text-xs">
-                      🔥 <span className="font-mono font-semibold" style={{ color: '#8CB264' }}>{data.streak} วัน</span> streak ต่อเนื่อง
-                    </p>
-                  )
-                }
-                return greetingContext.headline ? (
-                  <p className="text-xs font-display tracked uppercase text-amber">{greetingContext.headline}</p>
-                ) : null
-              })()}
+        {/* greeting + Fitness Score + settings */}
+        <div className="relative z-20 px-1 animate-rise">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted">👋 {greetingText}</p>
+                <div className="shrink-0">
+                  <NotificationBell latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
+                </div>
+              </div>
+              <p
+                className="uppercase mt-1"
+                style={{
+                  fontFamily: 'var(--font-oswald), var(--font-kanit)',
+                  fontSize: 34,
+                  fontWeight: 800,
+                  letterSpacing: '1.5px',
+                  lineHeight: 1,
+                  backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                }}
+              >
+                {data.profileDisplayName || emailDisplayName(data.email)}
+              </p>
+              <p className="text-xs text-muted mt-1">Personalized Fitness</p>
             </div>
+            <FitnessScoreRing score={fitnessScore} />
           </div>
-          <div className="flex items-center gap-2 shrink-0 pt-1">
-            <NotificationBell latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
+
+          <FitnessWaveDecoration color={fitnessScore.color} />
+
+          <p className="text-xs text-ink">วันนี้พร้อมสำหรับการออกกำลังกาย 💪</p>
+
+          <div className="mt-3">
+            <TodaysFocusCard
+              label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
+              href={scheduledDay ? '/session' : '/log'}
+            />
           </div>
         </div>
 
@@ -380,95 +365,29 @@ export default function MobileDashboardView() {
               ดูทั้งหมด →
             </Link>
           </div>
-          <BodyMetricsRow showLastMeasuredDate />
+          <BodyMetricsRow showLastMeasuredDate colorScheme="vibrant" />
         </div>
+
+        {/* Today's Workout (แบบย่อ) + สถิติย่อวันนี้ — ใช้ข้อมูลจริงที่คำนวณได้ (เซ็ต/นาที/recovery)
+            แทนที่ kcal/ก้าว/นอนหลับ ในมอคอัพต้นแบบ ซึ่ง FITLOG ไม่มีข้อมูลจริงรองรับ (ไม่ได้เชื่อมต่อ
+            Apple Health/Google Fit เลย) */}
+        <TodaysWorkoutCompactCard
+          completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
+          total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
+          href={scheduledDay ? '/session' : '/log'}
+        />
+
+        <TodayHealthStatsRow health={health} />
 
         {/* streak + weekly goal — สองการ์ดแยกเดี่ยว (ไม่รวมกับแถบปัด Recovery/AI Coach ด้านล่าง)
             เพราะเป็นข้อมูลที่อยากให้เห็นทันทีโดยไม่ต้องปัด ตามดีไซน์ที่เลือก */}
         <WorkoutStreakCard streak={data.streak} weekDayTicks={data.weekDayTicks} today={today} />
 
+        <AICoachCompactCard message={data.aiDailySummary} />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <WeeklyGoalMuscleCard />
           <WeeklyVolumeRecoveryCard recoveryPct={overallRecoveryPct} />
-        </div>
-
-        {/* hero — today's workout, ตัวชี้นำหลักของหน้า วางแนวตั้ง (ring อยู่บนสุด) ต่างจาก
-            เดสก์ท็อปที่วาง ring ข้างข้อความ เพื่อให้อ่านง่ายบนจอแคบ */}
-        <div
-          className={`relative rounded-lg border border-amber/60 shadow-hero overflow-hidden ${totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'}`}
-          style={{ boxShadow: '0 0 14px #E8A33D40, 0 0 1px #E8A33D', ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }) }}
-        >
-          <div className="absolute inset-0 bg-surface">
-            <div
-              className="absolute inset-0 opacity-70"
-              style={{
-                backgroundImage:
-                  "linear-gradient(180deg, rgba(28,31,36,0.55) 0%, rgba(28,31,36,0.9) 75%), url('/images/workout-hero.jpg')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'top center',
-              }}
-            />
-          </div>
-          <div className="relative z-10 px-5 py-5">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] tracked uppercase text-muted flex items-center gap-1.5">
-                <span aria-hidden="true">🔥</span> Today&apos;s Workout
-              </p>
-              <GoalRing pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)} size={56} strokeWidth={6} color="#E8A33D" ariaLabel="ความพร้อมของวันนี้" />
-            </div>
-
-            <div className="mt-3">
-              {(() => {
-                const title = workoutTitle ?? 'ยังไม่ได้ตั้งโปรแกรม'
-                const splitAt = title.search(/\s[—-]\s/)
-                const dayLabel = splitAt >= 0 ? title.slice(0, splitAt) : null
-                const restLabel = splitAt >= 0 ? title.slice(splitAt + 3) : title
-                return (
-                  <>
-                    {dayLabel && <p className="font-display text-base tracked uppercase text-amber leading-tight">{dayLabel}</p>}
-                    <p className="font-display text-xl tracked uppercase text-ink leading-tight truncate">{restLabel}</p>
-                  </>
-                )
-              })()}
-              {plannedMuscleLabel && <p className="text-xs text-amber mt-1.5 truncate">{plannedMuscleLabel}</p>}
-
-              <div className="flex items-center gap-4 mt-3 flex-wrap">
-                <div>
-                  <p className="font-mono text-lg text-ink leading-none">{data.todayExercises.length || totals.entryCount}</p>
-                  <p className="text-[10px] text-muted mt-0.5">Exercises</p>
-                </div>
-                <div>
-                  <p className="font-mono text-lg text-ink leading-none">{plannedTotalSets}</p>
-                  <p className="text-[10px] text-muted mt-0.5">Sets</p>
-                </div>
-                <div>
-                  <p className="font-mono text-lg text-ink leading-none">
-                    {totals.durationMin !== null ? Math.round(totals.durationMin) : `~${estimatedMinutes}`}
-                  </p>
-                  <p className="text-[10px] text-muted mt-0.5">นาที</p>
-                </div>
-              </div>
-
-              <TodayMuscleChips todayWorkouts={data.todayWorkouts} />
-
-              {scheduledDay ? (
-                <Link href="/session" className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition w-full justify-center">
-                  {totals.entryCount > 0 ? 'ไปต่อ' : 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
-                </Link>
-              ) : (
-                <Link href="/log" className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition w-full justify-center">
-                  เริ่มเทรนเลย <span aria-hidden="true">▶</span>
-                </Link>
-              )}
-              {!scheduledDay && (
-                <p className="text-[11px] text-muted mt-2 text-center">
-                  ยังไม่มีโปรแกรมวันนี้ —{' '}
-                  <Link href="/program" className="text-amber hover:underline">ตั้งโปรแกรม</Link>{' '}
-                  หรือ <Link href="/templates" className="text-amber hover:underline">เริ่มจากเทมเพลต</Link>
-                </p>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* การ์ดปัดได้ (scroll-snap) — Recovery / Weekly Goal / AI Coach ในพื้นที่เดียว ปัดซ้ายขวา
