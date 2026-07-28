@@ -18,6 +18,12 @@ export const COLORS = {
   deltaGood: '#8CB264', // ตัวหนังสือเดลต้าที่ดีขึ้น (เฉดเขียวอ่อนกว่า moss เล็กน้อย ใช้ specifically กับข้อความ เช่น "↓2.1kg")
 } as const
 
+// สีคงที่ของ Ring + AnimatedWave บน header — ตามฟีดแบ็กให้ใช้สีเดียวกับรูป mockup อ้างอิงเสมอ
+// (ส้ม/เหลืองไฟ) แทนที่จะ dynamic ตาม tier ของ Fitness Score (เขียว/เหลือง/ส้ม/แดง) เหมือนเดิม —
+// ทำให้ header คงลุค "ไฟ" ไว้เสมอไม่ว่าคะแนนจะเป็นเท่าไหร่ก็ตาม (แลกกับการไม่สื่อความหมาย tier
+// ผ่านสีอีกต่อไปในจุดนี้ — ยังเห็น tier ได้จากคำว่า Excellent/Good/... ที่ใต้วงอยู่ดี)
+export const FIRE_ACCENT = '#FF8C1A'
+
 export type ThemeColorKey = keyof typeof COLORS
 
 // สีกลาง/พื้นหลัง — ใช้กับ SVG stroke/fill หรือ inline style ที่ใช้ Tailwind class ตรงๆ ไม่ได้
