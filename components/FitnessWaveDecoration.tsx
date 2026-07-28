@@ -13,7 +13,8 @@ export default function FitnessWaveDecoration({ color }: FitnessWaveDecorationPr
   const glowId = useId()
 
   return (
-    <svg viewBox="0 0 400 48" className="w-full h-6" preserveAspectRatio="none" aria-hidden="true">
+    // Mobile Dashboard v2: ลดความสูงเส้นคลื่นลง (h-6 -> h-4) ให้ header กระชับขึ้น
+    <svg viewBox="0 0 400 48" className="w-full h-4" preserveAspectRatio="none" aria-hidden="true">
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor={color} stopOpacity="0" />

@@ -35,6 +35,10 @@ export interface MetricCardProps {
   // มุมโค้งการ์ด — default 'lg' (8px, เดิม) สำหรับเดสก์ท็อป, มือถือใช้ 'xl20' (20px, ดูพรีเมียมกว่า
   // ตาม design-system ที่กำหนด "Card Radius 20px") ผ่าน colorScheme="vibrant" ใน BodyMetricsRow
   radius?: 'lg' | 'xl20'
+  // เฉพาะ Mobile Dashboard v2 (BodyMetricsRow colorScheme="vibrant" ส่ง compact=true ลงมา) —
+  // ลด padding ลงจากเดิม ให้การ์ด "ภาพรวมร่างกาย" ดูกระชับขึ้นใน grid 2x2 บนมือถือ โดยไม่กระทบ
+  // เดสก์ท็อป (DashboardView ไม่ได้ส่ง prop นี้ จึง default เป็น false เหมือนเดิมทุกประการ)
+  compact?: boolean
 }
 
 // เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
@@ -138,15 +142,16 @@ export default function MetricCard({
   lastMeasuredText,
   tall = false,
   radius = 'lg',
+  compact = false,
 }: MetricCardProps) {
   const radiusClass = radius === 'xl20' ? 'rounded-[20px]' : 'rounded-lg'
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[128px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
-          padding: '16px 18px 12px', // ลด padding-bottom ลงอีกนิด ให้บรรทัดเดลต้าที่ถูกดันไปด้วย margin-top:auto ชิดขอบล่างเห็นผลชัดขึ้น
+          padding: compact ? '12px 14px 10px' : '16px 18px 12px', // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") ลด padding ลงอีก
           border: '1.5px solid transparent',
           // 4 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
           // 1) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด (radial, #1B2230 ~5%) กันไม่ให้กลางการ์ดดำตันเกินไป

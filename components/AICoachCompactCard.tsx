@@ -9,13 +9,14 @@ interface AICoachCompactCardProps {
 
 // เวอร์ชันย่อของการ์ด AI Coach — ข้อความบรรทัดเดียว + ปุ่ม "ดูคำแนะนำ" แทนลิสต์ insight เต็มรูปแบบ
 // (เวอร์ชันเต็มพร้อม insight หลายรายการยังอยู่ในแถบปัด Recovery/AI Coach ด้านล่างของหน้าเหมือนเดิม)
+// Mobile Dashboard v2: ลด padding/ขนาด avatar ลงอีกนิด ให้สูงรวมอยู่ในช่วง ~90-100px ตามสเปค
 export default function AICoachCompactCard({ message, href = '/coach' }: AICoachCompactCardProps) {
   return (
     <Link
       href={href}
-      className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden flex items-center gap-3 px-4 py-4 active:bg-surface2 transition"
+      className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden flex items-center gap-3 px-4 py-3.5 active:bg-surface2 transition"
     >
-      <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-surface2 flex items-center justify-center text-xl" aria-hidden="true">
+      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-surface2 flex items-center justify-center text-lg" aria-hidden="true">
         🤖
       </div>
       <div className="min-w-0 flex-1">

@@ -9,9 +9,9 @@ interface TodayHealthStatsRowProps {
 }
 
 const METRIC_META = {
-  calories: { icon: '🔥', label: 'kcal', color: COLORS.amber },
-  steps: { icon: '👣', label: 'ก้าว', color: COLORS.moss },
-  sleepHours: { icon: '🌙', label: 'นอนหลับ', color: COLORS.purple },
+  calories: { icon: '🔥', title: 'Calories', unit: 'kcal', color: COLORS.amber },
+  steps: { icon: '👣', title: 'Steps', unit: 'ก้าว', color: COLORS.moss },
+  sleepHours: { icon: '🌙', title: 'Sleep', unit: 'ชม.', color: COLORS.purple },
 } as const
 
 /**
@@ -46,23 +46,40 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
     },
   ]
 
+  // v2: รวม 3 เมตริกเป็นการ์ดเดียว (เดิมเป็น grid 3 การ์ดแยก) — แถวละเมตริก คั่นด้วยเส้นบางๆ
+  // ระหว่างแถว ให้หน้าแรกสั้นลงและดูเป็นกลุ่มเดียวกัน (ตาม Mobile Dashboard v2)
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="rounded-[20px] bg-surface border border-line divide-y divide-line overflow-hidden">
       {items.map(({ key, metric, valueLabel }) => {
         const meta = METRIC_META[key]
         const pct = metric.value != null && metric.goal != null && metric.goal > 0 ? Math.min(100, (metric.value / metric.goal) * 100) : 0
         return (
-          <div key={key} className="rounded-[20px] bg-surface border border-line px-3 py-3">
-            <span className="text-sm" aria-hidden="true">{meta.icon}</span>
-            <p className="font-mono text-base text-ink mt-1 leading-none">
-              {valueLabel}
-              <span className="text-[10px] text-muted ml-0.5">{meta.label}</span>
-            </p>
-            <p className="text-[9px] text-muted mt-1 truncate">
-              {key === 'sleepHours' ? health.sleepQualityLabel ?? '\u00A0' : metric.goal != null ? `/ ${metric.goal.toLocaleString()}` : '\u00A0'}
-            </p>
-            <div className="h-1 rounded-full bg-surface2 mt-2 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+          <div key={key} className="flex items-center gap-3 px-4 py-2.5">
+            <span
+              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
+              style={{ backgroundColor: `${meta.color}22` }}
+              aria-hidden="true"
+            >
+              {meta.icon}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-[10px] tracked uppercase text-muted">{meta.title}</p>
+                <p className="font-mono text-sm text-ink leading-none shrink-0">
+                  {valueLabel}
+                  <span className="text-[9px] text-muted ml-1">
+                    {meta.unit}
+                    {key === 'sleepHours'
+                      ? health.sleepQualityLabel ? ` · ${health.sleepQualityLabel}` : ''
+                      : metric.goal != null
+                        ? ` / ${metric.goal.toLocaleString()}`
+                        : ''}
+                  </span>
+                </p>
+              </div>
+              <div className="h-1 rounded-full bg-surface2 mt-1.5 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+              </div>
             </div>
           </div>
         )

@@ -66,7 +66,14 @@ export default function BodyMetricsRow({
   showLastMeasuredDate = false,
   colorScheme = 'default',
   maxCards,
-}: { showLastMeasuredDate?: boolean; colorScheme?: 'default' | 'vibrant'; maxCards?: number } = {}) {
+  compact = false,
+}: {
+  showLastMeasuredDate?: boolean
+  colorScheme?: 'default' | 'vibrant'
+  maxCards?: number
+  // เฉพาะ Mobile Dashboard v2 — ลด padding การ์ดเมตริกลงให้กระชับขึ้นใน grid 2x2 (ดู MetricCard.tsx)
+  compact?: boolean
+} = {}) {
   const supabase = createClient()
   const { toDisplay, unit } = useWeightUnit()
 
@@ -210,6 +217,7 @@ export default function BodyMetricsRow({
           lastMeasuredText={lastMeasuredText}
           tall={showLastMeasuredDate}
           radius={colorScheme === 'vibrant' ? 'xl20' : 'lg'}
+          compact={compact}
         />
       ))}
     </div>
