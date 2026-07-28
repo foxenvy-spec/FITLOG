@@ -271,16 +271,18 @@ export default function MobileDashboardView() {
               >
                 {data.profileDisplayName || emailDisplayName(data.email)}
               </p>
-              <p className="text-xs text-muted mt-0.5">Personalized Fitness</p>
+              {/* Mobile Dashboard v2: ตัด "Personalized Fitness" ออก ช่วยลดความสูง header ร่วมกับ
+                  การตัด tagline ด้านล่าง — ชื่อผู้ใช้ยังคงขนาดเท่าเดิม (fontSize 28) ตามที่ขอ */}
             </div>
             <FitnessScoreRing score={fitnessScore} />
           </div>
 
           <FitnessWaveDecoration color={fitnessScore.color} />
 
-          <p className="text-xs text-ink">วันนี้พร้อมสำหรับการออกกำลังกาย 💪</p>
-
-          <div className="mt-2">
+          {/* Mobile Dashboard v2: ตัดบรรทัด tagline "วันนี้พร้อมสำหรับการออกกำลังกาย 💪" ออก และ
+              ลด margin-top ก่อน Today's Focus ลง (mt-2 -> mt-1.5) ให้ Today's Focus อยู่ใต้ Header
+              ทันที และ header โดยรวมเตี้ยลงจากเดิมประมาณ 20% */}
+          <div className="mt-1.5">
             <TodaysFocusCard
               label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
               href={scheduledDay ? '/session' : '/log'}
@@ -298,7 +300,7 @@ export default function MobileDashboardView() {
               ดูทั้งหมด →
             </Link>
           </div>
-          <BodyMetricsRow colorScheme="vibrant" maxCards={4} />
+          <BodyMetricsRow colorScheme="vibrant" maxCards={4} compact />
         </div>
 
         {/* Today's Workout (แบบย่อ) + สถิติย่อวันนี้ — ใช้ข้อมูลจริงที่คำนวณได้ (เซ็ต/นาที/recovery)
@@ -317,11 +319,6 @@ export default function MobileDashboardView() {
         <WorkoutStreakCard streak={data.streak} weekDayTicks={data.weekDayTicks} today={today} />
 
         <AICoachCompactCard message={data.aiDailySummary} />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <WeeklyGoalMuscleCard />
-          <WeeklyVolumeRecoveryCard recoveryPct={overallRecoveryPct} />
-        </div>
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม */}
         <div className="flex gap-2 overflow-x-auto animate-rise" style={{ animationDelay: '160ms', scrollbarWidth: 'none' }}>
@@ -355,6 +352,12 @@ export default function MobileDashboardView() {
 
         {showMore && (
           <div className="space-y-4">
+            {/* Mobile Dashboard v2: ย้าย Weekly Goal + Weekly Volume/Recovery Score มาไว้ในนี้
+                (เดิมอยู่เป็น grid แสดงตลอดในหน้าแรก) ให้หน้าแรกสั้นลงตามสเปค */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <WeeklyGoalMuscleCard />
+              <WeeklyVolumeRecoveryCard recoveryPct={overallRecoveryPct} />
+            </div>
             {recoveryDetailCard}
             <WeeklyMuscleHeatmap />
             <WeeklyVolume />
