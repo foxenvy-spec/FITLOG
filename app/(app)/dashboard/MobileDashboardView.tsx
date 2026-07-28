@@ -250,10 +250,12 @@ export default function MobileDashboardView() {
           displayName={data.profileDisplayName || emailDisplayName(data.email)}
           fitnessScore={fitnessScore}
         >
-          <TodaysFocusCard
-            label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
-            href={scheduledDay ? '/session' : '/log'}
-          />
+          <div className="max-w-[65%]">
+            <TodaysFocusCard
+              label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
+              href={scheduledDay ? '/session' : '/log'}
+            />
+          </div>
         </Header>
 
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
