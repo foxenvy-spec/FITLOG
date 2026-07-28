@@ -160,7 +160,7 @@ export default function MetricCard({
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[116px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[108px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
           padding: compact ? '14px' : '16px 18px 12px', // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — Mobile Dashboard v2.1: padding เท่ากันทุกด้าน 14px ตาม token ใหม่
@@ -213,14 +213,14 @@ export default function MetricCard({
             className="flex items-center gap-2"
             style={{
               color: 'rgba(255,255,255,.94)',
-              // ป้ายชื่อ Metric: มือถือ (compact) ลดจาก 700/13px → 500 (Medium) / 12px ตามสเปคที่ขอ
-              // (การ์ดเตี้ยลง ต้องประหยัดพื้นที่แนวตั้ง) — เดสก์ท็อป (compact=false) ยังคง 700/11px เดิม
+              // ป้ายชื่อ Metric: มือถือ (compact) ลดอีกขั้นจาก 12px → 11px (ยังคง Medium/500 เดิม)
+              // ตามที่ขอให้เล็กลงอีก — เดสก์ท็อป (compact=false) ยังคง 700/11px เดิมทุกประการ
               fontWeight: compact ? 500 : 700,
-              fontSize: compact ? 12 : 11,
+              fontSize: 11,
             }}
           >
             <span
-              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[36px] h-[36px]' : 'w-[42px] h-[42px]'}`}
+              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[30px] h-[30px]' : 'w-[42px] h-[42px]'}`}
               style={{
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -249,8 +249,8 @@ export default function MetricCard({
               <span
                 className="relative block"
                 style={{
-                  width: compact ? 32 : 38,
-                  height: compact ? 32 : 38,
+                  width: compact ? 26 : 38,
+                  height: compact ? 26 : 38,
                   backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                   WebkitMaskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
                   maskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
@@ -270,7 +270,7 @@ export default function MetricCard({
               แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
           <div className="absolute left-0 right-0 bottom-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 22 : 20 }}>
+              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 19 : 20 }}>
                 {/* Value font weight: ดีไซน์ระบุ Semibold (600) — ใช้เฉพาะมือถือ (compact) ตามสเปค
                     เดสก์ท็อป (compact=false) คงน้ำหนัก 800 (Bold) เดิมไว้ทุกประการ ไม่กระทบ */}
                 <span style={{ fontWeight: compact ? 600 : 800 }}>{splitValueUnit(valueText).num}</span>
@@ -278,7 +278,7 @@ export default function MetricCard({
                   <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
                 )}
               </p>
-              <Sparkline series={series} color={theme.main} height={compact ? 24 : 30} width={compact ? 42 : 64} />
+              <Sparkline series={series} color={theme.main} height={compact ? 20 : 30} width={compact ? 34 : 64} />
             </div>
             {deltaText && (() => {
               // Trend/Caption แยกบรรทัด: เฉพาะมือถือ (compact) — "↓2.1 kg" (trend) กับ "จาก 2 เดือนก่อน"
@@ -289,7 +289,7 @@ export default function MetricCard({
                 <>
                   <p
                     className={`font-semibold whitespace-nowrap flex items-center gap-1 ${compact ? 'leading-none' : ''}`}
-                    style={{ color: deltaColor, marginTop: compact ? 4 : 6, fontSize: compact ? 12 : 11 }}
+                    style={{ color: deltaColor, marginTop: compact ? 3 : 6, fontSize: compact ? 11 : 11 }}
                   >
                     {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
                     {trend}
@@ -297,7 +297,7 @@ export default function MetricCard({
                   {caption && (
                     <p
                       className="whitespace-nowrap truncate leading-none"
-                      style={{ color: 'rgba(255,255,255,.5)', fontWeight: 400, fontSize: 11, marginTop: 3 }}
+                      style={{ color: 'rgba(255,255,255,.5)', fontWeight: 400, fontSize: 10, marginTop: 2 }}
                     >
                       {caption}
                     </p>
