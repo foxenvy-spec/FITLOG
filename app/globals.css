@@ -171,12 +171,42 @@
     hero-glow-pulse 2.2s ease-in-out 620ms 3;
 }
 
+/* Dashboard header background FX — soft glow blob + floating particles behind the
+   greeting/name/score-ring content, and a slow drift on the decorative wave line.
+   Kept purely decorative (pointer-events-none, aria-hidden at the component level). */
+@keyframes header-glow-pulse {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50% { opacity: 0.22; transform: scale(1.06); }
+}
+.animate-header-glow {
+  animation: header-glow-pulse 4s ease-in-out infinite;
+}
+
+@keyframes header-particle-float {
+  0%, 100% { transform: translateY(0); opacity: 0.25; }
+  50% { transform: translateY(-6px); opacity: 0.8; }
+}
+.animate-header-particle {
+  animation: header-particle-float 3.6s ease-in-out infinite;
+}
+
+@keyframes header-wave-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(1.5%); }
+}
+.animate-header-wave {
+  animation: header-wave-drift 5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
   .animate-hero-enter,
   .animate-pr-glow,
-  .animate-pop-in {
+  .animate-pop-in,
+  .animate-header-glow,
+  .animate-header-particle,
+  .animate-header-wave {
     animation: none !important;
   }
 }
