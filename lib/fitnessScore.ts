@@ -6,6 +6,8 @@
 // (value: null) เสมอ — เมื่อปัจจัยไหนไม่มีค่า ระบบจะตัดออกแล้วกระจายน้ำหนักของมันไปให้ปัจจัย
 // ที่เหลือตามสัดส่วนเดิม (proportional redistribution) แทนที่จะนับเป็น 0 หรือข้ามทั้งคะแนน
 
+import { COLORS } from './theme'
+
 export interface FitnessScoreFactor {
   key: string
   // 0-100, หรือ null ถ้าไม่มีข้อมูลสำหรับปัจจัยนี้ (เช่น Sleep)
@@ -25,11 +27,11 @@ export interface FitnessScoreResult {
 }
 
 const TIERS: { min: number; tier: FitnessScoreTier; label: string; labelTh: string; color: string }[] = [
-  { min: 95, tier: 'elite', label: 'Elite', labelTh: 'ยอดเยี่ยมที่สุด', color: '#4ADE80' },
-  { min: 85, tier: 'excellent', label: 'Excellent', labelTh: 'ยอดเยี่ยม', color: '#7A9B57' },
-  { min: 70, tier: 'good', label: 'Good', labelTh: 'ดี', color: '#EAB308' },
-  { min: 50, tier: 'fair', label: 'Fair', labelTh: 'พอใช้', color: '#E8A33D' },
-  { min: 0, tier: 'recovery-needed', label: 'Recovery Needed', labelTh: 'ควรพักผ่อน', color: '#C1503A' },
+  { min: 95, tier: 'elite', label: 'Elite', labelTh: 'ยอดเยี่ยมที่สุด', color: COLORS.green },
+  { min: 85, tier: 'excellent', label: 'Excellent', labelTh: 'ยอดเยี่ยม', color: COLORS.moss },
+  { min: 70, tier: 'good', label: 'Good', labelTh: 'ดี', color: COLORS.yellow },
+  { min: 50, tier: 'fair', label: 'Fair', labelTh: 'พอใช้', color: COLORS.amber },
+  { min: 0, tier: 'recovery-needed', label: 'Recovery Needed', labelTh: 'ควรพักผ่อน', color: COLORS.rust },
 ]
 
 export function fitnessScoreTierOf(score: number): (typeof TIERS)[number] {
