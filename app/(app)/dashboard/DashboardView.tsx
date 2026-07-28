@@ -52,7 +52,7 @@ import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
-import NotificationBell from '@/components/NotificationBell'
+import NotificationButton from '@/components/dashboard/NotificationButton'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
@@ -603,7 +603,7 @@ export default function DashboardPage() {
           >
             📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
-          <NotificationBell latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
+          <NotificationButton latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
         </div>
       </div>
 
@@ -620,7 +620,7 @@ export default function DashboardPage() {
         <BodyMetricsRow />
       </div>
 
-      {/* PR ล่าสุด / ฝึกมากสุดสัปดาห์นี้ ย้ายไปอยู่ในกระดิ่งแจ้งเตือนที่ header แล้ว (ดู NotificationBell)
+      {/* PR ล่าสุด / ฝึกมากสุดสัปดาห์นี้ ย้ายไปอยู่ในกระดิ่งแจ้งเตือนที่ header แล้ว (ดู NotificationButton)
           แทนที่จะกินพื้นที่แถวเต็มความกว้างตรงนี้ */}
 
       {/* Cards cluster (lg+): hero, recovery, weekly goal, AI coach, quick actions, heatmaps.

@@ -33,14 +33,11 @@ import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
-import NotificationBell from '@/components/NotificationBell'
-import HeaderBackgroundFX from '@/components/HeaderBackgroundFX'
+import Header from '@/components/dashboard/Header'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
 import WeeklyVolumeRecoveryCard from '@/components/WeeklyVolumeRecoveryCard'
 import RecommendedProgramCard from '@/components/RecommendedProgramCard'
-import FitnessScoreRing from '@/components/FitnessScoreRing'
-import FitnessWaveDecoration from '@/components/FitnessWaveDecoration'
 import TodaysFocusCard from '@/components/TodaysFocusCard'
 import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
 import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
@@ -246,57 +243,18 @@ export default function MobileDashboardView() {
   return (
     <>
       <div className="space-y-[12px]">
-        {/* greeting + Fitness Score + settings — Stack: BackgroundFX (glow+particles, z-0) เป็น
-            ชั้นล่างสุด, เนื้อหาจริง (z-20) อยู่ทับด้านบน เหมือนแนวคิด Stack ของ Flutter */}
-        <div className="relative">
-          <HeaderBackgroundFX color={fitnessScore.color} />
-          <div className="relative z-20 px-1 animate-rise">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs text-muted">👋 {greetingText}</p>
-                <div className="shrink-0">
-                  <NotificationBell latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
-                </div>
-              </div>
-              <p
-                className="uppercase mt-1.5"
-                style={{
-                  fontFamily: 'var(--font-oswald), var(--font-kanit)',
-                  fontSize: 32,
-                  fontWeight: 800,
-                  letterSpacing: '1.2px',
-                  lineHeight: 1,
-                  backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}
-              >
-                {data.profileDisplayName || emailDisplayName(data.email)}
-              </p>
-              {/* Mobile Dashboard v2: ตัด "Personalized Fitness" ออก ช่วยลดความสูง header ร่วมกับ
-                  การตัด tagline ด้านล่าง — ชื่อผู้ใช้ยังคงขนาดเท่าเดิม (fontSize 28) ตามที่ขอ */}
-            </div>
-            <FitnessScoreRing score={fitnessScore} />
-          </div>
-
-          {/* wave ขยับช้าๆ (~5s/รอบ) ตามที่ขอ — ใช้ CSS keyframes ธรรมดา ไม่ต้องพึ่ง animation library */}
-          <div className="mt-2 animate-header-wave">
-            <FitnessWaveDecoration color={fitnessScore.color} />
-          </div>
-
-          {/* Mobile Dashboard v2: ตัดบรรทัด tagline "วันนี้พร้อมสำหรับการออกกำลังกาย 💪" ออก และ
-              ลด margin-top ก่อน Today's Focus ลง (mt-2 -> mt-1.5) ให้ Today's Focus อยู่ใต้ Header
-              ทันที และ header โดยรวมเตี้ยลงจากเดิมประมาณ 20% */}
-          <div className="mt-1.5">
-            <TodaysFocusCard
-              label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
-              href={scheduledDay ? '/session' : '/log'}
-            />
-          </div>
-          </div>
-        </div>
+        <Header
+          greetingText={greetingText}
+          latestPR={data.latestPR}
+          topMuscleThisWeek={data.topMuscleThisWeek}
+          displayName={data.profileDisplayName || emailDisplayName(data.email)}
+          fitnessScore={fitnessScore}
+        >
+          <TodaysFocusCard
+            label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
+            href={scheduledDay ? '/session' : '/log'}
+          />
+        </Header>
 
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 
