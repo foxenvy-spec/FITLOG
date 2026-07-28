@@ -22,13 +22,15 @@ export const COLORS = {
 // (ส้ม/เหลืองไฟ) แทนที่จะ dynamic ตาม tier ของ Fitness Score (เขียว/เหลือง/ส้ม/แดง) เหมือนเดิม —
 // ทำให้ header คงลุค "ไฟ" ไว้เสมอไม่ว่าคะแนนจะเป็นเท่าไหร่ก็ตาม (แลกกับการไม่สื่อความหมาย tier
 // ผ่านสีอีกต่อไปในจุดนี้ — ยังเห็น tier ได้จากคำว่า Excellent/Good/... ที่ใต้วงอยู่ดี)
-export const FIRE_ACCENT = '#FF8C1A'
+// (ดู FIRE_ACCENT ตัวจริงที่นิยามพร้อม FIRE_GRADIENT ด้านล่างของไฟล์นี้)
 
 export type ThemeColorKey = keyof typeof COLORS
 
 // สีกลาง/พื้นหลัง — ใช้กับ SVG stroke/fill หรือ inline style ที่ใช้ Tailwind class ตรงๆ ไม่ได้
 export const NEUTRAL = {
-  ringTrack: '#23272D', // พื้นหลังวงแหวนส่วนที่ยังไม่ถึงเป้า
+  ringTrack: '#23272D', // พื้นหลังวงแหวนส่วนที่ยังไม่ถึงเป้า (ใช้ทั่วไป — GoalRing, WorkoutHeatmap ฯลฯ)
+  ringTrackWarm: '#202126', // พื้นหลังวงแหวนโทนอุ่นกว่า ใช้เฉพาะ FitnessScore ring (ธีมไฟ) ให้ตัดกับ
+  // วงสีส้ม/ทองชัดกว่า ringTrack ปกติซึ่งเป็นโทนเทาเย็น
   chipInactive: '#2E333A', // ชิป/วงกลมที่ยังไม่ active (เช่น วันที่ยังไม่ได้ฝึก)
   chipInactiveAlt: '#3A3F47', // เฉดใกล้เคียง ใช้ตอนต้องการคอนทราสต์ต่างจาก chipInactive เล็กน้อย
   mutedIcon: '#9498A0', // ไอคอน/ตัวอักษรจางๆ บนพื้นเข้ม
@@ -55,3 +57,28 @@ export function lighten(hex: string, amount: number): string {
   const toHex = (n: number) => n.toString(16).padStart(2, '0')
   return `#${toHex(mix(r))}${toHex(mix(g))}${toHex(mix(b))}`
 }
+
+// ===================================================================================
+// "Fire" gradient — ชุดสีเดียวที่ใช้ร่วมกันทั่วทั้งแอปสำหรับจุดที่ต้องการความรู้สึก "พลังงาน/ไฟลุก"
+// (Fitness Score Ring, Wave ตกแต่งบน header, FAB "Start Workout", แถบ progress หลักของวันนี้)
+// ตั้งใจให้เป็นตัวแปรเดียว ไม่กระจาย hex ซ้ำคนละที่ — เปลี่ยนโทนธีมทั้งชุดในอนาคตแก้ที่นี่ที่เดียวพอ
+// (แยกจาก COLORS ด้านบนซึ่งเป็นสีความหมายเชิงข้อมูล เช่น tier ของ Fitness Score, กลุ่มกล้ามเนื้อ ฯลฯ —
+// FIRE_GRADIENT เป็นสี "ตกแต่ง/แบรนด์" ล้วนๆ ไม่ผูกความหมายอะไร)
+//
+// ตั้งใจไม่ทาแทนที่สีความหมาย (เช่น tier ของ Fitness Score, สีกลุ่มกล้ามเนื้อ, สีของแต่ละ timer type)
+// เพราะจุดเหล่านั้นสีสื่อความหมายจริง (ดี/แย่, กลุ่มกล้ามเนื้อไหน ฯลฯ) เปลี่ยนไปใช้สีไฟเดียวกันหมด
+// จะทำให้ข้อมูลสับสน — ใช้เฉพาะจุดที่เป็น "ของตกแต่ง/แบรนด์" ล้วนๆ เท่านั้น
+export const FIRE_GRADIENT_STOPS = [
+  { offset: '0%', color: '#D96A00' },
+  { offset: '25%', color: '#FF8A00' },
+  { offset: '45%', color: '#FFD166' },
+  { offset: '50%', color: '#FFF4CC' },
+  { offset: '55%', color: '#FFD166' },
+  { offset: '75%', color: '#FF8A00' },
+  { offset: '100%', color: '#D96A00' },
+] as const
+
+export const FIRE_GRADIENT_CSS = `linear-gradient(90deg, ${FIRE_GRADIENT_STOPS.map((s) => `${s.color} ${s.offset}`).join(', ')})`
+
+// สีเดี่ยวสำหรับจุดที่ต้องการแค่ hex เดียว (เช่น glow shadow, ไอคอนที่ recolor ไม่ได้แบบ gradient)
+export const FIRE_ACCENT = '#FF8A00'
