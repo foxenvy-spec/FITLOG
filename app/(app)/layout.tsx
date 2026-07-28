@@ -4,49 +4,32 @@ import QueryProvider from '@/components/QueryProvider'
 import { WeightUnitProvider } from '@/components/WeightUnitProvider'
 import { ToastProvider } from '@/components/Toast'
 import { DashboardSettingsProvider } from '@/components/DashboardSettingsProvider'
-import { createClient } from '@/lib/supabase/server'
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // header เหลือแค่โลโก้ + ทางลัดไปโปรไฟล์ — อีเมล/หน่วยน้ำหนัก/ปุ่มออกจากระบบ
-  // ย้ายไปรวมอยู่ที่หน้า /profile ทั้งหมดแล้ว เพื่อให้แต่ละหน้ามีหน้าที่ชัดเจนขึ้น
-  const initial = (user?.email ?? '?').slice(0, 1).toUpperCase()
-
   return (
     <WeightUnitProvider>
       <ToastProvider>
-        {/* < 768px: single column, mobile header + bottom tab bar (original layout, unchanged).
-          768–1023px: same header/bottom-bar shell, just a wider centered column so cards
-          can sit two-across instead of stretching one narrow strip across a tablet screen.
+        {/* < 768px: single column, bottom tab bar only (ตัด header โลโก้+avatar ออกแล้ว — ทุกหน้ามี
+          page title ของตัวเองอยู่แล้ว และ /profile เข้าถึงได้จากแท็บ bottom nav อยู่แล้ว การมี
+          header ลอยซ้ำทุกหน้าจึงไม่จำเป็น ตัดออกให้ดูโล่ง/พรีเมียมขึ้นแบบ Apple Health/Whoop).
+          768–1023px: same shell, just a wider centered column so cards can sit two-across
+          instead of stretching one narrow strip across a tablet screen.
           >= 1024px: sidebar replaces the header + bottom bar entirely; content gets the
-          remaining width to lay out as a multi-column dashboard. */}
+          remaining width to lay out as a multi-column dashboard. (ไม่กระทบส่วนนี้เลย — header
+          เดิมเป็น lg:hidden อยู่แล้ว desktop ไม่เคยเห็น มีแต่ SidebarNav) */}
         <div className="min-h-screen flex lg:flex-row">
           <DashboardSettingsProvider>
           <SidebarNav />
 
           <div className="flex-1 flex flex-col min-w-0">
-            <header className="lg:hidden sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-line safe-top">
-              <div className="max-w-sm md:max-w-2xl mx-auto flex items-center justify-between px-5 py-3.5">
-                <a href="/dashboard" className="font-display tracked-lg uppercase text-lg text-ink">FITLOG</a>
-                <a
-                  href="/profile"
-                  aria-label="โปรไฟล์"
-                  className="shrink-0 w-8 h-8 rounded-full bg-surface2 border border-line flex items-center justify-center font-display text-xs tracked uppercase text-amber"
-                >
-                  {initial}
-                </a>
-              </div>
-            </header>
-
-            <main className="flex-1 w-full max-w-sm md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-24 lg:pb-10">
+            {/* safe-top ย้ายมาไว้ที่ main แทน (เดิมอยู่ที่ header ที่เพิ่งตัดออก) กัน status
+                bar/notch บนมือถือทับเนื้อหาบนสุด — env(safe-area-inset-top) เป็น 0 บนเดสก์ท็อป
+                ทั่วไปอยู่แล้ว จึงไม่กระทบเดสก์ท็อป */}
+            <main className="flex-1 w-full max-w-sm md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-24 lg:pb-10 safe-top">
               <QueryProvider>{children}</QueryProvider>
             </main>
 
