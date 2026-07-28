@@ -149,7 +149,7 @@ function splitValueUnit(text: string): { num: string; unit: string } {
   return { num: text.slice(0, spaceIdx), unit: text.slice(spaceIdx + 1) }
 }
 
-export default function BodyMetricsRow() {
+export default function BodyMetricsRow({ showLastMeasuredDate = false }: { showLastMeasuredDate?: boolean } = {}) {
   const supabase = createClient()
   const { toDisplay, unit } = useWeightUnit()
 
@@ -196,6 +196,11 @@ export default function BodyMetricsRow() {
   // label เดียวใช้ร่วมกันทุกการ์ด ปรับข้อความอัตโนมัติตามระยะเวลาจริงระหว่างสองเอนทรีล่าสุด
   // (เช่น "จากเมื่อวาน" / "จาก 3 วันก่อน" / "จากสัปดาห์ที่แล้ว" / "จากเดือนที่แล้ว") แทนคำว่า "จากสัปดาห์ที่แล้ว" ตายตัว
   const period = summary.periodLabel ?? 'จากครั้งก่อน'
+  // วันที่ของเอนทรีล่าสุด (metrics เรียง desc มาแล้วจาก query) — ทุกเมตริกมาจากแถวเดียวกันเสมอ
+  // (บันทึกน้ำหนัก/ไขมัน/กล้ามเนื้อพร้อมกันในครั้งเดียว) จึงใช้วันที่เดียวกันได้ทุกการ์ด
+  const lastMeasuredText = showLastMeasuredDate
+    ? `ล่าสุด ${new Date(metrics[0].measured_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}`
+    : null
 
   // metrics เรียงใหม่->เก่า (measured_at desc) กลับด้านเป็นเก่า->ใหม่ ให้กราฟไล่จากซ้ายไปขวาตามเวลา
   const chronological = [...metrics].reverse()
@@ -279,7 +284,7 @@ export default function BodyMetricsRow() {
         return (
           <div
             key={c.key}
-            className="metric-card relative overflow-hidden rounded-lg flex flex-col justify-between h-[124px] 2xl:h-[128px]"
+            className={`metric-card relative overflow-hidden rounded-lg flex flex-col justify-between ${showLastMeasuredDate ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
             style={{
               transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
               padding: '16px 18px 12px', // ลด padding-bottom ลงอีกนิด ให้บรรทัดเดลต้าที่ถูกดันไปด้วย margin-top:auto ชิดขอบล่างเห็นผลชัดขึ้น
@@ -392,13 +397,20 @@ export default function BodyMetricsRow() {
                   <Sparkline series={c.series} color={theme.main} />
                 </div>
                 {c.deltaText && (
-                  <p
-                    className="text-[11px] font-semibold whitespace-nowrap flex items-center gap-1"
-                    style={{ color: c.deltaColor, marginTop: 6 }}
-                  >
-                    {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
-                    {c.deltaText}
-                  </p>
+                  <>
+                    <p
+                      className="text-[11px] font-semibold whitespace-nowrap flex items-center gap-1"
+                      style={{ color: c.deltaColor, marginTop: 6 }}
+                    >
+                      {c.deltaDir && <span aria-hidden="true">{c.deltaDir === 'up' ? '↑' : '↓'}</span>}
+                      {c.deltaText}
+                    </p>
+                    {lastMeasuredText && (
+                      <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
+                        {lastMeasuredText}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
