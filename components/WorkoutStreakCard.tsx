@@ -2,6 +2,7 @@
 
 import { WEEKDAY_LABELS } from '@/app/(app)/dashboard/DashboardView'
 import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
+import PremiumCard from './ui/PremiumCard'
 
 interface WorkoutStreakCardProps {
   streak: number
@@ -14,7 +15,7 @@ interface WorkoutStreakCardProps {
 // วันยังอยู่ครบใน aria-label ให้ screen reader อ่านได้ปกติ) ขวา ตัดคำบรรยายใต้หัวข้อออกไปเลย
 export default function WorkoutStreakCard({ streak, weekDayTicks, today }: WorkoutStreakCardProps) {
   return (
-    <div className="rounded-[20px] bg-surface border border-amber/40 shadow-elevated overflow-hidden animate-rise px-4 py-3">
+    <PremiumCard className="animate-rise px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 shrink-0">
           <span
@@ -52,6 +53,6 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
           })}
         </div>
       </div>
-    </div>
+    </PremiumCard>
   )
 }

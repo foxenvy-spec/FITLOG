@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { COLORS, withAlpha } from '@/lib/theme'
+import PremiumCard from './ui/PremiumCard'
 
 interface TodaysFocusCardProps {
   label: string | null
@@ -12,9 +13,10 @@ interface TodaysFocusCardProps {
 // ไปกล้ามเนื้อที่แนะนำวันนี้ (data.muscleRecommendation) ซึ่ง MobileDashboardView เป็นคนเลือกส่งมาให้แล้ว
 export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
   return (
-    <Link
+    <PremiumCard
+      as={Link}
       href={href}
-      className="flex items-center justify-between gap-2.5 rounded-[16px] border border-amber/40 bg-surface px-3 py-2.5 active:bg-surface2 transition"
+      className="flex items-center justify-between gap-2.5 px-3 py-2.5 active:scale-[0.99] transition"
     >
       <div className="flex items-center gap-2.5 min-w-0">
         <span
@@ -32,6 +34,6 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         </div>
       </div>
       <span className="text-muted shrink-0" aria-hidden="true">›</span>
-    </Link>
+    </PremiumCard>
   )
 }

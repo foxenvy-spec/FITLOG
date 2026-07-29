@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { COLORS, FIRE_GRADIENT_CSS } from '@/lib/theme'
 import AnimatedBarFill from './AnimatedBarFill'
+import PremiumCard from './ui/PremiumCard'
 
 interface TodaysWorkoutCompactCardProps {
   completed: number
@@ -16,9 +17,10 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
 
   return (
-    <Link
+    <PremiumCard
+      as={Link}
       href={href}
-      className="rounded-[20px] border border-amber/40 bg-surface flex items-center gap-4 px-4 py-4 active:bg-surface2 transition"
+      className="flex items-center gap-4 px-4 py-4 active:scale-[0.99] transition"
     >
       <span
         className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl"
@@ -41,6 +43,6 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         </div>
       </div>
       <span className="text-muted shrink-0" aria-hidden="true">›</span>
-    </Link>
+    </PremiumCard>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import PremiumCard from './ui/PremiumCard'
 
 interface AICoachCompactCardProps {
   message: string
@@ -12,9 +13,10 @@ interface AICoachCompactCardProps {
 // Mobile Dashboard v2: ลด padding/ขนาด avatar ลงอีกนิด ให้สูงรวมอยู่ในช่วง ~90-100px ตามสเปค
 export default function AICoachCompactCard({ message, href = '/coach' }: AICoachCompactCardProps) {
   return (
-    <Link
+    <PremiumCard
+      as={Link}
       href={href}
-      className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden flex items-center gap-3 px-4 py-3.5 active:bg-surface2 transition"
+      className="flex items-center gap-3 px-4 py-3.5 active:scale-[0.99] transition"
     >
       <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-surface2 flex items-center justify-center text-lg" aria-hidden="true">
         🤖
@@ -28,6 +30,6 @@ export default function AICoachCompactCard({ message, href = '/coach' }: AICoach
       <span className="shrink-0 text-[10px] font-display tracked uppercase text-amber border border-amber/40 rounded-full px-3 py-1.5 whitespace-nowrap">
         ดูคำแนะนำ ›
       </span>
-    </Link>
+    </PremiumCard>
   )
 }
