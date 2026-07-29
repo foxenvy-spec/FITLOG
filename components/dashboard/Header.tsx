@@ -73,8 +73,17 @@ export default function Header({
   return (
     <div className="animate-rise">
       <div
-        className="relative overflow-hidden"
-        style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)` }}
+        className="relative overflow-hidden rounded-[22px]"
+        style={{
+          height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)`,
+          // พื้นหลังของตัวการ์ด hero เอง — พอร์ตตรงจาก reference mockup (.hero-card): จุดสว่างอุ่นๆ
+          // ตรงฝั่งวง Fitness Score (82%/55% ≈ มุมขวาบน-กลาง ใกล้ตำแหน่งวงจริง) ซ้อนบน vignette มืด
+          // กลางการ์ด — เดิมกล่องนี้โปร่งใสล้วนๆ อาศัยแค่ AmbientGlow (blob เบลอ) ลอยทับพื้นหลังเพจ
+          // ไม่มี vignette/จุดสว่างเฉพาะการ์ดแบบนี้เลย จำกัดขอบเขตไว้แค่ไฟล์นี้ (mobile header) ไม่แตะ
+          // สีพื้นหลังหลักของทั้งแอป (bg-bg ใน tailwind.config) ซึ่งกระทบทุกหน้า
+          background:
+            'radial-gradient(ellipse 260px 200px at 82% 55%, rgba(255,120,20,0.20), transparent 60%), radial-gradient(ellipse 400px 300px at 50% 50%, #140b04, #060402 70%)',
+        }}
       >
         {/* Background: glow + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
