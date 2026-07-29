@@ -811,7 +811,13 @@ export default function SessionPage() {
         </button>
       )}
 
-      <div className="rounded-xl bg-surface border border-line shadow-elevated overflow-hidden">
+      <div
+        className="rounded-xl border border-line shadow-elevated overflow-hidden"
+        style={{
+          background:
+            'radial-gradient(circle at 88% 15%, rgba(255,138,0,0.20), transparent 55%), #1C1F24',
+        }}
+      >
         <div className="px-4 py-3.5 border-b border-line flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -906,16 +912,26 @@ export default function SessionPage() {
             </div>
           )}
 
-          {/* ใช้ COLORS.green (สีเขียวสดจริงๆ) แทน bg-moss/bg-steel — moss ตั้งใจให้หม่น/เอิร์ธโทน (ดูคอมเมนต์ใน
-              tailwind.config) สำหรับสถานะ recovery โดยเฉพาะ ไม่เหมาะกับปุ่ม "เสร็จแล้ว" ที่ต้องการให้
-              อ่านเป็นสีเขียวชัดเจนทันทีแบบในรูปตัวอย่าง */}
+          {/* Ghost + glow style (แทนพื้นเขียวทึบ) ตามมอคอัพ: พื้นหลังโปร่งใสอมเขียวจางๆ ขอบเขียว
+              เรืองแสง (box-shadow blur) ให้ดูมีมิติ ไม่ใช่ปุ่มแบนทึบเหมือนปุ่มอื่นในหน้า */}
           <button
             type="button"
             onClick={logSet}
-            style={{ backgroundColor: COLORS.green, color: NEUTRAL.onAmberText }}
-            className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition"
+            style={{
+              backgroundColor: 'rgba(74,222,128,0.08)',
+              borderColor: 'rgba(74,222,128,0.45)',
+              color: COLORS.green,
+              boxShadow: '0 0 24px rgba(74,222,128,0.35)',
+            }}
+            className="w-full rounded-full border font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition flex items-center justify-center gap-2"
           >
-            ✅ เซ็ตนี้เสร็จแล้ว{setsRemaining > 0 ? ` (เหลืออีก ${setsRemaining})` : ''}
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0"
+              style={{ backgroundColor: COLORS.green, color: NEUTRAL.onAmberText }}
+            >
+              ✓
+            </span>
+            เซ็ตนี้เสร็จแล้ว{setsRemaining > 0 ? ` (เหลืออีก ${setsRemaining})` : ''}
           </button>
 
           {currentState.setsLog.length > 0 && (
