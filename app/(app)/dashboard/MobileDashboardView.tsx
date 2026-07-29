@@ -276,7 +276,7 @@ export default function MobileDashboardView() {
 
         {/* body composition snapshot */}
         <div className="animate-rise" style={{ animationDelay: '15ms' }}>
-          <div className="flex items-center justify-between px-1 mb-2">
+          <div className="flex items-center justify-between px-1 mb-1.5">
             <p className="font-display tracked uppercase text-ink" style={{ fontSize: 12 }}>ภาพรวมร่างกาย</p>
             <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
               ดูทั้งหมด →

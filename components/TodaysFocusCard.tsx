@@ -16,12 +16,12 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
     <PremiumCard
       as={Link}
       href={href}
-      className="flex items-center justify-between gap-2.5 px-3 py-2.5 active:scale-[0.99] transition"
+      className="flex items-center justify-between gap-2 px-3 py-1.5 active:scale-[0.99] transition"
     >
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
         <span
-          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-          style={{ backgroundColor: withAlpha(COLORS.amber, '22'), fontSize: 12 }}
+          className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: withAlpha(COLORS.amber, '22'), fontSize: 11 }}
           aria-hidden="true"
         >
           🎯
