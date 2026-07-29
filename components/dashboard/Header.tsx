@@ -42,7 +42,7 @@ const HERO_BOTTOM_BREATHING_ROOM = 40
 //="none") จุดจบเส้นอยู่ที่ y=45 คือกึ่งกลางแนวตั้งของ viewBox พอดี (90/2) ดังนั้นไม่ว่า WAVE_HEIGHT
 // จะเป็นเท่าไหร่ จุดจบเส้นก็จะอยู่กึ่งกลางแนวตั้งของ wrapper นี้เสมอ — แค่จัดกึ่งกลาง wrapper ให้ตรง
 // กับกึ่งกลางวง Fitness Score (RING_TOP + RING_SIZE/2) ก็พอ ไม่ต้องคำนวณ offset ซับซ้อนเพิ่ม
-const WAVE_HEIGHT = 70
+const WAVE_HEIGHT = RING_SIZE
 const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE}px / 2 - ${WAVE_HEIGHT}px / 2)`
 // ปลายเส้น (x=400 ใน viewBox) วางให้ตรงกึ่งกลางแนวนอนของวง Fitness Score พอดี (แสง lens flare จะโผล่
 // ออกมาจากขอบวงเอง ดูเหมือนเส้นคลื่น "พุ่งเข้าไป" ในวงจริงๆ)
