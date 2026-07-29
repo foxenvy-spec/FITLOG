@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
 import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
+import { COLORS, NEUTRAL } from '@/lib/theme'
 import {
   parseRestSeconds,
   initSessionSet,
@@ -910,10 +911,14 @@ export default function SessionPage() {
             </div>
           )}
 
+          {/* ใช้ COLORS.green (สีเขียวสดจริงๆ) แทน bg-moss — moss ตั้งใจให้หม่น/เอิร์ธโทน (ดูคอมเมนต์ใน
+              tailwind.config) สำหรับสถานะ recovery โดยเฉพาะ ไม่เหมาะกับปุ่ม "เสร็จแล้ว" ที่ต้องการให้
+              อ่านเป็นสีเขียวชัดเจนทันทีแบบในรูปตัวอย่าง */}
           <button
             type="button"
             onClick={logSet}
-            className="w-full rounded-full bg-moss text-bg font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition"
+            style={{ backgroundColor: COLORS.green, color: NEUTRAL.onAmberText }}
+            className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition"
           >
             ✅ เซ็ตนี้เสร็จแล้ว{setsRemaining > 0 ? ` (เหลืออีก ${setsRemaining})` : ''}
           </button>
