@@ -86,6 +86,9 @@ export default function Header({
           // ไฟล์นี้ (mobile header) ไม่แตะสีพื้นหลังหลักของทั้งแอป (bg-bg ใน tailwind.config)
           background:
             'radial-gradient(circle at 78% 42%, rgba(255,150,0,0.22), transparent 60%), radial-gradient(ellipse 260px 200px at 82% 55%, rgba(255,120,20,0.20), transparent 60%), radial-gradient(ellipse 400px 300px at 50% 50%, #140b04, #060402 70%)',
+          // DEBUG ชั่วคราว — กรอบแดงให้เห็นขอบเขตจริงของกล่อง hero บนจอจริง เอาออกทีหลังตอนเช็คเสร็จ
+          outline: '2px solid red',
+          outlineOffset: '-2px',
         }}
       >
         {/* Background: glow + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
