@@ -37,7 +37,10 @@ const RING_SIZE = 84
 // ไปเงียบๆ (เกิดขึ้นแทบทุกขนาดจอ เพราะเดิม RING_TOP + RING_SIZE + label สูงเกินความสูงกล่องที่ตั้งไว้ตายตัว)
 const RING_LABEL_HEIGHT = 42
 // พื้นที่หายใจเพิ่มใต้ label — เดิม hero สูงพอดีเป๊ะกับเนื้อหาจนรู้สึกอึดอัด/แบน เพิ่มส่วนนี้ให้ดูโปร่งขึ้น
-const HERO_BOTTOM_BREATHING_ROOM = 40
+// ลดจาก 40 → 24 ตามฟีดแบ็ก (Header+Today's Focus รวมกันกินพื้นที่เยอะไป) — Today's Focus ยังดึงขึ้นมา
+// ซ้อน 18px เท่าเดิม (ดู marginTop ด้านล่างสุดของไฟล์) เหลือพื้นที่ว่างจริง ~6px เหนือการ์ด ยังไม่ชน
+// ตัวเลข/tier label ของวง
+const HERO_BOTTOM_BREATHING_ROOM = 24
 // ความสูงของ wrapper เส้นคลื่น HeroEnergyWave — viewBox ภายในเป็น 0 0 400 200 (preserveAspectRatio
 // ="none") จุดจบเส้นอยู่ที่กึ่งกลางแนวตั้งของ viewBox พอดี (200/2) ดังนั้นไม่ว่า WAVE_HEIGHT จะเป็น
 // เท่าไหร่ จุดจบเส้นก็จะอยู่กึ่งกลางแนวตั้งของ wrapper นี้เสมอ — แค่จัดกึ่งกลาง wrapper ให้ตรงกับ
@@ -86,9 +89,6 @@ export default function Header({
           // ไฟล์นี้ (mobile header) ไม่แตะสีพื้นหลังหลักของทั้งแอป (bg-bg ใน tailwind.config)
           background:
             'radial-gradient(circle at 78% 42%, rgba(255,150,0,0.22), transparent 60%), radial-gradient(ellipse 260px 200px at 82% 55%, rgba(255,120,20,0.20), transparent 60%), radial-gradient(ellipse 400px 300px at 50% 50%, #140b04, #060402 70%)',
-          // DEBUG ชั่วคราว — กรอบแดงให้เห็นขอบเขตจริงของกล่อง hero บนจอจริง เอาออกทีหลังตอนเช็คเสร็จ
-          outline: '2px solid red',
-          outlineOffset: '-2px',
         }}
       >
         {/* Background: glow + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
@@ -175,11 +175,11 @@ export default function Header({
       </div>
 
       {/* "ซ้อนสายตา" (visual overlap) กับ hero ตามที่ขอ — ดึงการ์ด Today's Focus ขึ้นไปคาบเกี่ยวกับ
-          HERO_BOTTOM_BREATHING_ROOM (40px พื้นที่ว่างล้วนๆ ท้ายกล่อง hero ไม่มีตัวเลข/ป้ายชื่อของวง
+          HERO_BOTTOM_BREATHING_ROOM (24px พื้นที่ว่างล้วนๆ ท้ายกล่อง hero ไม่มีตัวเลข/ป้ายชื่อของวง
           ซ้อนอยู่ตรงนั้น) ด้วย margin-top ติดลบ แทนที่จะปล่อยให้อยู่เป็นบล็อกแยกข้างล่างเหมือนเดิม —
           ไม่ต้องแตะ overflow-hidden ของกล่อง hero เลย เพราะการ์ดนี้เป็น sibling อยู่นอกกล่องนั้นอยู่แล้ว
           (แค่ paint ทับขึ้นไปด้านบนตามลำดับ DOM ปกติ) จึงไม่มีความเสี่ยงโดนตัดขอบ
-          ดึงขึ้น 18px จาก 40px ที่มี เหลือ ~22px ของพื้นที่ว่างเดิมอยู่เหนือการ์ดใน hero ไม่ให้ชนตัวเลข/
+          ดึงขึ้น 18px จาก 24px ที่มี เหลือ ~6px ของพื้นที่ว่างเดิมอยู่เหนือการ์ดใน hero ไม่ให้ชนตัวเลข/
           tier label ของวง Fitness Score ด้านบน */}
       <div className="relative z-10 px-1" style={{ marginTop: -18 }}>{children}</div>
     </div>

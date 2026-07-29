@@ -18,8 +18,8 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
       as={Link}
       href={href}
       className="flex items-center justify-between gap-3 active:scale-[0.99] transition"
-      // DEBUG ชั่วคราว — กรอบเขียวให้เห็นขอบเขตจริงของการ์ดนี้บนจอจริง เอาออกทีหลังตอนเช็คเสร็จ
-      style={{ padding: 20, outline: '2px solid limegreen', outlineOffset: '-2px' }}
+      // padding ลดจาก 20 → 14 ตามฟีดแบ็ก (Header+Today's Focus รวมกันกินพื้นที่เยอะไป)
+      style={{ padding: 14 }}
     >
       <div className="flex items-center gap-3 min-w-0">
         {/* กลับไปใหญ่ขึ้น (24px -> 36px) ตามที่ยืนยันทิศทางแล้ว — เดิมย่อลงไปรอบก่อนหน้า —
