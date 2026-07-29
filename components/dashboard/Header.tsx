@@ -27,7 +27,10 @@ interface HeaderProps {
 // (แทนที่จะ hardcode เลข 130 แยกไว้คนละจุดแบบ v4/v5/v6) กัน bug กรณีขยับ Ring แล้วลืมขยับ Wave ตาม
 const RING_RIGHT = 'clamp(16px, 5vw, 24px)'
 const RING_TOP = 'clamp(60px, 18vw, 80px)'
-const RING_SIZE = 110
+// ลดจาก 110 → 84 ตามที่ขอ (คืนพื้นที่แนวตั้งของ header ลงมา ~15%) — WAVE_TOP/HERO ด้านล่างคำนวณจาก
+// ค่านี้โดยตรงทั้งคู่ ไม่ hardcode ตัวเลขแยก กันพลาดแบบที่เคยเกิดตอนแก้ครั้งก่อน (ปรับ RING_SIZE
+// จุดเดียว ทุกอย่างขยับตามอัตโนมัติ)
+const RING_SIZE = 84
 // วง Fitness Score มีข้อความ "Fitness Score" + tier label ต่อท้ายใต้วงอีก ~40px (ดู FitnessScore.tsx)
 // ต้องบวกเข้าไปในความสูงกล่อง hero ด้วย ไม่งั้น overflow-hidden ของกล่องจะตัดข้อความสองบรรทัดนั้นทิ้ง
 // ไปเงียบๆ (เกิดขึ้นแทบทุกขนาดจอ เพราะเดิม RING_TOP + RING_SIZE + label สูงเกินความสูงกล่องที่ตั้งไว้ตายตัว)
@@ -36,8 +39,9 @@ const RING_LABEL_HEIGHT = 42
 const HERO_BOTTOM_BREATHING_ROOM = 40
 // Wave ต้องจบที่ "ความสูงเดียวกับกึ่งกลางวง" (= ขอบซ้ายสุดของวงกลม) ไม่งั้นจะรู้สึกเหมือนเป็นคนละชิ้นกัน
 // แม้จะจบที่ตำแหน่ง x เดียวกันก็ตาม (ดู AnimatedWave.tsx: จุดจบของเส้นอยู่ที่ y=22 จาก viewBox สูง 70)
-// คำนวณจาก RING_TOP ตรงๆ แทนการ clamp แยกต่างหาก กัน bug แบบเดียวกับที่เคยเกิดกับความสูง hero มาก่อน
-const WAVE_TOP = `calc(${RING_TOP} + 33px)`
+// คำนวณจาก RING_TOP + RING_SIZE/2 (จุดกึ่งกลางวงตามแนวตั้ง) ลบ 22 ตรงๆ แทนเลข 33 คงที่เดิม (ซึ่งผูก
+// อยู่กับ RING_SIZE เดิม=110 โดยเฉพาะ) กัน bug กรณีเปลี่ยน RING_SIZE แล้วลืมคำนวณจุดนี้ใหม่ตาม
+const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE / 2 - 22}px)`
 
 // Header ของหน้า Dashboard (มือถือ) — v7:
 //   - ตำแหน่งทุกจุด (Bell/Greeting/ชื่อ/Ring/Wave) เปลี่ยนจาก fixed px เป็น clamp(min, vw, max) —

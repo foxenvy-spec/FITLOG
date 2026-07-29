@@ -77,13 +77,14 @@ function Sparkline({ series, color, height = 30, width = 64 }: { series: number[
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" style={{ overflow: 'visible' }} aria-hidden="true">
       <defs>
-        {/* 2 filter: อันแรก blur แคบ (ใกล้เส้น) อันที่สอง blur กว้างกว่า (ฟุ้งไกลกว่า) ซ้อนกัน
-            ให้ glow มีมิติ/รู้สึกได้ชัดขึ้นที่ขนาดกราฟจิ๋วนี้ รวม opacity อยู่ในช่วง 15-20% ตามที่ขอ */}
+        {/* 2 filter: อันแรก blur แคบ (ใกล้เส้น) อันที่สอง blur กว้างกว่า (ฟุ้งไกลกว่า) ซ้อนกัน — ลด blur
+            radius ลงจากเดิม (4.5/2.2 → 3/1.4) ให้แสงกระชับ/เบาลง ดูคุมโทนแบบ Apple Health มากกว่า
+            ไฟฟุ้งจ้า opacity ก็ลดลงคู่กัน (ดูจุดที่วาด path ด้านล่าง) */}
         <filter id={`sparkline-glow-tight-${glowId}`} x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="2.2" />
+          <feGaussianBlur stdDeviation="1.4" />
         </filter>
         <filter id={`sparkline-glow-wide-${glowId}`} x="-150%" y="-150%" width="400%" height="400%">
-          <feGaussianBlur stdDeviation="4.5" />
+          <feGaussianBlur stdDeviation="3" />
         </filter>
         {/* พื้นที่ใต้กราฟเป็น gradient จาง (เข้มใกล้เส้น ค่อยๆ จางหายไปด้านล่าง) แทนสีเรียบ fillOpacity เดิม
             ให้เข้าชุดกับ icon/card ที่เป็น gradient ทั้งหมดแล้ว */}
@@ -93,23 +94,23 @@ function Sparkline({ series, color, height = 30, width = 64 }: { series: number[
         </linearGradient>
       </defs>
       <path d={areaPath} fill={`url(#sparkline-area-${glowId})`} stroke="none" />
-      {/* glow ชั้นกว้าง (ฟุ้งไกล, opacity ต่ำสุด) วาดก่อน อยู่ล่างสุด */}
+      {/* glow ชั้นกว้าง (ฟุ้งไกล, opacity ต่ำสุด) วาดก่อน อยู่ล่างสุด — opacity ลดจาก 0.15 → 0.08 */}
       <path
         d={linePath}
         fill="none"
         stroke={color}
-        strokeOpacity={0.15}
+        strokeOpacity={0.08}
         strokeWidth="4.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         filter={`url(#sparkline-glow-wide-${glowId})`}
       />
-      {/* glow ชั้นชิด (สว่างกว่าเล็กน้อย, blur น้อยกว่า) อยู่หลังเส้นจริง สีเดียวกับเส้น */}
+      {/* glow ชั้นชิด (สว่างกว่าเล็กน้อย, blur น้อยกว่า) อยู่หลังเส้นจริง สีเดียวกับเส้น — opacity ลดจาก 0.2 → 0.1 */}
       <path
         d={linePath}
         fill="none"
         stroke={color}
-        strokeOpacity={0.2}
+        strokeOpacity={0.1}
         strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
