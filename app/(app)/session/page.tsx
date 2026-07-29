@@ -1,10 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
 import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
+import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
+import { findExerciseByName } from '@/lib/exercises'
+import { COLORS, NEUTRAL } from '@/lib/theme'
 import {
   parseRestSeconds,
   initSessionSet,
@@ -57,6 +61,7 @@ export default function SessionPage() {
   const supabase = createClient()
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const { showToast } = useToast()
+  const { data: exerciseLibrary = [] } = useExerciseLibrary()
 
   const [phase, setPhase] = useState<Phase>('loading')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -723,6 +728,7 @@ export default function SessionPage() {
   const mg = (current.muscle_group as MuscleGroup) ?? null
   const mgColor = mg ? MUSCLE_GROUP_COLORS[mg] : undefined
   const setsRemaining = Math.max(0, targetSets - currentState.setsLog.length)
+  const knownExercise = findExerciseByName(exerciseLibrary, current.exercise_name)
 
   return (
     <div className="space-y-4 lg:max-w-2xl lg:mx-auto">
@@ -805,18 +811,25 @@ export default function SessionPage() {
         </button>
       )}
 
-      <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-line">
-          <div className="flex items-center gap-2">
-            {mg && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: mgColor }} />}
-            <p className="font-display text-lg tracked uppercase text-ink truncate">{current.exercise_name}</p>
+      <div className="rounded-xl bg-surface border border-line shadow-elevated overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-line flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              {mg && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: mgColor }} />}
+              <p className="font-display text-xl tracked uppercase text-ink truncate">{current.exercise_name}</p>
+            </div>
+            <p className="text-[11px] text-muted mt-1">
+              เป้าหมาย {targetSets} เซ็ต × {current.target_reps ?? '–'} reps
+              {current.target_rir && ` · RIR ${current.target_rir}`}
+              {current.rest && ` · พัก ${current.rest}`}
+            </p>
+            {current.rationale && <p className="text-[11px] text-muted/70 mt-1 italic">{current.rationale}</p>}
           </div>
-          <p className="text-[11px] text-muted mt-1">
-            เป้าหมาย {targetSets} เซ็ต × {current.target_reps ?? '–'} reps
-            {current.target_rir && ` · RIR ${current.target_rir}`}
-            {current.rest && ` · พัก ${current.rest}`}
-          </p>
-          {current.rationale && <p className="text-[11px] text-muted/70 mt-1 italic">{current.rationale}</p>}
+          {knownExercise?.imageUrl && (
+            <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-surface2">
+              <Image src={knownExercise.imageUrl} alt="" fill sizes="80px" loading="lazy" className="object-cover" />
+            </div>
+          )}
         </div>
 
         <div className="px-4 py-4 space-y-3">
@@ -893,10 +906,14 @@ export default function SessionPage() {
             </div>
           )}
 
+          {/* ใช้ COLORS.green (สีเขียวสดจริงๆ) แทน bg-moss/bg-steel — moss ตั้งใจให้หม่น/เอิร์ธโทน (ดูคอมเมนต์ใน
+              tailwind.config) สำหรับสถานะ recovery โดยเฉพาะ ไม่เหมาะกับปุ่ม "เสร็จแล้ว" ที่ต้องการให้
+              อ่านเป็นสีเขียวชัดเจนทันทีแบบในรูปตัวอย่าง */}
           <button
             type="button"
             onClick={logSet}
-            className="w-full rounded-lg bg-steel text-bg font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition"
+            style={{ backgroundColor: COLORS.green, color: NEUTRAL.onAmberText }}
+            className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition"
           >
             ✅ เซ็ตนี้เสร็จแล้ว{setsRemaining > 0 ? ` (เหลืออีก ${setsRemaining})` : ''}
           </button>
@@ -920,7 +937,7 @@ export default function SessionPage() {
           type="button"
           onClick={skipCurrent}
           disabled={saving}
-          className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-3 text-xs disabled:opacity-50 transition"
+          className="flex-1 rounded-full border border-line text-muted font-display tracked uppercase py-3 text-xs disabled:opacity-50 transition"
         >
           ข้ามท่านี้
         </button>
@@ -928,7 +945,7 @@ export default function SessionPage() {
           type="button"
           onClick={logCurrentExercise}
           disabled={saving || currentState.setsLog.length === 0}
-          className="flex-[2] rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-xs disabled:opacity-40 active:scale-[0.99] transition"
+          className="flex-[2] rounded-full bg-amber text-bg font-display tracked uppercase py-3 text-xs disabled:opacity-40 active:scale-[0.99] transition"
         >
           {saving
             ? 'กำลังบันทึก...'
