@@ -32,6 +32,12 @@ const RING_SIZE = 110
 // ต้องบวกเข้าไปในความสูงกล่อง hero ด้วย ไม่งั้น overflow-hidden ของกล่องจะตัดข้อความสองบรรทัดนั้นทิ้ง
 // ไปเงียบๆ (เกิดขึ้นแทบทุกขนาดจอ เพราะเดิม RING_TOP + RING_SIZE + label สูงเกินความสูงกล่องที่ตั้งไว้ตายตัว)
 const RING_LABEL_HEIGHT = 42
+// พื้นที่หายใจเพิ่มใต้ label — เดิม hero สูงพอดีเป๊ะกับเนื้อหาจนรู้สึกอึดอัด/แบน เพิ่มส่วนนี้ให้ดูโปร่งขึ้น
+const HERO_BOTTOM_BREATHING_ROOM = 40
+// Wave ต้องจบที่ "ความสูงเดียวกับกึ่งกลางวง" (= ขอบซ้ายสุดของวงกลม) ไม่งั้นจะรู้สึกเหมือนเป็นคนละชิ้นกัน
+// แม้จะจบที่ตำแหน่ง x เดียวกันก็ตาม (ดู AnimatedWave.tsx: จุดจบของเส้นอยู่ที่ y=22 จาก viewBox สูง 70)
+// คำนวณจาก RING_TOP ตรงๆ แทนการ clamp แยกต่างหาก กัน bug แบบเดียวกับที่เคยเกิดกับความสูง hero มาก่อน
+const WAVE_TOP = `calc(${RING_TOP} + 33px)`
 
 // Header ของหน้า Dashboard (มือถือ) — v7:
 //   - ตำแหน่งทุกจุด (Bell/Greeting/ชื่อ/Ring/Wave) เปลี่ยนจาก fixed px เป็น clamp(min, vw, max) —
@@ -50,14 +56,17 @@ export default function Header({
 }: HeaderProps) {
   return (
     <div className="animate-rise">
-      <div className="relative overflow-hidden" style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px)` }}>
+      <div
+        className="relative overflow-hidden"
+        style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)` }}
+      >
         {/* Background: glow + wave */}
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <AmbientGlow color={fitnessScore.color} />
         </div>
         <div
           className="absolute left-0 z-0 pointer-events-none animate-header-wave"
-          style={{ top: 'clamp(70px, 20vw, 95px)', right: `calc(${RING_SIZE}px + ${RING_RIGHT})` }}
+          style={{ top: WAVE_TOP, right: `calc(${RING_SIZE}px + ${RING_RIGHT})` }}
           aria-hidden="true"
         >
           <AnimatedWave />
