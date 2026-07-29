@@ -7,6 +7,8 @@ import AmbientGlow from './AmbientGlow'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
+import HeroEnergyWave from './HeroEnergyWave'
+import EnergyParticles from './EnergyParticles'
 import Glow from '@/components/ui/Glow'
 
 interface HeaderProps {
@@ -36,12 +38,24 @@ const RING_SIZE = 84
 const RING_LABEL_HEIGHT = 42
 // พื้นที่หายใจเพิ่มใต้ label — เดิม hero สูงพอดีเป๊ะกับเนื้อหาจนรู้สึกอึดอัด/แบน เพิ่มส่วนนี้ให้ดูโปร่งขึ้น
 const HERO_BOTTOM_BREATHING_ROOM = 40
+// ความสูงของ wrapper เส้นคลื่น HeroEnergyWave — viewBox ภายในเป็น 0 0 400 90 (preserveAspectRatio
+//="none") จุดจบเส้นอยู่ที่ y=45 คือกึ่งกลางแนวตั้งของ viewBox พอดี (90/2) ดังนั้นไม่ว่า WAVE_HEIGHT
+// จะเป็นเท่าไหร่ จุดจบเส้นก็จะอยู่กึ่งกลางแนวตั้งของ wrapper นี้เสมอ — แค่จัดกึ่งกลาง wrapper ให้ตรง
+// กับกึ่งกลางวง Fitness Score (RING_TOP + RING_SIZE/2) ก็พอ ไม่ต้องคำนวณ offset ซับซ้อนเพิ่ม
+const WAVE_HEIGHT = 70
+const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE}px / 2 - ${WAVE_HEIGHT}px / 2)`
+// ปลายเส้น (x=400 ใน viewBox) วางให้ตรงกึ่งกลางแนวนอนของวง Fitness Score พอดี (แสง lens flare จะโผล่
+// ออกมาจากขอบวงเอง ดูเหมือนเส้นคลื่น "พุ่งเข้าไป" ในวงจริงๆ)
+const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px / 2)`
 
-// Header ของหน้า Dashboard (มือถือ) — v8:
-//   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/Wave/คำให้กำลังใจ) ตอนนี้เป็น flex-col เดียวใน normal
-//     flow ทั้งหมด — Wave ไม่ใช่ background ที่วิ่งไปชนวง Fitness Score อีกต่อไปแล้ว (v7) เปลี่ยนเป็น
-//     เส้นตรงเล็กๆ อยู่ใต้ subtitle "Personalized Fitness" แทน
-//   - ตำแหน่งฝั่งขวา (Bell/Ring) ยังคง clamp(min, vw, max) เดิม
+// Header ของหน้า Dashboard (มือถือ) — v9:
+//   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/คำให้กำลังใจ) ยังเป็น flex-col เดียวใน normal flow
+//     เหมือนเดิม (กัน bug ข้อความตกบรรทัดซ้อนกันที่เคยเจอ) — เอา light-streak เส้นเล็กใต้ subtitle
+//     ของ v8 ออก เพราะตอนนี้มี HeroEnergyWave เป็นเส้นคลื่นพลังงานเต็มความกว้าง header อยู่เป็น
+//     background layer แทนแล้ว (วิ่งจากซ้ายไปพุ่งเข้าหาวง Fitness Score ทางขวา ตามสเปคที่ขอ)
+//   - EnergyParticles คลุมพื้นหลังทั้งกล่อง hero (อยู่เหนือ AmbientGlow แต่ใต้ตัว wave/ข้อความ)
+//   - ตำแหน่งฝั่งขวา (Bell/Ring) ยังคง clamp(min, vw, max) เดิม — วง Fitness Score เปลี่ยนไปใช้
+//     FitnessRing (conic-gradient) ข้างในแล้ว แต่ตำแหน่ง/ขนาดจากมุมมอง Header.tsx ไม่เปลี่ยน
 export default function Header({
   greetingText,
   latestPR,
@@ -57,9 +71,19 @@ export default function Header({
         className="relative overflow-hidden"
         style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)` }}
       >
-        {/* Background: glow */}
+        {/* Background: glow + particles + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <AmbientGlow color={fitnessScore.color} />
+        </div>
+        <div className="absolute inset-0 z-[5] pointer-events-none" aria-hidden="true">
+          <EnergyParticles count={40} />
+        </div>
+        <div
+          className="absolute z-[8] pointer-events-none left-0"
+          style={{ top: WAVE_TOP, right: WAVE_RIGHT, height: WAVE_HEIGHT }}
+          aria-hidden="true"
+        >
+          <HeroEnergyWave />
         </div>
 
         {/* Foreground — ทักทาย/ชื่อ/subtitle/wave/คำให้กำลังใจ รวมเป็นคอลัมน์เดียว (flex-col, normal flow)
@@ -90,62 +114,11 @@ export default function Header({
             {displayName}
           </p>
 
-          {/* subtitle + light streak ห่อด้วย inline-block เดียวกัน — ทำให้เส้นด้านล่างกว้างเท่ากับ
-              ความกว้างจริงของ "Personalized Fitness" เป๊ะเสมอ (inline-block หดตัวพอดีตัวอักษรของมัน
-              เอง แล้วเส้น width:100% ก็ยืดตามพอดี) แทนที่จะเดาความกว้างเป็น px ตายตัว ซึ่งพังง่ายถ้า
-              ฟอนต์/ขนาดจอเปลี่ยน — ตามที่ขอ "ให้เส้นสุดแค่ตัว s ตัวสุดท้ายของคำว่า fitness" พอดี */}
-          <div className="inline-block" style={{ marginTop: 2 }}>
-            <p className="tracked text-muted whitespace-nowrap" style={{ fontSize: 11 }}>
-              Personalized Fitness
-            </p>
-
-            {/* Light Streak — เส้นแสงบาง + จุดสว่างกลางเส้น แทนเส้นคลื่น AnimatedWave เดิม ตามสเปคที่ขอ
-                เป๊ะๆ: gradient โปร่งใส→ส้ม→โปร่งใส กลางเส้น, glow รอบเส้น (box-shadow 3 ชั้น), จุดสว่าง
-                กลางเส้น (glow แรงกว่าอีกชั้น + หายใจเบาๆ), particle เล็กๆ ลอยข้างๆ */}
-            <div className="relative" style={{ height: 2, marginTop: 4 }} aria-hidden="true">
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background:
-                    'linear-gradient(90deg, transparent, rgba(255,120,0,.2), #FF7A00, rgba(255,120,0,.2), transparent)',
-                  boxShadow: '0 0 8px #FF7A00, 0 0 20px #FF7A00, 0 0 40px rgba(255,122,0,.6)',
-                }}
-              />
-              <div
-                className="animate-ring-pulse absolute rounded-full"
-                style={{
-                  width: 8,
-                  height: 8,
-                  left: '50%',
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  background: '#FF7A00',
-                  boxShadow: '0 0 10px #FF7A00, 0 0 20px #FF7A00, 0 0 36px rgba(255,122,0,.7)',
-                }}
-              />
-              <span
-                className="animate-header-particle absolute rounded-full"
-                style={{ width: 2, height: 2, left: '20%', top: -3, background: '#FFD24A' }}
-              />
-              <span
-                className="animate-header-particle absolute rounded-full"
-                style={{ width: 2, height: 2, left: '78%', top: 4, background: '#FFD24A', animationDelay: '1.4s' }}
-              />
-              {/* จุดสว่างที่วิ่งซ้าย→ขวาซ้ำๆ ตามเส้น (moving light streak) แยกจากจุดกลางที่หายใจอยู่กับที่
-                  ด้านบน — คนละเอฟเฟกต์กัน: จุดกลางนิ่งแต่สว่าง-หรี่, จุดนี้เคลื่อนที่ */}
-              <span
-                className="animate-streak-sweep absolute rounded-full"
-                style={{
-                  width: 4,
-                  height: 4,
-                  top: '50%',
-                  marginTop: -2,
-                  background: '#FFF4CC',
-                  boxShadow: '0 0 8px #FFF4CC, 0 0 14px #FF8A00',
-                }}
-              />
-            </div>
-          </div>
+          {/* subtitle ธรรมดา — เส้นคลื่นเดิมที่เคยอยู่ใต้บรรทัดนี้ (light streak) ย้ายไปเป็น
+              HeroEnergyWave พื้นหลังเต็มความกว้าง header แทนแล้ว ไม่ผูกกับความกว้างของข้อความนี้อีกต่อไป */}
+          <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 2, fontSize: 11 }}>
+            Personalized Fitness
+          </p>
 
           {/* คำให้กำลังใจ — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ */}
           <p className="text-ink" style={{ marginTop: 8, fontSize: 13 }}>

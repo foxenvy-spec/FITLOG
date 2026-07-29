@@ -257,6 +257,34 @@
   animation: ring-sweep 4s linear infinite;
 }
 
+/* HeroEnergyWave — เส้นบางสองชั้นที่ซ้อนทับเส้นแกนไฟหลัก ใช้ dash ไหลต่อเนื่องคนละความเร็ว/ทิศทาง
+   (stroke-dashoffset ไล่ลบ = มองเห็นเป็นลายไหลไปทางขวา) ให้ผิวเส้นดูมีประกายเคลื่อนไหวจริง ไม่ใช่
+   เส้นทึบนิ่งๆ */
+@keyframes wave-flow {
+  to { stroke-dashoffset: -32; }
+}
+.animate-wave-flow {
+  animation: wave-flow 1.6s linear infinite;
+}
+
+@keyframes wave-flow-slow {
+  to { stroke-dashoffset: -36; }
+}
+.animate-wave-flow-slow {
+  animation: wave-flow-slow 2.6s linear infinite reverse;
+}
+
+/* FitnessRing — ไล่เฉด hue ของ conic-gradient วนช้าๆ (Orange → Amber → Yellow → กลับมา Orange) ให้
+   วงดูมีพลังงาน "ไหลอยู่" เบาๆ โดยไม่ต้องคำนวณ conic-gradient ใหม่ทุกเฟรมด้วย JS — หมุนแค่ hue ในช่วง
+   แคบๆ (±18deg) พอให้เห็นการไล่สี ไม่ทำให้วงเพี้ยนไปเป็นโทนอื่น (เขียว/ฟ้า) */
+@keyframes ring-gradient-shift {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(18deg); }
+}
+.animate-ring-gradient-shift {
+  animation: ring-gradient-shift 9s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
@@ -269,7 +297,10 @@
   .animate-ring-pulse,
   .animate-badge-pulse,
   .animate-streak-sweep,
-  .animate-ring-sweep {
+  .animate-ring-sweep,
+  .animate-wave-flow,
+  .animate-wave-flow-slow,
+  .animate-ring-gradient-shift {
     animation: none !important;
   }
 }
