@@ -270,7 +270,13 @@ export default function MetricCard({
               แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
           <div className="absolute left-0 right-0 bottom-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-mono tracking-tight leading-none text-ink" style={{ fontSize: compact ? 19 : 20 }}>
+              {/* letter-spacing: มือถือ (compact) เปลี่ยนจาก tracking-tight (ชิดเข้าไปอีก) เป็นบวก
+                  +0.5px แทน ตามสเปคที่ขอ (ตัวเลขอ่านง่ายขึ้น ไม่แน่นจนติดกัน) — เดสก์ท็อป (compact=false)
+                  คง -0.025em (ค่าเดียวกับ tracking-tight เดิม) ไว้ทุกประการ ไม่กระทบ */}
+              <p
+                className="font-mono leading-none text-ink"
+                style={{ fontSize: compact ? 19 : 20, letterSpacing: compact ? '0.5px' : '-0.025em' }}
+              >
                 {/* Value font weight: ดีไซน์ระบุ Semibold (600) — ใช้เฉพาะมือถือ (compact) ตามสเปค
                     เดสก์ท็อป (compact=false) คงน้ำหนัก 800 (Bold) เดิมไว้ทุกประการ ไม่กระทบ */}
                 <span style={{ fontWeight: compact ? 600 : 800 }}>{splitValueUnit(valueText).num}</span>
