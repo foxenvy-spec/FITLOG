@@ -23,6 +23,9 @@ export default function AmbientGlow({ color }: AmbientGlowProps) {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       <Glow color={color} width={200} height={110} top={-20} right={-10} blur={36} opacity={0.16} pulse />
+      {/* ก้อนที่ 2 — เดิมมีแสงฟุ้งแค่ฝั่งวง Fitness Score ฝั่งเดียว ทำให้มุมทักทาย/ชื่อดูแบนกว่า
+          เพิ่มก้อนเล็กกว่า/จางกว่าไว้หลังโซนทักทาย-ชื่อ ให้มีบรรยากาศทั้งสองฝั่งของ header */}
+      <Glow color={color} width={180} height={180} top={12} left={-40} blur={90} opacity={0.1} pulse />
       {particles.map((p, i) => (
         <span
           key={i}

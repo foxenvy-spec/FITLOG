@@ -78,7 +78,7 @@ export default function NotificationButton({
           <path d="M9.5 18a2.5 2.5 0 0 0 5 0h-5Z" fill="#FFD24A" />
         </svg>
         {items.length > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rust text-[9px] font-mono font-bold text-white flex items-center justify-center leading-none">
+          <span className="animate-badge-pulse absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rust text-[9px] font-mono font-bold text-white flex items-center justify-center leading-none">
             {items.length}
           </span>
         )}
