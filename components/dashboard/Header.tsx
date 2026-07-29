@@ -127,10 +127,14 @@ export default function Header({
         </div>
       </div>
 
-      {/* นอกกล่อง hero — normal flow ตามหลัง ชนกับอะไรใน hero ไม่ได้อีกแล้ว
-          headerGap (10px) ตาม spacing scale ที่กำหนด — mt-3 เดิม (12px) ใกล้เคียงอยู่แล้วแต่ปรับให้
-          ตรงเป๊ะตาม token แทนค่าที่ไม่ได้อิงสเกลเดียวกัน */}
-      <div className="px-1" style={{ marginTop: 10 }}>{children}</div>
+      {/* "ซ้อนสายตา" (visual overlap) กับ hero ตามที่ขอ — ดึงการ์ด Today's Focus ขึ้นไปคาบเกี่ยวกับ
+          HERO_BOTTOM_BREATHING_ROOM (40px พื้นที่ว่างล้วนๆ ท้ายกล่อง hero ไม่มีตัวเลข/ป้ายชื่อของวง
+          ซ้อนอยู่ตรงนั้น) ด้วย margin-top ติดลบ แทนที่จะปล่อยให้อยู่เป็นบล็อกแยกข้างล่างเหมือนเดิม —
+          ไม่ต้องแตะ overflow-hidden ของกล่อง hero เลย เพราะการ์ดนี้เป็น sibling อยู่นอกกล่องนั้นอยู่แล้ว
+          (แค่ paint ทับขึ้นไปด้านบนตามลำดับ DOM ปกติ) จึงไม่มีความเสี่ยงโดนตัดขอบ
+          ดึงขึ้น 18px จาก 40px ที่มี เหลือ ~22px ของพื้นที่ว่างเดิมอยู่เหนือการ์ดใน hero ไม่ให้ชนตัวเลข/
+          tier label ของวง Fitness Score ด้านบน */}
+      <div className="relative z-10 px-1" style={{ marginTop: -18 }}>{children}</div>
     </div>
   )
 }
