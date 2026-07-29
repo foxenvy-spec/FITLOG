@@ -81,7 +81,6 @@ export default function FitnessRing({
           filter={`url(#${idPrefix}-glow-soft)`}
           opacity={0.7}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          className="animate-ring-pulse"
           style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
 
@@ -99,7 +98,6 @@ export default function FitnessRing({
           strokeDashoffset={dashOffset}
           filter={`url(#${idPrefix}-glow-tight)`}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          className="animate-ring-gradient-shift"
           style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
       </svg>
