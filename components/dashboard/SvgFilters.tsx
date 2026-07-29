@@ -22,6 +22,13 @@ export default function SvgFilters({ idPrefix }: SvgFiltersProps) {
         <feGaussianBlur stdDeviation="14" />
       </filter>
 
+      {/* glow แบบ "hug เส้น" — stdDeviation เล็กมาก ให้แสงเรืองแนบไปกับรูปทรงเส้นจริงๆ (เห็นเป็นเงา
+          เรืองรอบ stroke บางๆ) แทนที่จะเบลอกว้างจนพื้นที่รอบเส้นรวมกันเป็นก้อนทึบ (blob) ไม่เห็นรูปทรง
+          เส้นเดิมอีกต่อไป — ใช้กับ Glow Wave ของ HeroEnergyWave โดยเฉพาะ */}
+      <filter id={`${idPrefix}-glow-tight`} x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="2.5" />
+      </filter>
+
       {/* bloom — เบลอแล้วดันความสว่าง (feColorMatrix) ก่อน merge กลับเข้า source ให้แสงฟุ้งจ้าแบบ
           "bloom" จริงๆ ไม่ใช่แค่เบลอเดี่ยวๆ เหมือน glow-soft ด้านบน */}
       <filter id={`${idPrefix}-bloom`} x="-150%" y="-150%" width="400%" height="400%">
@@ -56,6 +63,15 @@ export default function SvgFilters({ idPrefix }: SvgFiltersProps) {
           repeatCount="indefinite"
         />
       </linearGradient>
+
+      {/* radial glow — ใช้เป็นพื้นหลังเรืองแสงกลมๆ ฟุ้งจากจุดศูนย์กลางออกไปโปร่งใส (เช่น หลังวง
+          Fitness Score หรือจุด lens flare) แยกจาก glow-wide/glow-tight ที่เป็น filter (เบลอของทรง
+          ที่มีอยู่แล้ว) — อันนี้เป็น fill โดยตรง ไม่ต้องมี shape อื่นมาก่อน */}
+      <radialGradient id={`${idPrefix}-radial-glow`}>
+        <stop offset="0%" stopColor="#FFF4CC" stopOpacity="0.9" />
+        <stop offset="40%" stopColor="#FF8A00" stopOpacity="0.35" />
+        <stop offset="100%" stopColor="#FF8A00" stopOpacity="0" />
+      </radialGradient>
     </defs>
   )
 }

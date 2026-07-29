@@ -44,9 +44,10 @@ const HERO_BOTTOM_BREATHING_ROOM = 40
 // กับกึ่งกลางวง Fitness Score (RING_TOP + RING_SIZE/2) ก็พอ ไม่ต้องคำนวณ offset ซับซ้อนเพิ่ม
 const WAVE_HEIGHT = RING_SIZE
 const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE}px / 2 - ${WAVE_HEIGHT}px / 2)`
-// ปลายเส้น (x=400 ใน viewBox) วางให้ตรงกึ่งกลางแนวนอนของวง Fitness Score พอดี (แสง lens flare จะโผล่
-// ออกมาจากขอบวงเอง ดูเหมือนเส้นคลื่น "พุ่งเข้าไป" ในวงจริงๆ)
-const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px / 2)`
+// ปลายเส้น (x=400 ใน viewBox) วางให้ตรงกับ "ขอบซ้าย" ของวงพอดี (เดิมจอดที่กึ่งกลางวง ทำให้เส้นดูเหมือน
+// วางแยกอยู่ข้างวงคนละชิ้น ไม่ได้ไหลเข้าไปจริงๆ) — เอา lens flare ไปชนขอบวงเป๊ะ แสงจะเบลอรวมเข้ากับ
+// glow รอบวง (recoveryColor) ที่ Header.tsx ห่ออยู่แล้ว ให้อ่านเป็น "พลังงานไหลเข้าวงต่อเนื่อง" ชิ้นเดียว
+const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px)`
 
 // Header ของหน้า Dashboard (มือถือ) — v9:
 //   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/คำให้กำลังใจ) ยังเป็น flex-col เดียวใน normal flow
