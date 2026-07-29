@@ -917,7 +917,7 @@ export default function SessionPage() {
           <button
             type="button"
             onClick={logSet}
-            style={{ backgroundColor: COLORS.green, color: NEUTRAL.onAmberText }}
+            style={{ backgroundColor: '#FF00FF', color: NEUTRAL.onAmberText }}
             className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition"
           >
             ✅ เซ็ตนี้เสร็จแล้ว{setsRemaining > 0 ? ` (เหลืออีก ${setsRemaining})` : ''}
