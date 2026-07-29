@@ -22,13 +22,23 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
     >
       <div className="flex items-center gap-3 min-w-0">
         {/* กลับไปใหญ่ขึ้น (24px -> 36px) ตามที่ยืนยันทิศทางแล้ว — เดิมย่อลงไปรอบก่อนหน้า —
-            ไอคอนเป้าที่ผู้ใช้สร้างเอง แทนอีโมจิ 🎯 เดิม */}
+            ไอคอนเป้าที่ผู้ใช้สร้างเอง แทนอีโมจิ 🎯 เดิม — รูปมีพื้นวงกลมดำของตัวเองติดมาด้วย (ไม่ใช่
+            พื้นโปร่งใส) ทำให้ดูเหมือนกรอบดำทับอยู่บนวงพื้นหลังสีอำพัน ใช้ mixBlendMode: screen (เทคนิค
+            เดียวกับ glow ทุกจุดใน Header.tsx/HeroEnergyWave.tsx) ให้พื้นดำเกือบสนิทของรูปนี้ "หายไป"
+            กลืนกับพื้นหลังมืดของวง เหลือแค่ไอคอนเรืองแสงจริงๆ */}
         <span
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
           style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
           aria-hidden="true"
         >
-          <Image src="/icons/today-focus.png" alt="" width={36} height={36} className="w-full h-full object-cover" />
+          <Image
+            src="/icons/today-focus.png"
+            alt=""
+            width={36}
+            height={36}
+            className="w-full h-full object-cover"
+            style={{ mixBlendMode: 'screen' }}
+          />
         </span>
         <div className="min-w-0">
           <p className="text-[10px] tracked uppercase text-muted">Today&apos;s Focus</p>

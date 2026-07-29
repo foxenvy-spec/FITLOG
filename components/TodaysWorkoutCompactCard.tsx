@@ -41,12 +41,22 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         />
       </div>
 
+      {/* ไอคอนดัมเบล/ลูกศรมีพื้นวงกลมดำของตัวเองติดมาด้วย (ไม่ใช่พื้นโปร่งใส) — ใช้ mixBlendMode:
+          screen (เทคนิคเดียวกับ glow ทุกจุดใน Header.tsx) ให้พื้นดำ "หายไป" กลืนกับพื้นหลังมืดของวง/
+          การ์ด เหลือแค่ไอคอนเรืองแสงจริงๆ แทนที่จะเห็นเป็นกรอบดำทับอยู่บนพื้นหลังสีอำพัน/ฉากยิม */}
       <span
         className="relative z-10 w-12 h-12 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
         style={{ backgroundColor: `${COLORS.amber}22` }}
         aria-hidden="true"
       >
-        <Image src="/icons/today-workout-icon-dumbbell.png" alt="" width={48} height={48} className="w-full h-full object-cover" />
+        <Image
+          src="/icons/today-workout-icon-dumbbell.png"
+          alt=""
+          width={48}
+          height={48}
+          className="w-full h-full object-cover"
+          style={{ mixBlendMode: 'screen' }}
+        />
       </span>
       <div className="relative z-10 min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
@@ -62,7 +72,14 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         </div>
       </div>
       <span className="relative z-10 shrink-0 w-4 h-4" aria-hidden="true">
-        <Image src="/icons/today-workout-icon-arrow.png" alt="" width={16} height={16} className="w-full h-full object-contain" />
+        <Image
+          src="/icons/today-workout-icon-arrow.png"
+          alt=""
+          width={16}
+          height={16}
+          className="w-full h-full object-contain"
+          style={{ mixBlendMode: 'screen' }}
+        />
       </span>
     </PremiumCard>
   )
