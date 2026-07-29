@@ -37,18 +37,12 @@ const RING_SIZE = 84
 const RING_LABEL_HEIGHT = 42
 // พื้นที่หายใจเพิ่มใต้ label — เดิม hero สูงพอดีเป๊ะกับเนื้อหาจนรู้สึกอึดอัด/แบน เพิ่มส่วนนี้ให้ดูโปร่งขึ้น
 const HERO_BOTTOM_BREATHING_ROOM = 40
-// Wave ต้องจบที่ "ความสูงเดียวกับกึ่งกลางวง" (= ขอบซ้ายสุดของวงกลม) ไม่งั้นจะรู้สึกเหมือนเป็นคนละชิ้นกัน
-// แม้จะจบที่ตำแหน่ง x เดียวกันก็ตาม (ดู AnimatedWave.tsx: จุดจบของเส้นอยู่ที่ y=22 จาก viewBox สูง 70)
-// คำนวณจาก RING_TOP + RING_SIZE/2 (จุดกึ่งกลางวงตามแนวตั้ง) ลบ 22 ตรงๆ แทนเลข 33 คงที่เดิม (ซึ่งผูก
-// อยู่กับ RING_SIZE เดิม=110 โดยเฉพาะ) กัน bug กรณีเปลี่ยน RING_SIZE แล้วลืมคำนวณจุดนี้ใหม่ตาม
-const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE / 2 - 22}px)`
 
-// Header ของหน้า Dashboard (มือถือ) — v7:
-//   - ตำแหน่งทุกจุด (Bell/Greeting/ชื่อ/Ring/Wave) เปลี่ยนจาก fixed px เป็น clamp(min, vw, max) —
-//     คำนวณจากความกว้างจอ (vw) แต่มีเพดานบน-ล่างกันไม่ให้เล็ก/ใหญ่เกินไปบนจอที่ต่างกันมาก แทนที่
-//     fixed px ตายตัวแบบ v4-v6 ที่พอจอเปลี่ยนขนาดมากๆ สัดส่วนจะเพี้ยน
-//   - Wave ยังคง "จบที่ขอบ Ring พอดี" เหมือน v6 แต่คำนวณ right offset จาก RING_RIGHT + RING_SIZE
-//     แทนเลข 130 คงที่ ให้ Wave ขยับตาม Ring อัตโนมัติถ้าปรับตำแหน่ง Ring ในอนาคต
+// Header ของหน้า Dashboard (มือถือ) — v8:
+//   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/Wave/คำให้กำลังใจ) ตอนนี้เป็น flex-col เดียวใน normal
+//     flow ทั้งหมด — Wave ไม่ใช่ background ที่วิ่งไปชนวง Fitness Score อีกต่อไปแล้ว (v7) เปลี่ยนเป็น
+//     เส้นตรงเล็กๆ อยู่ใต้ subtitle "Personalized Fitness" แทน
+//   - ตำแหน่งฝั่งขวา (Bell/Ring) ยังคง clamp(min, vw, max) เดิม
 export default function Header({
   greetingText,
   latestPR,
@@ -64,19 +58,12 @@ export default function Header({
         className="relative overflow-hidden"
         style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)` }}
       >
-        {/* Background: glow + wave */}
+        {/* Background: glow */}
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <AmbientGlow color={fitnessScore.color} />
         </div>
-        <div
-          className="absolute left-0 z-0 pointer-events-none animate-header-wave"
-          style={{ top: WAVE_TOP, right: `calc(${RING_SIZE}px + ${RING_RIGHT})` }}
-          aria-hidden="true"
-        >
-          <AnimatedWave />
-        </div>
 
-        {/* Foreground — ทักทาย/ชื่อ/subtitle/คำให้กำลังใจ รวมเป็นคอลัมน์เดียว (flex-col, normal flow)
+        {/* Foreground — ทักทาย/ชื่อ/subtitle/wave/คำให้กำลังใจ รวมเป็นคอลัมน์เดียว (flex-col, normal flow)
             แทนที่จะ absolute แยกทีละบรรทัดพร้อม top: คำนวณเอง — เดิมสมมติว่าทุกบรรทัด "บรรทัดเดียว"
             เสมอ พอข้อความจริง (subtitle/คำให้กำลังใจ) ตกบรรทัดเป็น 2 บรรทัดบนจอแคบ กลายเป็นโดนซ้อนกับ
             wave/tier label ของวง (บั๊กเดียวกับ label การ์ด Fitness Score ที่เคยเจอมาก่อน) ใช้ flow
@@ -104,15 +91,23 @@ export default function Header({
             {displayName}
           </p>
 
-          {/* subtitle ใต้ชื่อ — เดิมไม่มีเลย (มอคอัพมี "Personalized Fitness" ใต้ชื่อแบรนด์) ใช้ tagline
-              เดิมของ FITLOG เอง ("Track · Train · Transform" จากหน้า login) แทนที่จะเอาข้อความมอคอัพ
-              มาแปะตรงๆ เพราะช่องนี้โชว์ชื่อผู้ใช้จริง ไม่ใช่ชื่อแอป ใส่ข้อความบรรยายแอปคนละความหมาย */}
-          <p className="tracked uppercase text-muted" style={{ marginTop: 2, fontSize: 11 }}>
-            Track · Train · Transform
+          {/* subtitle ใต้ชื่อ — ใช้ข้อความจากมอคอัพตรงๆ ตามที่ขอ (รอบก่อนเคยเปลี่ยนเป็น tagline ของ
+              FITLOG เองแทน แต่ตอนนี้ขอกลับไปใช้ข้อความมอคอัพเป๊ะๆ แล้ว) */}
+          <p className="tracked text-muted" style={{ marginTop: 2, fontSize: 11 }}>
+            Personalized Fitness
           </p>
 
+          {/* Wave — ย้ายจากเดิมที่เป็น background ลอยแยกต่างหาก (จัดตำแหน่งด้วย top: คำนวณเทียบกับวง
+              Fitness Score) มาอยู่ใน flow ปกติต่อจาก subtitle ตรงๆ แทน — รับประกันว่า "อยู่ใต้คำว่า
+              Personalized Fitness พอดี" เสมอไม่ว่าจอกว้างแค่ไหนหรือ subtitle ตกกี่บรรทัด (ไม่ต้องเดา
+              เลข top อีกต่อไป) เป็นเส้นตรงแทนเส้นโค้งเดิมตามที่ขอ — ดูรายละเอียดที่ AnimatedWave.tsx
+              (endGlow ปิดไว้ เพราะเส้นไม่ได้วิ่งไปชนวงคะแนนอีกต่อไปแล้ว) */}
+          <div className="w-full max-w-[220px]" style={{ marginTop: 4 }} aria-hidden="true">
+            <AnimatedWave endGlow={false} />
+          </div>
+
           {/* คำให้กำลังใจ — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ */}
-          <p className="text-ink" style={{ marginTop: 12, fontSize: 13 }}>
+          <p className="text-ink" style={{ marginTop: 8, fontSize: 13 }}>
             วันนี้พร้อมสำหรับการออกกำลังกาย 💪
           </p>
         </div>
