@@ -242,9 +242,20 @@ export default function MobileDashboardView() {
 
   return (
     <>
-      {/* ระยะห่างระหว่างการ์ดหลัก — เดิม 12px แน่นเกินไปจนการ์ดชิดกันเป็นพรืด (มอคอัพใช้ ~24px
-          ให้แต่ละการ์ด "หายใจ" ได้) ปรับขึ้นมาให้ใกล้เคียงมอคอัพมากขึ้น */}
-      <div className="space-y-[24px]">
+      {/* Ambient lighting ทั้งหน้า — จุดแสงฟุ้งเบาๆ กระจายอยู่หลังเนื้อหาตลอดความสูงของหน้า
+          (ไม่ใช่แค่ในกล่อง header เหมือนเดิม) ให้บรรยากาศ "มีแสงไฟรอบตัว" แบบ Apple Health/Whoop
+          แทนพื้นหลังดำทึบเรียบๆ — ตำแหน่งเป็น % ของความสูงคอนเทนเนอร์ (ไม่ใช่ px ตายตัว) เพราะ
+          ความสูงจริงของหน้าแปรผันได้มาก (เปิด/ปิด "ดูสถิติเพิ่มเติม", มี onboarding banner หรือไม่ ฯลฯ) */}
+      <div className="relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="absolute w-44 h-44 rounded-full blur-[120px] bg-amber/10" style={{ top: '18%', left: -50 }} />
+          <div className="absolute w-56 h-56 rounded-full blur-[130px] bg-rust/10" style={{ top: '52%', right: -70 }} />
+          <div className="absolute w-48 h-48 rounded-full blur-[120px] bg-moss/10" style={{ top: '85%', left: -40 }} />
+        </div>
+
+        {/* ระยะห่างระหว่างการ์ดหลัก — เดิม 12px แน่นเกินไปจนการ์ดชิดกันเป็นพรืด (มอคอัพใช้ ~24px
+            ให้แต่ละการ์ด "หายใจ" ได้) ปรับขึ้นมาให้ใกล้เคียงมอคอัพมากขึ้น */}
+        <div className="relative space-y-[24px]">
         <Header
           greetingText={greetingText}
           latestPR={data.latestPR}
@@ -350,6 +361,7 @@ export default function MobileDashboardView() {
         )}
 
         <RecommendedProgramCard recommendedMuscle={data.muscleRecommendation?.muscleGroup ?? null} />
+        </div>
       </div>
 
       {settingsOpen && (
