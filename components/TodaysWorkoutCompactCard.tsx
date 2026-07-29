@@ -25,15 +25,17 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
       href={href}
       className="relative overflow-hidden flex items-center gap-4 px-4 py-4 active:scale-[0.99] transition"
     >
-      {/* พื้นหลังฉากยิม — จางๆ อยู่หลังเนื้อหาทั้งหมด (z-0) โฟกัสไปมุมขวาล่างที่มีดัมเบลเรืองแสง แล้วไล่
-          เฉดมืดจากซ้ายทับอีกชั้น (z-[1]) กันตัวหนังสือ/ไอคอนอ่านไม่ออก */}
+      {/* พื้นหลังฉากยิม — จางๆ อยู่หลังเนื้อหาทั้งหมด (z-0) โฟกัสไปฝั่งขวาที่มีดัมเบลเรืองแสง แล้วไล่
+          เฉดมืดจากซ้ายทับอีกชั้น (z-[1]) กันตัวหนังสือ/ไอคอนอ่านไม่ออก — รูปเวอร์ชันใหม่เป็นแนวนอน
+          (1983x793 ≈ 2.5:1) ดัมเบลอยู่กึ่งกลางแนวตั้งค่อนไปทางล่างเล็กน้อย ต่างจากรูปแนวตั้งเดิมที่ต้อง
+          โฟกัสไปมุมล่างสุด (75%) จึงปรับ objectPosition ขึ้นมาเป็นกึ่งกลางแนวตั้งแทน */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <Image
           src="/images/today-workout-bg-mobile.png"
           alt=""
           fill
           className="object-cover"
-          style={{ objectPosition: '85% 75%' }}
+          style={{ objectPosition: '80% 60%' }}
         />
         <div
           className="absolute inset-0"
