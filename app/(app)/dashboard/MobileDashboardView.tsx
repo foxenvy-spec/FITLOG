@@ -286,22 +286,6 @@ export default function MobileDashboardView() {
           </div>
         </Header>
 
-        {/* DEBUG ชั่วคราว — โชว์ค่าดิบของแต่ละปัจจัย Fitness Score บนหน้าจอตรงๆ (screenshot มาดูได้เลย
-            ไม่ต้องเปิด browser console) เพื่อไล่หาว่าคะแนนที่เห็นมาจากไหน เอาออกทีหลังตอนไล่บั๊กเสร็จ */}
-        <div className="rounded-lg border border-red-500 bg-black/80 p-3 text-[11px] text-white font-mono leading-relaxed">
-          <p>DEBUG Fitness Score = {fitnessScore.score}</p>
-          <p>last7DaysTrainedCount = {data.last7DaysTrainedCount}</p>
-          <p>workout value = {Math.round((data.last7DaysTrainedCount / 7) * 100)} (weight 30)</p>
-          <p>streak = {data.streak}</p>
-          <p>streak value = {Math.min(100, Math.round((data.streak / 14) * 100))} (weight 20)</p>
-          <p>trainedRecoveryMuscles = {JSON.stringify(trainedRecoveryMuscles)}</p>
-          <p>fitnessScoreRecoveryPct = {fitnessScoreRecoveryPct === null ? 'null (excluded)' : fitnessScoreRecoveryPct} (weight 15)</p>
-          <p>weeklyGoalPct = {data.weeklyGoalPct} (weight 10)</p>
-          <p>progressPct = {progressPct === null || progressPct === undefined ? 'null/undefined' : progressPct}</p>
-          <p>totals.entryCount = {totals.entryCount}</p>
-          <p>activityToday value = {progressPct ?? (totals.entryCount > 0 ? 100 : 0)} (weight 5)</p>
-        </div>
-
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 
         {/* body composition snapshot */}
