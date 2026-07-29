@@ -85,6 +85,7 @@ export default function ProgressRing({
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
           filter={glow ? `url(#${glowId})` : undefined}
+          className={glow ? 'animate-ring-pulse' : undefined}
           style={{ mixBlendMode: 'screen', transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
         {/* glossy rim — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก ให้ความรู้สึกผิวมันวาว/3 มิติ (reflection) —

@@ -215,6 +215,16 @@
   animation: header-wave-drift 5s ease-in-out infinite;
 }
 
+/* Fitness Score ring — เดิมมีแค่ glow แวดล้อม (Glow blob ที่ pulse อยู่แล้ว) มา "หายใจ" แต่ตัวเส้นวง
+   เองนิ่งสนิท เพิ่มการหายใจเบาๆ ให้ตัวเส้น glow ของวงเองด้วย (opacity ไม่ใช่ scale กัน layout สั่น) */
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+.animate-ring-pulse {
+  animation: ring-pulse 3.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
@@ -223,7 +233,8 @@
   .animate-pop-in,
   .animate-header-glow,
   .animate-header-particle,
-  .animate-header-wave {
+  .animate-header-wave,
+  .animate-ring-pulse {
     animation: none !important;
   }
 }
