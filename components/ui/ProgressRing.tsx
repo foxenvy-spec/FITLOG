@@ -58,8 +58,10 @@ export default function ProgressRing({
             ))}
           </linearGradient>
           {glow && (
-            <filter id={glowId} x="-70%" y="-70%" width="240%" height="240%">
-              <feGaussianBlur stdDeviation={Math.max(8, sw * 0.9)} result="blur" />
+            // x/y/width/height ขยายจาก -70%/240% เป็น -90%/280% ให้พื้นที่ filter กว้างพอรองรับ
+            // stdDeviation ที่เพิ่มขึ้น ไม่งั้นแสง glow จะถูกตัดขอบ (clip) ที่ขอบกรอบ filter เอง
+            <filter id={glowId} x="-90%" y="-90%" width="280%" height="280%">
+              <feGaussianBlur stdDeviation={Math.max(11, sw * 1.3)} result="blur" />
               {/* วาง blur ซ้ำสองชั้นก่อน SourceGraphic ให้แสง glow เข้มขึ้นอีกนิด โดยไม่ต้องเพิ่ม
                   stdDeviation จนฟุ้งเกินไป */}
               <feMerge>
@@ -85,18 +87,19 @@ export default function ProgressRing({
           filter={glow ? `url(#${glowId})` : undefined}
           style={{ mixBlendMode: 'screen', transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
-        {/* glossy rim — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก ให้ความรู้สึกผิวมันวาว/3 มิติ */}
+        {/* glossy rim — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก ให้ความรู้สึกผิวมันวาว/3 มิติ (reflection) —
+            หนา/สว่างขึ้นจากเดิมอีกนิดให้เห็นชัดขึ้นว่าเป็นผิวมันจริงๆ ไม่ใช่แค่เส้นบางจางๆ */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius - sw * 0.32}
           fill="none"
           stroke="#FFF4CC"
-          strokeWidth={Math.max(1, sw * 0.12)}
+          strokeWidth={Math.max(1.2, sw * 0.16)}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
-          strokeOpacity={0.55}
+          strokeOpacity={0.7}
           style={{ mixBlendMode: 'screen', transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
       </svg>
