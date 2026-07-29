@@ -912,22 +912,23 @@ export default function SessionPage() {
             </div>
           )}
 
-          {/* Ghost + glow style (แทนพื้นเขียวทึบ) ตามมอคอัพ: พื้นหลังโปร่งใสอมเขียวจางๆ ขอบเขียว
-              เรืองแสง (box-shadow blur) ให้ดูมีมิติ ไม่ใช่ปุ่มแบนทึบเหมือนปุ่มอื่นในหน้า */}
+          {/* ไล่สีเขียว (#4ADE80 → #22C55E) ตัวเดียวกับการ์ด "มวลไขมัน" ใน BodyMetricsRow
+              (colorScheme="vibrant" ที่การ์ดภาพรวมร่างกาย) + จุดไฮไลต์มุมบนซ้ายให้ดูมีมิติ
+              แทนแบบ ghost/โปร่งใสก่อนหน้า */}
           <button
             type="button"
             onClick={logSet}
             style={{
-              backgroundColor: 'rgba(74,222,128,0.08)',
-              borderColor: 'rgba(74,222,128,0.45)',
-              color: COLORS.green,
-              boxShadow: '0 0 24px rgba(74,222,128,0.35)',
+              backgroundImage:
+                'radial-gradient(circle at 25% 20%, rgba(255,255,255,0.35), transparent 50%), linear-gradient(135deg, #4ADE80, #22C55E)',
+              color: NEUTRAL.onAmberText,
+              boxShadow: '0 0 24px rgba(74,222,128,0.4)',
             }}
-            className="w-full rounded-full border font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition flex items-center justify-center gap-2"
+            className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition flex items-center justify-center gap-2"
           >
             <span
               className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0"
-              style={{ backgroundColor: COLORS.green, color: NEUTRAL.onAmberText }}
+              style={{ backgroundColor: NEUTRAL.onAmberText, color: COLORS.green }}
             >
               ✓
             </span>
