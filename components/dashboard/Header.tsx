@@ -8,7 +8,7 @@ import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
 import HeroEnergyWave from './HeroEnergyWave'
-import EnergyParticles from './EnergyParticles'
+import SubtitleAccent from './SubtitleAccent'
 import Glow from '@/components/ui/Glow'
 
 interface HeaderProps {
@@ -38,25 +38,29 @@ const RING_SIZE = 84
 const RING_LABEL_HEIGHT = 42
 // พื้นที่หายใจเพิ่มใต้ label — เดิม hero สูงพอดีเป๊ะกับเนื้อหาจนรู้สึกอึดอัด/แบน เพิ่มส่วนนี้ให้ดูโปร่งขึ้น
 const HERO_BOTTOM_BREATHING_ROOM = 40
-// ความสูงของ wrapper เส้นคลื่น HeroEnergyWave — viewBox ภายในเป็น 0 0 400 90 (preserveAspectRatio
-//="none") จุดจบเส้นอยู่ที่ y=45 คือกึ่งกลางแนวตั้งของ viewBox พอดี (90/2) ดังนั้นไม่ว่า WAVE_HEIGHT
-// จะเป็นเท่าไหร่ จุดจบเส้นก็จะอยู่กึ่งกลางแนวตั้งของ wrapper นี้เสมอ — แค่จัดกึ่งกลาง wrapper ให้ตรง
-// กับกึ่งกลางวง Fitness Score (RING_TOP + RING_SIZE/2) ก็พอ ไม่ต้องคำนวณ offset ซับซ้อนเพิ่ม
-const WAVE_HEIGHT = RING_SIZE
+// ความสูงของ wrapper เส้นคลื่น HeroEnergyWave — viewBox ภายในเป็น 0 0 400 200 (preserveAspectRatio
+// ="none") จุดจบเส้นอยู่ที่กึ่งกลางแนวตั้งของ viewBox พอดี (200/2) ดังนั้นไม่ว่า WAVE_HEIGHT จะเป็น
+// เท่าไหร่ จุดจบเส้นก็จะอยู่กึ่งกลางแนวตั้งของ wrapper นี้เสมอ — แค่จัดกึ่งกลาง wrapper ให้ตรงกับ
+// กึ่งกลางวง Fitness Score (RING_TOP + RING_SIZE/2) ก็พอ ไม่ต้องคำนวณ offset ซับซ้อนเพิ่ม
+// ค่านี้ใหญ่กว่า RING_SIZE เดิม (84) มาก เพราะ amplitude ของเส้นคลื่นใน reference (30 หน่วยจาก viewBox
+// 200 หน่วย = 15%) ต้องการพื้นที่แนวตั้งมากกว่าความสูงวงล้วนๆ ถึงจะไม่ดูเตี้ยจนไม่มีพลัง — 150px ยังอยู่
+// ในขอบเขตปลอดภัยไม่ล้น hero (แม้ที่ RING_TOP ค่าต่ำสุด 60px พื้นที่เหนือ/ใต้กึ่งกลางวงยังเหลือ >100px
+// ทั้งสองด้าน พอสำหรับครึ่งหนึ่งของ 150 พอดี)
+const WAVE_HEIGHT = 150
 const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE}px / 2 - ${WAVE_HEIGHT}px / 2)`
 // ปลายเส้น (x=400 ใน viewBox) วางให้ตรงกับ "ขอบซ้าย" ของวงพอดี (เดิมจอดที่กึ่งกลางวง ทำให้เส้นดูเหมือน
 // วางแยกอยู่ข้างวงคนละชิ้น ไม่ได้ไหลเข้าไปจริงๆ) — เอา lens flare ไปชนขอบวงเป๊ะ แสงจะเบลอรวมเข้ากับ
 // glow รอบวง (recoveryColor) ที่ Header.tsx ห่ออยู่แล้ว ให้อ่านเป็น "พลังงานไหลเข้าวงต่อเนื่อง" ชิ้นเดียว
 const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px)`
 
-// Header ของหน้า Dashboard (มือถือ) — v9:
-//   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/คำให้กำลังใจ) ยังเป็น flex-col เดียวใน normal flow
-//     เหมือนเดิม (กัน bug ข้อความตกบรรทัดซ้อนกันที่เคยเจอ) — เอา light-streak เส้นเล็กใต้ subtitle
-//     ของ v8 ออก เพราะตอนนี้มี HeroEnergyWave เป็นเส้นคลื่นพลังงานเต็มความกว้าง header อยู่เป็น
-//     background layer แทนแล้ว (วิ่งจากซ้ายไปพุ่งเข้าหาวง Fitness Score ทางขวา ตามสเปคที่ขอ)
-//   - EnergyParticles คลุมพื้นหลังทั้งกล่อง hero (อยู่เหนือ AmbientGlow แต่ใต้ตัว wave/ข้อความ)
-//   - ตำแหน่งฝั่งขวา (Bell/Ring) ยังคง clamp(min, vw, max) เดิม — วง Fitness Score เปลี่ยนไปใช้
-//     FitnessRing (conic-gradient) ข้างในแล้ว แต่ตำแหน่ง/ขนาดจากมุมมอง Header.tsx ไม่เปลี่ยน
+// Header ของหน้า Dashboard (มือถือ) — v12: พอร์ตตรงจาก reference mockup ที่ผู้ใช้ส่งมา (ไฟล์ HTML+JS)
+//   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/คำให้กำลังใจ) ยังเป็น flex-col เดียวใน normal flow เหมือน
+//     เดิม (กัน bug ข้อความตกบรรทัดซ้อนกันที่เคยเจอ) — เพิ่ม SubtitleAccent (เส้นแสงเล็ก) กลับมาใต้
+//     subtitle ตามที่ reference มี ควบคู่ไปกับ HeroEnergyWave พื้นหลังเต็มความกว้าง header (เดิมคิดว่า
+//     ต้องเลือกอย่างใดอย่างหนึ่ง แต่ reference มีทั้งคู่พร้อมกัน)
+//   - เอา EnergyParticles ออก (reference ไม่มี particle field กระจายทั่ว header)
+//   - ตำแหน่งฝั่งขวา (Bell/Ring) ยังคง clamp(min, vw, max) เดิม — วง Fitness Score ใช้ FitnessRing
+//     (SVG stroke-based ตาม reference) ข้างในแล้ว แต่ตำแหน่ง/ขนาดจากมุมมอง Header.tsx ไม่เปลี่ยน
 export default function Header({
   greetingText,
   latestPR,
@@ -72,12 +76,9 @@ export default function Header({
         className="relative overflow-hidden"
         style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)` }}
       >
-        {/* Background: glow + particles + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
+        {/* Background: glow + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <AmbientGlow color={fitnessScore.color} />
-        </div>
-        <div className="absolute inset-0 z-[5] pointer-events-none" aria-hidden="true">
-          <EnergyParticles count={40} />
         </div>
         <div
           className="absolute z-[8] pointer-events-none left-0"
@@ -115,11 +116,10 @@ export default function Header({
             {displayName}
           </p>
 
-          {/* subtitle ธรรมดา — เส้นคลื่นเดิมที่เคยอยู่ใต้บรรทัดนี้ (light streak) ย้ายไปเป็น
-              HeroEnergyWave พื้นหลังเต็มความกว้าง header แทนแล้ว ไม่ผูกกับความกว้างของข้อความนี้อีกต่อไป */}
           <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 2, fontSize: 11 }}>
             Personalized Fitness
           </p>
+          <SubtitleAccent />
 
           {/* คำให้กำลังใจ — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ */}
           <p className="text-ink" style={{ marginTop: 8, fontSize: 13 }}>

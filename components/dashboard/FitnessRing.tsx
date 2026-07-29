@@ -3,7 +3,6 @@
 import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { FIRE_GRADIENT_STOPS, NEUTRAL } from '@/lib/theme'
-import SvgFilters from './SvgFilters'
 
 interface FitnessRingProps {
   /** 0-100 */
@@ -16,10 +15,11 @@ interface FitnessRingProps {
   className?: string
 }
 
-// FitnessRing — v2: กลับไปเป็น SVG stroke-dasharray (จาก conic-gradient+mask ของ v1) ตามฟีดแบ็ก —
-// วงเดิมดูเป็น progress ring ธรรมดา ไม่มีชั้นแสงสมจริงเหมือนภาพอ้างอิงที่มี glow 2 ชั้น/reflection/
-// inner shadow/bloom ครบ ซึ่งทำผ่าน conic-gradient+CSS mask ไม่ได้ (ไม่มี SVG filter ให้ใช้) ต้องกลับมา
-// เป็น SVG ถึงจะไล่ชั้นแสงแบบนี้ได้จริง — ใช้ SvgFilters (defs เดียวกับ HeroEnergyWave) กันโค้ดซ้ำ
+// FitnessRing — v3: พอร์ตตรงจาก reference mockup แทนโครงสร้าง glow 2 ชั้น + bloom + reflection ของ v2
+// ซึ่งซับซ้อนเกินและไม่ตรงกับที่ขอ — โครงสร้างจริงของ reference เรียบง่ายกว่า: วงพื้นหลัง (track) →
+// วง glow ชั้นเดียว (เส้นหนากว่า เบลอนุ่ม opacity ต่ำกว่า) → วงคะแนนหลัก (เส้นปกติ เบลอแคบแนบเส้น) →
+// จุดปลาย (tip) ที่หายใจเบาๆ ตรงตำแหน่ง progress ปัจจุบัน (ตัดวงหมุนรอบต่อเนื่อง (sweep) ของ v1/v2 ออก
+// เพราะ reference ไม่มี — ใช้จุด tip นิ่งที่แค่ pulse ขนาดแทน)
 //
 // สี gradient คงที่เป็นชุด fire theme เดิมเสมอ (ไม่ผูกกับ tier/recovery ตามหลักการที่ตกลงไว้ใน
 // lib/theme.ts) — ส่วนแสง glow รอบวงที่สะท้อนสถานะ recovery ยังคงมาจาก <Glow> ที่ Header.tsx ห่ออยู่
@@ -40,11 +40,23 @@ export default function FitnessRing({
   const rawId = useId()
   const idPrefix = `fr-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
 
+  // ตำแหน่งจุด tip — พารามิเตอร์มุมเดียวกับที่ strokeDasharray/strokeDashoffset วาดเส้นจริง (เริ่มที่ 3
+  // นาฬิกาแล้วหมุน -90deg ให้ไปเริ่มที่ 12 นาฬิกาแทน) ลบ 90deg ออกจากมุม raw ให้ตรงกับตำแหน่งที่ตาเห็นจริง
+  const rawAngleRad = (clamped / 100) * 2 * Math.PI
+  const tipAngle = rawAngleRad - Math.PI / 2
+  const tipX = size / 2 + radius * Math.cos(tipAngle)
+  const tipY = size / 2 + radius * Math.sin(tipAngle)
+
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
-        <SvgFilters idPrefix={idPrefix} />
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <defs>
+          <filter id={`${idPrefix}-glow-soft`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation={Math.max(2, sw * 0.5)} />
+          </filter>
+          <filter id={`${idPrefix}-glow-tight`} x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation={Math.max(0.8, sw * 0.12)} />
+          </filter>
           <linearGradient id={`${idPrefix}-ring-gradient`} x1="0%" y1="0%" x2="100%" y2="100%">
             {FIRE_GRADIENT_STOPS.map((s) => (
               <stop key={s.offset} offset={s.offset} stopColor={s.color} />
@@ -54,36 +66,27 @@ export default function FitnessRing({
 
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackColor} strokeWidth={sw} />
 
-        {/* Glow ชั้นนอก — เบลอกว้าง ฟุ้งไกล ให้แสงแผ่ออกรอบวงเป็นบรรยากาศ (ambient) */}
+        {/* ring-glow — เส้นหนากว่าเส้นหลัก เบลอนุ่ม (glow-soft) opacity ต่ำ ให้แสงแผ่ออกรอบวงเป็น
+            บรรยากาศ (ambient) อยู่ข้างหลังเส้นคะแนนหลัก */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#FF8A00"
-          strokeWidth={sw * 1.4}
-          strokeOpacity={0.4}
+          stroke={`url(#${idPrefix}-ring-gradient)`}
+          strokeWidth={sw * 1.3}
+          strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
-          filter={`url(#${idPrefix}-glow-wide)`}
-          style={{ mixBlendMode: 'screen' }}
-        />
-        {/* Glow ชั้นใน — เบลอแคบ แนบเส้นจริง ให้ขอบเส้นสว่างจ้าเฉพาะรอบตัวมันเอง (ไม่ใช่ก้อนเบลอกว้าง) */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="#FFD166"
-          strokeWidth={sw * 0.7}
-          strokeOpacity={0.6}
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          filter={`url(#${idPrefix}-glow-tight)`}
-          style={{ mixBlendMode: 'screen' }}
+          filter={`url(#${idPrefix}-glow-soft)`}
+          opacity={0.7}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          className="animate-ring-pulse"
+          style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
 
-        {/* เส้นวงหลัก — gradient ไฟ + bloom filter (เบลอ+ดันสว่างก่อน merge กลับ source) */}
+        {/* ring-progress — เส้นคะแนนหลัก เบลอแคบ (glow-tight) แนบผิวเส้นจริง ให้ขอบสว่างจ้าเฉพาะรอบตัว
+            มันเอง ไม่ใช่ก้อนเบลอกว้างเหมือน ring-glow ด้านบน */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -94,44 +97,33 @@ export default function FitnessRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
-          filter={`url(#${idPrefix}-bloom)`}
-          className="animate-ring-pulse animate-ring-gradient-shift"
-          style={{ mixBlendMode: 'screen', transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
-        />
-
-        {/* Reflection / glossy highlight — เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก ให้ความรู้สึกผิวมันวาว */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius - sw * 0.32}
-          fill="none"
-          stroke="#FFF4CC"
-          strokeWidth={Math.max(1.2, sw * 0.16)}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          strokeOpacity={0.7}
-          style={{ mixBlendMode: 'screen', transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
+          filter={`url(#${idPrefix}-glow-tight)`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          className="animate-ring-gradient-shift"
+          style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
       </svg>
 
-      {/* sweep glow — จุดสว่างหมุนวนรอบขอบวงต่อเนื่อง */}
-      <div className="absolute inset-0 pointer-events-none animate-ring-sweep" aria-hidden="true">
-        <div
-          className="absolute rounded-full"
+      {/* ring-tip — จุดสว่างนิ่งตรงตำแหน่ง progress ปัจจุบัน หายใจ (scale) เบาๆ แทนวงหมุนรอบต่อเนื่อง */}
+      {clamped > 1 && (
+        <span
+          className="absolute rounded-full animate-ring-tip-pulse"
           style={{
-            width: Math.max(4, sw * 0.5),
-            height: Math.max(4, sw * 0.5),
-            left: '50%',
-            top: sw / 2,
+            width: Math.max(3, sw * 0.7),
+            height: Math.max(3, sw * 0.7),
+            left: tipX,
+            top: tipY,
+            // fallback ตำแหน่งกึ่งกลางเวลา prefers-reduced-motion ปิด animation (keyframe
+            // ring-tip-pulse เองก็ตั้งค่านี้ซ้ำอยู่แล้วตอน animation ทำงานปกติ — จำเป็นต้องมีทั้งคู่
+            // เพราะพอ animation ถูกปิดด้วย `animation: none`, transform จาก keyframe หายไปด้วย)
             transform: 'translate(-50%, -50%)',
             background: '#FFF4CC',
-            boxShadow: '0 0 8px #FFF4CC, 0 0 16px #FF8A00',
+            boxShadow: '0 0 6px #FFF4CC, 0 0 12px #FF8A00',
           }}
         />
-      </div>
+      )}
 
-      {/* Inner shadow บางๆ ด้านในวง ให้เนื้อหากึ่งกลางดูจมลงไปนิดหนึ่งแทนที่จะลอยแบน */}
+      {/* inner shadow บางๆ ด้านในวง ให้เนื้อหากึ่งกลางดูจมลงไปนิดหนึ่งแทนที่จะลอยแบน */}
       <div
         className="absolute rounded-full pointer-events-none"
         style={{ inset: sw, boxShadow: 'inset 0 3px 8px rgba(0,0,0,.5)' }}

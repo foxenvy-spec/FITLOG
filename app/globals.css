@@ -285,6 +285,27 @@
   animation: ring-gradient-shift 9s ease-in-out infinite;
 }
 
+/* SubtitleAccent — จุดสว่างกลางเส้นใต้ subtitle หายใจ (scale) เบาๆ ต่อเนื่อง */
+@keyframes subtitle-accent-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+.animate-subtitle-accent-pulse {
+  animation: subtitle-accent-pulse 2.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* FitnessRing v3 — จุด tip นิ่งตรงตำแหน่ง progress ปัจจุบัน หายใจ (scale) เบาๆ แทนวงหมุนรอบต่อเนื่อง
+   ของเวอร์ชันก่อน — ใส่ translate(-50%,-50%) ไว้ในคีย์เฟรมเองเลย (แทนที่จะพึ่ง inline style) เพราะ
+   CSS animation จะ override ค่า transform จาก inline style ทั้งหมดอยู่ดี ใส่แยกกันจะสับสนเปล่าๆ */
+@keyframes ring-tip-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.3); }
+}
+.animate-ring-tip-pulse {
+  animation: ring-tip-pulse 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
@@ -300,7 +321,9 @@
   .animate-ring-sweep,
   .animate-wave-flow,
   .animate-wave-flow-slow,
-  .animate-ring-gradient-shift {
+  .animate-ring-gradient-shift,
+  .animate-subtitle-accent-pulse,
+  .animate-ring-tip-pulse {
     animation: none !important;
   }
 }
