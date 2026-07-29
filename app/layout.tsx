@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Oswald, Kanit, Inter, IBM_Plex_Sans_Thai, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
 // tailwind.config.js กำหนด font-display/font-body/font-mono ให้อ้างอิงตัวแปร CSS พวกนี้
 // (--font-oswald, --font-kanit, --font-inter, --font-plex-thai, --font-mono) — ต้องประกาศค่าจริง
@@ -63,7 +64,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" className={`${oswald.variable} ${kanit.variable} ${inter.variable} ${plexThai.variable} ${plexMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ServiceWorkerRegister />
+        {children}
+      </body>
     </html>
   )
 }
