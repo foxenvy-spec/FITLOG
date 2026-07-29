@@ -8,6 +8,7 @@ import AnimatedWave from '@/components/ui/AnimatedWave'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
+import Glow from '@/components/ui/Glow'
 
 interface HeaderProps {
   greetingText: string
@@ -15,6 +16,9 @@ interface HeaderProps {
   topMuscleThisWeek: TopMuscle | null
   displayName: string
   fitnessScore: FitnessScoreResult
+  /** สีตามสถานะ Recovery รวม (เขียว/เหลือง/แดง จาก recoveryStatusColor) — ใช้เรืองแสงรอบวง Fitness
+   *  Score เพื่อให้เห็นสถานะการฟื้นตัวแค่แวบเดียวโดยไม่ต้องกดเข้าไปดูรายละเอียด */
+  recoveryColor: string
   /** เนื้อหาที่วางอยู่ใต้ header ทั้งชุด (เช่น Today's Focus card) */
   children?: ReactNode
 }
@@ -37,6 +41,7 @@ export default function Header({
   topMuscleThisWeek,
   displayName,
   fitnessScore,
+  recoveryColor,
   children,
 }: HeaderProps) {
   return (
@@ -84,7 +89,24 @@ export default function Header({
         </p>
 
         <div className="absolute z-20" style={{ top: RING_TOP, right: RING_RIGHT }}>
-          <FitnessScore score={fitnessScore} size={RING_SIZE} />
+          <div className="relative">
+            {/* เรืองแสงตามสถานะ Recovery รวม — อยู่หลังตัววง (z-0) ไม่บังตัวเลข/label ของวงเอง
+                ซึ่งยังคงไล่สี fire gradient เดิมของมันไว้ (ไม่เปลี่ยนสีเส้นวง เปลี่ยนแค่แสงรอบๆ) */}
+            <Glow
+              color={recoveryColor}
+              width={RING_SIZE + 50}
+              height={RING_SIZE + 50}
+              top={-25}
+              left={-25}
+              blur={26}
+              opacity={0.45}
+              pulse
+              className="z-0"
+            />
+            <div className="relative z-10">
+              <FitnessScore score={fitnessScore} size={RING_SIZE} />
+            </div>
+          </div>
         </div>
       </div>
 

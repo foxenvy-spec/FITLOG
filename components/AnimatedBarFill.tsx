@@ -9,10 +9,13 @@ import { useEffect, useState } from 'react'
 export default function AnimatedBarFill({
   pct,
   color,
+  background,
   className = 'h-full rounded-full transition-all duration-700 ease-out',
 }: {
   pct: number
   color: string
+  // เกรเดียนต์ (เช่น FIRE_GRADIENT_CSS) แทนสีเรียบ — ถ้าระบุจะวาดทับ color เดิม (color ยังเป็น fallback)
+  background?: string
   className?: string
 }) {
   const [width, setWidth] = useState(0)
@@ -29,5 +32,5 @@ export default function AnimatedBarFill({
     }
   }, [clamped])
 
-  return <div className={className} style={{ width: `${width}%`, backgroundColor: color }} />
+  return <div className={className} style={{ width: `${width}%`, backgroundColor: color, backgroundImage: background }} />
 }

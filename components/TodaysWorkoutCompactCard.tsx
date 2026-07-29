@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { COLORS, FIRE_GRADIENT_CSS } from '@/lib/theme'
+import AnimatedBarFill from './AnimatedBarFill'
 
 interface TodaysWorkoutCompactCardProps {
   completed: number
@@ -36,7 +37,7 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
           </p>
         </div>
         <div className="h-2 rounded-full bg-surface2 mt-2.5 overflow-hidden">
-          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundImage: FIRE_GRADIENT_CSS }} />
+          <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
         </div>
       </div>
       <span className="text-muted shrink-0" aria-hidden="true">›</span>
