@@ -179,9 +179,12 @@ export default function Header({
           ซ้อนอยู่ตรงนั้น) ด้วย margin-top ติดลบ แทนที่จะปล่อยให้อยู่เป็นบล็อกแยกข้างล่างเหมือนเดิม —
           ไม่ต้องแตะ overflow-hidden ของกล่อง hero เลย เพราะการ์ดนี้เป็น sibling อยู่นอกกล่องนั้นอยู่แล้ว
           (แค่ paint ทับขึ้นไปด้านบนตามลำดับ DOM ปกติ) จึงไม่มีความเสี่ยงโดนตัดขอบ
-          ดึงขึ้น 18px จาก 24px ที่มี เหลือ ~6px ของพื้นที่ว่างเดิมอยู่เหนือการ์ดใน hero ไม่ให้ชนตัวเลข/
-          tier label ของวง Fitness Score ด้านบน */}
-      <div className="relative z-10 px-1" style={{ marginTop: -18 }}>{children}</div>
+          ดึงขึ้น 24px จาก 24px ที่มี (กิน breathing room หมดพอดี) — ไม่ได้แตะ RING_LABEL_HEIGHT (42px)
+          ซึ่งยังมี slack เหลืออยู่ภายในตัวมันเองอีก ~8px (ความสูงข้อความจริงของ "Fitness Score" + tier
+          label รวมกัน ~34px จาก 42px ที่เผื่อไว้) เป็นเซฟตี้ชั้นสุดท้ายก่อนจะไปชนตัวหนังสือจริง — ถ้าจะ
+          ดึงขึ้นมากกว่านี้อีกต้องเช็คบนจอจริงตอน tier label ยาวสุด ("RECOVERY NEEDED") ก่อน กันบั๊กแบบ
+          PR #2 ตอนต้นเซสชัน (label โดนตัด/ทับ) กลับมาอีก */}
+      <div className="relative z-10 px-1" style={{ marginTop: -24 }}>{children}</div>
     </div>
   )
 }
