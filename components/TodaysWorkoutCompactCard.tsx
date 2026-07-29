@@ -25,15 +25,17 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
       href={href}
       className="relative overflow-hidden flex items-center gap-4 px-4 py-4 active:scale-[0.99] transition"
     >
-      {/* พื้นหลังฉากยิม — จางๆ อยู่หลังเนื้อหาทั้งหมด (z-0) โฟกัสไปมุมขวาล่างที่มีดัมเบลเรืองแสง แล้วไล่
-          เฉดมืดจากซ้ายทับอีกชั้น (z-[1]) กันตัวหนังสือ/ไอคอนอ่านไม่ออก */}
+      {/* พื้นหลังฉากยิม — จางๆ อยู่หลังเนื้อหาทั้งหมด (z-0) โฟกัสไปฝั่งขวาที่มีดัมเบลเรืองแสง แล้วไล่
+          เฉดมืดจากซ้ายทับอีกชั้น (z-[1]) กันตัวหนังสือ/ไอคอนอ่านไม่ออก — รูปเวอร์ชันใหม่เป็นแนวนอน
+          (1983x793 ≈ 2.5:1) ดัมเบลอยู่กึ่งกลางแนวตั้งค่อนไปทางล่างเล็กน้อย ต่างจากรูปแนวตั้งเดิมที่ต้อง
+          โฟกัสไปมุมล่างสุด (75%) จึงปรับ objectPosition ขึ้นมาเป็นกึ่งกลางแนวตั้งแทน */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <Image
           src="/images/today-workout-bg-mobile.png"
           alt=""
           fill
           className="object-cover"
-          style={{ objectPosition: '85% 75%' }}
+          style={{ objectPosition: '80% 60%' }}
         />
         <div
           className="absolute inset-0"
@@ -41,12 +43,22 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         />
       </div>
 
+      {/* ไอคอนดัมเบล/ลูกศรมีพื้นวงกลมดำของตัวเองติดมาด้วย (ไม่ใช่พื้นโปร่งใส) — ใช้ mixBlendMode:
+          screen (เทคนิคเดียวกับ glow ทุกจุดใน Header.tsx) ให้พื้นดำ "หายไป" กลืนกับพื้นหลังมืดของวง/
+          การ์ด เหลือแค่ไอคอนเรืองแสงจริงๆ แทนที่จะเห็นเป็นกรอบดำทับอยู่บนพื้นหลังสีอำพัน/ฉากยิม */}
       <span
         className="relative z-10 w-12 h-12 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
         style={{ backgroundColor: `${COLORS.amber}22` }}
         aria-hidden="true"
       >
-        <Image src="/icons/today-workout-icon-dumbbell.png" alt="" width={48} height={48} className="w-full h-full object-cover" />
+        <Image
+          src="/icons/today-workout-icon-dumbbell.png"
+          alt=""
+          width={48}
+          height={48}
+          className="w-full h-full object-cover"
+          style={{ mixBlendMode: 'screen' }}
+        />
       </span>
       <div className="relative z-10 min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
@@ -62,7 +74,14 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         </div>
       </div>
       <span className="relative z-10 shrink-0 w-4 h-4" aria-hidden="true">
-        <Image src="/icons/today-workout-icon-arrow.png" alt="" width={16} height={16} className="w-full h-full object-contain" />
+        <Image
+          src="/icons/today-workout-icon-arrow.png"
+          alt=""
+          width={16}
+          height={16}
+          className="w-full h-full object-contain"
+          style={{ mixBlendMode: 'screen' }}
+        />
       </span>
     </PremiumCard>
   )
