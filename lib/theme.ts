@@ -18,11 +18,13 @@ export const COLORS = {
   deltaGood: '#8CB264', // ตัวหนังสือเดลต้าที่ดีขึ้น (เฉดเขียวอ่อนกว่า moss เล็กน้อย ใช้ specifically กับข้อความ เช่น "↓2.1kg")
 } as const
 
-// สีคงที่ของ Ring + AnimatedWave บน header — ตามฟีดแบ็กให้ใช้สีเดียวกับรูป mockup อ้างอิงเสมอ
-// (ส้ม/เหลืองไฟ) แทนที่จะ dynamic ตาม tier ของ Fitness Score (เขียว/เหลือง/ส้ม/แดง) เหมือนเดิม —
-// ทำให้ header คงลุค "ไฟ" ไว้เสมอไม่ว่าคะแนนจะเป็นเท่าไหร่ก็ตาม (แลกกับการไม่สื่อความหมาย tier
-// ผ่านสีอีกต่อไปในจุดนี้ — ยังเห็น tier ได้จากคำว่า Excellent/Good/... ที่ใต้วงอยู่ดี)
-// (ดู FIRE_ACCENT ตัวจริงที่นิยามพร้อม FIRE_GRADIENT ด้านล่างของไฟล์นี้)
+// สีของ FitnessRing/HeroEnergyWave/glow บน header — เดิมตั้งใจให้คงที่เป็นธีมไฟเสมอ (ส้ม/เหลือง)
+// ไม่ผูกกับ tier แต่เปลี่ยนมาผูกกับ tier ของ Fitness Score จริงๆ แล้ว ตามฟีดแบ็กที่อยากให้สี Ring/
+// Wave/Glow/ข้อความ AI Coach สัมพันธ์กันทั้งหมด ให้มองแวบเดียวเข้าใจทั้งสภาพร่างกายและคำแนะนำ — ชุดสี
+// ต่อ tier (Excellent/Very Good/Good/Moderate/Recovery/Rest Today) ประกาศอยู่ที่ lib/fitnessScore.ts
+// (FitnessScoreResult.gradientStops/color) ไม่ใช่ไฟล์นี้ เพราะผูกกับความหมายของคะแนนโดยตรง
+// FIRE_GRADIENT_STOPS ด้านล่างยังเป็นสี "ตกแต่ง/แบรนด์" คงที่เหมือนเดิม ใช้กับจุดที่ไม่เกี่ยวกับ tier
+// (FAB "Start Workout", แถบ progress ของวันนี้ ฯลฯ)
 
 export type ThemeColorKey = keyof typeof COLORS
 

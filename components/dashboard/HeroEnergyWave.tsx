@@ -2,8 +2,16 @@
 
 import { useEffect, useId, useRef } from 'react'
 
+interface GradientStop {
+  offset: string
+  color: string
+}
+
 interface HeroEnergyWaveProps {
   className?: string
+  /** ไล่สีของเส้นคลื่น — ดีฟอลต์เป็นส้ม/เหลืองไฟถ้าไม่ส่งมา แต่ Header.tsx จะส่ง gradientStops ของ
+   *  tier ปัจจุบัน (จาก fitnessScore.gradientStops) มาเสมอ ให้ Wave เป็นธีมเดียวกับ Ring/Glow */
+  gradientStops?: readonly GradientStop[]
 }
 
 const VIEW_WIDTH = 400
@@ -20,6 +28,11 @@ const STEPS = 40
 const THIN_AMPLITUDE = AMPLITUDE * 0.5
 const THIN_FREQUENCY = FREQUENCY * 1.4
 const THIN_PHASE_OFFSET = Math.PI * 0.5
+// ดีฟอลต์เวลาไม่ได้ส่ง gradientStops มา (ส้ม/เหลืองไฟเดิม)
+const DEFAULT_GRADIENT_STOPS: readonly GradientStop[] = [
+  { offset: '0%', color: '#ff6a00' },
+  { offset: '100%', color: '#ffd27a' },
+]
 
 /** สร้าง path เส้นคลื่นจาก sine wave ที่ค่อยๆ เบาแรง (taper) ที่ปลายทั้งสองข้าง แล้วต่อจุดที่คำนวณได้
  *  ด้วย quadratic bezier แบบ "midpoint smoothing" (จุดควบคุม = จุดจริง, จุดปลายของแต่ละช่วง = จุดกึ่ง
@@ -46,18 +59,21 @@ function buildWavePath(phase: number, amp: number = AMPLITUDE, freq: number = FR
   return d
 }
 
-// เส้นคลื่นพลังงานหลักของ header — v13: แก้ตามฟีดแบ็ก "wave เล็กไป/แยกจาก ring" —
-//   - amplitude สูงขึ้น 2 เท่า, ความถี่ลดลงเหลือ 2-3 ลูกใหญ่ๆ (ดูค่าคงที่ด้านบน)
-//   - เพิ่มเส้นบาง (thin wave) ซ้อนด้านหลังเส้นหลัก คนละ amp/freq/phase
-//   - จุด flare ปลายเส้นใหญ่ขึ้น/สว่างขึ้น ให้เป็นจุดเชื่อมที่เห็นชัดว่าเส้นคลื่น "ไหลเข้า" วง ไม่ใช่แค่
-//     จุดจางๆ ปลายเส้น (ตำแหน่ง/การจางหายเข้าขอบวงจริงๆ อยู่ที่ wrapper mask ใน Header.tsx)
-export default function HeroEnergyWave({ className = '' }: HeroEnergyWaveProps) {
+// เส้นคลื่นพลังงานหลักของ header — v14: เพิ่ม gradientStops prop ให้สีของเส้นคลื่นผูกกับ tier ของ
+// Fitness Score ได้ (เดิม v13 สีคงที่ส้ม/เหลืองไฟตายตัว) — ใช้แค่สีต้น/ปลายของ gradientStops ที่ส่งมา
+// (ไม่ได้พยายามแมปทุก stop ของ tier ตรงๆ เพราะโครงสร้าง fade เข้า-ออกของเส้นคลื่นนี้ต่างจาก ring)
+// ไล่เข้ากับ opacity fade เดิมของเส้น (โปร่งใสที่ปลาย ทึบตรงกลาง) ให้เอฟเฟกต์ fade เดิมยังทำงานเหมือนเดิม
+// ไม่ว่าจะเปลี่ยนสีเป็น tier ไหนก็ตาม
+export default function HeroEnergyWave({ className = '', gradientStops = DEFAULT_GRADIENT_STOPS }: HeroEnergyWaveProps) {
   const rawId = useId()
   const idPrefix = `hew-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
   const thinRef = useRef<SVGPathElement>(null)
   const haloRef = useRef<SVGPathElement>(null)
   const mainRef = useRef<SVGPathElement>(null)
   const flareRef = useRef<SVGCircleElement>(null)
+
+  const deepColor = gradientStops[0]?.color ?? '#ff6a00'
+  const brightColor = gradientStops[gradientStops.length - 1]?.color ?? '#ffd27a'
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -105,15 +121,15 @@ export default function HeroEnergyWave({ className = '' }: HeroEnergyWaveProps) 
           <feGaussianBlur stdDeviation="16" />
         </filter>
         <linearGradient id={`${idPrefix}-wave-fade`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#ff6a00" stopOpacity="0" />
-          <stop offset="25%" stopColor="#ff7c00" stopOpacity="0.9" />
-          <stop offset="65%" stopColor="#ff9a1a" stopOpacity="1" />
-          <stop offset="100%" stopColor="#ffd27a" stopOpacity="1" />
+          <stop offset="0%" stopColor={deepColor} stopOpacity="0" />
+          <stop offset="25%" stopColor={deepColor} stopOpacity="0.9" />
+          <stop offset="65%" stopColor={brightColor} stopOpacity="1" />
+          <stop offset="100%" stopColor={brightColor} stopOpacity="1" />
         </linearGradient>
         <radialGradient id={`${idPrefix}-flare`} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#fff6e0" stopOpacity="1" />
-          <stop offset="30%" stopColor="#ffb347" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#ff8c1a" stopOpacity="0" />
+          <stop offset="30%" stopColor={brightColor} stopOpacity="0.8" />
+          <stop offset="100%" stopColor={deepColor} stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -121,7 +137,7 @@ export default function HeroEnergyWave({ className = '' }: HeroEnergyWaveProps) 
       <path
         ref={thinRef}
         fill="none"
-        stroke="#FFD27A"
+        stroke={brightColor}
         strokeWidth="1"
         strokeOpacity="0.35"
         strokeLinecap="round"

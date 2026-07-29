@@ -17,9 +17,6 @@ interface HeaderProps {
   topMuscleThisWeek: TopMuscle | null
   displayName: string
   fitnessScore: FitnessScoreResult
-  /** สีตามสถานะ Recovery รวม (เขียว/เหลือง/แดง จาก recoveryStatusColor) — ใช้เรืองแสงรอบวง Fitness
-   *  Score เพื่อให้เห็นสถานะการฟื้นตัวแค่แวบเดียวโดยไม่ต้องกดเข้าไปดูรายละเอียด */
-  recoveryColor: string
   /** เนื้อหาที่วางอยู่ใต้ header ทั้งชุด (เช่น Today's Focus card) */
   children?: ReactNode
 }
@@ -32,12 +29,18 @@ const RING_TOP = 'clamp(60px, 18vw, 80px)'
 // ค่านี้โดยตรงทั้งคู่ ไม่ hardcode ตัวเลขแยก กันพลาดแบบที่เคยเกิดตอนแก้ครั้งก่อน (ปรับ RING_SIZE
 // จุดเดียว ทุกอย่างขยับตามอัตโนมัติ)
 const RING_SIZE = 84
-// วง Fitness Score มีข้อความ "Fitness Score" + tier label ต่อท้ายใต้วงอีก ~40px (ดู FitnessScore.tsx)
-// ต้องบวกเข้าไปในความสูงกล่อง hero ด้วย ไม่งั้น overflow-hidden ของกล่องจะตัดข้อความสองบรรทัดนั้นทิ้ง
-// ไปเงียบๆ (เกิดขึ้นแทบทุกขนาดจอ เพราะเดิม RING_TOP + RING_SIZE + label สูงเกินความสูงกล่องที่ตั้งไว้ตายตัว)
-const RING_LABEL_HEIGHT = 42
+// วง Fitness Score มีข้อความใต้วง 3 บรรทัดแล้ว (ดู FitnessScore.tsx): "Fitness Score" + tier label +
+// บรรทัดคำแนะนำ (score.recommendation เช่น "Ready for Heavy Training 💪") — บรรทัดที่ 3 นี้ยาวและถูก
+// จำกัด maxWidth ไว้แค่ 120px จึงมักตกเป็น 2 บรรทัดแทบทุกข้อความ ต้องเผื่อพื้นที่ตามจริง (ไม่ใช่แค่ 2
+// บรรทัดเหมือน RING_LABEL_HEIGHT เดิม 42px) ไม่งั้น overflow-hidden ของกล่อง hero จะตัดบรรทัดคำแนะนำทิ้ง
+// ไปเงียบๆ (บั๊กเดียวกับที่เคยเกิดตอน RING_LABEL_HEIGHT ยังไม่มีเลย — PR #2 ต้นเซสชัน) เพิ่มจาก 42 → 70
+// (~2 บรรทัด "Fitness Score"+tier เดิม ~34px + บรรทัดคำแนะนำ 2 บรรทัดที่ wrap ~24px + margin/slack)
+const RING_LABEL_HEIGHT = 70
 // พื้นที่หายใจเพิ่มใต้ label — เดิม hero สูงพอดีเป๊ะกับเนื้อหาจนรู้สึกอึดอัด/แบน เพิ่มส่วนนี้ให้ดูโปร่งขึ้น
-const HERO_BOTTOM_BREATHING_ROOM = 40
+// ลดจาก 40 → 24 ตามฟีดแบ็ก (Header+Today's Focus รวมกันกินพื้นที่เยอะไป) — Today's Focus ยังดึงขึ้นมา
+// ซ้อน 18px เท่าเดิม (ดู marginTop ด้านล่างสุดของไฟล์) เหลือพื้นที่ว่างจริง ~6px เหนือการ์ด ยังไม่ชน
+// ตัวเลข/tier label ของวง
+const HERO_BOTTOM_BREATHING_ROOM = 24
 // ความสูงของ wrapper เส้นคลื่น HeroEnergyWave — viewBox ภายในเป็น 0 0 400 200 (preserveAspectRatio
 // ="none") จุดจบเส้นอยู่ที่กึ่งกลางแนวตั้งของ viewBox พอดี (200/2) ดังนั้นไม่ว่า WAVE_HEIGHT จะเป็น
 // เท่าไหร่ จุดจบเส้นก็จะอยู่กึ่งกลางแนวตั้งของ wrapper นี้เสมอ — แค่จัดกึ่งกลาง wrapper ให้ตรงกับ
@@ -62,16 +65,16 @@ const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px / 2)`
 // พ้นขอบอีกฝั่งของวงออกมา) — ทึบเต็มถึง 70% ของความกว้างแล้วค่อยๆ จางจนโปร่งใสสนิทที่ 95%
 const WAVE_MASK = 'linear-gradient(90deg, black 0%, black 70%, transparent 95%)'
 
-// Header ของหน้า Dashboard (มือถือ) — v13: ปรับจาก v12 (พอร์ตตรงจาก reference mockup) ตามฟีดแบ็ก
-// รอบล่าสุด — wave ใหญ่ขึ้น/เลื่อนลงเลี่ยงตัวหนังสือ/ทาบเข้าไปใต้วงจริง (ดูคอมเมนต์ WAVE_* ด้านบน)
-// + เพิ่มจุดสว่างหลังวง (radial-gradient ชั้นแรกใน background) ให้ hero มีมิติขึ้น
+// Header ของหน้า Dashboard (มือถือ) — v15: เอา recoveryColor prop ออก — สี glow รอบวงเปลี่ยนจากผูก
+// กับสถานะ Recovery (1 ใน 6 ปัจจัยของ Fitness Score) มาผูกกับ tier ของ Fitness Score เอง (fitnessScore.
+// color) แทน ให้ Ring/Wave/Glow เป็นสีชุดเดียวกันทั้งหมดตามฟีดแบ็ก — ดู lib/fitnessScore.ts สำหรับชุดสี
+// ต่อ tier
 export default function Header({
   greetingText,
   latestPR,
   topMuscleThisWeek,
   displayName,
   fitnessScore,
-  recoveryColor,
   children,
 }: HeaderProps) {
   return (
@@ -103,7 +106,7 @@ export default function Header({
           }}
           aria-hidden="true"
         >
-          <HeroEnergyWave />
+          <HeroEnergyWave gradientStops={fitnessScore.gradientStops} />
         </div>
 
         {/* Foreground — ทักทาย/ชื่อ/subtitle/wave/คำให้กำลังใจ รวมเป็นคอลัมน์เดียว (flex-col, normal flow)
@@ -151,10 +154,10 @@ export default function Header({
 
         <div className="absolute z-20" style={{ top: RING_TOP, right: RING_RIGHT }}>
           <div className="relative">
-            {/* เรืองแสงตามสถานะ Recovery รวม — อยู่หลังตัววง (z-0) ไม่บังตัวเลข/label ของวงเอง
-                ซึ่งยังคงไล่สี fire gradient เดิมของมันไว้ (ไม่เปลี่ยนสีเส้นวง เปลี่ยนแค่แสงรอบๆ) */}
+            {/* เรืองแสงตามสี tier ของ Fitness Score — อยู่หลังตัววง (z-0) ไม่บังตัวเลข/label ของวงเอง
+                สีเดียวกับที่ตัววง/wave ใช้ (fitnessScore.color) ให้ทั้ง header เป็นชุดสีเดียวกัน */}
             <Glow
-              color={recoveryColor}
+              color={fitnessScore.color}
               width={RING_SIZE + 50}
               height={RING_SIZE + 50}
               top={-25}
@@ -172,13 +175,17 @@ export default function Header({
       </div>
 
       {/* "ซ้อนสายตา" (visual overlap) กับ hero ตามที่ขอ — ดึงการ์ด Today's Focus ขึ้นไปคาบเกี่ยวกับ
-          HERO_BOTTOM_BREATHING_ROOM (40px พื้นที่ว่างล้วนๆ ท้ายกล่อง hero ไม่มีตัวเลข/ป้ายชื่อของวง
+          HERO_BOTTOM_BREATHING_ROOM (24px พื้นที่ว่างล้วนๆ ท้ายกล่อง hero ไม่มีตัวเลข/ป้ายชื่อของวง
           ซ้อนอยู่ตรงนั้น) ด้วย margin-top ติดลบ แทนที่จะปล่อยให้อยู่เป็นบล็อกแยกข้างล่างเหมือนเดิม —
           ไม่ต้องแตะ overflow-hidden ของกล่อง hero เลย เพราะการ์ดนี้เป็น sibling อยู่นอกกล่องนั้นอยู่แล้ว
           (แค่ paint ทับขึ้นไปด้านบนตามลำดับ DOM ปกติ) จึงไม่มีความเสี่ยงโดนตัดขอบ
-          ดึงขึ้น 18px จาก 40px ที่มี เหลือ ~22px ของพื้นที่ว่างเดิมอยู่เหนือการ์ดใน hero ไม่ให้ชนตัวเลข/
-          tier label ของวง Fitness Score ด้านบน */}
-      <div className="relative z-10 px-1" style={{ marginTop: -18 }}>{children}</div>
+          ดึงขึ้น 24px จาก 24px ที่มี (กิน HERO_BOTTOM_BREATHING_ROOM หมดพอดี) — ไม่ได้แตะ
+          RING_LABEL_HEIGHT (70px, เผื่อไว้ให้บรรทัดคำแนะนำที่เพิ่มมาใหม่ด้วย ดูคอมเมนต์จุดประกาศค่า
+          ด้านบน) พื้นที่ที่ดึงขึ้นมายังคงเป็นแค่ HERO_BOTTOM_BREATHING_ROOM ล้วนๆ เท่านั้น ไม่ได้กินเข้าไป
+          ใน RING_LABEL_HEIGHT เลย จึงไม่กระทบข้อความใต้วงไม่ว่าจะยาวแค่ไหน — ถ้าจะดึงขึ้นมากกว่านี้อีก
+          (เกิน breathing room ที่มี) ต้องเช็คบนจอจริงก่อน กันบั๊กแบบ PR #2 ตอนต้นเซสชัน (label โดนตัด/
+          ทับ) กลับมาอีก */}
+      <div className="relative z-10 px-1" style={{ marginTop: -24 }}>{children}</div>
     </div>
   )
 }

@@ -169,6 +169,19 @@ export default function MobileDashboardView() {
     RECOVERY_MUSCLES.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / RECOVERY_MUSCLES.length
   )
 
+  // ปัจจัย Recovery ของ Fitness Score เท่านั้น (ไม่ใช่ overallRecoveryPct ด้านบน ซึ่งการ์ด "ฟื้นตัวรวม"
+  // (GoalRing) กับตารางรายละเอียดยังใช้ตามปกติ ไม่แตะ) — เอาเฉพาะกลุ่มกล้ามเนื้อที่มีประวัติฝึกจริง
+  // (recoveryDates[mg] ไม่ null) มาเฉลี่ย ไม่นับกลุ่มที่ยังไม่เคยฝึกเลยว่า "ฟื้นตัวเต็มที่" (100%) แบบที่
+  // computeRecoveryPct คืนค่าไว้ เพราะนั่นจะ reward คนไม่ออกกำลังกายเลยด้วยแต้ม Recovery เต็ม — ถ้ายังไม่
+  // เคยฝึกกลุ่มไหนเลยสักกลุ่ม ปัจจัยนี้เป็น null (ไม่มีข้อมูลให้วัด) ให้ computeFitnessScore ตัดออกแล้ว
+  // กระจายน้ำหนักให้ปัจจัยอื่นแทน เหมือนที่ Sleep ทำอยู่แล้ว — ตาม pattern แอปแทร็กกล้ามเนื้อจริงๆ (Hevy,
+  // Strong ฯลฯ) ที่ไม่โชว์ recovery indicator จนกว่าจะฝึกครั้งแรก
+  const trainedRecoveryMuscles = RECOVERY_MUSCLES.filter((mg) => data?.recoveryDates[mg])
+  const fitnessScoreRecoveryPct =
+    trainedRecoveryMuscles.length > 0
+      ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / trainedRecoveryMuscles.length)
+      : null
+
   // Fitness Score — สูตรตามที่กำหนด: Workout Completion 30% / Streak 20% / Sleep 20% /
   // Recovery 15% / Weekly Goal 10% / Activity วันนี้ 5% — FITLOG ไม่มีข้อมูลการนอนเลย (ไม่ได้
   // เชื่อมต่อ Apple Health/Google Fit) จึง Sleep เป็น null เสมอ แล้วให้ computeFitnessScore
@@ -180,7 +193,7 @@ export default function MobileDashboardView() {
     { key: 'workout', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
     { key: 'streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
     { key: 'sleep', value: null, weight: 20 },
-    { key: 'recovery', value: overallRecoveryPct, weight: 15 },
+    { key: 'recovery', value: fitnessScoreRecoveryPct, weight: 15 },
     { key: 'weeklyGoal', value: data.weeklyGoalPct, weight: 10 },
     { key: 'activityToday', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
   ])
@@ -264,7 +277,6 @@ export default function MobileDashboardView() {
           topMuscleThisWeek={data.topMuscleThisWeek}
           displayName={data.profileDisplayName || emailDisplayName(data.email)}
           fitnessScore={fitnessScore}
-          recoveryColor={recoveryStatusColor(overallRecoveryPct)}
         >
           <div className="max-w-[65%]">
             <TodaysFocusCard
