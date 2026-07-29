@@ -235,6 +235,28 @@
   animation: badge-pulse 2s ease-in-out infinite;
 }
 
+/* Light streak ใต้ subtitle — จุดสว่างวิ่งซ้าย→ขวาซ้ำๆ ตามความยาวเส้น (left: 0%→100% ของ container
+   ที่เป็น position:relative ของมันเอง) จางเข้า/จางออกที่ปลายทั้งสองข้างกันไม่ให้ "โผล่/หาย" กระทันหัน */
+@keyframes streak-sweep {
+  0% { left: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+.animate-streak-sweep {
+  animation: streak-sweep 3s ease-in-out infinite;
+}
+
+/* วงแหวนคะแนน — จุดสว่างหมุนวนรอบขอบวงต่อเนื่อง (sweep glow) แยกจาก ring-pulse ที่แค่หายใจอยู่กับที่
+   ใช้ transform:rotate บน wrapper ทั้งก้อนแทนการคำนวณตำแหน่ง x/y เอง */
+@keyframes ring-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-ring-sweep {
+  animation: ring-sweep 4s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
@@ -245,7 +267,9 @@
   .animate-header-particle,
   .animate-header-wave,
   .animate-ring-pulse,
-  .animate-badge-pulse {
+  .animate-badge-pulse,
+  .animate-streak-sweep,
+  .animate-ring-sweep {
     animation: none !important;
   }
 }

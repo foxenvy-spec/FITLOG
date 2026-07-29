@@ -131,6 +131,19 @@ export default function Header({
                 className="animate-header-particle absolute rounded-full"
                 style={{ width: 2, height: 2, left: '78%', top: 4, background: '#FFD24A', animationDelay: '1.4s' }}
               />
+              {/* จุดสว่างที่วิ่งซ้าย→ขวาซ้ำๆ ตามเส้น (moving light streak) แยกจากจุดกลางที่หายใจอยู่กับที่
+                  ด้านบน — คนละเอฟเฟกต์กัน: จุดกลางนิ่งแต่สว่าง-หรี่, จุดนี้เคลื่อนที่ */}
+              <span
+                className="animate-streak-sweep absolute rounded-full"
+                style={{
+                  width: 4,
+                  height: 4,
+                  top: '50%',
+                  marginTop: -2,
+                  background: '#FFF4CC',
+                  boxShadow: '0 0 8px #FFF4CC, 0 0 14px #FF8A00',
+                }}
+              />
             </div>
           </div>
 
