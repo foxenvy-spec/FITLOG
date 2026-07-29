@@ -28,6 +28,10 @@ interface HeaderProps {
 const RING_RIGHT = 'clamp(16px, 5vw, 24px)'
 const RING_TOP = 'clamp(60px, 18vw, 80px)'
 const RING_SIZE = 110
+// วง Fitness Score มีข้อความ "Fitness Score" + tier label ต่อท้ายใต้วงอีก ~40px (ดู FitnessScore.tsx)
+// ต้องบวกเข้าไปในความสูงกล่อง hero ด้วย ไม่งั้น overflow-hidden ของกล่องจะตัดข้อความสองบรรทัดนั้นทิ้ง
+// ไปเงียบๆ (เกิดขึ้นแทบทุกขนาดจอ เพราะเดิม RING_TOP + RING_SIZE + label สูงเกินความสูงกล่องที่ตั้งไว้ตายตัว)
+const RING_LABEL_HEIGHT = 42
 
 // Header ของหน้า Dashboard (มือถือ) — v7:
 //   - ตำแหน่งทุกจุด (Bell/Greeting/ชื่อ/Ring/Wave) เปลี่ยนจาก fixed px เป็น clamp(min, vw, max) —
@@ -46,7 +50,7 @@ export default function Header({
 }: HeaderProps) {
   return (
     <div className="animate-rise">
-      <div className="relative overflow-hidden" style={{ height: 'clamp(170px, 48vw, 210px)' }}>
+      <div className="relative overflow-hidden" style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px)` }}>
         {/* Background: glow + wave */}
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <AmbientGlow color={fitnessScore.color} />
