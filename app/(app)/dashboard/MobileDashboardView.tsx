@@ -242,7 +242,9 @@ export default function MobileDashboardView() {
 
   return (
     <>
-      <div className="space-y-[12px]">
+      {/* ระยะห่างระหว่างการ์ดหลัก — เดิม 12px แน่นเกินไปจนการ์ดชิดกันเป็นพรืด (มอคอัพใช้ ~24px
+          ให้แต่ละการ์ด "หายใจ" ได้) ปรับขึ้นมาให้ใกล้เคียงมอคอัพมากขึ้น */}
+      <div className="space-y-[24px]">
         <Header
           greetingText={greetingText}
           latestPR={data.latestPR}
