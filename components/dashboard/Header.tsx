@@ -127,8 +127,10 @@ export default function Header({
         </div>
       </div>
 
-      {/* นอกกล่อง hero — normal flow ตามหลัง ชนกับอะไรใน hero ไม่ได้อีกแล้ว */}
-      <div className="px-1 mt-3">{children}</div>
+      {/* นอกกล่อง hero — normal flow ตามหลัง ชนกับอะไรใน hero ไม่ได้อีกแล้ว
+          headerGap (10px) ตาม spacing scale ที่กำหนด — mt-3 เดิม (12px) ใกล้เคียงอยู่แล้วแต่ปรับให้
+          ตรงเป๊ะตาม token แทนค่าที่ไม่ได้อิงสเกลเดียวกัน */}
+      <div className="px-1" style={{ marginTop: 10 }}>{children}</div>
     </div>
   )
 }
