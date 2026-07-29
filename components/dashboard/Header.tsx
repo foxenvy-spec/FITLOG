@@ -4,7 +4,6 @@ import type { ReactNode } from 'react'
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
 import AmbientGlow from './AmbientGlow'
-import AnimatedWave from '@/components/ui/AnimatedWave'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -91,19 +90,48 @@ export default function Header({
             {displayName}
           </p>
 
-          {/* subtitle ใต้ชื่อ — ใช้ข้อความจากมอคอัพตรงๆ ตามที่ขอ (รอบก่อนเคยเปลี่ยนเป็น tagline ของ
-              FITLOG เองแทน แต่ตอนนี้ขอกลับไปใช้ข้อความมอคอัพเป๊ะๆ แล้ว) */}
-          <p className="tracked text-muted" style={{ marginTop: 2, fontSize: 11 }}>
-            Personalized Fitness
-          </p>
+          {/* subtitle + light streak ห่อด้วย inline-block เดียวกัน — ทำให้เส้นด้านล่างกว้างเท่ากับ
+              ความกว้างจริงของ "Personalized Fitness" เป๊ะเสมอ (inline-block หดตัวพอดีตัวอักษรของมัน
+              เอง แล้วเส้น width:100% ก็ยืดตามพอดี) แทนที่จะเดาความกว้างเป็น px ตายตัว ซึ่งพังง่ายถ้า
+              ฟอนต์/ขนาดจอเปลี่ยน — ตามที่ขอ "ให้เส้นสุดแค่ตัว s ตัวสุดท้ายของคำว่า fitness" พอดี */}
+          <div className="inline-block" style={{ marginTop: 2 }}>
+            <p className="tracked text-muted whitespace-nowrap" style={{ fontSize: 11 }}>
+              Personalized Fitness
+            </p>
 
-          {/* Wave — ย้ายจากเดิมที่เป็น background ลอยแยกต่างหาก (จัดตำแหน่งด้วย top: คำนวณเทียบกับวง
-              Fitness Score) มาอยู่ใน flow ปกติต่อจาก subtitle ตรงๆ แทน — รับประกันว่า "อยู่ใต้คำว่า
-              Personalized Fitness พอดี" เสมอไม่ว่าจอกว้างแค่ไหนหรือ subtitle ตกกี่บรรทัด (ไม่ต้องเดา
-              เลข top อีกต่อไป) เป็นเส้นตรงแทนเส้นโค้งเดิมตามที่ขอ — ดูรายละเอียดที่ AnimatedWave.tsx
-              (endGlow ปิดไว้ เพราะเส้นไม่ได้วิ่งไปชนวงคะแนนอีกต่อไปแล้ว) */}
-          <div className="w-full max-w-[220px]" style={{ marginTop: 4 }} aria-hidden="true">
-            <AnimatedWave endGlow={false} />
+            {/* Light Streak — เส้นแสงบาง + จุดสว่างกลางเส้น แทนเส้นคลื่น AnimatedWave เดิม ตามสเปคที่ขอ
+                เป๊ะๆ: gradient โปร่งใส→ส้ม→โปร่งใส กลางเส้น, glow รอบเส้น (box-shadow 3 ชั้น), จุดสว่าง
+                กลางเส้น (glow แรงกว่าอีกชั้น + หายใจเบาๆ), particle เล็กๆ ลอยข้างๆ */}
+            <div className="relative" style={{ height: 2, marginTop: 4 }} aria-hidden="true">
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background:
+                    'linear-gradient(90deg, transparent, rgba(255,120,0,.2), #FF7A00, rgba(255,120,0,.2), transparent)',
+                  boxShadow: '0 0 8px #FF7A00, 0 0 20px #FF7A00, 0 0 40px rgba(255,122,0,.6)',
+                }}
+              />
+              <div
+                className="animate-ring-pulse absolute rounded-full"
+                style={{
+                  width: 8,
+                  height: 8,
+                  left: '50%',
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  background: '#FF7A00',
+                  boxShadow: '0 0 10px #FF7A00, 0 0 20px #FF7A00, 0 0 36px rgba(255,122,0,.7)',
+                }}
+              />
+              <span
+                className="animate-header-particle absolute rounded-full"
+                style={{ width: 2, height: 2, left: '20%', top: -3, background: '#FFD24A' }}
+              />
+              <span
+                className="animate-header-particle absolute rounded-full"
+                style={{ width: 2, height: 2, left: '78%', top: 4, background: '#FFD24A', animationDelay: '1.4s' }}
+              />
+            </div>
           </div>
 
           {/* คำให้กำลังใจ — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ */}
