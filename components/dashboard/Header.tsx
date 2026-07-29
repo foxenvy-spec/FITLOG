@@ -105,6 +105,32 @@ export default function Header({
           {displayName}
         </p>
 
+        {/* subtitle ใต้ชื่อ — เดิมไม่มีเลย (มอคอัพมี "Personalized Fitness" ใต้ชื่อแบรนด์) ใช้ tagline
+            เดิมของ FITLOG เอง ("TRACK · TRAIN · TRANSFORM" จากหน้า login) แทนที่จะเอาข้อความมอคอัพ
+            มาแปะตรงๆ เพราะช่องนี้โชว์ชื่อผู้ใช้จริง ไม่ใช่ชื่อแอป ใส่ข้อความบรรยายแอปคนละความหมาย */}
+        <p
+          className="absolute z-20 tracked uppercase text-muted"
+          style={{
+            top: `calc(clamp(48px, 14vw, 64px) + clamp(42px, 15vw, 60px))`,
+            left: 'clamp(18px, 6vw, 26px)',
+            maxWidth: 'calc(100% - 150px)',
+            fontSize: 11,
+          }}
+        >
+          Track · Train · Transform
+        </p>
+
+        {/* คำให้กำลังใจใต้ wave — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ วางไว้ในโซน
+            HERO_BOTTOM_BREATHING_ROOM (40px ว่างท้ายกล่อง hero ฝั่งซ้ายไม่มีอะไรอยู่แล้ว) แทนการเพิ่ม
+            ความสูง hero ใหม่ — bottom:26 (ไม่ใช่ 14) เว้นที่ให้พ้นโซนที่การ์ด Today's Focus ซ้อนขึ้นมา
+            (margin-top:-18 ด้านล่าง แปลว่าการ์ดกิน 18px บนสุดของ hero) ไม่งั้นข้อความจะโดนการ์ดทับ */}
+        <p
+          className="absolute z-20 text-ink"
+          style={{ bottom: 26, left: 'clamp(18px, 6vw, 26px)', maxWidth: 'calc(100% - 150px)', fontSize: 13 }}
+        >
+          วันนี้พร้อมสำหรับการออกกำลังกาย 💪
+        </p>
+
         <div className="absolute z-20" style={{ top: RING_TOP, right: RING_RIGHT }}>
           <div className="relative">
             {/* เรืองแสงตามสถานะ Recovery รวม — อยู่หลังตัววง (z-0) ไม่บังตัวเลข/label ของวงเอง
