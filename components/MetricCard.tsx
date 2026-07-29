@@ -278,7 +278,13 @@ export default function MetricCard({
                   คง -0.025em (ค่าเดียวกับ tracking-tight เดิม) ไว้ทุกประการ ไม่กระทบ */}
               <p
                 className="font-mono leading-none text-ink"
-                style={{ fontSize: compact ? 19 : 20, letterSpacing: compact ? '0.5px' : '-0.025em' }}
+                style={{
+                  fontSize: compact ? 19 : 20,
+                  letterSpacing: compact ? '0.5px' : '-0.025em',
+                  // ตัวเลขความกว้างเท่ากันทุกหลัก (tabular figures) กันเลขกระโดดตอนค่าเปลี่ยน
+                  // (เช่น "1" แคบกว่า "8" ปกติ) เฉพาะมือถือตามสเปคที่ขอ
+                  fontVariantNumeric: compact ? 'tabular-nums' : undefined,
+                }}
               >
                 {/* Value font weight: ดีไซน์ระบุ Semibold (600) — ใช้เฉพาะมือถือ (compact) ตามสเปค
                     เดสก์ท็อป (compact=false) คงน้ำหนัก 800 (Bold) เดิมไว้ทุกประการ ไม่กระทบ */}

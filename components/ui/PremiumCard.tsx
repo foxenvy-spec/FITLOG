@@ -24,16 +24,29 @@ export default function PremiumCard<T extends ElementType = 'div'>({
 }: PremiumCardProps<T>) {
   const Comp = (as || 'div') as ElementType
   return (
-    <Comp
-      className={`relative overflow-hidden rounded-[20px] ${className}`}
-      style={{
-        backgroundImage: 'linear-gradient(180deg, #1A1B20, #121317)',
-        border: '1px solid rgba(255,180,70,.12)',
-        boxShadow: '0 10px 30px rgba(0,0,0,.45), 0 0 40px rgba(255,138,0,.06), inset 0 1px rgba(255,255,255,.04)',
-      }}
-      {...rest}
-    >
-      {children}
-    </Comp>
+    <>
+      <Comp
+        className={`premium-card relative overflow-hidden rounded-[20px] ${className}`}
+        style={{
+          backgroundImage: 'linear-gradient(180deg, #1A1B20, #121317)',
+          border: '1px solid rgba(255,180,70,.12)',
+          boxShadow: '0 10px 30px rgba(0,0,0,.45), 0 0 40px rgba(255,138,0,.06), inset 0 1px rgba(255,255,255,.04)',
+          transition: 'box-shadow 150ms ease',
+        }}
+        {...rest}
+      >
+        {children}
+      </Comp>
+      {/* glow เพิ่มเฉพาะตอนแตะ (:active) เท่านั้น ไม่ใช่ hover ถาวร — กันไม่ให้ล้นตาบนมือถือที่ไม่มี
+          hover จริงอยู่แล้ว แค่ให้ความรู้สึก "ตอบสนอง" ตอนกดจริงๆ */}
+      <style jsx>{`
+        .premium-card:active {
+          box-shadow:
+            0 10px 30px rgba(0, 0, 0, 0.45),
+            0 0 30px rgba(255, 138, 0, 0.15),
+            inset 0 1px rgba(255, 255, 255, 0.04);
+        }
+      `}</style>
+    </>
   )
 }

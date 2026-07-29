@@ -225,6 +225,16 @@
   animation: ring-pulse 3.2s ease-in-out infinite;
 }
 
+/* กระดิ่งแจ้งเตือน — badge ตัวเลขนิ่งสนิทมาตลอด เพิ่ม pulse เบาๆ ให้รู้สึกว่า "มีอะไรใหม่รอ" โดยไม่รบกวน
+   (scale เท่านั้น ไม่ขยับตำแหน่ง กันเบียดกับกระดิ่งข้างใต้) */
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.animate-badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
@@ -234,7 +244,8 @@
   .animate-header-glow,
   .animate-header-particle,
   .animate-header-wave,
-  .animate-ring-pulse {
+  .animate-ring-pulse,
+  .animate-badge-pulse {
     animation: none !important;
   }
 }
