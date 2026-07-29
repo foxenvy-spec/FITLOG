@@ -9,6 +9,7 @@ import { parseRangeToNumber, rirToRpe } from '@/lib/importWorkoutExcel'
 import { MUSCLE_GROUP_COLORS, VOLUME_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import type { WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
 import Skeleton from './Skeleton'
+import PremiumCard from './ui/PremiumCard'
 
 interface RecommendedProgramCardProps {
   // กล้ามเนื้อที่แนะนำให้ฝึกวันนี้ (data.muscleRecommendation?.muscleGroup) — ใช้เลือกว่าเทมเพลต
@@ -60,11 +61,11 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
 
   if (isLoading || !data) {
     return (
-      <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden px-4 py-4">
+      <PremiumCard className="px-4 py-4">
         <Skeleton className="h-3 w-28 mb-3" />
         <Skeleton className="h-5 w-40 mb-2" />
         <Skeleton className="h-9 w-full" />
-      </div>
+      </PremiumCard>
     )
   }
 
@@ -72,16 +73,17 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
 
   if (templates.length === 0) {
     return (
-      <Link
+      <PremiumCard
+        as={Link}
         href="/templates"
-        className="flex items-center justify-between gap-3 rounded-[20px] bg-surface border border-line px-4 py-4 hover:border-amber/40 transition"
+        className="flex items-center justify-between gap-3 px-4 py-4 active:scale-[0.99] transition"
       >
         <div>
           <p className="font-display text-xs tracked uppercase text-amber">แนะนำสำหรับคุณ</p>
           <p className="text-xs text-muted mt-1">ยังไม่มีเทมเพลต — สร้างโปรแกรมแรกของคุณที่หน้าเทมเพลต</p>
         </div>
         <span className="text-xs text-amber shrink-0">สร้างเลย →</span>
-      </Link>
+      </PremiumCard>
     )
   }
 
@@ -149,7 +151,7 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
   }
 
   return (
-    <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
+    <PremiumCard className="animate-rise">
       <div className="px-4 pt-3 flex items-center justify-between">
         <p className="font-display text-xs tracked uppercase text-amber">แนะนำสำหรับคุณ</p>
         <Link href="/templates" className="text-muted" aria-label="เทมเพลตทั้งหมด">
@@ -211,6 +213,6 @@ export default function RecommendedProgramCard({ recommendedMuscle }: Recommende
           </button>
         )}
       </div>
-    </div>
+    </PremiumCard>
   )
 }
