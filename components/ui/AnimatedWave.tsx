@@ -17,16 +17,19 @@ interface AnimatedWaveProps {
   className?: string
 }
 
-const PATH = 'M0,45 C60,10 110,15 160,32 C210,50 240,55 290,38 C340,20 380,15 400,22'
+// เปลี่ยนจากเส้นโค้ง (เคยลองทั้งแบบ 3 ช่วงและ 2 ช่วงมาก่อน) เป็นเส้นตรงแนวนอนล้วนๆ ตามที่ขอ —
+// วางไว้ใน Header.tsx ต่อจาก subtitle "Personalized Fitness" โดยตรง (normal flow) ไม่ต้องพยายาม
+// ให้ไปชนวง Fitness Score อีกต่อไป จึงตัดความโค้ง/จุดจบพิเศษออกไปเลย เหลือแค่เส้นตรงที่ y=35
+// (กึ่งกลาง viewBox สูง 70 เดิม)
+const PATH = 'M0,35 L400,35'
 
 const PARTICLE_POINTS = [
-  { x: 40, y: 22 },
-  { x: 100, y: 18 },
-  { x: 160, y: 32 },
-  { x: 205, y: 47 },
-  { x: 260, y: 47 },
-  { x: 310, y: 30 },
-  { x: 360, y: 17 },
+  { x: 40, y: 35 },
+  { x: 100, y: 35 },
+  { x: 160, y: 35 },
+  { x: 220, y: 35 },
+  { x: 280, y: 35 },
+  { x: 340, y: 35 },
 ]
 
 // AnimatedWave — เส้นคลื่นไฟตกแต่งทั่วไป (decorative only) ไม่ผูกกับ dashboard header โดยเฉพาะ
@@ -50,7 +53,10 @@ export default function AnimatedWave({
   return (
     <svg
       viewBox="0 0 400 70"
-      className={`w-full h-[70px] overflow-visible ${className}`}
+      // เดิม h-[70px] (ตอนยังเป็นเส้นโค้งพื้นหลังใหญ่ๆ) ลดเหลือ h-[18px] ให้สัดส่วนเข้ากับการเป็น
+      // เส้นขีดเล็กๆ ใต้ subtitle แทน — viewBox ยังคง 0 0 400 70 เดิม (ไม่แตะค่า blur/glow ที่ปรับจูน
+      // ไว้กับสัดส่วนนี้) แค่บีบความสูงตอน render ผ่าน CSS เท่านั้น
+      className={`w-full h-[18px] overflow-visible ${className}`}
       preserveAspectRatio="none"
       aria-hidden="true"
     >

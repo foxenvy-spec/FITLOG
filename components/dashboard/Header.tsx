@@ -4,10 +4,11 @@ import type { ReactNode } from 'react'
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
 import AmbientGlow from './AmbientGlow'
-import AnimatedWave from '@/components/ui/AnimatedWave'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
+import HeroEnergyWave from './HeroEnergyWave'
+import EnergyParticles from './EnergyParticles'
 import Glow from '@/components/ui/Glow'
 
 interface HeaderProps {
@@ -37,18 +38,24 @@ const RING_SIZE = 84
 const RING_LABEL_HEIGHT = 42
 // พื้นที่หายใจเพิ่มใต้ label — เดิม hero สูงพอดีเป๊ะกับเนื้อหาจนรู้สึกอึดอัด/แบน เพิ่มส่วนนี้ให้ดูโปร่งขึ้น
 const HERO_BOTTOM_BREATHING_ROOM = 40
-// Wave ต้องจบที่ "ความสูงเดียวกับกึ่งกลางวง" (= ขอบซ้ายสุดของวงกลม) ไม่งั้นจะรู้สึกเหมือนเป็นคนละชิ้นกัน
-// แม้จะจบที่ตำแหน่ง x เดียวกันก็ตาม (ดู AnimatedWave.tsx: จุดจบของเส้นอยู่ที่ y=22 จาก viewBox สูง 70)
-// คำนวณจาก RING_TOP + RING_SIZE/2 (จุดกึ่งกลางวงตามแนวตั้ง) ลบ 22 ตรงๆ แทนเลข 33 คงที่เดิม (ซึ่งผูก
-// อยู่กับ RING_SIZE เดิม=110 โดยเฉพาะ) กัน bug กรณีเปลี่ยน RING_SIZE แล้วลืมคำนวณจุดนี้ใหม่ตาม
-const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE / 2 - 22}px)`
+// ความสูงของ wrapper เส้นคลื่น HeroEnergyWave — viewBox ภายในเป็น 0 0 400 90 (preserveAspectRatio
+//="none") จุดจบเส้นอยู่ที่ y=45 คือกึ่งกลางแนวตั้งของ viewBox พอดี (90/2) ดังนั้นไม่ว่า WAVE_HEIGHT
+// จะเป็นเท่าไหร่ จุดจบเส้นก็จะอยู่กึ่งกลางแนวตั้งของ wrapper นี้เสมอ — แค่จัดกึ่งกลาง wrapper ให้ตรง
+// กับกึ่งกลางวง Fitness Score (RING_TOP + RING_SIZE/2) ก็พอ ไม่ต้องคำนวณ offset ซับซ้อนเพิ่ม
+const WAVE_HEIGHT = 70
+const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE}px / 2 - ${WAVE_HEIGHT}px / 2)`
+// ปลายเส้น (x=400 ใน viewBox) วางให้ตรงกึ่งกลางแนวนอนของวง Fitness Score พอดี (แสง lens flare จะโผล่
+// ออกมาจากขอบวงเอง ดูเหมือนเส้นคลื่น "พุ่งเข้าไป" ในวงจริงๆ)
+const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px / 2)`
 
-// Header ของหน้า Dashboard (มือถือ) — v7:
-//   - ตำแหน่งทุกจุด (Bell/Greeting/ชื่อ/Ring/Wave) เปลี่ยนจาก fixed px เป็น clamp(min, vw, max) —
-//     คำนวณจากความกว้างจอ (vw) แต่มีเพดานบน-ล่างกันไม่ให้เล็ก/ใหญ่เกินไปบนจอที่ต่างกันมาก แทนที่
-//     fixed px ตายตัวแบบ v4-v6 ที่พอจอเปลี่ยนขนาดมากๆ สัดส่วนจะเพี้ยน
-//   - Wave ยังคง "จบที่ขอบ Ring พอดี" เหมือน v6 แต่คำนวณ right offset จาก RING_RIGHT + RING_SIZE
-//     แทนเลข 130 คงที่ ให้ Wave ขยับตาม Ring อัตโนมัติถ้าปรับตำแหน่ง Ring ในอนาคต
+// Header ของหน้า Dashboard (มือถือ) — v9:
+//   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/คำให้กำลังใจ) ยังเป็น flex-col เดียวใน normal flow
+//     เหมือนเดิม (กัน bug ข้อความตกบรรทัดซ้อนกันที่เคยเจอ) — เอา light-streak เส้นเล็กใต้ subtitle
+//     ของ v8 ออก เพราะตอนนี้มี HeroEnergyWave เป็นเส้นคลื่นพลังงานเต็มความกว้าง header อยู่เป็น
+//     background layer แทนแล้ว (วิ่งจากซ้ายไปพุ่งเข้าหาวง Fitness Score ทางขวา ตามสเปคที่ขอ)
+//   - EnergyParticles คลุมพื้นหลังทั้งกล่อง hero (อยู่เหนือ AmbientGlow แต่ใต้ตัว wave/ข้อความ)
+//   - ตำแหน่งฝั่งขวา (Bell/Ring) ยังคง clamp(min, vw, max) เดิม — วง Fitness Score เปลี่ยนไปใช้
+//     FitnessRing (conic-gradient) ข้างในแล้ว แต่ตำแหน่ง/ขนาดจากมุมมอง Header.tsx ไม่เปลี่ยน
 export default function Header({
   greetingText,
   latestPR,
@@ -64,46 +71,64 @@ export default function Header({
         className="relative overflow-hidden"
         style={{ height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)` }}
       >
-        {/* Background: glow + wave */}
+        {/* Background: glow + particles + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <AmbientGlow color={fitnessScore.color} />
         </div>
+        <div className="absolute inset-0 z-[5] pointer-events-none" aria-hidden="true">
+          <EnergyParticles count={40} />
+        </div>
         <div
-          className="absolute left-0 z-0 pointer-events-none animate-header-wave"
-          style={{ top: WAVE_TOP, right: `calc(${RING_SIZE}px + ${RING_RIGHT})` }}
+          className="absolute z-[8] pointer-events-none left-0"
+          style={{ top: WAVE_TOP, right: WAVE_RIGHT, height: WAVE_HEIGHT }}
           aria-hidden="true"
         >
-          <AnimatedWave />
+          <HeroEnergyWave />
         </div>
 
-        {/* Foreground */}
-        <div className="absolute z-20" style={{ top: 'clamp(16px, 5vw, 22px)', left: 'clamp(18px, 6vw, 26px)' }}>
+        {/* Foreground — ทักทาย/ชื่อ/subtitle/wave/คำให้กำลังใจ รวมเป็นคอลัมน์เดียว (flex-col, normal flow)
+            แทนที่จะ absolute แยกทีละบรรทัดพร้อม top: คำนวณเอง — เดิมสมมติว่าทุกบรรทัด "บรรทัดเดียว"
+            เสมอ พอข้อความจริง (subtitle/คำให้กำลังใจ) ตกบรรทัดเป็น 2 บรรทัดบนจอแคบ กลายเป็นโดนซ้อนกับ
+            wave/tier label ของวง (บั๊กเดียวกับ label การ์ด Fitness Score ที่เคยเจอมาก่อน) ใช้ flow
+            ปกติแทน รับประกันว่าไม่ว่าจะตกกี่บรรทัด บรรทัดถัดไปก็จะขยับลงเองอัตโนมัติ ไม่ทับกันแน่นอน */}
+        <div
+          className="absolute z-20 flex flex-col"
+          style={{ top: 'clamp(16px, 5vw, 22px)', left: 'clamp(18px, 6vw, 26px)', maxWidth: 'calc(100% - 150px)' }}
+        >
           <Greeting text={greetingText} />
+          <p
+            className="uppercase"
+            style={{
+              marginTop: 4,
+              fontFamily: 'var(--font-oswald), var(--font-kanit)',
+              fontSize: 'clamp(42px, 15vw, 60px)',
+              fontWeight: 900,
+              letterSpacing: '2px',
+              lineHeight: 1,
+              backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            {displayName}
+          </p>
+
+          {/* subtitle ธรรมดา — เส้นคลื่นเดิมที่เคยอยู่ใต้บรรทัดนี้ (light streak) ย้ายไปเป็น
+              HeroEnergyWave พื้นหลังเต็มความกว้าง header แทนแล้ว ไม่ผูกกับความกว้างของข้อความนี้อีกต่อไป */}
+          <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 2, fontSize: 11 }}>
+            Personalized Fitness
+          </p>
+
+          {/* คำให้กำลังใจ — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ */}
+          <p className="text-ink" style={{ marginTop: 8, fontSize: 13 }}>
+            วันนี้พร้อมสำหรับการออกกำลังกาย 💪
+          </p>
         </div>
 
         <div className="absolute z-30" style={{ top: 'clamp(14px, 4.5vw, 20px)', right: RING_RIGHT }}>
           <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
         </div>
-
-        <p
-          className="absolute z-20 uppercase"
-          style={{
-            top: 'clamp(48px, 14vw, 64px)',
-            left: 'clamp(18px, 6vw, 26px)',
-            maxWidth: 'calc(100% - 150px)', // กันชื่อยาวๆ ไม่ให้ไปทับ Ring ทางขวา
-            fontFamily: 'var(--font-oswald), var(--font-kanit)',
-            fontSize: 'clamp(42px, 15vw, 60px)',
-            fontWeight: 900,
-            letterSpacing: '2px',
-            lineHeight: 1,
-            backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-          }}
-        >
-          {displayName}
-        </p>
 
         <div className="absolute z-20" style={{ top: RING_TOP, right: RING_RIGHT }}>
           <div className="relative">

@@ -105,6 +105,26 @@ export default function ProgressRing({
         />
       </svg>
 
+      {/* sweep glow — จุดสว่างหมุนวนรอบขอบวงต่อเนื่อง (แยกจาก ring-pulse ที่แค่หายใจอยู่กับที่ไม่ขยับ)
+          ใช้ wrapper หมุนทั้งก้อน (transform:rotate) แทนคำนวณตำแหน่ง x/y เอง — จุดวางไว้บนสุดตรงกลาง
+          แนวนอน (offset ลงมา sw/2 ให้ตรงกึ่งกลางเส้นวงพอดี) แล้วหมุนตามวง */}
+      {glow && (
+        <div className="absolute inset-0 pointer-events-none animate-ring-sweep" aria-hidden="true">
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: Math.max(4, sw * 0.5),
+              height: Math.max(4, sw * 0.5),
+              left: '50%',
+              top: sw / 2,
+              transform: 'translate(-50%, -50%)',
+              background: '#FFF4CC',
+              boxShadow: '0 0 8px #FFF4CC, 0 0 16px #FF8A00',
+            }}
+          />
+        </div>
+      )}
+
       {/* inner shadow บางๆ ด้านในวง ให้เนื้อหากึ่งกลางดูจมลงไปนิดหนึ่งแทนที่จะลอยแบน */}
       <div
         className="absolute rounded-full pointer-events-none"
