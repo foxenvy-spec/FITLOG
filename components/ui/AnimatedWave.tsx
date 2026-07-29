@@ -61,10 +61,10 @@ export default function AnimatedWave({
           ))}
         </linearGradient>
         <filter id={glowWideId} x="-80%" y="-400%" width="260%" height="900%">
-          <feGaussianBlur stdDeviation="14" />
+          <feGaussianBlur stdDeviation="20" />
         </filter>
         <filter id={glowCoreId} x="-70%" y="-300%" width="240%" height="700%">
-          <feGaussianBlur stdDeviation="6" />
+          <feGaussianBlur stdDeviation="8" />
         </filter>
         {endGlow && (
           <filter id={endGlowId} x="-300%" y="-300%" width="700%" height="700%">
@@ -73,14 +73,14 @@ export default function AnimatedWave({
         )}
       </defs>
 
-      {/* outer glow — ส้มจาง กว้างสุด */}
-      <path d={PATH} fill="none" stroke="#FF8A00" strokeWidth="18" strokeOpacity="0.18" filter={`url(#${glowWideId})`} style={{ mixBlendMode: 'screen' }} />
+      {/* outer glow — ส้มจาง กว้างสุด — เข้ม/กว้างขึ้นจากเดิม ให้ "ฟุ้ง" ชัดเจนขึ้นแทนที่จะจางจนแทบมองไม่เห็น */}
+      <path d={PATH} fill="none" stroke="#FF8A00" strokeWidth="24" strokeOpacity="0.32" filter={`url(#${glowWideId})`} style={{ mixBlendMode: 'screen' }} />
       {/* middle glow — ทอง เข้มขึ้น แคบกว่า */}
-      <path d={PATH} fill="none" stroke="#FFAA00" strokeWidth="8" strokeOpacity="0.35" filter={`url(#${glowCoreId})`} style={{ mixBlendMode: 'screen' }} />
-      {/* เส้นแกนไฟหลัก */}
-      <path d={PATH} fill="none" stroke={`url(#${gradId})`} strokeWidth="3" strokeLinecap="round" style={{ mixBlendMode: 'screen' }} />
+      <path d={PATH} fill="none" stroke="#FFAA00" strokeWidth="11" strokeOpacity="0.5" filter={`url(#${glowCoreId})`} style={{ mixBlendMode: 'screen' }} />
+      {/* เส้นแกนไฟหลัก — หนาขึ้นเล็กน้อยให้ตัวเส้นเองดูมีน้ำหนักขึ้น ไม่ใช่พึ่งแค่ glow รอบๆ */}
+      <path d={PATH} fill="none" stroke={`url(#${gradId})`} strokeWidth="4" strokeLinecap="round" style={{ mixBlendMode: 'screen' }} />
       {/* inner glow — เกือบขาว บางที่สุด ทับตรงกลางเส้นให้สว่างจ้า */}
-      <path d={PATH} fill="none" stroke="#FFF5DC" strokeWidth="1.4" strokeOpacity="0.95" strokeLinecap="round" style={{ mixBlendMode: 'screen' }} />
+      <path d={PATH} fill="none" stroke="#FFF5DC" strokeWidth="1.8" strokeOpacity="0.95" strokeLinecap="round" style={{ mixBlendMode: 'screen' }} />
 
       {particles &&
         PARTICLE_POINTS.map((p, i) => (
