@@ -253,9 +253,11 @@ export default function MobileDashboardView() {
           <div className="absolute w-48 h-48 rounded-full blur-[120px] bg-moss/10" style={{ top: '85%', left: -40 }} />
         </div>
 
-        {/* ระยะห่างระหว่างการ์ดหลัก — เดิม 12px แน่นเกินไปจนการ์ดชิดกันเป็นพรืด (มอคอัพใช้ ~24px
-            ให้แต่ละการ์ด "หายใจ" ได้) ปรับขึ้นมาให้ใกล้เคียงมอคอัพมากขึ้น */}
-        <div className="relative space-y-[24px]">
+        {/* ระยะห่างระหว่าง "section" หลัก — sectionGap (12px) ตาม spacing scale ที่กำหนด
+            (headerGap 10 / sectionGap 12 / titleGap 8 / cardGap 10 / contentGap 6, ห้ามมี
+            margin 24/32px หลุดสเกลอีก) เดิมเคยปรับเป็น 24px ไปรอบก่อน แต่รอบนี้คร่อมกับ
+            headerGap ที่แยกออกมาแล้ว (ดู Header.tsx) เลยรวมเป็น sectionGap เดียวกันหมด */}
+        <div className="relative space-y-[12px]">
         <Header
           greetingText={greetingText}
           latestPR={data.latestPR}
@@ -276,7 +278,10 @@ export default function MobileDashboardView() {
 
         {/* body composition snapshot */}
         <div className="animate-rise" style={{ animationDelay: '15ms' }}>
-          <div className="flex items-center justify-between px-1 mb-1.5">
+          {/* titleGap (8px) ตาม spacing scale — คงขนาดตัวอักษร micro-label เดิม (12px, tracked
+              uppercase) ให้เข้าชุดกับ label อื่นๆ ในหน้าเดียวกัน (Today's Workout, AI Coach ฯลฯ
+              ก็ใช้สไตล์ label เล็กแบบนี้ทั้งหมด) แทนที่จะขยับขึ้นเป็นหัวข้อใหญ่แยกสไตล์ */}
+          <div className="flex items-center justify-between px-1" style={{ marginBottom: 8 }}>
             <p className="font-display tracked uppercase text-ink" style={{ fontSize: 12 }}>ภาพรวมร่างกาย</p>
             <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
               ดูทั้งหมด →
