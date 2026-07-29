@@ -12,77 +12,72 @@ interface TodaysWorkoutCompactCardProps {
   href: string
 }
 
-// เวอร์ชันย่อของการ์ด "Today's Workout" — ไอคอนวงกลม + เศษส่วน + progress bar ในแถวเดียว (Mobile
-// Dashboard v2: ปรับ padding/ขนาดตัวอักษรให้สูงรวม ~110px) — รูปประกอบพื้นหลัง/ไอคอนที่ผู้ใช้สร้างเอง
-// (v3) กลับมาแล้ว แต่วางเป็น background layer จางๆ ด้านหลังแถวเนื้อหาเดิม แทนที่จะเป็นรูปใหญ่แยก
-// บล็อกต่างหากเหมือนเวอร์ชันก่อน v2 (ที่ตัดออกไปตอนทำ compact) — ไม่ดันความสูงการ์ดกลับขึ้นไป
+// การ์ด "Today's Workout" — v4: จัดเลย์เอาต์ใหม่ตามภาพอ้างอิงที่ผู้ใช้ส่งมา (ตัวเลขเศษส่วนใหญ่ขึ้น
+// เป็นจุดเด่นหลัก แยกบรรทัดจาก label ด้านบน + progress bar เต็มความกว้างพร้อมปุ่มลูกศรวงกลมลอยท้าย
+// แถบ) แทนที่แถวเดียวแบบ v2/v3 เดิม — การ์ดสูงขึ้นจาก ~80px เป็นประมาณ 130-140px ตามที่ขอ ไม่มี wrapper
+// ไหนใน MobileDashboardView กำหนดความสูงตายตัวไว้ (แค่ space-y ปกติ) จึงขยายได้อย่างปลอดภัย
+//
+// ไอคอนดัมเบลเล็ก (แถวบน) ยังใช้ mixBlendMode: screen เหมือนเดิม (พื้นดำของรูปกลืนเข้ากับพื้นหลังวงสี
+// อำพันจางๆ) แต่ปุ่มลูกศรตอนนี้ใหญ่ขึ้นและทำหน้าที่เป็นปุ่มกดจริงๆ แยกเป็นชิ้นเด่นของตัวเอง — รูปนี้ทรง
+// วงกลมมีขอบ/glow อยู่ในตัวอยู่แล้ว จึงปล่อยพื้นดำของมันไว้ตามธรรมชาติ (ไม่ blend) ให้ดูเป็นปุ่มวงกลมจริง
+// แทนที่จะกลืนหายไปเป็นแค่ไอคอนแบนๆ เหมือนตอนใช้เป็นไอคอนเล็กแทรกในข้อความ
 export default function TodaysWorkoutCompactCard({ completed, total, href }: TodaysWorkoutCompactCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
 
   return (
-    <PremiumCard
-      as={Link}
-      href={href}
-      className="relative overflow-hidden flex items-center gap-4 px-4 py-4 active:scale-[0.99] transition"
-    >
-      {/* พื้นหลังฉากยิม — จางๆ อยู่หลังเนื้อหาทั้งหมด (z-0) โฟกัสไปฝั่งขวาที่มีดัมเบลเรืองแสง แล้วไล่
-          เฉดมืดจากซ้ายทับอีกชั้น (z-[1]) กันตัวหนังสือ/ไอคอนอ่านไม่ออก — รูปเวอร์ชันใหม่เป็นแนวนอน
-          (1983x793 ≈ 2.5:1) ดัมเบลอยู่กึ่งกลางแนวตั้งค่อนไปทางล่างเล็กน้อย ต่างจากรูปแนวตั้งเดิมที่ต้อง
-          โฟกัสไปมุมล่างสุด (75%) จึงปรับ objectPosition ขึ้นมาเป็นกึ่งกลางแนวตั้งแทน */}
+    <PremiumCard as={Link} href={href} className="relative overflow-hidden block active:scale-[0.99] transition" style={{ padding: 16 }}>
+      {/* พื้นหลังฉากยิม — โฟกัสฝั่งขวาที่มีดัมเบลเรืองแสง เปิดให้เห็นชัดขึ้นกว่า v3 (เนื้อหาทั้งหมดตอนนี้
+          ชิดซ้ายเป็นคอลัมน์เดียว ไม่ได้ทับพื้นที่ฝั่งขวาเหมือนเดิม) ไล่เฉดมืดจากซ้ายทับอีกชั้นแค่พอให้
+          ตัวหนังสืออ่านออก ไม่ต้องมืดจัดเท่า v3 */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <Image
-          src="/images/today-workout-bg-mobile.png"
-          alt=""
-          fill
-          className="object-cover"
-          style={{ objectPosition: '80% 60%' }}
-        />
+        <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '80% 55%' }} />
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(90deg, rgba(20,22,26,0.94) 0%, rgba(20,22,26,0.75) 45%, rgba(20,22,26,0.35) 100%)' }}
+          style={{ background: 'linear-gradient(90deg, rgba(20,22,26,0.95) 0%, rgba(20,22,26,0.8) 40%, rgba(20,22,26,0.25) 100%)' }}
         />
       </div>
 
-      {/* ไอคอนดัมเบล/ลูกศรมีพื้นวงกลมดำของตัวเองติดมาด้วย (ไม่ใช่พื้นโปร่งใส) — ใช้ mixBlendMode:
-          screen (เทคนิคเดียวกับ glow ทุกจุดใน Header.tsx) ให้พื้นดำ "หายไป" กลืนกับพื้นหลังมืดของวง/
-          การ์ด เหลือแค่ไอคอนเรืองแสงจริงๆ แทนที่จะเห็นเป็นกรอบดำทับอยู่บนพื้นหลังสีอำพัน/ฉากยิม */}
-      <span
-        className="relative z-10 w-12 h-12 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-        style={{ backgroundColor: `${COLORS.amber}22` }}
-        aria-hidden="true"
-      >
-        <Image
-          src="/icons/today-workout-icon-dumbbell.png"
-          alt=""
-          width={48}
-          height={48}
-          className="w-full h-full object-cover"
-          style={{ mixBlendMode: 'screen' }}
-        />
-      </span>
-      <div className="relative z-10 min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
+      <div className="relative z-10">
+        {/* แถวบน — ไอคอนเล็ก + label */}
+        <div className="flex items-center gap-2">
+          <span
+            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+            style={{ backgroundColor: `${COLORS.amber}22` }}
+            aria-hidden="true"
+          >
+            <Image
+              src="/icons/today-workout-icon-dumbbell.png"
+              alt=""
+              width={32}
+              height={32}
+              className="w-full h-full object-cover"
+              style={{ mixBlendMode: 'screen' }}
+            />
+          </span>
           <p className="text-[11px] tracked uppercase text-muted">Today&apos;s Workout</p>
-          <p className="text-xs text-muted shrink-0">
-            <span className="font-mono text-ink text-base font-semibold">{completed}</span>
-            <span className="mx-0.5">/</span>
-            {total} ท่า
-          </p>
         </div>
-        <div className="h-2 rounded-full bg-surface2 mt-2.5 overflow-hidden">
-          <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
+
+        {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ดตามภาพอ้างอิง */}
+        <div className="flex items-baseline gap-1 mt-3">
+          <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 34 }}>
+            {completed}
+          </span>
+          <span className="text-muted leading-none" style={{ fontSize: 18 }}>
+            /{total}
+          </span>
+        </div>
+        <p className="text-xs text-muted mt-1">ท่าที่ทำแล้ว</p>
+
+        {/* progress bar เต็มความกว้าง + ปุ่มลูกศรวงกลมท้ายแถบ */}
+        <div className="flex items-center gap-3 mt-4">
+          <div className="h-2 rounded-full bg-surface2 flex-1 overflow-hidden">
+            <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
+          </div>
+          <span className="shrink-0 w-9 h-9" aria-hidden="true">
+            <Image src="/icons/today-workout-icon-arrow.png" alt="" width={36} height={36} className="w-full h-full object-cover rounded-full" />
+          </span>
         </div>
       </div>
-      <span className="relative z-10 shrink-0 w-4 h-4" aria-hidden="true">
-        <Image
-          src="/icons/today-workout-icon-arrow.png"
-          alt=""
-          width={16}
-          height={16}
-          className="w-full h-full object-contain"
-          style={{ mixBlendMode: 'screen' }}
-        />
-      </span>
     </PremiumCard>
   )
 }
