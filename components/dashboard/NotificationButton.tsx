@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { relativeDayLabel } from '@/lib/dashboardStats'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
+import GlassCard from '@/components/ui/GlassCard'
 
 // ย้าย "PR ล่าสุด" / "ฝึกมากสุดสัปดาห์นี้" ออกจากเนื้อหาหลักของ Dashboard มาไว้ในกระดิ่งแจ้งเตือนแทน —
 // เดิมสองการ์ดนี้กินพื้นที่แถวเต็มความกว้างอยู่ใต้การ์ดสถิติร่างกาย ทั้งที่เป็นข้อมูล "เชิงแจ้งเตือน"
@@ -57,23 +58,18 @@ export default function NotificationButton({
 
   return (
     <div className="relative shrink-0" ref={ref}>
-      <button
+      <GlassCard
+        as="button"
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="การแจ้งเตือน"
         aria-expanded={open}
-        className="relative w-11 h-11 rounded-full flex items-center justify-center hover:brightness-110 transition backdrop-blur-md"
-        style={{
-          border: '1.5px solid transparent',
-          backgroundImage:
-            'linear-gradient(180deg, #13233Acc, #08121Fcc), linear-gradient(135deg, #FF8A0014, #FF8A0040, #FF8A0014)',
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'padding-box, border-box',
-          boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 16px rgba(255,170,0,.45)',
-        }}
+        rounded="full"
+        glowColor="#FF8A00"
+        className="relative w-11 h-11 flex items-center justify-center hover:brightness-110 transition"
       >
         {/* SVG แทน emoji 🔔 เดิม — emoji บังคับสีตามสเปกไม่ได้ (มีสีของตัวเองมากับฟอนต์/แพลตฟอร์ม)
-            ใช้ currentColor ผ่าน fill ตรงๆ ให้ตรงสเปก icon #FFD24A ได้จริง */}
+            ใช้ fill ตรงๆ ให้ตรงสเปก icon #FFD24A ได้จริง */}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
             d="M12 3a4 4 0 0 0-4 4v2.2c0 .9-.32 1.77-.9 2.45L5.6 13.8c-.63.74-.12 1.87.85 1.87h11.1c.97 0 1.48-1.13.85-1.87l-1.5-2.15A3.75 3.75 0 0 1 16 9.2V7a4 4 0 0 0-4-4Z"
@@ -86,7 +82,7 @@ export default function NotificationButton({
             {items.length}
           </span>
         )}
-      </button>
+      </GlassCard>
 
       {open && (
         <div className="absolute right-0 mt-2 w-72 max-w-[85vw] rounded-lg bg-surface border border-line shadow-elevated z-20 overflow-hidden">
