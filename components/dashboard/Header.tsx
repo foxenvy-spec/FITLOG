@@ -76,60 +76,50 @@ export default function Header({
           <AnimatedWave />
         </div>
 
-        {/* Foreground */}
-        <div className="absolute z-20" style={{ top: 'clamp(16px, 5vw, 22px)', left: 'clamp(18px, 6vw, 26px)' }}>
+        {/* Foreground — ทักทาย/ชื่อ/subtitle/คำให้กำลังใจ รวมเป็นคอลัมน์เดียว (flex-col, normal flow)
+            แทนที่จะ absolute แยกทีละบรรทัดพร้อม top: คำนวณเอง — เดิมสมมติว่าทุกบรรทัด "บรรทัดเดียว"
+            เสมอ พอข้อความจริง (subtitle/คำให้กำลังใจ) ตกบรรทัดเป็น 2 บรรทัดบนจอแคบ กลายเป็นโดนซ้อนกับ
+            wave/tier label ของวง (บั๊กเดียวกับ label การ์ด Fitness Score ที่เคยเจอมาก่อน) ใช้ flow
+            ปกติแทน รับประกันว่าไม่ว่าจะตกกี่บรรทัด บรรทัดถัดไปก็จะขยับลงเองอัตโนมัติ ไม่ทับกันแน่นอน */}
+        <div
+          className="absolute z-20 flex flex-col"
+          style={{ top: 'clamp(16px, 5vw, 22px)', left: 'clamp(18px, 6vw, 26px)', maxWidth: 'calc(100% - 150px)' }}
+        >
           <Greeting text={greetingText} />
+          <p
+            className="uppercase"
+            style={{
+              marginTop: 4,
+              fontFamily: 'var(--font-oswald), var(--font-kanit)',
+              fontSize: 'clamp(42px, 15vw, 60px)',
+              fontWeight: 900,
+              letterSpacing: '2px',
+              lineHeight: 1,
+              backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            {displayName}
+          </p>
+
+          {/* subtitle ใต้ชื่อ — เดิมไม่มีเลย (มอคอัพมี "Personalized Fitness" ใต้ชื่อแบรนด์) ใช้ tagline
+              เดิมของ FITLOG เอง ("Track · Train · Transform" จากหน้า login) แทนที่จะเอาข้อความมอคอัพ
+              มาแปะตรงๆ เพราะช่องนี้โชว์ชื่อผู้ใช้จริง ไม่ใช่ชื่อแอป ใส่ข้อความบรรยายแอปคนละความหมาย */}
+          <p className="tracked uppercase text-muted" style={{ marginTop: 2, fontSize: 11 }}>
+            Track · Train · Transform
+          </p>
+
+          {/* คำให้กำลังใจ — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ */}
+          <p className="text-ink" style={{ marginTop: 12, fontSize: 13 }}>
+            วันนี้พร้อมสำหรับการออกกำลังกาย 💪
+          </p>
         </div>
 
         <div className="absolute z-30" style={{ top: 'clamp(14px, 4.5vw, 20px)', right: RING_RIGHT }}>
           <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
         </div>
-
-        <p
-          className="absolute z-20 uppercase"
-          style={{
-            top: 'clamp(48px, 14vw, 64px)',
-            left: 'clamp(18px, 6vw, 26px)',
-            maxWidth: 'calc(100% - 150px)', // กันชื่อยาวๆ ไม่ให้ไปทับ Ring ทางขวา
-            fontFamily: 'var(--font-oswald), var(--font-kanit)',
-            fontSize: 'clamp(42px, 15vw, 60px)',
-            fontWeight: 900,
-            letterSpacing: '2px',
-            lineHeight: 1,
-            backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-          }}
-        >
-          {displayName}
-        </p>
-
-        {/* subtitle ใต้ชื่อ — เดิมไม่มีเลย (มอคอัพมี "Personalized Fitness" ใต้ชื่อแบรนด์) ใช้ tagline
-            เดิมของ FITLOG เอง ("TRACK · TRAIN · TRANSFORM" จากหน้า login) แทนที่จะเอาข้อความมอคอัพ
-            มาแปะตรงๆ เพราะช่องนี้โชว์ชื่อผู้ใช้จริง ไม่ใช่ชื่อแอป ใส่ข้อความบรรยายแอปคนละความหมาย */}
-        <p
-          className="absolute z-20 tracked uppercase text-muted"
-          style={{
-            top: `calc(clamp(48px, 14vw, 64px) + clamp(42px, 15vw, 60px))`,
-            left: 'clamp(18px, 6vw, 26px)',
-            maxWidth: 'calc(100% - 150px)',
-            fontSize: 11,
-          }}
-        >
-          Track · Train · Transform
-        </p>
-
-        {/* คำให้กำลังใจใต้ wave — ข้อความเดียวกับที่มอคอัพระบุไว้เป๊ะๆ วางไว้ในโซน
-            HERO_BOTTOM_BREATHING_ROOM (40px ว่างท้ายกล่อง hero ฝั่งซ้ายไม่มีอะไรอยู่แล้ว) แทนการเพิ่ม
-            ความสูง hero ใหม่ — bottom:26 (ไม่ใช่ 14) เว้นที่ให้พ้นโซนที่การ์ด Today's Focus ซ้อนขึ้นมา
-            (margin-top:-18 ด้านล่าง แปลว่าการ์ดกิน 18px บนสุดของ hero) ไม่งั้นข้อความจะโดนการ์ดทับ */}
-        <p
-          className="absolute z-20 text-ink"
-          style={{ bottom: 26, left: 'clamp(18px, 6vw, 26px)', maxWidth: 'calc(100% - 150px)', fontSize: 13 }}
-        >
-          วันนี้พร้อมสำหรับการออกกำลังกาย 💪
-        </p>
 
         <div className="absolute z-20" style={{ top: RING_TOP, right: RING_RIGHT }}>
           <div className="relative">
