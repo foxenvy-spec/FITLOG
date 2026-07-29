@@ -4,12 +4,20 @@ import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { FIRE_GRADIENT_STOPS, NEUTRAL } from '@/lib/theme'
 
+interface GradientStop {
+  offset: string
+  color: string
+}
+
 interface FitnessRingProps {
   /** 0-100 */
   value: number
   size?: number
   strokeWidth?: number
   trackColor?: string
+  /** ไล่สีของเส้นวง — ดีฟอลต์เป็น fire theme คงที่ (FIRE_GRADIENT_STOPS) ถ้าไม่ส่งมา แต่ FitnessScore.tsx
+   *  จะส่ง gradientStops ของ tier ปัจจุบันมาเสมอ (ดู lib/fitnessScore.ts) ให้สีวงเปลี่ยนตามคะแนนจริง */
+  gradientStops?: readonly GradientStop[]
   /** เนื้อหากึ่งกลางวง (เช่น ตัวเลข + label) */
   children?: ReactNode
   className?: string
@@ -21,14 +29,15 @@ interface FitnessRingProps {
 // เฉยๆ) → glossy reflection rim (เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก จำลองผิวมันวาว) → highlight arc
 // สั้นๆ ตรงด้านบนสุด (จำลองแสงสะท้อนจากด้านบน แบบวัสดุทรงกลม) → จุดปลาย (tip) ที่หายใจเบาๆ
 //
-// สี gradient คงที่เป็นชุด fire theme เดิมเสมอ (ไม่ผูกกับ tier/recovery ตามหลักการที่ตกลงไว้ใน
-// lib/theme.ts) — ส่วนแสง glow รอบวงที่สะท้อนสถานะ recovery ยังคงมาจาก <Glow> ที่ Header.tsx ห่ออยู่
-// รอบนอก component นี้เหมือนเดิม ไม่ได้ทำซ้ำใน component นี้อีกชั้น
+// สี gradient เปลี่ยนตาม tier ของ Fitness Score แล้ว (เดิมคงที่เป็น fire theme เสมอ — ดูคอมเมนต์ที่
+// อัปเดตแล้วใน lib/theme.ts) ส่วนแสง glow รอบวงที่ Header.tsx ห่ออยู่รอบนอก component นี้ ก็เปลี่ยนไป
+// ใช้สีเดียวกับ tier แล้วเหมือนกัน (fitnessScore.color) ไม่ใช่สถานะ recovery แยกต่างหากเหมือนเดิมอีกต่อไป
 export default function FitnessRing({
   value,
   size = 84,
   strokeWidth,
   trackColor = NEUTRAL.ringTrackWarm,
+  gradientStops = FIRE_GRADIENT_STOPS,
   children,
   className = '',
 }: FitnessRingProps) {
@@ -66,7 +75,7 @@ export default function FitnessRing({
             </feMerge>
           </filter>
           <linearGradient id={`${idPrefix}-ring-gradient`} x1="0%" y1="0%" x2="100%" y2="100%">
-            {FIRE_GRADIENT_STOPS.map((s) => (
+            {gradientStops.map((s) => (
               <stop key={s.offset} offset={s.offset} stopColor={s.color} />
             ))}
           </linearGradient>

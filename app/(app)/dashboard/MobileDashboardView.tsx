@@ -264,7 +264,6 @@ export default function MobileDashboardView() {
           topMuscleThisWeek={data.topMuscleThisWeek}
           displayName={data.profileDisplayName || emailDisplayName(data.email)}
           fitnessScore={fitnessScore}
-          recoveryColor={recoveryStatusColor(overallRecoveryPct)}
         >
           <div className="max-w-[65%]">
             <TodaysFocusCard
