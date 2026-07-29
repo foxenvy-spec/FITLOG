@@ -47,20 +47,24 @@ const HERO_BOTTOM_BREATHING_ROOM = 40
 // ในขอบเขตปลอดภัยไม่ล้น hero (แม้ที่ RING_TOP ค่าต่ำสุด 60px พื้นที่เหนือ/ใต้กึ่งกลางวงยังเหลือ >100px
 // ทั้งสองด้าน พอสำหรับครึ่งหนึ่งของ 150 พอดี)
 const WAVE_HEIGHT = 150
-const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE}px / 2 - ${WAVE_HEIGHT}px / 2)`
-// ปลายเส้น (x=400 ใน viewBox) วางให้ตรงกับ "ขอบซ้าย" ของวงพอดี (เดิมจอดที่กึ่งกลางวง ทำให้เส้นดูเหมือน
-// วางแยกอยู่ข้างวงคนละชิ้น ไม่ได้ไหลเข้าไปจริงๆ) — เอา lens flare ไปชนขอบวงเป๊ะ แสงจะเบลอรวมเข้ากับ
-// glow รอบวง (recoveryColor) ที่ Header.tsx ห่ออยู่แล้ว ให้อ่านเป็น "พลังงานไหลเข้าวงต่อเนื่อง" ชิ้นเดียว
-const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px)`
+// เลื่อนลง 25px จากกึ่งกลางวงตรงๆ (ตามฟีดแบ็ก "wave ชนกับ Personalized Fitness") ให้เส้นคลื่นไปอยู่
+// ในช่องว่างระหว่าง subtitle+SubtitleAccent (จบประมาณ y=97-117 ที่ RING_TOP ต่ำสุด) กับคำให้กำลังใจ
+// (เริ่มประมาณ y=125) แทนที่จะพาดทับ subtitle โดยตรงเหมือนตอนจัดกึ่งกลางวงเป๊ะๆ — ยังคำนวณจาก RING_TOP/
+// RING_SIZE อยู่ (ไม่ hardcode เลขลอยๆ) แค่บวก offset คงที่เพิ่มเข้าไปอีกชั้นเดียว
+const WAVE_VERTICAL_OFFSET = 25
+const WAVE_TOP = `calc(${RING_TOP} + ${RING_SIZE}px / 2 - ${WAVE_HEIGHT}px / 2 + ${WAVE_VERTICAL_OFFSET}px)`
+// ปลายเส้น (x=400 ใน viewBox) ตอนนี้ยืดเข้าไปถึง "กึ่งกลาง" ของวง (เดิมจอดแค่ขอบซ้ายวง) ให้เส้นทาบเข้าไป
+// ใต้ตัววงจริงๆ ไม่ใช่แค่ชนขอบ — ส่วนที่ทาบเข้าไปใต้วงจะถูกจางหายไปเองด้วย WAVE_MASK ด้านล่าง (ไม่ใช่ตัว
+// วงมาบังทับ เพราะตัว FitnessRing ไม่มีพื้นทึบ) ให้ความรู้สึกว่าคลื่น "ไหลเข้า" วงจริงๆ แทนที่จะรู้สึกว่า
+// วางชนกันเฉยๆ
+const WAVE_RIGHT = `calc(${RING_RIGHT} + ${RING_SIZE}px / 2)`
+// จางเส้นคลื่นให้หายไปก่อนถึงขอบขวาสุดของ wrapper เอง (แทนที่จะให้เห็นเส้นวิ่งเข้าไปเต็มๆ ใต้วงซึ่งจะโผล่
+// พ้นขอบอีกฝั่งของวงออกมา) — ทึบเต็มถึง 70% ของความกว้างแล้วค่อยๆ จางจนโปร่งใสสนิทที่ 95%
+const WAVE_MASK = 'linear-gradient(90deg, black 0%, black 70%, transparent 95%)'
 
-// Header ของหน้า Dashboard (มือถือ) — v12: พอร์ตตรงจาก reference mockup ที่ผู้ใช้ส่งมา (ไฟล์ HTML+JS)
-//   - ตำแหน่งฝั่งซ้าย (Greeting/ชื่อ/subtitle/คำให้กำลังใจ) ยังเป็น flex-col เดียวใน normal flow เหมือน
-//     เดิม (กัน bug ข้อความตกบรรทัดซ้อนกันที่เคยเจอ) — เพิ่ม SubtitleAccent (เส้นแสงเล็ก) กลับมาใต้
-//     subtitle ตามที่ reference มี ควบคู่ไปกับ HeroEnergyWave พื้นหลังเต็มความกว้าง header (เดิมคิดว่า
-//     ต้องเลือกอย่างใดอย่างหนึ่ง แต่ reference มีทั้งคู่พร้อมกัน)
-//   - เอา EnergyParticles ออก (reference ไม่มี particle field กระจายทั่ว header)
-//   - ตำแหน่งฝั่งขวา (Bell/Ring) ยังคง clamp(min, vw, max) เดิม — วง Fitness Score ใช้ FitnessRing
-//     (SVG stroke-based ตาม reference) ข้างในแล้ว แต่ตำแหน่ง/ขนาดจากมุมมอง Header.tsx ไม่เปลี่ยน
+// Header ของหน้า Dashboard (มือถือ) — v13: ปรับจาก v12 (พอร์ตตรงจาก reference mockup) ตามฟีดแบ็ก
+// รอบล่าสุด — wave ใหญ่ขึ้น/เลื่อนลงเลี่ยงตัวหนังสือ/ทาบเข้าไปใต้วงจริง (ดูคอมเมนต์ WAVE_* ด้านบน)
+// + เพิ่มจุดสว่างหลังวง (radial-gradient ชั้นแรกใน background) ให้ hero มีมิติขึ้น
 export default function Header({
   greetingText,
   latestPR,
@@ -76,13 +80,12 @@ export default function Header({
         className="relative overflow-hidden rounded-[22px]"
         style={{
           height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)`,
-          // พื้นหลังของตัวการ์ด hero เอง — พอร์ตตรงจาก reference mockup (.hero-card): จุดสว่างอุ่นๆ
-          // ตรงฝั่งวง Fitness Score (82%/55% ≈ มุมขวาบน-กลาง ใกล้ตำแหน่งวงจริง) ซ้อนบน vignette มืด
-          // กลางการ์ด — เดิมกล่องนี้โปร่งใสล้วนๆ อาศัยแค่ AmbientGlow (blob เบลอ) ลอยทับพื้นหลังเพจ
-          // ไม่มี vignette/จุดสว่างเฉพาะการ์ดแบบนี้เลย จำกัดขอบเขตไว้แค่ไฟล์นี้ (mobile header) ไม่แตะ
-          // สีพื้นหลังหลักของทั้งแอป (bg-bg ใน tailwind.config) ซึ่งกระทบทุกหน้า
+          // พื้นหลังของตัวการ์ด hero เอง — เลเยอร์แรก (78%/42%) เพิ่มตามฟีดแบ็ก "hero ยังมืดไป" เจาะจงอยู่
+          // หลังวง Fitness Score พอดี (RING_TOP กลาง ๆ ค่อนไปทางขวา) ให้มิติแสงชัดขึ้นกว่าเดิม ก่อนจะไล่
+          // เข้า vignette มืดสองชั้นถัดมา (พอร์ตจาก reference mockup .hero-card เดิม) — จำกัดขอบเขตไว้แค่
+          // ไฟล์นี้ (mobile header) ไม่แตะสีพื้นหลังหลักของทั้งแอป (bg-bg ใน tailwind.config)
           background:
-            'radial-gradient(ellipse 260px 200px at 82% 55%, rgba(255,120,20,0.20), transparent 60%), radial-gradient(ellipse 400px 300px at 50% 50%, #140b04, #060402 70%)',
+            'radial-gradient(circle at 78% 42%, rgba(255,150,0,0.22), transparent 60%), radial-gradient(ellipse 260px 200px at 82% 55%, rgba(255,120,20,0.20), transparent 60%), radial-gradient(ellipse 400px 300px at 50% 50%, #140b04, #060402 70%)',
         }}
       >
         {/* Background: glow + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
@@ -91,7 +94,13 @@ export default function Header({
         </div>
         <div
           className="absolute z-[8] pointer-events-none left-0"
-          style={{ top: WAVE_TOP, right: WAVE_RIGHT, height: WAVE_HEIGHT }}
+          style={{
+            top: WAVE_TOP,
+            right: WAVE_RIGHT,
+            height: WAVE_HEIGHT,
+            WebkitMaskImage: WAVE_MASK,
+            maskImage: WAVE_MASK,
+          }}
           aria-hidden="true"
         >
           <HeroEnergyWave />

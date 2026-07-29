@@ -15,11 +15,11 @@ interface FitnessRingProps {
   className?: string
 }
 
-// FitnessRing — v3: พอร์ตตรงจาก reference mockup แทนโครงสร้าง glow 2 ชั้น + bloom + reflection ของ v2
-// ซึ่งซับซ้อนเกินและไม่ตรงกับที่ขอ — โครงสร้างจริงของ reference เรียบง่ายกว่า: วงพื้นหลัง (track) →
-// วง glow ชั้นเดียว (เส้นหนากว่า เบลอนุ่ม opacity ต่ำกว่า) → วงคะแนนหลัก (เส้นปกติ เบลอแคบแนบเส้น) →
-// จุดปลาย (tip) ที่หายใจเบาๆ ตรงตำแหน่ง progress ปัจจุบัน (ตัดวงหมุนรอบต่อเนื่อง (sweep) ของ v1/v2 ออก
-// เพราะ reference ไม่มี — ใช้จุด tip นิ่งที่แค่ pulse ขนาดแทน)
+// FitnessRing — v4: เพิ่มความ "หนาของวัสดุ" กลับมาตามฟีดแบ็ก (v3 ที่พอร์ตตรงจาก reference มา
+// เรียบง่ายเกินไป ยังดูเป็นแค่ arc + glow ไม่มีมิติผิวจริง) โครงสร้างตอนนี้: วงพื้นหลัง (track) →
+// วง glow ชั้นนอก (เส้นหนากว่า เบลอนุ่ม opacity ต่ำ) → วงคะแนนหลัก (bloom filter จริง ไม่ใช่แค่เบลอแคบ
+// เฉยๆ) → glossy reflection rim (เส้นบางสว่างจ้าแนบผิวด้านในของวงหลัก จำลองผิวมันวาว) → highlight arc
+// สั้นๆ ตรงด้านบนสุด (จำลองแสงสะท้อนจากด้านบน แบบวัสดุทรงกลม) → จุดปลาย (tip) ที่หายใจเบาๆ
 //
 // สี gradient คงที่เป็นชุด fire theme เดิมเสมอ (ไม่ผูกกับ tier/recovery ตามหลักการที่ตกลงไว้ใน
 // lib/theme.ts) — ส่วนแสง glow รอบวงที่สะท้อนสถานะ recovery ยังคงมาจาก <Glow> ที่ Header.tsx ห่ออยู่
@@ -54,8 +54,16 @@ export default function FitnessRing({
           <filter id={`${idPrefix}-glow-soft`} x="-100%" y="-100%" width="300%" height="300%">
             <feGaussianBlur stdDeviation={Math.max(2, sw * 0.5)} />
           </filter>
-          <filter id={`${idPrefix}-glow-tight`} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation={Math.max(0.8, sw * 0.12)} />
+          {/* bloom บนเส้นคะแนนหลัก — เบลอแล้วดันความสว่าง (feColorMatrix) ก่อน merge กลับเข้า source
+              ให้แสงฟุ้งจ้าแบบ "bloom" จริงๆ แทนที่จะเป็นแค่เบลอแคบธรรมดา (glow-tight เดิม) ซึ่งดูแบน
+              เกินไปสำหรับวัสดุที่ควรมีความหนา */}
+          <filter id={`${idPrefix}-bloom`} x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation={Math.max(1, sw * 0.18)} result="blur" />
+            <feColorMatrix in="blur" type="matrix" values="1.3 0 0 0 0  0 1.3 0 0 0  0 0 1.3 0 0  0 0 0 1 0" result="brightBlur" />
+            <feMerge>
+              <feMergeNode in="brightBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
           <linearGradient id={`${idPrefix}-ring-gradient`} x1="0%" y1="0%" x2="100%" y2="100%">
             {FIRE_GRADIENT_STOPS.map((s) => (
@@ -84,8 +92,8 @@ export default function FitnessRing({
           style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
 
-        {/* ring-progress — เส้นคะแนนหลัก เบลอแคบ (glow-tight) แนบผิวเส้นจริง ให้ขอบสว่างจ้าเฉพาะรอบตัว
-            มันเอง ไม่ใช่ก้อนเบลอกว้างเหมือน ring-glow ด้านบน */}
+        {/* ring-progress — เส้นคะแนนหลัก ใช้ bloom filter จริง (เบลอ+ดันสว่างก่อน merge กลับ source)
+            แทน glow-tight เดิม ให้ผิวเส้นดูมีความหนา/สว่างจ้าเป็นวัสดุจริง ไม่ใช่แค่เส้นแบนมีเงาบางๆ */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -96,9 +104,45 @@ export default function FitnessRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
-          filter={`url(#${idPrefix}-glow-tight)`}
+          filter={`url(#${idPrefix}-bloom)`}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
+        />
+
+        {/* glossy reflection rim — เส้นบางสว่างจ้าเกือบขาว แนบผิวด้านในของวงหลัก จำลองผิวมันวาว/สะท้อน
+            แสง (เหมือนวัสดุทรงกลมจริงๆ ไม่ใช่แค่เส้น flat) */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius - sw * 0.3}
+          fill="none"
+          stroke="#FFF4CC"
+          strokeWidth={Math.max(1, sw * 0.14)}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          strokeOpacity={0.65}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ mixBlendMode: 'screen', transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
+        />
+
+        {/* highlight arc — ส่วนโค้งสั้นๆ สว่างจ้าตรงด้านบนสุด (12 นาฬิกา) จำลองแสงตกกระทบจากด้านบนแบบ
+            วัสดุทรงกลมมันวาว (glossy sphere) แยกจาก reflection rim ที่แนบตลอดทั้งวง — อันนี้แค่ส่วนเล็กๆ
+            ด้านบนเท่านั้น ให้ความรู้สึก "แสงตกกระทบจุดเดียว" ไม่ใช่แสงรอบวงสม่ำเสมอ */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth={Math.max(1, sw * 0.2)}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference * 0.14} ${circumference * 0.86}`}
+          strokeDashoffset={circumference * 0.07}
+          strokeOpacity={0.55}
+          filter={`url(#${idPrefix}-glow-soft)`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ mixBlendMode: 'screen' }}
         />
       </svg>
 
