@@ -49,7 +49,7 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           className="font-display font-bold tracked uppercase leading-tight mt-1"
           style={{ fontSize: 14, color: score.color }}
         >
-          {score.tierLabel}
+          {score.tierLabelTh}
         </p>
         <p className="text-muted leading-tight mt-0.5" style={{ fontSize: 9, maxWidth: 120 }}>
           {score.recommendation}

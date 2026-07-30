@@ -60,8 +60,8 @@ const TIERS: {
       { offset: '50%', color: '#FFB000' },
       { offset: '100%', color: '#FF8A00' },
     ],
-    aiCoachStatus: 'Heavy Training',
-    recommendation: 'Ready for Heavy Training 💪',
+    aiCoachStatus: 'ฝึกหนักได้เต็มที่',
+    recommendation: 'ฝึกสม่ำเสมอเยี่ยมมาก ลุยหนักได้เต็มที่ 💪',
   },
   {
     min: 75,
@@ -73,8 +73,8 @@ const TIERS: {
       { offset: '0%', color: '#65E572' },
       { offset: '100%', color: '#3FD965' },
     ],
-    aiCoachStatus: 'Normal Training',
-    recommendation: 'Ready for Normal Training',
+    aiCoachStatus: 'ฝึกตามแผนปกติ',
+    recommendation: 'ฝึกสม่ำเสมอดีต่อเนื่อง ฝึกตามแผนปกติได้เลย',
   },
   {
     min: 60,
@@ -86,8 +86,8 @@ const TIERS: {
       { offset: '0%', color: '#FFD84A' },
       { offset: '100%', color: '#FFB400' },
     ],
-    aiCoachStatus: 'Moderate Training',
-    recommendation: 'Ready for Regular Workout',
+    aiCoachStatus: 'ฝึกตามแผน',
+    recommendation: 'ความสม่ำเสมออยู่ในเกณฑ์ดี ฝึกต่อตามแผนได้เลย',
   },
   {
     min: 40,
@@ -99,8 +99,11 @@ const TIERS: {
       { offset: '0%', color: '#FF9E42' },
       { offset: '100%', color: '#FF7A00' },
     ],
-    aiCoachStatus: 'Light Training',
-    recommendation: 'Light Training Recommended',
+    aiCoachStatus: 'เพิ่มความสม่ำเสมอ',
+    // ตั้งใจไม่พูดถึง "ร่างกาย/ฟื้นตัว" ในระดับนี้ เพราะคะแนนตกจากความไม่สม่ำเสมอ (Completion/Streak/
+    // Weekly Goal) เป็นหลัก ไม่ใช่ Recovery ซึ่งมีน้ำหนักแค่ 15% — พัก 4 วันติดกันปัจจัย Recovery จริงๆ
+    // อาจเต็ม 100% ด้วยซ้ำ (ยิ่งพักยิ่งฟื้นตัวเต็มที่) พูดว่า "ร่างกายต้องพัก" ตอนคะแนนโซนนี้จะสื่อผิด
+    recommendation: 'ความสม่ำเสมอเริ่มลดลง ลองกลับมาฝึกให้ต่อเนื่องขึ้น',
   },
   {
     min: 20,
@@ -112,8 +115,8 @@ const TIERS: {
       { offset: '0%', color: '#FF6B5B' },
       { offset: '100%', color: '#FF4E3A' },
     ],
-    aiCoachStatus: 'Recovery Workout',
-    recommendation: 'Light Workout Recommended',
+    aiCoachStatus: 'เริ่มฝึกใหม่แบบเบาๆ',
+    recommendation: 'ห่างหายจากการฝึกไปพักหนึ่งแล้ว เริ่มกลับมาฝึกเบาๆ ก่อนได้',
   },
   {
     min: 0,
@@ -125,8 +128,8 @@ const TIERS: {
       { offset: '0%', color: '#FF4D4D' },
       { offset: '100%', color: '#D63031' },
     ],
-    aiCoachStatus: 'Rest & Sleep',
-    recommendation: 'Your body needs recovery',
+    aiCoachStatus: 'กลับมาฝึกทีละน้อย',
+    recommendation: 'ไม่ได้ฝึกมานานแล้ว เริ่มกลับมาฝึกทีละน้อยเมื่อพร้อม',
   },
 ]
 
