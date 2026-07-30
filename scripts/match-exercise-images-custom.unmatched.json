@@ -2,7 +2,7 @@
   {
     "id": "bench-press",
     "name": "Bench Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.6666666666666666
   },
   {
@@ -18,22 +18,10 @@
     "score": 0
   },
   {
-    "id": "decline-bench-press",
-    "name": "Decline Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.5
-  },
-  {
-    "id": "dumbbell-bench-press",
-    "name": "Dumbbell Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.5
-  },
-  {
     "id": "dumbbell-fly",
     "name": "Dumbbell Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "push-up",
@@ -44,103 +32,103 @@
   {
     "id": "floor-press-barbell",
     "name": "Barbell Floor Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.2
   },
   {
     "id": "guillotine-press",
     "name": "Guillotine Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "spoto-press",
     "name": "Spoto Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "larsen-press",
     "name": "Larsen Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "wide-grip-bench-press",
     "name": "Wide-Grip Bench Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.4
   },
   {
     "id": "reverse-grip-bench-press",
     "name": "Reverse-Grip Bench Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.4
   },
   {
     "id": "pin-press-barbell",
     "name": "Pin Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "incline-dumbbell-press",
     "name": "Incline Dumbbell Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Dumbbell Bench Press.png",
     "score": 0.5
   },
   {
     "id": "decline-dumbbell-press",
     "name": "Decline Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Decline Bench Press.png",
+    "score": 0.5
   },
   {
     "id": "incline-dumbbell-fly",
     "name": "Incline Dumbbell Fly",
-    "closest": "Incline Bench Press.png",
+    "closest": "Dumbbell Bench Press.png",
     "score": 0.2
   },
   {
     "id": "decline-dumbbell-fly",
     "name": "Decline Dumbbell Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Decline Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "single-arm-dumbbell-bench-press",
     "name": "Single-Arm Dumbbell Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.3333333333333333
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.6
   },
   {
     "id": "dumbbell-floor-press",
     "name": "Dumbbell Floor Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.5
   },
   {
     "id": "dumbbell-pullover",
     "name": "Dumbbell Pullover",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "svend-press",
     "name": "Svend Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "neutral-grip-dumbbell-press",
     "name": "Neutral-Grip Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.4
   },
   {
     "id": "machine-chest-press",
     "name": "Machine Chest Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.2
   },
   {
@@ -158,13 +146,13 @@
   {
     "id": "decline-machine-chest-press",
     "name": "Decline Machine Chest Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Decline Bench Press.png",
+    "score": 0.4
   },
   {
     "id": "smith-machine-bench-press",
     "name": "Smith Machine Bench Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.4
   },
   {
@@ -176,7 +164,7 @@
   {
     "id": "hammer-strength-chest-press",
     "name": "Hammer Strength Chest Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.16666666666666666
   },
   {
@@ -200,7 +188,7 @@
   {
     "id": "standing-cable-chest-press",
     "name": "Standing Cable Chest Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.16666666666666666
   },
   {
@@ -224,8 +212,8 @@
   {
     "id": "decline-push-up",
     "name": "Decline Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Decline Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "diamond-push-up",
@@ -338,7 +326,7 @@
   {
     "id": "leg-press",
     "name": "Leg Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
@@ -368,14 +356,14 @@
   {
     "id": "close-grip-bench-press",
     "name": "Close-Grip Bench Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.4
   },
   {
     "id": "dumbbell-curl",
     "name": "Dumbbell Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "hammer-curl",
@@ -458,8 +446,8 @@
   {
     "id": "dumbbell-row",
     "name": "Dumbbell Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "face-pull",
@@ -494,14 +482,14 @@
   {
     "id": "arnold-press",
     "name": "Arnold Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "dumbbell-shoulder-press",
     "name": "Dumbbell Shoulder Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.5
   },
   {
     "id": "front-raise",
@@ -524,7 +512,7 @@
   {
     "id": "shoulder-press",
     "name": "Shoulder Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
@@ -578,8 +566,8 @@
   {
     "id": "chest-supported-dumbbell-row",
     "name": "Chest-Supported Dumbbell Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.16666666666666666
   },
   {
     "id": "renegade-row",
@@ -590,20 +578,20 @@
   {
     "id": "dumbbell-high-pull",
     "name": "Dumbbell High Pull",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "dumbbell-deadlift",
     "name": "Dumbbell Deadlift",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "dumbbell-shrug",
     "name": "Dumbbell Shrug",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "assisted-pull-up-machine",
@@ -794,20 +782,20 @@
   {
     "id": "dumbbell-lunge",
     "name": "Dumbbell Lunge",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "dumbbell-step-up",
     "name": "Dumbbell Step-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "dumbbell-sumo-squat",
     "name": "Dumbbell Sumo Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "single-leg-romanian-deadlift",
@@ -818,8 +806,8 @@
   {
     "id": "dumbbell-calf-raise",
     "name": "Dumbbell Calf Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "curtsy-lunge",
@@ -956,19 +944,19 @@
   {
     "id": "military-press",
     "name": "Military Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "push-press",
     "name": "Push Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "behind-the-neck-press",
     "name": "Behind-the-Neck Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.16666666666666666
   },
   {
@@ -980,20 +968,20 @@
   {
     "id": "landmine-press",
     "name": "Landmine Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
     "id": "seated-dumbbell-press",
     "name": "Seated Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.5
   },
   {
     "id": "single-arm-dumbbell-press",
     "name": "Single-Arm Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.4
   },
   {
     "id": "leaning-lateral-raise",
@@ -1010,7 +998,7 @@
   {
     "id": "cuban-press",
     "name": "Cuban Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
@@ -1022,7 +1010,7 @@
   {
     "id": "machine-shoulder-press",
     "name": "Machine Shoulder Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.2
   },
   {
@@ -1034,13 +1022,13 @@
   {
     "id": "smith-machine-shoulder-press",
     "name": "Smith Machine Shoulder Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.16666666666666666
   },
   {
     "id": "plate-loaded-shoulder-press",
     "name": "Plate-Loaded Shoulder Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.16666666666666666
   },
   {
@@ -1082,7 +1070,7 @@
   {
     "id": "cable-shoulder-press",
     "name": "Cable Shoulder Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.2
   },
   {
@@ -1142,7 +1130,7 @@
   {
     "id": "jm-press",
     "name": "JM Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
@@ -1154,7 +1142,7 @@
   {
     "id": "incline-dumbbell-curl",
     "name": "Incline Dumbbell Curl",
-    "closest": "Incline Bench Press.png",
+    "closest": "Dumbbell Bench Press.png",
     "score": 0.2
   },
   {
@@ -1178,20 +1166,20 @@
   {
     "id": "dumbbell-kickback",
     "name": "Dumbbell Triceps Kickback",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "dumbbell-wrist-curl",
     "name": "Dumbbell Wrist Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "reverse-dumbbell-curl",
     "name": "Reverse Dumbbell Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "cross-body-hammer-curl",
@@ -1280,7 +1268,7 @@
   {
     "id": "bench-dip",
     "name": "Bench Dip",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
@@ -1328,8 +1316,8 @@
   {
     "id": "dumbbell-side-bend",
     "name": "Dumbbell Side Bend",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.2
   },
   {
     "id": "weighted-sit-up",
@@ -1340,8 +1328,8 @@
   {
     "id": "dumbbell-woodchopper",
     "name": "Dumbbell Woodchopper",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "suitcase-carry",
@@ -1382,7 +1370,7 @@
   {
     "id": "pallof-press",
     "name": "Pallof Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
@@ -1502,14 +1490,14 @@
   {
     "id": "clean-and-press",
     "name": "Clean and Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.2
   },
   {
     "id": "dumbbell-clean-and-press",
     "name": "Dumbbell Clean and Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.4
   },
   {
     "id": "man-maker",
@@ -1520,13 +1508,13 @@
   {
     "id": "dumbbell-snatch",
     "name": "Dumbbell Snatch",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.25
   },
   {
     "id": "devils-press",
     "name": "Devil's Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
@@ -1538,7 +1526,7 @@
   {
     "id": "kettlebell-clean-and-press",
     "name": "Kettlebell Clean and Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.16666666666666666
   },
   {
@@ -1694,13 +1682,13 @@
   {
     "id": "converging-chest-press",
     "name": "Converging Chest Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.2
   },
   {
     "id": "single-arm-cable-chest-press",
     "name": "Single-Arm Cable Chest Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.14285714285714285
   },
   {
@@ -1730,7 +1718,7 @@
   {
     "id": "z-press",
     "name": "Z Press",
-    "closest": "Incline Bench Press.png",
+    "closest": "Decline Bench Press.png",
     "score": 0.25
   },
   {
