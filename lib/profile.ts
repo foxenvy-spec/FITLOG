@@ -20,6 +20,23 @@ export async function saveDisplayName(
   if (error) throw error
 }
 
+// อายุจริง (ปี) — ใช้คำนวณ BMR/TDEE โดยประมาณ (สูตร Mifflin-St Jeor) ร่วมกับ height_cm/sex/น้ำหนักล่าสุด
+// ดู lib/bmr.ts — ส่ง null เพื่อล้างค่า
+export async function saveAge(
+  supabase: ReturnType<typeof createClient>,
+  age: number | null
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('ยังไม่ได้ล็อกอิน')
+
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ user_id: user.id, age, updated_at: new Date().toISOString() })
+  if (error) throw error
+}
+
 // ชีพจรสูงสุดโดยประมาณ (bpm) — ใช้คำนวณ Heart Rate Zone ใน Weekly Cardio Volume (ดู lib/heartRate.ts)
 // ส่ง null เพื่อล้างค่า (กลับไปใช้ค่าประมาณมาตรฐานแทน)
 export async function saveMaxHeartRate(

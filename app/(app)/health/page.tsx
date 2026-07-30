@@ -20,6 +20,8 @@ import GoalRing from '@/components/GoalRing'
 import InsightCard from '@/components/InsightCard'
 import type { Insight } from '@/lib/dashboardStats'
 import { zoneOf, classifyMetric, summarizeHealthScore, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
+import { saveAge } from '@/lib/profile'
+import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
 
 function todayStr() {
   const d = new Date()
@@ -166,6 +168,14 @@ export default function HealthPage() {
         throw error
       }
       if (data) setProfile(data as Profile)
+    },
+    [supabase]
+  )
+
+  const handleAgeChanged = useCallback(
+    async (age: number) => {
+      await saveAge(supabase, age)
+      setProfile((prev) => (prev ? { ...prev, age } : prev))
     },
     [supabase]
   )
@@ -1033,6 +1043,10 @@ export default function HealthPage() {
             )}
           </div>
 
+          {/* BMR ที่วัดจากเครื่องชั่งจริง (latest.bmr_kcal, การ์ด IconStatCard ด้านบน) แม่นกว่าค่าประมาณ
+              จากสูตรเสมอ — โชว์การ์ดนี้เฉพาะตอนยังไม่มีค่าจากเครื่องชั่ง กันข้อมูลสองชุดขัดกันจนงง */}
+          {!latest?.bmr_kcal && <BmrEstimateCard profile={profile} weightKg={latest?.weight_kg ?? null} />}
+
           {healthInsights.length > 0 && (
             <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
               <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
@@ -1273,6 +1287,7 @@ export default function HealthPage() {
             profile={profile}
             onSaved={(m) => setMetrics((prev) => [m, ...prev.filter((x) => x.id !== m.id)])}
             onHeightExtracted={saveHeight}
+            onAgeChanged={handleAgeChanged}
           />
 
           <section>
@@ -2388,15 +2403,18 @@ function MetricForm({
   profile,
   onSaved,
   onHeightExtracted,
+  onAgeChanged,
 }: {
   profile: Profile | null
   onSaved: (m: BodyMetric) => void
   onHeightExtracted?: (heightCm: number) => Promise<void>
+  onAgeChanged?: (age: number) => Promise<void>
 }) {
   const supabase = createClient()
   const { unit, toKg, toDisplay } = useWeightUnit()
   const [date, setDate] = useState(todayStr())
   const [heightCm, setHeightCm] = useState(profile?.height_cm ? String(profile.height_cm) : '')
+  const [ageInput, setAgeInput] = useState(profile?.age ? String(profile.age) : '')
   const [weight, setWeight] = useState('')
   const [bodyFat, setBodyFat] = useState('')
   const [muscle, setMuscle] = useState('')
@@ -2437,10 +2455,14 @@ function MetricForm({
   const [error, setError] = useState<string | null>(null)
   const [heightNote, setHeightNote] = useState<string | null>(null)
 
-  // profile โหลดแบบ async หลัง MetricForm mount ไปแล้ว — sync ค่าส่วนสูงเข้าช่องกรอกทุกครั้งที่โหลดเสร็จ/เปลี่ยน
+  // profile โหลดแบบ async หลัง MetricForm mount ไปแล้ว — sync ค่าส่วนสูง/อายุเข้าช่องกรอกทุกครั้งที่โหลดเสร็จ/เปลี่ยน
   useEffect(() => {
     setHeightCm(profile?.height_cm ? String(profile.height_cm) : '')
   }, [profile?.height_cm])
+
+  useEffect(() => {
+    setAgeInput(profile?.age ? String(profile.age) : '')
+  }, [profile?.age])
 
   async function handleHeightBlur() {
     const trimmed = heightCm.trim()
@@ -2451,6 +2473,18 @@ function MetricForm({
       await onHeightExtracted(num)
     } catch (err) {
       console.error('บันทึกส่วนสูงไม่สำเร็จ', err)
+    }
+  }
+
+  async function handleAgeBlur() {
+    const trimmed = ageInput.trim()
+    if (!trimmed || !onAgeChanged) return
+    const num = Math.round(Number(trimmed))
+    if (!Number.isFinite(num) || num === profile?.age) return
+    try {
+      await onAgeChanged(num)
+    } catch (err) {
+      console.error('บันทึกอายุไม่สำเร็จ', err)
     }
   }
 
@@ -2639,6 +2673,7 @@ function MetricForm({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         <LabeledInput label="ส่วนสูง (ซม.)" value={heightCm} onChange={setHeightCm} onBlur={handleHeightBlur} />
+        <LabeledInput label="อายุ (ปี)" value={ageInput} onChange={setAgeInput} onBlur={handleAgeBlur} />
         <LabeledInput label={`น้ำหนัก (${unit})`} value={weight} onChange={setWeight} />
         <LabeledInput label="Body Fat (%)" value={bodyFat} onChange={setBodyFat} />
         <LabeledInput label={`Muscle (${unit})`} value={muscle} onChange={setMuscle} />
@@ -2703,6 +2738,66 @@ function MetricForm({
         {saving ? 'กำลังบันทึก...' : 'บันทึก'}
       </button>
     </form>
+  )
+}
+
+function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weightKg: number | null }) {
+  const [activity, setActivity] = useState<ActivityLevel>('moderate')
+
+  if (!profile?.age || !profile?.height_cm || !profile?.sex || !weightKg) {
+    return (
+      <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
+        <h2 className="font-display text-sm tracked uppercase text-muted mb-1">BMR/TDEE โดยประมาณ</h2>
+        <p className="text-[11px] text-muted">
+          กรอกอายุ, ส่วนสูง, เพศ และน้ำหนักล่าสุดให้ครบ (แท็บ &quot;บันทึกข้อมูล&quot;) เพื่อประมาณอัตราการเผาผลาญพื้นฐาน
+        </p>
+      </div>
+    )
+  }
+
+  const bmr = computeBmr(weightKg, profile.height_cm, profile.age, profile.sex)
+  const tdee = computeTdee(bmr, activity)
+
+  return (
+    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-sm tracked uppercase text-muted">BMR/TDEE โดยประมาณ</h2>
+        <span className="text-[10px] text-muted">สูตร Mifflin-St Jeor</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[10px] tracked uppercase text-muted">BMR</p>
+          <p className="font-mono text-xl text-ink">
+            {bmr}
+            <span className="text-xs text-muted ml-1">kcal</span>
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] tracked uppercase text-muted">TDEE</p>
+          <p className="font-mono text-xl text-amber">
+            {tdee}
+            <span className="text-xs text-muted ml-1">kcal</span>
+          </p>
+        </div>
+      </div>
+      <label className="block">
+        <span className="block text-[10px] tracked uppercase text-muted mb-1">ระดับกิจกรรม</span>
+        <select
+          value={activity}
+          onChange={(e) => setActivity(e.target.value as ActivityLevel)}
+          className="w-full bg-surface2 text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-amber"
+        >
+          {(Object.keys(ACTIVITY_MULTIPLIERS) as ActivityLevel[]).map((level) => (
+            <option key={level} value={level}>
+              {ACTIVITY_LEVEL_LABELS[level]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="text-[10px] text-muted/70">
+        * เป็นค่าประมาณจากสูตรทั่วไป ไม่ใช่ค่าที่วัดจริง ถ้ามีค่า BMR จากรายงานเครื่องชั่งจะใช้ค่านั้นแทนอัตโนมัติ (แม่นกว่า)
+      </p>
+    </div>
   )
 }
 
