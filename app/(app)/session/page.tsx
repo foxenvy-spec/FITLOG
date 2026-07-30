@@ -923,31 +923,49 @@ export default function SessionPage() {
         }}
       >
         <div className="relative overflow-hidden border-b border-line min-h-[190px]">
-          {/* รูปท่าออกกำลังกายแบบเต็มมุมขวา — เอา mask ไล่จางออก เพราะรูปชุดที่ผู้ใช้ทำเอง (AI-generated)
-              มีพื้นที่มืดฝั่งซ้ายสำหรับใส่ตัวหนังสือมาให้อยู่แล้วในตัวรูปเอง (ดูตัวอย่าง Incline Bench
-              Press) การไล่จางซ้อนเข้าไปอีกชั้นเลยทำให้บังส่วนที่อยากเห็น (ท่าออกกำลังกาย) ไปโดยไม่จำเป็น
-              — สูง 190px (ไม่ใช่ 132px แบบแรก) เพราะ aspect ratio ของกล่องที่เตี้ยเกินไปเทียบกับรูปต้นฉบับ
-              (แนวนอนกว้าง) ทำให้ object-cover ต้อง crop ด้านข้างจนเห็นแค่ริมขวาสุดของรูป ไม่เห็นคนเล่นท่าเลย
-              — เพิ่มความสูงให้ใกล้ aspect ต้นฉบับมากขึ้นและใช้ object-position กำหนดเองแทน object-right */}
+          {/* รูปท่าออกกำลังกายแบบเต็มมุมขวา — ไม่ mask เนื้อรูปแล้ว (เห็นเต็มภาพตามที่อยากได้) แต่ต้องมี
+              ฉากมืดจางๆ (scrim) แยกอีกชั้นทับอยู่บนรูป (ไม่ใช่ตัวรูปเอง) เฉพาะโซนที่วางตัวหนังสือของแอป
+              (ชื่อท่า/เป้าหมาย/RIR/พัก) ไม่งั้นตัวหนังสือของแอปจะไปทับกับตัวหนังสือที่ฝังอยู่ในรูปเอง
+              (ชื่อท่าที่ AI สร้างมาให้) อ่านไม่ออกทั้งคู่ — ต่างจาก mask เดิมตรงที่นี่แค่หรี่แสง ไม่ได้ทำให้
+              เนื้อรูปหายไปจริง — สูง 190px (ไม่ใช่ 132px แบบแรก) เพราะ aspect ratio ของกล่องที่เตี้ยเกินไป
+              เทียบกับรูปต้นฉบับ (แนวนอนกว้าง) ทำให้ object-cover ต้อง crop ด้านข้างจนเห็นแค่ริมขวาสุดของรูป
+              ไม่เห็นคนเล่นท่าเลย — เพิ่มความสูงให้ใกล้ aspect ต้นฉบับมากขึ้นและใช้ object-position กำหนดเอง
+              แทน object-right */}
           {knownExercise?.imageUrl && (
-            <div className="absolute inset-0">
-              <Image
-                src={knownExercise.imageUrl}
-                alt=""
-                fill
-                sizes="600px"
-                loading="lazy"
-                className="object-cover"
-                style={{ objectPosition: '62% 50%' }}
+            <>
+              <div className="absolute inset-0">
+                <Image
+                  src={knownExercise.imageUrl}
+                  alt=""
+                  fill
+                  sizes="600px"
+                  loading="lazy"
+                  className="object-cover"
+                  style={{ objectPosition: '62% 50%' }}
+                />
+              </div>
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(90deg, rgba(20,22,26,0.9) 0%, rgba(20,22,26,0.55) 35%, transparent 60%)',
+                }}
               />
-            </div>
+            </>
           )}
           <div className="relative px-4 py-3.5">
             <div className="flex items-center gap-2">
               {mg && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: mgColor }} />}
-              <p className="font-display text-xl tracked uppercase text-ink truncate">{current.exercise_name}</p>
+              <p
+                className="font-display text-xl tracked uppercase text-ink truncate"
+                style={knownExercise?.imageUrl ? { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } : undefined}
+              >
+                {current.exercise_name}
+              </p>
             </div>
-            <p className="text-[11px] text-muted mt-1">
+            <p
+              className="text-[11px] text-muted mt-1"
+              style={knownExercise?.imageUrl ? { textShadow: '0 1px 3px rgba(0,0,0,0.9)' } : undefined}
+            >
               เป้าหมาย {targetSets} เซ็ต × {current.target_reps ?? '–'} reps
               {current.target_rir && ` · RIR ${current.target_rir}`}
               {current.rest && ` · พัก ${current.rest}`}
