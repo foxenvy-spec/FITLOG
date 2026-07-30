@@ -962,10 +962,10 @@ export default function SessionPage() {
         </div>
 
         <div className="px-4 py-4 space-y-3">
-          <div className="flex items-center justify-between bg-surface2 rounded-lg px-4 py-3">
+          <div className="flex items-center justify-between bg-surface2 rounded-lg px-4 py-2.5">
             <div>
               <p className="text-[10px] tracked uppercase text-muted">เซ็ตที่ทำแล้ว</p>
-              <p className="font-mono text-2xl text-ink mt-0.5">
+              <p className="font-mono text-xl text-ink mt-0.5">
                 {currentState.setsLog.length}
                 <span className="text-sm text-muted">/{targetSets}</span>
               </p>
@@ -1208,7 +1208,7 @@ function RestTimerButton({
 
   return (
     <div className="text-right">
-      <p className={`font-mono text-2xl tabular ${done ? 'text-amber' : 'text-steel'}`}>{formatClock(remainingMs)}</p>
+      <p className={`font-mono text-xl tabular ${done ? 'text-amber' : 'text-steel'}`}>{formatClock(remainingMs)}</p>
       <button
         type="button"
         onClick={() => {
