@@ -438,14 +438,14 @@
     "name": "Lat Pulldown",
     "closest": "Lat Pulldown Machine.png",
     "score": 0.6666666666666666,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "seated-cable-row",
     "name": "Seated Cable Row",
     "closest": "Seated Row Machine.png",
     "score": 0.5,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "t-bar-row",
@@ -581,18 +581,11 @@
     "closestTaken": true
   },
   {
-    "id": "plate-loaded-row-machine",
-    "name": "Plate-Loaded Row Machine",
-    "closest": "Seated Row Machine.png",
-    "score": 0.4,
-    "closestTaken": false
-  },
-  {
     "id": "smith-machine-bent-over-row",
     "name": "Smith Machine Bent-Over Row",
     "closest": "Seated Row Machine.png",
     "score": 0.3333333333333333,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "reverse-pec-deck-row",
@@ -609,39 +602,32 @@
     "closestTaken": true
   },
   {
-    "id": "lat-pulldown-machine",
-    "name": "Plate-Loaded Lat Pulldown",
-    "closest": "Lat Pulldown Machine.png",
-    "score": 0.4,
-    "closestTaken": false
-  },
-  {
     "id": "straight-arm-pulldown",
     "name": "Straight-Arm Pulldown",
     "closest": "Lat Pulldown Machine.png",
     "score": 0.2,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "single-arm-lat-pulldown",
     "name": "Single-Arm Lat Pulldown",
     "closest": "Lat Pulldown Machine.png",
     "score": 0.4,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "close-grip-seated-row",
     "name": "Close-Grip Seated Cable Row",
     "closest": "Seated Row Machine.png",
     "score": 0.3333333333333333,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "wide-grip-seated-row",
     "name": "Wide-Grip Seated Cable Row",
     "closest": "Seated Row Machine.png",
     "score": 0.3333333333333333,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "single-arm-cable-row",
@@ -662,7 +648,7 @@
     "name": "Reverse-Grip Lat Pulldown",
     "closest": "Lat Pulldown Machine.png",
     "score": 0.4,
-    "closestTaken": false
+    "closestTaken": true
   },
   {
     "id": "cable-shrug",
@@ -1887,6 +1873,6 @@
     "name": "Seated Forward Fold",
     "closest": "Seated Row Machine.png",
     "score": 0.2,
-    "closestTaken": false
+    "closestTaken": true
   }
 ]

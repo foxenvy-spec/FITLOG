@@ -1,7 +1,7 @@
 -- 040_exercise_library_images_custom.sql
 -- สร้างอัตโนมัติจาก scripts/match-exercise-images-custom.mjs — จับคู่ชื่อไฟล์ใน public/images/exercises/
 -- (ชุดรูปที่ทำเอง) กับท่าในตาราง exercise_library
--- จับคู่ได้ 30/300 ท่า (ที่เหลือดู scripts/match-exercise-images-custom.unmatched.json)
+-- จับคู่ได้ 32/300 ท่า (ที่เหลือดู scripts/match-exercise-images-custom.unmatched.json)
 -- รันซ้ำได้ปลอดภัย
 
 update public.exercise_library as e
@@ -27,6 +27,8 @@ from (values
   ('pull-up', '/images/exercises/Pull%20Up.png'),
   ('dumbbell-shoulder-press', '/images/exercises/Dumbbell%20Shoulder%20Press.png'),
   ('lateral-raise', '/images/exercises/Lateral%20Raise.png'),
+  ('plate-loaded-row-machine', '/images/exercises/Seated%20Row%20Machine.png'),
+  ('lat-pulldown-machine', '/images/exercises/Lat%20Pulldown%20Machine.png'),
   ('goblet-squat', '/images/exercises/Goblet%20Squat.png'),
   ('dumbbell-calf-raise', '/images/exercises/Dumbbell%20Calf%20Raise.png'),
   ('standing-calf-raise-machine', '/images/exercises/Standing%20Calf%20Raise%20Machine.png'),

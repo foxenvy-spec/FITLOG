@@ -409,9 +409,9 @@
   },
   {
     "id": "plate-loaded-row-machine",
-    "name": "Plate-Loaded Row Machine",
+    "name": "Seated Row Machine",
     "closest": "Smith Machine Upright Row",
-    "score": 0.3333333333333333
+    "score": 0.4
   },
   {
     "id": "reverse-pec-deck-row",
@@ -427,9 +427,9 @@
   },
   {
     "id": "lat-pulldown-machine",
-    "name": "Plate-Loaded Lat Pulldown",
+    "name": "Lat Pulldown Machine",
     "closest": "One Arm Lat Pulldown",
-    "score": 0.3333333333333333
+    "score": 0.4
   },
   {
     "id": "single-arm-lat-pulldown",
