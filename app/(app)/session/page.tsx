@@ -70,6 +70,24 @@ function markExerciseFinished(id: string) {
   window.localStorage.setItem(finishedExerciseIdsKey(), JSON.stringify(Array.from(ids)))
 }
 
+// เวลาที่กด "เซ็ตนี้เสร็จแล้ว" ล่าสุดของแต่ละท่า (สำหรับนับพักอัตโนมัติต่อ) — เก็บใน localStorage
+// ด้วยเหตุผลเดียวกับด้านบน: RestTimerButton มี useStopwatch ของตัวเองซึ่งอยู่ในหน่วยความจำล้วนๆ
+// รีเซ็ตเป็น 0 ทุกครั้งที่ remount ทำให้นาฬิกาพักหายไปเฉยๆ ถ้าสลับหน้าไปมาระหว่างพัก
+function restStartedAtKey(exerciseId: string): string {
+  return `fitlog:rest-started-at:${todayStr()}:${exerciseId}`
+}
+
+function readRestStartedAt(exerciseId: string): number | null {
+  if (typeof window === 'undefined') return null
+  const raw = window.localStorage.getItem(restStartedAtKey(exerciseId))
+  return raw ? Number(raw) : null
+}
+
+function writeRestStartedAt(exerciseId: string) {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(restStartedAtKey(exerciseId), String(Date.now()))
+}
+
 interface PRHit {
   exerciseName: string
   weightKg: number
@@ -463,6 +481,7 @@ export default function SessionPage() {
     setErrorMsg(null)
     const newSetsLog = [...currentState.setsLog, { reps: currentState.reps, weightKg: currentState.weightKg ?? 0 }]
     updateCurrent({ setsLog: newSetsLog })
+    writeRestStartedAt(current.id)
 
     const {
       data: { user },
@@ -935,6 +954,7 @@ export default function SessionPage() {
               key={current.id}
               restSeconds={parseRestSeconds(current.rest)}
               onSetLogged={currentState.setsLog.length}
+              startedAt={currentState.setsLog.length > 0 ? readRestStartedAt(current.id) : null}
             />
           </div>
 
@@ -1091,17 +1111,43 @@ function recoveryBarColor(tier: 'green' | 'yellow' | 'orange' | 'red') {
 
 // ตัวจับเวลาพักแบบย่อ ฝังอยู่ในการ์ดของท่าปัจจุบัน — เริ่มนับอัตโนมัติทุกครั้งที่กด
 // "เซ็ตนี้เสร็จแล้ว" (ติดตามผ่าน onSetLogged ที่เปลี่ยนค่าทุกครั้งที่เซ็ตเพิ่มขึ้น)
-function RestTimerButton({ restSeconds, onSetLogged }: { restSeconds: number; onSetLogged: number }) {
+function RestTimerButton({
+  restSeconds,
+  onSetLogged,
+  startedAt,
+}: {
+  restSeconds: number
+  onSetLogged: number
+  // เวลา (timestamp) ที่กดเซ็ตล่าสุดจริงๆ จาก localStorage — ใช้นับพักต่อให้ถูกต้องตอน remount
+  // (เช่นสลับหน้าไปมาระหว่างพัก) แทนที่จะรีเซ็ตเป็น 0 ทุกครั้งเพราะ useStopwatch เป็น state ในหน่วยความจำ
+  startedAt: number | null
+}) {
   const { enabled: voiceEnabled } = useVoiceEnabled()
   const { elapsedMs, running, start, pause, reset } = useStopwatch()
   const finishedRef = useRef(false)
   const tickedRef = useRef(-1)
   const prevCountRef = useRef(onSetLogged)
+  const restOffsetRef = useRef(0)
+  const resumedRef = useRef(false)
 
   useWakeLock(running)
 
   const totalMs = restSeconds * 1000
-  const remainingMs = Math.max(0, totalMs - elapsedMs)
+
+  // นับต่อจาก startedAt ทันทีตอน mount ครั้งแรก (ถ้ามี) — ถ้าเวลาพักผ่านไปครบแล้วตั้งแต่ก่อน mount
+  // ก็ยังปล่อยให้ effect ด้านล่างตรวจพบ remainingMs<=0 แล้วเปลี่ยนเป็นสถานะ "พักครบแล้ว" ให้เองตามปกติ
+  useEffect(() => {
+    if (resumedRef.current) return
+    resumedRef.current = true
+    if (startedAt) {
+      restOffsetRef.current = Date.now() - startedAt
+      start()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const displayElapsedMs = elapsedMs + restOffsetRef.current
+  const remainingMs = Math.max(0, totalMs - displayElapsedMs)
   const remainingSec = Math.ceil(remainingMs / 1000)
 
   // เซ็ตเพิ่มขึ้น (กดปุ่ม "เซ็ตนี้เสร็จแล้ว") -> เริ่มพักอัตโนมัติ
@@ -1110,6 +1156,7 @@ function RestTimerButton({ restSeconds, onSetLogged }: { restSeconds: number; on
       prevCountRef.current = onSetLogged
       finishedRef.current = false
       tickedRef.current = -1
+      restOffsetRef.current = 0
       reset()
       start()
     } else {
@@ -1133,7 +1180,7 @@ function RestTimerButton({ restSeconds, onSetLogged }: { restSeconds: number; on
     }
   }, [remainingMs, remainingSec, running, pause, voiceEnabled])
 
-  if (!running && elapsedMs === 0) {
+  if (!running && displayElapsedMs === 0) {
     return <p className="text-[10px] text-muted text-right">พัก {restSeconds}s หลังกดเซ็ต</p>
   }
 
