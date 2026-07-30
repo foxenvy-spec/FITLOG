@@ -11,6 +11,40 @@ import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 
+function downloadBlob(content: BlobPart, filename: string, type: string) {
+  const blob = new Blob([content], { type })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function slugify(title: string) {
+  return title.trim().toLowerCase().replace(/[^a-z0-9ก-๙]+/g, '-').replace(/^-+|-+$/g, '') || 'template'
+}
+
+interface TemplateExport {
+  version: 1
+  type: 'fitlog-template'
+  title: string
+  exercises: Array<{
+    exercise_name: string
+    muscle_group: string | null
+    secondary_muscles: string[]
+    exercise_library_id: string | null
+    sets: number | null
+    target_reps: string | null
+    target_rir: string | null
+    rest: string | null
+    default_weight_kg: number | null
+    notes: string | null
+  }>
+}
+
 export default function TemplatesPage() {
   const supabase = createClient()
 
@@ -27,6 +61,9 @@ export default function TemplatesPage() {
   const [applyPickerId, setApplyPickerId] = useState<string | null>(null)
   const [applyingId, setApplyingId] = useState<string | null>(null)
   const [applyMessage, setApplyMessage] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importMessage, setImportMessage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -101,6 +138,97 @@ export default function TemplatesPage() {
       return
     }
     setTemplates((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  function handleExportTemplate(t: WorkoutTemplate) {
+    const exercises = exercisesByTemplate[t.id] ?? []
+    const payload: TemplateExport = {
+      version: 1,
+      type: 'fitlog-template',
+      title: t.title,
+      exercises: exercises.map((ex) => ({
+        exercise_name: ex.exercise_name,
+        muscle_group: ex.muscle_group,
+        secondary_muscles: ex.secondary_muscles,
+        exercise_library_id: ex.exercise_library_id,
+        sets: ex.sets,
+        target_reps: ex.target_reps,
+        target_rir: ex.target_rir,
+        rest: ex.rest,
+        default_weight_kg: ex.default_weight_kg,
+        notes: ex.notes,
+      })),
+    }
+    downloadBlob(JSON.stringify(payload, null, 2), `fitlog-template-${slugify(t.title)}.json`, 'application/json')
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setImporting(true)
+    setError(null)
+    setImportMessage(null)
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text) as Partial<TemplateExport>
+      if (parsed?.type !== 'fitlog-template' || typeof parsed.title !== 'string' || !Array.isArray(parsed.exercises)) {
+        setError('ไฟล์นี้ไม่ใช่เทมเพลตที่รองรับ')
+        return
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setError('กรุณาเข้าสู่ระบบใหม่')
+        return
+      }
+
+      const { data: newTemplate, error: tErr } = await supabase
+        .from('workout_templates')
+        .insert({ user_id: user.id, title: parsed.title })
+        .select('*')
+        .single()
+      if (tErr || !newTemplate) {
+        setError(`นำเข้าเทมเพลตไม่สำเร็จ: ${tErr?.message ?? 'unknown error'}`)
+        return
+      }
+      const created = newTemplate as WorkoutTemplate
+
+      if (parsed.exercises.length > 0) {
+        const payload = parsed.exercises.map((ex, i) => ({
+          template_id: created.id,
+          user_id: user.id,
+          position: i,
+          exercise_name: ex.exercise_name,
+          muscle_group: ex.muscle_group ?? null,
+          secondary_muscles: ex.secondary_muscles ?? [],
+          exercise_library_id: ex.exercise_library_id ?? null,
+          sets: ex.sets ?? null,
+          target_reps: ex.target_reps ?? null,
+          target_rir: ex.target_rir ?? null,
+          rest: ex.rest ?? null,
+          default_weight_kg: ex.default_weight_kg ?? null,
+          notes: ex.notes ?? null,
+        }))
+        const { data: exRows, error: exErr } = await supabase.from('workout_template_exercises').insert(payload).select('*')
+        if (exErr) {
+          setError(`นำเข้าท่าไม่สำเร็จ: ${exErr.message}`)
+        } else {
+          setExercisesByTemplate((prev) => ({ ...prev, [created.id]: exRows as WorkoutTemplateExercise[] }))
+        }
+      }
+
+      setTemplates((prev) => [created, ...prev])
+      setExpandedId(created.id)
+      setImportMessage(`นำเข้า "${created.title}" (${parsed.exercises.length} ท่า) แล้ว`)
+    } catch (err) {
+      setError(`นำเข้าไฟล์ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setImporting(false)
+    }
   }
 
   async function handleAddExercise(
@@ -350,6 +478,7 @@ export default function TemplatesPage() {
       {error && <p className="text-sm text-rusttext">{error}</p>}
       {startMessage && <p className="text-sm text-steel">{startMessage}</p>}
       {applyMessage && <p className="text-sm text-steel">{applyMessage}</p>}
+      {importMessage && <p className="text-sm text-steel">{importMessage}</p>}
 
       {templates.length === 0 && !creating && (
         <div className="rounded-lg bg-surface border border-line shadow-elevated border-dashed px-4 py-8 text-center">
@@ -390,7 +519,7 @@ export default function TemplatesPage() {
                     onDelete={handleDeleteExercise}
                     onReorder={(reordered) => handleReorderExercises(t.id, reordered)}
                   />
-                  <div className="px-4 py-3 border-t border-line flex items-center justify-between">
+                  <div className="px-4 py-3 border-t border-line flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                     <button
                       onClick={() => setAddingToId(t.id)}
                       className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
@@ -403,6 +532,13 @@ export default function TemplatesPage() {
                       className="text-xs font-display tracked uppercase text-muted hover:text-amber transition disabled:opacity-40"
                     >
                       📅 ตั้งโปรแกรม
+                    </button>
+                    <button
+                      onClick={() => handleExportTemplate(t)}
+                      disabled={exercises.length === 0}
+                      className="text-xs font-display tracked uppercase text-muted hover:text-amber transition disabled:opacity-40"
+                    >
+                      ⬇ Export
                     </button>
                     <button onClick={() => handleDeleteTemplate(t.id)} className="text-xs text-muted hover:text-rust transition">
                       ลบเทมเพลตนี้
@@ -437,13 +573,25 @@ export default function TemplatesPage() {
           )
         })}
 
-      {templates.length > 0 && !creating && (
-        <button
-          onClick={() => setCreating(true)}
-          className="w-full rounded-lg border border-line border-dashed text-muted font-display tracked uppercase py-3 text-sm hover:text-amber transition"
-        >
-          + เทมเพลตใหม่
-        </button>
+      {!creating && (
+        <div className="flex gap-2">
+          {templates.length > 0 && (
+            <button
+              onClick={() => setCreating(true)}
+              className="flex-1 rounded-lg border border-line border-dashed text-muted font-display tracked uppercase py-3 text-sm hover:text-amber transition"
+            >
+              + เทมเพลตใหม่
+            </button>
+          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="shrink-0 rounded-lg border border-line border-dashed text-muted font-display tracked uppercase py-3 px-4 text-sm hover:text-amber transition disabled:opacity-40"
+          >
+            {importing ? '...' : '⬆ Import'}
+          </button>
+          <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} className="hidden" />
+        </div>
       )}
 
       {creating && <NewTemplateForm onCancel={() => setCreating(false)} onSubmit={handleCreateTemplate} />}
