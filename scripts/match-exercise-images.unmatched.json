@@ -1,0 +1,1196 @@
+[
+  {
+    "id": "bench-press",
+    "name": "Bench Press",
+    "closest": "Bench Press - Powerlifting",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "chest-dip",
+    "name": "Chest Dip",
+    "closest": "Dip Machine",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "dumbbell-fly",
+    "name": "Dumbbell Fly",
+    "closest": "Dumbbell Clean",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "incline-bench-press",
+    "name": "Incline Bench Press",
+    "closest": "Smith Machine Incline Bench Press",
+    "score": 0.6
+  },
+  {
+    "id": "push-up",
+    "name": "Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "floor-press-barbell",
+    "name": "Barbell Floor Press",
+    "closest": "Floor Press",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "guillotine-press",
+    "name": "Guillotine Press",
+    "closest": "Barbell Guillotine Bench Press",
+    "score": 0.5
+  },
+  {
+    "id": "spoto-press",
+    "name": "Spoto Press",
+    "closest": "Bent Press",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "larsen-press",
+    "name": "Larsen Press",
+    "closest": "Bent Press",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "reverse-grip-bench-press",
+    "name": "Reverse-Grip Bench Press",
+    "closest": "Reverse Band Bench Press",
+    "score": 0.6
+  },
+  {
+    "id": "pin-press-barbell",
+    "name": "Pin Press",
+    "closest": "Bent Press",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "incline-dumbbell-fly",
+    "name": "Incline Dumbbell Fly",
+    "closest": "Dumbbell Incline Row",
+    "score": 0.5
+  },
+  {
+    "id": "decline-dumbbell-fly",
+    "name": "Decline Dumbbell Fly",
+    "closest": "Decline Dumbbell Flyes",
+    "score": 0.5
+  },
+  {
+    "id": "single-arm-dumbbell-bench-press",
+    "name": "Single-Arm Dumbbell Bench Press",
+    "closest": "One Arm Dumbbell Bench Press",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "dumbbell-pullover",
+    "name": "Dumbbell Pullover",
+    "closest": "Bent-Arm Dumbbell Pullover",
+    "score": 0.5
+  },
+  {
+    "id": "neutral-grip-dumbbell-press",
+    "name": "Neutral-Grip Dumbbell Press",
+    "closest": "Dumbbell Bench Press with Neutral Grip",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "machine-chest-press",
+    "name": "Machine Chest Press",
+    "closest": "Cable Chest Press",
+    "score": 0.5
+  },
+  {
+    "id": "pec-deck-fly",
+    "name": "Pec Deck Fly",
+    "closest": "Cable Rear Delt Fly",
+    "score": 0.16666666666666666
+  },
+  {
+    "id": "incline-machine-chest-press",
+    "name": "Incline Machine Chest Press",
+    "closest": "Incline Cable Chest Press",
+    "score": 0.6
+  },
+  {
+    "id": "decline-machine-chest-press",
+    "name": "Decline Machine Chest Press",
+    "closest": "Leverage Decline Chest Press",
+    "score": 0.6
+  },
+  {
+    "id": "hammer-strength-chest-press",
+    "name": "Hammer Strength Chest Press",
+    "closest": "Cable Chest Press",
+    "score": 0.4
+  },
+  {
+    "id": "low-to-high-cable-fly",
+    "name": "Low-to-High Cable Fly",
+    "closest": "High Cable Curls",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "high-to-low-cable-fly",
+    "name": "High-to-Low Cable Fly",
+    "closest": "High Cable Curls",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "cable-fly-flat",
+    "name": "Cable Fly (Flat)",
+    "closest": "Cable Rear Delt Fly",
+    "score": 0.4
+  },
+  {
+    "id": "single-arm-cable-fly",
+    "name": "Single-Arm Cable Fly",
+    "closest": "Single-Arm Cable Crossover",
+    "score": 0.6
+  },
+  {
+    "id": "diamond-push-up",
+    "name": "Diamond Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.5
+  },
+  {
+    "id": "archer-push-up",
+    "name": "Archer Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.5
+  },
+  {
+    "id": "weighted-dip",
+    "name": "Weighted Dip",
+    "closest": "Weighted Bench Dip",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "plyometric-push-up",
+    "name": "Plyometric Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.5
+  },
+  {
+    "id": "deficit-push-up",
+    "name": "Deficit Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.5
+  },
+  {
+    "id": "ab-wheel-rollout",
+    "name": "Ab Wheel Rollout",
+    "closest": "Barbell Ab Rollout",
+    "score": 0.5
+  },
+  {
+    "id": "bulgarian-split-squat",
+    "name": "Bulgarian Split Squat",
+    "closest": "Suspended Split Squat",
+    "score": 0.5
+  },
+  {
+    "id": "calf-raise",
+    "name": "Calf Raise",
+    "closest": "Seated Calf Raise",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "front-squat",
+    "name": "Front Squat",
+    "closest": "Front Barbell Squat",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "hip-thrust",
+    "name": "Hip Thrust",
+    "closest": "Barbell Hip Thrust",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "leg-curl",
+    "name": "Leg Curl",
+    "closest": "Ball Leg Curl",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "leg-extension",
+    "name": "Leg Extension",
+    "closest": "Single-Leg Leg Extension",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "squat",
+    "name": "Squat",
+    "closest": "Barbell Squat",
+    "score": 0.5
+  },
+  {
+    "id": "walking-lunge",
+    "name": "Walking Lunge",
+    "closest": "Barbell Walking Lunge",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "dumbbell-curl",
+    "name": "Dumbbell Curl",
+    "closest": "Dumbbell Bicep Curl",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "hammer-curl",
+    "name": "Hammer Curl",
+    "closest": "Alternate Hammer Curl",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "skull-crusher",
+    "name": "Skull Crusher",
+    "closest": "Band Skull Crusher",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "burpee",
+    "name": "Burpee",
+    "closest": null,
+    "score": 0
+  },
+  {
+    "id": "farmers-carry",
+    "name": "Farmer's Carry",
+    "closest": "Farmer's Walk",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "kettlebell-swing",
+    "name": "Kettlebell Swing",
+    "closest": "Kettlebell Thruster",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "thruster",
+    "name": "Thruster",
+    "closest": "Kettlebell Thruster",
+    "score": 0.5
+  },
+  {
+    "id": "barbell-row",
+    "name": "Barbell Row",
+    "closest": "Upright Barbell Row",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "deadlift",
+    "name": "Deadlift",
+    "closest": "Axle Deadlift",
+    "score": 0.5
+  },
+  {
+    "id": "dumbbell-row",
+    "name": "Dumbbell Row",
+    "closest": "Dumbbell Incline Row",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "lat-pulldown",
+    "name": "Lat Pulldown",
+    "closest": "One Arm Lat Pulldown",
+    "score": 0.5
+  },
+  {
+    "id": "pull-up",
+    "name": "Pull Up",
+    "closest": "Scapular Pull-Up",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "seated-cable-row",
+    "name": "Seated Cable Row",
+    "closest": "Cable Seated Crunch",
+    "score": 0.5
+  },
+  {
+    "id": "arnold-press",
+    "name": "Arnold Press",
+    "closest": "Arnold Dumbbell Press",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "front-raise",
+    "name": "Front Raise",
+    "closest": "Front Cable Raise",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "lateral-raise",
+    "name": "Lateral Raise",
+    "closest": "Side Lateral Raise",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "shoulder-press",
+    "name": "Shoulder Press",
+    "closest": "Barbell Shoulder Press",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "upright-row",
+    "name": "Upright Row",
+    "closest": "Upright Barbell Row",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "pendlay-row",
+    "name": "Pendlay Row",
+    "closest": "Inverted Row",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "yates-row",
+    "name": "Yates Row",
+    "closest": "Inverted Row",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "rack-pull",
+    "name": "Rack Pull",
+    "closest": "Rack Pull with Bands",
+    "score": 0.5
+  },
+  {
+    "id": "snatch-grip-deadlift",
+    "name": "Snatch-Grip Deadlift",
+    "closest": "Snatch Deadlift",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "meadows-row",
+    "name": "Meadows Row",
+    "closest": "Inverted Row",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "kroc-row",
+    "name": "Kroc Row",
+    "closest": "Inverted Row",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "chest-supported-dumbbell-row",
+    "name": "Chest-Supported Dumbbell Row",
+    "closest": "Dumbbell Incline Row",
+    "score": 0.4
+  },
+  {
+    "id": "renegade-row",
+    "name": "Renegade Row",
+    "closest": "Alternating Renegade Row",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "dumbbell-high-pull",
+    "name": "Dumbbell High Pull",
+    "closest": "Kettlebell Sumo High Pull",
+    "score": 0.4
+  },
+  {
+    "id": "dumbbell-deadlift",
+    "name": "Dumbbell Deadlift",
+    "closest": "Stiff-Legged Dumbbell Deadlift",
+    "score": 0.5
+  },
+  {
+    "id": "assisted-pull-up-machine",
+    "name": "Assisted Pull-Up Machine",
+    "closest": "Band Assisted Pull-Up",
+    "score": 0.6
+  },
+  {
+    "id": "plate-loaded-row-machine",
+    "name": "Plate-Loaded Row Machine",
+    "closest": "Smith Machine Upright Row",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "reverse-pec-deck-row",
+    "name": "Reverse Pec Deck",
+    "closest": "Reverse Crunch",
+    "score": 0.25
+  },
+  {
+    "id": "back-extension-machine",
+    "name": "Back Extension Machine",
+    "closest": "Machine Triceps Extension",
+    "score": 0.5
+  },
+  {
+    "id": "lat-pulldown-machine",
+    "name": "Plate-Loaded Lat Pulldown",
+    "closest": "One Arm Lat Pulldown",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "single-arm-lat-pulldown",
+    "name": "Single-Arm Lat Pulldown",
+    "closest": "One Arm Lat Pulldown",
+    "score": 0.6
+  },
+  {
+    "id": "close-grip-seated-row",
+    "name": "Close-Grip Seated Cable Row",
+    "closest": "Seated Close-Grip Concentration Barbell Curl",
+    "score": 0.375
+  },
+  {
+    "id": "wide-grip-seated-row",
+    "name": "Wide-Grip Seated Cable Row",
+    "closest": "Cable Seated Crunch",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "single-arm-cable-row",
+    "name": "Single-Arm Cable Row",
+    "closest": "Single-Arm Cable Crossover",
+    "score": 0.6
+  },
+  {
+    "id": "cable-pullover",
+    "name": "Cable Pullover",
+    "closest": "Cable Crossover",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "reverse-grip-lat-pulldown",
+    "name": "Reverse-Grip Lat Pulldown",
+    "closest": "Wide-Grip Lat Pulldown",
+    "score": 0.6
+  },
+  {
+    "id": "cable-shrug",
+    "name": "Cable Shrug",
+    "closest": "Barbell Shrug",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "high-cable-row",
+    "name": "High Cable Row",
+    "closest": "High Cable Curls",
+    "score": 0.5
+  },
+  {
+    "id": "neutral-grip-pull-up",
+    "name": "Neutral-Grip Pull-Up",
+    "closest": "Wide-Grip Rear Pull-Up",
+    "score": 0.5
+  },
+  {
+    "id": "bird-dog",
+    "name": "Bird Dog",
+    "closest": null,
+    "score": 0
+  },
+  {
+    "id": "zercher-squat",
+    "name": "Zercher Squat",
+    "closest": "Barbell Squat",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "barbell-step-up",
+    "name": "Barbell Step-Up",
+    "closest": "Barbell Step Ups",
+    "score": 0.5
+  },
+  {
+    "id": "dumbbell-lunge",
+    "name": "Dumbbell Lunge",
+    "closest": "Dumbbell Rear Lunge",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "dumbbell-step-up",
+    "name": "Dumbbell Step-Up",
+    "closest": "Dumbbell Step Ups",
+    "score": 0.5
+  },
+  {
+    "id": "dumbbell-sumo-squat",
+    "name": "Dumbbell Sumo Squat",
+    "closest": "Dumbbell Squat",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "single-leg-romanian-deadlift",
+    "name": "Single-Leg Romanian Deadlift",
+    "closest": "Romanian Deadlift",
+    "score": 0.5
+  },
+  {
+    "id": "curtsy-lunge",
+    "name": "Curtsy Lunge",
+    "closest": "Barbell Lunge",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "lying-leg-curl",
+    "name": "Lying Leg Curl",
+    "closest": "Ball Leg Curl",
+    "score": 0.5
+  },
+  {
+    "id": "standing-calf-raise-machine",
+    "name": "Standing Calf Raise Machine",
+    "closest": "Rocking Standing Calf Raise",
+    "score": 0.6
+  },
+  {
+    "id": "hip-abduction-machine",
+    "name": "Hip Abduction Machine",
+    "closest": "Smith Machine Hip Raise",
+    "score": 0.4
+  },
+  {
+    "id": "hip-adduction-machine",
+    "name": "Hip Adduction Machine",
+    "closest": "Cable Hip Adduction",
+    "score": 0.5
+  },
+  {
+    "id": "cable-pull-through",
+    "name": "Cable Pull-Through",
+    "closest": "Pull Through",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "cable-squat",
+    "name": "Cable Squat",
+    "closest": "Barbell Squat",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "cable-kickback",
+    "name": "Cable Kickback",
+    "closest": "One-Legged Cable Kickback",
+    "score": 0.5
+  },
+  {
+    "id": "cable-hip-abduction",
+    "name": "Cable Hip Abduction",
+    "closest": "Cable Hip Adduction",
+    "score": 0.5
+  },
+  {
+    "id": "cable-romanian-deadlift",
+    "name": "Cable Romanian Deadlift",
+    "closest": "Romanian Deadlift",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "pistol-squat",
+    "name": "Pistol Squat",
+    "closest": "Kettlebell Pistol Squat",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "jump-squat",
+    "name": "Jump Squat",
+    "closest": "Freehand Jump Squat",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "box-jump",
+    "name": "Box Jump",
+    "closest": "Front Box Jump",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "wall-sit",
+    "name": "Wall Sit",
+    "closest": "Sit-Up",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "glute-bridge",
+    "name": "Glute Bridge",
+    "closest": "Barbell Glute Bridge",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "step-up-bodyweight",
+    "name": "Bodyweight Step-Up",
+    "closest": "Step-up with Knee Raise",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "nordic-hamstring-curl",
+    "name": "Nordic Hamstring Curl",
+    "closest": "Seated Band Hamstring Curl",
+    "score": 0.4
+  },
+  {
+    "id": "kettlebell-goblet-squat",
+    "name": "Kettlebell Goblet Squat",
+    "closest": "Goblet Squat",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "military-press",
+    "name": "Military Press",
+    "closest": "Standing Military Press",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "barbell-front-raise",
+    "name": "Barbell Front Raise",
+    "closest": "Front Barbell Squat",
+    "score": 0.5
+  },
+  {
+    "id": "landmine-press",
+    "name": "Landmine Press",
+    "closest": "Bent Press",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "single-arm-dumbbell-press",
+    "name": "Single-Arm Dumbbell Press",
+    "closest": "Dumbbell One-Arm Shoulder Press",
+    "score": 0.5
+  },
+  {
+    "id": "leaning-lateral-raise",
+    "name": "Leaning Lateral Raise",
+    "closest": "Side Lateral Raise",
+    "score": 0.5
+  },
+  {
+    "id": "incline-rear-delt-raise",
+    "name": "Incline Rear Delt Raise",
+    "closest": "Lying Rear Delt Raise",
+    "score": 0.6
+  },
+  {
+    "id": "machine-lateral-raise",
+    "name": "Machine Lateral Raise",
+    "closest": "Side Lateral Raise",
+    "score": 0.5
+  },
+  {
+    "id": "plate-loaded-shoulder-press",
+    "name": "Plate-Loaded Shoulder Press",
+    "closest": "Barbell Shoulder Press",
+    "score": 0.4
+  },
+  {
+    "id": "machine-rear-delt-fly",
+    "name": "Machine Rear Delt Fly",
+    "closest": "Cable Rear Delt Fly",
+    "score": 0.6
+  },
+  {
+    "id": "cable-y-raise",
+    "name": "Cable Y-Raise",
+    "closest": "Front Cable Raise",
+    "score": 0.5
+  },
+  {
+    "id": "single-arm-cable-lateral-raise",
+    "name": "Single-Arm Cable Lateral Raise",
+    "closest": "Cable Seated Lateral Raise",
+    "score": 0.5
+  },
+  {
+    "id": "pike-push-up",
+    "name": "Pike Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.5
+  },
+  {
+    "id": "handstand-push-up",
+    "name": "Handstand Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.5
+  },
+  {
+    "id": "wall-walk",
+    "name": "Wall Walk",
+    "closest": "Farmer's Walk",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "shoulder-tap-plank",
+    "name": "Shoulder Tap Plank",
+    "closest": "Plank",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "wall-slide",
+    "name": "Wall Slide",
+    "closest": "Linear Acceleration Wall Drill",
+    "score": 0.2
+  },
+  {
+    "id": "barbell-wrist-curl",
+    "name": "Barbell Wrist Curl",
+    "closest": "Barbell Curl",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "concentration-curl",
+    "name": "Concentration Curl",
+    "closest": "Standing Concentration Curl",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "dumbbell-kickback",
+    "name": "Dumbbell Triceps Kickback",
+    "closest": "Tricep Dumbbell Kickback",
+    "score": 0.5
+  },
+  {
+    "id": "dumbbell-wrist-curl",
+    "name": "Dumbbell Wrist Curl",
+    "closest": "Cable Wrist Curl",
+    "score": 0.5
+  },
+  {
+    "id": "preacher-curl-machine",
+    "name": "Preacher Curl Machine",
+    "closest": "Preacher Curl",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "assisted-dip-machine",
+    "name": "Assisted Dip Machine",
+    "closest": "Dip Machine",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "reverse-curl-machine",
+    "name": "Reverse Curl Machine",
+    "closest": "Machine Bicep Curl",
+    "score": 0.5
+  },
+  {
+    "id": "cable-curl",
+    "name": "Cable Curl",
+    "closest": "Cable Preacher Curl",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "rope-hammer-curl",
+    "name": "Rope Hammer Curl",
+    "closest": "Alternate Hammer Curl",
+    "score": 0.5
+  },
+  {
+    "id": "single-arm-cable-triceps-extension",
+    "name": "Single-Arm Cable Triceps Extension",
+    "closest": "Cable Incline Triceps Extension",
+    "score": 0.5
+  },
+  {
+    "id": "cable-concentration-curl",
+    "name": "Cable Concentration Curl",
+    "closest": "Cable Preacher Curl",
+    "score": 0.5
+  },
+  {
+    "id": "bayesian-cable-curl",
+    "name": "Bayesian Cable Curl",
+    "closest": "Cable Preacher Curl",
+    "score": 0.5
+  },
+  {
+    "id": "bench-dip",
+    "name": "Bench Dip",
+    "closest": "Weighted Bench Dip",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "bodyweight-curl",
+    "name": "Bodyweight Curl",
+    "closest": "Barbell Curl",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "fingertip-push-up",
+    "name": "Fingertip Push Up",
+    "closest": "Clock Push-Up",
+    "score": 0.5
+  },
+  {
+    "id": "dead-hang",
+    "name": "Dead Hang",
+    "closest": "Dead Bug",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "barbell-rollout",
+    "name": "Barbell Rollout",
+    "closest": "Barbell Ab Rollout",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "landmine-rotation",
+    "name": "Landmine Rotation",
+    "closest": "External Rotation",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "weighted-sit-up",
+    "name": "Weighted Sit Up",
+    "closest": "Sit-Up",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "dumbbell-woodchopper",
+    "name": "Dumbbell Woodchopper",
+    "closest": "Dumbbell Clean",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "suitcase-carry",
+    "name": "Suitcase Carry",
+    "closest": "Rickshaw Carry",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "rotary-torso-machine",
+    "name": "Rotary Torso Machine",
+    "closest": "Dip Machine",
+    "score": 0.25
+  },
+  {
+    "id": "captains-chair-leg-raise",
+    "name": "Captain's Chair Leg Raise",
+    "closest": "Hanging Leg Raise",
+    "score": 0.4
+  },
+  {
+    "id": "cable-woodchopper",
+    "name": "Cable Woodchopper",
+    "closest": "Cable Crossover",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "cable-reverse-woodchopper",
+    "name": "Cable Reverse Woodchopper",
+    "closest": "Cable Reverse Crunch",
+    "score": 0.5
+  },
+  {
+    "id": "cable-side-bend",
+    "name": "Cable Side Bend",
+    "closest": "Barbell Side Bend",
+    "score": 0.5
+  },
+  {
+    "id": "standing-cable-crunch",
+    "name": "Standing Cable Crunch",
+    "closest": "Cable Crunch",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "cable-lift",
+    "name": "Cable Lift",
+    "closest": "Standing Cable Lift",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "mountain-climber",
+    "name": "Mountain Climber",
+    "closest": "Mountain Climbers",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "bicycle-crunch",
+    "name": "Bicycle Crunch",
+    "closest": "Cable Crunch",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "leg-raise",
+    "name": "Lying Leg Raise",
+    "closest": "Flat Bench Lying Leg Raise",
+    "score": 0.6
+  },
+  {
+    "id": "flutter-kick",
+    "name": "Flutter Kick",
+    "closest": "Flutter Kicks",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "v-up",
+    "name": "V-Up",
+    "closest": "Body-Up",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "side-plank",
+    "name": "Side Plank",
+    "closest": "Plank",
+    "score": 0.5
+  },
+  {
+    "id": "hollow-body-hold",
+    "name": "Hollow Body Hold",
+    "closest": "Body-Up",
+    "score": 0.25
+  },
+  {
+    "id": "toe-touch",
+    "name": "Toe Touch",
+    "closest": "Toe Touchers",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "dragon-flag",
+    "name": "Dragon Flag",
+    "closest": null,
+    "score": 0
+  },
+  {
+    "id": "plank-up-down",
+    "name": "Plank Up-Down",
+    "closest": "Plank",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "turkish-get-up",
+    "name": "Turkish Get-Up",
+    "closest": "Kettlebell Turkish Get-Up (Lunge style)",
+    "score": 0.5
+  },
+  {
+    "id": "man-maker",
+    "name": "Man Maker",
+    "closest": null,
+    "score": 0
+  },
+  {
+    "id": "dumbbell-snatch",
+    "name": "Dumbbell Snatch",
+    "closest": "Snatch",
+    "score": 0.5
+  },
+  {
+    "id": "devils-press",
+    "name": "Devil's Press",
+    "closest": "Bent Press",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "kettlebell-clean",
+    "name": "Kettlebell Clean",
+    "closest": "Kettlebell Dead Clean",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "kettlebell-snatch",
+    "name": "Kettlebell Snatch",
+    "closest": "Double Kettlebell Snatch",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "bear-crawl",
+    "name": "Bear Crawl",
+    "closest": "Bear Crawl Sled Drags",
+    "score": 0.5
+  },
+  {
+    "id": "burpee-box-jump",
+    "name": "Burpee Box Jump",
+    "closest": "Front Box Jump",
+    "score": 0.5
+  },
+  {
+    "id": "sprawl",
+    "name": "Sprawl",
+    "closest": null,
+    "score": 0
+  },
+  {
+    "id": "cat-cow-stretch",
+    "name": "Cat-Cow Stretch",
+    "closest": "Cat Stretch",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "hip-flexor-stretch",
+    "name": "Hip Flexor Stretch",
+    "closest": "Intermediate Hip Flexor and Quad Stretch",
+    "score": 0.5
+  },
+  {
+    "id": "pigeon-pose",
+    "name": "Pigeon Pose",
+    "closest": "Child's Pose",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "thoracic-spine-rotation",
+    "name": "Thoracic Spine Rotation",
+    "closest": "External Rotation",
+    "score": 0.25
+  },
+  {
+    "id": "leg-swings",
+    "name": "Leg Swings",
+    "closest": "Leg Extensions",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "jumping-jacks",
+    "name": "Jumping Jacks",
+    "closest": "Rope Jumping",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "high-knees",
+    "name": "High Knees",
+    "closest": "High Cable Curls",
+    "score": 0.25
+  },
+  {
+    "id": "butt-kicks",
+    "name": "Butt Kicks",
+    "closest": "Butt-Ups",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "jump-rope",
+    "name": "Jump Rope",
+    "closest": "Bench Jump",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "foam-rolling-quads",
+    "name": "Foam Rolling (Quads)",
+    "closest": null,
+    "score": 0
+  },
+  {
+    "id": "downward-dog",
+    "name": "Downward Dog",
+    "closest": "Downward Facing Balance",
+    "score": 0.25
+  },
+  {
+    "id": "cossack-squat",
+    "name": "Cossack Squat",
+    "closest": "Barbell Squat",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "shoulder-dislocates",
+    "name": "Shoulder Dislocates",
+    "closest": "Shoulder Circles",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "spiderman-lunge-stretch",
+    "name": "Spiderman Lunge Stretch",
+    "closest": "Barbell Lunge",
+    "score": 0.25
+  },
+  {
+    "id": "converging-chest-press",
+    "name": "Converging Chest Press",
+    "closest": "Cable Chest Press",
+    "score": 0.5
+  },
+  {
+    "id": "single-arm-cable-chest-press",
+    "name": "Single-Arm Cable Chest Press",
+    "closest": "Cable Chest Press",
+    "score": 0.6
+  },
+  {
+    "id": "seal-row",
+    "name": "Seal Row",
+    "closest": "Inverted Row",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "batwing-row",
+    "name": "Batwing Row",
+    "closest": "Inverted Row",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "belt-squat",
+    "name": "Belt Squat",
+    "closest": "Barbell Squat",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "sissy-squat",
+    "name": "Sissy Squat",
+    "closest": "Weighted Sissy Squat",
+    "score": 0.6666666666666666
+  },
+  {
+    "id": "z-press",
+    "name": "Z Press",
+    "closest": "Bent Press",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "bus-driver",
+    "name": "Bus Driver",
+    "closest": null,
+    "score": 0
+  },
+  {
+    "id": "waiter-curl",
+    "name": "Waiter's Curl",
+    "closest": "Barbell Curl",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "cable-skull-crusher",
+    "name": "Cable Skull Crusher",
+    "closest": "Band Skull Crusher",
+    "score": 0.5
+  },
+  {
+    "id": "ab-rollout-machine",
+    "name": "Ab Rollout Machine",
+    "closest": "Ab Crunch Machine",
+    "score": 0.5
+  },
+  {
+    "id": "copenhagen-plank",
+    "name": "Copenhagen Plank",
+    "closest": "Plank",
+    "score": 0.5
+  },
+  {
+    "id": "single-arm-kettlebell-swing",
+    "name": "Single-Arm Kettlebell Swing",
+    "closest": "One-Arm Kettlebell Clean",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "battle-ropes",
+    "name": "Battle Ropes",
+    "closest": "Battling Ropes",
+    "score": 0.3333333333333333
+  },
+  {
+    "id": "ninety-ninety-hip-stretch",
+    "name": "90/90 Hip Stretch",
+    "closest": "Intermediate Hip Flexor and Quad Stretch",
+    "score": 0.2857142857142857
+  },
+  {
+    "id": "seated-forward-fold",
+    "name": "Seated Forward Fold",
+    "closest": "Seated Biceps",
+    "score": 0.25
+  }
+]

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
@@ -10,7 +10,7 @@ import type { Workout } from '@/lib/types'
 import { computeExerciseStats, type ExerciseStats } from '@/lib/exerciseStats'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { MUSCLE_GROUP_COLORS, muscleGroupLabel } from '@/lib/muscle-groups'
-import { equipmentLabel } from '@/lib/exerciseLibrary'
+import { equipmentLabel, invalidateExerciseLibraryCache } from '@/lib/exerciseLibrary'
 import { relativeDayLabel } from '@/lib/dashboardStats'
 import { todayStr } from '@/lib/weekdays'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
@@ -28,9 +28,54 @@ export default function ExerciseDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<ExerciseStats | null>(null)
-  const { data: exercises = [] } = useExerciseLibrary()
+  const { data: exercises = [], refetch: refetchExercises } = useExerciseLibrary()
 
   const known = exercises.find((ex) => ex.name === exerciseName || ex.nameTh === exerciseName)
+
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // อัปโหลดรูปสาธิตท่านี้ — เก็บไฟล์ใน storage bucket "exercise-images" (public) แล้วเขียน image_url
+  // ผ่าน RPC update_exercise_image (ดู supabase/migrations/036_exercise_library_image_upload.sql)
+  // เพราะ policy ปกติของ exercise_library อนุญาตแค่แก้ท่า custom ของตัวเอง ท่ามาตรฐานแก้ image_url
+  // ตรงๆ ผ่าน client ไม่ได้ ต้องผ่าน RPC ที่จำกัดสิทธิ์ไว้เฉพาะคอลัมน์นี้เท่านั้น
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !known) return
+    setUploadError(null)
+    setUploadingImage(true)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setUploadError('กรุณาเข้าสู่ระบบใหม่')
+        return
+      }
+      const ext = file.name.split('.').pop() || 'jpg'
+      const path = `${known.id}-${Date.now()}.${ext}`
+      const { error: uploadErr } = await supabase.storage.from('exercise-images').upload(path, file, { upsert: true })
+      if (uploadErr) {
+        setUploadError('อัปโหลดไม่สำเร็จ ลองใหม่อีกครั้ง')
+        return
+      }
+      const { data: pub } = supabase.storage.from('exercise-images').getPublicUrl(path)
+      const { error: rpcErr } = await supabase.rpc('update_exercise_image', {
+        p_exercise_id: known.id,
+        p_image_url: pub.publicUrl,
+      })
+      if (rpcErr) {
+        setUploadError('บันทึกรูปไม่สำเร็จ')
+        return
+      }
+      invalidateExerciseLibraryCache()
+      await refetchExercises()
+    } finally {
+      setUploadingImage(false)
+      e.target.value = ''
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -89,10 +134,10 @@ export default function ExerciseDetailPage() {
         </div>
       </div>
 
-      {known && (known.imageUrl || known.highlighterMuscles.length > 0) && (
+      {known && (
         <div className="grid grid-cols-2 gap-3">
-          {known.imageUrl && (
-            <div className="relative w-full aspect-square rounded-xl bg-panel overflow-hidden">
+          <div className="relative w-full aspect-square rounded-xl bg-panel overflow-hidden">
+            {known.imageUrl ? (
               <Image
                 src={known.imageUrl}
                 alt={known.name}
@@ -101,8 +146,19 @@ export default function ExerciseDetailPage() {
                 loading="lazy"
                 className="object-cover"
               />
-            </div>
-          )}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-3xl opacity-40">{known.icon}</div>
+            )}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="absolute bottom-1.5 right-1.5 text-[10px] font-display tracked uppercase bg-bg/80 text-ink border border-line rounded-full px-2.5 py-1 disabled:opacity-50"
+            >
+              {uploadingImage ? '...' : known.imageUrl ? 'เปลี่ยนรูป' : '+ เพิ่มรูป'}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+          </div>
           {known.highlighterMuscles.length > 0 && (
             <div className="rounded-xl bg-panel flex items-center justify-center py-2">
               <MuscleDiagram exerciseName={known.name} highlighterMuscles={known.highlighterMuscles} />
@@ -110,6 +166,7 @@ export default function ExerciseDetailPage() {
           )}
         </div>
       )}
+      {uploadError && <p className="text-xs text-rusttext">{uploadError}</p>}
 
       {error ? (
         <ErrorState title="โหลดข้อมูลท่านี้ไม่สำเร็จ" message={error} onRetry={load} />
