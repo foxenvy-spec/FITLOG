@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import type { Profile } from '@/lib/types'
+import { saveAge, saveSex } from '@/lib/profile'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import SignOutButton from '@/components/SignOutButton'
 
@@ -23,6 +25,7 @@ export default function ProfileView() {
   const supabase = createClient()
   const [email, setEmail] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
     let active = true
@@ -35,11 +38,13 @@ export default function ProfileView() {
       setEmail(user.email ?? null)
       const { data } = await supabase
         .from('profiles')
-        .select('display_name')
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle()
       if (active) {
-        setDisplayName((data as { display_name: string | null } | null)?.display_name ?? null)
+        const row = data as (Profile & { display_name: string | null }) | null
+        setDisplayName(row?.display_name ?? null)
+        setProfile(row)
       }
     }
 
@@ -63,6 +68,8 @@ export default function ProfileView() {
           <p className="text-[11px] text-muted font-mono truncate">{email}</p>
         </div>
       </div>
+
+      <PersonalInfoCard profile={profile} onSaved={(p) => setProfile(p)} />
 
       <div className="rounded-xl bg-surface border border-line shadow-elevated divide-y divide-line overflow-hidden">
         {LINKS.map((item) => (
@@ -92,6 +99,104 @@ export default function ProfileView() {
       <div className="flex justify-center pt-1">
         <SignOutButton />
       </div>
+    </div>
+  )
+}
+
+// เพศ+อายุ อยู่หน้าโปรไฟล์ตรงนี้ (ไม่ใช่แค่ในฟอร์มบันทึกวัดผลที่หน้า Health) เพื่อให้ผู้ใช้กรอกได้ตั้งแต่
+// เข้าแอปครั้งแรก — สองค่านี้เป็นข้อมูลระดับโปรไฟล์ (ไม่ผูกกับวันที่วัดผลไหนโดยเฉพาะ) ใช้คำนวณเกณฑ์
+// มาตรฐานน้ำในร่างกาย/โปรตีน และ BMR/TDEE โดยประมาณ (ดู lib/bmr.ts) ที่หน้า Health
+function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSaved: (p: Profile) => void }) {
+  const supabase = createClient()
+  const [ageInput, setAgeInput] = useState(profile?.age ? String(profile.age) : '')
+  const [savingSex, setSavingSex] = useState<'male' | 'female' | null>(null)
+  const [ageError, setAgeError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setAgeInput(profile?.age ? String(profile.age) : '')
+  }, [profile?.age])
+
+  async function handlePickSex(sex: 'male' | 'female') {
+    if (!profile) return
+    setSavingSex(sex)
+    try {
+      await saveSex(supabase, sex)
+      onSaved({ ...profile, sex })
+    } catch (err) {
+      console.error('บันทึกเพศไม่สำเร็จ', err)
+    } finally {
+      setSavingSex(null)
+    }
+  }
+
+  async function handleAgeBlur() {
+    if (!profile) return
+    const trimmed = ageInput.trim()
+    if (!trimmed) return
+    const num = Math.round(Number(trimmed))
+    if (!Number.isFinite(num) || num === profile.age) return
+    setAgeError(null)
+    try {
+      await saveAge(supabase, num)
+      onSaved({ ...profile, age: num })
+    } catch (err) {
+      console.error('บันทึกอายุไม่สำเร็จ', err)
+      setAgeError('บันทึกไม่สำเร็จ ลองอีกครั้ง')
+    }
+  }
+
+  return (
+    <div className="rounded-xl bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-3">
+      <p className="text-[10px] tracked uppercase text-muted">ข้อมูลส่วนตัว</p>
+
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-ink">เพศ</p>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => handlePickSex('male')}
+            disabled={savingSex !== null || !profile}
+            className={`px-3 py-1.5 rounded-lg text-xs font-display tracked uppercase disabled:opacity-50 transition ${
+              profile?.sex === 'male' ? 'bg-steel text-bg' : 'bg-steeldim text-steel'
+            }`}
+          >
+            {savingSex === 'male' ? '...' : 'ชาย'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePickSex('female')}
+            disabled={savingSex !== null || !profile}
+            className={`px-3 py-1.5 rounded-lg text-xs font-display tracked uppercase disabled:opacity-50 transition ${
+              profile?.sex === 'female' ? 'bg-rust text-bg' : 'bg-rustdim text-rusttext'
+            }`}
+          >
+            {savingSex === 'female' ? '...' : 'หญิง'}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor="profile-age" className="text-sm text-ink">
+          อายุ (ปี)
+        </label>
+        <input
+          id="profile-age"
+          type="number"
+          inputMode="numeric"
+          disabled={!profile}
+          value={ageInput}
+          onChange={(e) => setAgeInput(e.target.value)}
+          onBlur={handleAgeBlur}
+          placeholder="เช่น 28"
+          className="w-24 shrink-0 bg-surface2 text-ink text-sm text-center font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-amber disabled:opacity-50"
+        />
+      </div>
+
+      {ageError && <p className="text-[11px] text-rusttext">{ageError}</p>}
+
+      <p className="text-[10px] text-muted/70">
+        ใช้คำนวณเกณฑ์มาตรฐานสุขภาพและอัตราการเผาผลาญ (BMR/TDEE) โดยประมาณในหน้า Measures & สุขภาพ
+      </p>
     </div>
   )
 }

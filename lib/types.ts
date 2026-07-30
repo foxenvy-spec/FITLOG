@@ -44,6 +44,9 @@ export interface WorkoutSet {
 export interface Profile {
   user_id: string
   height_cm: number | null
+  // อายุจริง (ปี) — แยกจาก body_metrics.body_age_years (อายุร่างกายที่เครื่องชั่งประมาณ)
+  // ใช้คำนวณ BMR/TDEE โดยประมาณคู่กับ height_cm/sex/น้ำหนักล่าสุด ดู lib/bmr.ts
+  age: number | null
   // เพศ — ใช้แยกเกณฑ์มาตรฐาน "สัดส่วนน้ำในร่างกาย (%)" ที่ต่างกันระหว่างชาย/หญิง ดูหน้า Health
   sex: 'male' | 'female' | null
   // ชีพจรสูงสุดโดยประมาณ (bpm) — ผู้ใช้กรอกเอง ใช้คำนวณ Heart Rate Zone ใน Weekly Cardio Volume
