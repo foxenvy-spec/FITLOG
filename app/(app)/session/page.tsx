@@ -45,6 +45,31 @@ import LoadingState from '@/components/LoadingState'
 
 type Phase = 'loading' | 'error' | 'empty' | 'active' | 'done'
 
+// ตั้งแต่ persistSets เขียนลง DB ทันทีทีละเซ็ต (ไม่รอจนกดจบท่า) แถว workouts ของท่านึงอาจมีอยู่แล้ว
+// ทั้งที่ผู้ใช้ยังไม่ได้กด "บันทึก & ท่าถัดไป" จริงๆ — initSessionStates (lib/workoutSession.ts) เดา
+// logged=true แค่จากการมีแถว workouts อยู่ ซึ่งใช้ไม่ได้แล้ว เก็บ id ท่าที่ "กดจบท่าจริง" แยกไว้ใน
+// localStorage ต่างหาก เพื่อตัดสิน logged ให้ถูกต้องตอนโหลดหน้าใหม่ (เช่น สลับไปหน้าอื่นแล้วกลับมา)
+function finishedExerciseIdsKey(): string {
+  return `fitlog:session-finished:${todayStr()}`
+}
+
+function readFinishedExerciseIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = window.localStorage.getItem(finishedExerciseIdsKey())
+    return new Set(raw ? (JSON.parse(raw) as string[]) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function markExerciseFinished(id: string) {
+  if (typeof window === 'undefined') return
+  const ids = readFinishedExerciseIds()
+  ids.add(id)
+  window.localStorage.setItem(finishedExerciseIdsKey(), JSON.stringify(Array.from(ids)))
+}
+
 interface PRHit {
   exerciseName: string
   weightKg: number
@@ -246,10 +271,21 @@ export default function SessionPage() {
       lastPerformanceByName
     )
 
+    // initSessionStates เดา logged=true จากการมีแถว workouts อยู่เฉยๆ ซึ่งตอนนี้ไม่จริงเสมอไปแล้ว
+    // (persistSets เขียนทุกเซ็ตทันที ไม่รอจบท่า) — เชื่อ logged=true เฉพาะท่าที่กดจบท่าจริงเท่านั้น
+    // (อยู่ใน finishedIds) ท่าที่ยังทำไม่ครบจะถูกดึงกลับมาเปิดต่อที่เดิมพร้อม setsLog เดิมที่บันทึกไว้แล้ว
+    const finishedIds = readFinishedExerciseIds()
+    const adjustedStates = Object.fromEntries(
+      Object.entries(initialStates).map(([id, state]) => [
+        id,
+        state.logged && !finishedIds.has(id) ? { ...state, logged: false } : state,
+      ])
+    )
+
     setDay(dayRow as ProgramDay)
     setExercises(combinedExercises)
-    setStates(initialStates)
-    setIndex(firstUnfinishedIndex(combinedExercises, initialStates))
+    setStates(adjustedStates)
+    setIndex(firstUnfinishedIndex(combinedExercises, adjustedStates))
     setPhase('active')
   }, [supabase])
 
@@ -489,6 +525,8 @@ export default function SessionPage() {
               { onConflict: 'user_id,program_exercise_id,completed_at' }
             )
         }
+
+        markExerciseFinished(current.id)
 
         // ใช้ states ที่เพิ่งอัปเดตนี้ (ไม่ใช่ตัวแปร states เดิมจาก closure ที่ยังไม่ทันอัปเดต)
         // ไปคำนวณท่าถัดไปทันที กัน goNext เห็นค่า logged เก่าที่ยังเป็น false อยู่
