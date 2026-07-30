@@ -28,24 +28,48 @@ async function main() {
   const files = (await readdir(IMAGES_DIR)).filter((f) => /\.(png|jpe?g|webp|gif)$/i.test(f))
   console.log(`เจอไฟล์รูป ${files.length} ไฟล์ใน ${IMAGES_DIR}/`)
 
-  const matched = []
-  const unmatched = []
-
+  // เดิม: จับคู่แบบ "ท่าละไฟล์ที่ดีที่สุด" อิสระต่อกัน ทำให้ท่าที่ชื่อคล้ายกัน (เช่น
+  // "Machine Shoulder Press" กับ "Smith Machine Shoulder Press") แย่งไฟล์เดียวกันได้ทั้งคู่ —
+  // ท่าหลังได้รูปที่ไม่ตรงอุปกรณ์จริงไปแบบเงียบๆ แถมไฟล์ที่ควรจะไปคู่กับท่าอื่นก็ค้างไม่ถูกใช้
+  // แก้ด้วยการจับคู่คะแนนสูงสุดก่อนแบบ one-to-one (ไฟล์ 1 ไฟล์ผูกกับท่าได้แค่ท่าเดียว) —
+  // เรียงคู่ทั้งหมดจากคะแนนสูงไปต่ำ ไล่จองทีละคู่ ใครมาก่อนได้ก่อน
+  const candidates = []
   for (const ex of EXERCISES) {
-    let best = null
-    let bestScore = 0
     for (const file of files) {
       const fileName = path.parse(file).name
       const score = normalize(fileName) === normalize(ex.name) ? 1 : tokenOverlap(ex.name, fileName)
-      if (score > bestScore) {
-        bestScore = score
-        best = file
-      }
+      if (score >= 0.7) candidates.push({ ex, file, score })
     }
-    if (best && bestScore >= 0.7) {
-      matched.push({ id: ex.id, name: ex.name, file: best, score: bestScore })
+  }
+  candidates.sort((a, b) => b.score - a.score)
+
+  const matchedByExerciseId = new Map()
+  const claimedFiles = new Set()
+  for (const c of candidates) {
+    if (matchedByExerciseId.has(c.ex.id) || claimedFiles.has(c.file)) continue
+    matchedByExerciseId.set(c.ex.id, { id: c.ex.id, name: c.ex.name, file: c.file, score: c.score })
+    claimedFiles.add(c.file)
+  }
+
+  const matched = []
+  const unmatched = []
+  for (const ex of EXERCISES) {
+    const m = matchedByExerciseId.get(ex.id)
+    if (m) {
+      matched.push(m)
     } else {
-      unmatched.push({ id: ex.id, name: ex.name, closest: best ?? null, score: bestScore })
+      // เผื่อดีบัก: โชว์ไฟล์ที่ใกล้เคียงที่สุดแม้จะถูกท่าอื่นจองไปแล้วก็ตาม
+      let best = null
+      let bestScore = 0
+      for (const file of files) {
+        const fileName = path.parse(file).name
+        const score = normalize(fileName) === normalize(ex.name) ? 1 : tokenOverlap(ex.name, fileName)
+        if (score > bestScore) {
+          bestScore = score
+          best = file
+        }
+      }
+      unmatched.push({ id: ex.id, name: ex.name, closest: best, score: bestScore, closestTaken: best ? claimedFiles.has(best) : false })
     }
   }
 
