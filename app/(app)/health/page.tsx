@@ -1269,6 +1269,8 @@ export default function HealthPage() {
 
       {tab === 'log' && (
         <div className="space-y-6">
+          <HeightSetting profile={profile} onSaved={(p) => setProfile(p)} />
+
           <MetricForm
             onSaved={(m) => setMetrics((prev) => [m, ...prev.filter((x) => x.id !== m.id)])}
             onHeightExtracted={saveHeight}
