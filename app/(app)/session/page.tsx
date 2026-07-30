@@ -83,6 +83,11 @@ export default function SessionPage() {
   // นาฬิกาเซสชันรวม — เดินตั้งแต่เปิดหน้า ใช้บอกเวลาที่ใช้ไปในสรุปตอนจบ
   const session = useStopwatch()
   const sessionStartedRef = useRef(false)
+  // ผลรวมเวลาที่ผ่านไปแล้ว "ก่อน" ที่ stopwatch รอบนี้จะเริ่มนับ (ms) — เก็บเป็น timestamp เริ่มเซสชัน
+  // ไว้ใน localStorage กันเวลารีเซ็ตเป็น 0 ทุกครั้งที่ component unmount/remount (เช่นสลับไปหน้าอื่นแล้ว
+  // กลับมาหน้านี้) เพราะ useStopwatch เองเป็น state ในหน่วยความจำล้วนๆ ไม่รอดจาก remount
+  const sessionOffsetRef = useRef(0)
+  const sessionStorageKey = `fitlog:session-started-at:${todayStr()}`
 
   // กันหน้าจอดับตลอดเซสชัน ไม่ต้องรอให้ rest timer ทำงานก่อน
   useWakeLock(phase === 'active')
@@ -255,10 +260,28 @@ export default function SessionPage() {
   useEffect(() => {
     if (phase === 'active' && !sessionStartedRef.current) {
       sessionStartedRef.current = true
+      const stored = typeof window !== 'undefined' ? window.localStorage.getItem(sessionStorageKey) : null
+      if (stored) {
+        sessionOffsetRef.current = Date.now() - Number(stored)
+      } else if (typeof window !== 'undefined') {
+        window.localStorage.setItem(sessionStorageKey, String(Date.now()))
+      }
       session.start()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
+
+  // เวลารวมจริงตั้งแต่เริ่มเซสชันวันนี้ (รวม offset จากรอบก่อนหน้า remount ด้วย) — ใช้แทน
+  // session.elapsedMs ตรงๆ ทุกจุดที่ต้องโชว์/คำนวณเวลาเซสชัน
+  const totalElapsedMs = session.elapsedMs + sessionOffsetRef.current
+
+  // เรียกตอนจบเซสชัน (ทั้งทำครบทุกท่า และกด "จบก่อน") — ล้าง timestamp เริ่มเซสชันทิ้ง ไม่งั้น
+  // เซสชันถัดไปในวันเดียวกัน (ถ้ามี) จะเห็น timestamp เก่าแล้วคำนวณ offset ผิด
+  function endSession() {
+    session.pause()
+    if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
+    setPhase('done')
+  }
 
   const current = exercises[index] ?? null
   const currentState = current ? states[current.id] : null
@@ -332,18 +355,90 @@ export default function SessionPage() {
     setShowAddExercise(false)
   }
 
+  // เขียน setsLog ปัจจุบันของท่านี้ลง DB จริง (workouts + workout_sets) — เรียกทันทีทุกครั้งที่กด
+  // "เซ็ตนี้เสร็จแล้ว" ไม่ใช่รอจนกดจบท่า เพราะ state ของหน้านี้อยู่ในหน่วยความจำล้วนๆ ถ้าออกจากหน้า
+  // ระหว่างทำท่าอยู่ (เช่น สลับไปดูหน้าอื่นแล้วกลับมา) ข้อมูลที่ยังไม่ได้เขียนลง DB จะหายหมด
+  async function persistSets(
+    ex: ProgramExercise,
+    state: SessionSetState,
+    userId: string
+  ): Promise<{ workoutId: string | null; setsError: string | null }> {
+    if (state.setsLog.length === 0) return { workoutId: state.workoutId ?? null, setsError: null }
+
+    // top set = เซ็ตที่หนักที่สุด (ถ้าเท่ากันเทียบ reps) — เก็บลง workouts.reps/weight_kg
+    // เพื่อให้ยังใช้เป็นค่าเดี่ยวสำหรับ PR / ประมาณ 1RM ได้เหมือนหน้า /log
+    const topSet = state.setsLog.reduce((best, s) => {
+      if (s.weightKg > best.weightKg) return s
+      if (s.weightKg === best.weightKg && s.reps > best.reps) return s
+      return best
+    }, state.setsLog[0])
+    // total_volume_kg: รวมจาก reps x น้ำหนัก จริงทีละเซ็ต (ไม่ใช่ setsDone * ค่าเดียวเหมือนเดิม)
+    const totalVolumeKg = state.setsLog.reduce((sum, s) => sum + s.reps * s.weightKg, 0)
+    const payload = {
+      user_id: userId,
+      type: 'strength' as const,
+      performed_at: todayStr(),
+      exercise_name: ex.exercise_name,
+      muscle_group: ex.muscle_group,
+      sets: state.setsLog.length,
+      reps: topSet.reps,
+      weight_kg: topSet.weightKg,
+      rpe: state.rpe,
+      notes: ex.rationale,
+      total_volume_kg: totalVolumeKg,
+    }
+
+    // ถ้าเคยบันทึกท่านี้ไปแล้ว (เซ็ตก่อนหน้าในท่าเดียวกัน หรือกลับมาแก้ผ่าน progress chips)
+    // ต้องอัปเดตแถวเดิมแทนการ insert ใหม่ ไม่งั้นจะได้รายการซ้ำซ้อนในประวัติ/สถิติ
+    const { data: upserted, error: wErr } = state.workoutId
+      ? await supabase.from('workouts').update(payload).eq('id', state.workoutId).select('id').single()
+      : await supabase.from('workouts').insert(payload).select('id').single()
+
+    if (wErr) throw wErr
+
+    const workoutId = (upserted as { id: string } | null)?.id ?? state.workoutId
+    if (!workoutId) return { workoutId: null, setsError: null }
+
+    // ลบเซ็ตเก่าทั้งหมดแล้วเขียนชุดใหม่ทับ — ง่ายกว่า diff ทีละเซ็ต และจำนวน/ลำดับเซ็ตอาจเปลี่ยนไปจากเดิม
+    if (state.workoutId) {
+      await supabase.from('workout_sets').delete().eq('workout_id', workoutId)
+    }
+    const setsPayload = state.setsLog.map((s, i) => ({
+      workout_id: workoutId,
+      user_id: userId,
+      set_number: i + 1,
+      reps: s.reps,
+      weight_kg: s.weightKg,
+      completed: true,
+    }))
+    const { error: setsError } = await supabase.from('workout_sets').insert(setsPayload)
+
+    return { workoutId, setsError: setsError ? setsError.message : null }
+  }
+
   // กด "เซ็ตนี้เสร็จแล้ว" — จำ reps/น้ำหนักที่กรอกอยู่ ณ ตอนนี้เป็นเซ็ตจริงเซ็ตหนึ่ง (ไม่ใช่แค่นับจำนวน)
   // ทำให้ drop set หรือเซ็ตท้ายๆ ที่ reps ตกลง ถูกเก็บค่าจริงแยกทีละเซ็ต ไม่ถูกปัดเป็นค่าเดียวซ้ำทุกเซ็ต
-  function logSet() {
+  async function logSet() {
     if (!current || !currentState) return
     if (!currentState.reps || currentState.reps <= 0) {
       setErrorMsg('กรุณาใส่จำนวน reps ที่ทำได้ก่อนกดเซ็ตเสร็จ')
       return
     }
     setErrorMsg(null)
-    updateCurrent({
-      setsLog: [...currentState.setsLog, { reps: currentState.reps, weightKg: currentState.weightKg ?? 0 }],
-    })
+    const newSetsLog = [...currentState.setsLog, { reps: currentState.reps, weightKg: currentState.weightKg ?? 0 }]
+    updateCurrent({ setsLog: newSetsLog })
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    try {
+      const { workoutId, setsError } = await persistSets(current, { ...currentState, setsLog: newSetsLog }, user.id)
+      if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
+      if (setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
+    } catch (err) {
+      setErrorMsg(`บันทึกเซ็ตไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   // "ลบเซ็ตล่าสุด" — เอาเซ็ตท้ายสุดออก แล้วดึงค่า reps/น้ำหนักของเซ็ตนั้นกลับมาเป็น draft
@@ -372,66 +467,21 @@ export default function SessionPage() {
       }
 
       if (currentState.setsLog.length > 0) {
-        // top set = เซ็ตที่หนักที่สุด (ถ้าเท่ากันเทียบ reps) — เก็บลง workouts.reps/weight_kg
-        // เพื่อให้ยังใช้เป็นค่าเดี่ยวสำหรับ PR / ประมาณ 1RM ได้เหมือนหน้า /log
-        const topSet = currentState.setsLog.reduce((best, s) => {
-          if (s.weightKg > best.weightKg) return s
-          if (s.weightKg === best.weightKg && s.reps > best.reps) return s
-          return best
-        }, currentState.setsLog[0])
-        // total_volume_kg: รวมจาก reps x น้ำหนัก จริงทีละเซ็ต (ไม่ใช่ setsDone * ค่าเดียวเหมือนเดิม)
-        const totalVolumeKg = currentState.setsLog.reduce((sum, s) => sum + s.reps * s.weightKg, 0)
-        const payload = {
-          user_id: user.id,
-          type: 'strength' as const,
-          performed_at: todayStr(),
-          exercise_name: current.exercise_name,
-          muscle_group: current.muscle_group,
-          sets: currentState.setsLog.length,
-          reps: topSet.reps,
-          weight_kg: topSet.weightKg,
-          rpe: currentState.rpe,
-          notes: current.rationale,
-          total_volume_kg: totalVolumeKg,
-        }
-
-        // ถ้าเคยบันทึกท่านี้ไปแล้วในเซสชันนี้ (เช่น กดย้อนกลับมาแก้ผ่าน progress chips ด้านบน)
-        // ต้องอัปเดตแถวเดิมแทนการ insert ใหม่ ไม่งั้นจะได้รายการซ้ำซ้อนในประวัติ/สถิติ
-        const { data: upserted, error: wErr } = currentState.workoutId
-          ? await supabase.from('workouts').update(payload).eq('id', currentState.workoutId).select('id').single()
-          : await supabase.from('workouts').insert(payload).select('id').single()
-
-        if (wErr) {
-          setErrorMsg(`บันทึกไม่สำเร็จ: ${wErr.message}`)
+        // ปกติเซ็ตทั้งหมดถูกเขียนลง DB ไปแล้วทีละเซ็ตตั้งแต่ตอนกด "เซ็ตนี้เสร็จแล้ว" (ดู persistSets
+        // ใน logSet) เรียกซ้ำอีกทีตรงนี้เพื่อความชัวร์ (idempotent) เผื่อครั้งก่อนๆ เขียนไม่สำเร็จ
+        let workoutId: string | null
+        try {
+          const result = await persistSets(current, currentState, user.id)
+          workoutId = result.workoutId
+          if (result.setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
+        } catch (err) {
+          setErrorMsg(`บันทึกไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
           return
-        }
-
-        const workoutId = (upserted as { id: string } | null)?.id ?? currentState.workoutId
-
-        if (workoutId) {
-          // แก้ไขซ้ำ (กดย้อนมาแก้ผ่าน progress chips) — ลบเซ็ตเก่าทั้งหมดแล้วเขียนชุดใหม่ทับ
-          // ง่ายกว่า diff ทีละเซ็ต และจำนวน/ลำดับเซ็ตอาจเปลี่ยนไปจากเดิม
-          if (currentState.workoutId) {
-            await supabase.from('workout_sets').delete().eq('workout_id', workoutId)
-          }
-          const setsPayload = currentState.setsLog.map((s, i) => ({
-            workout_id: workoutId,
-            user_id: user.id,
-            set_number: i + 1,
-            reps: s.reps,
-            weight_kg: s.weightKg,
-            completed: true,
-          }))
-          const { error: setsError } = await supabase.from('workout_sets').insert(setsPayload)
-          if (setsError) {
-            // แถวสรุป (workouts) บันทึกสำเร็จแล้ว แค่รายละเอียดทีละเซ็ตไม่ครบ — ตัวเลขรวมยังถูกต้อง
-            setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
-          }
         }
 
         // program_completions ผูก FK กับ program_exercises เท่านั้น — ท่าที่ผู้ใช้กด "เพิ่มท่า" เองระหว่าง
         // เซสชัน (ไม่ได้อยู่ในแผน) จึงต้องข้ามขั้นตอนนี้ไป ไม่งั้น insert จะพังเพราะไม่มีแถวจริงให้ผูก
-        if (!isAdhocExercise(current)) {
+        if (workoutId && !isAdhocExercise(current)) {
           await supabase
             .from('program_completions')
             .upsert(
@@ -475,8 +525,7 @@ export default function SessionPage() {
   function goNext(latestStates: Record<string, SessionSetState> = states) {
     const next = nextUnvisitedIndex(exercises, latestStates, index)
     if (next === null) {
-      session.pause()
-      setPhase('done')
+      endSession()
     } else {
       setIndex(next)
     }
@@ -494,7 +543,7 @@ export default function SessionPage() {
         .map((ex) => ({ ex, state: states[ex.id] }))
         .filter((e) => e.state?.logged)
 
-      const durationMin = Math.round(session.elapsedMs / 60000)
+      const durationMin = Math.round(totalElapsedMs / 60000)
 
       const [{ data: latestMetric }, { data: priorRows }, { data: recentMuscleRows }] = await Promise.all([
         supabase.from('body_metrics').select('weight_kg').order('measured_at', { ascending: false }).limit(1).maybeSingle(),
@@ -554,7 +603,7 @@ export default function SessionPage() {
       setSummaryLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase, exercises, states, session.elapsedMs])
+  }, [supabase, exercises, states, totalElapsedMs])
 
   useEffect(() => {
     if (phase === 'done' && !summaryExtras && !summaryLoading) {
@@ -572,7 +621,7 @@ export default function SessionPage() {
     const skipped = getSkippedExercises(exercises, states)
     const lines = [
       `🏋️ ${day?.title ?? 'Workout'} เสร็จแล้ว!`,
-      `⏱ ${formatClock(session.elapsedMs)} · ${summary.exerciseCount}/${exercises.length} ท่า · ${summary.totalSets} เซ็ต`,
+      `⏱ ${formatClock(totalElapsedMs)} · ${summary.exerciseCount}/${exercises.length} ท่า · ${summary.totalSets} เซ็ต`,
     ]
     if (summary.totalVolumeKg > 0) lines.push(`💪 วอลุ่มรวม ${Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString()} ${unit}`)
     if (skipped.length > 0) lines.push(`⏭️ ข้ามไป: ${skipped.map((s) => s.exerciseName).join(', ')}`)
@@ -632,7 +681,7 @@ export default function SessionPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <SummaryCell label="เวลาที่ใช้" value={formatClock(session.elapsedMs)} />
+          <SummaryCell label="เวลาที่ใช้" value={formatClock(totalElapsedMs)} />
           <SummaryCell label="ท่าที่ทำ" value={`${summary.exerciseCount}/${exercises.length}`} />
           <SummaryCell label="เซ็ตรวม" value={String(summary.totalSets)} />
         </div>
@@ -737,13 +786,10 @@ export default function SessionPage() {
           ท่าที่ <span className="text-ink font-mono">{index + 1}</span>/{exercises.length}
         </p>
         <div className="flex items-center gap-3">
-          <p className="text-[11px] font-mono text-muted tabular">{formatClock(session.elapsedMs)}</p>
+          <p className="text-[11px] font-mono text-muted tabular">{formatClock(totalElapsedMs)}</p>
           <button
             type="button"
-            onClick={() => {
-              session.pause()
-              setPhase('done')
-            }}
+            onClick={endSession}
             className="text-[11px] text-muted hover:text-rusttext transition"
           >
             จบก่อน
