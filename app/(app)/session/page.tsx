@@ -8,7 +8,9 @@ import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { findExerciseByName } from '@/lib/exercises'
-import { COLORS, NEUTRAL } from '@/lib/theme'
+import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
+import PremiumCard from '@/components/ui/PremiumCard'
+import ProgressRing from '@/components/ui/ProgressRing'
 import {
   parseRestSeconds,
   initSessionSet,
@@ -731,25 +733,37 @@ export default function SessionPage() {
     const skipped = getSkippedExercises(exercises, states)
     return (
       <div className="space-y-5 text-center py-4">
-        <p className="text-4xl">🎉</p>
         <div>
-          <p className="font-display text-2xl tracked uppercase text-ink">เซสชันเสร็จแล้ว</p>
+          <p className="text-5xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
+            🎉
+          </p>
+          <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
           <p className="text-xs text-muted mt-1">{day?.title}</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <SummaryCell label="เวลาที่ใช้" value={formatClock(totalElapsedMs)} />
-          <SummaryCell label="ท่าที่ทำ" value={`${summary.exerciseCount}/${exercises.length}`} />
-          <SummaryCell label="เซ็ตรวม" value={String(summary.totalSets)} />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <SummaryCell
-            label={`วอลุ่มรวม (${unit})`}
-            value={summary.totalVolumeKg > 0 ? Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString() : '–'}
+        <div className="grid grid-cols-3 gap-2.5">
+          <GlowStatCell icon={<ClockIcon />} color={COLORS.amber} value={formatClock(totalElapsedMs)} label="เวลาที่ใช้" />
+          <GlowStatCell
+            icon={<DumbbellIcon />}
+            color={COLORS.steel}
+            value={`${summary.exerciseCount}/${exercises.length}`}
+            label="ท่าที่ทำ"
           />
-          <SummaryCell
-            label="แคลอรี่ (ประมาณ)"
+          <GlowStatCell icon={<CheckIcon />} color={COLORS.moss} value={String(summary.totalSets)} label="เซ็ตรวม" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <GlowStatRow
+            icon={<FlameIcon />}
+            color={COLORS.cyan}
+            value={summary.totalVolumeKg > 0 ? Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString() : '–'}
+            label={`วอลุ่มรวม (${unit})`}
+          />
+          <GlowStatRow
+            icon={<BoltIcon />}
+            color={COLORS.green}
             value={summaryLoading ? '…' : summaryExtras ? `${summaryExtras.calories} kcal` : '–'}
+            label="แคลอรี่ (ประมาณ)"
           />
         </div>
 
@@ -780,28 +794,38 @@ export default function SessionPage() {
         )}
 
         {summaryExtras && (
-          <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 text-left space-y-2.5">
+          <PremiumCard className="px-4 py-4 text-left space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] tracked uppercase text-muted">ความพร้อมครั้งถัดไป</p>
-              <p className={`font-mono text-lg ${recoveryTextColor(summaryExtras.recovery.overall)}`}>
-                {tierEmoji(summaryExtras.recovery.overall)} {summaryExtras.recovery.overall}%
-              </p>
+              <p className="text-[11px] tracked uppercase text-muted">ความพร้อมกล้ามเนื้อโดยรวม</p>
+              <ProgressRing value={summaryExtras.recovery.overall} size={46} strokeWidth={5} gradientStops={ringStopsForPct(summaryExtras.recovery.overall)}>
+                <span className="font-mono text-xs text-ink">{summaryExtras.recovery.overall}%</span>
+              </ProgressRing>
             </div>
-            <div className="space-y-1.5">
-              {summaryExtras.recovery.byMuscle.map((m) => (
-                <div key={m.muscleGroup} className="flex items-center gap-2">
-                  <span className="text-[11px] text-muted w-16 shrink-0">{m.muscleGroup}</span>
-                  <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
-                    <div className={`h-full rounded-full ${recoveryBarColor(m.tier)}`} style={{ width: `${m.pct}%` }} />
+            <div className="space-y-2.5">
+              {summaryExtras.recovery.byMuscle.map((m) => {
+                const mgColor = MUSCLE_GROUP_COLORS[m.muscleGroup]
+                const MuscleGroupIcon = MUSCLE_ICON_BY_GROUP[m.muscleGroup]
+                return (
+                  <div key={m.muscleGroup} className="flex items-center gap-2.5">
+                    <span
+                      className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center"
+                      style={{ background: withAlpha(mgColor, '26'), boxShadow: `0 0 10px ${withAlpha(mgColor, '55')}`, color: mgColor }}
+                    >
+                      <MuscleGroupIcon />
+                    </span>
+                    <span className="text-[11px] text-muted w-14 shrink-0">{m.muscleGroup}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
+                      <div className={`h-full rounded-full ${recoveryBarColor(m.tier)}`} style={{ width: `${m.pct}%` }} />
+                    </div>
+                    <span className="text-[11px] font-mono text-ink w-9 text-right">{m.pct}%</span>
                   </div>
-                  <span className="text-[11px] font-mono text-ink w-9 text-right">{m.pct}%</span>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <p className="text-[10px] text-muted/70">
               ประเมินจากวอลุ่ม/ความหนักที่เพิ่งฝึกและวันที่ฝึกล่าสุดของแต่ละกลุ่มกล้ามเนื้อ (ยังไม่รวมข้อมูลการนอน)
             </p>
-          </div>
+          </PremiumCard>
         )}
 
         {shareMsg && <p className="text-xs text-amber">{shareMsg}</p>}
@@ -1148,34 +1172,176 @@ export default function SessionPage() {
   )
 }
 
-function SummaryCell({ label, value }: { label: string; value: string }) {
+// การ์ดสรุปตัวเลขแบบมีไอคอนวงกลมเรืองแสง (glow) — ใช้ withAlpha ทำพื้นหลังจางๆ สีเดียวกับไอคอน
+// แล้วใส่ boxShadow สีเดียวกันแบบโปร่งแสงให้ดูเหมือนไอคอนเปล่งแสงออกมา (โทนเดียวกับปุ่ม "เซ็ตนี้เสร็จแล้ว")
+function GlowIconChip({ icon, color, size = 36 }: { icon: React.ReactNode; color: string; size?: number }) {
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg py-3">
+    <span
+      className="shrink-0 rounded-full flex items-center justify-center"
+      style={{ width: size, height: size, background: withAlpha(color, '26'), boxShadow: `0 0 14px ${withAlpha(color, '55')}`, color }}
+    >
+      {icon}
+    </span>
+  )
+}
+
+function GlowStatCell({ icon, color, value, label }: { icon: React.ReactNode; color: string; value: string; label: string }) {
+  return (
+    <div className="bg-surface border border-line shadow-elevated rounded-lg py-3.5 px-2 flex flex-col items-center gap-1.5">
+      <GlowIconChip icon={icon} color={color} size={34} />
       <p className="font-mono text-lg text-ink tabular">{value}</p>
-      <p className="text-[9px] tracked uppercase text-muted mt-0.5">{label}</p>
+      <p className="text-[9px] tracked uppercase text-muted">{label}</p>
     </div>
   )
 }
 
-function tierEmoji(pct: number) {
-  const tier = tierForPct(pct)
-  if (tier === 'green') return '🟢'
-  if (tier === 'yellow') return '🟡'
-  if (tier === 'orange') return '🟠'
-  return '🔴'
+function GlowStatRow({ icon, color, value, label }: { icon: React.ReactNode; color: string; value: string; label: string }) {
+  return (
+    <div className="bg-surface border border-line shadow-elevated rounded-lg px-3.5 py-3.5 flex items-center gap-3">
+      <GlowIconChip icon={icon} color={color} size={40} />
+      <div className="min-w-0 text-left">
+        <p className="font-mono text-lg text-ink tabular truncate">{value}</p>
+        <p className="text-[9px] tracked uppercase text-muted">{label}</p>
+      </div>
+    </div>
+  )
 }
 
-function recoveryTextColor(pct: number) {
+// สีวงแหวน ProgressRing ของ "ความพร้อมกล้ามเนื้อโดยรวม" — ผูกกับ tier เดียวกับแถบสีรายกลุ่ม
+// (recoveryBarColor) ไม่ใช้ fire gradient เริ่มต้นของ ProgressRing เพราะที่นี่สื่อความหมาย
+// ระดับความพร้อม ไม่ใช่แค่ของตกแต่ง
+function ringStopsForPct(pct: number) {
   const tier = tierForPct(pct)
-  if (tier === 'green') return 'text-steel'
-  if (tier === 'yellow') return 'text-amber'
-  return 'text-rusttext'
+  const c = tier === 'green' ? COLORS.steel : tier === 'yellow' ? COLORS.amber : COLORS.rust
+  return [
+    { offset: '0%', color: c },
+    { offset: '100%', color: c },
+  ]
 }
 
 function recoveryBarColor(tier: 'green' | 'yellow' | 'orange' | 'red') {
   if (tier === 'green') return 'bg-steel'
   if (tier === 'yellow') return 'bg-amber'
   return 'bg-rust'
+}
+
+function ClockIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
+    </svg>
+  )
+}
+
+function DumbbellIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 9v6M2 10v4M20 9v6M22 10v4M7 12h10" />
+      <rect x="5" y="8" width="4" height="8" rx="1" />
+      <rect x="15" y="8" width="4" height="8" rx="1" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 12l5 5L20 6" />
+    </svg>
+  )
+}
+
+function FlameIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2c1 3-2 4-2 7a4 4 0 008 0c0-1-.5-2-1-3 1 0 3 2 3 6a6 6 0 11-12 0c0-4 2-7 4-10z" />
+    </svg>
+  )
+}
+
+function BoltIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" />
+    </svg>
+  )
+}
+
+function ChestIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 8c0-2 2-3 4-2 1 .6 1.5 1.6 1.5 3v7" />
+      <path d="M20 8c0-2-2-3-4-2-1 .6-1.5 1.6-1.5 3v7" />
+    </svg>
+  )
+}
+
+function BackIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v18" />
+      <path d="M5 6c3 2 4 5 7 5s4-3 7-5" />
+      <path d="M6 19c2-3 4-4 6-4s4 1 6 4" />
+    </svg>
+  )
+}
+
+function LegsIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 3c-.5 5-1 9-2.5 12M15 3c.5 5 1 9 2.5 12M9 3h6" />
+    </svg>
+  )
+}
+
+function CalvesIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 4c-1 3-.5 6 1 8-1 2-1.5 4-1 8" />
+      <path d="M15 4c1 3 .5 6-1 8 1 2 1.5 4 1 8" />
+    </svg>
+  )
+}
+
+function ShouldersIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 14c0-4 2-7 4-7s3 2 3 5" />
+      <path d="M21 14c0-4-2-7-4-7s-3 2-3 5" />
+      <path d="M10 12h4" />
+    </svg>
+  )
+}
+
+function ArmsIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 20c0-5 1-8 2-10 1-2 3-3 5-3 3 0 5 2 5 5 0 2-1 3-3 3-1 0-2-1-2-2" />
+      <path d="M8 20c0-3 .5-5 1.5-7" />
+    </svg>
+  )
+}
+
+function CoreIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="7" y="4" width="10" height="16" rx="3" />
+      <path d="M7 9h10M7 14h10M12 4v16" />
+    </svg>
+  )
+}
+
+const MUSCLE_ICON_BY_GROUP: Record<MuscleGroup, () => React.JSX.Element> = {
+  'อก': ChestIcon,
+  'หลัง': BackIcon,
+  'ขา': LegsIcon,
+  'น่อง': CalvesIcon,
+  'ไหล่': ShouldersIcon,
+  'แขน': ArmsIcon,
+  'แกนกลางลำตัว': CoreIcon,
+  'ทั้งตัว': DumbbellIcon,
+  'อื่นๆ': DumbbellIcon,
 }
 
 // ตัวจับเวลาพักแบบย่อ ฝังอยู่ในการ์ดของท่าปัจจุบัน — เริ่มนับอัตโนมัติทุกครั้งที่กด
