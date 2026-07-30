@@ -837,7 +837,8 @@ export default function SessionPage() {
   const knownExercise = findExerciseByName(exerciseLibrary, current.exercise_name)
 
   return (
-    <div className="space-y-4 lg:max-w-2xl lg:mx-auto">
+    <div className="lg:max-w-5xl lg:mx-auto lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
+      <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-[11px] tracked uppercase text-muted">
           ท่าที่ <span className="text-ink font-mono">{index + 1}</span>/{exercises.length}
@@ -854,8 +855,8 @@ export default function SessionPage() {
         </div>
       </div>
 
-      {/* progress chips */}
-      <div className="flex gap-1">
+      {/* progress chips (มือถือ) — บนจอกว้างใช้ sidebar รายชื่อท่าแทน (ดูด้านล่าง) */}
+      <div className="flex gap-1 lg:hidden">
         {exercises.map((ex, i) => (
           <button
             key={ex.id}
@@ -1094,6 +1095,42 @@ export default function SessionPage() {
               ? 'บันทึก & จบเซสชัน'
               : 'บันทึก & ท่าถัดไป ▶'}
         </button>
+      </div>
+      </div>
+
+      {/* sidebar รายชื่อท่าทั้งหมด — โชว์เฉพาะจอกว้าง (lg+) แทน progress chips เพื่อใช้พื้นที่ว่างข้างการ์ด */}
+      <div className="hidden lg:block">
+        <div className="sticky top-4 rounded-lg bg-surface border border-line shadow-elevated p-3 space-y-0.5">
+          <p className="text-[10px] tracked uppercase text-muted px-1.5 pb-1.5">ท่าในเซสชันนี้</p>
+          <ul className="space-y-0.5">
+            {exercises.map((ex, i) => {
+              const st = states[ex.id]
+              const done = st?.logged
+              const skipped = st?.skipped
+              const activeItem = i === index
+              return (
+                <li key={ex.id}>
+                  <button
+                    type="button"
+                    onClick={() => setIndex(i)}
+                    className={`w-full text-left px-2.5 py-2 rounded-lg text-xs transition flex items-center gap-2 ${
+                      activeItem ? 'bg-amber/10 text-amber' : 'text-ink hover:bg-surface2'
+                    }`}
+                  >
+                    <span
+                      className={`w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-[9px] ${
+                        done ? 'bg-steel text-bg' : activeItem ? 'bg-amber text-bg' : 'bg-surface2 text-muted'
+                      }`}
+                    >
+                      {done ? '✓' : skipped ? '–' : i + 1}
+                    </span>
+                    <span className={`truncate ${done ? 'text-muted line-through' : ''}`}>{ex.exercise_name}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   )
