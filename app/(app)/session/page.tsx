@@ -921,8 +921,33 @@ export default function SessionPage() {
             'radial-gradient(circle at 88% 15%, rgba(255,138,0,0.20), transparent 55%), #1C1F24',
         }}
       >
-        <div className="px-4 py-3.5 border-b border-line flex items-start justify-between gap-3">
-          <div className="min-w-0">
+        <div className="relative overflow-hidden border-b border-line min-h-[190px]">
+          {/* รูปท่าออกกำลังกายแบบเต็มมุมขวา ไล่จางกลืนเข้าพื้นหลังการ์ดทางซ้าย (ตรงข้ามกับ WAVE_MASK
+              ใน Header.tsx ที่จางไปทางขวา — ที่นี่ตัวหนังสืออยู่ซ้าย รูปเลยต้องจางไปทางซ้ายแทน) กัน
+              รูปทับตัวหนังสือจนอ่านไม่ออก — สูง 190px (ไม่ใช่ 132px แบบแรก) เพราะ aspect ratio ของกล่อง
+              ที่เตี้ยเกินไปเทียบกับรูปต้นฉบับ (แนวนอนกว้าง) ทำให้ object-cover ต้อง crop ด้านข้างจนเห็น
+              แค่ริมขวาสุดของรูป (จานเวท/ไดอะแกรม) ไม่เห็นคนเล่นท่าเลย — เพิ่มความสูงให้ใกล้ aspect ต้นฉบับ
+              มากขึ้นและใช้ object-position กำหนดเองแทน object-right เพื่อให้เห็นตัวคนในเฟรมด้วย */}
+          {knownExercise?.imageUrl && (
+            <div
+              className="absolute inset-0"
+              style={{
+                maskImage: 'linear-gradient(90deg, transparent 0%, transparent 28%, black 70%)',
+                WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, transparent 28%, black 70%)',
+              }}
+            >
+              <Image
+                src={knownExercise.imageUrl}
+                alt=""
+                fill
+                sizes="600px"
+                loading="lazy"
+                className="object-cover"
+                style={{ objectPosition: '62% 50%' }}
+              />
+            </div>
+          )}
+          <div className="relative px-4 py-3.5">
             <div className="flex items-center gap-2">
               {mg && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: mgColor }} />}
               <p className="font-display text-xl tracked uppercase text-ink truncate">{current.exercise_name}</p>
@@ -934,18 +959,13 @@ export default function SessionPage() {
             </p>
             {current.rationale && <p className="text-[11px] text-muted/70 mt-1 italic">{current.rationale}</p>}
           </div>
-          {knownExercise?.imageUrl && (
-            <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-surface2">
-              <Image src={knownExercise.imageUrl} alt="" fill sizes="80px" loading="lazy" className="object-cover" />
-            </div>
-          )}
         </div>
 
         <div className="px-4 py-4 space-y-3">
-          <div className="flex items-center justify-between bg-surface2 rounded-lg px-4 py-3">
+          <div className="flex items-center justify-between bg-surface2 rounded-lg px-4 py-2.5">
             <div>
               <p className="text-[10px] tracked uppercase text-muted">เซ็ตที่ทำแล้ว</p>
-              <p className="font-mono text-2xl text-ink mt-0.5">
+              <p className="font-mono text-xl text-ink mt-0.5">
                 {currentState.setsLog.length}
                 <span className="text-sm text-muted">/{targetSets}</span>
               </p>
@@ -1188,7 +1208,7 @@ function RestTimerButton({
 
   return (
     <div className="text-right">
-      <p className={`font-mono text-2xl tabular ${done ? 'text-amber' : 'text-steel'}`}>{formatClock(remainingMs)}</p>
+      <p className={`font-mono text-xl tabular ${done ? 'text-amber' : 'text-steel'}`}>{formatClock(remainingMs)}</p>
       <button
         type="button"
         onClick={() => {
