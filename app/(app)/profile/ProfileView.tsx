@@ -151,13 +151,21 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-ink">เพศ</p>
-        <div className="flex items-center gap-2 shrink-0">
+        {/* segmented control สไตล์เดียวกับ WeightUnitToggle — ตัวที่เลือกไว้ทึบสีอำพัน ตัวที่ไม่ได้เลือก
+            เป็นแค่ข้อความสีเทาจาง ให้เห็นชัดว่าเลือกอะไรอยู่ (เดิมใช้สี steel/rust คนละโทนสำหรับปุ่ม ชาย/หญิง
+            เอง ซึ่งดูคล้ายกันทั้งตอนเลือกและไม่เลือก แยกไม่ออก) */}
+        <div
+          className="shrink-0 inline-flex rounded-full border border-line bg-surface2 p-0.5"
+          role="group"
+          aria-label="เพศ"
+        >
           <button
             type="button"
             onClick={() => handlePickSex('male')}
+            aria-pressed={profile?.sex === 'male'}
             disabled={savingSex !== null || !profile}
-            className={`px-3 py-1.5 rounded-lg text-xs font-display tracked uppercase disabled:opacity-50 transition ${
-              profile?.sex === 'male' ? 'bg-steel text-bg' : 'bg-steeldim text-steel'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase transition disabled:opacity-50 ${
+              profile?.sex === 'male' ? 'bg-amber text-bg' : 'text-muted'
             }`}
           >
             {savingSex === 'male' ? '...' : 'ชาย'}
@@ -165,9 +173,10 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
           <button
             type="button"
             onClick={() => handlePickSex('female')}
+            aria-pressed={profile?.sex === 'female'}
             disabled={savingSex !== null || !profile}
-            className={`px-3 py-1.5 rounded-lg text-xs font-display tracked uppercase disabled:opacity-50 transition ${
-              profile?.sex === 'female' ? 'bg-rust text-bg' : 'bg-rustdim text-rusttext'
+            className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase transition disabled:opacity-50 ${
+              profile?.sex === 'female' ? 'bg-amber text-bg' : 'text-muted'
             }`}
           >
             {savingSex === 'female' ? '...' : 'หญิง'}
