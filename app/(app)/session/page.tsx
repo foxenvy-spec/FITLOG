@@ -923,20 +923,14 @@ export default function SessionPage() {
         }}
       >
         <div className="relative overflow-hidden border-b border-line min-h-[190px]">
-          {/* รูปท่าออกกำลังกายแบบเต็มมุมขวา ไล่จางกลืนเข้าพื้นหลังการ์ดทางซ้าย (ตรงข้ามกับ WAVE_MASK
-              ใน Header.tsx ที่จางไปทางขวา — ที่นี่ตัวหนังสืออยู่ซ้าย รูปเลยต้องจางไปทางซ้ายแทน) กัน
-              รูปทับตัวหนังสือจนอ่านไม่ออก — สูง 190px (ไม่ใช่ 132px แบบแรก) เพราะ aspect ratio ของกล่อง
-              ที่เตี้ยเกินไปเทียบกับรูปต้นฉบับ (แนวนอนกว้าง) ทำให้ object-cover ต้อง crop ด้านข้างจนเห็น
-              แค่ริมขวาสุดของรูป (จานเวท/ไดอะแกรม) ไม่เห็นคนเล่นท่าเลย — เพิ่มความสูงให้ใกล้ aspect ต้นฉบับ
-              มากขึ้นและใช้ object-position กำหนดเองแทน object-right เพื่อให้เห็นตัวคนในเฟรมด้วย */}
+          {/* รูปท่าออกกำลังกายแบบเต็มมุมขวา — เอา mask ไล่จางออก เพราะรูปชุดที่ผู้ใช้ทำเอง (AI-generated)
+              มีพื้นที่มืดฝั่งซ้ายสำหรับใส่ตัวหนังสือมาให้อยู่แล้วในตัวรูปเอง (ดูตัวอย่าง Incline Bench
+              Press) การไล่จางซ้อนเข้าไปอีกชั้นเลยทำให้บังส่วนที่อยากเห็น (ท่าออกกำลังกาย) ไปโดยไม่จำเป็น
+              — สูง 190px (ไม่ใช่ 132px แบบแรก) เพราะ aspect ratio ของกล่องที่เตี้ยเกินไปเทียบกับรูปต้นฉบับ
+              (แนวนอนกว้าง) ทำให้ object-cover ต้อง crop ด้านข้างจนเห็นแค่ริมขวาสุดของรูป ไม่เห็นคนเล่นท่าเลย
+              — เพิ่มความสูงให้ใกล้ aspect ต้นฉบับมากขึ้นและใช้ object-position กำหนดเองแทน object-right */}
           {knownExercise?.imageUrl && (
-            <div
-              className="absolute inset-0"
-              style={{
-                maskImage: 'linear-gradient(90deg, transparent 0%, transparent 28%, black 70%)',
-                WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, transparent 28%, black 70%)',
-              }}
-            >
+            <div className="absolute inset-0">
               <Image
                 src={knownExercise.imageUrl}
                 alt=""
