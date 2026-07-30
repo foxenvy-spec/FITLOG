@@ -37,6 +37,23 @@ export async function saveAge(
   if (error) throw error
 }
 
+// เพศ — ใช้แยกเกณฑ์มาตรฐาน "สัดส่วนน้ำในร่างกาย (%)" ที่ต่างกันระหว่างชาย/หญิง (ดูหน้า Health)
+// และเป็นหนึ่งในตัวแปรของสูตร BMR Mifflin-St Jeor (ดู lib/bmr.ts) — ส่ง null เพื่อล้างค่า
+export async function saveSex(
+  supabase: ReturnType<typeof createClient>,
+  sex: 'male' | 'female' | null
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('ยังไม่ได้ล็อกอิน')
+
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ user_id: user.id, sex, updated_at: new Date().toISOString() })
+  if (error) throw error
+}
+
 // ชีพจรสูงสุดโดยประมาณ (bpm) — ใช้คำนวณ Heart Rate Zone ใน Weekly Cardio Volume (ดู lib/heartRate.ts)
 // ส่ง null เพื่อล้างค่า (กลับไปใช้ค่าประมาณมาตรฐานแทน)
 export async function saveMaxHeartRate(
