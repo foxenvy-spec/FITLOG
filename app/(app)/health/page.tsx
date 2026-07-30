@@ -1269,9 +1269,8 @@ export default function HealthPage() {
 
       {tab === 'log' && (
         <div className="space-y-6">
-          <HeightSetting profile={profile} onSaved={(p) => setProfile(p)} />
-
           <MetricForm
+            profile={profile}
             onSaved={(m) => setMetrics((prev) => [m, ...prev.filter((x) => x.id !== m.id)])}
             onHeightExtracted={saveHeight}
           />
@@ -2385,82 +2384,19 @@ function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profil
   )
 }
 
-function HeightSetting({ profile, onSaved }: { profile: Profile | null; onSaved: (p: Profile) => void }) {
-  const supabase = createClient()
-  const [height, setHeight] = useState(profile?.height_cm ? String(profile.height_cm) : '')
-  const [editing, setEditing] = useState(!profile?.height_cm)
-  const [saving, setSaving] = useState(false)
-
-  async function handleSave() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user || !height) return
-    setSaving(true)
-    const { data } = await supabase
-      .from('profiles')
-      .upsert({ user_id: user.id, height_cm: Number(height), updated_at: new Date().toISOString() })
-      .select()
-      .single()
-    setSaving(false)
-    if (data) {
-      onSaved(data as Profile)
-      setEditing(false)
-    }
-  }
-
-  if (!editing) {
-    return (
-      <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-[11px] tracked uppercase text-muted">ส่วนสูง</p>
-          <button type="button" onClick={() => setEditing(true)} className="text-[10px] text-amber underline">
-            แก้ไข
-          </button>
-        </div>
-        <p className="font-mono text-2xl tabular text-amber">
-          {profile?.height_cm}
-          <span className="text-xs text-muted ml-1">ซม.</span>
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
-      <p className="text-[11px] tracked uppercase text-muted mb-1.5">ส่วนสูง (ซม.)</p>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          inputMode="decimal"
-          value={height}
-          onChange={(e) => setHeight(e.target.value)}
-          placeholder="สำหรับคำนวณ BMI"
-          className="input font-mono text-sm py-2"
-        />
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving || !height}
-          className="shrink-0 px-3 py-2 rounded-lg bg-steel text-bg text-xs font-display tracked uppercase disabled:opacity-50"
-        >
-          บันทึก
-        </button>
-      </div>
-    </div>
-  )
-}
-
 function MetricForm({
+  profile,
   onSaved,
   onHeightExtracted,
 }: {
+  profile: Profile | null
   onSaved: (m: BodyMetric) => void
   onHeightExtracted?: (heightCm: number) => Promise<void>
 }) {
   const supabase = createClient()
   const { unit, toKg, toDisplay } = useWeightUnit()
   const [date, setDate] = useState(todayStr())
+  const [heightCm, setHeightCm] = useState(profile?.height_cm ? String(profile.height_cm) : '')
   const [weight, setWeight] = useState('')
   const [bodyFat, setBodyFat] = useState('')
   const [muscle, setMuscle] = useState('')
@@ -2500,6 +2436,23 @@ function MetricForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [heightNote, setHeightNote] = useState<string | null>(null)
+
+  // profile โหลดแบบ async หลัง MetricForm mount ไปแล้ว — sync ค่าส่วนสูงเข้าช่องกรอกทุกครั้งที่โหลดเสร็จ/เปลี่ยน
+  useEffect(() => {
+    setHeightCm(profile?.height_cm ? String(profile.height_cm) : '')
+  }, [profile?.height_cm])
+
+  async function handleHeightBlur() {
+    const trimmed = heightCm.trim()
+    if (!trimmed || !onHeightExtracted) return
+    const num = Number(trimmed)
+    if (!Number.isFinite(num) || num === profile?.height_cm) return
+    try {
+      await onHeightExtracted(num)
+    } catch (err) {
+      console.error('บันทึกส่วนสูงไม่สำเร็จ', err)
+    }
+  }
 
   function fmtKg(v: number | null): string {
     return v !== null ? String(Math.round(toDisplay(v) * 10) / 10) : ''
@@ -2685,6 +2638,7 @@ function MetricForm({
       {heightNote && <p className="text-[11px] text-muted -mt-1">{heightNote}</p>}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <LabeledInput label="ส่วนสูง (ซม.)" value={heightCm} onChange={setHeightCm} onBlur={handleHeightBlur} />
         <LabeledInput label={`น้ำหนัก (${unit})`} value={weight} onChange={setWeight} />
         <LabeledInput label="Body Fat (%)" value={bodyFat} onChange={setBodyFat} />
         <LabeledInput label={`Muscle (${unit})`} value={muscle} onChange={setMuscle} />
@@ -2752,7 +2706,17 @@ function MetricForm({
   )
 }
 
-function LabeledInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function LabeledInput({
+  label,
+  value,
+  onChange,
+  onBlur,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  onBlur?: () => void
+}) {
   return (
     <div>
       <label className="block text-[10px] tracked uppercase text-muted mb-1">{label}</label>
@@ -2762,6 +2726,7 @@ function LabeledInput({ label, value, onChange }: { label: string; value: string
         step="0.1"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         className="input font-mono text-center text-sm py-2"
       />
     </div>
