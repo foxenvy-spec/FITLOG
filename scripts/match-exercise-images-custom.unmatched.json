@@ -1,1796 +1,1878 @@
 [
   {
-    "id": "bench-press",
-    "name": "Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.6666666666666666
-  },
-  {
     "id": "cable-crossover",
     "name": "Cable Crossover",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "chest-dip",
     "name": "Chest Dip",
     "closest": null,
-    "score": 0
-  },
-  {
-    "id": "decline-bench-press",
-    "name": "Decline Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.5
-  },
-  {
-    "id": "dumbbell-bench-press",
-    "name": "Dumbbell Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.5
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "dumbbell-fly",
     "name": "Dumbbell Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "push-up",
     "name": "Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "floor-press-barbell",
     "name": "Barbell Floor Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Bench Press.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "guillotine-press",
     "name": "Guillotine Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "spoto-press",
     "name": "Spoto Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "larsen-press",
     "name": "Larsen Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "wide-grip-bench-press",
     "name": "Wide-Grip Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.4
+    "closest": "Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "reverse-grip-bench-press",
     "name": "Reverse-Grip Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.4
+    "closest": "Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "pin-press-barbell",
     "name": "Pin Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "incline-dumbbell-press",
     "name": "Incline Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.5
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "decline-dumbbell-press",
     "name": "Decline Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Decline Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "incline-dumbbell-fly",
     "name": "Incline Dumbbell Fly",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Incline Dumbbell Curl.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "decline-dumbbell-fly",
     "name": "Decline Dumbbell Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "single-arm-dumbbell-bench-press",
     "name": "Single-Arm Dumbbell Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.3333333333333333
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.6,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-floor-press",
     "name": "Dumbbell Floor Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
-  },
-  {
-    "id": "dumbbell-pullover",
-    "name": "Dumbbell Pullover",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "svend-press",
     "name": "Svend Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "neutral-grip-dumbbell-press",
     "name": "Neutral-Grip Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "machine-chest-press",
     "name": "Machine Chest Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Machine Shoulder Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "pec-deck-fly",
     "name": "Pec Deck Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.16666666666666666,
+    "closestTaken": true
   },
   {
     "id": "incline-machine-chest-press",
     "name": "Incline Machine Chest Press",
     "closest": "Incline Bench Press.png",
-    "score": 0.4
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "decline-machine-chest-press",
     "name": "Decline Machine Chest Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Decline Bench Press.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "smith-machine-bench-press",
     "name": "Smith Machine Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.4
+    "closest": "Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "smith-machine-incline-press",
     "name": "Smith Machine Incline Press",
     "closest": "Incline Bench Press.png",
-    "score": 0.4
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "hammer-strength-chest-press",
     "name": "Hammer Strength Chest Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Bench Press.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "low-to-high-cable-fly",
     "name": "Low-to-High Cable Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.125,
+    "closestTaken": true
   },
   {
     "id": "high-to-low-cable-fly",
     "name": "High-to-Low Cable Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.125,
+    "closestTaken": true
   },
   {
     "id": "single-arm-cable-crossover",
     "name": "Single-Arm Cable Crossover",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "standing-cable-chest-press",
     "name": "Standing Cable Chest Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Bench Press.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "cable-fly-flat",
     "name": "Cable Fly (Flat)",
-    "closest": null,
-    "score": 0
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.16666666666666666,
+    "closestTaken": true
   },
   {
     "id": "single-arm-cable-fly",
     "name": "Single-Arm Cable Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.14285714285714285,
+    "closestTaken": true
   },
   {
     "id": "incline-push-up",
     "name": "Incline Push Up",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "decline-push-up",
     "name": "Decline Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "diamond-push-up",
     "name": "Diamond Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "wide-grip-push-up",
     "name": "Wide-Grip Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "archer-push-up",
     "name": "Archer Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "weighted-dip",
     "name": "Weighted Dip",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "plyometric-push-up",
     "name": "Plyometric Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "deficit-push-up",
     "name": "Deficit Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "ab-wheel-rollout",
     "name": "Ab Wheel Rollout",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "cable-crunch",
     "name": "Cable Crunch",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "hanging-leg-raise",
-    "name": "Hanging Leg Raise",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "plank",
-    "name": "Plank",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "russian-twist",
     "name": "Russian Twist",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "sit-up",
     "name": "Sit Up",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "bulgarian-split-squat",
-    "name": "Bulgarian Split Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "calf-raise",
     "name": "Calf Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Calf Raise.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "front-squat",
     "name": "Front Squat",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "hip-thrust",
-    "name": "Hip Thrust",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "leg-curl",
-    "name": "Leg Curl",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "leg-extension",
-    "name": "Leg Extension",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "leg-press",
-    "name": "Leg Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
-  },
-  {
-    "id": "romanian-deadlift",
-    "name": "Romanian Deadlift",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "squat",
-    "name": "Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "walking-lunge",
     "name": "Walking Lunge",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "barbell-curl",
     "name": "Barbell Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "close-grip-bench-press",
     "name": "Close-Grip Bench Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.4
+    "closest": "Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-curl",
     "name": "Dumbbell Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Incline Dumbbell Curl.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "hammer-curl",
     "name": "Hammer Curl",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "overhead-triceps-extension",
-    "name": "Overhead Triceps Extension",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "preacher-curl",
     "name": "Preacher Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "skull-crusher",
     "name": "Skull Crusher",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "triceps-pushdown",
     "name": "Triceps Pushdown",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Triceps Kickback.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "burpee",
     "name": "Burpee",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "clean-and-jerk",
     "name": "Clean and Jerk",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "farmers-carry",
     "name": "Farmer's Carry",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "kettlebell-swing",
     "name": "Kettlebell Swing",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "snatch",
     "name": "Snatch",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "thruster",
     "name": "Thruster",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "barbell-row",
     "name": "Barbell Row",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "deadlift",
-    "name": "Deadlift",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "dumbbell-row",
-    "name": "Dumbbell Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "face-pull",
     "name": "Face Pull",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "lat-pulldown",
     "name": "Lat Pulldown",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "pull-up",
-    "name": "Pull Up",
-    "closest": null,
-    "score": 0
+    "closest": "Lat Pulldown Machine.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "seated-cable-row",
     "name": "Seated Cable Row",
-    "closest": null,
-    "score": 0
+    "closest": "Seated Row Machine.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "t-bar-row",
     "name": "T-Bar Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "arnold-press",
     "name": "Arnold Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
-  },
-  {
-    "id": "dumbbell-shoulder-press",
-    "name": "Dumbbell Shoulder Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "front-raise",
     "name": "Front Raise",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "lateral-raise",
-    "name": "Lateral Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "rear-delt-fly",
     "name": "Rear Delt Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.75,
+    "closestTaken": true
   },
   {
     "id": "shoulder-press",
     "name": "Shoulder Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Dumbbell Shoulder Press.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "upright-row",
     "name": "Upright Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "pendlay-row",
     "name": "Pendlay Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "yates-row",
     "name": "Yates Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "rack-pull",
     "name": "Rack Pull",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "deficit-deadlift",
     "name": "Deficit Deadlift",
-    "closest": null,
-    "score": 0
+    "closest": "Deadlift.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "snatch-grip-deadlift",
     "name": "Snatch-Grip Deadlift",
-    "closest": null,
-    "score": 0
+    "closest": "Deadlift.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "meadows-row",
     "name": "Meadows Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "kroc-row",
     "name": "Kroc Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "chest-supported-dumbbell-row",
     "name": "Chest-Supported Dumbbell Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "renegade-row",
     "name": "Renegade Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-high-pull",
     "name": "Dumbbell High Pull",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-deadlift",
     "name": "Dumbbell Deadlift",
-    "closest": null,
-    "score": 0
+    "closest": "Deadlift.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-shrug",
     "name": "Dumbbell Shrug",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "assisted-pull-up-machine",
     "name": "Assisted Pull-Up Machine",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "plate-loaded-row-machine",
-    "name": "Plate-Loaded Row Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "smith-machine-bent-over-row",
     "name": "Smith Machine Bent-Over Row",
-    "closest": null,
-    "score": 0
+    "closest": "Seated Row Machine.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "reverse-pec-deck-row",
     "name": "Reverse Pec Deck",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "back-extension-machine",
     "name": "Back Extension Machine",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "lat-pulldown-machine",
-    "name": "Plate-Loaded Lat Pulldown",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Extension.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "straight-arm-pulldown",
     "name": "Straight-Arm Pulldown",
-    "closest": null,
-    "score": 0
+    "closest": "Lat Pulldown Machine.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "single-arm-lat-pulldown",
     "name": "Single-Arm Lat Pulldown",
-    "closest": null,
-    "score": 0
+    "closest": "Lat Pulldown Machine.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "close-grip-seated-row",
     "name": "Close-Grip Seated Cable Row",
-    "closest": null,
-    "score": 0
+    "closest": "Seated Row Machine.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "wide-grip-seated-row",
     "name": "Wide-Grip Seated Cable Row",
-    "closest": null,
-    "score": 0
+    "closest": "Seated Row Machine.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "single-arm-cable-row",
     "name": "Single-Arm Cable Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "cable-pullover",
     "name": "Cable Pullover",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "reverse-grip-lat-pulldown",
     "name": "Reverse-Grip Lat Pulldown",
-    "closest": null,
-    "score": 0
+    "closest": "Lat Pulldown Machine.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "cable-shrug",
     "name": "Cable Shrug",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "high-cable-row",
     "name": "High Cable Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "chin-up",
     "name": "Chin-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "inverted-row",
     "name": "Inverted Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "wide-grip-pull-up",
     "name": "Wide-Grip Pull-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "neutral-grip-pull-up",
     "name": "Neutral-Grip Pull-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "muscle-up",
     "name": "Muscle-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "superman",
     "name": "Superman",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "bird-dog",
     "name": "Bird Dog",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "scapular-pull-up",
     "name": "Scapular Pull-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "box-squat",
     "name": "Box Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "zercher-squat",
     "name": "Zercher Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "sumo-deadlift",
     "name": "Sumo Deadlift",
-    "closest": null,
-    "score": 0
+    "closest": "Deadlift.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "barbell-lunge",
     "name": "Barbell Lunge",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "overhead-squat",
     "name": "Overhead Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "good-morning",
     "name": "Good Morning",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "barbell-step-up",
     "name": "Barbell Step-Up",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "goblet-squat",
-    "name": "Goblet Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-lunge",
     "name": "Dumbbell Lunge",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-step-up",
     "name": "Dumbbell Step-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-sumo-squat",
     "name": "Dumbbell Sumo Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "single-leg-romanian-deadlift",
     "name": "Single-Leg Romanian Deadlift",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "dumbbell-calf-raise",
-    "name": "Dumbbell Calf Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Romanian Deadlift.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "curtsy-lunge",
     "name": "Curtsy Lunge",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "hack-squat",
     "name": "Hack Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "seated-leg-curl",
     "name": "Seated Leg Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "lying-leg-curl",
     "name": "Lying Leg Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "smith-machine-squat",
     "name": "Smith Machine Squat",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "standing-calf-raise-machine",
-    "name": "Standing Calf Raise Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "hip-abduction-machine",
     "name": "Hip Abduction Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Hip Thrust.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "hip-adduction-machine",
     "name": "Hip Adduction Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Hip Thrust.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-pull-through",
     "name": "Cable Pull-Through",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-squat",
     "name": "Cable Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "cable-kickback",
     "name": "Cable Kickback",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Triceps Kickback.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-hip-abduction",
     "name": "Cable Hip Abduction",
-    "closest": null,
-    "score": 0
+    "closest": "Hip Thrust.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-romanian-deadlift",
     "name": "Cable Romanian Deadlift",
-    "closest": null,
-    "score": 0
+    "closest": "Romanian Deadlift.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "pistol-squat",
     "name": "Pistol Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "jump-squat",
     "name": "Jump Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "box-jump",
     "name": "Box Jump",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "wall-sit",
     "name": "Wall Sit",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "glute-bridge",
     "name": "Glute Bridge",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "single-leg-glute-bridge",
     "name": "Single-Leg Glute Bridge",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "step-up-bodyweight",
     "name": "Bodyweight Step-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "nordic-hamstring-curl",
     "name": "Nordic Hamstring Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "kettlebell-goblet-squat",
     "name": "Kettlebell Goblet Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Goblet Squat.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "military-press",
     "name": "Military Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "push-press",
     "name": "Push Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "behind-the-neck-press",
     "name": "Behind-the-Neck Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Bench Press.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "barbell-front-raise",
     "name": "Barbell Front Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "landmine-press",
     "name": "Landmine Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "seated-dumbbell-press",
     "name": "Seated Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "single-arm-dumbbell-press",
     "name": "Single-Arm Dumbbell Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "leaning-lateral-raise",
     "name": "Leaning Lateral Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "incline-rear-delt-raise",
     "name": "Incline Rear Delt Raise",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "cuban-press",
     "name": "Cuban Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "plate-front-raise",
     "name": "Plate Front Raise",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "machine-shoulder-press",
-    "name": "Machine Shoulder Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
-  },
-  {
-    "id": "machine-lateral-raise",
-    "name": "Machine Lateral Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "smith-machine-shoulder-press",
     "name": "Smith Machine Shoulder Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Machine Shoulder Press.png",
+    "score": 0.75,
+    "closestTaken": true
   },
   {
     "id": "plate-loaded-shoulder-press",
     "name": "Plate-Loaded Shoulder Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
-  },
-  {
-    "id": "machine-rear-delt-fly",
-    "name": "Machine Rear Delt Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Shoulder Press.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "cable-lateral-raise",
     "name": "Cable Lateral Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.6666666666666666,
+    "closestTaken": true
   },
   {
     "id": "cable-front-raise",
     "name": "Cable Front Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-rear-delt-fly",
     "name": "Cable Rear Delt Fly",
-    "closest": null,
-    "score": 0
+    "closest": "Machine Rear Delt Fly.png",
+    "score": 0.6,
+    "closestTaken": true
   },
   {
     "id": "cable-y-raise",
     "name": "Cable Y-Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "single-arm-cable-lateral-raise",
     "name": "Single-Arm Cable Lateral Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Lateral Raise.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "cable-shoulder-press",
     "name": "Cable Shoulder Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Dumbbell Shoulder Press.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "cable-external-rotation",
     "name": "Cable External Rotation",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "pike-push-up",
     "name": "Pike Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "handstand-push-up",
     "name": "Handstand Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "wall-walk",
     "name": "Wall Walk",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "shoulder-tap-plank",
     "name": "Shoulder Tap Plank",
-    "closest": null,
-    "score": 0
+    "closest": "Plank.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "wall-slide",
     "name": "Wall Slide",
     "closest": null,
-    "score": 0
-  },
-  {
-    "id": "ez-bar-curl",
-    "name": "EZ-Bar Curl",
-    "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "reverse-barbell-curl",
     "name": "Reverse Barbell Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "drag-curl",
     "name": "Drag Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "jm-press",
     "name": "JM Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "barbell-wrist-curl",
     "name": "Barbell Wrist Curl",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "incline-dumbbell-curl",
-    "name": "Incline Dumbbell Curl",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "concentration-curl",
     "name": "Concentration Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "zottman-curl",
     "name": "Zottman Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "spider-curl",
     "name": "Spider Curl",
-    "closest": null,
-    "score": 0
-  },
-  {
-    "id": "dumbbell-kickback",
-    "name": "Dumbbell Triceps Kickback",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-wrist-curl",
     "name": "Dumbbell Wrist Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Incline Dumbbell Curl.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "reverse-dumbbell-curl",
     "name": "Reverse Dumbbell Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Incline Dumbbell Curl.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "cross-body-hammer-curl",
     "name": "Cross-Body Hammer Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "preacher-curl-machine",
     "name": "Preacher Curl Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "bicep-curl-machine",
     "name": "Bicep Curl Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "triceps-extension-machine",
     "name": "Triceps Extension Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Overhead Triceps Extension.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "assisted-dip-machine",
     "name": "Assisted Dip Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "reverse-curl-machine",
     "name": "Reverse Curl Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-curl",
     "name": "Cable Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "rope-hammer-curl",
     "name": "Rope Hammer Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-overhead-triceps-extension",
     "name": "Cable Overhead Triceps Extension",
-    "closest": null,
-    "score": 0
+    "closest": "Overhead Triceps Extension.png",
+    "score": 0.75,
+    "closestTaken": true
   },
   {
     "id": "single-arm-cable-triceps-extension",
     "name": "Single-Arm Cable Triceps Extension",
-    "closest": null,
-    "score": 0
+    "closest": "Overhead Triceps Extension.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "reverse-grip-triceps-pushdown",
     "name": "Reverse-Grip Triceps Pushdown",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Triceps Kickback.png",
+    "score": 0.16666666666666666,
+    "closestTaken": true
   },
   {
     "id": "cable-concentration-curl",
     "name": "Cable Concentration Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "bayesian-cable-curl",
     "name": "Bayesian Cable Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "cable-wrist-curl",
     "name": "Cable Wrist Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "bench-dip",
     "name": "Bench Dip",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "bodyweight-curl",
     "name": "Bodyweight Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "wrist-roller",
     "name": "Wrist Roller",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "plate-pinch",
     "name": "Plate Pinch",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "fingertip-push-up",
     "name": "Fingertip Push Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "dead-hang",
     "name": "Dead Hang",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "barbell-rollout",
     "name": "Barbell Rollout",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "landmine-rotation",
     "name": "Landmine Rotation",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "dumbbell-side-bend",
     "name": "Dumbbell Side Bend",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "weighted-sit-up",
     "name": "Weighted Sit Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-woodchopper",
     "name": "Dumbbell Woodchopper",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "suitcase-carry",
     "name": "Suitcase Carry",
     "closest": null,
-    "score": 0
-  },
-  {
-    "id": "ab-crunch-machine",
-    "name": "Ab Crunch Machine",
-    "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "rotary-torso-machine",
     "name": "Rotary Torso Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "captains-chair-leg-raise",
     "name": "Captain's Chair Leg Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Hanging Leg Raise.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "cable-woodchopper",
     "name": "Cable Woodchopper",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "cable-reverse-woodchopper",
     "name": "Cable Reverse Woodchopper",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "pallof-press",
     "name": "Pallof Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "cable-side-bend",
     "name": "Cable Side Bend",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "standing-cable-crunch",
     "name": "Standing Cable Crunch",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "cable-lift",
     "name": "Cable Lift",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "mountain-climber",
     "name": "Mountain Climber",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "bicycle-crunch",
     "name": "Bicycle Crunch",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "leg-raise",
     "name": "Lying Leg Raise",
-    "closest": null,
-    "score": 0
+    "closest": "Hanging Leg Raise.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "flutter-kick",
     "name": "Flutter Kick",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "v-up",
     "name": "V-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "side-plank",
     "name": "Side Plank",
-    "closest": null,
-    "score": 0
+    "closest": "Plank.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "hollow-body-hold",
     "name": "Hollow Body Hold",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "dead-bug",
     "name": "Dead Bug",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "toe-touch",
     "name": "Toe Touch",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "reverse-crunch",
     "name": "Reverse Crunch",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "dragon-flag",
     "name": "Dragon Flag",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "plank-up-down",
     "name": "Plank Up-Down",
-    "closest": null,
-    "score": 0
+    "closest": "Plank.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "kettlebell-windmill",
     "name": "Kettlebell Windmill",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "turkish-get-up",
     "name": "Turkish Get-Up",
-    "closest": null,
-    "score": 0
+    "closest": "Pull Up.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "power-clean",
     "name": "Power Clean",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "hang-clean",
     "name": "Hang Clean",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "clean-and-press",
     "name": "Clean and Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Bench Press.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "dumbbell-clean-and-press",
     "name": "Dumbbell Clean and Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Dumbbell Bench Press.png",
+    "score": 0.4,
+    "closestTaken": true
   },
   {
     "id": "man-maker",
     "name": "Man Maker",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "dumbbell-snatch",
     "name": "Dumbbell Snatch",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Pullover.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "devils-press",
     "name": "Devil's Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "kettlebell-clean",
     "name": "Kettlebell Clean",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "kettlebell-clean-and-press",
     "name": "Kettlebell Clean and Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.16666666666666666
+    "closest": "Bench Press.png",
+    "score": 0.2,
+    "closestTaken": true
   },
   {
     "id": "kettlebell-snatch",
     "name": "Kettlebell Snatch",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "kettlebell-thruster",
     "name": "Kettlebell Thruster",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "bear-crawl",
     "name": "Bear Crawl",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "burpee-box-jump",
     "name": "Burpee Box Jump",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "sprawl",
     "name": "Sprawl",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "cat-cow-stretch",
     "name": "Cat-Cow Stretch",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "worlds-greatest-stretch",
     "name": "World's Greatest Stretch",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "hip-flexor-stretch",
     "name": "Hip Flexor Stretch",
-    "closest": null,
-    "score": 0
+    "closest": "Hip Thrust.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "pigeon-pose",
     "name": "Pigeon Pose",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "thoracic-spine-rotation",
     "name": "Thoracic Spine Rotation",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "arm-circles",
     "name": "Arm Circles",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "leg-swings",
     "name": "Leg Swings",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "inchworm",
     "name": "Inchworm",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "jumping-jacks",
     "name": "Jumping Jacks",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "high-knees",
     "name": "High Knees",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "butt-kicks",
     "name": "Butt Kicks",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "jump-rope",
     "name": "Jump Rope",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "foam-rolling-quads",
     "name": "Foam Rolling (Quads)",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "downward-dog",
     "name": "Downward Dog",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "childs-pose",
     "name": "Child's Pose",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "cossack-squat",
     "name": "Cossack Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "shoulder-dislocates",
     "name": "Shoulder Dislocates",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Shoulder Press.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "ankle-circles",
     "name": "Ankle Circles",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "spiderman-lunge-stretch",
     "name": "Spiderman Lunge Stretch",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "standing-quad-stretch",
     "name": "Standing Quad Stretch",
-    "closest": null,
-    "score": 0
+    "closest": "Standing Calf Raise.png",
+    "score": 0.2,
+    "closestTaken": false
   },
   {
     "id": "converging-chest-press",
     "name": "Converging Chest Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.2
+    "closest": "Bench Press.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "single-arm-cable-chest-press",
     "name": "Single-Arm Cable Chest Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.14285714285714285
+    "closest": "Bench Press.png",
+    "score": 0.16666666666666666,
+    "closestTaken": true
   },
   {
     "id": "seal-row",
     "name": "Seal Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "batwing-row",
     "name": "Batwing Row",
-    "closest": null,
-    "score": 0
+    "closest": "Dumbbell Row.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "belt-squat",
     "name": "Belt Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "sissy-squat",
     "name": "Sissy Squat",
-    "closest": null,
-    "score": 0
+    "closest": "Squat.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "z-press",
     "name": "Z Press",
-    "closest": "Incline Bench Press.png",
-    "score": 0.25
+    "closest": "Bench Press.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "bus-driver",
     "name": "Bus Driver",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "waiter-curl",
     "name": "Waiter's Curl",
-    "closest": null,
-    "score": 0
+    "closest": "Leg Curl.png",
+    "score": 0.3333333333333333,
+    "closestTaken": true
   },
   {
     "id": "cable-skull-crusher",
     "name": "Cable Skull Crusher",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "ab-rollout-machine",
     "name": "Ab Rollout Machine",
-    "closest": null,
-    "score": 0
+    "closest": "Ab Crunch Machine.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "copenhagen-plank",
     "name": "Copenhagen Plank",
-    "closest": null,
-    "score": 0
+    "closest": "Plank.png",
+    "score": 0.5,
+    "closestTaken": true
   },
   {
     "id": "single-arm-kettlebell-swing",
     "name": "Single-Arm Kettlebell Swing",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "sled-push",
     "name": "Sled Push",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "battle-ropes",
     "name": "Battle Ropes",
     "closest": null,
-    "score": 0
+    "score": 0,
+    "closestTaken": false
   },
   {
     "id": "ninety-ninety-hip-stretch",
     "name": "90/90 Hip Stretch",
-    "closest": null,
-    "score": 0
+    "closest": "Hip Thrust.png",
+    "score": 0.25,
+    "closestTaken": true
   },
   {
     "id": "seated-forward-fold",
     "name": "Seated Forward Fold",
-    "closest": null,
-    "score": 0
+    "closest": "Seated Row Machine.png",
+    "score": 0.2,
+    "closestTaken": true
   }
 ]
