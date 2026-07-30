@@ -25,6 +25,11 @@ export default function ProgramPage() {
   const [logging, setLogging] = useState(false)
   const [logMessage, setLogMessage] = useState<string | null>(null)
   const [addingExercise, setAddingExercise] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -94,6 +99,14 @@ export default function ProgramPage() {
 
   const currentDay = days.find((d) => d.day_of_week === selectedDow) ?? null
   const currentExercises = currentDay ? exercisesByDay[currentDay.id] ?? [] : []
+
+  // สลับวันแล้วเคลียร์โหมดเลือก/ยืนยันลบทิ้ง กันเลือกท่าของวันเดิมค้างอยู่ตอนสลับไปดูวันอื่น
+  useEffect(() => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+    setConfirmBulkDelete(false)
+    setConfirmDeleteAll(false)
+  }, [selectedDow])
 
   async function toggleComplete(exerciseId: string, done: boolean) {
     const {
@@ -269,6 +282,54 @@ export default function ProgramPage() {
     if (err) setError(err.message)
   }
 
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+    setConfirmBulkDelete(false)
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function handleBulkDelete() {
+    if (!currentDay || selectedIds.size === 0) return
+    setBulkDeleting(true)
+    setError(null)
+    const ids = Array.from(selectedIds)
+    const { error: err } = await supabase.from('program_exercises').delete().in('id', ids)
+    setBulkDeleting(false)
+    if (err) {
+      setError(`ลบท่าที่เลือกไม่สำเร็จ: ${err.message}`)
+      return
+    }
+    setExercisesByDay((prev) => ({
+      ...prev,
+      [currentDay.id]: (prev[currentDay.id] ?? []).filter((e) => !selectedIds.has(e.id)),
+    }))
+    exitSelectMode()
+  }
+
+  async function handleDeleteAll() {
+    if (!currentDay || currentExercises.length === 0) return
+    setBulkDeleting(true)
+    setError(null)
+    const { error: err } = await supabase.from('program_exercises').delete().eq('program_day_id', currentDay.id)
+    setBulkDeleting(false)
+    if (err) {
+      setError(`ลบท่าทั้งหมดไม่สำเร็จ: ${err.message}`)
+      return
+    }
+    setExercisesByDay((prev) => ({ ...prev, [currentDay.id]: [] }))
+    setConfirmDeleteAll(false)
+    exitSelectMode()
+  }
+
   async function handleRenameDay(day: ProgramDay, title: string) {
     setDays((prev) => prev.map((d) => (d.id === day.id ? { ...d, title } : d)))
     const { error: err } = await supabase.from('program_days').update({ title }).eq('id', day.id)
@@ -358,13 +419,83 @@ export default function ProgramPage() {
 
       {currentDay && (
         <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-          <div className="px-4 py-3 border-b border-line">
+          <div className="px-4 py-3 border-b border-line flex items-center gap-2">
             <input
               value={currentDay.title}
               onChange={(e) => handleRenameDay(currentDay, e.target.value)}
-              className="bg-transparent text-ink font-display tracked uppercase text-sm outline-none w-full"
+              className="bg-transparent text-ink font-display tracked uppercase text-sm outline-none flex-1 min-w-0"
             />
+            {currentExercises.length > 0 && !selectMode && (
+              <>
+                <button
+                  onClick={() => setSelectMode(true)}
+                  className="text-[11px] text-muted hover:text-amber shrink-0"
+                >
+                  เลือก
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteAll(true)}
+                  className="text-[11px] text-muted hover:text-rust shrink-0"
+                >
+                  ลบทั้งหมด
+                </button>
+              </>
+            )}
           </div>
+
+          {selectMode && (
+            <div className="px-4 py-2.5 border-b border-line bg-surface2 flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[11px] text-muted">เลือกแล้ว {selectedIds.size} ท่า</p>
+              <div className="flex gap-3 shrink-0">
+                <button onClick={exitSelectMode} className="text-[11px] text-muted hover:text-ink">
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={() => setConfirmBulkDelete(true)}
+                  disabled={selectedIds.size === 0}
+                  className="text-[11px] text-rusttext hover:underline disabled:opacity-40 disabled:no-underline"
+                >
+                  ลบที่เลือก
+                </button>
+              </div>
+            </div>
+          )}
+
+          {confirmBulkDelete && (
+            <div className="px-4 py-2.5 border-b border-line bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[11px] text-rusttext">ลบ {selectedIds.size} ท่าที่เลือก?</p>
+              <div className="flex gap-3 shrink-0">
+                <button onClick={() => setConfirmBulkDelete(false)} className="text-[11px] text-muted hover:text-ink">
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                  className="text-[11px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                >
+                  {bulkDeleting ? '...' : 'ยืนยันลบ'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {confirmDeleteAll && (
+            <div className="px-4 py-2.5 border-b border-line bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[11px] text-rusttext">ลบท่าทั้งหมด {currentExercises.length} ท่าในวันนี้?</p>
+              <div className="flex gap-3 shrink-0">
+                <button onClick={() => setConfirmDeleteAll(false)} className="text-[11px] text-muted hover:text-ink">
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={bulkDeleting}
+                  className="text-[11px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                >
+                  {bulkDeleting ? '...' : 'ยืนยันลบทั้งหมด'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <ul>
             {currentExercises.map((ex) => (
@@ -375,20 +506,25 @@ export default function ProgramPage() {
                 onToggle={(done) => toggleComplete(ex.id, done)}
                 onUpdate={(patch) => handleUpdateExercise(ex, patch)}
                 onDelete={() => handleDeleteExercise(ex)}
+                selectMode={selectMode}
+                selected={selectedIds.has(ex.id)}
+                onToggleSelect={() => toggleSelected(ex.id)}
               />
             ))}
           </ul>
 
-          <div className="px-4 py-3 border-t border-line">
-            <button
-              onClick={() => setAddingExercise(true)}
-              className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
-            >
-              + เพิ่มท่า
-            </button>
-          </div>
+          {!selectMode && (
+            <div className="px-4 py-3 border-t border-line">
+              <button
+                onClick={() => setAddingExercise(true)}
+                className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
+              >
+                + เพิ่มท่า
+              </button>
+            </div>
+          )}
 
-          {currentExercises.length > 0 && (
+          {currentExercises.length > 0 && !selectMode && (
             <div className="px-4 pb-4">
               <button
                 onClick={handleLogAllToday}
@@ -415,24 +551,37 @@ function ExerciseRow({
   onToggle,
   onUpdate,
   onDelete,
+  selectMode = false,
+  selected = false,
+  onToggleSelect,
 }: {
   exercise: ProgramExercise
   done: boolean
   onToggle: (done: boolean) => void
   onUpdate: (patch: Partial<ProgramExercise>) => void
   onDelete: () => void
+  selectMode?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
 }) {
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const [editing, setEditing] = useState(false)
 
   return (
-    <li className="tally-row px-4 py-3 space-y-2">
+    <li
+      className={`tally-row px-4 py-3 space-y-2 ${selectMode ? 'cursor-pointer' : ''} ${selected ? 'bg-rustdim/20' : ''}`}
+      onClick={selectMode ? onToggleSelect : undefined}
+    >
       <div className="flex items-start gap-2">
         <input
           type="checkbox"
-          checked={done}
-          onChange={(e) => onToggle(e.target.checked)}
-          className="mt-1 accent-amber shrink-0"
+          checked={selectMode ? selected : done}
+          onChange={(e) => {
+            if (selectMode) onToggleSelect?.()
+            else onToggle(e.target.checked)
+          }}
+          onClick={(e) => selectMode && e.stopPropagation()}
+          className={`mt-1 shrink-0 ${selectMode ? 'accent-rust' : 'accent-amber'}`}
         />
         <div className="flex-1 min-w-0">
           <p className={`text-sm ${done ? 'text-muted line-through' : 'text-ink'}`}>{exercise.exercise_name}</p>
@@ -449,12 +598,20 @@ function ExerciseRow({
           )}
           {!editing && exercise.rationale && <p className="text-[11px] text-muted/70 mt-1 italic">{exercise.rationale}</p>}
         </div>
-        <button onClick={() => setEditing((v) => !v)} className="text-[11px] text-muted hover:text-amber shrink-0">
-          {editing ? 'เสร็จ' : 'แก้ไข'}
-        </button>
+        {!selectMode && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setEditing((v) => !v)
+            }}
+            className="text-[11px] text-muted hover:text-amber shrink-0"
+          >
+            {editing ? 'เสร็จ' : 'แก้ไข'}
+          </button>
+        )}
       </div>
 
-      {editing && (
+      {!selectMode && editing && (
         <div className="pl-6 space-y-2">
           <div className="grid grid-cols-2 gap-1.5">
             <MiniField label="เซ็ต" value={exercise.sets != null ? String(exercise.sets) : ''} onBlur={(v) => onUpdate({ sets: v ? Number(v) : null })} />
