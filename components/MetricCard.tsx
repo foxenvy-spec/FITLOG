@@ -1,7 +1,7 @@
 'use client'
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG } from '@/lib/theme'
+import { NOISE_BG, TEXT } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
@@ -100,15 +100,15 @@ export default function MetricCard({
           // 4) เข้ม→อ่อน→เข้ม แนวทแยง (แทนสีพื้นจางๆ เรียบๆ เดิม) กันไม่ให้ช่วงกลางขอบ/มุมอื่นดูเป็นเส้นแข็งทื่อ
           // ผลคือขอบเรืองแสงชัดเฉพาะ 2 มุมตรงข้ามกัน ส่วนช่วงกลางขอบก็ยังไล่เฉดนุ่มๆ ไม่ใช่เส้นตรงแข็งๆ
           backgroundImage: compact
-            ? `radial-gradient(circle at 50% 55%, #1E1E1E, transparent 60%), linear-gradient(180deg, #1C1C1C, #161616), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
+            ? `radial-gradient(circle at 50% 55%, #262626, transparent 60%), linear-gradient(180deg, #242424, #171717 45%, #101010), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
             : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
           backgroundClip: 'padding-box, padding-box, border-box, border-box, border-box',
           // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
-          // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + inset เงาเข้มขอบล่าง (เดิมมีแค่ด้านบน ใส่คู่ให้ครบ
-          // bevel แบบแผ่นโลหะ — compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุม
+          // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + inset เงาเข้มขอบล่างแบบจม (CARD_INSET_SHADOW เดียวกับ
+          // PremiumCard — compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุม
           // ซ้ายบน/ขวาล่าง (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
-          boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.05), ${compact ? 'inset 0 -1px rgba(0,0,0,.35), ' : ''}-6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
+          boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.05), ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
@@ -152,7 +152,9 @@ export default function MetricCard({
           <p
             className="flex items-center gap-2"
             style={{
-              color: 'rgba(255,255,255,.94)',
+              // TEXT.body (แทน rgba ขาว 94% เดิม) — ตามระดับสีตัวหนังสือใหม่ (Title/Body/Secondary/
+              // Caption) กันไม่ให้ label ขาวจ้าเท่าตัวเลขหลัก ซึ่งควรเด่นกว่า
+              color: compact ? TEXT.body : 'rgba(255,255,255,.94)',
               // ป้ายชื่อ Metric: มือถือ (compact) จาก dashboardSpec.metricCard.labelFontSize (15px,
               // เดิม 16px) — ลด 1pt กันชื่อยาว ("ไขมันในร่างกาย", "กล้ามเนื้อโครงร่าง") ตัดบรรทัดเพิ่ม
               // ความสูงการ์ดโดยไม่จำเป็น (ดู BodyMetricsRow.tsx ที่ย่อชื่อสองอันนี้ให้สั้นลงด้วยแล้ว)
@@ -216,8 +218,10 @@ export default function MetricCard({
             <>
               <div className="flex items-center justify-between gap-2">
                 <p
-                  className="font-mono leading-none text-ink"
+                  className="font-mono leading-none"
                   style={{
+                    // TEXT.title (แทน text-ink #F3F0E8 เดิม) — ตัวเลขหลักของการ์ด ควรเป็นสีเด่นสุด
+                    color: TEXT.title,
                     fontSize: dashboardSpec.metricCard.valueFontSize,
                     fontWeight: 700,
                     letterSpacing: '-0.01em',

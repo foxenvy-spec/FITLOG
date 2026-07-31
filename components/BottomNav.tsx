@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { COLORS, NEUTRAL } from '@/lib/theme'
+import { COLORS, NEUTRAL, AMBER_GLOW_SHADOW } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
@@ -44,7 +44,9 @@ export default function BottomNav() {
                     width: btnSize,
                     height: btnSize,
                     background: `radial-gradient(circle at 35% 30%, #FFF4CC, #FFD166 35%, #FF8A00 70%, #D96A00 100%)`,
-                    boxShadow: `0 6px 18px rgba(0,0,0,.45), 0 0 22px rgba(255,170,0,.55), inset 0 1px rgba(255,255,255,.35)`,
+                    // AMBER_GLOW_SHADOW = glow หลายสต็อป (ขาว→เหลือง→ส้ม→โปร่งใส) แทน glow สีส้มเดียว
+                    // แบนๆ เดิม ให้ความรู้สึกแสงจริงที่มี hot-spot ขาวจ้าตรงกลางก่อนไล่โทนอุ่นออกไป
+                    boxShadow: `0 6px 18px rgba(0,0,0,.45), ${AMBER_GLOW_SHADOW}, inset 0 1px rgba(255,255,255,.35)`,
                     border: `3px solid ${NEUTRAL.onAmberText}`,
                   }}
                 >
