@@ -151,7 +151,7 @@ export default function MetricCard({
             }}
           >
             <span
-              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[26px] h-[26px]' : 'w-[42px] h-[42px]'}`}
+              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[22px] h-[22px]' : 'w-[42px] h-[42px]'}`}
               style={{
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -180,8 +180,8 @@ export default function MetricCard({
               <span
                 className="relative block"
                 style={{
-                  width: compact ? 20 : 38,
-                  height: compact ? 20 : 38,
+                  width: compact ? 17 : 38,
+                  height: compact ? 17 : 38,
                   backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                   WebkitMaskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
                   maskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
@@ -229,7 +229,7 @@ export default function MetricCard({
                 )}
               </div>
               {series.length >= 2 && (
-                <div className="mt-2 w-full">
+                <div className="mt-1 w-full">
                   <Sparkline series={series} color={theme.main} height={dashboardSpec.metricCard.sparklineHeight} width={200} stretch />
                 </div>
               )}

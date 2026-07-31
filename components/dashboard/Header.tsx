@@ -16,10 +16,11 @@ interface HeaderProps {
   fitnessScore: FitnessScoreResult
 }
 
-// Header ของหน้า Dashboard (มือถือ) — v18: ลดสัดส่วนรอบที่ 3 ตามฟีดแบ็ก "hero section ยังกิน 35-38%
-// ของจอ ควรอยู่ที่ 28-30%" — ชื่อ (BANK/MINT) ลด 10% (60→54px), วง Fitness Score ลด 10% ผ่าน
-// dashboardSpec.header.scoreRingSize, ระยะห่างระหว่างบรรทัดฝั่งซ้ายลดกลับลงมาอีกนิด (เดิมเพิ่มไปรอบ
-// ก่อนตามฟีดแบ็ก negative space แต่รอบนี้ขอให้ลดอีกเพื่อคืนพื้นที่ ~60-80px)
+// Header ของหน้า Dashboard (มือถือ) — v19: แก้บั๊กกระดิ่งทับวง Fitness Score — รอบก่อน (v18) แยก
+// กระดิ่งออกมาเป็น absolute top-0 right-0 (44px) แต่คอลัมน์วงแหวนยังใช้ marginTop:8 เดิม (ตอนกระดิ่ง
+// ยังอยู่ในโฟลว์) ทำให้วง (เริ่มที่ y=8) ทับซ้อนกับกระดิ่ง (y=0-44) จริง — แก้เป็น marginTop 52
+// (=ความสูงกระดิ่ง 44px + ช่องไฟ 8px) ให้วงเริ่มหลังกระดิ่งจริงๆ ไม่ทับกันอีก — font ชื่อ/ระยะห่าง
+// บรรทัดฝั่งซ้ายคงค่าจาก v18 ไว้ทั้งหมด (ผู้ใช้ระบุว่ารอบนี้ไม่ลด font เพิ่ม เน้นความสูง/padding/gap)
 export default function Header({ greetingText, latestPR, topMuscleThisWeek, displayName, fitnessScore }: HeaderProps) {
   return (
     <div className="relative flex items-start justify-between gap-3 animate-rise">
@@ -61,8 +62,8 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
         <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
       </div>
 
-      <div className="flex flex-col items-end shrink-0" style={{ marginTop: 8 }}>
-        {/* วง Fitness Score — ขนาดมาจาก dashboardSpec.header.scoreRingSize (121px) แหล่งความจริงเดียว
+      <div className="flex flex-col items-end shrink-0" style={{ marginTop: 52 }}>
+        {/* วง Fitness Score — ขนาดมาจาก dashboardSpec.header.scoreRingSize (90px) แหล่งความจริงเดียว
             แทนตัวเลขลอยในไฟล์นี้ — FitnessRing/FitnessScore สเกล stroke/font ภายในตาม size prop เอง */}
         <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} />
       </div>
