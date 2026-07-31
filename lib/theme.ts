@@ -84,3 +84,10 @@ export const FIRE_GRADIENT_CSS = `linear-gradient(90deg, ${FIRE_GRADIENT_STOPS.m
 
 // สีเดี่ยวสำหรับจุดที่ต้องการแค่ hex เดียว (เช่น glow shadow, ไอคอนที่ recolor ไม่ได้แบบ gradient)
 export const FIRE_ACCENT = '#FF8A00'
+
+// ===================================================================================
+// เท็กซ์เจอร์ noise บางๆ ปูทับพื้นหลัง — สร้างจาก SVG feTurbulence แทนไฟล์รูป กันไม่ต้องมี asset เพิ่ม
+// ใช้คู่กับ opacity ต่ำ (~0.04) + mixBlendMode: 'overlay' เท่านั้น — ให้ผิวพื้นหลังดูเป็น "แผ่นโลหะ
+// เกรนละเอียด" (Dark Titanium) แทนสีทึบเรียบๆ ย้ายมาจาก templates/page.tsx เดิม (ที่นั่นประกาศ local
+// const ซ้ำ) ให้เป็นตัวแปรกลางใช้ร่วมกันได้ทุกหน้าที่อยากได้ผิวโลหะแบบเดียวกัน (templates, dashboard)
+export const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`

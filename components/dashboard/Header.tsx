@@ -38,10 +38,14 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             fontWeight: 900,
             letterSpacing: '2px',
             lineHeight: 1,
-            backgroundImage: 'linear-gradient(180deg, #FFFFFF, #C7CBD1)',
+            // ไล่สี 5 stop (เดิม 2 stop ขาว→เทาเรียบๆ) + drop-shadow คู่ (เงาเข้มด้านล่าง + ไฮไลต์บาง
+            // ด้านบน) จำลองผิวโลหะสลักนูน (embossed metal) แบบภาพอ้างอิงจริง — 2-stop เดิมให้ความรู้สึก
+            // "ตัวหนังสือสีเทา" เฉยๆ ไม่มีมิติเหมือนแผ่นโลหะจริง
+            backgroundImage: 'linear-gradient(180deg, #FFFFFF 0%, #E8E8E8 15%, #B8B8BC 50%, #8A8D93 85%, #6B6E74 100%)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
+            filter: 'drop-shadow(0 2px 1px rgba(0,0,0,.5)) drop-shadow(0 1px 0 rgba(255,255,255,.12))',
           }}
         >
           {displayName}

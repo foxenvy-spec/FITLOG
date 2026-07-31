@@ -1,6 +1,7 @@
 'use client'
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { NOISE_BG } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
@@ -104,11 +105,21 @@ export default function MetricCard({
           backgroundOrigin: 'border-box',
           backgroundClip: 'padding-box, padding-box, border-box, border-box, border-box',
           // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
-          // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + glow สีธีมเยื้อง offset ไปมุมซ้ายบน/ขวาล่าง
-          // (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
-          boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.05), -6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
+          // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + inset เงาเข้มขอบล่าง (เดิมมีแค่ด้านบน ใส่คู่ให้ครบ
+          // bevel แบบแผ่นโลหะ — compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุม
+          // ซ้ายบน/ขวาล่าง (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
+          boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.05), ${compact ? 'inset 0 -1px rgba(0,0,0,.35), ' : ''}-6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
         }}
       >
+        {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
+            เดสก์ท็อปไม่กระทบ (ดีไซน์ของตัวเองอยู่แล้ว ไม่ได้ตั้งใจให้เป็น titanium) */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+            style={{ backgroundImage: NOISE_BG, opacity: 0.05, mixBlendMode: 'overlay' }}
+          />
+        )}
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
         <div
           aria-hidden="true"

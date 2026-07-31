@@ -27,6 +27,7 @@ import {
 } from './DashboardView'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { NOISE_BG } from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import OnboardingBanner from '@/components/OnboardingBanner'
@@ -267,6 +268,9 @@ export default function MobileDashboardView() {
           <div className="absolute w-44 h-44 rounded-full blur-[120px] bg-amber/10" style={{ top: '18%', left: -50 }} />
           <div className="absolute w-56 h-56 rounded-full blur-[130px] bg-rust/10" style={{ top: '52%', right: -70 }} />
           <div className="absolute w-48 h-48 rounded-full blur-[120px] bg-moss/10" style={{ top: '85%', left: -40 }} />
+          {/* เท็กซ์เจอร์เกรนโลหะบางๆ ทับทั้งหน้า (Dark Titanium เดียวกับหน้าเทมเพลต) — เดิมหน้านี้ไม่มี
+              เลย ทำให้พื้นผิวดูเป็นสีทึบเรียบๆ ไม่ใช่ "แผ่นโลหะ" เหมือนมอคอัพอ้างอิง */}
+          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }} />
         </div>
 
         {/* sectionGap เดียวกันทั้งหมด (dashboardSpec.screen.sectionGap = 20px) รวม Header→Focus ด้วย —
