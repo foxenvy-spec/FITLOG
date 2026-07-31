@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
-import { NOISE_BG, CARD_GRADIENT_CSS, CARD_INSET_SHADOW, CARD_BORDER_CSS } from '@/lib/theme'
+import { NOISE_BG, CARD_GRADIENT_CSS, CARD_INSET_SHADOW, CARD_BORDER_CSS, CARD_REFLECTION_CSS, CARD_FLOAT_SHADOW } from '@/lib/theme'
 
 interface PremiumCardOwnProps {
   children: ReactNode
@@ -29,19 +29,21 @@ export default function PremiumCard<T extends ElementType = 'div'>({
       <Comp
         className={`premium-card relative overflow-hidden rounded-[24px] ${className}`}
         style={{
-          // ไล่สีการ์ดเทาเย็น (CARD_GRADIENT_CSS) + rim light เฉียง 135deg มุมบนซ้าย จำลองแสงสตูดิโอ
-          // ตกกระทบผิวโลหะ (เทคนิคเดียวกับหน้าเทมเพลต "Dark Titanium")
+          // ไล่สีการ์ดเทาเย็น (CARD_GRADIENT_CSS) + rim light เฉียง 135deg มุมบนซ้าย (แสงสตูดิโอ) +
+          // CARD_REFLECTION_CSS แถบสะท้อนแสงแนวนอนตรงจากขอบบน (brushed titanium) — สองชั้นนี้คนละมุม
+          // แสง ซ้อนกันให้ผิวการ์ดดูเป็นโลหะขัดเงาจริง ไม่ใช่พลาสติกด้าน (matte) เหมือนก่อนหน้า
           backgroundImage: [
+            CARD_REFLECTION_CSS,
             'linear-gradient(135deg, rgba(255,255,255,.06) 0%, transparent 35%)',
             CARD_GRADIENT_CSS,
           ].join(', '),
           // ขอบเทาเย็นจางๆ (CARD_BORDER_CSS) แทนขอบส้ม rgba(255,180,70,.12) เดิม — เดิมทำให้ทุกการ์ด
           // (รวม Today's Focus/Today's Workout ที่ไม่ใช่จุดเน้นสีส้มเสมอไป) มีขอบอมส้มตลอดเวลา
           border: `1px solid ${CARD_BORDER_CSS}`,
-          // ตัด ambient glow สีส้ม (0 0 40px rgba(255,138,0,.06)) ออกจากสถานะปกติ — เหลือแค่เงาเข้ม
-          // เป็นกลาง + CARD_INSET_SHADOW (highlight ขอบบน + เงาจมขอบล่าง, bevel แบบแผ่นโลหะจริง)
+          // CARD_FLOAT_SHADOW (เบาบางกว่าเดิม 0 10px 30px rgba(0,0,0,.45)) ให้การ์ดดูลอยเหนือพื้นหลัง
+          // แทนที่จะติดพื้น + CARD_INSET_SHADOW (highlight ขอบบน + เงาจมขอบล่าง, bevel แบบแผ่นโลหะจริง)
           // แสงส้มยังโผล่ได้ตอน :active เท่านั้น (ดู style jsx ด้านล่าง) ไม่ใช่ทุกการ์ดตลอดเวลา
-          boxShadow: `0 10px 30px rgba(0,0,0,.45), ${CARD_INSET_SHADOW}`,
+          boxShadow: `${CARD_FLOAT_SHADOW}, ${CARD_INSET_SHADOW}`,
           transition: 'box-shadow 150ms ease',
         }}
         {...rest}

@@ -43,7 +43,10 @@ export default function BottomNav() {
                     top: -Math.round(btnSize * 0.42),
                     width: btnSize,
                     height: btnSize,
-                    background: `radial-gradient(circle at 35% 30%, #FFF4CC, #FFD166 35%, #FF8A00 70%, #D96A00 100%)`,
+                    // v2: เดิมสต็อปกลาง/นอก (#FFD166/#FF8A00/#D96A00) เป็นโทนส้มสดเกินไป เปลี่ยนเป็นโทน
+                    // อมทอง (เทียบเท่า AMBER_GRADIENT_CSS) ให้เข้ากับ "ทองเข้ม" แทน "ส้มสด" — เก็บ
+                    // hot-spot ครีมกลางไว้เหมือนเดิม (ไม่ใช่จุดที่ขอเปลี่ยน)
+                    background: `radial-gradient(circle at 35% 30%, #FFF4CC, #FFB84A 35%, #FF9A16 70%, #E77A00 100%)`,
                     // AMBER_GLOW_SHADOW = glow หลายสต็อป (ขาว→เหลือง→ส้ม→โปร่งใส) แทน glow สีส้มเดียว
                     // แบนๆ เดิม ให้ความรู้สึกแสงจริงที่มี hot-spot ขาวจ้าตรงกลางก่อนไล่โทนอุ่นออกไป
                     boxShadow: `0 6px 18px rgba(0,0,0,.45), ${AMBER_GLOW_SHADOW}, inset 0 1px rgba(255,255,255,.35)`,

@@ -1,7 +1,7 @@
 'use client'
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, TEXT, CARD_GRADIENT_CSS } from '@/lib/theme'
+import { NOISE_BG, TEXT, CARD_GRADIENT_CSS, CARD_REFLECTION_CSS, CARD_FLOAT_SHADOW, glowAlphaHex } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
@@ -19,6 +19,11 @@ export const METRIC_ICON_IMAGES: Record<MetricIconImageKey, string> = {
 export interface MetricCardTheme {
   main: string
   second: string
+  // ความเข้ม glow มุมการ์ด (0-100) — ไม่ใส่ = ใช้ดีฟอลต์ 20 (พฤติกรรมเดิมก่อนมีฟิลด์นี้) เฉพาะมือถือ
+  // (compact) เท่านั้นที่อ่านค่านี้จริง — เดสก์ท็อปยัง hardcode alpha คงที่เหมือนเดิมทุกประการ ไม่กระทบ
+  // ให้แต่ละการ์ด glow เข้ม/อ่อนไม่เท่ากัน (เช่น น้ำหนัก 18% เข้มกว่ามวลไขมัน 10%) ดูเป็นธรรมชาติกว่า
+  // glow เท่ากันหมดทุกใบแบบเดิม
+  glow?: number
 }
 
 export interface MetricCardProps {
@@ -79,6 +84,9 @@ export default function MetricCard({
   // Mobile Dashboard v2.2: compact (มือถือ) ใช้ border-radius 24px ตาม Design Token ล่าสุด (เดิม
   // 18px) — เดสก์ท็อป (compact=false) ยังได้ 20px เหมือนเดิมทุกประการ ไม่กระทบ
   const radiusClass = radius === 'xl20' ? (compact ? 'rounded-[24px]' : 'rounded-[20px]') : 'rounded-lg'
+  // ความเข้ม glow ต่อการ์ด (compact เท่านั้น) — ดีฟอลต์ 20 = พฤติกรรมเดิมก่อนมีฟิลด์ theme.glow
+  // (เทียบเท่า alpha hex "33" เดิมที่ hardcode คงที่ทุกใบ)
+  const glowAlpha = glowAlphaHex(theme.glow ?? 20)
   return (
     <>
       <div
@@ -92,27 +100,33 @@ export default function MetricCard({
           padding: compact ? dashboardSpec.metricCard.padding : '16px 18px 12px',
           border: '1.5px solid transparent',
           // 5 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
-          // 1) rim light เฉียงบางๆ (reflection ผิวโลหะ, มือถือ (compact) เท่านั้น — ให้วัสดุการ์ดสอดคล้อง
-          //    กับ PremiumCard) 2) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด กันไม่ให้กลางการ์ด
-          //    ดำตันเกินไป วาดถึงแค่ padding-box (คือพื้นการ์ดจริง ทับซ่อนกลางของ 3-5 ไว้) — มือถือ
-          //    (compact) ใช้ CARD_GRADIENT_CSS เทาเย็น (โทนเดียวกับ PremiumCard ทั้งแอป) แทนเทากลาง
+          // 1) CARD_REFLECTION_CSS แถบสะท้อนแสงตรงจากขอบบน (มือถือ (compact) เท่านั้น — ให้วัสดุการ์ด
+          //    สอดคล้องกับ PremiumCard, แทน rim light เฉียง 135deg เดิมซึ่งไม่ใช่ทิศทางแสงแบบโลหะขัดเงา
+          //    จริงที่สะท้อนจากด้านบนตรงๆ) 2) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด กันไม่ให้
+          //    กลางการ์ดดำตันเกินไป วาดถึงแค่ padding-box (คือพื้นการ์ดจริง ทับซ่อนกลางของ 3-5 ไว้) —
+          //    มือถือ (compact) ใช้ CARD_GRADIENT_CSS เทาเย็น (โทนเดียวกับ PremiumCard ทั้งแอป) แทนเทากลาง
           //    #242424/#171717/#101010 เดิม (R=G=B เป๊ะ ไม่เย็นจริง) — เดสก์ท็อป (compact=false) ยังคง
           //    โทนกรมท่าเดิมทุกประการ ไม่กระทบ
-          // 3) radial glow ที่มุมซ้ายบน (สี main) 4) radial glow ที่มุมขวาล่าง (สี second)
+          // 3) radial glow ที่มุมซ้ายบน (สี main) 4) radial glow ที่มุมขวาล่าง (สี second) — มือถือ
+          //    (compact) ใช้ glowAlpha (จาก theme.glow ต่อการ์ด) แทน alpha เต็มค่าคงที่เดิม ให้แต่ละการ์ด
+          //    glow เข้ม/อ่อนไม่เท่ากันจริง (เช่น น้ำหนัก 18% เข้มกว่ามวลไขมัน 10%) — เดสก์ท็อปยังใช้สีเต็ม
+          //    ไม่มี alpha เหมือนเดิมทุกประการ ไม่กระทบ
           // 5) เข้ม→อ่อน→เข้ม แนวทแยง (แทนสีพื้นจางๆ เรียบๆ เดิม) กันไม่ให้ช่วงกลางขอบ/มุมอื่นดูเป็นเส้นแข็งทื่อ
           // ผลคือขอบเรืองแสงชัดเฉพาะ 2 มุมตรงข้ามกัน ส่วนช่วงกลางขอบก็ยังไล่เฉดนุ่มๆ ไม่ใช่เส้นตรงแข็งๆ
           backgroundImage: compact
-            ? `linear-gradient(135deg, rgba(255,255,255,.05) 0%, transparent 30%), radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
+            ? `${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
             : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
           backgroundClip: compact
             ? 'padding-box, padding-box, padding-box, border-box, border-box, border-box'
             : 'padding-box, padding-box, border-box, border-box, border-box',
-          // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
-          // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + inset เงาเข้มขอบล่างแบบจม (CARD_INSET_SHADOW เดียวกับ
-          // PremiumCard — compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุม
-          // ซ้ายบน/ขวาล่าง (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
-          boxShadow: `0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.05), ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}33, 6px 6px 20px ${theme.second}33`,
+          // ชั้นซ้อนกัน: ambient shadow (มือถือ (compact) ใช้ CARD_FLOAT_SHADOW เบาบางกว่าเดิมให้การ์ด
+          // ดูลอย เดสก์ท็อปยังใช้ contact+ambient shadow คู่เดิมทุกประการ) + inset highlight บนขอบบน
+          // (ผิวมีไฮไลต์) + inset เงาเข้มขอบล่างแบบจม (CARD_INSET_SHADOW เดียวกับ PremiumCard —
+          // compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุมซ้ายบน/ขวาล่าง
+          // (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ — มือถือ
+          // (compact) ใช้ glowAlpha ต่อการ์ดแทน alpha "33" คงที่เดิม
+          boxShadow: `${compact ? CARD_FLOAT_SHADOW : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, inset 0 1px rgba(255,255,255,.05), ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
