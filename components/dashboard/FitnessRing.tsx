@@ -83,13 +83,15 @@ export default function FitnessRing({
               ทำให้อ่านออกว่าเป็นแค่ "แถบ progress bar" ไม่ใช่วงแหวนโลหะจริง สลับสว่าง/มืดหลาย stop
               แนวทแยงจำลองแสงตกกระทบผิวโค้งไม่สม่ำเสมอแบบโลหะจริง (เทียบภาพอ้างอิง) — ทิศทางคงที่
               (ไม่หมุนตาม progress) ให้ความรู้สึกเป็นวัสดุจริงที่มีอยู่ก่อนคะแนนจะวาดทับ
-              v2: สต็อปเดิมเป็นเทากลางล้วน (#38393E-#6E7179) ไม่มีจุดสว่างจริง (silver) เท่าที่ควร ทำให้
-              ยังอ่านเป็น "เทาเรียบ" มากกว่าโลหะขัดเงา — เปลี่ยนเป็น silver→gray→charcoal→silver ให้มี
-              contrast จ้ากว่าเดิมจริง (F2F2F2 เกือบขาวจ้า สลับกับ 2B2B2C เกือบดำ) */}
+              v3: เพิ่มจาก 4 เป็น 5 สต็อป (silver→gray→เกือบดำ→gray→silver) ให้มี highlight/midtone/
+              shadow/reflection ครบใน "วงเดียว" ตามที่ขอ ไม่ใช่แค่ไล่ทางเดียวจากสว่างไปมืด — เพิ่ม opacity
+              จาก 0.85 เป็น 0.95 ให้ contrast โลหะเด่นชัดขึ้น (ยังไม่ถึง 1 เพื่อให้ trackColor เบสด้านล่าง
+              ยังช่วยกันวงคะแนนสีสดด้านหน้าไม่ให้กลืนไปกับพื้นหลัง) */}
           <linearGradient id={`${idPrefix}-titanium-track`} x1="10%" y1="0%" x2="90%" y2="100%">
             <stop offset="0%" stopColor="#F2F2F2" />
-            <stop offset="33%" stopColor="#7D7D80" />
-            <stop offset="66%" stopColor="#2B2B2C" />
+            <stop offset="25%" stopColor="#7D7D80" />
+            <stop offset="50%" stopColor="#2B2B2C" />
+            <stop offset="75%" stopColor="#7D7D80" />
             <stop offset="100%" stopColor="#BEBEBE" />
           </linearGradient>
         </defs>
@@ -104,7 +106,7 @@ export default function FitnessRing({
           fill="none"
           stroke={`url(#${idPrefix}-titanium-track)`}
           strokeWidth={sw}
-          opacity={0.85}
+          opacity={0.95}
         />
 
         {/* ring-glow — เส้นหนากว่าเส้นหลัก เบลอนุ่ม (glow-soft) opacity ต่ำ ให้แสงแผ่ออกรอบวงเป็น

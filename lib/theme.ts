@@ -106,7 +106,14 @@ export const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 // ใน NotificationButton.tsx ผ่าน glowColor) ไม่ใช่พื้นหลังทั้งหน้าอีกต่อไป
 // v3: พื้นสีเรียบ 3 สต็อปเดิมยัง "แบน" เกินไป (ไม่มีไล่เฉดที่สังเกตได้จริงในพื้นที่กว้าง) เพิ่มเป็น 4
 // สต็อปที่ไล่ถี่ขึ้นตรงกลาง (25%/55%) ให้เห็นการไล่เฉดเทาเย็นเป็นชั้นๆ แบบผิวโลหะจริง ไม่ใช่บล็อกสีเดียว
-export const DASHBOARD_BG_CSS = 'linear-gradient(180deg, #16181B 0%, #121315 25%, #0D0E10 55%, #09090A 100%)'
+// v4: ยังแบนอยู่แม้มี noise+vignette — เพิ่ม "micro gradient" 2 จุด (สีขาวล้วน อัลฟาต่ำมาก 1.2-1.5%
+// ไม่ใช่สีส้ม ไม่ใช่ glow) จำลองความไม่สม่ำเสมอเล็กๆ ของผิวโลหะจริง (ไม่ใช่พื้นเรียบเนียนทางเดียวแบบ
+// linear-gradient เดียว) ตามคำขอ "เพิ่มความต่างของเฉดสีเทา" แทนการเพิ่มแสง/glow
+export const DASHBOARD_BG_CSS = [
+  'radial-gradient(circle at 30% 20%, rgba(255,255,255,.015), transparent 50%)',
+  'radial-gradient(circle at 75% 65%, rgba(255,255,255,.012), transparent 55%)',
+  'linear-gradient(180deg, #16181B 0%, #121315 25%, #0D0E10 55%, #09090A 100%)',
+].join(', ')
 
 // Vignette — ขอบจอมืดกว่ากลางจอเล็กน้อย กันไม่ให้พื้นหลังดำสนิทเป็นแผ่นเดียวเรียบๆ ทั้งขอบจอ
 export const VIGNETTE_CSS = 'radial-gradient(circle, transparent 45%, rgba(0,0,0,.28) 100%)'
@@ -116,13 +123,15 @@ export const VIGNETTE_CSS = 'radial-gradient(circle, transparent 45%, rgba(0,0,0
 // บนแล้วค่อยจางลงล่าง ให้ผิวการ์ดดูมีมิติแบบแผ่นโลหะจริง ใช้คู่กับ CARD_INSET_SHADOW/CARD_REFLECTION_CSS
 // เสมอ (highlight ขอบบน + เงาจมขอบล่าง + แถบสะท้อนแสงด้านบน)
 export const CARD_GRADIENT_CSS = 'linear-gradient(180deg, #26282C 0%, #1B1D20 35%, #141518 70%, #0D0E10 100%)'
-export const CARD_INSET_SHADOW = 'inset 0 1px 0 rgba(255,255,255,.08), inset 0 -4px 10px rgba(0,0,0,.6)'
+// v2: highlight ขอบบนเดิม (inset 0 1px 0, กว้างเต็มขอบบนทั้งเส้น) รวมกับ border สีเทา ทำให้ขอบบนดูสว่าง
+// "ทั้งเส้น" แทนที่จะสว่างเฉพาะมุมแบบวัสดุโลหะจริง — เปลี่ยนเป็น inset แนวทแยง (offset ทั้ง x และ y พร้อม
+// กัน) ให้ความสว่างกระจุกอยู่แถวมุมบนซ้ายเป็นหลัก (จางหายไปทางขวา/ล่าง) แทนเส้นสว่างสม่ำเสมอเต็มความกว้าง
+export const CARD_INSET_SHADOW = 'inset 1px 1px 0 0 rgba(255,255,255,.09), inset 0 -4px 10px rgba(0,0,0,.6)'
 
-// v2: การ์ดยัง "ด้าน" (matte plastic) เกินไป แม้จะมี rim light เฉียง 135deg มุมบนซ้ายอยู่แล้วก็ตาม —
-// เพิ่มแถบสะท้อนแสงแนวนอนจริงจากขอบบน (180deg ตรงๆ ไม่เฉียง) จางลงที่ ~35% ของความสูงการ์ด จำลองผิว
-// โลหะขัดเงา (brushed titanium) ที่แสงเหนือหัวสะท้อนเป็นแถบตรงจากด้านบน แยกจาก rim light เฉียงเดิม
-// (ยังเก็บไว้ทั้งคู่ — คนละมุมแสง ซ้อนกันได้)
-export const CARD_REFLECTION_CSS = 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 35%)'
+// v3: การ์ดยัง "ด้าน" (matte plastic) เกินไป — สต็อปเดิม (2 สต็อป, จาง 5%→โปร่งใสที่ 35%) ยังไม่พอ
+// เปลี่ยนเป็น 3 สต็อปตามที่ขอเป๊ะ (.06 → .015 ที่ 20% → โปร่งใสที่ 45%) ให้มี "ขั้น" ความสว่างที่ชัดเจน
+// กว่าการไล่จางทางเดียวแบบเดิม จำลองแผ่นไทเทเนียมกัดผิว (anodized) จริงมากขึ้น
+export const CARD_REFLECTION_CSS = 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015) 20%, transparent 45%)'
 
 // v2: shadow เดิม (0 10px 30px rgba(0,0,0,.45)) หนัก/มืดเกินไป ทำให้การ์ดดู "ติดพื้น" แทนที่จะลอยเบาๆ
 // เหนือพื้นหลัง — ลด blur/opacity ลงให้เป็นเงาลอยแบบเบาบาง (float) จริง
