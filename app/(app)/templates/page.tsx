@@ -35,10 +35,19 @@ const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 
 function ChevronIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,.82)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
+}
+
+// แยกหัวข้อเป็น "คำนำ" (เช่น "DAY 5") กับ "ส่วนที่เหลือ" ถ้าชื่อเทมเพลตมีเครื่องหมาย — คั่นอยู่ (ให้น้ำหนัก
+// ตัวอักษรต่างกัน คำนำเบากว่า+สีตามวัน ส่วนที่เหลือหนักกว่า+สีขาว ไล่ลำดับสายตาได้ดีกว่าตัวหนาเท่ากันหมด)
+// ถ้าไม่มี — เลย (ชื่อเทมเพลตที่ผู้ใช้ตั้งเองส่วนใหญ่ไม่มีรูปแบบนี้) ก็ fallback ไปแสดงทั้งก้อนแบบเดิม
+function splitTitle(title: string): [string, string] | null {
+  const idx = title.indexOf('—')
+  if (idx <= 0 || idx >= title.length - 1) return null
+  return [title.slice(0, idx).trim(), title.slice(idx + 1).trim()]
 }
 
 function downloadBlob(content: BlobPart, filename: string, type: string) {
@@ -557,14 +566,20 @@ export default function TemplatesPage() {
             >
               {/* เงาของการ์ดต้องอยู่ที่ "ห่อนอก" ใบนี้ (ไม่มี overflow-hidden) — overflow-hidden จะไปตัด
                   box-shadow ของ "ตัวเอง" ทิ้งด้วย เลยแยกเป็น 2 ชั้น: ห่อนอกคุมขอบ/เงา, ห่อในคุม
-                  overflow-hidden สำหรับพื้นหลัง/รูปที่ต้องโค้งตามการ์ด — พื้นการ์ดยังเป็นโลหะเข้มเดียวกัน
-                  ทุกใบ (มิติหลักมาจาก shadow/bevel) แต่มีขอบซ้าย + glow บางๆ สีต่อวันเป็นสัญญะเสริม */}
+                  overflow-hidden สำหรับพื้นหลัง/รูปที่ต้องโค้งตามการ์ด — ขอบรอบการ์ดตอนนี้เป็น "gradient
+                  border" (สว่างด้านบน มืดด้านล่าง จำลองผิวโลหะจริง) แทนเส้นสีเทาแบนเดิม ใช้เทคนิค
+                  background 2 เลเยอร์ + backgroundClip (border ธรรมดาไล่สีไม่ได้ตรงๆ) ส่วนสีต่อวันย้าย
+                  ไปอยู่ที่เส้น "energy line" ในห่อในแทนที่จะเป็นขอบซ้ายทึบเหมือนก่อน */}
               <div
                 className="rounded-3xl"
                 style={{
-                  border: '1px solid rgba(255,255,255,.08)',
-                  borderLeftWidth: 2,
-                  borderLeftColor: accent,
+                  border: '1px solid transparent',
+                  backgroundImage: [
+                    'linear-gradient(#1A1C21, #1A1C21)',
+                    'linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.45))',
+                  ].join(', '),
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
                   boxShadow: [
                     '0 20px 45px rgba(0,0,0,.5)',
                     '0 1px 0 rgba(255,255,255,.05)',
@@ -584,14 +599,29 @@ export default function TemplatesPage() {
                     boxShadow: ['inset 0 1px 0 rgba(255,255,255,.08)', 'inset 0 -1px 0 rgba(0,0,0,.5)'].join(', '),
                   }}
                 >
+                  {/* Energy line — เส้นสีต่อวันบางๆ ที่ขอบซ้าย ไล่จากสว่าง (บน) ไปจาง (ล่าง) แทนแถบสีทึบ
+                      เรียบๆ เหมือนก่อน ให้ความรู้สึกเป็นเส้นพลังงานมากกว่าเส้นบอกหมวดหมู่ธรรมดา */}
+                  <div
+                    className="absolute left-0 top-0 bottom-0 w-[2px] pointer-events-none"
+                    style={{
+                      background: `linear-gradient(180deg, ${lighten(accent, 0.25)} 0%, ${accent} 45%, ${withAlpha(accent, '33')} 100%)`,
+                      boxShadow: `0 0 8px ${withAlpha(accent, '80')}`,
+                    }}
+                    aria-hidden="true"
+                  />
                   {/* glass reflection — ไล่ขาวจางๆ จากขอบบน ให้พื้นผิวดูมีมิติแทนสีทึบราบเรียบ */}
                   <div
                     className="absolute inset-0 pointer-events-none"
                     style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 22%)' }}
                     aria-hidden="true"
                   />
-                  {/* ลูกศรมุมขวาบน — ย้ำสัญญะว่าแตะการ์ดเพื่อขยายดูรายละเอียดได้ (ปุ่มขยายจริงคือทั้งแถวซ้าย) */}
-                  <span className="absolute top-3 right-3 pointer-events-none" aria-hidden="true">
+                  {/* ลูกศรมุมขวาบน — แบบ pill วงกลมเหมือน iOS แทนลูกศรลอยเดี่ยวๆ ย้ำสัญญะว่าแตะการ์ดเพื่อ
+                      ขยายดูรายละเอียดได้ (ปุ่มขยายจริงคือทั้งแถวซ้าย) */}
+                  <span
+                    className="absolute top-3 right-3 pointer-events-none w-6 h-6 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(255,255,255,.08)', boxShadow: '0 0 6px rgba(255,255,255,.15)' }}
+                    aria-hidden="true"
+                  >
                     <ChevronIcon />
                   </span>
 
@@ -626,6 +656,15 @@ export default function TemplatesPage() {
                               className="w-full h-full object-cover"
                               style={{ transform: 'scale(1.15)' }}
                             />
+                            {/* rim light มุมบนซ้าย — เส้นแสงขาวบางๆ จำลองแสงตกกระทบ ให้รูปดูมีมิติ 3 มิติ
+                                ขึ้น แยกจาก inner glow สีต่อวันด้านล่าง (คนละทิศ คนละสี ซ้อนกันได้พอดี) */}
+                            <span
+                              className="absolute inset-0 rounded-full pointer-events-none"
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(255,255,255,.35) 0%, transparent 35%)',
+                                mixBlendMode: 'screen',
+                              }}
+                            />
                             <span
                               className="absolute inset-0 rounded-full pointer-events-none"
                               style={{
@@ -637,9 +676,21 @@ export default function TemplatesPage() {
                         </span>
                       </span>
                       <span className="min-w-0">
-                        <p className="text-xs text-ink font-display tracked uppercase leading-snug" style={{ fontWeight: 800 }}>
-                          {t.title}
-                        </p>
+                        {(() => {
+                          const split = splitTitle(t.title)
+                          return split ? (
+                            <p className="text-xs font-display tracked uppercase leading-snug">
+                              <span style={{ fontWeight: 600, color: accent }}>{split[0]} —</span>{' '}
+                              <span className="text-ink" style={{ fontWeight: 800 }}>
+                                {split[1]}
+                              </span>
+                            </p>
+                          ) : (
+                            <p className="text-xs text-ink font-display tracked uppercase leading-snug" style={{ fontWeight: 800 }}>
+                              {t.title}
+                            </p>
+                          )
+                        })()}
                         <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,.7)', fontWeight: 600 }}>
                           🕐 {exercises.length} ท่า
                         </p>
@@ -650,8 +701,11 @@ export default function TemplatesPage() {
                       disabled={startingId === t.id || exercises.length === 0}
                       className="shrink-0 w-[92px] rounded-[18px] text-[9px] leading-tight font-display tracked uppercase text-bg py-2 px-3 text-center active:scale-[0.99] disabled:opacity-40 transition"
                       style={{
-                        backgroundImage: 'linear-gradient(180deg, #FFDA8C 0%, #FFC94B 40%, #FF9700 100%)',
-                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 rgba(0,0,0,.25), 0 6px 14px rgba(255,150,0,.32)',
+                        backgroundImage: [
+                          'linear-gradient(180deg, rgba(255,255,255,.35), transparent 55%)',
+                          'linear-gradient(180deg, #FFDA8C 0%, #FFC94B 40%, #FF9700 100%)',
+                        ].join(', '),
+                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 rgba(0,0,0,.25), 0 5px 11px rgba(255,150,0,.26)',
                       }}
                     >
                       {startingId === t.id ? '...' : `Start ${t.title}`}
