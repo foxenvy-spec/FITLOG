@@ -82,14 +82,15 @@ export default function FitnessRing({
           {/* ไล่สีวงพื้นหลัง (track) แบบโลหะขัดเงา (brushed titanium) — เดิมเป็นสีเดียวแบนๆ (trackColor)
               ทำให้อ่านออกว่าเป็นแค่ "แถบ progress bar" ไม่ใช่วงแหวนโลหะจริง สลับสว่าง/มืดหลาย stop
               แนวทแยงจำลองแสงตกกระทบผิวโค้งไม่สม่ำเสมอแบบโลหะจริง (เทียบภาพอ้างอิง) — ทิศทางคงที่
-              (ไม่หมุนตาม progress) ให้ความรู้สึกเป็นวัสดุจริงที่มีอยู่ก่อนคะแนนจะวาดทับ */}
+              (ไม่หมุนตาม progress) ให้ความรู้สึกเป็นวัสดุจริงที่มีอยู่ก่อนคะแนนจะวาดทับ
+              v2: สต็อปเดิมเป็นเทากลางล้วน (#38393E-#6E7179) ไม่มีจุดสว่างจริง (silver) เท่าที่ควร ทำให้
+              ยังอ่านเป็น "เทาเรียบ" มากกว่าโลหะขัดเงา — เปลี่ยนเป็น silver→gray→charcoal→silver ให้มี
+              contrast จ้ากว่าเดิมจริง (F2F2F2 เกือบขาวจ้า สลับกับ 2B2B2C เกือบดำ) */}
           <linearGradient id={`${idPrefix}-titanium-track`} x1="10%" y1="0%" x2="90%" y2="100%">
-            <stop offset="0%" stopColor="#5C5F67" />
-            <stop offset="18%" stopColor="#38393E" />
-            <stop offset="38%" stopColor="#6E7179" />
-            <stop offset="55%" stopColor="#2A2B2F" />
-            <stop offset="72%" stopColor="#565961" />
-            <stop offset="100%" stopColor="#222327" />
+            <stop offset="0%" stopColor="#F2F2F2" />
+            <stop offset="33%" stopColor="#7D7D80" />
+            <stop offset="66%" stopColor="#2B2B2C" />
+            <stop offset="100%" stopColor="#BEBEBE" />
           </linearGradient>
         </defs>
 

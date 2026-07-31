@@ -24,6 +24,14 @@ interface HeaderProps {
 export default function Header({ greetingText, latestPR, topMuscleThisWeek, displayName, fitnessScore }: HeaderProps) {
   return (
     <div className="relative flex items-start justify-between gap-3 animate-rise">
+      {/* Ambient light เฉพาะโซน Header — เดิมพื้นหลังทั้งหน้าตัดแสงส้มออกหมดแล้ว (เทาเย็นล้วน) แต่
+          ผลคือ Header ไม่มีแสงสะท้อนเลย ดูแบนไปด้วย — เพิ่มแสงขาวเย็นจางมากๆ (4%) เฉพาะจุดนี้ ไม่ใช่
+          สีส้ม จำลองแสงตกกระทบผิวโลหะบริเวณหัวเรื่อง */}
+      <div
+        className="absolute -inset-x-4 -top-6 h-36 pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(ellipse at 25% 0%, rgba(255,255,255,.04), transparent 65%)' }}
+        aria-hidden="true"
+      />
       <div className="min-w-0" style={{ paddingRight: 44 }}>
         <Greeting text={greetingText} />
         <p
@@ -38,15 +46,16 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             fontWeight: 900,
             letterSpacing: '2px',
             lineHeight: 1,
-            // ไล่สี 4 stop จบสว่างกว่ากลาง (ขาว→เทาอ่อน→เทาเข้ม→เทาอ่อนอีกครั้ง) จำลอง "แนวชนแสง"
-            // (shine sweep) กวาดผ่านผิวโลหะจริง แทน 2-stop เดิมที่ไล่มืดลงเรื่อยๆ ทางเดียว ให้ความรู้สึก
-            // "ตัวหนังสือสีเทา" เฉยๆ ไม่มีมิติ — คู่กับ drop-shadow (เงาเข้มด้านล่าง + ไฮไลต์บางด้านบน)
-            // จำลองผิวโลหะสลักนูน (embossed metal) แบบภาพอ้างอิงจริง
-            backgroundImage: 'linear-gradient(180deg, #FFFFFF, #D6D6D6, #8A8A8A, #EFEFEF)',
+            // v2: สต็อปเดิม (#FFFFFF/#D6D6D6/#8A8A8A/#EFEFEF) ยัง "ขาวเกินไป" — ครึ่งบนของตัวอักษร
+            // (0-50%) มีแต่โทนขาว/เทาอ่อนแทบทั้งหมด สต็อปมืดสุด (#8A8A8A) เป็นแค่เทากลาง ไม่ใช่เทาเข้ม
+            // จริง และสต็อปท้าย (#EFEFEF) เกือบขาวอีกรอบแทนที่จะเป็นโทนเงิน (silver) — ปรับเป็นขาว→
+            // เทาอ่อน→เทาเข้มจริง(#5A5A5A)→เงิน(#C7C7C7) ให้ contrast สูงขึ้น อ่านเป็นโลหะสลักนูนชัดเจนขึ้น
+            backgroundImage: 'linear-gradient(180deg, #FFFFFF, #D6D6D6, #5A5A5A, #C7C7C7)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
-            filter: 'drop-shadow(0 2px 1px rgba(0,0,0,.5)) drop-shadow(0 1px 0 rgba(255,255,255,.12))',
+            // เงาเข้มขึ้นเล็กน้อย (.5 -> .6) ให้ตัวอักษรดูจมสลักลงในผิวโลหะ (inner-shadow จำลอง) ชัดขึ้น
+            filter: 'drop-shadow(0 2px 1px rgba(0,0,0,.6)) drop-shadow(0 1px 0 rgba(255,255,255,.14))',
           }}
         >
           {displayName}
