@@ -111,25 +111,27 @@ export default function FitnessRing({
 
         {/* วง track เดิมมีแค่ไล่สีทแยงเส้นเดียว ยัง "สะอาด/แบน" เกินไป — เพิ่มส่วนโค้งนิ่ง (ไม่ผูกกับ
             progress เหมือนจุดอื่นในไฟล์นี้) จำลอง highlight สว่าง 2 จุดที่ 11 กับ 5 นาฬิกา (ตำแหน่งตรง
-            ข้ามกันบนวงกลม, กว้างจุดละ ~9% ของเส้นรอบวง) + shadow มืดด้านล่างขวา (ด้านล่าง) ให้วง track
-            เองมี reflection/highlight/micro-shadow ในตัวจริงๆ แทนที่จะพึ่งแค่ linearGradient เส้นเดียว —
-            ไม่มี filter/blur ทั้งคู่ (แค่ stroke-opacity ธรรมดา) ไม่นับเป็น glow ใหม่ตามที่ขอให้หยุดเพิ่ม
+            ข้ามกันบนวงกลม, กว้างจุดละ ~10% ของเส้นรอบวง) + shadow มืดด้านล่างขวา ให้วง track เองมี
+            reflection/highlight/micro-shadow ในตัวจริงๆ แทนที่จะพึ่งแค่ linearGradient เส้นเดียว — ไม่มี
+            filter/blur ทั้งคู่ (แค่ stroke-opacity ธรรมดา) ไม่นับเป็น glow ใหม่ตามที่ขอให้หยุดเพิ่ม
 
-            คำนวณตำแหน่งนาฬิกา: หลัง transform rotate(-90) path เริ่มที่ 12 นาฬิกา (s=0) แล้ววิ่งตามเข็ม
-            นาฬิกาเมื่อ s เพิ่มขึ้น (s=C คือครบรอบกลับมา 12 อีกครั้ง) — จุดกึ่งกลางส่วนโค้งที่มองเห็นอยู่ที่
-            path position s = (circumference - dashOffset) mod circumference ดังนั้นตำแหน่ง k นาฬิกา
-            (คิดจาก 12 นาฬิกา) ต้องการ s_center = (k/12)*C แล้วแก้ dashOffset = C - s_center + width/2 */}
+            บั๊กรอบก่อน: 3 วงนี้ลืมใส่ transform rotate(-90) เหมือนวงอื่นๆ ในไฟล์นี้ (ring-glow/ring-progress/
+            reflection rim/highlight arc ด้านล่างทุกวงมี) ทำให้คำนวณตำแหน่งนาฬิกาโดยอิงกรอบอ้างอิงผิด (คิด
+            ว่า s=0 คือ 12 นาฬิกา แต่จริงๆ ไม่หมุนเลยจึงยังเป็น 3 นาฬิกาแบบ default SVG circle) ผลคือ
+            highlight ที่ตั้งใจไว้ 11/5 นาฬิกาไปโผล่ที่ ~2/~8 นาฬิกาแทน — เพิ่ม transform เดียวกับวงอื่น
+            ให้กรอบอ้างอิงตรงกัน สูตร dashOffset เดิม (คำนวณสำหรับกรอบหลังหมุนอยู่แล้ว) ใช้ได้เลยไม่ต้องแก้ */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
           stroke="#FFFFFF"
-          strokeWidth={Math.max(1, sw * 0.2)}
+          strokeWidth={Math.max(1, sw * 0.22)}
           strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.09} ${circumference * 0.91}`}
+          strokeDasharray={`${circumference * 0.1} ${circumference * 0.9}`}
           strokeDashoffset={circumference * 0.1333}
-          strokeOpacity={0.22}
+          strokeOpacity={0.26}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ mixBlendMode: 'screen' }}
         />
         <circle
@@ -138,11 +140,12 @@ export default function FitnessRing({
           r={radius}
           fill="none"
           stroke="#FFFFFF"
-          strokeWidth={Math.max(1, sw * 0.2)}
+          strokeWidth={Math.max(1, sw * 0.22)}
           strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.09} ${circumference * 0.91}`}
+          strokeDasharray={`${circumference * 0.1} ${circumference * 0.9}`}
           strokeDashoffset={circumference * 0.6333}
-          strokeOpacity={0.2}
+          strokeOpacity={0.24}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ mixBlendMode: 'screen' }}
         />
         <circle
@@ -156,6 +159,7 @@ export default function FitnessRing({
           strokeDasharray={`${circumference * 0.18} ${circumference * 0.82}`}
           strokeDashoffset={circumference * 0.58}
           strokeOpacity={0.28}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
 
         {/* ring-glow — เส้นหนากว่าเส้นหลัก เบลอนุ่ม (glow-soft) opacity ต่ำ ให้แสงแผ่ออกรอบวงเป็น

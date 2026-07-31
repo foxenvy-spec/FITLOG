@@ -26,11 +26,11 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
     <div className="relative flex items-start justify-between gap-3 animate-rise">
       {/* Ambient light เฉพาะโซน Header — เดิมพื้นหลังทั้งหน้าตัดแสงส้มออกหมดแล้ว (เทาเย็นล้วน) แต่
           ผลคือ Header ไม่มีแสงสะท้อนเลย ดูแบนไปด้วย — แสงขาวเย็นจางมากๆ เฉพาะจุดนี้ ไม่ใช่สีส้ม จำลอง
-          แสงตกกระทบผิวโลหะบริเวณหัวเรื่อง — ลดจาก 4% เหลือ 3% ตาม "Cool White 2-3%" ที่ขอ (แรงเกินไป
-          จะเริ่มอ่านเป็น glow แทนที่จะเป็นแค่แสงสะท้อนเบาๆ) */}
+          แสงตกกระทบผิวโลหะบริเวณหัวเรื่อง — ลดจาก 3% เหลือ 2% ตามที่ขอ (Soft Reflection ไม่ใช่ Glow
+          แรงเกินไปจะเริ่มอ่านเป็น glow แทนที่จะเป็นแค่แสงสะท้อนเบาๆ) */}
       <div
         className="absolute -inset-x-4 -top-6 h-36 pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(ellipse at 25% 0%, rgba(255,255,255,.03), transparent 65%)' }}
+        style={{ backgroundImage: 'radial-gradient(ellipse at 25% 0%, rgba(255,255,255,.02), transparent 65%)' }}
         aria-hidden="true"
       />
       <div className="min-w-0" style={{ paddingRight: 44 }}>
@@ -52,8 +52,16 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // ที่ 20% (เข้มกว่าเดิมชัดเจน) → กลับขึ้น #A9A9A9 ที่ 45% → #E6E6E6 ที่ 75% → ขาวจ้าที่สุด
             // (100%) อยู่ล่างสุดแทนบนสุด ให้จุดสว่างที่สุดของตัวอักษรอยู่คนละตำแหน่งกับจุดมืดสุด อ่านเป็น
             // ผิวโลหะสะท้อนแสงจริง ไม่ใช่ไล่จากขาวลงเทาทางเดียว
-            backgroundImage:
+            //
+            // v5: ยังเป็นไล่สีแนวตั้งทางเดียวเส้นเดียว — เพิ่มไล่สีแนวนอน (90deg) ตามที่ขอเป็นชั้นซ้อนบน
+            // แล้วผสมด้วย backgroundBlendMode:'overlay' (ไม่ใช่วาดทับตรงๆ ซึ่งจะบังไล่สีแนวตั้งจนหายไป
+            // เพราะสต็อปแนวนอนเป็นสีทึบไม่มี alpha) ให้เกิดลาย "ไขว้" สองทิศทางพร้อมกันแบบผิวโลหะขัดเงาจริง
+            // ที่แสงสะท้อนไม่ได้มาจากทิศทางเดียว
+            backgroundImage: [
+              'linear-gradient(90deg, #EAEAEA, #BFBFBF, #F5F5F5, #8E8E8E)',
               'linear-gradient(180deg, #DADADA 0%, #6F6F72 20%, #A9A9A9 45%, #E6E6E6 75%, #FFFFFF 100%)',
+            ].join(', '),
+            backgroundBlendMode: 'overlay',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
