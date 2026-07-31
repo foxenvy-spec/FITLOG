@@ -56,12 +56,13 @@ const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume
 })
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
+// ตัด "สถิติ" (/stats) กับ "ถาม AI" (/coach) ออกจากแถวนี้ — ซ้ำซ้อนกับที่มีอยู่แล้วในหน้าเดียวกัน:
+// "สถิติ" ซ้ำกับแท็บ "สถิติ" ใน bottom nav ตรงๆ ส่วน "ถาม AI" ซ้ำกับการ์ด AICoachCompactCard
+// ที่วางอยู่เหนือแถวนี้ทันที (กดการ์ดนั้นไปหน้า /coach เหมือนกันอยู่แล้ว)
 const QUICK_ACTIONS = [
   { href: '/log', label: 'บันทึกสถิติ', icon: '➕', accent: '#7A9B57' },
   { href: '/templates', label: 'เลือกโปรแกรม', icon: '📋', accent: '#6C8CA8' },
   { href: '/health', label: 'วิเคราะห์ร่างกาย', icon: '🔍', accent: '#E8A33D' },
-  { href: '/stats', label: 'สถิติ', icon: '📈', accent: '#C1503A' },
-  { href: '/coach', label: 'ถาม AI', icon: '🤖', accent: '#9C7CC4' },
 ] as const
 
 /**
@@ -321,7 +322,7 @@ export default function MobileDashboardView() {
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม */}
         <div className="flex gap-2 overflow-x-auto animate-rise" style={{ animationDelay: '160ms', scrollbarWidth: 'none' }}>
-          {QUICK_ACTIONS.filter((a) => a.href !== '/coach' || data.hasAnyHistory).map((action) => (
+          {QUICK_ACTIONS.map((action) => (
             <Link
               key={action.href}
               href={action.href}
