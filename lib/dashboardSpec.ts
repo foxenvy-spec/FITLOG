@@ -2,46 +2,46 @@
 // ระยะห่างที่ใช้ซ้ำในหลายไฟล์ (Header, MetricCard, TodaysFocusCard, TodaysWorkoutCompactCard,
 // TodayHealthStatsRow, BottomNav) กันไม่ให้แต่ละไฟล์ "เดาสัดส่วน" กันเองแบบที่เคยเกิดปัญหามาหลายรอบ —
 // ห้ามขยาย/ย่อค่าพวกนี้เองโดยไม่ตั้งใจ ถ้าต้องปรับให้แก้ที่ไฟล์นี้จุดเดียว แล้วค่าที่ import ไปใช้จะ
-// ตามมาเองทุกจุด — v5: รอบที่ 4 ของการลดสัดส่วน — รอบนี้ผู้ใช้ระบุชัดเจนว่า "ไม่ลด font ทุกอย่าง เพราะ
-// จะอ่านยาก เน้นลดความสูง+padding+gap แทน" จึงตัด valueFontSize/labelFontSize/sparklineHeight/ชื่อ
-// header ออกจากรอบนี้ (คงค่าจาก v4 ไว้ทุกจุด) ปรับเฉพาะมิติ height/padding/gap/ขนาดวงกลม
+// ตามมาเองทุกจุด — v6: รอบที่ 5 ของการลดสัดส่วน — ผู้ใช้ให้ตัดสินใจเองรอบนี้ ("อยากลดอีกครับ" ไม่ระบุ %)
+// ยังคงหลักการเดิม (ไม่ลด value/label font เพิ่ม) ยกเว้น sparkline (เป็นกราฟตกแต่ง ไม่ใช่ตัวหนังสือ) —
+// ทุกจุดเข้าใกล้ physical floor แล้ว (ดูคอมเมนต์ต่อ field) ควรเช็คบนจอจริงก่อนลดต่อจากรอบนี้
 export const dashboardSpec = {
   screen: {
     width: 393,
     horizontalPadding: 20,
-    sectionGap: 16, // -22% จาก 20
+    sectionGap: 14, // -12.5% จาก 16
   },
   header: {
-    height: 131, // -17% จาก 158
-    scoreRingSize: 90, // -17% จาก 109
+    height: 118, // -10% จาก 131 — ร่วมกับตัดบรรทัด "FITNESS SCORE" micro-label ออก (ดู FitnessScore.tsx)
+    scoreRingSize: 80, // -11% จาก 90
   },
   focusCard: {
-    height: 67,
+    height: 60, // -10% จาก 67
     borderRadius: 24,
-    padding: 9, // -20% จาก 11 (Card Padding rule)
+    padding: 8, // -11% จาก 9
   },
   metricCard: {
-    height: 94, // -18% จาก 115 (Summary Card rule)
+    height: 86, // -8.5% จาก 94 — ใกล้ physical floor แล้วที่ font ปัจจุบัน (22/15px)
     borderRadius: 24,
-    padding: 9, // -20% จาก 11
-    gridGap: 14,
-    valueFontSize: 22, // คงเดิม — ไม่ลด font รอบนี้ตามที่ขอ
-    sparklineHeight: 20, // คงเดิม
+    padding: 8, // -11% จาก 9
+    gridGap: 12, // -14% จาก 14
+    valueFontSize: 22, // คงเดิม
+    sparklineHeight: 16, // -20% จาก 20 (กราฟตกแต่ง ไม่ใช่ตัวหนังสือ ลดได้โดยไม่กระทบการอ่าน)
     labelFontSize: 15, // คงเดิม
   },
   workoutCard: {
-    height: 102, // -20% จาก 128
+    height: 92, // -10% จาก 102
     borderRadius: 24,
-    padding: 9, // -20% จาก 11
-    imageWidthPct: 27, // -23% จาก 35 (Workout Image rule)
+    padding: 8, // -11% จาก 9
+    imageWidthPct: 27,
   },
   healthBanner: {
-    height: 74,
+    height: 66, // -11% จาก 74
   },
   floatingButton: {
-    size: 68, // -7% จาก 73
+    size: 62, // -9% จาก 68
   },
   bottomNav: {
-    height: 74,
+    height: 68, // -8% จาก 74
   },
 } as const

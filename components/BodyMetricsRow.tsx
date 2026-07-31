@@ -8,6 +8,7 @@ import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
 import MetricCard, { type MetricIconImageKey, type MetricCardTheme } from './MetricCard'
 import { COLORS, NEUTRAL } from '@/lib/theme'
+import { dashboardSpec } from '@/lib/dashboardSpec'
 
 // ธีมสีต่อการ์ด (main + second) ตามสเปคที่ให้มา — มี 4 ธีม (เขียว/แดง/ส้ม/ฟ้า) แต่ 5 การ์ด
 // น้ำหนักกับกล้ามเนื้อโครงร่างใช้ธีมเขียวร่วมกัน (ทั้งคู่เป็นโทนเขียวอยู่แล้วก่อนหน้านี้)
@@ -205,10 +206,13 @@ export default function BodyMetricsRow({
     },
   ]
 
-  // compact (มือถือ): cardGap ตาม dashboardSpec.metricCard.gridGap (14px, เดิม 16px) — gap-3.5 ใน
-  // Tailwind default scale ตรงกับ 14px พอดี
+  // compact (มือถือ): cardGap จาก dashboardSpec.metricCard.gridGap (12px) แหล่งความจริงเดียว —
+  // ใช้ style แทน Tailwind class เพราะ JIT อ่านค่าจากตัวแปรไม่ได้ (เหมือนจุดอื่นในไฟล์ที่ใช้ token)
   return (
-    <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? 'gap-3.5' : 'gap-3'}`}>
+    <div
+      className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? '' : 'gap-3'}`}
+      style={compact ? { gap: dashboardSpec.metricCard.gridGap } : undefined}
+    >
       {cards.slice(0, maxCards ?? cards.length).map((c) => (
         <MetricCard
           key={c.key}
