@@ -27,6 +27,18 @@ const ICON_PALETTE = [
   '/images/templates/chest.png',
 ] as const
 
+// เท็กซ์เจอร์ noise บางๆ ปูทับพื้นหลังทั้งหน้า — สร้างจาก SVG feTurbulence แทนไฟล์รูป กันไม่ต้องมี asset
+// เพิ่ม ใช้คู่กับ opacity ต่ำ + mixBlendMode: 'overlay' เท่านั้น (ดูจุดที่ใช้งานด้านล่าง)
+const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
+
+function ChevronIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,.82)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function downloadBlob(content: BlobPart, filename: string, type: string) {
   const blob = new Blob([content], { type })
   const url = URL.createObjectURL(blob)
@@ -475,7 +487,20 @@ export default function TemplatesPage() {
   if (loadError) return <ErrorState title="โหลดเทมเพลตไม่สำเร็จ" message={loadError} onRetry={load} />
 
   return (
-    <div className="space-y-3 lg:max-w-3xl lg:mx-auto">
+    <div className="relative">
+      {/* พื้นหลังทั้งหน้า — glow อำพันจางๆ ด้านบน + gradient เข้ม + noise บางๆ แทนสีทึบเรียบเดียว
+          ให้ความรู้สึกมีมิติ ไม่ใช่ตัดสีตรงๆ กับพื้นหลังของ shell รอบนอก */}
+      <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at 50% 0%, ${withAlpha(COLORS.amber, '1F')}, transparent 35%), linear-gradient(180deg, #0d0d10, #0b0b0d)`,
+          }}
+        />
+        <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }} />
+      </div>
+
+      <div className="space-y-3 lg:max-w-3xl lg:mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-xl tracked uppercase">เทมเพลต</h1>
@@ -520,44 +545,87 @@ export default function TemplatesPage() {
           const accent = ACCENT_PALETTE[i % ACCENT_PALETTE.length]
           const icon = ICON_PALETTE[i % ICON_PALETTE.length]
           return (
-            <div
-              key={t.id}
-              className="rounded-2xl bg-surface border-y border-r border-line shadow-elevated overflow-hidden animate-rise"
-              style={{
-                borderLeftWidth: 4,
-                borderLeftStyle: 'solid',
-                borderLeftColor: accent,
-                boxShadow: `0 0 16px ${withAlpha(accent, '26')}`,
-              }}
-            >
-              <div className="px-3.5 py-3 border-b border-line flex items-center gap-3">
-                <button
-                  onClick={() => setExpandedId(expanded ? null : t.id)}
-                  className="flex items-center gap-3 min-w-0 flex-1 text-left"
-                >
-                  <span
-                    className="shrink-0 w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
-                    style={{
-                      background: `radial-gradient(circle at 35% 30%, ${lighten(accent, 0.3)}, ${accent})`,
-                      boxShadow: `0 0 12px ${withAlpha(accent, '55')}`,
-                    }}
-                    aria-hidden="true"
+            <div key={t.id} className="relative animate-rise">
+              {/* แสง ambient เรืองด้านหลังการ์ด — เบลอ ล้นขอบการ์ดออกไป ให้การ์ดรู้สึก "ลอย" จากพื้นหลัง
+                  (ต้องอยู่นอก div ที่มี overflow-hidden ไม่งั้นแสงจะโดนตัดขอบไปหมด) */}
+              <div
+                className="absolute -inset-3 rounded-[28px] pointer-events-none"
+                style={{ backgroundColor: accent, filter: 'blur(40px)', opacity: 0.25 }}
+                aria-hidden="true"
+              />
+              {/* จุดแสงเข้มขึ้นตรงมุมบนซ้าย ใกล้ไอคอน — เป็น "จุดเด่น" ของแสงตามสีต่อการ์ด */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: -40,
+                  top: -30,
+                  width: 160,
+                  height: 160,
+                  background: `radial-gradient(circle, ${withAlpha(accent, '8C')}, transparent 70%)`,
+                  filter: 'blur(40px)',
+                }}
+                aria-hidden="true"
+              />
+
+              <div
+                className="relative rounded-3xl overflow-hidden"
+                style={{
+                  backgroundImage: 'linear-gradient(180deg, #23252b, #18191d)',
+                  border: `1px solid ${withAlpha(accent, '40')}`,
+                  boxShadow: [
+                    'inset 0 1px 0 rgba(255,255,255,.06)',
+                    'inset 0 -1px 0 rgba(0,0,0,.45)',
+                    '0 20px 50px rgba(0,0,0,.45)',
+                  ].join(', '),
+                }}
+              >
+                {/* glass reflection — ไล่ขาวจางๆ จากขอบบน ให้พื้นผิวดูมีมิติแทนสีทึบราบเรียบ */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 30%)' }}
+                  aria-hidden="true"
+                />
+                {/* ลูกศรมุมขวาบน — ย้ำสัญญะว่าแตะการ์ดเพื่อขยายดูรายละเอียดได้ (ปุ่มขยายจริงคือทั้งแถวซ้าย) */}
+                <span className="absolute top-3 right-3 pointer-events-none" aria-hidden="true">
+                  <ChevronIcon />
+                </span>
+
+                <div className="relative px-3.5 py-3.5 border-b border-line flex items-center gap-3">
+                  <button
+                    onClick={() => setExpandedId(expanded ? null : t.id)}
+                    className="flex items-center gap-3 min-w-0 flex-1 text-left"
                   >
-                    <Image src={icon} alt="" width={56} height={56} className="w-full h-full object-cover" />
-                  </span>
-                  <span className="min-w-0">
-                    <p className="text-xs text-ink font-display tracked uppercase leading-snug">{t.title}</p>
-                    <p className="text-[10px] text-muted mt-1">🕐 {exercises.length} ท่า</p>
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleStart(t)}
-                  disabled={startingId === t.id || exercises.length === 0}
-                  className="shrink-0 w-[100px] rounded-xl text-[9px] leading-tight font-display tracked uppercase text-bg bg-amber py-2.5 px-2 text-center active:scale-[0.99] disabled:opacity-40 transition"
-                >
-                  {startingId === t.id ? '...' : `Start ${t.title}`}
-                </button>
-              </div>
+                    <span
+                      className="shrink-0 w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
+                      style={{
+                        background: `radial-gradient(circle at 35% 30%, ${lighten(accent, 0.3)}, ${accent})`,
+                        boxShadow: `0 0 20px ${withAlpha(accent, '55')}, 0 0 50px ${withAlpha(accent, '33')}`,
+                      }}
+                      aria-hidden="true"
+                    >
+                      <Image src={icon} alt="" width={56} height={56} className="w-full h-full object-cover" />
+                    </span>
+                    <span className="min-w-0">
+                      <p className="text-xs text-ink font-display tracked uppercase leading-snug" style={{ fontWeight: 700 }}>
+                        {t.title}
+                      </p>
+                      <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,.55)' }}>
+                        🕐 {exercises.length} ท่า
+                      </p>
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleStart(t)}
+                    disabled={startingId === t.id || exercises.length === 0}
+                    className="shrink-0 w-[100px] rounded-[18px] text-[9px] leading-tight font-display tracked uppercase text-bg py-2.5 px-2 text-center active:scale-[0.99] disabled:opacity-40 transition"
+                    style={{
+                      backgroundImage: 'linear-gradient(180deg, #FFBE3A, #FF9700)',
+                      boxShadow: 'inset 0 2px 0 rgba(255,255,255,.35), 0 8px 20px rgba(255,150,0,.45)',
+                    }}
+                  >
+                    {startingId === t.id ? '...' : `Start ${t.title}`}
+                  </button>
+                </div>
 
               {expanded && (
                 <>
@@ -617,6 +685,7 @@ export default function TemplatesPage() {
                   )}
                 </>
               )}
+              </div>
             </div>
           )
         })}
@@ -626,7 +695,7 @@ export default function TemplatesPage() {
           {templates.length > 0 && (
             <button
               onClick={() => setCreating(true)}
-              className="flex-1 rounded-2xl border border-dashed py-3.5 px-3 text-center transition active:scale-[0.99]"
+              className="flex-1 rounded-3xl border border-dashed py-3.5 px-3 text-center transition active:scale-[0.99]"
               style={{ borderColor: withAlpha(COLORS.amber, '66'), color: COLORS.amber }}
             >
               <span className="block font-display text-sm tracked uppercase">+ เทมเพลตใหม่</span>
@@ -636,7 +705,7 @@ export default function TemplatesPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="flex-1 rounded-2xl border border-dashed py-3.5 px-3 text-center transition active:scale-[0.99] disabled:opacity-40"
+            className="flex-1 rounded-3xl border border-dashed py-3.5 px-3 text-center transition active:scale-[0.99] disabled:opacity-40"
             style={{ borderColor: withAlpha(COLORS.steel, '66'), color: COLORS.steel }}
           >
             <span className="block font-display text-sm tracked uppercase">{importing ? '...' : '⬆ Import'}</span>
@@ -647,6 +716,7 @@ export default function TemplatesPage() {
       )}
 
       {creating && <NewTemplateForm onCancel={() => setCreating(false)} onSubmit={handleCreateTemplate} />}
+      </div>
     </div>
   )
 }
