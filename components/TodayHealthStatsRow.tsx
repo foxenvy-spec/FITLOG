@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useId } from 'react'
 import type { HealthSnapshot } from '@/lib/healthIntegration'
 import { COLORS } from '@/lib/theme'
+import { dashboardSpec } from '@/lib/dashboardSpec'
 
 interface TodayHealthStatsRowProps {
   health: HealthSnapshot
@@ -53,7 +54,8 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
     return (
       <Link
         href="/profile"
-        className="rounded-[20px] bg-surface border border-line border-dashed px-4 h-[82px] flex items-center justify-between gap-3 active:bg-surface2 transition"
+        className="rounded-[20px] bg-surface border border-line border-dashed px-4 flex items-center justify-between gap-3 active:bg-surface2 transition"
+        style={{ height: dashboardSpec.healthBanner.height }}
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-base shrink-0" aria-hidden="true">🔥👣🌙</span>
@@ -71,7 +73,10 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
   ]
 
   return (
-    <div className="rounded-[20px] bg-surface border border-line h-[82px] grid grid-cols-3 divide-x divide-line overflow-hidden">
+    <div
+      className="rounded-[20px] bg-surface border border-line grid grid-cols-3 divide-x divide-line overflow-hidden"
+      style={{ height: dashboardSpec.healthBanner.height }}
+    >
       {items.map(({ key, valueLabel }) => {
         const meta = METRIC_META[key]
         return (

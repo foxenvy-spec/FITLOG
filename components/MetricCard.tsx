@@ -198,16 +198,18 @@ export default function MetricCard({
 
           {compact ? (
             // มือถือ (compact): ตรงตามภาพอ้างอิงจริง (Image A) — value+unit+delta อยู่แถวเดียวกัน (delta
-            // ชิดขวา) ต่อด้วย sparkline เต็มความกว้างเป็นแถวแยกด้านล่าง — ตัวเลข 24px (ลดจาก 28px ตามที่ขอ
-            // "reduce ~15%" รอบนี้ — ยังต้องเล็กกว่า text-5xl/48px ที่แนะนำมา เพราะ 44px ขึ้นไปทำให้
-            // unit+delta ไม่พอที่จะอยู่แถวเดียวกันได้จริงในการ์ดกว้าง ~130px) ปกติ flow ธรรมดา ปล่อยให้
-            // flex flex-col justify-between ของ wrapper ด้านบนกระจายพื้นที่ เดสก์ท็อป (compact=false)
-            // ไม่กระทบ ดู branch ด้านล่าง
+            // ชิดขวา) ต่อด้วย sparkline เต็มความกว้างเป็นแถวแยกด้านล่าง — ขนาดตัวเลข/กราฟมาจาก
+            // dashboardSpec.metricCard (valueFontSize 22px, sparklineHeight 20px) แหล่งความจริงเดียว
             <>
               <div className="flex items-center justify-between gap-2">
                 <p
                   className="font-mono leading-none text-ink"
-                  style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums' }}
+                  style={{
+                    fontSize: dashboardSpec.metricCard.valueFontSize,
+                    fontWeight: 700,
+                    letterSpacing: '-0.01em',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
                 >
                   {splitValueUnit(valueText).num}
                   {splitValueUnit(valueText).unit && (
@@ -226,7 +228,7 @@ export default function MetricCard({
               </div>
               {series.length >= 2 && (
                 <div className="mt-2 w-full">
-                  <Sparkline series={series} color={theme.main} height={24} width={200} stretch />
+                  <Sparkline series={series} color={theme.main} height={dashboardSpec.metricCard.sparklineHeight} width={200} stretch />
                 </div>
               )}
             </>
