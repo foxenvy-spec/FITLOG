@@ -109,6 +109,37 @@ export default function FitnessRing({
           opacity={0.95}
         />
 
+        {/* วง track เดิมมีแค่ไล่สีทแยงเส้นเดียว ยัง "แบน" — เพิ่มส่วนโค้งนิ่ง 2 จุด (ไม่ผูกกับ progress
+            เหมือนจุดอื่นในไฟล์นี้) จำลอง reflection สว่างมุมบนซ้าย + shadow มืดมุมล่างขวา ตำแหน่งตรงข้าม
+            กันเสมอ ไม่ว่าคะแนนจะเป็นเท่าไหร่ ให้วง track เองมี highlight/shadow ในตัวจริงๆ แทนที่จะพึ่ง
+            แค่ linearGradient เส้นเดียว — ไม่มี filter/blur ทั้งคู่ (แค่ stroke-opacity ธรรมดา) ไม่นับเป็น
+            glow ใหม่ตามที่ขอให้หยุดเพิ่ม */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth={Math.max(1, sw * 0.22)}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference * 0.16} ${circumference * 0.84}`}
+          strokeDashoffset={circumference * 0.08}
+          strokeOpacity={0.22}
+          style={{ mixBlendMode: 'screen' }}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#000000"
+          strokeWidth={Math.max(1, sw * 0.28)}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference * 0.18} ${circumference * 0.82}`}
+          strokeDashoffset={circumference * 0.58}
+          strokeOpacity={0.28}
+        />
+
         {/* ring-glow — เส้นหนากว่าเส้นหลัก เบลอนุ่ม (glow-soft) opacity ต่ำ ให้แสงแผ่ออกรอบวงเป็น
             บรรยากาศ (ambient) อยู่ข้างหลังเส้นคะแนนหลัก */}
         <circle

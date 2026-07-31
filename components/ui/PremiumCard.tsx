@@ -52,7 +52,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
             backgroundImage หลัก) เพราะต้องคุม opacity ของตัวเองอิสระจากพื้นเบส */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
+          style={{ backgroundImage: NOISE_BG, opacity: 0.01, mixBlendMode: 'overlay' }}
           aria-hidden="true"
         />
         {children}
