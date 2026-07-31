@@ -157,7 +157,9 @@ export default function BodyMetricsRow({
     {
       key: 'bodyFat',
       icon: 'bodyFat',
-      label: 'ไขมันในร่างกาย',
+      // ย่อจาก "ไขมันในร่างกาย" — ชื่อเดิมยาวจนตัดบรรทัด ("ไขมันใน" / "ร่างกาย") บนการ์ดมือถือแคบๆ
+      // ทำให้การ์ดสูงขึ้นโดยไม่จำเป็น เปลี่ยนเป็นย่อที่ยังสื่อความหมายชัดเจนในบริบทการ์ด body composition
+      label: 'ไขมัน (%)',
       valueText: summary.bodyFatPct.value != null ? `${summary.bodyFatPct.value.toFixed(1)} %` : '—',
       deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} ${period}` : null,
       deltaColor: summary.bodyFatPct.isGood == null ? NEUTRAL.mutedIcon : summary.bodyFatPct.isGood ? COLORS.deltaGood : COLORS.rust,
@@ -167,7 +169,8 @@ export default function BodyMetricsRow({
     {
       key: 'muscle',
       icon: 'muscle',
-      label: 'กล้ามเนื้อโครงร่าง',
+      // ย่อจาก "กล้ามเนื้อโครงร่าง" — เหตุผลเดียวกับ "ไขมัน (%)" ด้านบน
+      label: 'กล้ามเนื้อ',
       valueText: summary.skeletalMuscleKg.value != null ? `${toDisplay(summary.skeletalMuscleKg.value).toFixed(1)} ${unit}` : '—',
       deltaText:
         summary.skeletalMuscleKg.delta != null

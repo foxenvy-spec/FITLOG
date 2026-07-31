@@ -142,14 +142,16 @@ export default function MetricCard({
             className="flex items-center gap-2"
             style={{
               color: 'rgba(255,255,255,.94)',
-              // ป้ายชื่อ Metric: มือถือ (compact) 16px ตาม Design Token ล่าสุด (Metric Label 16px,
-              // เดิม 11px) — เดสก์ท็อป (compact=false) ยังคง 700/11px เดิมทุกประการ ไม่กระทบ
+              // ป้ายชื่อ Metric: มือถือ (compact) จาก dashboardSpec.metricCard.labelFontSize (15px,
+              // เดิม 16px) — ลด 1pt กันชื่อยาว ("ไขมันในร่างกาย", "กล้ามเนื้อโครงร่าง") ตัดบรรทัดเพิ่ม
+              // ความสูงการ์ดโดยไม่จำเป็น (ดู BodyMetricsRow.tsx ที่ย่อชื่อสองอันนี้ให้สั้นลงด้วยแล้ว)
+              // เดสก์ท็อป (compact=false) ยังคง 700/11px เดิมทุกประการ ไม่กระทบ
               fontWeight: compact ? 500 : 700,
-              fontSize: compact ? 16 : 11,
+              fontSize: compact ? dashboardSpec.metricCard.labelFontSize : 11,
             }}
           >
             <span
-              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[28px] h-[28px]' : 'w-[42px] h-[42px]'}`}
+              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[26px] h-[26px]' : 'w-[42px] h-[42px]'}`}
               style={{
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -178,8 +180,8 @@ export default function MetricCard({
               <span
                 className="relative block"
                 style={{
-                  width: compact ? 22 : 38,
-                  height: compact ? 22 : 38,
+                  width: compact ? 20 : 38,
+                  height: compact ? 20 : 38,
                   backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                   WebkitMaskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
                   maskImage: `url(${METRIC_ICON_IMAGES[icon]})`,

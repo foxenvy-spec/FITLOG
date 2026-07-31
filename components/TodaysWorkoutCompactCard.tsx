@@ -75,9 +75,9 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
       </div>
 
       {/* คอลัมน์รูปฝั่งขวา — ชนขอบการ์ดเต็มความสูง overflow-hidden ของ PremiumCard ตัดขอบให้เอง
-          เกรเดียนต์บางๆ ที่ขอบซ้ายกลืนรอยต่อกับคอลัมน์เนื้อหาไม่ให้ดูตัดแข็งเกินไป — ความกว้าง 36%
-          (เดิม 40%) ตามฟีดแบ็ก "รูป Barbell ใหญ่กว่าต้นแบบ" */}
-      <div className="relative w-[36%] shrink-0" aria-hidden="true">
+          เกรเดียนต์บางๆ ที่ขอบซ้ายกลืนรอยต่อกับคอลัมน์เนื้อหาไม่ให้ดูตัดแข็งเกินไป — ความกว้างจาก
+          dashboardSpec.workoutCard.imageWidthPct (35%) ตามที่ขอ "รูป 35% ข้อมูล 65%" */}
+      <div className="relative shrink-0" style={{ width: `${dashboardSpec.workoutCard.imageWidthPct}%` }} aria-hidden="true">
         <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '75% 55%' }} />
         <div
           className="absolute inset-y-0 left-0 w-10"
