@@ -109,22 +109,40 @@ export default function FitnessRing({
           opacity={0.95}
         />
 
-        {/* วง track เดิมมีแค่ไล่สีทแยงเส้นเดียว ยัง "แบน" — เพิ่มส่วนโค้งนิ่ง 2 จุด (ไม่ผูกกับ progress
-            เหมือนจุดอื่นในไฟล์นี้) จำลอง reflection สว่างมุมบนซ้าย + shadow มืดมุมล่างขวา ตำแหน่งตรงข้าม
-            กันเสมอ ไม่ว่าคะแนนจะเป็นเท่าไหร่ ให้วง track เองมี highlight/shadow ในตัวจริงๆ แทนที่จะพึ่ง
-            แค่ linearGradient เส้นเดียว — ไม่มี filter/blur ทั้งคู่ (แค่ stroke-opacity ธรรมดา) ไม่นับเป็น
-            glow ใหม่ตามที่ขอให้หยุดเพิ่ม */}
+        {/* วง track เดิมมีแค่ไล่สีทแยงเส้นเดียว ยัง "สะอาด/แบน" เกินไป — เพิ่มส่วนโค้งนิ่ง (ไม่ผูกกับ
+            progress เหมือนจุดอื่นในไฟล์นี้) จำลอง highlight สว่าง 2 จุดที่ 11 กับ 5 นาฬิกา (ตำแหน่งตรง
+            ข้ามกันบนวงกลม, กว้างจุดละ ~9% ของเส้นรอบวง) + shadow มืดด้านล่างขวา (ด้านล่าง) ให้วง track
+            เองมี reflection/highlight/micro-shadow ในตัวจริงๆ แทนที่จะพึ่งแค่ linearGradient เส้นเดียว —
+            ไม่มี filter/blur ทั้งคู่ (แค่ stroke-opacity ธรรมดา) ไม่นับเป็น glow ใหม่ตามที่ขอให้หยุดเพิ่ม
+
+            คำนวณตำแหน่งนาฬิกา: หลัง transform rotate(-90) path เริ่มที่ 12 นาฬิกา (s=0) แล้ววิ่งตามเข็ม
+            นาฬิกาเมื่อ s เพิ่มขึ้น (s=C คือครบรอบกลับมา 12 อีกครั้ง) — จุดกึ่งกลางส่วนโค้งที่มองเห็นอยู่ที่
+            path position s = (circumference - dashOffset) mod circumference ดังนั้นตำแหน่ง k นาฬิกา
+            (คิดจาก 12 นาฬิกา) ต้องการ s_center = (k/12)*C แล้วแก้ dashOffset = C - s_center + width/2 */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
           stroke="#FFFFFF"
-          strokeWidth={Math.max(1, sw * 0.22)}
+          strokeWidth={Math.max(1, sw * 0.2)}
           strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.16} ${circumference * 0.84}`}
-          strokeDashoffset={circumference * 0.08}
+          strokeDasharray={`${circumference * 0.09} ${circumference * 0.91}`}
+          strokeDashoffset={circumference * 0.1333}
           strokeOpacity={0.22}
+          style={{ mixBlendMode: 'screen' }}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth={Math.max(1, sw * 0.2)}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference * 0.09} ${circumference * 0.91}`}
+          strokeDashoffset={circumference * 0.6333}
+          strokeOpacity={0.2}
           style={{ mixBlendMode: 'screen' }}
         />
         <circle
