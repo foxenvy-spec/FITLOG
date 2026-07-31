@@ -79,9 +79,32 @@ export default function FitnessRing({
               <stop key={s.offset} offset={s.offset} stopColor={s.color} />
             ))}
           </linearGradient>
+          {/* ไล่สีวงพื้นหลัง (track) แบบโลหะขัดเงา (brushed titanium) — เดิมเป็นสีเดียวแบนๆ (trackColor)
+              ทำให้อ่านออกว่าเป็นแค่ "แถบ progress bar" ไม่ใช่วงแหวนโลหะจริง สลับสว่าง/มืดหลาย stop
+              แนวทแยงจำลองแสงตกกระทบผิวโค้งไม่สม่ำเสมอแบบโลหะจริง (เทียบภาพอ้างอิง) — ทิศทางคงที่
+              (ไม่หมุนตาม progress) ให้ความรู้สึกเป็นวัสดุจริงที่มีอยู่ก่อนคะแนนจะวาดทับ */}
+          <linearGradient id={`${idPrefix}-titanium-track`} x1="10%" y1="0%" x2="90%" y2="100%">
+            <stop offset="0%" stopColor="#5C5F67" />
+            <stop offset="18%" stopColor="#38393E" />
+            <stop offset="38%" stopColor="#6E7179" />
+            <stop offset="55%" stopColor="#2A2B2F" />
+            <stop offset="72%" stopColor="#565961" />
+            <stop offset="100%" stopColor="#222327" />
+          </linearGradient>
         </defs>
 
+        {/* วงพื้นหลัง — เบสสีเข้มทึบก่อน แล้วค่อยวาดไล่สีโลหะทับอีกชั้น (opacity <1) ให้ยังอ่าน
+            ตัดกับวงคะแนนสีสดด้านหน้าได้ชัดเจน ไม่สว่างจนแย่งซีน */}
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackColor} strokeWidth={sw} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={`url(#${idPrefix}-titanium-track)`}
+          strokeWidth={sw}
+          opacity={0.85}
+        />
 
         {/* ring-glow — เส้นหนากว่าเส้นหลัก เบลอนุ่ม (glow-soft) opacity ต่ำ ให้แสงแผ่ออกรอบวงเป็น
             บรรยากาศ (ambient) อยู่ข้างหลังเส้นคะแนนหลัก */}
