@@ -268,25 +268,22 @@ export default function MobileDashboardView() {
           <div className="absolute w-48 h-48 rounded-full blur-[120px] bg-moss/10" style={{ top: '85%', left: -40 }} />
         </div>
 
-        {/* ระยะห่างระหว่าง "section" หลัก — sectionGap (12px) ตาม spacing scale ที่กำหนด
-            (headerGap 10 / sectionGap 12 / titleGap 8 / cardGap 10 / contentGap 6, ห้ามมี
-            margin 24/32px หลุดสเกลอีก) เดิมเคยปรับเป็น 24px ไปรอบก่อน แต่รอบนี้คร่อมกับ
-            headerGap ที่แยกออกมาแล้ว (ดู Header.tsx) เลยรวมเป็น sectionGap เดียวกันหมด */}
-        <div className="relative space-y-[12px]">
+        {/* ระยะห่างระหว่าง "section" หลัก — sectionGap 24px ตาม spacing scale ใหม่ (เดิม 12px) —
+            Header ไม่มี children slot ให้ Today's Focus ซ้อนทับอีกต่อไป (ดู Header.tsx v16) ทั้งคู่
+            เป็น sibling ธรรมดาในคอลัมน์เดียวกันนี้แทน */}
+        <div className="relative space-y-6">
         <Header
           greetingText={greetingText}
           latestPR={data.latestPR}
           topMuscleThisWeek={data.topMuscleThisWeek}
           displayName={data.profileDisplayName || emailDisplayName(data.email)}
           fitnessScore={fitnessScore}
-        >
-          <div className="max-w-[65%]">
-            <TodaysFocusCard
-              label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
-              href={scheduledDay ? '/session' : '/log'}
-            />
-          </div>
-        </Header>
+        />
+
+        <TodaysFocusCard
+          label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
+          href={scheduledDay ? '/session' : '/log'}
+        />
 
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 

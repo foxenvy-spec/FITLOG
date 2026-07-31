@@ -201,9 +201,9 @@ export default function BodyMetricsRow({
     },
   ]
 
-  // compact (มือถือ): cardGap (10px) ตาม spacing scale — เดิม gap-2 (8px) ต่ำกว่าเป้าไปนิด
+  // compact (มือถือ): cardGap ตาม spacing token ใหม่ (16px, เดิม 10px)
   return (
-    <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? 'gap-2.5' : 'gap-3'}`}>
+    <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? 'gap-4' : 'gap-3'}`}>
       {cards.slice(0, maxCards ?? cards.length).map((c) => (
         <MetricCard
           key={c.key}

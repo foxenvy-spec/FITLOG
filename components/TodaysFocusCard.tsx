@@ -19,8 +19,8 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
       href={href}
       className="flex items-center justify-between gap-3 active:scale-[0.99] transition"
       style={{
-        // padding ลดจาก 20 → 14 ตามฟีดแบ็ก (Header+Today's Focus รวมกันกินพื้นที่เยอะไป)
-        padding: 14,
+        // padding ตาม spacing token ใหม่ (Card padding 18-20px)
+        padding: 18,
         // มุมตัด (cut-corner) ที่ขอบซ้ายบน — ให้ความรู้สึก "แผ่นโลหะ/ตั๋วเข้างาน" แทนมุมโค้งมนเรียบๆ
         // เหมือนการ์ดอื่น ตัดเฉพาะการ์ดนี้ใบเดียว (จุดสนใจของหน้า ไม่ใช่ทุกการ์ดตัดหมด) มุมที่เหลือ
         // (บนขวา/ล่างขวา/ล่างซ้าย) เป็นมุมตัดเล็ก 4px แทนมุมโค้งเดิม (clip-path ทับ border-radius ของ

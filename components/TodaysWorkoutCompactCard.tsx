@@ -25,7 +25,13 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
 
   return (
-    <PremiumCard as={Link} href={href} className="relative overflow-hidden block active:scale-[0.99] transition" style={{ padding: 16 }}>
+    <PremiumCard
+      as={Link}
+      href={href}
+      className="relative overflow-hidden block active:scale-[0.99] transition"
+      // ความสูงขั้นต่ำตาม spacing token ใหม่ (Workout Card 180-200px, เดิมสูงตามเนื้อหา ~130-140px)
+      style={{ padding: 18, minHeight: 180 }}
+    >
       {/* พื้นหลังฉากยิม — โฟกัสฝั่งขวาที่มีดัมเบลเรืองแสง เปิดให้เห็นชัดขึ้นกว่า v3 (เนื้อหาทั้งหมดตอนนี้
           ชิดซ้ายเป็นคอลัมน์เดียว ไม่ได้ทับพื้นที่ฝั่งขวาเหมือนเดิม) ไล่เฉดมืดจากซ้ายทับอีกชั้นแค่พอให้
           ตัวหนังสืออ่านออก ไม่ต้องมืดจัดเท่า v3 */}

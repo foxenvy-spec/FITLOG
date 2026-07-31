@@ -178,13 +178,13 @@ export default function MetricCard({
   radius = 'lg',
   compact = false,
 }: MetricCardProps) {
-  // Mobile Dashboard v2.1: compact (มือถือ) ใช้ border-radius 18px แยกจากเดสก์ท็อป (xl20 = 20px)
-  // ตาม Design Token ที่ให้มาใหม่ — เดสก์ท็อป (compact=false) ยังได้ 20px เหมือนเดิมทุกประการ
-  const radiusClass = radius === 'xl20' ? (compact ? 'rounded-[18px]' : 'rounded-[20px]') : 'rounded-lg'
+  // Mobile Dashboard v2.2: compact (มือถือ) ใช้ border-radius 24px ตาม Design Token ล่าสุด (เดิม
+  // 18px) — เดสก์ท็อป (compact=false) ยังได้ 20px เหมือนเดิมทุกประการ ไม่กระทบ
+  const radiusClass = radius === 'xl20' ? (compact ? 'rounded-[24px]' : 'rounded-[20px]') : 'rounded-lg'
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[96px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[104px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
           // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — ลดจาก 108px/14px padding
@@ -321,7 +321,7 @@ export default function MetricCard({
                 </div>
                 {series.length >= 2 && (
                   <div className="mt-2 w-full">
-                    <Sparkline series={series} color={theme.main} height={20} width={200} stretch />
+                    <Sparkline series={series} color={theme.main} height={24} width={200} stretch />
                   </div>
                 )}
               </>
