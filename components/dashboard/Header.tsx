@@ -83,12 +83,12 @@ export default function Header({
         className="relative overflow-hidden rounded-[22px]"
         style={{
           height: `calc(${RING_TOP} + ${RING_SIZE}px + ${RING_LABEL_HEIGHT}px + ${HERO_BOTTOM_BREATHING_ROOM}px)`,
-          // พื้นหลังของตัวการ์ด hero เอง — เลเยอร์แรก (78%/42%) เพิ่มตามฟีดแบ็ก "hero ยังมืดไป" เจาะจงอยู่
-          // หลังวง Fitness Score พอดี (RING_TOP กลาง ๆ ค่อนไปทางขวา) ให้มิติแสงชัดขึ้นกว่าเดิม ก่อนจะไล่
-          // เข้า vignette มืดสองชั้นถัดมา (พอร์ตจาก reference mockup .hero-card เดิม) — จำกัดขอบเขตไว้แค่
-          // ไฟล์นี้ (mobile header) ไม่แตะสีพื้นหลังหลักของทั้งแอป (bg-bg ใน tailwind.config)
-          background:
-            'radial-gradient(circle at 78% 42%, rgba(255,150,0,0.22), transparent 60%), radial-gradient(ellipse 260px 200px at 82% 55%, rgba(255,120,20,0.20), transparent 60%), radial-gradient(ellipse 400px 300px at 50% 50%, #140b04, #060402 70%)',
+          // พื้นหลังของตัวการ์ด hero เอง — ตามฟีดแบ็กใหม่ (เทียบ mockup อ้างอิงที่พื้นหลังเป็นสีเข้มสนิท
+          // เกือบเท่าพื้นหลังหลักของหน้า ไม่ใช่กล่องอำพันกว้างครอบทั้ง hero แบบเดิม) ตัด vignette ทึบ
+          // 400x300 กลางเฟรมออก เหลือแค่แสงอำพันจุดเดียวเล็กๆ เจาะจงอยู่หลังวง Fitness Score เท่านั้น
+          // (82%/48% ตรงตำแหน่งวงพอดี) ที่เหลือให้เป็นสี #14161A ตรงกับพื้นหลังหลักของแอป (bg-bg ใน
+          // tailwind.config) ให้ไม่มีรอยต่อสีเป็น "กล่อง" ให้เห็น
+          background: 'radial-gradient(ellipse 200px 160px at 82% 48%, rgba(255,140,20,0.16), transparent 70%), #14161A',
         }}
       >
         {/* Background: glow + energy wave — เรียงจากหลังสุดไปหน้าสุด */}
