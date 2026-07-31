@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
+import { NOISE_BG } from '@/lib/theme'
 
 interface PremiumCardOwnProps {
   children: ReactNode
@@ -29,14 +30,28 @@ export default function PremiumCard<T extends ElementType = 'div'>({
         className={`premium-card relative overflow-hidden rounded-[24px] ${className}`}
         style={{
           // เบสสีการ์ด #161616 ตาม Color token ใหม่ (เดิม #1A1B20→#121317 โทนเทาอมม่วง) — ไล่เฉดบางๆ
-          // เข้ากว่าเล็กน้อยด้านล่างให้ยังมีมิติ ไม่ใช่สีตันแบนเดียว
-          backgroundImage: 'linear-gradient(180deg, #1C1C1C, #161616)',
+          // เข้ากว่าเล็กน้อยด้านล่างให้ยังมีมิติ ไม่ใช่สีตันแบนเดียว + rim light เฉียง 135deg มุมบนซ้าย
+          // จำลองแสงสตูดิโอตกกระทบผิวโลหะ (เทคนิคเดียวกับหน้าเทมเพลต "Dark Titanium")
+          backgroundImage: [
+            'linear-gradient(135deg, rgba(255,255,255,.06) 0%, transparent 35%)',
+            'linear-gradient(180deg, #1C1C1C, #161616)',
+          ].join(', '),
           border: '1px solid rgba(255,180,70,.12)',
-          boxShadow: '0 10px 30px rgba(0,0,0,.45), 0 0 40px rgba(255,138,0,.06), inset 0 1px rgba(255,255,255,.05)',
+          // เพิ่ม inset เงาเข้มขอบล่าง (เดิมมีแค่ inset สว่างขอบบน) ให้ครบคู่ bevel แบบแผ่นโลหะจริง
+          // (แสงจับขอบบน เงาจมขอบล่าง) แทนที่จะมีแค่ด้านเดียว
+          boxShadow:
+            '0 10px 30px rgba(0,0,0,.45), 0 0 40px rgba(255,138,0,.06), inset 0 1px rgba(255,255,255,.05), inset 0 -1px rgba(0,0,0,.4)',
           transition: 'box-shadow 150ms ease',
         }}
         {...rest}
       >
+        {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต) — ชั้นแยกต่างหาก (ไม่รวมเข้า
+            backgroundImage หลัก) เพราะต้องคุม opacity ของตัวเองอิสระจากพื้นเบส */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ backgroundImage: NOISE_BG, opacity: 0.05, mixBlendMode: 'overlay' }}
+          aria-hidden="true"
+        />
         {children}
       </Comp>
       {/* glow เพิ่มเฉพาะตอนแตะ (:active) เท่านั้น ไม่ใช่ hover ถาวร — กันไม่ให้ล้นตาบนมือถือที่ไม่มี

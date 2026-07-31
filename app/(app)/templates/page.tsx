@@ -11,7 +11,7 @@ import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import Image from 'next/image'
-import { COLORS, withAlpha, lighten } from '@/lib/theme'
+import { COLORS, withAlpha, lighten, NOISE_BG } from '@/lib/theme'
 
 // Dark Titanium — พื้นการ์ดยังเป็นผิวโลหะเข้มเดียวกันหมด (ไม่ใช่ glow สีจัดๆ แบบก่อนหน้า) แต่เอาสัญญะสี
 // ต่อวันกลับมาบางๆ (ขอบซ้าย + glow รอบไอคอนแบบเบาๆ) เพราะฟีดแบ็กบอกว่าไม่มีสีเลยรู้สึกจืดไป — ต่างจาก
@@ -29,9 +29,7 @@ const ICON_PALETTE = [
   '/images/templates/chest.png',
 ] as const
 
-// เท็กซ์เจอร์ noise บางๆ ปูทับพื้นหลังทั้งหน้า — สร้างจาก SVG feTurbulence แทนไฟล์รูป กันไม่ต้องมี asset
-// เพิ่ม ใช้คู่กับ opacity ต่ำ + mixBlendMode: 'overlay' เท่านั้น (ดูจุดที่ใช้งานด้านล่าง)
-const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
+// NOISE_BG (เท็กซ์เจอร์ผิวโลหะ) ย้ายไปเป็นตัวแปรกลางที่ lib/theme.ts แล้ว ใช้ร่วมกับหน้า dashboard
 
 // แยกหัวข้อเป็น "คำนำ" (เช่น "DAY 5") กับ "ส่วนที่เหลือ" ถ้าชื่อเทมเพลตมีเครื่องหมาย — คั่นอยู่ (ให้น้ำหนัก
 // ตัวอักษรต่างกัน คำนำเบากว่า+สีตามวัน ส่วนที่เหลือหนักกว่า+สีขาว ไล่ลำดับสายตาได้ดีกว่าตัวหนาเท่ากันหมด)
