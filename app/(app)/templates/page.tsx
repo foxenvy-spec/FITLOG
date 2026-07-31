@@ -563,26 +563,31 @@ export default function TemplatesPage() {
                 className="rounded-3xl"
                 style={{
                   border: '1px solid rgba(255,255,255,.08)',
-                  borderLeftWidth: 3,
+                  borderLeftWidth: 2,
                   borderLeftColor: accent,
                   boxShadow: [
                     '0 20px 45px rgba(0,0,0,.5)',
                     '0 1px 0 rgba(255,255,255,.05)',
-                    `0 0 20px ${withAlpha(accent, '1A')}`,
+                    `-6px 0 18px ${withAlpha(accent, '2E')}`,
                   ].join(', '),
                 }}
               >
                 <div
                   className="relative rounded-3xl overflow-hidden"
                   style={{
-                    backgroundImage: 'linear-gradient(180deg, #2D2F36 0%, #23252B 45%, #1A1C21 100%)',
+                    backgroundImage: [
+                      // สีของรูป/ขอบซ้ายไหลเข้าไปในเนื้อการ์ดบางๆ ให้รูปกับการ์ดรู้สึกเป็นชิ้นเดียวกัน
+                      // แทนที่จะเป็นจุดสี (ไอคอน) กับเส้นสี (ขอบ) ที่แยกจากกันคนละจุด
+                      `radial-gradient(ellipse 220px 160px at 0% 45%, ${withAlpha(accent, '26')}, transparent 70%)`,
+                      'linear-gradient(180deg, #2D2F36 0%, #23252B 45%, #1A1C21 100%)',
+                    ].join(', '),
                     boxShadow: ['inset 0 1px 0 rgba(255,255,255,.08)', 'inset 0 -1px 0 rgba(0,0,0,.5)'].join(', '),
                   }}
                 >
                   {/* glass reflection — ไล่ขาวจางๆ จากขอบบน ให้พื้นผิวดูมีมิติแทนสีทึบราบเรียบ */}
                   <div
                     className="absolute inset-0 pointer-events-none"
-                    style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 25%)' }}
+                    style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 22%)' }}
                     aria-hidden="true"
                   />
                   {/* ลูกศรมุมขวาบน — ย้ำสัญญะว่าแตะการ์ดเพื่อขยายดูรายละเอียดได้ (ปุ่มขยายจริงคือทั้งแถวซ้าย) */}
@@ -646,7 +651,7 @@ export default function TemplatesPage() {
                       className="shrink-0 w-[92px] rounded-[18px] text-[9px] leading-tight font-display tracked uppercase text-bg py-2 px-3 text-center active:scale-[0.99] disabled:opacity-40 transition"
                       style={{
                         backgroundImage: 'linear-gradient(180deg, #FFDA8C 0%, #FFC94B 40%, #FF9700 100%)',
-                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.2), 0 8px 20px rgba(255,150,0,.45)',
+                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 rgba(0,0,0,.25), 0 6px 14px rgba(255,150,0,.32)',
                       }}
                     >
                       {startingId === t.id ? '...' : `Start ${t.title}`}
