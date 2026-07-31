@@ -10,25 +10,22 @@ import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
+import Image from 'next/image'
 import { COLORS, withAlpha, lighten } from '@/lib/theme'
 
 // สีไล่ตามลำดับการ์ด (ไม่ผูกกับกลุ่มกล้ามเนื้อ) — ให้แต่ละเทมเพลตแยกจากกันด้วยสายตาง่ายๆ เหมือน
 // รายการเดย์ในโปรแกรม โดยใช้ชุดสีของแอปเอง (lib/theme.ts) แทนสีใหม่ที่ไม่มีในธีม
 const ACCENT_PALETTE = [COLORS.amber, COLORS.steel, COLORS.violet, COLORS.moss, COLORS.rust] as const
 
-function DumbbellGlyph() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M2 12h2M5 9v6M8 7v10M16 7v10M19 9v6M22 12h-2M8 12h8"
-        stroke="#F3F0E8"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
+// รูปประกอบวงกลม — เรียงคู่กับ ACCENT_PALETTE ตำแหน่งต่อตำแหน่ง (index เดียวกัน) ไฟล์ทั้งหมดอยู่ที่
+// public/images/templates/ เป็น PNG โปร่งใส (ยกเว้น upper.png ที่พื้นหลังเข้มอยู่แล้ว) ขนาดจริง 1024x1024
+const ICON_PALETTE = [
+  '/images/templates/lower.png',
+  '/images/templates/upper.png',
+  '/images/templates/legs.png',
+  '/images/templates/back.png',
+  '/images/templates/chest.png',
+] as const
 
 function downloadBlob(content: BlobPart, filename: string, type: string) {
   const blob = new Blob([content], { type })
@@ -521,6 +518,7 @@ export default function TemplatesPage() {
           const exercises = exercisesByTemplate[t.id] ?? []
           const expanded = expandedId === t.id
           const accent = ACCENT_PALETTE[i % ACCENT_PALETTE.length]
+          const icon = ICON_PALETTE[i % ICON_PALETTE.length]
           return (
             <div
               key={t.id}
@@ -538,14 +536,14 @@ export default function TemplatesPage() {
                   className="flex items-center gap-3 min-w-0 flex-1 text-left"
                 >
                   <span
-                    className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center"
+                    className="shrink-0 w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
                     style={{
                       background: `radial-gradient(circle at 35% 30%, ${lighten(accent, 0.3)}, ${accent})`,
                       boxShadow: `0 0 12px ${withAlpha(accent, '55')}`,
                     }}
                     aria-hidden="true"
                   >
-                    <DumbbellGlyph />
+                    <Image src={icon} alt="" width={56} height={56} className="w-full h-full object-cover" />
                   </span>
                   <span className="min-w-0">
                     <p className="text-xs text-ink font-display tracked uppercase leading-snug">{t.title}</p>
