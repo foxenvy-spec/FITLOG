@@ -56,11 +56,12 @@ const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume
 })
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
-// ตัด "สถิติ" (/stats) กับ "ถาม AI" (/coach) ออกจากแถวนี้ — ซ้ำซ้อนกับที่มีอยู่แล้วในหน้าเดียวกัน:
-// "สถิติ" ซ้ำกับแท็บ "สถิติ" ใน bottom nav ตรงๆ ส่วน "ถาม AI" ซ้ำกับการ์ด AICoachCompactCard
-// ที่วางอยู่เหนือแถวนี้ทันที (กดการ์ดนั้นไปหน้า /coach เหมือนกันอยู่แล้ว)
+// ตัด "สถิติ" (/stats), "ถาม AI" (/coach) และ "บันทึกสถิติ" (/log) ออกจากแถวนี้ — ซ้ำซ้อนกับที่มีอยู่แล้ว
+// ในหน้าเดียวกัน: "สถิติ" ซ้ำกับแท็บ "สถิติ" ใน bottom nav ตรงๆ, "ถาม AI" ซ้ำกับการ์ด AICoachCompactCard
+// ที่วางอยู่เหนือแถวนี้ทันที (ไปหน้า /coach เหมือนกัน), ส่วน "บันทึกสถิติ" ซ้ำกับ TodaysFocusCard และ
+// TodaysWorkoutCompactCard ด้านบน ซึ่งทั้งคู่ลิงก์ไป /log อยู่แล้วเมื่อวันนี้ไม่มีโปรแกรมกำหนดไว้
+// (scheduledDay ? '/session' : '/log')
 const QUICK_ACTIONS = [
-  { href: '/log', label: 'บันทึกสถิติ', icon: '➕', accent: '#7A9B57' },
   { href: '/templates', label: 'เลือกโปรแกรม', icon: '📋', accent: '#6C8CA8' },
   { href: '/health', label: 'วิเคราะห์ร่างกาย', icon: '🔍', accent: '#E8A33D' },
 ] as const
