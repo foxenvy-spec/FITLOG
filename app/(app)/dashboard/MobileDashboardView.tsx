@@ -259,19 +259,13 @@ export default function MobileDashboardView() {
 
   return (
     <>
-      {/* Ambient lighting ทั้งหน้า — จุดแสงฟุ้งเบาๆ กระจายอยู่หลังเนื้อหาตลอดความสูงของหน้า
-          (ไม่ใช่แค่ในกล่อง header เหมือนเดิม) ให้บรรยากาศ "มีแสงไฟรอบตัว" แบบ Apple Health/Whoop
-          แทนพื้นหลังดำทึบเรียบๆ — ตำแหน่งเป็น % ของความสูงคอนเทนเนอร์ (ไม่ใช่ px ตายตัว) เพราะ
-          ความสูงจริงของหน้าแปรผันได้มาก (เปิด/ปิด "ดูสถิติเพิ่มเติม", มี onboarding banner หรือไม่ ฯลฯ)
-          — พื้นหลังตัวการ์ด็อกเนอร์เอง (DASHBOARD_BG_CSS) แทนสีทึบเดียว #0B0B0B เดิม ให้ "มีชีวิต"
-          โดยผู้ใช้ไม่รู้ตัว บวก vignette จางๆ กันขอบจอดำสนิทเป็นแผ่นเดียว */}
+      {/* พื้นหลังหน้า — v3: ตัดจุดแสงสีอุ่นฟุ้งใหญ่ (amber/rust/moss blur blob) ที่เคยกระจายเกือบเต็ม
+          ความสูงหน้าออกทั้งหมด (รอบก่อนทำให้ทั้งหน้าดูอมส้ม/น้ำตาล กลืนกับการ์ด กลืนกับ Header จนความ
+          รู้สึก "โลหะเย็น" หายไป) เหลือแค่ไล่สีเทาเย็นล้วนๆ (DASHBOARD_BG_CSS) + เกรนผิวโลหะ + vignette
+          — แสงสีส้มยังอยู่ครบ แต่ย้ายไปประจำที่จุด Interactive เฉพาะ (Fitness Score bloom, ปุ่ม Start
+          Workout, กระดิ่งแจ้งเตือน) แทนที่จะเป็น ambient เต็มจอแบบเดิม ให้สายตาโฟกัสเฉพาะจุดที่ควรสนใจ */}
       <div className="relative" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="absolute w-44 h-44 rounded-full blur-[120px] bg-amber/10" style={{ top: '18%', left: -50 }} />
-          <div className="absolute w-56 h-56 rounded-full blur-[130px] bg-rust/10" style={{ top: '52%', right: -70 }} />
-          <div className="absolute w-48 h-48 rounded-full blur-[120px] bg-moss/10" style={{ top: '85%', left: -40 }} />
-          {/* เท็กซ์เจอร์เกรนโลหะบางๆ ทับทั้งหน้า (Dark Titanium เดียวกับหน้าเทมเพลต) — เดิมหน้านี้ไม่มี
-              เลย ทำให้พื้นผิวดูเป็นสีทึบเรียบๆ ไม่ใช่ "แผ่นโลหะ" เหมือนมอคอัพอ้างอิง */}
           <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>

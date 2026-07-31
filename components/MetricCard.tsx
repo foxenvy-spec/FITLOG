@@ -1,7 +1,7 @@
 'use client'
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, TEXT } from '@/lib/theme'
+import { NOISE_BG, TEXT, CARD_GRADIENT_CSS } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
@@ -91,19 +91,23 @@ export default function MetricCard({
           height: compact ? dashboardSpec.metricCard.height : undefined,
           padding: compact ? dashboardSpec.metricCard.padding : '16px 18px 12px',
           border: '1.5px solid transparent',
-          // 4 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
-          // 1) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด กันไม่ให้กลางการ์ดดำตันเกินไป
-          //    วาดถึงแค่ padding-box (คือพื้นการ์ดจริง ทับซ่อนกลางของ 2-4 ไว้) — มือถือ (compact) ใช้เบส
-          //    กลาง #161616 ตาม Color token ใหม่ (Card: #161616) แทนโทนกรมท่าเดิม (#13233A→#08121F)
-          //    เดสก์ท็อป (compact=false) ยังคงโทนกรมท่าเดิมทุกประการ ไม่กระทบ
-          // 2) radial glow ที่มุมซ้ายบน (สี main) 3) radial glow ที่มุมขวาล่าง (สี second)
-          // 4) เข้ม→อ่อน→เข้ม แนวทแยง (แทนสีพื้นจางๆ เรียบๆ เดิม) กันไม่ให้ช่วงกลางขอบ/มุมอื่นดูเป็นเส้นแข็งทื่อ
+          // 5 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
+          // 1) rim light เฉียงบางๆ (reflection ผิวโลหะ, มือถือ (compact) เท่านั้น — ให้วัสดุการ์ดสอดคล้อง
+          //    กับ PremiumCard) 2) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด กันไม่ให้กลางการ์ด
+          //    ดำตันเกินไป วาดถึงแค่ padding-box (คือพื้นการ์ดจริง ทับซ่อนกลางของ 3-5 ไว้) — มือถือ
+          //    (compact) ใช้ CARD_GRADIENT_CSS เทาเย็น (โทนเดียวกับ PremiumCard ทั้งแอป) แทนเทากลาง
+          //    #242424/#171717/#101010 เดิม (R=G=B เป๊ะ ไม่เย็นจริง) — เดสก์ท็อป (compact=false) ยังคง
+          //    โทนกรมท่าเดิมทุกประการ ไม่กระทบ
+          // 3) radial glow ที่มุมซ้ายบน (สี main) 4) radial glow ที่มุมขวาล่าง (สี second)
+          // 5) เข้ม→อ่อน→เข้ม แนวทแยง (แทนสีพื้นจางๆ เรียบๆ เดิม) กันไม่ให้ช่วงกลางขอบ/มุมอื่นดูเป็นเส้นแข็งทื่อ
           // ผลคือขอบเรืองแสงชัดเฉพาะ 2 มุมตรงข้ามกัน ส่วนช่วงกลางขอบก็ยังไล่เฉดนุ่มๆ ไม่ใช่เส้นตรงแข็งๆ
           backgroundImage: compact
-            ? `radial-gradient(circle at 50% 55%, #262626, transparent 60%), linear-gradient(180deg, #242424, #171717 45%, #101010), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
+            ? `linear-gradient(135deg, rgba(255,255,255,.05) 0%, transparent 30%), radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
             : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
-          backgroundClip: 'padding-box, padding-box, border-box, border-box, border-box',
+          backgroundClip: compact
+            ? 'padding-box, padding-box, padding-box, border-box, border-box, border-box'
+            : 'padding-box, padding-box, border-box, border-box, border-box',
           // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
           // + inset highlight บนขอบบน (ผิวมีไฮไลต์) + inset เงาเข้มขอบล่างแบบจม (CARD_INSET_SHADOW เดียวกับ
           // PremiumCard — compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุม
