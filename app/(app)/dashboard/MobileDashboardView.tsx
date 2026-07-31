@@ -268,18 +268,20 @@ export default function MobileDashboardView() {
           <div className="absolute w-48 h-48 rounded-full blur-[120px] bg-moss/10" style={{ top: '85%', left: -40 }} />
         </div>
 
-        {/* ระยะห่างระหว่าง "section" หลัก — sectionGap 24px ตาม spacing scale ใหม่ (เดิม 12px) —
-            Header ไม่มี children slot ให้ Today's Focus ซ้อนทับอีกต่อไป (ดู Header.tsx v16) ทั้งคู่
-            เป็น sibling ธรรมดาในคอลัมน์เดียวกันนี้แทน */}
-        <div className="relative space-y-6">
-        <Header
-          greetingText={greetingText}
-          latestPR={data.latestPR}
-          topMuscleThisWeek={data.topMuscleThisWeek}
-          displayName={data.profileDisplayName || emailDisplayName(data.email)}
-          fitnessScore={fitnessScore}
-        />
+        {/* Header แยกออกจาก sectionGap ปกติ — สเปคขอระยะห่างเฉพาะจุดนี้ 40px (มากกว่า sectionGap
+            ทั่วไป 24px) ระหว่าง Header กับการ์ดถัดไป (Today's Focus) */}
+        <div className="relative" style={{ marginBottom: 40 }}>
+          <Header
+            greetingText={greetingText}
+            latestPR={data.latestPR}
+            topMuscleThisWeek={data.topMuscleThisWeek}
+            displayName={data.profileDisplayName || emailDisplayName(data.email)}
+            fitnessScore={fitnessScore}
+          />
+        </div>
 
+        {/* ระยะห่างระหว่าง "section" หลักที่เหลือ — sectionGap 24px ตาม spacing scale */}
+        <div className="relative space-y-6">
         <TodaysFocusCard
           label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
           href={scheduledDay ? '/session' : '/log'}
@@ -289,12 +291,11 @@ export default function MobileDashboardView() {
 
         {/* body composition snapshot */}
         <div className="animate-rise" style={{ animationDelay: '15ms' }}>
-          {/* titleGap (8px) ตาม spacing scale — คงขนาดตัวอักษร micro-label เดิม (12px, tracked
-              uppercase) ให้เข้าชุดกับ label อื่นๆ ในหน้าเดียวกัน (Today's Workout, AI Coach ฯลฯ
-              ก็ใช้สไตล์ label เล็กแบบนี้ทั้งหมด) แทนที่จะขยับขึ้นเป็นหัวข้อใหญ่แยกสไตล์ */}
-          <div className="flex items-center justify-between px-1" style={{ marginBottom: 8 }}>
-            <p className="font-display tracked uppercase text-ink" style={{ fontSize: 12 }}>ภาพรวมร่างกาย</p>
-            <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
+          {/* หัวข้อ section ใหญ่ขึ้นตาม Typography token ใหม่ (Section title 30px, เดิม micro-label
+              12px) — ระยะห่างหัวข้อ→กริด 20px ตามสเปค (เดิม 8px) */}
+          <div className="flex items-end justify-between px-1" style={{ marginBottom: 20 }}>
+            <p className="font-display text-ink" style={{ fontSize: 30, fontWeight: 700 }}>ภาพรวมร่างกาย</p>
+            <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0 mb-1">
               ดูทั้งหมด →
             </Link>
           </div>

@@ -28,9 +28,11 @@ export default function PremiumCard<T extends ElementType = 'div'>({
       <Comp
         className={`premium-card relative overflow-hidden rounded-[24px] ${className}`}
         style={{
-          backgroundImage: 'linear-gradient(180deg, #1A1B20, #121317)',
+          // เบสสีการ์ด #161616 ตาม Color token ใหม่ (เดิม #1A1B20→#121317 โทนเทาอมม่วง) — ไล่เฉดบางๆ
+          // เข้ากว่าเล็กน้อยด้านล่างให้ยังมีมิติ ไม่ใช่สีตันแบนเดียว
+          backgroundImage: 'linear-gradient(180deg, #1C1C1C, #161616)',
           border: '1px solid rgba(255,180,70,.12)',
-          boxShadow: '0 10px 30px rgba(0,0,0,.45), 0 0 40px rgba(255,138,0,.06), inset 0 1px rgba(255,255,255,.04)',
+          boxShadow: '0 10px 30px rgba(0,0,0,.45), 0 0 40px rgba(255,138,0,.06), inset 0 1px rgba(255,255,255,.05)',
           transition: 'box-shadow 150ms ease',
         }}
         {...rest}

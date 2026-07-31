@@ -21,6 +21,8 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
       style={{
         // padding ตาม spacing token ใหม่ (Card padding 18-20px)
         padding: 18,
+        // ความสูงขั้นต่ำตามสเปคใหม่ (Today's Focus 84-92px, เดิมสูงตามเนื้อหา ~70px)
+        minHeight: 88,
         // มุมตัด (cut-corner) ที่ขอบซ้ายบน — ให้ความรู้สึก "แผ่นโลหะ/ตั๋วเข้างาน" แทนมุมโค้งมนเรียบๆ
         // เหมือนการ์ดอื่น ตัดเฉพาะการ์ดนี้ใบเดียว (จุดสนใจของหน้า ไม่ใช่ทุกการ์ดตัดหมด) มุมที่เหลือ
         // (บนขวา/ล่างขวา/ล่างซ้าย) เป็นมุมตัดเล็ก 4px แทนมุมโค้งเดิม (clip-path ทับ border-radius ของ

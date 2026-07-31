@@ -24,17 +24,19 @@ export default function BottomNav() {
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-surface/95 backdrop-blur border-t border-line safe-bottom">
-      <div className="max-w-sm md:max-w-2xl mx-auto grid grid-cols-5">
+      {/* ความสูงขั้นต่ำ 82px ตาม spacing token ใหม่ (Bottom Navigation 80-84px, เดิมสูงตามเนื้อหา ~58px) */}
+      <div className="max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 min-h-[82px] items-center">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
 
           // /session — ปุ่มลอยวงกลมใหญ่กลาง bottom nav ("START WORKOUT") แทนไอคอนเล็กปกติ
-          // ข้อความ "START WORKOUT" อยู่ในวงกลมเลย (ไม่ใช่ label แยกข้างล่างแบบแท็บอื่น)
+          // ข้อความ "START WORKOUT" อยู่ในวงกลมเลย (ไม่ใช่ label แยกข้างล่างแบบแท็บอื่น) — ขนาดวง
+          // 86px ตามสเปคใหม่ (Floating Button 84-88px, เดิม 76px) offset -top-9 (36px) สเกลตามสัดส่วนเดิม
           if (href === '/session') {
             return (
               <Link key={href} href={href} className="relative flex items-start justify-center" aria-label="เริ่ม/ไปต่อเวิร์กเอาต์">
                 <span
-                  className="absolute -top-8 w-[76px] h-[76px] rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
+                  className="absolute -top-9 w-[86px] h-[86px] rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
                   style={{
                     background: `radial-gradient(circle at 35% 30%, #FFF4CC, #FFD166 35%, #FF8A00 70%, #D96A00 100%)`,
                     boxShadow: `0 6px 18px rgba(0,0,0,.45), 0 0 22px rgba(255,170,0,.55), inset 0 1px rgba(255,255,255,.35)`,

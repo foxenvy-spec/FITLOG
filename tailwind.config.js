@@ -7,7 +7,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: '#14161A',
+        // Background token ล่าสุด #0B0B0B (เดิม #14161A) — ทั้งสองเป็นดำเกือบสนิท ต่างกันน้อยมาก
+        // แต่ #0B0B0B ตรงตาม Color spec ที่ให้มาเป๊ะ
+        bg: '#0B0B0B',
         surface: '#1C1F24',
         surface2: '#23272D',
         line: '#2E333A',

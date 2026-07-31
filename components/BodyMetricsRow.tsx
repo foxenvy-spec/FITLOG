@@ -19,14 +19,15 @@ const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
   bmi: { main: '#1b8cff', second: '#3f6cff' },
 }
 
-// ธีมสีชุดที่ 2 (colorScheme="vibrant") — ตามมอคอัพใหม่: น้ำหนัก=ส้ม, ไขมัน=ชมพู, กล้ามเนื้อ=ฟ้า,
-// มวลไขมัน=เขียว ต่างจากชุดเดิมด้านบนไปเลย (ที่ยังใช้กับเดสก์ท็อปอยู่) จึงแยกเป็นอีกชุดแทนที่จะ
-// แก้ของเดิม — ป้องกันไม่ให้กระทบหน้าเดสก์ท็อปที่ยังอ้างอิง METRIC_THEME ชุดแรก
+// ธีมสีชุดที่ 2 (colorScheme="vibrant") — ตาม Color token ล่าสุด: น้ำหนัก=ส้ม #F59E0B, ไขมัน=ชมพู
+// #EC4899, กล้ามเนื้อ=ฟ้า #3B82F6, มวลไขมัน=เขียว #22C55E ต่างจากชุดเดิมด้านบนไปเลย (ที่ยังใช้กับ
+// เดสก์ท็อปอยู่) จึงแยกเป็นอีกชุดแทนที่จะแก้ของเดิม — ป้องกันไม่ให้กระทบหน้าเดสก์ท็อปที่ยังอ้างอิง
+// METRIC_THEME ชุดแรก — second เป็นเฉดเข้มกว่าของสีเดียวกัน (ใช้กับ glow มุมขวาล่างของการ์ด)
 const METRIC_THEME_VIBRANT: Record<MetricIconImageKey, MetricCardTheme> = {
-  weight: { main: '#FFA23D', second: '#FF7A1A' },
-  bodyFat: { main: '#ff2f5d', second: '#ff00c8' },
-  muscle: { main: '#3DA5FF', second: '#1B6EFF' },
-  fatMass: { main: '#4ADE80', second: '#22C55E' },
+  weight: { main: '#F59E0B', second: '#D97706' },
+  bodyFat: { main: '#EC4899', second: '#DB2777' },
+  muscle: { main: '#3B82F6', second: '#2563EB' },
+  fatMass: { main: '#22C55E', second: '#16A34A' },
   bmi: { main: '#1b8cff', second: '#3f6cff' },
 }
 

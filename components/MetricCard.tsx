@@ -1,6 +1,6 @@
 'use client'
 
-import { useId } from 'react'
+import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
 
@@ -39,110 +39,6 @@ export interface MetricCardProps {
   // ลด padding ลงจากเดิม ให้การ์ด "ภาพรวมร่างกาย" ดูกระชับขึ้นใน grid 2x2 บนมือถือ โดยไม่กระทบ
   // เดสก์ท็อป (DashboardView ไม่ได้ส่ง prop นี้ จึง default เป็น false เหมือนเดิมทุกประการ)
   compact?: boolean
-}
-
-// เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
-// เติมสีจางๆ (15% alpha) ล้อสีเดียวกับเส้น ตามสเปคที่ขอ (คล้าย Chart.js: borderColor / backgroundColor / tension)
-function Sparkline({
-  series,
-  color,
-  height = 30,
-  width = 64,
-  stretch = false,
-}: {
-  series: number[]
-  color: string
-  height?: number
-  width?: number
-  // true = เส้นกราฟยืดเต็มความกว้าง container (ใช้ตอนวางเป็นแถวเดี่ยวใต้ตัวเลข/เดลต้า
-  // แทนที่จะอยู่ข้างตัวเลขแบบเดิม) — width param ยังใช้คำนวณตำแหน่งจุดในระบบพิกัด viewBox
-  // อยู่เหมือนเดิม แค่ตัว <svg> เองยืดตาม container จริงแทนที่จะตรึงพิกเซล
-  stretch?: boolean
-}) {
-  const glowId = useId()
-  if (series.length < 2) return null
-  const w = width
-  const h = height
-  const pad = 3 // กันเส้นชนขอบบน-ล่างตอนค่าสูงสุด/ต่ำสุด
-  const tension = 0.6 // ยกจาก 0.45 ให้เส้นโค้งมนขึ้น (ลดความรู้สึกหักมุมแข็งๆ แบบเส้นตรงต่อกัน)
-  const min = Math.min(...series)
-  const max = Math.max(...series)
-  const range = max - min || 1
-  const step = w / (series.length - 1)
-  const points: [number, number][] = series.map((v, i) => [
-    i * step,
-    h - pad - ((v - min) / range) * (h - pad * 2),
-  ])
-
-  const n = points.length
-  let linePath = `M ${points[0][0].toFixed(2)},${points[0][1].toFixed(2)}`
-  for (let i = 0; i < n - 1; i++) {
-    const p0 = points[i === 0 ? 0 : i - 1]
-    const p1 = points[i]
-    const p2 = points[i + 1]
-    const p3 = points[i + 2 < n ? i + 2 : n - 1]
-    const cp1x = p1[0] + ((p2[0] - p0[0]) / 6) * tension
-    const cp1y = p1[1] + ((p2[1] - p0[1]) / 6) * tension
-    const cp2x = p2[0] - ((p3[0] - p1[0]) / 6) * tension
-    const cp2y = p2[1] - ((p3[1] - p1[1]) / 6) * tension
-    linePath += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`
-  }
-  const areaPath = `${linePath} L ${points[n - 1][0].toFixed(2)},${h} L ${points[0][0].toFixed(2)},${h} Z`
-
-  return (
-    <svg
-      width={stretch ? '100%' : w}
-      height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio={stretch ? 'none' : undefined}
-      className={stretch ? 'block' : 'shrink-0'}
-      style={{ overflow: 'visible' }}
-      aria-hidden="true"
-    >
-      <defs>
-        {/* 2 filter: อันแรก blur แคบ (ใกล้เส้น) อันที่สอง blur กว้างกว่า (ฟุ้งไกลกว่า) ซ้อนกัน — ลด blur
-            radius ลงจากเดิม (4.5/2.2 → 3/1.4) ให้แสงกระชับ/เบาลง ดูคุมโทนแบบ Apple Health มากกว่า
-            ไฟฟุ้งจ้า opacity ก็ลดลงคู่กัน (ดูจุดที่วาด path ด้านล่าง) */}
-        <filter id={`sparkline-glow-tight-${glowId}`} x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="1.4" />
-        </filter>
-        <filter id={`sparkline-glow-wide-${glowId}`} x="-150%" y="-150%" width="400%" height="400%">
-          <feGaussianBlur stdDeviation="3" />
-        </filter>
-        {/* พื้นที่ใต้กราฟเป็น gradient จาง (เข้มใกล้เส้น ค่อยๆ จางหายไปด้านล่าง) แทนสีเรียบ fillOpacity เดิม
-            ให้เข้าชุดกับ icon/card ที่เป็น gradient ทั้งหมดแล้ว */}
-        <linearGradient id={`sparkline-area-${glowId}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.28} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill={`url(#sparkline-area-${glowId})`} stroke="none" />
-      {/* glow ชั้นกว้าง (ฟุ้งไกล, opacity ต่ำสุด) วาดก่อน อยู่ล่างสุด — opacity ลดจาก 0.15 → 0.08 */}
-      <path
-        d={linePath}
-        fill="none"
-        stroke={color}
-        strokeOpacity={0.08}
-        strokeWidth="4.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter={`url(#sparkline-glow-wide-${glowId})`}
-      />
-      {/* glow ชั้นชิด (สว่างกว่าเล็กน้อย, blur น้อยกว่า) อยู่หลังเส้นจริง สีเดียวกับเส้น — opacity ลดจาก 0.2 → 0.1 */}
-      <path
-        d={linePath}
-        fill="none"
-        stroke={color}
-        strokeOpacity={0.1}
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter={`url(#sparkline-glow-tight-${glowId})`}
-      />
-      {/* เส้นจริง หนาขึ้นจาก 3px เป็น 3.5px (+0.5px ตามที่ขอ) */}
-      <path d={linePath} fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
 }
 
 function splitValueUnit(text: string): { num: string; unit: string } {
@@ -184,20 +80,24 @@ export default function MetricCard({
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'h-[104px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'min-h-[170px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
-          // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — ลดจาก 108px/14px padding
-          // ลงมาอีกขั้น (96px/12px) ตามสเปคที่ขอให้การ์ดกระชับขึ้น (คืนพื้นที่รวมของ Body Overview)
-          padding: compact ? '12px' : '16px 18px 12px',
+          // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — padding 20px ตาม Design
+          // Token ล่าสุด (เดิม 12px)
+          padding: compact ? '20px' : '16px 18px 12px',
           border: '1.5px solid transparent',
           // 4 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
-          // 1) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด (radial, #1B2230 ~5%) กันไม่ให้กลางการ์ดดำตันเกินไป
-          //    วาดถึงแค่ padding-box (คือพื้นการ์ดจริง ทับซ่อนกลางของ 2-4 ไว้)
+          // 1) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด กันไม่ให้กลางการ์ดดำตันเกินไป
+          //    วาดถึงแค่ padding-box (คือพื้นการ์ดจริง ทับซ่อนกลางของ 2-4 ไว้) — มือถือ (compact) ใช้เบส
+          //    กลาง #161616 ตาม Color token ใหม่ (Card: #161616) แทนโทนกรมท่าเดิม (#13233A→#08121F)
+          //    เดสก์ท็อป (compact=false) ยังคงโทนกรมท่าเดิมทุกประการ ไม่กระทบ
           // 2) radial glow ที่มุมซ้ายบน (สี main) 3) radial glow ที่มุมขวาล่าง (สี second)
           // 4) เข้ม→อ่อน→เข้ม แนวทแยง (แทนสีพื้นจางๆ เรียบๆ เดิม) กันไม่ให้ช่วงกลางขอบ/มุมอื่นดูเป็นเส้นแข็งทื่อ
           // ผลคือขอบเรืองแสงชัดเฉพาะ 2 มุมตรงข้ามกัน ส่วนช่วงกลางขอบก็ยังไล่เฉดนุ่มๆ ไม่ใช่เส้นตรงแข็งๆ
-          backgroundImage: `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
+          backgroundImage: compact
+            ? `radial-gradient(circle at 50% 55%, #1E1E1E, transparent 60%), linear-gradient(180deg, #1C1C1C, #161616), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
+            : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
           backgroundClip: 'padding-box, padding-box, border-box, border-box, border-box',
           // 5 ชั้นซ้อนกัน: contact shadow (เงาคมใกล้ตัว) + ambient shadow (เงานุ่มฟุ้งกว้าง)
@@ -234,19 +134,19 @@ export default function MetricCard({
           }}
         />
 
-        <div className="relative h-full">
+        <div className={compact ? 'relative h-full flex flex-col justify-between' : 'relative h-full'}>
           <p
             className="flex items-center gap-2"
             style={{
               color: 'rgba(255,255,255,.94)',
-              // ป้ายชื่อ Metric: มือถือ (compact) ลดอีกขั้นจาก 12px → 11px (ยังคง Medium/500 เดิม)
-              // ตามที่ขอให้เล็กลงอีก — เดสก์ท็อป (compact=false) ยังคง 700/11px เดิมทุกประการ
+              // ป้ายชื่อ Metric: มือถือ (compact) 16px ตาม Design Token ล่าสุด (Metric Label 16px,
+              // เดิม 11px) — เดสก์ท็อป (compact=false) ยังคง 700/11px เดิมทุกประการ ไม่กระทบ
               fontWeight: compact ? 500 : 700,
-              fontSize: 11,
+              fontSize: compact ? 16 : 11,
             }}
           >
             <span
-              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[24px] h-[24px]' : 'w-[42px] h-[42px]'}`}
+              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[28px] h-[28px]' : 'w-[42px] h-[42px]'}`}
               style={{
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -275,8 +175,8 @@ export default function MetricCard({
               <span
                 className="relative block"
                 style={{
-                  width: compact ? 20 : 38,
-                  height: compact ? 20 : 38,
+                  width: compact ? 22 : 38,
+                  height: compact ? 22 : 38,
                   backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                   WebkitMaskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
                   maskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
@@ -292,70 +192,66 @@ export default function MetricCard({
             </span>
             {label}
           </p>
-          {/* ตรึงด้วย position:absolute ชิดขอบล่าง/ซ้าย/ขวาของการ์ดโดยตรง แทนการพึ่ง margin-top:auto */}
-          <div className="absolute left-0 right-0 bottom-0">
-            {compact ? (
-              // มือถือ (compact): ตัวเลข+เดลต้าอยู่แถวเดียวกัน (ชิดขวา) ส่วนกราฟจิ๋วย้ายลงมาเป็นแถบเดี่ยว
-              // เต็มความกว้างด้านล่างสุด แทนที่จะแทรกข้างตัวเลข — ตัดบรรทัด caption ("จาก X ก่อน") ออก
-              // เพื่อเผื่อพื้นที่แถวกราฟ เดสก์ท็อป (compact=false) ไม่กระทบ ดู branch ด้านล่าง
-              <>
-                <div className="flex items-center justify-between gap-2">
+
+          {compact ? (
+            // มือถือ (compact): 3 โซนตาม Design Token ล่าสุด — บน (ไอคอน+ชื่อ, เรนเดอร์ไว้ด้านบนแล้ว) /
+            // กลาง (ตัวเลขใหญ่ 44px เดี่ยวๆ) / ล่าง (sparkline เต็มความกว้าง + Change Indicator) — ปกติ
+            // flow ธรรมดา (ไม่ใช้ position:absolute) ปล่อยให้ flex flex-col justify-between ของ wrapper
+            // ด้านบนกระจายพื้นที่ 3 โซนนี้เอง เดสก์ท็อป (compact=false) ไม่กระทบ ดู branch ด้านล่าง
+            <>
+              <p
+                className="font-mono leading-none text-ink"
+                style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}
+              >
+                {splitValueUnit(valueText).num}
+                {splitValueUnit(valueText).unit && (
+                  <span style={{ fontWeight: 500, fontSize: '0.36em' }}> {splitValueUnit(valueText).unit}</span>
+                )}
+              </p>
+              <div>
+                {series.length >= 2 && <Sparkline series={series} color={theme.main} height={26} width={200} stretch />}
+                {deltaText && (
                   <p
-                    className="font-mono leading-none text-ink"
-                    style={{ fontSize: 19, letterSpacing: '0.5px', fontVariantNumeric: 'tabular-nums' }}
+                    className="font-semibold whitespace-nowrap flex items-center gap-1 leading-none"
+                    style={{ color: deltaColor, fontSize: 13, marginTop: 6 }}
                   >
-                    <span style={{ fontWeight: 600 }}>{splitValueUnit(valueText).num}</span>
-                    {splitValueUnit(valueText).unit && (
-                      <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
-                    )}
+                    {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
+                    {splitDeltaCaption(deltaText).trend}
                   </p>
-                  {deltaText && (
-                    <p
-                      className="font-semibold whitespace-nowrap flex items-center gap-1 leading-none shrink-0"
-                      style={{ color: deltaColor, fontSize: 11 }}
-                    >
-                      {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
-                      {splitDeltaCaption(deltaText).trend}
+                )}
+              </div>
+            </>
+          ) : (
+            // เดสก์ท็อป — ไม่กระทบ เหมือนเดิมทุกประการ (position:absolute ชิดขอบล่าง, ตัวเลข+กราฟข้างกัน,
+            // เดลต้าบรรทัดเดียวรวม caption ด้านล่าง)
+            <div className="absolute left-0 right-0 bottom-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-mono leading-none text-ink" style={{ fontSize: 20, letterSpacing: '-0.025em' }}>
+                  <span style={{ fontWeight: 800 }}>{splitValueUnit(valueText).num}</span>
+                  {splitValueUnit(valueText).unit && (
+                    <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
+                  )}
+                </p>
+                <Sparkline series={series} color={theme.main} height={30} width={64} />
+              </div>
+              {deltaText && (
+                <>
+                  <p
+                    className="font-semibold whitespace-nowrap flex items-center gap-1"
+                    style={{ color: deltaColor, marginTop: 6, fontSize: 11 }}
+                  >
+                    {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
+                    {deltaText}
+                  </p>
+                  {lastMeasuredText && (
+                    <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
+                      {lastMeasuredText}
                     </p>
                   )}
-                </div>
-                {series.length >= 2 && (
-                  <div className="mt-2 w-full">
-                    <Sparkline series={series} color={theme.main} height={24} width={200} stretch />
-                  </div>
-                )}
-              </>
-            ) : (
-              // เดสก์ท็อป — ไม่กระทบ เหมือนเดิมทุกประการ (ตัวเลข+กราฟข้างกัน, เดลต้าบรรทัดเดียวรวม caption ด้านล่าง)
-              <>
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-mono leading-none text-ink" style={{ fontSize: 20, letterSpacing: '-0.025em' }}>
-                    <span style={{ fontWeight: 800 }}>{splitValueUnit(valueText).num}</span>
-                    {splitValueUnit(valueText).unit && (
-                      <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
-                    )}
-                  </p>
-                  <Sparkline series={series} color={theme.main} height={30} width={64} />
-                </div>
-                {deltaText && (
-                  <>
-                    <p
-                      className="font-semibold whitespace-nowrap flex items-center gap-1"
-                      style={{ color: deltaColor, marginTop: 6, fontSize: 11 }}
-                    >
-                      {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
-                      {deltaText}
-                    </p>
-                    {lastMeasuredText && (
-                      <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
-                        {lastMeasuredText}
-                      </p>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
       {/* Hover effect เฉพาะเว็บ/เดสก์ท็อป (@media hover:hover กันไม่ให้ค้างบนมือถือที่ไม่มี hover จริง)
