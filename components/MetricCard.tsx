@@ -121,12 +121,13 @@ export default function MetricCard({
             ? 'padding-box, padding-box, padding-box, border-box, border-box, border-box'
             : 'padding-box, padding-box, border-box, border-box, border-box',
           // ชั้นซ้อนกัน: ambient shadow (มือถือ (compact) ใช้ CARD_FLOAT_SHADOW เบาบางกว่าเดิมให้การ์ด
-          // ดูลอย เดสก์ท็อปยังใช้ contact+ambient shadow คู่เดิมทุกประการ) + inset highlight บนขอบบน
-          // (ผิวมีไฮไลต์) + inset เงาเข้มขอบล่างแบบจม (CARD_INSET_SHADOW เดียวกับ PremiumCard —
-          // compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุมซ้ายบน/ขวาล่าง
-          // (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ — มือถือ
-          // (compact) ใช้ glowAlpha ต่อการ์ดแทน alpha "33" คงที่เดิม
-          boxShadow: `${compact ? CARD_FLOAT_SHADOW : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, inset 0 1px rgba(255,255,255,.05), ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
+          // ดูลอย เดสก์ท็อปยังใช้ contact+ambient shadow คู่เดิมทุกประการ) + inset highlight (มือถือ
+          // (compact) ใช้ inset แนวทแยงมุมบนซ้ายแบบเดียวกับ CARD_INSET_SHADOW ของ PremiumCard ให้ความสว่าง
+          // กระจุกที่มุม ไม่ใช่เต็มเส้นขอบบนแบบเดิม — เดสก์ท็อปคงค่าเดิม inset 0 1px ทุกประการ) + inset
+          // เงาเข้มขอบล่างแบบจม (compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุม
+          // ซ้ายบน/ขวาล่าง (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
+          // — มือถือ (compact) ใช้ glowAlpha ต่อการ์ดแทน alpha "33" คงที่เดิม
+          boxShadow: `${compact ? CARD_FLOAT_SHADOW : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.09)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
@@ -135,7 +136,7 @@ export default function MetricCard({
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: NOISE_BG, opacity: 0.05, mixBlendMode: 'overlay' }}
+            style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
           />
         )}
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}

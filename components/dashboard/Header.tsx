@@ -25,11 +25,12 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
   return (
     <div className="relative flex items-start justify-between gap-3 animate-rise">
       {/* Ambient light เฉพาะโซน Header — เดิมพื้นหลังทั้งหน้าตัดแสงส้มออกหมดแล้ว (เทาเย็นล้วน) แต่
-          ผลคือ Header ไม่มีแสงสะท้อนเลย ดูแบนไปด้วย — เพิ่มแสงขาวเย็นจางมากๆ (4%) เฉพาะจุดนี้ ไม่ใช่
-          สีส้ม จำลองแสงตกกระทบผิวโลหะบริเวณหัวเรื่อง */}
+          ผลคือ Header ไม่มีแสงสะท้อนเลย ดูแบนไปด้วย — แสงขาวเย็นจางมากๆ เฉพาะจุดนี้ ไม่ใช่สีส้ม จำลอง
+          แสงตกกระทบผิวโลหะบริเวณหัวเรื่อง — ลดจาก 4% เหลือ 3% ตาม "Cool White 2-3%" ที่ขอ (แรงเกินไป
+          จะเริ่มอ่านเป็น glow แทนที่จะเป็นแค่แสงสะท้อนเบาๆ) */}
       <div
         className="absolute -inset-x-4 -top-6 h-36 pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(ellipse at 25% 0%, rgba(255,255,255,.04), transparent 65%)' }}
+        style={{ backgroundImage: 'radial-gradient(ellipse at 25% 0%, rgba(255,255,255,.03), transparent 65%)' }}
         aria-hidden="true"
       />
       <div className="min-w-0" style={{ paddingRight: 44 }}>

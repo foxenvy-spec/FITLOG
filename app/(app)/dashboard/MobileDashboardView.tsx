@@ -261,12 +261,15 @@ export default function MobileDashboardView() {
     <>
       {/* พื้นหลังหน้า — v3: ตัดจุดแสงสีอุ่นฟุ้งใหญ่ (amber/rust/moss blur blob) ที่เคยกระจายเกือบเต็ม
           ความสูงหน้าออกทั้งหมด (รอบก่อนทำให้ทั้งหน้าดูอมส้ม/น้ำตาล กลืนกับการ์ด กลืนกับ Header จนความ
-          รู้สึก "โลหะเย็น" หายไป) เหลือแค่ไล่สีเทาเย็นล้วนๆ (DASHBOARD_BG_CSS) + เกรนผิวโลหะ + vignette
-          — แสงสีส้มยังอยู่ครบ แต่ย้ายไปประจำที่จุด Interactive เฉพาะ (Fitness Score bloom, ปุ่ม Start
-          Workout, กระดิ่งแจ้งเตือน) แทนที่จะเป็น ambient เต็มจอแบบเดิม ให้สายตาโฟกัสเฉพาะจุดที่ควรสนใจ */}
+          รู้สึก "โลหะเย็น" หายไป) เหลือแค่ไล่สีเทาเย็นล้วนๆ (DASHBOARD_BG_CSS, ตอนนี้มี micro-gradient
+          เกรย์สเกลจางๆ ซ้อนอยู่ในตัวแล้ว) + เกรนผิวโลหะ + vignette — แสงสีส้มยังอยู่ครบ แต่ย้ายไปประจำ
+          ที่จุด Interactive เฉพาะ (Fitness Score bloom, ปุ่ม Start Workout, กระดิ่งแจ้งเตือน) แทนที่จะเป็น
+          ambient เต็มจอแบบเดิม ให้สายตาโฟกัสเฉพาะจุดที่ควรสนใจ — noise ลดจาก 0.04 เหลือ 0.03 ตาม
+          "Noise เบามาก 2-3%" ที่ขอ (ความแตกต่างของพื้นผิวมาจาก micro-gradient เป็นหลักแล้ว ไม่ต้องพึ่ง
+          noise หนักขึ้น) */}
       <div className="relative" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }} />
+          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>
 
