@@ -33,14 +33,28 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
       className="flex flex-col items-center gap-1.5"
       aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh} — ${score.recommendation}`}
     >
-      <FitnessRing value={animatedScore} size={size} gradientStops={score.gradientStops}>
-        <span className="font-mono text-ink leading-none" style={{ fontSize: Math.round(size * 0.28) }}>
-          {animatedScore}
-        </span>
-        <span className="text-muted leading-none mt-0.5" style={{ fontSize: Math.round(size * 0.12) }}>
-          /100
-        </span>
-      </FitnessRing>
+      <div className="relative flex items-center justify-center">
+        {/* Bloom หลังวง — เดิมไม่มีเลย (ตัด Glow wrapper ออกตอนลดความสูง header รอบก่อน) ทำให้วงลอย
+            อยู่บนพื้นเปล่าๆ ไม่มี "แสงส่องจากด้านหลัง" แบบภาพอ้างอิง — ใช้สี tier ปัจจุบัน (score.color)
+            ไม่ตายตัวเป็นส้มเสมอ ให้ยังสัมพันธ์กับสีวง/ข้อความเหมือนจุดอื่นในหน้า */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: size * 1.7,
+            height: size * 1.7,
+            background: `radial-gradient(circle, ${score.color}2E, transparent 65%)`,
+          }}
+          aria-hidden="true"
+        />
+        <FitnessRing value={animatedScore} size={size} gradientStops={score.gradientStops}>
+          <span className="font-mono text-ink leading-none" style={{ fontSize: Math.round(size * 0.28) }}>
+            {animatedScore}
+          </span>
+          <span className="text-muted leading-none mt-0.5" style={{ fontSize: Math.round(size * 0.12) }}>
+            /100
+          </span>
+        </FitnessRing>
+      </div>
       {/* ตัดบรรทัด "Fitness Score" micro-label ออก (เดิมอยู่เหนือ tier label) — ความหมายของวงชัดเจน
           อยู่แล้วจากบริบท (ตัวเลข 0-100 + /100 กลางวง) ไม่ต้องมีป้ายชื่อซ้ำ ประหยัดพื้นที่แนวตั้งได้อีก
           ชั้นหนึ่ง — บรรทัด recommendation ยังคงบังคับบรรทัดเดียว (nowrap+ellipsis) เพราะข้อความยาว

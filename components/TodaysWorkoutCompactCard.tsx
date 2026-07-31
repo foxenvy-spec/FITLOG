@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { COLORS, FIRE_GRADIENT_CSS } from '@/lib/theme'
+import { COLORS, FIRE_GRADIENT_CSS, TEXT } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from './AnimatedBarFill'
 import PremiumCard from './ui/PremiumCard'
@@ -56,7 +56,7 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
               พอแล้วโดยไม่ต้องมีบรรทัดอธิบายซ้ำ) — physical constraint: ที่ความสูงนี้ไม่มีที่พอสำหรับ
               4 บรรทัด (label/value/caption/progress) พร้อมกันถ้าไม่ตัดอะไรออกเลย */}
           <div className="flex items-baseline gap-1">
-            <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 24 }}>
+            <span className="font-mono font-bold leading-none" style={{ fontSize: 24, color: TEXT.title }}>
               {completed}
             </span>
             <span className="text-muted leading-none" style={{ fontSize: 14 }}>

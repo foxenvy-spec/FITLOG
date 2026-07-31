@@ -38,10 +38,11 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             fontWeight: 900,
             letterSpacing: '2px',
             lineHeight: 1,
-            // ไล่สี 5 stop (เดิม 2 stop ขาว→เทาเรียบๆ) + drop-shadow คู่ (เงาเข้มด้านล่าง + ไฮไลต์บาง
-            // ด้านบน) จำลองผิวโลหะสลักนูน (embossed metal) แบบภาพอ้างอิงจริง — 2-stop เดิมให้ความรู้สึก
-            // "ตัวหนังสือสีเทา" เฉยๆ ไม่มีมิติเหมือนแผ่นโลหะจริง
-            backgroundImage: 'linear-gradient(180deg, #FFFFFF 0%, #E8E8E8 15%, #B8B8BC 50%, #8A8D93 85%, #6B6E74 100%)',
+            // ไล่สี 4 stop จบสว่างกว่ากลาง (ขาว→เทาอ่อน→เทาเข้ม→เทาอ่อนอีกครั้ง) จำลอง "แนวชนแสง"
+            // (shine sweep) กวาดผ่านผิวโลหะจริง แทน 2-stop เดิมที่ไล่มืดลงเรื่อยๆ ทางเดียว ให้ความรู้สึก
+            // "ตัวหนังสือสีเทา" เฉยๆ ไม่มีมิติ — คู่กับ drop-shadow (เงาเข้มด้านล่าง + ไฮไลต์บางด้านบน)
+            // จำลองผิวโลหะสลักนูน (embossed metal) แบบภาพอ้างอิงจริง
+            backgroundImage: 'linear-gradient(180deg, #FFFFFF, #D6D6D6, #8A8A8A, #EFEFEF)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',

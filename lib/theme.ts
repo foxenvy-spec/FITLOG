@@ -91,3 +91,44 @@ export const FIRE_ACCENT = '#FF8A00'
 // เกรนละเอียด" (Dark Titanium) แทนสีทึบเรียบๆ ย้ายมาจาก templates/page.tsx เดิม (ที่นั่นประกาศ local
 // const ซ้ำ) ให้เป็นตัวแปรกลางใช้ร่วมกันได้ทุกหน้าที่อยากได้ผิวโลหะแบบเดียวกัน (templates, dashboard)
 export const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
+
+// ===================================================================================
+// ชุดโทเคนเพิ่มเติมสำหรับ "Dark Titanium" รอบละเอียด — พื้นหลังหลายเลเยอร์ (ไม่ใช่สีทึบเดียว),
+// ไล่สีการ์ด, ไล่สีส้มแบรนด์ (ไม่แบนสีเดียว), glow หลายสต็อป, ระดับสีตัวหนังสือ — รวมไว้ที่นี่ให้ทุก
+// component ที่อยากได้ผิวโลหะพรีเมียมชุดเดียวกันดึงไปใช้ ไม่ต้อง copy ค่าซ้ำคนละไฟล์
+
+// พื้นหลังหน้า Dashboard — 3 จุดแสงอุ่นจางๆ (บนสุด, บนขวา 80%/30%, บนซ้าย 20%/0% จำลองแสงสะท้อน
+// โลหะ) ซ้อนบนไล่สีเทาเข้ม 3 สต็อป แทนสีทึบเดียว (#0B0B0B เดิม) ให้พื้นหลังรู้สึก "มีชีวิต" โดยผู้ใช้
+// ไม่รู้ตัวว่าทำไม
+export const DASHBOARD_BG_CSS = [
+  'radial-gradient(circle at 20% 0%, rgba(255,180,70,.10), transparent 45%)',
+  'radial-gradient(circle at top, rgba(255,170,40,.08), transparent 35%)',
+  'radial-gradient(circle at 80% 30%, rgba(255,120,0,.05), transparent 40%)',
+  'linear-gradient(180deg, #181818 0%, #101010 35%, #0A0A0A 100%)',
+].join(', ')
+
+// Vignette — ขอบจอมืดกว่ากลางจอเล็กน้อย กันไม่ให้พื้นหลังดำสนิทเป็นแผ่นเดียวเรียบๆ ทั้งขอบจอ
+export const VIGNETTE_CSS = 'radial-gradient(circle, transparent 45%, rgba(0,0,0,.28) 100%)'
+
+// ไล่สีการ์ด (แทน #161616 สีเดียว) — สว่างกว่าเดิมตรงกลางบนแล้วค่อยจางลงล่าง ให้ผิวการ์ดดูมีมิติ
+// แบบแผ่นโลหะจริง ใช้คู่กับ CARD_INSET_SHADOW เสมอ (highlight ขอบบน + เงาจมขอบล่าง)
+export const CARD_GRADIENT_CSS = 'linear-gradient(180deg, #242424, #171717 45%, #101010)'
+export const CARD_INSET_SHADOW = 'inset 0 1px 0 rgba(255,255,255,.08), inset 0 -4px 10px rgba(0,0,0,.6)'
+
+// ไล่สีส้มแบรนด์ (แทน #FF9800 สีเดียว) — สว่าง(บน)→กลาง→เข้ม(ล่าง) ให้พื้นผิวสีส้ม (ปุ่ม Start,
+// badge ฯลฯ) ดูมีมิติแทนสีแบนราบ
+export const AMBER_GRADIENT_CSS = 'linear-gradient(180deg, #FFC84A, #FFAA1A, #FF8500)'
+
+// Glow หลายสต็อป (ขาว→เหลือง→ส้ม→โปร่งใส) แทน glow สีส้มเดียวแบนๆ — ให้ความรู้สึกแสงจริงที่มี
+// hot-spot ขาวจ้าตรงกลางแล้วค่อยไล่โทนอุ่นออกไป ใช้กับปุ่ม/badge ที่มี glow อำพัน
+export const AMBER_GLOW_SHADOW =
+  '0 0 2px rgba(255,255,255,.6), 0 0 8px rgba(255,210,120,.6), 0 0 22px rgba(255,150,20,.35), 0 0 60px rgba(255,130,0,.12)'
+
+// ระดับสีตัวหนังสือ — แทนขาวล้วน (#FFFFFF) ที่แบน/จ้าเกินไปบนพื้นเข้ม ไล่ทึบมากไปน้อยตามลำดับ
+// ความสำคัญ (Title > Body > Secondary > Caption) แบบเดียวกับที่ Apple ใช้
+export const TEXT = {
+  title: '#F8F8F8',
+  body: '#CFCFCF',
+  secondary: '#8D8D8D',
+  caption: '#676767',
+} as const
