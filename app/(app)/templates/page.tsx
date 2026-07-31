@@ -494,7 +494,11 @@ export default function TemplatesPage() {
         <div
           className="absolute inset-0"
           style={{
-            background: `radial-gradient(circle at 50% 0%, ${withAlpha(COLORS.amber, '1F')}, transparent 35%), linear-gradient(180deg, #0d0d10, #0b0b0d)`,
+            background: [
+              'radial-gradient(circle at top, rgba(255,150,0,.10), transparent 35%)',
+              'radial-gradient(circle at bottom, rgba(80,90,255,.08), transparent 45%)',
+              'linear-gradient(180deg, #0d0d10, #0b0b0d)',
+            ].join(', '),
           }}
         />
         <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }} />
@@ -546,86 +550,77 @@ export default function TemplatesPage() {
           const icon = ICON_PALETTE[i % ICON_PALETTE.length]
           return (
             <div key={t.id} className="relative animate-rise">
-              {/* แสง ambient เรืองด้านหลังการ์ด — เบลอ ล้นขอบการ์ดออกไป ให้การ์ดรู้สึก "ลอย" จากพื้นหลัง
-                  (ต้องอยู่นอก div ที่มี overflow-hidden ไม่งั้นแสงจะโดนตัดขอบไปหมด) */}
+              {/* เงา/glow ของการ์ดต้องอยู่ที่ "ห่อนอก" ใบนี้ (ไม่มี overflow-hidden) — overflow-hidden
+                  จะไปตัด box-shadow ของ "ตัวเอง" ทิ้งด้วย (ไม่ใช่แค่ลูกข้างใน) เลยแยกเป็น 2 ชั้น:
+                  ห่อนอกคุมขอบ/เงา, ห่อในคุม overflow-hidden สำหรับพื้นหลัง/รูปที่ต้องโค้งตามการ์ด
+                  วิธีนี้ทำให้เงาโดนคลิปที่ขอบการ์ดเป๊ะๆ (ไม่ล้นไปโดนการ์ดข้างๆ เหมือนรอบก่อน) */}
               <div
-                className="absolute -inset-3 rounded-[28px] pointer-events-none"
-                style={{ backgroundColor: accent, filter: 'blur(40px)', opacity: 0.25 }}
-                aria-hidden="true"
-              />
-              {/* จุดแสงเข้มขึ้นตรงมุมบนซ้าย ใกล้ไอคอน — เป็น "จุดเด่น" ของแสงตามสีต่อการ์ด */}
-              <div
-                className="absolute pointer-events-none"
+                className="rounded-3xl"
                 style={{
-                  left: -40,
-                  top: -30,
-                  width: 160,
-                  height: 160,
-                  background: `radial-gradient(circle, ${withAlpha(accent, '8C')}, transparent 70%)`,
-                  filter: 'blur(40px)',
-                }}
-                aria-hidden="true"
-              />
-
-              <div
-                className="relative rounded-3xl overflow-hidden"
-                style={{
-                  backgroundImage: 'linear-gradient(180deg, #23252b, #18191d)',
                   border: `1px solid ${withAlpha(accent, '40')}`,
-                  boxShadow: [
-                    'inset 0 1px 0 rgba(255,255,255,.06)',
-                    'inset 0 -1px 0 rgba(0,0,0,.45)',
-                    '0 20px 50px rgba(0,0,0,.45)',
-                  ].join(', '),
+                  borderLeftWidth: 3,
+                  borderLeftColor: accent,
+                  boxShadow: ['0 20px 45px rgba(0,0,0,.45)', `0 0 16px ${withAlpha(accent, '26')}`].join(', '),
                 }}
               >
-                {/* glass reflection — ไล่ขาวจางๆ จากขอบบน ให้พื้นผิวดูมีมิติแทนสีทึบราบเรียบ */}
                 <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 30%)' }}
-                  aria-hidden="true"
-                />
-                {/* ลูกศรมุมขวาบน — ย้ำสัญญะว่าแตะการ์ดเพื่อขยายดูรายละเอียดได้ (ปุ่มขยายจริงคือทั้งแถวซ้าย) */}
-                <span className="absolute top-3 right-3 pointer-events-none" aria-hidden="true">
-                  <ChevronIcon />
-                </span>
+                  className="relative rounded-3xl overflow-hidden"
+                  style={{
+                    backgroundImage: 'linear-gradient(180deg, #2A2C33 0%, #202228 45%, #17191D 100%)',
+                    boxShadow: ['inset 0 1px 0 rgba(255,255,255,.06)', 'inset 0 -1px 0 rgba(0,0,0,.45)'].join(', '),
+                  }}
+                >
+                  {/* glass reflection — ไล่ขาวจางๆ จากขอบบน ให้พื้นผิวดูมีมิติแทนสีทึบราบเรียบ */}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 25%)' }}
+                    aria-hidden="true"
+                  />
+                  {/* ลูกศรมุมขวาบน — ย้ำสัญญะว่าแตะการ์ดเพื่อขยายดูรายละเอียดได้ (ปุ่มขยายจริงคือทั้งแถวซ้าย) */}
+                  <span className="absolute top-3 right-3 pointer-events-none" aria-hidden="true">
+                    <ChevronIcon />
+                  </span>
 
-                <div className="relative px-3.5 py-3.5 border-b border-line flex items-center gap-3">
-                  <button
-                    onClick={() => setExpandedId(expanded ? null : t.id)}
-                    className="flex items-center gap-3 min-w-0 flex-1 text-left"
-                  >
-                    <span
-                      className="shrink-0 w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
-                      style={{
-                        background: `radial-gradient(circle at 35% 30%, ${lighten(accent, 0.3)}, ${accent})`,
-                        boxShadow: `0 0 20px ${withAlpha(accent, '55')}, 0 0 50px ${withAlpha(accent, '33')}`,
-                      }}
-                      aria-hidden="true"
+                  <div className="relative px-3.5 py-3.5 border-b border-line flex items-center gap-3">
+                    <button
+                      onClick={() => setExpandedId(expanded ? null : t.id)}
+                      className="flex items-center gap-3 min-w-0 flex-1 text-left"
                     >
-                      <Image src={icon} alt="" width={56} height={56} className="w-full h-full object-cover" />
-                    </span>
-                    <span className="min-w-0">
-                      <p className="text-xs text-ink font-display tracked uppercase leading-snug" style={{ fontWeight: 700 }}>
-                        {t.title}
-                      </p>
-                      <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,.55)' }}>
-                        🕐 {exercises.length} ท่า
-                      </p>
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleStart(t)}
-                    disabled={startingId === t.id || exercises.length === 0}
-                    className="shrink-0 w-[100px] rounded-[18px] text-[9px] leading-tight font-display tracked uppercase text-bg py-2.5 px-2 text-center active:scale-[0.99] disabled:opacity-40 transition"
-                    style={{
-                      backgroundImage: 'linear-gradient(180deg, #FFBE3A, #FF9700)',
-                      boxShadow: 'inset 0 2px 0 rgba(255,255,255,.35), 0 8px 20px rgba(255,150,0,.45)',
-                    }}
-                  >
-                    {startingId === t.id ? '...' : `Start ${t.title}`}
-                  </button>
-                </div>
+                      {/* glow ของวงกลมไอคอนต้องอยู่บน span "ที่ไม่มี overflow-hidden" เหมือนกัน
+                          (เหตุผลเดียวกับการ์ด) แล้วค่อยซ้อน span ชั้นในที่ overflow-hidden ไว้ครอบรูป */}
+                      <span
+                        className="shrink-0 w-[72px] h-[72px] rounded-full flex items-center justify-center"
+                        style={{ boxShadow: `0 0 18px ${withAlpha(accent, '99')}, 0 0 35px ${withAlpha(accent, '66')}` }}
+                        aria-hidden="true"
+                      >
+                        <span
+                          className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
+                          style={{ background: `radial-gradient(circle at 35% 30%, ${lighten(accent, 0.3)}, ${accent})` }}
+                        >
+                          <Image src={icon} alt="" width={72} height={72} className="w-full h-full object-cover" />
+                        </span>
+                      </span>
+                      <span className="min-w-0">
+                        <p className="text-xs text-ink font-display tracked uppercase leading-snug" style={{ fontWeight: 800 }}>
+                          {t.title}
+                        </p>
+                        <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,.7)', fontWeight: 600 }}>
+                          🕐 {exercises.length} ท่า
+                        </p>
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleStart(t)}
+                      disabled={startingId === t.id || exercises.length === 0}
+                      className="shrink-0 w-[92px] rounded-[18px] text-[9px] leading-tight font-display tracked uppercase text-bg py-2 px-3 text-center active:scale-[0.99] disabled:opacity-40 transition"
+                      style={{
+                        backgroundImage: 'linear-gradient(180deg, #FFC94B, #FF9700)',
+                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.4), 0 8px 20px rgba(255,150,0,.45)',
+                      }}
+                    >
+                      {startingId === t.id ? '...' : `Start ${t.title}`}
+                    </button>
+                  </div>
 
               {expanded && (
                 <>
@@ -685,6 +680,7 @@ export default function TemplatesPage() {
                   )}
                 </>
               )}
+                </div>
               </div>
             </div>
           )
