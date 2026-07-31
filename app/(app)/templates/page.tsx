@@ -33,14 +33,6 @@ const ICON_PALETTE = [
 // เพิ่ม ใช้คู่กับ opacity ต่ำ + mixBlendMode: 'overlay' เท่านั้น (ดูจุดที่ใช้งานด้านล่าง)
 const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
 
-function ChevronIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
 // แยกหัวข้อเป็น "คำนำ" (เช่น "DAY 5") กับ "ส่วนที่เหลือ" ถ้าชื่อเทมเพลตมีเครื่องหมาย — คั่นอยู่ (ให้น้ำหนัก
 // ตัวอักษรต่างกัน คำนำเบากว่า+สีตามวัน ส่วนที่เหลือหนักกว่า+สีขาว ไล่ลำดับสายตาได้ดีกว่าตัวหนาเท่ากันหมด)
 // ถ้าไม่มี — เลย (ชื่อเทมเพลตที่ผู้ใช้ตั้งเองส่วนใหญ่ไม่มีรูปแบบนี้) ก็ fallback ไปแสดงทั้งก้อนแบบเดิม
@@ -594,7 +586,9 @@ export default function TemplatesPage() {
                       // สีของรูป/ขอบซ้ายไหลเข้าไปในเนื้อการ์ดบางๆ ให้รูปกับการ์ดรู้สึกเป็นชิ้นเดียวกัน
                       // แทนที่จะเป็นจุดสี (ไอคอน) กับเส้นสี (ขอบ) ที่แยกจากกันคนละจุด
                       `radial-gradient(ellipse 220px 160px at 0% 45%, ${withAlpha(accent, '26')}, transparent 70%)`,
-                      'linear-gradient(180deg, #2D2F36 0%, #23252B 45%, #1A1C21 100%)',
+                      // แสงกลางการ์ดจางๆ กันไม่ให้เนื้อการ์ดมืดตันเป็นสีทึบเดียวตรงกลาง
+                      'radial-gradient(circle at 30% 50%, rgba(255,255,255,.03), transparent 45%)',
+                      'linear-gradient(180deg, #2B2D34, #1C1E23)',
                     ].join(', '),
                     boxShadow: ['inset 0 1px 0 rgba(255,255,255,.08)', 'inset 0 -1px 0 rgba(0,0,0,.5)'].join(', '),
                   }}
@@ -615,16 +609,6 @@ export default function TemplatesPage() {
                     style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent 22%)' }}
                     aria-hidden="true"
                   />
-                  {/* ลูกศรมุมขวาบน — แบบ pill วงกลมเหมือน iOS แทนลูกศรลอยเดี่ยวๆ ย้ำสัญญะว่าแตะการ์ดเพื่อ
-                      ขยายดูรายละเอียดได้ (ปุ่มขยายจริงคือทั้งแถวซ้าย) */}
-                  <span
-                    className="absolute top-3 right-3 pointer-events-none w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{ background: 'rgba(255,255,255,.08)', boxShadow: '0 0 6px rgba(255,255,255,.15)' }}
-                    aria-hidden="true"
-                  >
-                    <ChevronIcon />
-                  </span>
-
                   <div className="relative px-3.5 py-3.5 border-b border-line flex items-center gap-3">
                     <button
                       onClick={() => setExpandedId(expanded ? null : t.id)}
@@ -705,7 +689,7 @@ export default function TemplatesPage() {
                           'linear-gradient(180deg, rgba(255,255,255,.35), transparent 55%)',
                           'linear-gradient(180deg, #FFDA8C 0%, #FFC94B 40%, #FF9700 100%)',
                         ].join(', '),
-                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 rgba(0,0,0,.25), 0 5px 11px rgba(255,150,0,.26)',
+                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.25), 0 4px 9px rgba(255,150,0,.23)',
                       }}
                     >
                       {startingId === t.id ? '...' : `Start ${t.title}`}
