@@ -41,17 +41,19 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           /100
         </span>
       </FitnessRing>
+      {/* margin/font ลดลงจากเดิม (mt-1→mt-0.5, maxWidth 120→110) ให้ text stack ใต้วงกระชับขึ้น
+          ตามภาพอ้างอิงจริง (Image A) ที่ header รวมทั้งก้อนต้องอยู่ในกรอบ ~220px */}
       <div className="text-center">
         <p className="tracked uppercase text-muted leading-none" style={{ fontSize: 10 }}>
           Fitness Score
         </p>
         <p
-          className="font-display font-bold tracked uppercase leading-tight mt-1"
+          className="font-display font-bold tracked uppercase leading-tight mt-0.5"
           style={{ fontSize: 14, color: score.color }}
         >
           {score.tierLabel}
         </p>
-        <p className="text-muted leading-tight mt-0.5" style={{ fontSize: 9, maxWidth: 120 }}>
+        <p className="text-muted leading-tight mt-0.5" style={{ fontSize: 9, maxWidth: 110 }}>
           {score.recommendation}
         </p>
       </div>
