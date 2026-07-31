@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { COLORS, NEUTRAL } from '@/lib/theme'
+import { dashboardSpec } from '@/lib/dashboardSpec'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -24,20 +25,24 @@ export default function BottomNav() {
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-surface/95 backdrop-blur border-t border-line safe-bottom">
-      {/* ความสูงขั้นต่ำ 82px ตาม spacing token ใหม่ (Bottom Navigation 80-84px, เดิมสูงตามเนื้อหา ~58px) */}
-      <div className="max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 min-h-[82px] items-center">
+      {/* ความสูงจาก dashboardSpec.bottomNav.height (80px, เดิม 82px) */}
+      <div className="max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
 
           // /session — ปุ่มลอยวงกลมใหญ่กลาง bottom nav ("START WORKOUT") แทนไอคอนเล็กปกติ
-          // ข้อความ "START WORKOUT" อยู่ในวงกลมเลย (ไม่ใช่ label แยกข้างล่างแบบแท็บอื่น) — ขนาดวง
-          // 86px ตามสเปคใหม่ (Floating Button 84-88px, เดิม 76px) offset -top-9 (36px) สเกลตามสัดส่วนเดิม
+          // ข้อความ "START WORKOUT" อยู่ในวงกลมเลย (ไม่ใช่ label แยกข้างล่างแบบแท็บอื่น) — ขนาดวงจาก
+          // dashboardSpec.floatingButton.size (84px, เดิม 86px) offset สเกลตามสัดส่วนเดิม (~35px)
           if (href === '/session') {
+            const btnSize = dashboardSpec.floatingButton.size
             return (
               <Link key={href} href={href} className="relative flex items-start justify-center" aria-label="เริ่ม/ไปต่อเวิร์กเอาต์">
                 <span
-                  className="absolute -top-9 w-[86px] h-[86px] rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
+                  className="absolute rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
                   style={{
+                    top: -Math.round(btnSize * 0.42),
+                    width: btnSize,
+                    height: btnSize,
                     background: `radial-gradient(circle at 35% 30%, #FFF4CC, #FFD166 35%, #FF8A00 70%, #D96A00 100%)`,
                     boxShadow: `0 6px 18px rgba(0,0,0,.45), 0 0 22px rgba(255,170,0,.55), inset 0 1px rgba(255,255,255,.35)`,
                     border: `3px solid ${NEUTRAL.onAmberText}`,

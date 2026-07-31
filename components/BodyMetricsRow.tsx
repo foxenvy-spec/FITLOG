@@ -202,9 +202,10 @@ export default function BodyMetricsRow({
     },
   ]
 
-  // compact (มือถือ): cardGap ตาม spacing token ใหม่ (16px, เดิม 10px)
+  // compact (มือถือ): cardGap ตาม dashboardSpec.metricCard.gridGap (14px, เดิม 16px) — gap-3.5 ใน
+  // Tailwind default scale ตรงกับ 14px พอดี
   return (
-    <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? 'gap-4' : 'gap-3'}`}>
+    <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? 'gap-3.5' : 'gap-3'}`}>
       {cards.slice(0, maxCards ?? cards.length).map((c) => (
         <MetricCard
           key={c.key}

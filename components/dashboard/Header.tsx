@@ -2,6 +2,7 @@
 
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
+import { dashboardSpec } from '@/lib/dashboardSpec'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -30,8 +31,11 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
           style={{
             marginTop: 4,
             fontFamily: 'var(--font-oswald), var(--font-kanit)',
-            // Username 56-64px ตามสเปคใหม่ (เดิม clamp สูงสุด 52px) — ยังคง clamp ไว้กันจอแคบมากๆ พัง
-            fontSize: 'clamp(40px, 14vw, 58px)',
+            // BANK ตายตัว 60px (เทียบเท่า text-6xl ตาม Tailwind scale ที่ขอ, ห้ามใช้ 7xl ขึ้นไป) —
+            // ออกแบบเจาะจงสำหรับ iPhone 15/16 Pro (393px) เท่านั้น ไม่ต้อง responsive-scale ตามจอ
+            // ใหญ่ (ตามสเปคที่ระบุ "never optimize for desktop first") เผื่อ clamp ขั้นต่ำไว้นิดเดียว
+            // กันจอแคบผิดปกติ (< 360px) เท่านั้น
+            fontSize: 'clamp(52px, 16vw, 60px)',
             fontWeight: 900,
             letterSpacing: '2px',
             lineHeight: 1,
@@ -57,9 +61,9 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
 
       <div className="flex flex-col items-end gap-2 shrink-0">
         <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
-        {/* วง Fitness Score 148px (ในกรอบ 146-150px ตามสเปคล่าสุด, เดิมลอง 156px เกินกรอบ) —
-            FitnessRing/FitnessScore สเกล stroke/font ภายในตาม size prop อยู่แล้วโดยอัตโนมัติ */}
-        <FitnessScore score={fitnessScore} size={148} />
+        {/* วง Fitness Score — ขนาดมาจาก dashboardSpec.header.scoreRingSize (138px) แหล่งความจริงเดียว
+            แทนตัวเลขลอยในไฟล์นี้ — FitnessRing/FitnessScore สเกล stroke/font ภายในตาม size prop เอง */}
+        <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} />
       </div>
     </div>
   )

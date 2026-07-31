@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { COLORS, withAlpha } from '@/lib/theme'
+import { dashboardSpec } from '@/lib/dashboardSpec'
 import PremiumCard from './ui/PremiumCard'
 
 interface TodaysFocusCardProps {
@@ -19,10 +20,10 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
       href={href}
       className="flex items-center justify-between gap-3 active:scale-[0.99] transition"
       style={{
-        // padding ตาม spacing token ใหม่ (Card padding 18-20px)
-        padding: 18,
-        // ความสูงขั้นต่ำตามสเปคใหม่ (Today's Focus 84-92px, เดิมสูงตามเนื้อหา ~70px)
-        minHeight: 88,
+        // padding/ความสูงจาก dashboardSpec.focusCard (16px / 74px) — ลดลงจากรอบก่อน (18px / 88px)
+        // ตามที่ขอ "reduce card padding" + ความสูงเป้าหมายใหม่
+        padding: dashboardSpec.focusCard.padding,
+        minHeight: dashboardSpec.focusCard.height,
         // มุมตัด (cut-corner) ที่ขอบซ้ายบน — ให้ความรู้สึก "แผ่นโลหะ/ตั๋วเข้างาน" แทนมุมโค้งมนเรียบๆ
         // เหมือนการ์ดอื่น ตัดเฉพาะการ์ดนี้ใบเดียว (จุดสนใจของหน้า ไม่ใช่ทุกการ์ดตัดหมด) มุมที่เหลือ
         // (บนขวา/ล่างขวา/ล่างซ้าย) เป็นมุมตัดเล็ก 4px แทนมุมโค้งเดิม (clip-path ทับ border-radius ของ

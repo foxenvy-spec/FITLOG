@@ -26,6 +26,7 @@ import {
   type DashboardData,
 } from './DashboardView'
 import { computeFitnessScore } from '@/lib/fitnessScore'
+import { dashboardSpec } from '@/lib/dashboardSpec'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import OnboardingBanner from '@/components/OnboardingBanner'
@@ -268,9 +269,9 @@ export default function MobileDashboardView() {
           <div className="absolute w-48 h-48 rounded-full blur-[120px] bg-moss/10" style={{ top: '85%', left: -40 }} />
         </div>
 
-        {/* Header แยกออกจาก sectionGap ปกติ — สเปคขอระยะห่างเฉพาะจุดนี้ 40px (มากกว่า sectionGap
-            ทั่วไป 24px) ระหว่าง Header กับการ์ดถัดไป (Today's Focus) */}
-        <div className="relative" style={{ marginBottom: 40 }}>
+        {/* sectionGap เดียวกันทั้งหมด (dashboardSpec.screen.sectionGap = 20px) รวม Header→Focus ด้วย —
+            ตัด marginBottom:40 พิเศษของรอบก่อนออก ตามที่ขอ "reduce vertical whitespace" รอบนี้ */}
+        <div className="relative" style={{ marginBottom: dashboardSpec.screen.sectionGap }}>
           <Header
             greetingText={greetingText}
             latestPR={data.latestPR}
@@ -280,8 +281,7 @@ export default function MobileDashboardView() {
           />
         </div>
 
-        {/* ระยะห่างระหว่าง "section" หลักที่เหลือ — sectionGap 24px ตาม spacing scale */}
-        <div className="relative space-y-6">
+        <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap }}>
         <TodaysFocusCard
           label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
           href={scheduledDay ? '/session' : '/log'}
