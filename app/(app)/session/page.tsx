@@ -125,6 +125,14 @@ export default function SessionPage() {
   const [newExerciseDef, setNewExerciseDef] = useState<ExerciseDef | null>(null)
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null)
 
+  // "เปลี่ยนท่า" ท่าปัจจุบัน — เผื่ออุปกรณ์ไม่ว่างกลางเซสชัน สลับเป็นท่าอื่นแทนตรงตำแหน่งเดิมได้เลย
+  // ไม่ต้องข้ามทั้งท่าทิ้งแล้วไปเพิ่มท่าใหม่แยกต่างหากแบบเดิม (ดู swapCurrentExercise)
+  const [showSwapExercise, setShowSwapExercise] = useState(false)
+  const [swapName, setSwapName] = useState('')
+  const [swapDef, setSwapDef] = useState<ExerciseDef | null>(null)
+  const [swapError, setSwapError] = useState<string | null>(null)
+  const [swapping, setSwapping] = useState(false)
+
   // นาฬิกาเซสชันรวม — เดินตั้งแต่เปิดหน้า ใช้บอกเวลาที่ใช้ไปในสรุปตอนจบ
   const session = useStopwatch()
   const sessionStartedRef = useRef(false)
@@ -348,10 +356,47 @@ export default function SessionPage() {
     setStates((prev) => ({ ...prev, [current.id]: { ...prev[current.id], ...patch } }))
   }
 
+  // ผลงานล่าสุด "ครั้งก่อน" ของท่าที่ไม่ได้อยู่ในแผน (เพิ่มเอง/เปลี่ยนท่า) — ท่าพวกนี้ไม่ผ่าน
+  // initSessionStates ตอนโหลดหน้า (ซึ่งดึงผลงานล่าสุดให้ทุกท่าในแผนไปแล้ว) ต้องดึงเองแยกตรงนี้
+  // ไม่งั้นจะขึ้น 0/0 เสมอแม้เคยเล่นท่านี้มาก่อน — ใช้ร่วมกันทั้ง addExercise และ swapCurrentExercise
+  async function fetchLastPerformance(name: string): Promise<LastPerformance | null> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data: priorWorkout } = await supabase
+      .from('workouts')
+      .select('id, reps, weight_kg')
+      .eq('user_id', user.id)
+      .eq('type', 'strength')
+      .ilike('exercise_name', name)
+      .lt('performed_at', todayStr())
+      .order('performed_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const typedPriorWorkout = priorWorkout as { id: string; reps: number | null; weight_kg: number | null } | null
+    if (!typedPriorWorkout) return null
+
+    const { data: firstSet } = await supabase
+      .from('workout_sets')
+      .select('reps, weight_kg')
+      .eq('workout_id', typedPriorWorkout.id)
+      .eq('set_number', 1)
+      .maybeSingle()
+
+    const typedFirstSet = firstSet as { reps: number; weight_kg: number } | null
+    if (typedFirstSet) return { reps: typedFirstSet.reps, weightKg: typedFirstSet.weight_kg }
+    if (typedPriorWorkout.reps !== null && typedPriorWorkout.weight_kg !== null) {
+      return { reps: typedPriorWorkout.reps, weightKg: typedPriorWorkout.weight_kg }
+    }
+    return null
+  }
+
   // "เพิ่มท่า" เอง ระหว่างเซสชัน — รับได้ทั้งเลือกจากคลังท่า (ExercisePicker) และพิมพ์ชื่อเองอิสระ
   // ไม่ผูกกับ program_exercises จริง (ดู makeAdhocExercise) แต่เข้า flow เดียวกับท่าอื่นทุกอย่าง
-  // ท่านี้ไม่ผ่าน initSessionStates ตอนโหลดหน้า (ซึ่งดึงผลงานล่าสุดให้ทุกท่าในแผนไปแล้ว) — ต้อง
-  // ดึงผลงานล่าสุดของท่านี้เองแยกตรงนี้ ไม่งั้นท่าที่เพิ่มเองจะขึ้น 0/0 เสมอแม้เคยเล่นท่านี้มาก่อน
   async function addExercise() {
     const name = newExerciseName.trim()
     if (!name) {
@@ -366,42 +411,7 @@ export default function SessionPage() {
       position: exercises.length,
     })
 
-    let last: LastPerformance | null = null
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    console.log('[fitlog-debug] addExercise looking up last performance for name=', JSON.stringify(name))
-    if (user) {
-      const { data: priorWorkout, error: priorWorkoutError } = await supabase
-        .from('workouts')
-        .select('id, reps, weight_kg')
-        .eq('user_id', user.id)
-        .eq('type', 'strength')
-        .ilike('exercise_name', name)
-        .lt('performed_at', todayStr())
-        .order('performed_at', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      console.log('[fitlog-debug] addExercise priorWorkout=', priorWorkout, 'error=', priorWorkoutError)
-      const typedPriorWorkout = priorWorkout as { id: string; reps: number | null; weight_kg: number | null } | null
-      if (typedPriorWorkout) {
-        const { data: firstSet, error: firstSetError } = await supabase
-          .from('workout_sets')
-          .select('reps, weight_kg')
-          .eq('workout_id', typedPriorWorkout.id)
-          .eq('set_number', 1)
-          .maybeSingle()
-        console.log('[fitlog-debug] addExercise firstSet=', firstSet, 'error=', firstSetError)
-        const typedFirstSet = firstSet as { reps: number; weight_kg: number } | null
-        if (typedFirstSet) {
-          last = { reps: typedFirstSet.reps, weightKg: typedFirstSet.weight_kg }
-        } else if (typedPriorWorkout.reps !== null && typedPriorWorkout.weight_kg !== null) {
-          last = { reps: typedPriorWorkout.reps, weightKg: typedPriorWorkout.weight_kg }
-        }
-      }
-    }
-    console.log('[fitlog-debug] addExercise final last=', last)
+    const last = await fetchLastPerformance(name)
 
     setExercises((prev) => [...prev, newEx])
     setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx, last) }))
@@ -566,6 +576,86 @@ export default function SessionPage() {
       setErrorMsg(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setSaving(false)
+    }
+  }
+
+  // "เปลี่ยนท่า" ท่าปัจจุบันกลางเซสชัน — เผื่ออุปกรณ์ไม่ว่าง ถ้ายังไม่ได้ทำเซ็ตไหนเลยของท่านี้ แทนที่
+  // ท่าเดิมในตำแหน่งเดิมไปเลย แต่ถ้าทำไปแล้วบางเซ็ต จะบันทึกเท่าที่ทำจริงของท่าเดิมไว้ก่อน (เหมือนกด
+  // "บันทึก & ท่าถัดไป") แล้วแทรกท่าใหม่เข้ามาต่อจากตำแหน่งเดิมให้ทำต่อ ไม่ทิ้งข้อมูลที่ทำไปแล้ว
+  async function swapCurrentExercise() {
+    if (!current || !currentState) return
+    const name = swapName.trim()
+    if (!name) {
+      setSwapError('กรุณาพิมพ์หรือเลือกชื่อท่าก่อน')
+      return
+    }
+    setSwapError(null)
+    setSwapping(true)
+    try {
+      const last = await fetchLastPerformance(name)
+      const newEx = makeAdhocExercise({
+        id: crypto.randomUUID(),
+        exerciseName: name,
+        muscleGroup: swapDef?.muscleGroup ?? current.muscle_group,
+        position: current.position,
+        sets: current.sets ?? undefined,
+        targetReps: current.target_reps,
+        targetRir: current.target_rir,
+        rest: current.rest,
+      })
+      const newState = initSessionSet(newEx, last)
+
+      if (currentState.setsLog.length > 0) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (!user) {
+          setSwapError('กรุณาเข้าสู่ระบบใหม่')
+          return
+        }
+        const result = await persistSets(current, currentState, user.id)
+        if (result.setsError) {
+          setSwapError('บันทึกท่าเดิมสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
+        }
+        if (result.workoutId && !isAdhocExercise(current)) {
+          await supabase
+            .from('program_completions')
+            .upsert(
+              { user_id: user.id, program_exercise_id: current.id, completed_at: todayStr() },
+              { onConflict: 'user_id,program_exercise_id,completed_at' }
+            )
+        }
+        markExerciseFinished(current.id)
+
+        setStates((prev) => ({
+          ...prev,
+          [current.id]: { ...currentState, logged: true, workoutId: result.workoutId },
+          [newEx.id]: newState,
+        }))
+        setExercises((prev) => {
+          const next = [...prev]
+          next.splice(index + 1, 0, newEx)
+          return next
+        })
+        setIndex(index + 1)
+      } else {
+        // ยังไม่ได้ทำเซ็ตไหนเลย — ไม่มีอะไรต้องเก็บของท่าเดิม แทนที่ตรงตำแหน่งเดิมไปเลย
+        setExercises((prev) => prev.map((ex, i) => (i === index ? newEx : ex)))
+        setStates((prev) => {
+          const next = { ...prev }
+          delete next[current.id]
+          next[newEx.id] = newState
+          return next
+        })
+      }
+
+      setSwapName('')
+      setSwapDef(null)
+      setShowSwapExercise(false)
+    } catch (err) {
+      setSwapError(`เปลี่ยนท่าไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setSwapping(false)
     }
   }
 
@@ -977,14 +1067,24 @@ export default function SessionPage() {
             </>
           )}
           <div className="relative px-4 py-3.5">
-            <div className="flex items-center gap-2">
-              {mg && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: mgColor }} />}
-              <p
-                className="font-display text-xl tracked uppercase text-ink truncate"
-                style={knownExercise?.imageUrl ? { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } : undefined}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                {mg && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: mgColor }} />}
+                <p
+                  className="font-display text-xl tracked uppercase text-ink truncate"
+                  style={knownExercise?.imageUrl ? { textShadow: '0 1px 4px rgba(0,0,0,0.9)' } : undefined}
+                >
+                  {current.exercise_name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSwapExercise((v) => !v)}
+                className="shrink-0 text-[10px] tracked uppercase text-muted hover:text-amber transition"
+                style={knownExercise?.imageUrl ? { textShadow: '0 1px 3px rgba(0,0,0,0.9)' } : undefined}
               >
-                {current.exercise_name}
-              </p>
+                🔁 เปลี่ยนท่า
+              </button>
             </div>
             <p
               className="text-[11px] text-muted mt-1"
@@ -1107,6 +1207,47 @@ export default function SessionPage() {
           )}
         </div>
       </div>
+
+      {showSwapExercise && (
+        <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-2.5">
+          <p className="text-[10px] tracked uppercase text-muted">
+            เปลี่ยนท่า &quot;{current.exercise_name}&quot; เป็นท่าอื่น
+            {currentState.setsLog.length > 0 && ` (บันทึก ${currentState.setsLog.length} เซ็ตที่ทำไปแล้วไว้ก่อน)`}
+          </p>
+          <ExercisePicker
+            value={swapName}
+            onChange={(name) => {
+              setSwapName(name)
+              setSwapDef(null)
+            }}
+            onSelect={(ex) => setSwapDef(ex)}
+            placeholder="พิมพ์ชื่อท่าใหม่ หรือเลือกจากคลัง"
+          />
+          {swapError && <p className="text-xs text-rusttext">{swapError}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowSwapExercise(false)
+                setSwapName('')
+                setSwapDef(null)
+                setSwapError(null)
+              }}
+              className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2.5 text-xs transition"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              onClick={swapCurrentExercise}
+              disabled={swapping}
+              className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] disabled:opacity-50 transition"
+            >
+              {swapping ? 'กำลังเปลี่ยน...' : 'เปลี่ยนเป็นท่านี้'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {errorMsg && <p className="text-xs text-rusttext text-center">{errorMsg}</p>}
 
