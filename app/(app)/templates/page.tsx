@@ -10,6 +10,25 @@ import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
+import { COLORS, withAlpha, lighten } from '@/lib/theme'
+
+// สีไล่ตามลำดับการ์ด (ไม่ผูกกับกลุ่มกล้ามเนื้อ) — ให้แต่ละเทมเพลตแยกจากกันด้วยสายตาง่ายๆ เหมือน
+// รายการเดย์ในโปรแกรม โดยใช้ชุดสีของแอปเอง (lib/theme.ts) แทนสีใหม่ที่ไม่มีในธีม
+const ACCENT_PALETTE = [COLORS.amber, COLORS.steel, COLORS.violet, COLORS.moss, COLORS.rust] as const
+
+function DumbbellGlyph() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2 12h2M5 9v6M8 7v10M16 7v10M19 9v6M22 12h-2M8 12h8"
+        stroke="#F3F0E8"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 
 function downloadBlob(content: BlobPart, filename: string, type: string) {
   const blob = new Blob([content], { type })
@@ -465,12 +484,18 @@ export default function TemplatesPage() {
           <h1 className="font-display text-2xl tracked uppercase">เทมเพลต</h1>
           <p className="text-sm text-muted mt-1">กดเริ่มได้ทุกเมื่อ ไม่ผูกกับวันในสัปดาห์</p>
         </div>
-        <div className="flex gap-3 shrink-0">
-          <a href="/exercises" className="text-xs font-display tracked uppercase text-muted hover:text-amber transition">
+        <div className="flex gap-2 shrink-0">
+          <a
+            href="/exercises"
+            className="inline-flex items-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
+          >
             🔍 ฐานข้อมูลท่า
           </a>
-          <a href="/history" className="text-xs font-display tracked uppercase text-muted hover:text-amber transition">
-            ดูประวัติ →
+          <a
+            href="/history"
+            className="inline-flex items-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
+          >
+            🕐 ดูประวัติ
           </a>
         </div>
       </div>
@@ -492,20 +517,45 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {templates.map((t) => {
+      {templates.map((t, i) => {
           const exercises = exercisesByTemplate[t.id] ?? []
           const expanded = expandedId === t.id
+          const accent = ACCENT_PALETTE[i % ACCENT_PALETTE.length]
           return (
-            <div key={t.id} className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-              <div className="px-4 py-3 border-b border-line flex items-center justify-between gap-2">
-                <button onClick={() => setExpandedId(expanded ? null : t.id)} className="min-w-0 text-left flex-1">
-                  <p className="text-sm text-ink font-display tracked uppercase truncate">{t.title}</p>
-                  <p className="text-[11px] text-muted">{exercises.length} ท่า</p>
+            <div
+              key={t.id}
+              className="rounded-2xl bg-surface border-y border-r border-line shadow-elevated overflow-hidden animate-rise"
+              style={{
+                borderLeftWidth: 4,
+                borderLeftStyle: 'solid',
+                borderLeftColor: accent,
+                boxShadow: `0 0 16px ${withAlpha(accent, '26')}`,
+              }}
+            >
+              <div className="px-3.5 py-3 border-b border-line flex items-center gap-3">
+                <button
+                  onClick={() => setExpandedId(expanded ? null : t.id)}
+                  className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                >
+                  <span
+                    className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{
+                      background: `radial-gradient(circle at 35% 30%, ${lighten(accent, 0.3)}, ${accent})`,
+                      boxShadow: `0 0 12px ${withAlpha(accent, '55')}`,
+                    }}
+                    aria-hidden="true"
+                  >
+                    <DumbbellGlyph />
+                  </span>
+                  <span className="min-w-0">
+                    <p className="text-sm text-ink font-display tracked uppercase leading-snug">{t.title}</p>
+                    <p className="text-[11px] text-muted mt-1">🕐 {exercises.length} ท่า</p>
+                  </span>
                 </button>
                 <button
                   onClick={() => handleStart(t)}
                   disabled={startingId === t.id || exercises.length === 0}
-                  className="shrink-0 text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] disabled:opacity-40"
+                  className="shrink-0 w-[108px] rounded-xl text-[10.5px] leading-tight font-display tracked uppercase text-bg bg-amber py-2.5 px-2 text-center active:scale-[0.99] disabled:opacity-40 transition"
                 >
                   {startingId === t.id ? '...' : `Start ${t.title}`}
                 </button>
@@ -574,21 +624,25 @@ export default function TemplatesPage() {
         })}
 
       {!creating && (
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           {templates.length > 0 && (
             <button
               onClick={() => setCreating(true)}
-              className="flex-1 rounded-lg border border-line border-dashed text-muted font-display tracked uppercase py-3 text-sm hover:text-amber transition"
+              className="flex-1 rounded-2xl border border-dashed py-3.5 px-3 text-center transition active:scale-[0.99]"
+              style={{ borderColor: withAlpha(COLORS.amber, '66'), color: COLORS.amber }}
             >
-              + เทมเพลตใหม่
+              <span className="block font-display text-sm tracked uppercase">+ เทมเพลตใหม่</span>
+              <span className="block text-[10px] text-muted mt-1 normal-case">สร้างโปรแกรมของคุณเอง</span>
             </button>
           )}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="shrink-0 rounded-lg border border-line border-dashed text-muted font-display tracked uppercase py-3 px-4 text-sm hover:text-amber transition disabled:opacity-40"
+            className="flex-1 rounded-2xl border border-dashed py-3.5 px-3 text-center transition active:scale-[0.99] disabled:opacity-40"
+            style={{ borderColor: withAlpha(COLORS.steel, '66'), color: COLORS.steel }}
           >
-            {importing ? '...' : '⬆ Import'}
+            <span className="block font-display text-sm tracked uppercase">{importing ? '...' : '⬆ Import'}</span>
+            <span className="block text-[10px] text-muted mt-1 normal-case">นำเข้าเทมเพลตจากไฟล์</span>
           </button>
           <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} className="hidden" />
         </div>
