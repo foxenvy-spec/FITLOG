@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { COLORS, FIRE_GRADIENT_CSS } from '@/lib/theme'
+import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from './AnimatedBarFill'
 import PremiumCard from './ui/PremiumCard'
 
@@ -15,8 +16,7 @@ interface TodaysWorkoutCompactCardProps {
 // การ์ด "Today's Workout" — v5: คอลัมน์เนื้อหาซ้าย + รูปภาพชิดขวา (แยกโซนชัดเจน แทนรูปเต็มพื้นหลัง
 // การ์ด+ไล่เฉดมืดทับแบบ v4 เดิม) ตามสเปคใหม่ที่ขอ "Image stays on right. Content stays left. Button
 // should NOT overlap image." — ปุ่มลูกศร/progress bar อยู่ในคอลัมน์ซ้ายล้วนๆ จึงไม่มีทางทับรูปได้เลย
-// โดยโครงสร้าง ไม่ต้องคำนวณตำแหน่งเอง — ความสูงขั้นต่ำ 180px ตาม spacing token (เดิมสูงตามเนื้อหา
-// ~130-140px)
+// โดยโครงสร้าง ไม่ต้องคำนวณตำแหน่งเอง — ความสูงจาก dashboardSpec.workoutCard.height (170px, เดิม 180px)
 export default function TodaysWorkoutCompactCard({ completed, total, href }: TodaysWorkoutCompactCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
 
@@ -25,11 +25,12 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
       as={Link}
       href={href}
       className="relative overflow-hidden flex active:scale-[0.99] transition"
-      style={{ padding: 0, minHeight: 180 }}
+      style={{ padding: 0, minHeight: dashboardSpec.workoutCard.height }}
     >
       {/* คอลัมน์เนื้อหา — padding ของตัวเองแทนที่ padding ของ PremiumCard (ปิดไว้ที่ 0 ด้านบน เพราะ
-          คอลัมน์รูปฝั่งขวาต้องชนขอบการ์ดเต็มๆ ไม่มี padding ครอบ) */}
-      <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-between" style={{ padding: 18 }}>
+          คอลัมน์รูปฝั่งขวาต้องชนขอบการ์ดเต็มๆ ไม่มี padding ครอบ) — 16px ลดจากเดิม 18px ตามที่ขอ
+          "reduce card padding" */}
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-between" style={{ padding: 16 }}>
         {/* แถวบน — ไอคอนเล็ก + label */}
         <div className="flex items-center gap-2">
           <span

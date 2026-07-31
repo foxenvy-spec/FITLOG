@@ -1,5 +1,6 @@
 'use client'
 
+import { dashboardSpec } from '@/lib/dashboardSpec'
 import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
@@ -80,12 +81,14 @@ export default function MetricCard({
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'min-h-[170px]' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? '' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
           transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
-          // compact: มือถือเท่านั้น (BodyMetricsRow colorScheme="vibrant") — padding 20px ตาม Design
-          // Token ล่าสุด (เดิม 12px)
-          padding: compact ? '20px' : '16px 18px 12px',
+          // ความสูง/padding มือถือ (compact) มาจาก dashboardSpec.metricCard (160px / 16px) — ค่าคงที่
+          // (ไม่ใช่ min-height เหมือนรอบก่อน) ตาม Tailwind class แบบไดนามิกใช้ JIT ไม่ได้ (ตรวจจับตอน build
+          // ไม่เจอค่าที่มาจากตัวแปร) จึงกำหนดผ่าน style ตรงๆ แทน — เดสก์ท็อป (compact=false) ไม่กระทบ
+          height: compact ? dashboardSpec.metricCard.height : undefined,
+          padding: compact ? dashboardSpec.metricCard.padding : '16px 18px 12px',
           border: '1.5px solid transparent',
           // 4 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
           // 1) ไล่สีเข้มพรีเมียมด้านใน + จุดสว่างจางๆ กลางการ์ด กันไม่ให้กลางการ์ดดำตันเกินไป
@@ -195,15 +198,16 @@ export default function MetricCard({
 
           {compact ? (
             // มือถือ (compact): ตรงตามภาพอ้างอิงจริง (Image A) — value+unit+delta อยู่แถวเดียวกัน (delta
-            // ชิดขวา) ต่อด้วย sparkline เต็มความกว้างเป็นแถวแยกด้านล่าง — ตัวเลข 28px (ไม่ใช่ 44/56px ตามที่
-            // เคยลองก่อนหน้า เพราะ 44px ขึ้นไปทำให้ unit+delta ไม่พอที่จะอยู่แถวเดียวกันได้จริงในการ์ดกว้าง
-            // ~130px) ปกติ flow ธรรมดา ปล่อยให้ flex flex-col justify-between ของ wrapper ด้านบนกระจายพื้นที่
-            // เดสก์ท็อป (compact=false) ไม่กระทบ ดู branch ด้านล่าง
+            // ชิดขวา) ต่อด้วย sparkline เต็มความกว้างเป็นแถวแยกด้านล่าง — ตัวเลข 24px (ลดจาก 28px ตามที่ขอ
+            // "reduce ~15%" รอบนี้ — ยังต้องเล็กกว่า text-5xl/48px ที่แนะนำมา เพราะ 44px ขึ้นไปทำให้
+            // unit+delta ไม่พอที่จะอยู่แถวเดียวกันได้จริงในการ์ดกว้าง ~130px) ปกติ flow ธรรมดา ปล่อยให้
+            // flex flex-col justify-between ของ wrapper ด้านบนกระจายพื้นที่ เดสก์ท็อป (compact=false)
+            // ไม่กระทบ ดู branch ด้านล่าง
             <>
               <div className="flex items-center justify-between gap-2">
                 <p
                   className="font-mono leading-none text-ink"
-                  style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums' }}
+                  style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums' }}
                 >
                   {splitValueUnit(valueText).num}
                   {splitValueUnit(valueText).unit && (
