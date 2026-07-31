@@ -16,12 +16,10 @@ interface HeaderProps {
   fitnessScore: FitnessScoreResult
 }
 
-// Header ของหน้า Dashboard (มือถือ) — v17: กระดิ่งแจ้งเตือนแยกออกมาเป็น absolute top-right แทนที่จะ
-// เรียงซ้อนเหนือวง Fitness Score ในคอลัมน์ขวา (เดิม notif 44px + gap 8px เพิ่มความสูงให้คอลัมน์ขวา
-// โดยไม่จำเป็น) — ตัดการซ้อนออกทำให้คอลัมน์ขวาเหลือแค่วง+ข้อความใต้วงเท่านั้น เป็นตัวแปรหลักที่ทำให้
-// header ทั้งก้อนสูงเกิน budget (220px รอบก่อน, ผู้ใช้ฟีดแบ็กว่ายังกิน 40-45% ของจอ ทั้งที่ควรอยู่ที่
-// ~30%) — เพิ่มระยะห่างแนวตั้งฝั่งซ้าย (greeting→BANK, BANK→subtitle, subtitle→motivation) เล็กน้อย
-// ตามฟีดแบ็ก "negative space" ที่ต้นแบบมีแต่ของเราแน่นไป แม้ว่า header โดยรวมจะเตี้ยลง
+// Header ของหน้า Dashboard (มือถือ) — v18: ลดสัดส่วนรอบที่ 3 ตามฟีดแบ็ก "hero section ยังกิน 35-38%
+// ของจอ ควรอยู่ที่ 28-30%" — ชื่อ (BANK/MINT) ลด 10% (60→54px), วง Fitness Score ลด 10% ผ่าน
+// dashboardSpec.header.scoreRingSize, ระยะห่างระหว่างบรรทัดฝั่งซ้ายลดกลับลงมาอีกนิด (เดิมเพิ่มไปรอบ
+// ก่อนตามฟีดแบ็ก negative space แต่รอบนี้ขอให้ลดอีกเพื่อคืนพื้นที่ ~60-80px)
 export default function Header({ greetingText, latestPR, topMuscleThisWeek, displayName, fitnessScore }: HeaderProps) {
   return (
     <div className="relative flex items-start justify-between gap-3 animate-rise">
@@ -30,13 +28,12 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
         <p
           className="uppercase"
           style={{
-            marginTop: 6,
+            marginTop: 4,
             fontFamily: 'var(--font-oswald), var(--font-kanit)',
-            // BANK ตายตัว 60px (เทียบเท่า text-6xl ตาม Tailwind scale ที่ขอ, ห้ามใช้ 7xl ขึ้นไป) —
-            // ออกแบบเจาะจงสำหรับ iPhone 15/16 Pro (393px) เท่านั้น ไม่ต้อง responsive-scale ตามจอ
-            // ใหญ่ (ตามสเปคที่ระบุ "never optimize for desktop first") เผื่อ clamp ขั้นต่ำไว้นิดเดียว
-            // กันจอแคบผิดปกติ (< 360px) เท่านั้น
-            fontSize: 'clamp(52px, 16vw, 60px)',
+            // ชื่อ 54px (เทียบเท่า text-6xl ลด 10%, เดิม 60px) — ออกแบบเจาะจงสำหรับ iPhone 15/16 Pro
+            // (393px) เท่านั้น ไม่ต้อง responsive-scale ตามจอใหญ่ เผื่อ clamp ขั้นต่ำไว้นิดเดียวกันจอแคบ
+            // ผิดปกติ (< 360px) เท่านั้น
+            fontSize: 'clamp(46px, 15vw, 54px)',
             fontWeight: 900,
             letterSpacing: '2px',
             lineHeight: 1,
@@ -49,13 +46,12 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
           {displayName}
         </p>
 
-        {/* ระยะห่างชื่อ→subtitle 10px (เดิม 8px) — เพิ่มเล็กน้อยตามฟีดแบ็ก negative space */}
-        <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 10, fontSize: 11 }}>
+        <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 7, fontSize: 11 }}>
           Personalized Fitness
         </p>
         <SubtitleAccent />
 
-        <p className="text-ink" style={{ marginTop: 10, fontSize: 13 }}>
+        <p className="text-ink" style={{ marginTop: 7, fontSize: 13 }}>
           วันนี้พร้อมสำหรับการออกกำลังกาย 💪
         </p>
       </div>
