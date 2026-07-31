@@ -481,7 +481,7 @@ export default function TemplatesPage() {
     <div className="space-y-6 lg:max-w-3xl lg:mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl tracked uppercase">เทมเพลต</h1>
+          <h1 className="font-display text-xl tracked uppercase">เทมเพลต</h1>
           <p className="text-sm text-muted mt-1">กดเริ่มได้ทุกเมื่อ ไม่ผูกกับวันในสัปดาห์</p>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -548,14 +548,14 @@ export default function TemplatesPage() {
                     <DumbbellGlyph />
                   </span>
                   <span className="min-w-0">
-                    <p className="text-sm text-ink font-display tracked uppercase leading-snug">{t.title}</p>
-                    <p className="text-[11px] text-muted mt-1">🕐 {exercises.length} ท่า</p>
+                    <p className="text-xs text-ink font-display tracked uppercase leading-snug">{t.title}</p>
+                    <p className="text-[10px] text-muted mt-1">🕐 {exercises.length} ท่า</p>
                   </span>
                 </button>
                 <button
                   onClick={() => handleStart(t)}
                   disabled={startingId === t.id || exercises.length === 0}
-                  className="shrink-0 w-[108px] rounded-xl text-[10.5px] leading-tight font-display tracked uppercase text-bg bg-amber py-2.5 px-2 text-center active:scale-[0.99] disabled:opacity-40 transition"
+                  className="shrink-0 w-[100px] rounded-xl text-[9px] leading-tight font-display tracked uppercase text-bg bg-amber py-2.5 px-2 text-center active:scale-[0.99] disabled:opacity-40 transition"
                 >
                   {startingId === t.id ? '...' : `Start ${t.title}`}
                 </button>
