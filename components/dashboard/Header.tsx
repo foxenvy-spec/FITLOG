@@ -16,20 +16,21 @@ interface HeaderProps {
   fitnessScore: FitnessScoreResult
 }
 
-// Header ของหน้า Dashboard (มือถือ) — v16: ตัดกลไก absolute-position + คำนวณความสูงตายตัว
-// (RING_TOP/RING_SIZE/WAVE_* เดิม) และเส้นคลื่น HeroEnergyWave/AmbientGlow ออกทั้งหมด ตามสเปคใหม่ที่
-// ขอให้ header เป็น flex row ธรรมดา (ฝั่งซ้าย: ทักทาย/ชื่อ/subtitle, ฝั่งขวา: แจ้งเตือน+วง Fitness
-// Score) ไม่มี wrapper สูงตายตัวอีกต่อไป — Today's Focus ไม่ได้อยู่ใน children ของ Header แล้ว
-// (ย้ายไปเป็น sibling ธรรมดาใน MobileDashboardView แทนการซ้อนทับด้วย margin-top ติดลบแบบเดิม)
+// Header ของหน้า Dashboard (มือถือ) — v17: กระดิ่งแจ้งเตือนแยกออกมาเป็น absolute top-right แทนที่จะ
+// เรียงซ้อนเหนือวง Fitness Score ในคอลัมน์ขวา (เดิม notif 44px + gap 8px เพิ่มความสูงให้คอลัมน์ขวา
+// โดยไม่จำเป็น) — ตัดการซ้อนออกทำให้คอลัมน์ขวาเหลือแค่วง+ข้อความใต้วงเท่านั้น เป็นตัวแปรหลักที่ทำให้
+// header ทั้งก้อนสูงเกิน budget (220px รอบก่อน, ผู้ใช้ฟีดแบ็กว่ายังกิน 40-45% ของจอ ทั้งที่ควรอยู่ที่
+// ~30%) — เพิ่มระยะห่างแนวตั้งฝั่งซ้าย (greeting→BANK, BANK→subtitle, subtitle→motivation) เล็กน้อย
+// ตามฟีดแบ็ก "negative space" ที่ต้นแบบมีแต่ของเราแน่นไป แม้ว่า header โดยรวมจะเตี้ยลง
 export default function Header({ greetingText, latestPR, topMuscleThisWeek, displayName, fitnessScore }: HeaderProps) {
   return (
-    <div className="flex items-start justify-between gap-3 animate-rise">
-      <div className="min-w-0">
+    <div className="relative flex items-start justify-between gap-3 animate-rise">
+      <div className="min-w-0" style={{ paddingRight: 44 }}>
         <Greeting text={greetingText} />
         <p
           className="uppercase"
           style={{
-            marginTop: 4,
+            marginTop: 6,
             fontFamily: 'var(--font-oswald), var(--font-kanit)',
             // BANK ตายตัว 60px (เทียบเท่า text-6xl ตาม Tailwind scale ที่ขอ, ห้ามใช้ 7xl ขึ้นไป) —
             // ออกแบบเจาะจงสำหรับ iPhone 15/16 Pro (393px) เท่านั้น ไม่ต้อง responsive-scale ตามจอ
@@ -48,20 +49,24 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
           {displayName}
         </p>
 
-        {/* ระยะห่างชื่อ→subtitle 8px ตามสเปคใหม่ (เดิม 2px) */}
-        <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 8, fontSize: 11 }}>
+        {/* ระยะห่างชื่อ→subtitle 10px (เดิม 8px) — เพิ่มเล็กน้อยตามฟีดแบ็ก negative space */}
+        <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 10, fontSize: 11 }}>
           Personalized Fitness
         </p>
         <SubtitleAccent />
 
-        <p className="text-ink" style={{ marginTop: 8, fontSize: 13 }}>
+        <p className="text-ink" style={{ marginTop: 10, fontSize: 13 }}>
           วันนี้พร้อมสำหรับการออกกำลังกาย 💪
         </p>
       </div>
 
-      <div className="flex flex-col items-end gap-2 shrink-0">
+      {/* กระดิ่งแจ้งเตือน — ลอยมุมขวาบนอิสระ ไม่กินพื้นที่ในโฟลว์แนวตั้งของคอลัมน์ขวาอีกต่อไป */}
+      <div className="absolute top-0 right-0">
         <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
-        {/* วง Fitness Score — ขนาดมาจาก dashboardSpec.header.scoreRingSize (138px) แหล่งความจริงเดียว
+      </div>
+
+      <div className="flex flex-col items-end shrink-0" style={{ marginTop: 8 }}>
+        {/* วง Fitness Score — ขนาดมาจาก dashboardSpec.header.scoreRingSize (121px) แหล่งความจริงเดียว
             แทนตัวเลขลอยในไฟล์นี้ — FitnessRing/FitnessScore สเกล stroke/font ภายในตาม size prop เอง */}
         <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} />
       </div>

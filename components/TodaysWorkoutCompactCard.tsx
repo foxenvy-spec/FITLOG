@@ -28,9 +28,9 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
       style={{ padding: 0, minHeight: dashboardSpec.workoutCard.height }}
     >
       {/* คอลัมน์เนื้อหา — padding ของตัวเองแทนที่ padding ของ PremiumCard (ปิดไว้ที่ 0 ด้านบน เพราะ
-          คอลัมน์รูปฝั่งขวาต้องชนขอบการ์ดเต็มๆ ไม่มี padding ครอบ) — 16px ลดจากเดิม 18px ตามที่ขอ
-          "reduce card padding" */}
-      <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-between" style={{ padding: 16 }}>
+          คอลัมน์รูปฝั่งขวาต้องชนขอบการ์ดเต็มๆ ไม่มี padding ครอบ) — จาก dashboardSpec.workoutCard.padding
+          (13px, เดิม 16px) */}
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-between" style={{ padding: dashboardSpec.workoutCard.padding }}>
         {/* แถวบน — ไอคอนเล็ก + label */}
         <div className="flex items-center gap-2">
           <span
@@ -51,33 +51,33 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         </div>
 
         <div>
-          {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ด */}
+          {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ด — ลดจาก 34px เป็น 30px ให้พอดีกับความสูงการ์ดที่ลดลง */}
           <div className="flex items-baseline gap-1">
-            <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 34 }}>
+            <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 30 }}>
               {completed}
             </span>
-            <span className="text-muted leading-none" style={{ fontSize: 18 }}>
+            <span className="text-muted leading-none" style={{ fontSize: 16 }}>
               /{total}
             </span>
           </div>
           <p className="text-xs text-muted mt-1">ท่าที่ทำแล้ว</p>
 
           {/* progress bar + ปุ่มลูกศรวงกลม — อยู่ในคอลัมน์ซ้ายทั้งคู่ ไม่ล้ำเข้าไปในโซนรูปฝั่งขวาแน่นอน */}
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-3 mt-3">
             <div className="h-2 rounded-full bg-surface2 flex-1 overflow-hidden">
               <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
             </div>
-            <span className="shrink-0 w-9 h-9" aria-hidden="true">
-              <Image src="/icons/today-workout-icon-arrow.png" alt="" width={36} height={36} className="w-full h-full object-cover rounded-full" />
+            <span className="shrink-0 w-8 h-8" aria-hidden="true">
+              <Image src="/icons/today-workout-icon-arrow.png" alt="" width={32} height={32} className="w-full h-full object-cover rounded-full" />
             </span>
           </div>
         </div>
       </div>
 
       {/* คอลัมน์รูปฝั่งขวา — ชนขอบการ์ดเต็มความสูง overflow-hidden ของ PremiumCard ตัดขอบให้เอง
-          เกรเดียนต์บางๆ ที่ขอบซ้ายกลืนรอยต่อกับคอลัมน์เนื้อหาไม่ให้ดูตัดแข็งเกินไป */}
-      {/* ความกว้าง 40% ตามภาพอ้างอิงจริง (Image A) — เดิมลอง 45% กว้างไปนิด */}
-      <div className="relative w-[40%] shrink-0" aria-hidden="true">
+          เกรเดียนต์บางๆ ที่ขอบซ้ายกลืนรอยต่อกับคอลัมน์เนื้อหาไม่ให้ดูตัดแข็งเกินไป — ความกว้าง 36%
+          (เดิม 40%) ตามฟีดแบ็ก "รูป Barbell ใหญ่กว่าต้นแบบ" */}
+      <div className="relative w-[36%] shrink-0" aria-hidden="true">
         <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '75% 55%' }} />
         <div
           className="absolute inset-y-0 left-0 w-10"
