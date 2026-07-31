@@ -136,7 +136,7 @@ export default function MetricCard({
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
+            style={{ backgroundImage: NOISE_BG, opacity: 0.01, mixBlendMode: 'overlay' }}
           />
         )}
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}

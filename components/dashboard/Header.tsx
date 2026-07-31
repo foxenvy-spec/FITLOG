@@ -47,11 +47,13 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             fontWeight: 900,
             letterSpacing: '2px',
             lineHeight: 1,
-            // v2: สต็อปเดิม (#FFFFFF/#D6D6D6/#8A8A8A/#EFEFEF) ยัง "ขาวเกินไป" — ครึ่งบนของตัวอักษร
-            // (0-50%) มีแต่โทนขาว/เทาอ่อนแทบทั้งหมด สต็อปมืดสุด (#8A8A8A) เป็นแค่เทากลาง ไม่ใช่เทาเข้ม
-            // จริง และสต็อปท้าย (#EFEFEF) เกือบขาวอีกรอบแทนที่จะเป็นโทนเงิน (silver) — ปรับเป็นขาว→
-            // เทาอ่อน→เทาเข้มจริง(#5A5A5A)→เงิน(#C7C7C7) ให้ contrast สูงขึ้น อ่านเป็นโลหะสลักนูนชัดเจนขึ้น
-            backgroundImage: 'linear-gradient(180deg, #FFFFFF, #D6D6D6, #5A5A5A, #C7C7C7)',
+            // v3: 4 สต็อปเดิม (White/LightGray/#5A5A5A/#C7C7C7) ยัง "ไม่ละเอียดพอ" — แต่ละช่วงเปลี่ยนสี
+            // แบบกระโดดเป็นบล็อกใหญ่ ไม่ใช่ไล่เฉดโลหะจริง — เพิ่มเป็น 7 สต็อปตามลำดับ White→Silver→
+            // Dark Gray→Silver ที่ขอ แต่แทรกสต็อปเปลี่ยนผ่านนุ่มๆ ระหว่างกลาง (เช่น #F0F0F0 คั่นก่อนลง
+            // Silver, #8F8F8F คั่นก่อนขึ้นจาก Dark Gray) ให้เห็นเป็นไล่เฉดต่อเนื่องแบบผิวโลหะจริง ไม่ใช่
+            // ขั้นสีหยาบๆ
+            backgroundImage:
+              'linear-gradient(180deg, #FFFFFF 0%, #F0F0F0 15%, #C7C7C7 32%, #8A8A8A 48%, #5A5A5A 60%, #8F8F8F 78%, #C7C7C7 100%)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',

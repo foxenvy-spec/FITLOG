@@ -264,12 +264,12 @@ export default function MobileDashboardView() {
           รู้สึก "โลหะเย็น" หายไป) เหลือแค่ไล่สีเทาเย็นล้วนๆ (DASHBOARD_BG_CSS, ตอนนี้มี micro-gradient
           เกรย์สเกลจางๆ ซ้อนอยู่ในตัวแล้ว) + เกรนผิวโลหะ + vignette — แสงสีส้มยังอยู่ครบ แต่ย้ายไปประจำ
           ที่จุด Interactive เฉพาะ (Fitness Score bloom, ปุ่ม Start Workout, กระดิ่งแจ้งเตือน) แทนที่จะเป็น
-          ambient เต็มจอแบบเดิม ให้สายตาโฟกัสเฉพาะจุดที่ควรสนใจ — noise ลดจาก 0.04 เหลือ 0.03 ตาม
-          "Noise เบามาก 2-3%" ที่ขอ (ความแตกต่างของพื้นผิวมาจาก micro-gradient เป็นหลักแล้ว ไม่ต้องพึ่ง
-          noise หนักขึ้น) */}
+          ambient เต็มจอแบบเดิม ให้สายตาโฟกัสเฉพาะจุดที่ควรสนใจ — noise ลดอีกจาก 0.03 เหลือ 0.01 ตาม
+          "Noise ละเอียดมาก ~1% ไม่ใช่เห็นชัด" ที่ขอรอบล่าสุด (ความแตกต่างของพื้นผิวมาจาก micro-gradient
+          เป็นหลักแล้ว noise แค่เสริมเกรนละเอียดจริงๆ) */}
       <div className="relative" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }} />
+          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.01, mixBlendMode: 'overlay' }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>
 
