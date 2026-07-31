@@ -11,14 +11,16 @@ import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import Image from 'next/image'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { COLORS, withAlpha, lighten } from '@/lib/theme'
 
-// Dark Titanium — การ์ดทุกใบใช้ผิวโลหะเข้มสีเดียวกันหมด (ไม่มีสี accent แยกตามวัน/กลุ่มกล้ามเนื้ออีกแล้ว)
-// ให้มิติมาจากแสง/เงา (bevel, drop shadow) แทน glow สี ตัวที่แยกแต่ละการ์ดออกจากกันคือ "รูป" เท่านั้น
-// สีส้ม (COLORS.amber) เหลือใช้จุดเดียวคือปุ่ม Start ซึ่งเป็นสีแบรนด์หลักของ FitLog (ธีมดำ-ส้ม)
-//
+// Dark Titanium — พื้นการ์ดยังเป็นผิวโลหะเข้มเดียวกันหมด (ไม่ใช่ glow สีจัดๆ แบบก่อนหน้า) แต่เอาสัญญะสี
+// ต่อวันกลับมาบางๆ (ขอบซ้าย + glow รอบไอคอนแบบเบาๆ) เพราะฟีดแบ็กบอกว่าไม่มีสีเลยรู้สึกจืดไป — ต่างจาก
+// เวอร์ชันก่อนตรงที่สีนี้เป็น "จุดเสริม" ไม่ใช่ตัวเด่นของการ์ดอีกต่อไป สีส้ม (COLORS.amber) ยังเป็นสีแบรนด์
+// หลักจุดเดียวที่ปุ่ม Start ตามธีมดำ-ส้มของ FitLog
+const ACCENT_PALETTE = [COLORS.amber, COLORS.steel, COLORS.violet, COLORS.moss, COLORS.rust] as const
+
 // รูปประกอบวงกลม — ไฟล์ทั้งหมดอยู่ที่ public/images/templates/ เป็น PNG โปร่งใส (ยกเว้น upper.png
-// ที่พื้นหลังเข้มอยู่แล้ว) ขนาดจริง 1024x1024
+// ที่พื้นหลังเข้มอยู่แล้ว) ขนาดจริง 1024x1024 — เรียงคู่กับ ACCENT_PALETTE ตำแหน่งต่อตำแหน่ง (index เดียวกัน)
 const ICON_PALETTE = [
   '/images/templates/lower.png',
   '/images/templates/upper.png',
@@ -545,25 +547,35 @@ export default function TemplatesPage() {
       {templates.map((t, i) => {
           const exercises = exercisesByTemplate[t.id] ?? []
           const expanded = expandedId === t.id
+          const accent = ACCENT_PALETTE[i % ACCENT_PALETTE.length]
           const icon = ICON_PALETTE[i % ICON_PALETTE.length]
           return (
-            <div key={t.id} className="relative animate-rise">
+            <div
+              key={t.id}
+              className="relative animate-rise"
+              style={{ animationDuration: '350ms', animationDelay: `${i * 60}ms` }}
+            >
               {/* เงาของการ์ดต้องอยู่ที่ "ห่อนอก" ใบนี้ (ไม่มี overflow-hidden) — overflow-hidden จะไปตัด
                   box-shadow ของ "ตัวเอง" ทิ้งด้วย เลยแยกเป็น 2 ชั้น: ห่อนอกคุมขอบ/เงา, ห่อในคุม
-                  overflow-hidden สำหรับพื้นหลัง/รูปที่ต้องโค้งตามการ์ด — Dark Titanium: ไม่มีสี accent
-                  แยกตามการ์ดอีกแล้ว ทุกใบเป็นผิวโลหะเข้มสีเดียวกัน มิติมาจาก shadow/bevel ล้วนๆ
-                  ตัวที่แยกแต่ละการ์ดออกจากกันคือ "รูปกล้ามเนื้อ" เท่านั้น ให้รูปเป็นจุดเด่นจริงๆ */}
+                  overflow-hidden สำหรับพื้นหลัง/รูปที่ต้องโค้งตามการ์ด — พื้นการ์ดยังเป็นโลหะเข้มเดียวกัน
+                  ทุกใบ (มิติหลักมาจาก shadow/bevel) แต่มีขอบซ้าย + glow บางๆ สีต่อวันเป็นสัญญะเสริม */}
               <div
                 className="rounded-3xl"
                 style={{
                   border: '1px solid rgba(255,255,255,.08)',
-                  boxShadow: ['0 20px 45px rgba(0,0,0,.5)', '0 1px 0 rgba(255,255,255,.05)'].join(', '),
+                  borderLeftWidth: 3,
+                  borderLeftColor: accent,
+                  boxShadow: [
+                    '0 20px 45px rgba(0,0,0,.5)',
+                    '0 1px 0 rgba(255,255,255,.05)',
+                    `0 0 20px ${withAlpha(accent, '1A')}`,
+                  ].join(', '),
                 }}
               >
                 <div
                   className="relative rounded-3xl overflow-hidden"
                   style={{
-                    backgroundImage: 'linear-gradient(180deg, #2E3037 0%, #24262C 45%, #191A1E 100%)',
+                    backgroundImage: 'linear-gradient(180deg, #2D2F36 0%, #23252B 45%, #1A1C21 100%)',
                     boxShadow: ['inset 0 1px 0 rgba(255,255,255,.08)', 'inset 0 -1px 0 rgba(0,0,0,.5)'].join(', '),
                   }}
                 >
@@ -583,19 +595,40 @@ export default function TemplatesPage() {
                       onClick={() => setExpandedId(expanded ? null : t.id)}
                       className="flex items-center gap-3 min-w-0 flex-1 text-left"
                     >
-                      {/* วงแหวนรอบรูปเป็นโลหะเข้ากับพื้นหลัง (bezel ring + drop shadow) ไม่ใช่ glow สี
-                          เหมือนก่อนหน้า — ต้องอยู่บน span "ที่ไม่มี overflow-hidden" เหมือนการ์ด แล้วค่อย
-                          ซ้อน span ชั้นในที่ overflow-hidden ไว้ครอบรูป */}
-                      <span
-                        className="shrink-0 w-[72px] h-[72px] rounded-full flex items-center justify-center"
-                        style={{ boxShadow: '0 0 0 1px rgba(255,255,255,.15), 0 6px 14px rgba(0,0,0,.55)' }}
-                        aria-hidden="true"
-                      >
+                      {/* ไอคอนวงกลม: glow ด้านหลังหายใจเบาๆ (layer แยก ไม่แตะตัวรูป) + วงเบเซลโลหะนิ่ง
+                          + highlight บนพื้นหลังผสมสีต่อวัน (mix-blend-mode: screen) ให้ดูเหมือนมีไฟอยู่
+                          ข้างใน + รูปซูมเข้า 15% ให้กล้ามเนื้อเต็มวงมากกว่าเดิม */}
+                      <span className="relative shrink-0 w-20 h-20 flex items-center justify-center">
                         <span
-                          className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
-                          style={{ background: 'radial-gradient(circle at 35% 30%, #4A4D54, #2A2C31)' }}
+                          className="absolute inset-0 rounded-full animate-icon-glow-breathe pointer-events-none"
+                          style={{ background: `radial-gradient(circle, ${withAlpha(accent, '66')}, transparent 70%)`, filter: 'blur(14px)' }}
+                          aria-hidden="true"
+                        />
+                        <span
+                          className="relative w-full h-full rounded-full flex items-center justify-center"
+                          style={{ boxShadow: '0 0 0 1px rgba(255,255,255,.15), 0 6px 14px rgba(0,0,0,.55)' }}
+                          aria-hidden="true"
                         >
-                          <Image src={icon} alt="" width={72} height={72} className="w-full h-full object-cover" />
+                          <span
+                            className="relative w-full h-full rounded-full overflow-hidden flex items-center justify-center"
+                            style={{ background: `radial-gradient(circle at 35% 30%, ${lighten(accent, 0.15)}, #2A2C31)` }}
+                          >
+                            <Image
+                              src={icon}
+                              alt=""
+                              width={80}
+                              height={80}
+                              className="w-full h-full object-cover"
+                              style={{ transform: 'scale(1.15)' }}
+                            />
+                            <span
+                              className="absolute inset-0 rounded-full pointer-events-none"
+                              style={{
+                                background: `radial-gradient(circle at 50% 40%, ${withAlpha(accent, '4D')}, transparent 60%)`,
+                                mixBlendMode: 'screen',
+                              }}
+                            />
+                          </span>
                         </span>
                       </span>
                       <span className="min-w-0">
@@ -612,8 +645,8 @@ export default function TemplatesPage() {
                       disabled={startingId === t.id || exercises.length === 0}
                       className="shrink-0 w-[92px] rounded-[18px] text-[9px] leading-tight font-display tracked uppercase text-bg py-2 px-3 text-center active:scale-[0.99] disabled:opacity-40 transition"
                       style={{
-                        backgroundImage: 'linear-gradient(180deg, #FFC94B, #FF9700)',
-                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.4), 0 8px 20px rgba(255,150,0,.45)',
+                        backgroundImage: 'linear-gradient(180deg, #FFDA8C 0%, #FFC94B 40%, #FF9700 100%)',
+                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.2), 0 8px 20px rgba(255,150,0,.45)',
                       }}
                     >
                       {startingId === t.id ? '...' : `Start ${t.title}`}

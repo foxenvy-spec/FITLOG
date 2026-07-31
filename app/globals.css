@@ -306,6 +306,16 @@
   animation: ring-tip-pulse 2.4s ease-in-out infinite;
 }
 
+/* เทมเพลตหน้ามือถือ — วง glow หลังไอคอนวงกลม "หายใจ" เบาๆ ต่อเนื่อง ให้รู้สึกว่ามีไฟอยู่ข้างในโดยไม่รบกวน
+   สายตา (scale ล้วนๆ ไม่ใช่ opacity กันสีเพี้ยน) อยู่บน layer แยกจากตัวรูป/วงเบเซล ไม่กระทบทั้งสองอย่างนั้น */
+@keyframes icon-glow-breathe {
+  0%, 100% { transform: scale(0.95); }
+  50% { transform: scale(1.05); }
+}
+.animate-icon-glow-breathe {
+  animation: icon-glow-breathe 4.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
@@ -323,7 +333,8 @@
   .animate-wave-flow-slow,
   .animate-ring-gradient-shift,
   .animate-subtitle-accent-pulse,
-  .animate-ring-tip-pulse {
+  .animate-ring-tip-pulse,
+  .animate-icon-glow-breathe {
     animation: none !important;
   }
 }
