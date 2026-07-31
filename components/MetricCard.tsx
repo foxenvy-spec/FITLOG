@@ -194,32 +194,37 @@ export default function MetricCard({
           </p>
 
           {compact ? (
-            // มือถือ (compact): 3 โซนตาม Design Token ล่าสุด — บน (ไอคอน+ชื่อ, เรนเดอร์ไว้ด้านบนแล้ว) /
-            // กลาง (ตัวเลขใหญ่ 44px เดี่ยวๆ) / ล่าง (sparkline เต็มความกว้าง + Change Indicator) — ปกติ
-            // flow ธรรมดา (ไม่ใช้ position:absolute) ปล่อยให้ flex flex-col justify-between ของ wrapper
-            // ด้านบนกระจายพื้นที่ 3 โซนนี้เอง เดสก์ท็อป (compact=false) ไม่กระทบ ดู branch ด้านล่าง
+            // มือถือ (compact): ตรงตามภาพอ้างอิงจริง (Image A) — value+unit+delta อยู่แถวเดียวกัน (delta
+            // ชิดขวา) ต่อด้วย sparkline เต็มความกว้างเป็นแถวแยกด้านล่าง — ตัวเลข 28px (ไม่ใช่ 44/56px ตามที่
+            // เคยลองก่อนหน้า เพราะ 44px ขึ้นไปทำให้ unit+delta ไม่พอที่จะอยู่แถวเดียวกันได้จริงในการ์ดกว้าง
+            // ~130px) ปกติ flow ธรรมดา ปล่อยให้ flex flex-col justify-between ของ wrapper ด้านบนกระจายพื้นที่
+            // เดสก์ท็อป (compact=false) ไม่กระทบ ดู branch ด้านล่าง
             <>
-              <p
-                className="font-mono leading-none text-ink"
-                style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}
-              >
-                {splitValueUnit(valueText).num}
-                {splitValueUnit(valueText).unit && (
-                  <span style={{ fontWeight: 500, fontSize: '0.36em' }}> {splitValueUnit(valueText).unit}</span>
-                )}
-              </p>
-              <div>
-                {series.length >= 2 && <Sparkline series={series} color={theme.main} height={26} width={200} stretch />}
+              <div className="flex items-center justify-between gap-2">
+                <p
+                  className="font-mono leading-none text-ink"
+                  style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {splitValueUnit(valueText).num}
+                  {splitValueUnit(valueText).unit && (
+                    <span style={{ fontWeight: 500, fontSize: '0.5em' }}> {splitValueUnit(valueText).unit}</span>
+                  )}
+                </p>
                 {deltaText && (
                   <p
-                    className="font-semibold whitespace-nowrap flex items-center gap-1 leading-none"
-                    style={{ color: deltaColor, fontSize: 13, marginTop: 6 }}
+                    className="font-semibold whitespace-nowrap flex items-center gap-1 leading-none shrink-0"
+                    style={{ color: deltaColor, fontSize: 12 }}
                   >
                     {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
                     {splitDeltaCaption(deltaText).trend}
                   </p>
                 )}
               </div>
+              {series.length >= 2 && (
+                <div className="mt-2 w-full">
+                  <Sparkline series={series} color={theme.main} height={24} width={200} stretch />
+                </div>
+              )}
             </>
           ) : (
             // เดสก์ท็อป — ไม่กระทบ เหมือนเดิมทุกประการ (position:absolute ชิดขอบล่าง, ตัวเลข+กราฟข้างกัน,

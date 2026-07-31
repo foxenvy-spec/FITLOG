@@ -57,9 +57,9 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
 
       <div className="flex flex-col items-end gap-2 shrink-0">
         <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
-        {/* วง Fitness Score ใหญ่ขึ้นมากตามสเปคใหม่ (150-160px, เดิม 84px) — FitnessRing/FitnessScore
-            สเกล stroke/font ภายในตาม size prop อยู่แล้วโดยอัตโนมัติ ไม่ต้องแก้ไฟล์อื่นเพิ่ม */}
-        <FitnessScore score={fitnessScore} size={156} />
+        {/* วง Fitness Score 148px (ในกรอบ 146-150px ตามสเปคล่าสุด, เดิมลอง 156px เกินกรอบ) —
+            FitnessRing/FitnessScore สเกล stroke/font ภายในตาม size prop อยู่แล้วโดยอัตโนมัติ */}
+        <FitnessScore score={fitnessScore} size={148} />
       </div>
     </div>
   )
