@@ -41,16 +41,13 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           /100
         </span>
       </FitnessRing>
-      {/* margin/font ลดลงจากเดิม (mt-1→mt-0.5, maxWidth 120→110) ให้ text stack ใต้วงกระชับขึ้น —
-          บรรทัด recommendation บังคับบรรทัดเดียว (nowrap+ellipsis, เดิมปล่อย wrap ได้ 2 บรรทัด) เพราะ
-          ข้อความยาว (เช่น "Your body needs recovery") ดันให้คอลัมน์วงสูงกว่าคอลัมน์ซ้ายมาก กลายเป็น
-          ตัวแปรหลักที่ทำให้ header ทั้งก้อนสูงเกิน budget */}
+      {/* ตัดบรรทัด "Fitness Score" micro-label ออก (เดิมอยู่เหนือ tier label) — ความหมายของวงชัดเจน
+          อยู่แล้วจากบริบท (ตัวเลข 0-100 + /100 กลางวง) ไม่ต้องมีป้ายชื่อซ้ำ ประหยัดพื้นที่แนวตั้งได้อีก
+          ชั้นหนึ่ง — บรรทัด recommendation ยังคงบังคับบรรทัดเดียว (nowrap+ellipsis) เพราะข้อความยาว
+          (เช่น "Your body needs recovery") ดันให้คอลัมน์วงสูงกว่าคอลัมน์ซ้ายมาก */}
       <div className="text-center">
-        <p className="tracked uppercase text-muted leading-none" style={{ fontSize: 10 }}>
-          Fitness Score
-        </p>
         <p
-          className="font-display font-bold tracked uppercase leading-tight mt-0.5"
+          className="font-display font-bold tracked uppercase leading-tight"
           style={{ fontSize: 14, color: score.color }}
         >
           {score.tierLabel}
