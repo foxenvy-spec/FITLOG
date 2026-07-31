@@ -12,15 +12,11 @@ interface TodaysWorkoutCompactCardProps {
   href: string
 }
 
-// การ์ด "Today's Workout" — v4: จัดเลย์เอาต์ใหม่ตามภาพอ้างอิงที่ผู้ใช้ส่งมา (ตัวเลขเศษส่วนใหญ่ขึ้น
-// เป็นจุดเด่นหลัก แยกบรรทัดจาก label ด้านบน + progress bar เต็มความกว้างพร้อมปุ่มลูกศรวงกลมลอยท้าย
-// แถบ) แทนที่แถวเดียวแบบ v2/v3 เดิม — การ์ดสูงขึ้นจาก ~80px เป็นประมาณ 130-140px ตามที่ขอ ไม่มี wrapper
-// ไหนใน MobileDashboardView กำหนดความสูงตายตัวไว้ (แค่ space-y ปกติ) จึงขยายได้อย่างปลอดภัย
-//
-// ไอคอนดัมเบลเล็ก (แถวบน) ยังใช้ mixBlendMode: screen เหมือนเดิม (พื้นดำของรูปกลืนเข้ากับพื้นหลังวงสี
-// อำพันจางๆ) แต่ปุ่มลูกศรตอนนี้ใหญ่ขึ้นและทำหน้าที่เป็นปุ่มกดจริงๆ แยกเป็นชิ้นเด่นของตัวเอง — รูปนี้ทรง
-// วงกลมมีขอบ/glow อยู่ในตัวอยู่แล้ว จึงปล่อยพื้นดำของมันไว้ตามธรรมชาติ (ไม่ blend) ให้ดูเป็นปุ่มวงกลมจริง
-// แทนที่จะกลืนหายไปเป็นแค่ไอคอนแบนๆ เหมือนตอนใช้เป็นไอคอนเล็กแทรกในข้อความ
+// การ์ด "Today's Workout" — v5: คอลัมน์เนื้อหาซ้าย + รูปภาพชิดขวา (แยกโซนชัดเจน แทนรูปเต็มพื้นหลัง
+// การ์ด+ไล่เฉดมืดทับแบบ v4 เดิม) ตามสเปคใหม่ที่ขอ "Image stays on right. Content stays left. Button
+// should NOT overlap image." — ปุ่มลูกศร/progress bar อยู่ในคอลัมน์ซ้ายล้วนๆ จึงไม่มีทางทับรูปได้เลย
+// โดยโครงสร้าง ไม่ต้องคำนวณตำแหน่งเอง — ความสูงขั้นต่ำ 180px ตาม spacing token (เดิมสูงตามเนื้อหา
+// ~130-140px)
 export default function TodaysWorkoutCompactCard({ completed, total, href }: TodaysWorkoutCompactCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
 
@@ -28,22 +24,12 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
     <PremiumCard
       as={Link}
       href={href}
-      className="relative overflow-hidden block active:scale-[0.99] transition"
-      // ความสูงขั้นต่ำตาม spacing token ใหม่ (Workout Card 180-200px, เดิมสูงตามเนื้อหา ~130-140px)
-      style={{ padding: 18, minHeight: 180 }}
+      className="relative overflow-hidden flex active:scale-[0.99] transition"
+      style={{ padding: 0, minHeight: 180 }}
     >
-      {/* พื้นหลังฉากยิม — โฟกัสฝั่งขวาที่มีดัมเบลเรืองแสง เปิดให้เห็นชัดขึ้นกว่า v3 (เนื้อหาทั้งหมดตอนนี้
-          ชิดซ้ายเป็นคอลัมน์เดียว ไม่ได้ทับพื้นที่ฝั่งขวาเหมือนเดิม) ไล่เฉดมืดจากซ้ายทับอีกชั้นแค่พอให้
-          ตัวหนังสืออ่านออก ไม่ต้องมืดจัดเท่า v3 */}
-      <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '80% 55%' }} />
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(90deg, rgba(20,22,26,0.95) 0%, rgba(20,22,26,0.8) 40%, rgba(20,22,26,0.25) 100%)' }}
-        />
-      </div>
-
-      <div className="relative z-10">
+      {/* คอลัมน์เนื้อหา — padding ของตัวเองแทนที่ padding ของ PremiumCard (ปิดไว้ที่ 0 ด้านบน เพราะ
+          คอลัมน์รูปฝั่งขวาต้องชนขอบการ์ดเต็มๆ ไม่มี padding ครอบ) */}
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-between" style={{ padding: 18 }}>
         {/* แถวบน — ไอคอนเล็ก + label */}
         <div className="flex items-center gap-2">
           <span
@@ -63,26 +49,38 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
           <p className="text-[11px] tracked uppercase text-muted">Today&apos;s Workout</p>
         </div>
 
-        {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ดตามภาพอ้างอิง */}
-        <div className="flex items-baseline gap-1 mt-3">
-          <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 34 }}>
-            {completed}
-          </span>
-          <span className="text-muted leading-none" style={{ fontSize: 18 }}>
-            /{total}
-          </span>
-        </div>
-        <p className="text-xs text-muted mt-1">ท่าที่ทำแล้ว</p>
-
-        {/* progress bar เต็มความกว้าง + ปุ่มลูกศรวงกลมท้ายแถบ */}
-        <div className="flex items-center gap-3 mt-4">
-          <div className="h-2 rounded-full bg-surface2 flex-1 overflow-hidden">
-            <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
+        <div>
+          {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ด */}
+          <div className="flex items-baseline gap-1">
+            <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 34 }}>
+              {completed}
+            </span>
+            <span className="text-muted leading-none" style={{ fontSize: 18 }}>
+              /{total}
+            </span>
           </div>
-          <span className="shrink-0 w-9 h-9" aria-hidden="true">
-            <Image src="/icons/today-workout-icon-arrow.png" alt="" width={36} height={36} className="w-full h-full object-cover rounded-full" />
-          </span>
+          <p className="text-xs text-muted mt-1">ท่าที่ทำแล้ว</p>
+
+          {/* progress bar + ปุ่มลูกศรวงกลม — อยู่ในคอลัมน์ซ้ายทั้งคู่ ไม่ล้ำเข้าไปในโซนรูปฝั่งขวาแน่นอน */}
+          <div className="flex items-center gap-3 mt-4">
+            <div className="h-2 rounded-full bg-surface2 flex-1 overflow-hidden">
+              <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
+            </div>
+            <span className="shrink-0 w-9 h-9" aria-hidden="true">
+              <Image src="/icons/today-workout-icon-arrow.png" alt="" width={36} height={36} className="w-full h-full object-cover rounded-full" />
+            </span>
+          </div>
         </div>
+      </div>
+
+      {/* คอลัมน์รูปฝั่งขวา — ชนขอบการ์ดเต็มความสูง overflow-hidden ของ PremiumCard ตัดขอบให้เอง
+          เกรเดียนต์บางๆ ที่ขอบซ้ายกลืนรอยต่อกับคอลัมน์เนื้อหาไม่ให้ดูตัดแข็งเกินไป */}
+      <div className="relative w-[38%] shrink-0" aria-hidden="true">
+        <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '75% 55%' }} />
+        <div
+          className="absolute inset-y-0 left-0 w-10"
+          style={{ background: 'linear-gradient(90deg, rgba(22,22,22,0.9), transparent)' }}
+        />
       </div>
     </PremiumCard>
   )

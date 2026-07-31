@@ -30,7 +30,8 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
           style={{
             marginTop: 4,
             fontFamily: 'var(--font-oswald), var(--font-kanit)',
-            fontSize: 'clamp(38px, 13vw, 52px)',
+            // Username 56-64px ตามสเปคใหม่ (เดิม clamp สูงสุด 52px) — ยังคง clamp ไว้กันจอแคบมากๆ พัง
+            fontSize: 'clamp(40px, 14vw, 58px)',
             fontWeight: 900,
             letterSpacing: '2px',
             lineHeight: 1,
@@ -43,7 +44,8 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
           {displayName}
         </p>
 
-        <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 2, fontSize: 11 }}>
+        {/* ระยะห่างชื่อ→subtitle 8px ตามสเปคใหม่ (เดิม 2px) */}
+        <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 8, fontSize: 11 }}>
           Personalized Fitness
         </p>
         <SubtitleAccent />
@@ -55,7 +57,9 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
 
       <div className="flex flex-col items-end gap-2 shrink-0">
         <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
-        <FitnessScore score={fitnessScore} size={84} />
+        {/* วง Fitness Score ใหญ่ขึ้นมากตามสเปคใหม่ (150-160px, เดิม 84px) — FitnessRing/FitnessScore
+            สเกล stroke/font ภายในตาม size prop อยู่แล้วโดยอัตโนมัติ ไม่ต้องแก้ไฟล์อื่นเพิ่ม */}
+        <FitnessScore score={fitnessScore} size={156} />
       </div>
     </div>
   )
