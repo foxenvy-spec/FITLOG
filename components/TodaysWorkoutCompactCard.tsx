@@ -31,18 +31,18 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
           คอลัมน์รูปฝั่งขวาต้องชนขอบการ์ดเต็มๆ ไม่มี padding ครอบ) — จาก dashboardSpec.workoutCard.padding
           (13px, เดิม 16px) */}
       <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-between" style={{ padding: dashboardSpec.workoutCard.padding }}>
-        {/* แถวบน — ไอคอนเล็ก + label */}
+        {/* แถวบน — ไอคอนเล็ก + label — ไอคอนลดจาก 32px เป็น 24px ให้พอดีกับความสูงการ์ดที่ลดลงมาก */}
         <div className="flex items-center gap-2">
           <span
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
             style={{ backgroundColor: `${COLORS.amber}22` }}
             aria-hidden="true"
           >
             <Image
               src="/icons/today-workout-icon-dumbbell.png"
               alt=""
-              width={32}
-              height={32}
+              width={24}
+              height={24}
               className="w-full h-full object-cover"
               style={{ mixBlendMode: 'screen' }}
             />
@@ -51,24 +51,26 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
         </div>
 
         <div>
-          {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ด — ลดจาก 34px เป็น 30px ให้พอดีกับความสูงการ์ดที่ลดลง */}
+          {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ด — ลดจาก 30px เป็น 24px เพื่อให้พอดีกับความสูงการ์ด
+              102px (128px เดิม -20%) ตัดบรรทัด "ท่าที่ทำแล้ว" ออก (label บนสุด + เศษส่วนสื่อความหมาย
+              พอแล้วโดยไม่ต้องมีบรรทัดอธิบายซ้ำ) — physical constraint: ที่ความสูงนี้ไม่มีที่พอสำหรับ
+              4 บรรทัด (label/value/caption/progress) พร้อมกันถ้าไม่ตัดอะไรออกเลย */}
           <div className="flex items-baseline gap-1">
-            <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 30 }}>
+            <span className="font-mono text-ink font-bold leading-none" style={{ fontSize: 24 }}>
               {completed}
             </span>
-            <span className="text-muted leading-none" style={{ fontSize: 16 }}>
+            <span className="text-muted leading-none" style={{ fontSize: 14 }}>
               /{total}
             </span>
           </div>
-          <p className="text-xs text-muted mt-1">ท่าที่ทำแล้ว</p>
 
           {/* progress bar + ปุ่มลูกศรวงกลม — อยู่ในคอลัมน์ซ้ายทั้งคู่ ไม่ล้ำเข้าไปในโซนรูปฝั่งขวาแน่นอน */}
-          <div className="flex items-center gap-3 mt-3">
-            <div className="h-2 rounded-full bg-surface2 flex-1 overflow-hidden">
+          <div className="flex items-center gap-2 mt-2">
+            <div className="h-1.5 rounded-full bg-surface2 flex-1 overflow-hidden">
               <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
             </div>
-            <span className="shrink-0 w-8 h-8" aria-hidden="true">
-              <Image src="/icons/today-workout-icon-arrow.png" alt="" width={32} height={32} className="w-full h-full object-cover rounded-full" />
+            <span className="shrink-0 w-6 h-6" aria-hidden="true">
+              <Image src="/icons/today-workout-icon-arrow.png" alt="" width={24} height={24} className="w-full h-full object-cover rounded-full" />
             </span>
           </div>
         </div>

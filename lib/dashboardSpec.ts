@@ -2,43 +2,44 @@
 // ระยะห่างที่ใช้ซ้ำในหลายไฟล์ (Header, MetricCard, TodaysFocusCard, TodaysWorkoutCompactCard,
 // TodayHealthStatsRow, BottomNav) กันไม่ให้แต่ละไฟล์ "เดาสัดส่วน" กันเองแบบที่เคยเกิดปัญหามาหลายรอบ —
 // ห้ามขยาย/ย่อค่าพวกนี้เองโดยไม่ตั้งใจ ถ้าต้องปรับให้แก้ที่ไฟล์นี้จุดเดียว แล้วค่าที่ import ไปใช้จะ
-// ตามมาเองทุกจุด — v4: รอบที่ 3 ของการลดสัดส่วน ตามฟีดแบ็ก "hero section ยังกิน 35-38% ของจอ (ควร
-// 28-30%), การ์ดสรุปยังใหญ่สุด, padding การ์ดเยอะ, รูป Today's Workout กินพื้นที่เกินข้อมูล"
+// ตามมาเองทุกจุด — v5: รอบที่ 4 ของการลดสัดส่วน — รอบนี้ผู้ใช้ระบุชัดเจนว่า "ไม่ลด font ทุกอย่าง เพราะ
+// จะอ่านยาก เน้นลดความสูง+padding+gap แทน" จึงตัด valueFontSize/labelFontSize/sparklineHeight/ชื่อ
+// header ออกจากรอบนี้ (คงค่าจาก v4 ไว้ทุกจุด) ปรับเฉพาะมิติ height/padding/gap/ขนาดวงกลม
 export const dashboardSpec = {
   screen: {
     width: 393,
     horizontalPadding: 20,
-    sectionGap: 20,
+    sectionGap: 16, // -22% จาก 20
   },
   header: {
-    height: 158, // -12% จาก 180
-    scoreRingSize: 109, // -10% จาก 121
+    height: 131, // -17% จาก 158
+    scoreRingSize: 90, // -17% จาก 109
   },
   focusCard: {
     height: 67,
     borderRadius: 24,
-    padding: 11, // -15% จาก 13 (Card Padding rule)
+    padding: 9, // -20% จาก 11 (Card Padding rule)
   },
   metricCard: {
-    height: 115, // -15% จาก 136 (~21px, ตรงตามที่ขอ "เตี้ยลง 20-25px")
+    height: 94, // -18% จาก 115 (Summary Card rule)
     borderRadius: 24,
-    padding: 11, // -15% จาก 13
+    padding: 9, // -20% จาก 11
     gridGap: 14,
-    valueFontSize: 22,
-    sparklineHeight: 20,
-    labelFontSize: 15, // -1pt จาก 16 (กันชื่อยาวตัดบรรทัดเพิ่มความสูงการ์ดโดยไม่จำเป็น)
+    valueFontSize: 22, // คงเดิม — ไม่ลด font รอบนี้ตามที่ขอ
+    sparklineHeight: 20, // คงเดิม
+    labelFontSize: 15, // คงเดิม
   },
   workoutCard: {
-    height: 128, // -12% จาก 145
+    height: 102, // -20% จาก 128
     borderRadius: 24,
-    padding: 11, // -15% จาก 13
-    imageWidthPct: 35, // เดิม 36% — ใกล้เคียงเป้าหมาย "รูป 35% ข้อมูล 65%" ที่ขอ
+    padding: 9, // -20% จาก 11
+    imageWidthPct: 27, // -23% จาก 35 (Workout Image rule)
   },
   healthBanner: {
     height: 74,
   },
   floatingButton: {
-    size: 73, // -5% จาก 77
+    size: 68, // -7% จาก 73
   },
   bottomNav: {
     height: 74,

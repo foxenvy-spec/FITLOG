@@ -41,8 +41,10 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           /100
         </span>
       </FitnessRing>
-      {/* margin/font ลดลงจากเดิม (mt-1→mt-0.5, maxWidth 120→110) ให้ text stack ใต้วงกระชับขึ้น
-          ตามภาพอ้างอิงจริง (Image A) ที่ header รวมทั้งก้อนต้องอยู่ในกรอบ ~220px */}
+      {/* margin/font ลดลงจากเดิม (mt-1→mt-0.5, maxWidth 120→110) ให้ text stack ใต้วงกระชับขึ้น —
+          บรรทัด recommendation บังคับบรรทัดเดียว (nowrap+ellipsis, เดิมปล่อย wrap ได้ 2 บรรทัด) เพราะ
+          ข้อความยาว (เช่น "Your body needs recovery") ดันให้คอลัมน์วงสูงกว่าคอลัมน์ซ้ายมาก กลายเป็น
+          ตัวแปรหลักที่ทำให้ header ทั้งก้อนสูงเกิน budget */}
       <div className="text-center">
         <p className="tracked uppercase text-muted leading-none" style={{ fontSize: 10 }}>
           Fitness Score
@@ -53,7 +55,10 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
         >
           {score.tierLabel}
         </p>
-        <p className="text-muted leading-tight mt-0.5" style={{ fontSize: 9, maxWidth: 110 }}>
+        <p
+          className="text-muted leading-tight mt-0.5"
+          style={{ fontSize: 9, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
           {score.recommendation}
         </p>
       </div>
