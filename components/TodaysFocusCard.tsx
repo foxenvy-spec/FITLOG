@@ -18,8 +18,17 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
       as={Link}
       href={href}
       className="flex items-center justify-between gap-3 active:scale-[0.99] transition"
-      // padding ลดจาก 20 → 14 ตามฟีดแบ็ก (Header+Today's Focus รวมกันกินพื้นที่เยอะไป)
-      style={{ padding: 14 }}
+      style={{
+        // padding ลดจาก 20 → 14 ตามฟีดแบ็ก (Header+Today's Focus รวมกันกินพื้นที่เยอะไป)
+        padding: 14,
+        // มุมตัด (cut-corner) ที่ขอบซ้ายบน — ให้ความรู้สึก "แผ่นโลหะ/ตั๋วเข้างาน" แทนมุมโค้งมนเรียบๆ
+        // เหมือนการ์ดอื่น ตัดเฉพาะการ์ดนี้ใบเดียว (จุดสนใจของหน้า ไม่ใช่ทุกการ์ดตัดหมด) มุมที่เหลือ
+        // (บนขวา/ล่างขวา/ล่างซ้าย) เป็นมุมตัดเล็ก 4px แทนมุมโค้งเดิม (clip-path ทับ border-radius ของ
+        // PremiumCard ไปเลย ไม่ต้องแก้ radius ของ component กลาง) ค่าเป็น calc() ทั้งหมดกันพัง ถ้าการ์ด
+        // เปลี่ยนความสูง/กว้างทีหลัง
+        clipPath:
+          'polygon(18px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 18px)',
+      }}
     >
       <div className="flex items-center gap-3 min-w-0">
         {/* กลับไปใหญ่ขึ้น (24px -> 36px) ตามที่ยืนยันทิศทางแล้ว — เดิมย่อลงไปรอบก่อนหน้า —

@@ -43,7 +43,22 @@ export interface MetricCardProps {
 
 // เส้นกราฟจิ๋วมุมขวาล่างของการ์ด — เส้นโค้งมน (Catmull-Rom สมูทตาม tension) พร้อมพื้นที่ใต้เส้น
 // เติมสีจางๆ (15% alpha) ล้อสีเดียวกับเส้น ตามสเปคที่ขอ (คล้าย Chart.js: borderColor / backgroundColor / tension)
-function Sparkline({ series, color, height = 30, width = 64 }: { series: number[]; color: string; height?: number; width?: number }) {
+function Sparkline({
+  series,
+  color,
+  height = 30,
+  width = 64,
+  stretch = false,
+}: {
+  series: number[]
+  color: string
+  height?: number
+  width?: number
+  // true = เส้นกราฟยืดเต็มความกว้าง container (ใช้ตอนวางเป็นแถวเดี่ยวใต้ตัวเลข/เดลต้า
+  // แทนที่จะอยู่ข้างตัวเลขแบบเดิม) — width param ยังใช้คำนวณตำแหน่งจุดในระบบพิกัด viewBox
+  // อยู่เหมือนเดิม แค่ตัว <svg> เองยืดตาม container จริงแทนที่จะตรึงพิกเซล
+  stretch?: boolean
+}) {
   const glowId = useId()
   if (series.length < 2) return null
   const w = width
@@ -75,7 +90,15 @@ function Sparkline({ series, color, height = 30, width = 64 }: { series: number[
   const areaPath = `${linePath} L ${points[n - 1][0].toFixed(2)},${h} L ${points[0][0].toFixed(2)},${h} Z`
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" style={{ overflow: 'visible' }} aria-hidden="true">
+    <svg
+      width={stretch ? '100%' : w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio={stretch ? 'none' : undefined}
+      className={stretch ? 'block' : 'shrink-0'}
+      style={{ overflow: 'visible' }}
+      aria-hidden="true"
+    >
       <defs>
         {/* 2 filter: อันแรก blur แคบ (ใกล้เส้น) อันที่สอง blur กว้างกว่า (ฟุ้งไกลกว่า) ซ้อนกัน — ลด blur
             radius ลงจากเดิม (4.5/2.2 → 3/1.4) ให้แสงกระชับ/เบาลง ดูคุมโทนแบบ Apple Health มากกว่า
@@ -269,62 +292,69 @@ export default function MetricCard({
             </span>
             {label}
           </p>
-          {/* ตรึงด้วย position:absolute ชิดขอบล่าง/ซ้าย/ขวาของการ์ดโดยตรง แทนการพึ่ง margin-top:auto
-              แถวบน (ตัวเลข+กราฟ) กราฟอยู่ข้างตัวเลขแทนที่จะทับบรรทัดเดลต้าด้านล่าง */}
+          {/* ตรึงด้วย position:absolute ชิดขอบล่าง/ซ้าย/ขวาของการ์ดโดยตรง แทนการพึ่ง margin-top:auto */}
           <div className="absolute left-0 right-0 bottom-0">
-            <div className="flex items-center justify-between gap-2">
-              {/* letter-spacing: มือถือ (compact) เปลี่ยนจาก tracking-tight (ชิดเข้าไปอีก) เป็นบวก
-                  +0.5px แทน ตามสเปคที่ขอ (ตัวเลขอ่านง่ายขึ้น ไม่แน่นจนติดกัน) — เดสก์ท็อป (compact=false)
-                  คง -0.025em (ค่าเดียวกับ tracking-tight เดิม) ไว้ทุกประการ ไม่กระทบ */}
-              <p
-                className="font-mono leading-none text-ink"
-                style={{
-                  fontSize: compact ? 19 : 20,
-                  letterSpacing: compact ? '0.5px' : '-0.025em',
-                  // ตัวเลขความกว้างเท่ากันทุกหลัก (tabular figures) กันเลขกระโดดตอนค่าเปลี่ยน
-                  // (เช่น "1" แคบกว่า "8" ปกติ) เฉพาะมือถือตามสเปคที่ขอ
-                  fontVariantNumeric: compact ? 'tabular-nums' : undefined,
-                }}
-              >
-                {/* Value font weight: ดีไซน์ระบุ Semibold (600) — ใช้เฉพาะมือถือ (compact) ตามสเปค
-                    เดสก์ท็อป (compact=false) คงน้ำหนัก 800 (Bold) เดิมไว้ทุกประการ ไม่กระทบ */}
-                <span style={{ fontWeight: compact ? 600 : 800 }}>{splitValueUnit(valueText).num}</span>
-                {splitValueUnit(valueText).unit && (
-                  <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
-                )}
-              </p>
-              <Sparkline series={series} color={theme.main} height={compact ? 20 : 30} width={compact ? 34 : 64} />
-            </div>
-            {deltaText && (() => {
-              // Trend/Caption แยกบรรทัด: เฉพาะมือถือ (compact) — "↓2.1 kg" (trend) กับ "จาก 2 เดือนก่อน"
-              // (caption) เป็นคนละบรรทัด/คนละน้ำหนักสีตามดีไซน์ (Caption 11px Regular, สีจางกว่า)
-              // เดสก์ท็อป (compact=false) ยังคงโชว์รวมกันบรรทัดเดียวเหมือนเดิมทุกประการ ไม่กระทบ
-              const { trend, caption } = compact ? splitDeltaCaption(deltaText) : { trend: deltaText, caption: null }
-              return (
-                <>
+            {compact ? (
+              // มือถือ (compact): ตัวเลข+เดลต้าอยู่แถวเดียวกัน (ชิดขวา) ส่วนกราฟจิ๋วย้ายลงมาเป็นแถบเดี่ยว
+              // เต็มความกว้างด้านล่างสุด แทนที่จะแทรกข้างตัวเลข — ตัดบรรทัด caption ("จาก X ก่อน") ออก
+              // เพื่อเผื่อพื้นที่แถวกราฟ เดสก์ท็อป (compact=false) ไม่กระทบ ดู branch ด้านล่าง
+              <>
+                <div className="flex items-center justify-between gap-2">
                   <p
-                    className={`font-semibold whitespace-nowrap flex items-center gap-1 ${compact ? 'leading-none' : ''}`}
-                    style={{ color: deltaColor, marginTop: compact ? 3 : 6, fontSize: compact ? 11 : 11 }}
+                    className="font-mono leading-none text-ink"
+                    style={{ fontSize: 19, letterSpacing: '0.5px', fontVariantNumeric: 'tabular-nums' }}
                   >
-                    {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
-                    {trend}
+                    <span style={{ fontWeight: 600 }}>{splitValueUnit(valueText).num}</span>
+                    {splitValueUnit(valueText).unit && (
+                      <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
+                    )}
                   </p>
-                  {caption && (
+                  {deltaText && (
                     <p
-                      className="whitespace-nowrap truncate leading-none"
-                      style={{ color: 'rgba(255,255,255,.5)', fontWeight: 400, fontSize: 10, marginTop: 2 }}
+                      className="font-semibold whitespace-nowrap flex items-center gap-1 leading-none shrink-0"
+                      style={{ color: deltaColor, fontSize: 11 }}
                     >
-                      {caption}
+                      {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
+                      {splitDeltaCaption(deltaText).trend}
                     </p>
                   )}
-                  {lastMeasuredText && (
-                    <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
-                      {lastMeasuredText}
+                </div>
+                {series.length >= 2 && (
+                  <div className="mt-2 w-full">
+                    <Sparkline series={series} color={theme.main} height={20} width={200} stretch />
+                  </div>
+                )}
+              </>
+            ) : (
+              // เดสก์ท็อป — ไม่กระทบ เหมือนเดิมทุกประการ (ตัวเลข+กราฟข้างกัน, เดลต้าบรรทัดเดียวรวม caption ด้านล่าง)
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-mono leading-none text-ink" style={{ fontSize: 20, letterSpacing: '-0.025em' }}>
+                    <span style={{ fontWeight: 800 }}>{splitValueUnit(valueText).num}</span>
+                    {splitValueUnit(valueText).unit && (
+                      <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
+                    )}
+                  </p>
+                  <Sparkline series={series} color={theme.main} height={30} width={64} />
+                </div>
+                {deltaText && (
+                  <>
+                    <p
+                      className="font-semibold whitespace-nowrap flex items-center gap-1"
+                      style={{ color: deltaColor, marginTop: 6, fontSize: 11 }}
+                    >
+                      {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
+                      {deltaText}
                     </p>
-                  )}
-                </>
-              )
-            })()}
+                    {lastMeasuredText && (
+                      <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
+                        {lastMeasuredText}
+                      </p>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
