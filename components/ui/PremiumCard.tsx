@@ -26,7 +26,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
   return (
     <>
       <Comp
-        className={`premium-card relative overflow-hidden rounded-[20px] ${className}`}
+        className={`premium-card relative overflow-hidden rounded-[24px] ${className}`}
         style={{
           backgroundImage: 'linear-gradient(180deg, #1A1B20, #121317)',
           border: '1px solid rgba(255,180,70,.12)',
