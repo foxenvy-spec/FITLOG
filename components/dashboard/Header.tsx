@@ -3,7 +3,7 @@
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, DIAGONAL_TITANIUM_CSS } from '@/lib/theme'
+import { NOISE_BG, DIAGONAL_TITANIUM_CSS, CARD_REFLECTION_CSS } from '@/lib/theme'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -32,6 +32,23 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
       <div
         className="absolute -inset-x-4 -top-6 h-36 pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(ellipse at 25% 0%, rgba(255,255,255,.02), transparent 65%)' }}
+        aria-hidden="true"
+      />
+
+      {/* v17: ฟีดแบ็ก "Hero Area ยังดูแยก" — ฝั่งซ้าย (ชื่อ/greeting) กับฝั่งขวา (Fitness Score Ring)
+          ดูเหมือนคนละโลก เพิ่มแสงส้มอุ่นจาง (Ambient Light) ยึดตำแหน่งใกล้ Ring (มุมขวา) ฟุ้งเข้ามาทาง
+          ซ้ายเบามากๆ (peak 5%, screen blend เหมือนเทคนิคแสงส้มจุดอื่นในแอป) ให้สองฝั่งรู้สึกอยู่ในแสง
+          เดียวกัน ไม่ใช่แค่แสงขาวเย็นด้านบน (ชั้นบนนี้) อย่างเดียว
+          v17b: รอบแรกเช็คด้วย pixel sample พบว่าแสงจางหมดตั้งแต่ก่อนถึงกลางคอลัมน์ซ้าย ไม่ถึงคำว่า BANK
+          จริง (ellipse แคบไป, จางหมดที่ 62% ของรัศมี) ขยาย ellipse แนวนอนจาก 55% เป็น 85% ของความกว้าง
+          Header และเลื่อนจุด transparent ออกไปที่ 90% ของรัศมี ให้แสงไล่จางยาวพอจะแตะขอบคอลัมน์ซ้ายจริงๆ
+          ตามที่ขอ "ฟุ้งเข้ามาด้านซ้ายประมาณ 10%" */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(ellipse 85% 70% at 88% 55%, rgba(255,142,20,.05), transparent 90%)',
+          mixBlendMode: 'screen',
+        }}
         aria-hidden="true"
       />
       <div className="min-w-0" style={{ paddingRight: 44 }}>
@@ -72,14 +89,24 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // Branding ไม่ใช่ Hero ของหน้า เพิ่มลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เป็นอีกชั้น
             // ผสม overlay (ให้ผิวตัวอักษรมีลายเดียวกับพื้นหลัง/การ์ดทั้งแอป) + ลด brightness ของทั้งบล็อก
             // ด้วย filter (ดูด้านล่าง) แทนการลดสี stop ทีละจุด เพื่อคุมความสว่างโดยรวมได้ตรงเป้าหมายกว่า
+            //
+            // v17: ฟีดแบ็ก "ยังเป็นสีขาวล้วน ยังไม่เข้าธีม Titanium" — ต้นเหตุจริงคือสต็อปสีฐาน (ชั้นล่างสุด)
+            // เดิมจบที่ #FFFFFF เต็ม 100% (ขอบล่างสุดของตัวอักษร ซึ่งเป็นพื้นที่เห็นชัดมากสำหรับฟอนต์ตัวใหญ่)
+            // filter brightness(.82) ลดความสว่างรวมแต่ยังอ่านเป็น "ขาวถูกหรี่" ไม่ใช่ "โลหะ" — ออกแบบสต็อปสี
+            // ใหม่ทั้งหมดเป็นแบบ มืด→สว่าง→มืด (ขอบบน/ขอบล่างมืดลง จุดกึ่งกลางสว่างสุดแต่ไม่ใช่ขาวจ้า #FFFFFF)
+            // จำลองแท่งโลหะขัดเงาโค้งที่แสงจับกลางแท่งแล้วมืดลงที่ขอบทั้งสองด้าน แก้ทั้ง "Vertical Reflection"
+            // (แสงจับกลาง) และ "ขอบมืดลงเล็กน้อย" (ขอบบน/ล่างมืดกว่าเดิม) ในสต็อปเดียวกัน + เพิ่ม
+            // CARD_REFLECTION_CSS เป็นชั้นแยกต่างหาก (โทเคนเดียวกับที่การ์ดทุกใบใช้ ไม่ใช่ค่าลอยใหม่) ให้ตัว
+            // อักษรใช้ "แสงสะท้อนแนวตั้ง" ภาษาเดียวกับผิวการ์ดทั้งแอปจริงๆ ตามที่ขอ (Consistency)
             backgroundImage: [
               DIAGONAL_TITANIUM_CSS,
               NOISE_BG,
+              CARD_REFLECTION_CSS,
               'linear-gradient(180deg, transparent 0%, transparent 42%, rgba(255,255,255,.02) 50%, transparent 58%, transparent 100%)',
-              'linear-gradient(90deg, #EAEAEA, #BFBFBF, #F5F5F5, #8E8E8E)',
-              'linear-gradient(180deg, #DADADA 0%, #6F6F72 20%, #A9A9A9 45%, #E6E6E6 75%, #FFFFFF 100%)',
+              'linear-gradient(90deg, #D2D2D2, #A8A8A8, #DADADA, #7C7C7C)',
+              'linear-gradient(180deg, #6E7074 0%, #B7B8BB 15%, #E4E4E4 45%, #A8A9AC 72%, #5A5C60 100%)',
             ].join(', '),
-            backgroundBlendMode: 'overlay, overlay, normal, overlay, normal',
+            backgroundBlendMode: 'overlay, overlay, normal, normal, overlay, normal',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
