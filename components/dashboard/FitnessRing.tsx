@@ -21,6 +21,11 @@ interface FitnessRingProps {
   /** เนื้อหากึ่งกลางวง (เช่น ตัวเลข + label) */
   children?: ReactNode
   className?: string
+  /** true = โหมดย่อ 3 เลเยอร์ล้วน (Titanium Track -> Progress -> children) ตัด glow/bloom/reflection
+   *  rim/highlight arc/light sweep/highlight dots/tip/inner shadow ออกทั้งหมด — ใช้กับ badge เล็กๆ
+   *  (เช่น TodaysWorkoutCompactCard ~46px) ที่ feedback บอกว่าเวอร์ชันเต็มรู้สึก "หนัก"/bevel เยอะไป
+   *  เทียบกับ Fitness Score ring บน Header ที่ยังใช้เวอร์ชันเต็มเหมือนเดิม (ไม่แตะ, prop ดีฟอลต์ false) */
+  simple?: boolean
 }
 
 // FitnessRing — v4: เพิ่มความ "หนาของวัสดุ" กลับมาตามฟีดแบ็ก (v3 ที่พอร์ตตรงจาก reference มา
@@ -40,6 +45,7 @@ export default function FitnessRing({
   gradientStops = FIRE_GRADIENT_STOPS,
   children,
   className = '',
+  simple = false,
 }: FitnessRingProps) {
   const sw = strokeWidth ?? Math.round(size * 0.08)
   const radius = (size - sw) / 2
@@ -55,6 +61,47 @@ export default function FitnessRing({
   const tipAngle = rawAngleRad - Math.PI / 2
   const tipX = size / 2 + radius * Math.cos(tipAngle)
   const tipY = size / 2 + radius * Math.sin(tipAngle)
+
+  // โหมด simple — 3 เลเยอร์ล้วน: วง track ไทเทเนียม (gradient เดียว ไม่มีฐานสีทึบซ้อน) -> วง progress
+  // สีตาม tier (gradient เดียว ไม่มี bloom/overlay ผสมวัสดุ) -> children กลางวง ไม่มี glow/reflection/
+  // highlight arc/light sweep/highlight dots/tip pulse/inner shadow เลยสักอย่าง
+  if (simple) {
+    return (
+      <div className={`relative ${className}`} style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+          <defs>
+            <linearGradient id={`${idPrefix}-ring-gradient`} x1="0%" y1="0%" x2="100%" y2="100%">
+              {gradientStops.map((s) => (
+                <stop key={s.offset} offset={s.offset} stopColor={s.color} />
+              ))}
+            </linearGradient>
+            <linearGradient id={`${idPrefix}-titanium-track`} x1="10%" y1="0%" x2="90%" y2="100%">
+              <stop offset="0%" stopColor="#F2F2F2" />
+              <stop offset="25%" stopColor="#7D7D80" />
+              <stop offset="50%" stopColor="#2B2B2C" />
+              <stop offset="75%" stopColor="#7D7D80" />
+              <stop offset="100%" stopColor="#BEBEBE" />
+            </linearGradient>
+          </defs>
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={`url(#${idPrefix}-titanium-track)`} strokeWidth={sw} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={`url(#${idPrefix}-ring-gradient)`}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
+      </div>
+    )
+  }
 
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>

@@ -16,7 +16,18 @@ interface TodaysWorkoutCompactCardProps {
   muscleGroups?: string[]
 }
 
-// การ์ด "Today's Workout" — v8: รูปดัมเบลเป็นพื้นหลังเต็มการ์ด (full-bleed) แทนคอลัมน์แคบฝั่งขวา (27%)
+// การ์ด "Today's Workout" — v10: 3 การปรับตามฟีดแบ็กหลังขึ้น production —
+// (1) ไล่สีมืดทับรูปเบาลงมาก (94%->0% แบบ v9 ทึบเกินจนรู้สึกว่า "รูปไม่เต็มการ์ด") ให้เห็นเนื้อรูป/
+//     texture ผ่านได้มากขึ้นทั่วทั้งใบ พึ่งความมืดตามธรรมชาติของรูป (พื้นดำ มีแค่ดัมเบล+glow สว่าง) แทน
+//     สกริมทึบ
+// (2) badge วงแหวนเปลี่ยนไปใช้ FitnessRing simple mode (ดู FitnessRing.tsx) — จาก ~7-8 เลเยอร์ (glow
+//     ambient/bloom/reflection rim/highlight arc/light sweep/dots/tip) เหลือแค่ 3: Titanium Track ->
+//     Progress Ring -> ไอคอนดัมเบล — เวอร์ชันเต็มที่ FitnessScore บน Header ใช้ไม่ถูกแตะ (badge เล็ก
+//     46px vs ring header 80px ใหญ่กว่ามาก layer เยอะเลยดู "หนัก"/bevel จัดที่ขนาดเล็ก)
+// (3) เพิ่ม rim light สีอำพันบางๆ รอบการ์ด (boxShadow เฉพาะการ์ดนี้ ไม่แตะ border กลางของ PremiumCard
+//     ซึ่งตั้งใจให้เป็นกลาง/เทาเย็นสำหรับการ์ดอื่นๆ ที่ไม่ใช่ธีมไฟ)
+//
+// v8: รูปดัมเบลเป็นพื้นหลังเต็มการ์ด (full-bleed) แทนคอลัมน์แคบฝั่งขวา (27%)
 // แบบ v7 ตามที่ขอ "อยากให้แสดงเต็มการ์ดเหมือนตัวอย่าง" (เทียบกับ mockup ที่ตัวรูป+ลายพื้นผิวคลุมทั้งใบ
 // ไม่ใช่แค่โซนแคบๆ) — เปลี่ยนจากโครงสร้าง 2 คอลัมน์ (เนื้อหา flex-1 + รูป shrink-0) มาเป็นรูปวางเป็น
 // absolute inset-0 ชั้นล่างสุด แล้ววางไล่สีมืด (ซ้ายทึบ -> ขวาจาง) ทับอีกชั้นให้ตัวหนังสืออ่านออกฝั่งซ้าย
@@ -43,17 +54,28 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
       // แทนที่จะเป็น 112px ตาม spec) แล้วรูปพื้นหลัง (position:absolute; inset:0) ก็ไปวัดขนาดตามกล่อง
       // ที่ยุบผิดนั้นด้วย ทำให้ครอปรูปผิดสัดส่วน (บั๊กที่เจอจริงตอนขึ้น production — v9 fix)
       className="relative overflow-hidden block active:scale-[0.99] active:translate-y-[1px] transition"
-      style={{ padding: 0, minHeight: dashboardSpec.workoutCard.height }}
+      style={{
+        padding: 0,
+        minHeight: dashboardSpec.workoutCard.height,
+        // rim light สีอำพันบางๆ รอบการ์ด — ขอบเทาเย็นเดิมจาก PremiumCard เป็นค่าพื้นฐานของการ์ดทุกใบ
+        // (ตั้งใจให้ไม่อมส้มทุกใบ ดู CARD_BORDER_CSS ใน lib/theme.ts) แต่การ์ดนี้มีรูป/ธีมไฟเป็นจุดเด่น
+        // อยู่แล้ว (ปุ่ม arrow, progress bar, ไอคอนดัมเบลล้วนอำพัน) จึงเพิ่ม rim เฉพาะใบนี้แทนที่จะแก้
+        // border กลางของ PremiumCard (จะกระทบการ์ดอื่นที่ไม่ต้องการโทนอำพันซ้ำ) — บางมากตามที่ขอ
+        // ("แทบมองไม่เห็น") แค่ให้รู้สึกขอบมีไฟจางๆ ตอนเลื่อนผ่าน ไม่ใช่เส้นส้มชัดเจน
+        boxShadow: '0 0 0 1px rgba(255,154,22,.14), inset 0 0 12px rgba(255,138,0,.05)',
+      }}
     >
-      {/* พื้นหลังรูปเต็มการ์ด + ไล่สีมืดทับ (ซ้ายทึบสุด 92% -> ขวาโปร่งใส) ให้ตัวหนังสือฝั่งซ้ายอ่านออก
-          ชัดเจน โดยยังเห็นรายละเอียด (แผ่นน้ำหนัก/แสงส้ม) ของรูปฝั่งขวาเต็มๆ ไม่ถูกบัง */}
+      {/* พื้นหลังรูปเต็มการ์ด + ไล่สีมืดทับบางลงมาก (v10: เดิม 94%->0% ทึบเกินจนรู้สึกเหมือนรูปไม่เต็ม
+          การ์ด กลับไปเป็นแถบดำแคบๆ ฝั่งขวาเหมือน v7 เดิม — ตัวรูปเองมืดอยู่แล้วโดยธรรมชาติฝั่งซ้าย
+          (background เป็นโทนดำ มีแค่ตัวดัมเบล+glow ที่สว่างฝั่งขวา) จึงพึ่งความมืดของรูปเองเป็นหลัก
+          ลดไล่สีทับเหลือแค่ scrim บางๆ ช่วยพยุง contrast ตัวหนังสือเท่านั้น ไม่ใช่ผนังทึบ) */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '68% 55%' }} />
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(90deg, rgba(13,14,16,.94) 0%, rgba(13,14,16,.86) 40%, rgba(13,14,16,.55) 62%, rgba(13,14,16,.15) 85%, rgba(13,14,16,0) 100%)',
+              'linear-gradient(90deg, rgba(13,14,16,.55) 0%, rgba(13,14,16,.42) 32%, rgba(13,14,16,.2) 52%, rgba(13,14,16,.05) 68%, rgba(13,14,16,0) 82%)',
           }}
         />
       </div>
@@ -71,6 +93,7 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           strokeWidth={4}
           trackColor={NEUTRAL.ringTrack}
           className="shrink-0"
+          simple
         >
           <span
             className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
