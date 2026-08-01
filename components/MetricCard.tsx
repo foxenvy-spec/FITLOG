@@ -187,7 +187,10 @@ export default function MetricCard({
           // จริง ไม่ใช่ในเนื้อผิว ต่างจาก "Hairline Highlight" เดิม v24 ซึ่งเป็น div คาดกลางความกว้างและ
           // จางที่ปลายทั้งสองข้าง อันนี้เต็มความกว้าง คมชัดที่ขอบจริง) (2) วงแหวนอำพันจางมากรอบนอกการ์ด
           // จำลอง "Orange Ambient" ที่ขอบ ไม่ใช่ glow มุมแบบเดิม (ซึ่งเป็นสีธีมต่อการ์ด ไม่ใช่อำพันเสมอ)
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.105)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4.6px 11.5px rgba(0,0,0,.68), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}${compact ? ', 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)' : ''}`,
+          // v26: ฟีดแบ็ก "Card ยัง Flat กว่า Workout ~15%" อีกรอบ - Top Reflection (inset highlight
+          // .105 -> .12) และ Bottom Shadow (offset 4.6px -> 5.3px, blur 11.5px -> 13.2px, alpha
+          // .68 -> .78) ขยับขึ้นอีก ~15% ตามสัดส่วนเดียวกับรอบ v23 ก่อนหน้า
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.12)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -5.3px 13.2px rgba(0,0,0,.78), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}${compact ? ', 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)' : ''}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
@@ -195,22 +198,26 @@ export default function MetricCard({
             v22: ฟีดแบ็ก "Tiny Noise เบามาก แทบมองไม่เห็น แต่ถือแล้วรู้สึกว่าเป็นวัสดุจริง" — ขยับจาก 0.02
             เป็น 0.03 เหมือน PremiumCard ให้สองจุดสอดคล้องกัน
             v24: ให้คะแนน 9.2/10 "ยังขาด Titanium Noise" — ขยับอีกนิดจาก 0.03 เป็น 0.035 */}
+        {/* v26: ฟีดแบ็ก "Card ยัง Flat กว่า Workout ~15% - Soft Noise" - ขยับ Soft Noise ขึ้นอีกรอบตาม
+            สัดส่วนเดียวกับ v23/v24 (0.035 -> 0.04, +15%) */}
         {compact && (
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: NOISE_BG, opacity: 0.035, mixBlendMode: 'overlay' }}
+            style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }}
           />
         )}
         {/* v24: "Hairline Highlight" — ฟีดแบ็ก "ยังขาด Hairline Highlight" ต่างจาก CARD_REFLECTION_CSS
             เดิม (แถบไล่สีนุ่มกว้าง ~40% ของความสูงการ์ด) อันนี้คือเส้นคมชัด 1px เส้นเดียวแนบขอบบนสุดจริงๆ
             จำลองขอบโลหะที่ถูกเจียรเรียบจนสะท้อนแสงเป็นเส้นคมแทนแถบนุ่ม (ทั้งสองอย่างอยู่ร่วมกันได้ คนละ
             layer คนละจุดประสงค์: แถบนุ่ม = ผิวโค้งสะท้อนกว้าง, เส้นคม = ขอบเจียรจริง) */}
+        {/* v26: "Top Reflection" - ฟีดแบ็ก "Card ยัง Flat กว่า Workout ~15%" - เส้น Hairline Highlight
+            คมชัดขอบบนขยับขึ้นอีกรอบ (.22 -> .25, +15%) ตามสัดส่วนเดียวกับ Micro Bevel/Bottom Shadow ด้านล่าง */}
         {compact && (
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-x-0 top-0 ${radiusClass}`}
-            style={{ height: 1, backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,.22) 25%, rgba(255,255,255,.22) 75%, transparent)' }}
+            style={{ height: 1, backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,.25) 25%, rgba(255,255,255,.25) 75%, transparent)' }}
           />
         )}
         {/* v13: ลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เดียวกับที่ใช้ในพื้นหลังหน้า/รูป Today's
@@ -229,11 +236,13 @@ export default function MetricCard({
         {/* v15: การ์ดยังดู "Matte" — เพิ่มแถบสะท้อนแสงเฉียง (diagonal reflection) มุมบนซ้ายไล่ไปขวาล่าง
             แยกจาก CARD_REFLECTION_CSS เดิม (ซึ่งเป็นแถบแนวนอนบนสุดล้วนๆ) อันนี้เอียงตามทิศทางเดียวกับ
             DIAGONAL_TITANIUM_CSS ให้ความรู้สึกผิวโลหะสะท้อนแสงจริง ไม่ใช่พื้นเรียบทึบ (~4% ตามที่ขอ) */}
+        {/* v26: "Top Reflection" ต่อ - แถบสะท้อนแสงเฉียงขยับขึ้นอีกรอบ (.04 -> .046, +15%) ชุดเดียวกับ
+            Hairline Highlight ด้านบน */}
         {compact && (
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: 'linear-gradient(115deg, rgba(255,255,255,.04) 0%, transparent 35%)' }}
+            style={{ backgroundImage: 'linear-gradient(115deg, rgba(255,255,255,.046) 0%, transparent 35%)' }}
           />
         )}
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ —

@@ -192,6 +192,27 @@ export const RADIAL_SHADOW_CSS = 'radial-gradient(ellipse 90% 45% at 50% 100%, r
 // grayscale noise นุ่มๆ — ใช้คู่กับ CSS transform: rotate ให้ทิศเดียวกับ DIAGONAL_TITANIUM_CSS (115deg)
 export const HAIRLINE_SCRATCH_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='hs'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -0.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23hs)'/%3E%3C/svg%3E")`
 
+// v26: ฟีดแบ็ก "BANK อยากให้เป็น Apple Watch Stainless Steel - Hairline Reflection -> Vertical Brushed
+// -> Micro Grain" - DIAGONAL_TITANIUM_CSS/NOISE_BG เดิมที่ตัวหนังสือ BANK ใช้อยู่แล้วเป็นลาย 115deg
+// (ทิศเดียวกับพื้นหลัง/การ์ดทั้งแอป) ซึ่งเหมาะกับ "แผ่นโลหะแบน" มากกว่า "ตัวโลหะที่กลึงขึ้นรูป" แบบเคส
+// Apple Watch Stainless Steel ที่เส้นแปรง (brush) วิ่งแนวตั้งชิดกันถี่ๆ ตามทิศทางการกลึง - โทเคนใหม่นี้
+// เส้นถี่กว่า DIAGONAL_TITANIUM_CSS มาก (ระยะห่าง 3px ไม่ใช่ 40px) และเป็นแนวตั้งแท้ (90deg ไม่ใช่ 115deg)
+// ให้ต่างจากลายทแยงที่ใช้ทั่วแอปอย่างจงใจ เฉพาะจุดที่อยากได้ความรู้สึก "แท่งโลหะกลึง" อย่าง wordmark เท่านั้น
+export const VERTICAL_BRUSHED_CSS =
+  'repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 1px, transparent 1px, transparent 3px)'
+
+// v26: "Micro Grain" - NOISE_BG เดิม (baseFrequency 0.9) คือเกรนระดับ "แผ่นการ์ด" ที่ใช้ทั่วแอปอยู่แล้ว
+// อันนี้ถี่กว่ามาก (1.8 = ละเอียดกว่าประมาณเท่าตัว) จำลองผิวเคสสแตนเลสที่ขัดละเอียดจนเกรนแทบเป็นฝุ่น ไม่ใช่
+// เกรนหยาบแบบแผ่นโลหะทั่วไป - ลด alpha ของ noise ลงเหลือ 35% ของค่าดิบด้วย feComponentTransfer (แทนที่จะ
+// พึ่ง opacity ของ CSS layer ข้างนอกอย่างเดียว) กัน "Micro" ไม่ให้แรงเกินจนกลืนกับ NOISE_BG เดิมที่ซ้อนอยู่
+export const MICRO_GRAIN_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='mg'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='2' stitchTiles='stitch' result='n'/%3E%3CfeComponentTransfer in='n'%3E%3CfeFuncA type='linear' slope='0.35' intercept='0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23mg)'/%3E%3C/svg%3E")`
+
+// v26: "Hairline Reflection" - ต่างจากแถบนุ่มเดิมที่ Header ใช้อยู่แล้ว (soft band กว้าง 16% ของความสูง
+// ตัวอักษร, alpha แค่ .02) ซึ่งอ่านเป็น "แสงฟุ้ง" - อันนี้เป็นเส้นคมชัดจริงๆ แคบกว่ามาก (~2.5%) แต่ alpha
+// สูงกว่ามาก (.38) จำลองเส้นสะท้อนแสงคมแบบขอบเคสสแตนเลสขัดเงาที่แสงจับเป็น "เส้น" ไม่ใช่ "แถบฟุ้ง"
+export const HAIRLINE_REFLECTION_CSS =
+  'linear-gradient(180deg, transparent 0%, transparent 47%, rgba(255,255,255,.38) 49.5%, transparent 52%, transparent 100%)'
+
 // ไล่สีการ์ด — v2: เปลี่ยนจากเทากลาง (#242424/#171717/#101010, R=G=B เป๊ะ) เป็นเทาเย็นจริง (B สูงกว่า
 // R เล็กน้อยทุกสต็อป) ตามค่าที่ขอ เพื่อให้ผิวการ์ดเป็น "โลหะเย็น" ไม่ใช่เทาดิบเฉยๆ — สว่างกว่าเดิมตรงกลาง
 // บนแล้วค่อยจางลงล่าง ให้ผิวการ์ดดูมีมิติแบบแผ่นโลหะจริง ใช้คู่กับ CARD_INSET_SHADOW/CARD_REFLECTION_CSS
@@ -231,7 +252,11 @@ export const CARD_CURVATURE_HIGHLIGHT_CSS =
 // โลหะ) — ก่อนหน้านี้ขอบใช้แค่ไล่สีธีม (สี, ไม่ใช่กลาง) เป็นแค่ "ขอบเรืองแสง" ไม่ใช่ "ขอบที่มีมิติ" —
 // โทเคนนี้เป็นไล่สีกลาง (ไม่ผูกสีธีม) มุมบนซ้ายสว่าง (สะท้อนแสง) ไล่ไปมุมล่างขวามืด (เงาจม) วาดถึง
 // border-box ซ้อนกับขอบไล่สีธีมเดิม (ไม่ได้แทนที่) ให้ขอบมีทั้งมิติจริง + สีธีมพร้อมกัน
-export const CARD_BEVEL_CSS = 'linear-gradient(135deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.02) 30%, transparent 55%, rgba(0,0,0,.22) 100%)'
+// v26: ฟีดแบ็ก "Metric Card ยัง Flat กว่า Workout ~15% - เพิ่ม Micro Bevel" - ขอบ 2 จุดหัว-ท้าย
+// (มุมบนซ้ายสว่าง/มุมล่างขวามืด) ที่เป็นตัวให้ความรู้สึก "ร่องสลัก" จริง ขยับขึ้นอีก ~15% ตามสัดส่วนเดียว
+// กับที่เคยทำรอบ v23 (.16->.18, .22->.25) จุดกลาง (.02) คงเดิมไม่แตะ (เป็นแค่จุดเปลี่ยนผ่านนุ่มๆ ไม่ใช่
+// ตัวบอกมิติ) โทเคนนี้ใช้เฉพาะ MetricCard จุดเดียวในทั้งแอป จึงปรับตรงนี้โดยไม่กระทบการ์ดอื่น
+export const CARD_BEVEL_CSS = 'linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.02) 30%, transparent 55%, rgba(0,0,0,.25) 100%)'
 
 // v20: "Titanium Reflection" — ฟีดแบ็ก "เพิ่ม Reflection บางๆ บน Card แบบเส้นสั้นๆ หลายเส้น ไม่เท่ากัน
 // opacity 2-3% แทบมองไม่เห็น แต่ทำให้การ์ดดูเป็นโลหะ" — CARD_REFLECTION_CSS/CARD_CURVATURE_HIGHLIGHT_CSS
