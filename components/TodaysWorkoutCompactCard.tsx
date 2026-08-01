@@ -139,8 +139,12 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
               (FitnessScore.tsx) มีชั้น Fog/Bloom/Core อยู่หลังวงอยู่แล้ว badge เล็กในนี้ไม่มีเลย เพิ่ม
               glow อำพันชั้นเดียว (ไม่ใช่ 3 ชั้นแบบ Hero เพราะ badge เล็กกว่ามาก 76px vs 110px) ไว้หลังวง
               ให้รู้สึกว่าเป็น "แกนแสง" เดียวกับ Ring Hero ไม่ใช่ badge ลอยเดี่ยวๆ ไม่มีแสงรอบตัวเลย */}
+          {/* v22: ฟีดแบ็ก "Motion: Orange Glow หายใจเบาๆ" — ใช้ animation เดียวกับ Bloom ของ Hero Ring
+              (ring-bloom-breathe ใน FitnessScore.tsx) ชื่อ class คนละไฟล์กัน (styled-jsx scope ต่อไฟล์)
+              แต่ keyframe values เดียวกันเป๊ะ (scale 1-1.06, opacity .85-1, 4s) ให้ทั้งสองจุด "หายใจ"
+              จังหวะเดียวกันแม้จะเป็นคนละ DOM/คนละ mount cycle ก็ตาม */}
           <div
-            className="absolute rounded-full pointer-events-none"
+            className="workout-core-breathe absolute rounded-full pointer-events-none"
             style={{
               width: dashboardSpec.workoutCard.ringSize * 1.6,
               height: dashboardSpec.workoutCard.ringSize * 1.6,
@@ -246,10 +250,27 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             background-position: 120% 120%;
           }
         }
+        .workout-core-breathe {
+          animation: workout-core-breathe 4s ease-in-out infinite;
+        }
+        @keyframes workout-core-breathe {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 0.85;
+          }
+          50% {
+            transform: scale(1.06);
+            opacity: 1;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           .workout-banner-sweep {
             animation: none;
             background-position: 120% 120%;
+          }
+          .workout-core-breathe {
+            animation: none;
           }
         }
       `}</style>

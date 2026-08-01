@@ -182,23 +182,27 @@ export default function MetricCard({
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
-            เดสก์ท็อปไม่กระทบ (ดีไซน์ของตัวเองอยู่แล้ว ไม่ได้ตั้งใจให้เป็น titanium) */}
+            เดสก์ท็อปไม่กระทบ (ดีไซน์ของตัวเองอยู่แล้ว ไม่ได้ตั้งใจให้เป็น titanium)
+            v22: ฟีดแบ็ก "Tiny Noise เบามาก แทบมองไม่เห็น แต่ถือแล้วรู้สึกว่าเป็นวัสดุจริง" — ขยับจาก 0.02
+            เป็น 0.03 เหมือน PremiumCard ให้สองจุดสอดคล้องกัน */}
         {compact && (
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }}
+            style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
           />
         )}
         {/* v13: ลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เดียวกับที่ใช้ในพื้นหลังหน้า/รูป Today's
             Workout — เดิม MetricCard มีแค่ NOISE_BG (grain สุ่มแบบ feTurbulence) ซึ่งเป็นลายคนละแบบกับ
             เส้นทแยงที่ Workout Card มี ทำให้ซูมดูแล้ว texture ยังเรียบกว่า — เพิ่มชั้นนี้ที่ opacity ต่ำมาก
-            (2%) ให้ผิวการ์ดมีลายเส้นทแยงแบบเดียวกันจริงๆ ไม่ใช่แค่โทนสีเดียวกัน (compact/มือถือเท่านั้น) */}
+            (2%) ให้ผิวการ์ดมีลายเส้นทแยงแบบเดียวกันจริงๆ ไม่ใช่แค่โทนสีเดียวกัน (compact/มือถือเท่านั้น)
+            v22: ฟีดแบ็ก "Fine Brushed Texture เบามาก" — ขยับ multiplier จาก 0.5 เป็น 0.65 (effective ~2.6%
+            แทน 2%) เล็กน้อย ยังอยู่ในเพดาน "แทบมองไม่เห็น" */}
         {compact && (
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.5 }}
+            style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.65 }}
           />
         )}
         {/* v15: การ์ดยังดู "Matte" — เพิ่มแถบสะท้อนแสงเฉียง (diagonal reflection) มุมบนซ้ายไล่ไปขวาล่าง

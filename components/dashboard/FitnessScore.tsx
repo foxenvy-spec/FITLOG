@@ -53,9 +53,13 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           }}
           aria-hidden="true"
         />
-        {/* Bloom — ชั้นเดิม ปรับอัลฟาลงเล็กน้อยเพราะตอนนี้มี Fog ห่อรอบนอกอีกชั้นแล้ว */}
+        {/* Bloom — ชั้นเดิม ปรับอัลฟาลงเล็กน้อยเพราะตอนนี้มี Fog ห่อรอบนอกอีกชั้นแล้ว
+            v22: ฟีดแบ็ก "Motion: Orange Glow หายใจเบาๆ (breathing glow)" — เพิ่ม animation หายใจ (scale +
+            opacity ไล่ขึ้น-ลงนุ่มๆ) เฉพาะชั้น Bloom (ไม่แตะ Fog/Core ให้ยังมีชั้นนิ่งเป็นฐานอยู่ ไม่ใช่ทุก
+            ชั้นสั่นพร้อมกันจนดูรก) รอบละ 4s ease-in-out เบามาก (scale 1-1.06, opacity .85-1) เคารพ
+            prefers-reduced-motion */}
         <div
-          className="absolute rounded-full pointer-events-none"
+          className="ring-bloom-breathe absolute rounded-full pointer-events-none"
           style={{
             width: size * 1.7,
             height: size * 1.7,
@@ -158,6 +162,20 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           opacity: 0;
           animation: ring-spark-flash 9s linear infinite;
         }
+        .ring-bloom-breathe {
+          animation: ring-bloom-breathe 4s ease-in-out infinite;
+        }
+        @keyframes ring-bloom-breathe {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 0.85;
+          }
+          50% {
+            transform: scale(1.06);
+            opacity: 1;
+          }
+        }
         @keyframes ring-sweep-rotate {
           0% {
             transform: rotate(0deg);
@@ -201,7 +219,8 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
         @media (prefers-reduced-motion: reduce) {
           .ring-sweep-wrap,
           .ring-sweep-dot,
-          .ring-tiny-spark {
+          .ring-tiny-spark,
+          .ring-bloom-breathe {
             animation: none !important;
           }
           .ring-sweep-dot {

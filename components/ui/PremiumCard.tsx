@@ -100,7 +100,10 @@ export default function PremiumCard<T extends ElementType = 'div'>({
             backgroundImage หลัก) เพราะต้องคุม opacity ของตัวเองอิสระจากพื้นเบส */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }}
+          // v22: ฟีดแบ็ก "Tiny Noise/Fine Brushed Texture เบามาก แทบมองไม่เห็น แต่เวลาถือมือถือจะรู้สึกว่า
+          // เป็นวัสดุจริง" — ขยับจาก 0.02 (2%) เป็น 0.03 (3%) เล็กน้อย ยังอยู่ในเพดาน "แทบมองไม่เห็น" ตาม
+          // ที่ขอ ไม่ใช่เพิ่มจนเห็นชัดเป็นลายกราฟิก
+          style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
           aria-hidden="true"
         />
         {children}
