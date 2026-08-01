@@ -115,8 +115,12 @@ export default function MetricCard({
           //    ไม่มี alpha เหมือนเดิมทุกประการ ไม่กระทบ
           // 5) เข้ม→อ่อน→เข้ม แนวทแยง (แทนสีพื้นจางๆ เรียบๆ เดิม) กันไม่ให้ช่วงกลางขอบ/มุมอื่นดูเป็นเส้นแข็งทื่อ
           // ผลคือขอบเรืองแสงชัดเฉพาะ 2 มุมตรงข้ามกัน ส่วนช่วงกลางขอบก็ยังไล่เฉดนุ่มๆ ไม่ใช่เส้นตรงแข็งๆ
+          // v12: ขอบไล่สี (ชั้นสุดท้าย) มือถือ (compact) ลดจาก 14/40/14 เหลือ 0a/22/0a (~ครึ่งเดียว) ตามคำขอ
+          // "ลดความเข้มข้นสีธีมลง ให้ titanium โชว์ชัดขึ้น" — เดสก์ท็อปคงค่าเดิม 14/40/14 ทุกประการ ไม่กระทบ
+          // (ไม่ได้ตั้งใจให้เป็น titanium อยู่แล้ว) glow มุม (radial 3-4) ยังใช้ glowAlpha ต่อการ์ดเดิม
+          // ไม่แตะ เพราะเป็นอัตลักษณ์สีที่ปรับทีละใบมาหลายรอบแล้ว (weight 14/bodyFat 11/muscle 9/ฯลฯ)
           backgroundImage: compact
-            ? `${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`
+            ? `${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
             : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
           backgroundClip: compact
@@ -147,11 +151,13 @@ export default function MetricCard({
             style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }}
           />
         )}
-        {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
+        {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ —
+            v12: มือถือ (compact) ลดจาก 14 (~8%) เหลือ 0a (~4%) ตามคำขอลดสีธีมให้ titanium โชว์ชัดขึ้น
+            เดสก์ท็อปคงเดิม 14 ทุกประการ */}
         <div
           aria-hidden="true"
           className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-          style={{ backgroundImage: `radial-gradient(circle at top left, ${theme.main}14, transparent 45%)` }}
+          style={{ backgroundImage: `radial-gradient(circle at top left, ${theme.main}${compact ? '0a' : '14'}, transparent 45%)` }}
         />
         {/* ชั้นเพิ่มเติมบางเบามาก (opacity 4%) สีขาวล้วน (ไม่ใช่สีธีม) จากมุมซ้ายบน — เพิ่มมิติแบบผู้ใช้แทบไม่รู้ตัว
             แยกจากชั้นสีธีมด้านบน เพราะอันนี้ให้ความรู้สึก "แสงทั่วไป" ไม่ใช่ "แสงจากไอคอน" */}
@@ -160,7 +166,9 @@ export default function MetricCard({
           className={`pointer-events-none absolute inset-0 ${radiusClass}`}
           style={{ backgroundImage: `radial-gradient(circle at top left, rgba(255,255,255,.03), transparent 50%)` }}
         />
-        {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — blur กว้างขึ้น + opacity ~8% ตามที่ขอ ให้ดูลึกขึ้น */}
+        {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — v12: มือถือ
+            (compact) ลดจาก opacity 0.08 เหลือ 0.045 (~ครึ่งเดียว) ตามคำขอลดสีธีมให้ titanium โชว์ชัดขึ้น
+            เดสก์ท็อปคงเดิม 0.08 ทุกประการ */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute rounded-full"
@@ -171,7 +179,7 @@ export default function MetricCard({
             top: -60,
             background: theme.main,
             filter: 'blur(60px)',
-            opacity: 0.08,
+            opacity: compact ? 0.045 : 0.08,
           }}
         />
 
