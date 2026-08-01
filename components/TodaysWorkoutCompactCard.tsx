@@ -12,6 +12,7 @@ import {
   CARD_AMBIENT_SHADOW_CSS,
   CARD_FLOAT_SHADOW,
   DIAGONAL_TITANIUM_CSS,
+  TITANIUM_MESH_CSS,
   DUST_PARTICLES_BG,
 } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
@@ -137,6 +138,58 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             ตรงๆ (โทเคนเดียวกับที่ FitnessRing.tsx ใช้ทำ Brushed Metal บนวงเป๊ะๆ ไม่ใช่ค่าลอยใหม่ มุม 115deg
             เดียวกัน) ให้เส้นบนการ์ดกับเส้นบนวงเป็นลายต่อเนื่องเดียวกันจริงๆ ไม่ใช่แค่โทนสีคล้ายกัน */}
         <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.7 }} />
+        {/* v28: "Brushed Titanium" เพิ่มเติม — TITANIUM_MESH_CSS โทเคนเดียวกับที่การ์ดอื่นทั่วแอปใช้ (ไขว้
+            2 ทิศ 12px) ซ้อนกับลายเฉียงทิศทางเดียวเดิมด้านบน ให้ Workout Card มีลายตารางไทเทเนียมชุดเดียว
+            กับการ์ดอื่นด้วย (เดิมมีแค่ลายเฉียงทิศทางเดียว ไม่มีลายตาข่าย) */}
+        <div className="absolute inset-0" style={{ backgroundImage: TITANIUM_MESH_CSS }} />
+        {/* v28: ฟีดแบ็ก "Workout Card ยังไม่ Hero พอ อยากได้ Brushed Titanium/Orange Fog/Particles/
+            Reflection/Lens Bloom บางๆ ด้านหลังดัมเบล ให้การ์ดดูราคาแพงขึ้นอีกเยอะ" — Orange Fog: หมอกอุ่น
+            ฟุ้งกระจายทั่วการ์ด (ต่างจาก Orange Reflection/Bloom เดิมที่เป็นไล่สีมีทิศทาง/ตำแหน่งชัดเจน)
+            เบลอนุ่มด้วย filter:blur ให้ไม่มีขอบเขตชัด เหมือนหมอกจริงลอยอยู่ในอากาศเหนือผิวโลหะ */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'radial-gradient(ellipse 90% 70% at 60% 40%, rgba(255,150,40,.1), transparent 65%)',
+            filter: 'blur(10px)',
+            mixBlendMode: 'screen',
+          }}
+        />
+        {/* Lens Bloom — วงเบลอนุ่มใหญ่ตรงจุดที่สว่างที่สุดของภาพ (ตำแหน่งเดียวกับ Spark หลักด้านล่าง
+            71%,32%) จำลองแสงจ้าล้นออกมาแบบเลนส์กล้องจริง (anamorphic bloom) ต่างจาก Spark ซึ่งเป็นจุด
+            คมเล็กๆ — อันนี้ใหญ่/นุ่ม/จางกว่ามาก ให้ความรู้สึก "แสงจ้าเกินจนล้นเลนส์" ไม่ใช่แค่จุดสะท้อน */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 71% 32%, rgba(255,244,224,.22), transparent 38%)',
+            filter: 'blur(4px)',
+            mixBlendMode: 'screen',
+          }}
+        />
+        {/* Particles — จุดลอยเล็กๆ กระจายไม่สม่ำเสมอ (ต่างจาก Dust ด้านล่างซึ่งเป็นฝุ่นละเอียดทั่วภาพ อันนี้
+            คืออนุภาคเด่นเป็นจุดๆ ไม่กี่จุด ขนาด/ความสว่างไม่เท่ากัน) เพิ่มมิติความลึกให้อากาศรอบดัมเบลดูมีวัตถุ
+            ลอยอยู่จริง ไม่ใช่แค่พื้นหลังนิ่งๆ */}
+        {[
+          { left: '38%', top: '18%', size: 2, opacity: 0.5 },
+          { left: '82%', top: '22%', size: 1.5, opacity: 0.4 },
+          { left: '90%', top: '62%', size: 2, opacity: 0.45 },
+          { left: '30%', top: '70%', size: 1.5, opacity: 0.35 },
+          { left: '52%', top: '80%', size: 1, opacity: 0.3 },
+        ].map((p, i) => (
+          <span
+            key={i}
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              left: p.left,
+              top: p.top,
+              width: p.size,
+              height: p.size,
+              background: '#FFF4E0',
+              opacity: p.opacity,
+              boxShadow: '0 0 3px 1px rgba(255,244,224,.5)',
+            }}
+            aria-hidden="true"
+          />
+        ))}
         {/* v27: "Hero Card Product Shot" — ฟีดแบ็ก "Workout Card 9.5/10 อยากได้ดัมเบล Rim Light เพิ่ม
             อีกนิด มี Dust มี Spark มี Reflection เหมือนภาพโฆษณา Nike ไม่ใช่แค่ Render" — Rim Light: แถบสว่าง
             จ้าแคบๆ เฉียงตามขอบดัมเบล (ประมาณตำแหน่งจริงของรูป objectPosition 68% 55%) จำลองแสงสตูดิโอ
@@ -182,6 +235,16 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             boxShadow: '0 0 4px 1px rgba(255,244,224,.7)',
           }}
           aria-hidden="true"
+        />
+        {/* Floor Reflection — แถบสะท้อนแสงแนวนอนบางๆ ใกล้ขอบล่างสุด จำลองพื้นสตูดิโอมันวาวที่สะท้อนแสงอุ่น
+            จากดัมเบล ต่างจาก Reflection sweep เดิม (แสงเฉียงวิ่งผ่านทั้งการ์ด) อันนี้อยู่นิ่งเฉพาะแถบล่างสุด */}
+        <div
+          className="absolute inset-x-0 bottom-0"
+          style={{
+            height: '18%',
+            backgroundImage: 'linear-gradient(0deg, rgba(255,160,60,.08), transparent)',
+            mixBlendMode: 'screen',
+          }}
         />
         {/* v21: ฟีดแบ็ก "Orange Highlight อยากเพิ่ม Light Sweep บางๆ วิ่งผ่าน Banner ช้าๆ ทุก 20 วินาที
             แทบไม่รู้สึกแต่ดูแพงมาก" — แถบแสงเฉียงกว้าง กวาดจากซ้ายไปขวาเต็มการ์ด รอบละ 20 วิ อัลฟาต่ำมาก

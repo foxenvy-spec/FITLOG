@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { COLORS, withAlpha, cncCornerClipPath } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import PremiumCard from './ui/PremiumCard'
 
@@ -64,14 +64,48 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         }}
         aria-hidden="true"
       />
-      {/* v25: ฟีดแบ็ก "ฝั่งซ้าย-ขวาน้ำหนักยังไม่เท่ากัน ไอคอน Titanium สวยแล้วแต่ฝั่งขวาโล่ง อยากได้
-          Diagonal Reflection แบบ BMW Dashboard ผ่านด้านขวา จางๆ" — ไอคอนวงกลมฝั่งซ้ายมีผิว/glow ของตัวเอง
-          หนาแน่นอยู่แล้ว ฝั่งขวามีแค่ตัวหนังสือ+ลูกศรบางๆ ลอยอยู่ ไม่มีอะไรถ่วงน้ำหนักภาพ — แถบสะท้อนแสง
-          เฉียงกว้าง (115deg องศาเดียวกับลายเฉียงทั่วแอป) stop ทั้งหมดอยู่ฝั่งขวาของการ์ด (55-80%) ให้มีน้ำหนัก
-          เฉพาะฝั่งขวาจริงๆ ไม่ใช่พาดเต็มการ์ดแบบสมมาตร */}
+      {/* v25/v28: ฟีดแบ็ก "ฝั่งซ้าย-ขวาน้ำหนักยังไม่เท่ากัน" (v25) แล้วรอบนี้ "Focus Card อยากให้เหมือน
+          Mission Card ของทหาร" (v28) — เพิ่ม Reflection อีกนิด (.045 -> .06) เป็นส่วนหนึ่งของชุด CNC/
+          Titanium Layers/Energy Line ด้านล่าง ให้ผิวการ์ดสว่างสมดุลกับเส้น/ชั้นที่เพิ่มเข้ามาใหม่ */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: 'linear-gradient(115deg, transparent 55%, rgba(255,255,255,.045) 68%, transparent 82%)' }}
+        style={{ backgroundImage: 'linear-gradient(115deg, transparent 55%, rgba(255,255,255,.06) 68%, transparent 82%)' }}
+        aria-hidden="true"
+      />
+      {/* v28: "Mission Card" — ฟีดแบ็ก "อยากให้เหมือนอุปกรณ์ทางทหาร มีเส้น CNC มี Titanium Layers มี
+          Energy Line มี Reflection" — Reflection เพิ่มไปแล้วด้านบน เหลือ 3 อย่าง: (1) CNC seam — เส้นคู่
+          บาง (สว่าง+มืด) แนวตั้งใกล้ขอบขวา จำลองรอยต่อแผงโลหะที่กัด CNC จริง (2) Titanium Layers — กรอบ
+          ชั้นในเยื้องจากขอบนอก 5px พร้อมมุมตัดเล็กกว่าของตัวเอง จำลอง "แผงซ้อนแผง" แบบเกราะ/อุปกรณ์ทหาร
+          ไม่ใช่การ์ดแผ่นเดียวเรียบๆ (3) Energy Line — เส้นเรืองแสงอำพันบางๆ ขอบล่างสุด หายใจเบาๆ ต่อเนื่อง
+          จำลองไฟสถานะ (status strip) ของอุปกรณ์จริง */}
+      <div
+        className="absolute pointer-events-none"
+        style={{ top: 10, bottom: 10, right: 30, width: 1, background: 'rgba(255,255,255,.14)' }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{ top: 10, bottom: 10, right: 31, width: 1, background: 'rgba(0,0,0,.35)' }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          inset: 5,
+          clipPath: cncCornerClipPath('tl', 12, 3),
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 0 rgba(255,255,255,.06)',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="focus-energy-line absolute pointer-events-none"
+        style={{
+          left: 14,
+          right: 14,
+          bottom: 4,
+          height: 1.5,
+          background: 'linear-gradient(90deg, transparent, rgba(255,180,90,.75) 30%, rgba(255,180,90,.75) 70%, transparent)',
+        }}
         aria-hidden="true"
       />
       <div className="flex items-center gap-3 min-w-0">
@@ -107,6 +141,26 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         </div>
       </div>
       <span className="text-muted shrink-0" aria-hidden="true">›</span>
+      <style jsx>{`
+        .focus-energy-line {
+          animation: focus-energy-line-breathe 2.8s ease-in-out infinite;
+        }
+        @keyframes focus-energy-line-breathe {
+          0%,
+          100% {
+            opacity: 0.55;
+          }
+          50% {
+            opacity: 1;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .focus-energy-line {
+            animation: none;
+            opacity: 0.8;
+          }
+        }
+      `}</style>
     </PremiumCard>
   )
 }
