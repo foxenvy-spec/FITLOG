@@ -137,6 +137,12 @@ export default function MobileDashboardView() {
   )
   const next = useMemo(() => (data ? findNextProgramDay(data.programDays, dow) : null), [data, dow])
   const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
+  // กลุ่มกล้ามเนื้อของโปรแกรมวันนี้ (จาก ProgramExercise.muscle_group จริง ไม่ใช่พาร์สจากชื่อโปรแกรม
+  // ที่ผู้ใช้พิมพ์เอง) — ใช้กับบรรทัด "Chest • Triceps" ใน TodaysWorkoutCompactCard
+  const todayMuscleGroups = useMemo(
+    () => Array.from(new Set(data?.todayExercises.map((e) => e.muscle_group).filter((m): m is string => !!m) ?? [])),
+    [data?.todayExercises]
+  )
 
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
   const progressPct =
@@ -320,6 +326,7 @@ export default function MobileDashboardView() {
           completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
           total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
           href={scheduledDay ? '/session' : '/log'}
+          muscleGroups={todayMuscleGroups}
         />
 
         <TodayHealthStatsRow health={health} />
