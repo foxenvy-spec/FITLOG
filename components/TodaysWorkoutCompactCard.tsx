@@ -2,7 +2,17 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { COLORS, FIRE_GRADIENT_CSS, NEUTRAL, TEXT, withAlpha, CARD_MULTI_REFLECTION_CSS, CARD_AMBIENT_SHADOW_CSS, CARD_FLOAT_SHADOW } from '@/lib/theme'
+import {
+  COLORS,
+  FIRE_GRADIENT_CSS,
+  NEUTRAL,
+  TEXT,
+  withAlpha,
+  CARD_MULTI_REFLECTION_CSS,
+  CARD_AMBIENT_SHADOW_CSS,
+  CARD_FLOAT_SHADOW,
+  DIAGONAL_TITANIUM_CSS,
+} from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from './AnimatedBarFill'
 import PremiumCard from './ui/PremiumCard'
@@ -120,6 +130,12 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             การ์ด (absolute inset-0 ด้านบน) วาดทับปิดมันหมดเงียบๆ (children วาดทีหลัง = อยู่บนสุดเสมอ) —
             เพิ่มชั้นเดียวกันตรงนี้แทน ให้เห็นจริงบนการ์ดใบนี้ด้วย ไม่ใช่แค่ทฤษฎีว่ามีอยู่ใน PremiumCard */}
         <div className="absolute inset-0" style={{ backgroundImage: CARD_MULTI_REFLECTION_CSS }} />
+        {/* v25: ฟีดแบ็ก "อยากให้พื้นหลังต่อเนื่องกับ Titanium Ring เหมือน Ring ถูกกลึงจากแผ่นเดียวกับ
+            Card" — ก่อนหน้านี้การ์ดนี้มีแค่ CARD_MULTI_REFLECTION_CSS (เส้นสะท้อนสั้นๆ 3 เส้นแยกกัน) ไม่ใช่
+            ลายเฉียงต่อเนื่องแบบ DIAGONAL_TITANIUM_CSS ที่ Ring/พื้นหลังหน้าใช้ — เพิ่ม DIAGONAL_TITANIUM_CSS
+            ตรงๆ (โทเคนเดียวกับที่ FitnessRing.tsx ใช้ทำ Brushed Metal บนวงเป๊ะๆ ไม่ใช่ค่าลอยใหม่ มุม 115deg
+            เดียวกัน) ให้เส้นบนการ์ดกับเส้นบนวงเป็นลายต่อเนื่องเดียวกันจริงๆ ไม่ใช่แค่โทนสีคล้ายกัน */}
+        <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.7 }} />
         {/* v21: ฟีดแบ็ก "Orange Highlight อยากเพิ่ม Light Sweep บางๆ วิ่งผ่าน Banner ช้าๆ ทุก 20 วินาที
             แทบไม่รู้สึกแต่ดูแพงมาก" — แถบแสงเฉียงกว้าง กวาดจากซ้ายไปขวาเต็มการ์ด รอบละ 20 วิ อัลฟาต่ำมาก
             (peak 6%) + screen blend ให้เห็นเป็นแค่ "แสงวาบผ่าน" ไม่ใช่แถบสีทึบ เคารพ prefers-reduced-motion

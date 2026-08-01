@@ -181,7 +181,13 @@ export default function MetricCard({
           // v23: ฟีดแบ็ก "Card Metrics ยัง Flat อยากให้ดูหนากว่าเดิมประมาณ 15%" — เพิ่ม Top Highlight
           // (.09->.105 alpha) และ Bottom Shadow (10px->11.5px blur, .6->.68 alpha) ขึ้นราว 15% ตามที่ขอ
           // เป๊ะ — glow มุม (theme.main/second) ไม่แตะ (อัตลักษณ์สีต่อการ์ดที่ปรับมาหลายรอบแล้ว)
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.105)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4.6px 11.5px rgba(0,0,0,.68), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
+          // v25: "Rim Light" — ฟีดแบ็ก "Card จบแค่ Glow -> Shadow อยากได้ Top Hairline 0.5px ขาว 6% ->
+          // Bottom Shadow (มีแล้ว) -> Orange Ambient เพิ่ม ให้การ์ดหนาขึ้นโดยไม่ต้องเพิ่ม Glow" — เพิ่ม 2
+          // box-shadow ใหม่ต่อท้าย: (1) เส้นขอบบนสุดจริงๆ (offset -0.5px ไม่ใช่ inset ให้เป็นเส้นที่ขอบ
+          // จริง ไม่ใช่ในเนื้อผิว ต่างจาก "Hairline Highlight" เดิม v24 ซึ่งเป็น div คาดกลางความกว้างและ
+          // จางที่ปลายทั้งสองข้าง อันนี้เต็มความกว้าง คมชัดที่ขอบจริง) (2) วงแหวนอำพันจางมากรอบนอกการ์ด
+          // จำลอง "Orange Ambient" ที่ขอบ ไม่ใช่ glow มุมแบบเดิม (ซึ่งเป็นสีธีมต่อการ์ด ไม่ใช่อำพันเสมอ)
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.105)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4.6px 11.5px rgba(0,0,0,.68), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}${compact ? ', 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)' : ''}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
