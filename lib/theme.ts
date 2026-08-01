@@ -135,7 +135,9 @@ export const CARD_INSET_SHADOW = 'inset 1px 1px 0 0 rgba(255,255,255,.09), inset
 
 // v5: การ์ดยัง "ด้าน" (soft plastic) เกินไป — ลด stop บนสุดจาก .05 เหลือ .04 ตามที่ขอ "Top Reflection
 // แค่ 4%" เป๊ะๆ (ค่าก่อนหน้ายังโปร่งใสเร็วไปนิดที่ .05) สต็อปกลาง/ท้ายคงเดิมไว้
-export const CARD_REFLECTION_CSS = 'linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02) 18%, transparent 40%)'
+// v6: การ์ดยัง "Matte" มากกว่า "Titanium" — เพิ่ม reflection อีก ~3 จุด (.04 -> .07, สต็อปกลาง .02 ->
+// .035 ตามสัดส่วนเดียวกัน) เฉพาะจุดเดียวที่ขอรอบนี้ ไม่แตะ border/glow/สี/พื้นหลังเลย
+export const CARD_REFLECTION_CSS = 'linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.035) 18%, transparent 40%)'
 
 // v2: shadow เดิม (0 10px 30px rgba(0,0,0,.45)) หนัก/มืดเกินไป ทำให้การ์ดดู "ติดพื้น" แทนที่จะลอยเบาๆ
 // เหนือพื้นหลัง — ลด blur/opacity ลงให้เป็นเงาลอยแบบเบาบาง (float) จริง
