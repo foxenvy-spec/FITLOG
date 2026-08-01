@@ -351,11 +351,19 @@ export default function MobileDashboardView() {
           </div>
           <div className="absolute inset-0" style={{ backgroundImage: AMBIENT_ORANGE_CSS }} />
           {/* v18: noise ขยับจาก 0.01 (1%) เป็น 0.015 (1.5%) ตามที่ขอ "Noise 1-2%" (เดิมอยู่ปลายล่างสุด
-              ของช่วง) — ยังอยู่ในเพดานที่ขอ ไม่ใช่กลับไปเป็น 2% เต็มแบบรอบก่อนๆ ที่เคยหนาไป */}
-          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.015, mixBlendMode: 'overlay' }} />
+              ของช่วง) — ยังอยู่ในเพดานที่ขอ ไม่ใช่กลับไปเป็น 2% เต็มแบบรอบก่อนๆ ที่เคยหนาไป
+              v24: "Titanium Noise ละเอียดมาก แทบมองไม่เห็น แต่ช่วยให้โลหะดูจริง" — ขยับอีกนิดเป็น 0.02 */}
+          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }} />
           {/* v18: "Radial Shadow" — เงามืดนุ่มเฉพาะโซนล่างสุดของจอ ซ้อนทับ VIGNETTE_CSS (ซึ่งมืดขอบสม่ำเสมอ
               ทุกด้าน) ให้จอมีน้ำหนักกดลงด้านล่างเหมือนวางอยู่บนพื้นผิวจริง ไม่ใช่ลอยแบนเท่ากันทุกด้าน */}
           <div className="absolute inset-0" style={{ backgroundImage: RADIAL_SHADOW_CSS }} />
+          {/* v24: "Animated Highlight" — ฟีดแบ็ก "แสงวิ่งช้าๆ ทุก 8-12 วินาที ผ่าน Gauge/Focus/Workout
+              จะทำให้ทั้ง Dashboard ดูมีชีวิตโดยไม่รบกวนสายตา" — แทนที่จะซิงก์ animation แยกกัน 3 จุด (ring
+              sweep 9s ใน FitnessScore.tsx, banner sweep 20s ใน TodaysWorkoutCompactCard.tsx ซึ่งทำงาน
+              อิสระอยู่แล้ว) ใช้แถบแสงแนวนอนบางๆ กวาดจากบนลงล่างทั้งหน้าเดียว (10s/รอบ) พาดผ่านทั้ง 3 โซน
+              พร้อมกันแทน — ง่ายกว่าและทนกว่าการพยายามซิงก์เวลาข้าม component/mount cycle จริง — เคารพ
+              prefers-reduced-motion */}
+          <div className="page-light-sweep absolute inset-0 pointer-events-none" aria-hidden="true" />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>
 
@@ -483,6 +491,29 @@ export default function MobileDashboardView() {
           onSaveDisplayName={handleSaveDisplayName}
         />
       )}
+      <style jsx>{`
+        .page-light-sweep {
+          background: linear-gradient(180deg, transparent 45%, rgba(255, 255, 255, 0.035) 50%, transparent 55%);
+          background-size: 100% 400%;
+          background-position: 0% -100%;
+          animation: page-light-sweep-move 10s ease-in-out infinite;
+        }
+        @keyframes page-light-sweep-move {
+          0% {
+            background-position: 0% -100%;
+          }
+          45%,
+          100% {
+            background-position: 0% 200%;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .page-light-sweep {
+            animation: none;
+            opacity: 0;
+          }
+        }
+      `}</style>
     </>
   )
 }

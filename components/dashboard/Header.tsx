@@ -3,7 +3,7 @@
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, DIAGONAL_TITANIUM_CSS, CARD_REFLECTION_CSS } from '@/lib/theme'
+import { NOISE_BG, DIAGONAL_TITANIUM_CSS, CARD_REFLECTION_CSS, PAGE_REFLECTION_CSS } from '@/lib/theme'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -48,6 +48,38 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
         style={{
           backgroundImage: 'radial-gradient(ellipse 85% 70% at 88% 55%, rgba(255,142,20,.05), transparent 90%)',
           mixBlendMode: 'screen',
+        }}
+        aria-hidden="true"
+      />
+      {/* v24: ฟีดแบ็ก "Header ยังดูเบากว่าส่วนล่าง เพิ่ม Ambient Glow หลัง Gauge/Reflection บางๆ/Texture
+          Titanium จางๆ" — ต้นเหตุคือ Header ไม่มี "ผิววัสดุของตัวเอง" เลย (แค่ตัวหนังสือ+วงลอยอยู่บนพื้น
+          หลังหน้าเฉยๆ) ต่างจาก Card ด้านล่างที่มีทั้งพื้นหลังหน้า + ผิว PremiumCard ของตัวเองซ้อนกันสองชั้น
+          — เพิ่ม 3 ชั้นนี้เฉพาะโซน Header ให้มีความหนาแน่นใกล้เคียงกับการ์ดโดยไม่ต้องใส่กรอบการ์ดจริง */}
+      {/* Ambient Glow หลัง Gauge — วงรีอุ่นเข้มกว่า "Hero Area" bridge เดิมด้านบน (ซึ่งเน้นเชื่อมสองฝั่ง)
+          อันนี้ยึดจุดกึ่งกลางวงจริงๆ แคบกว่า/เข้มกว่า ให้รู้สึกมีแหล่งกำเนิดแสงอยู่หลังวงจริง */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          right: -20,
+          top: 20,
+          width: dashboardSpec.header.scoreRingSize * 2.2,
+          height: dashboardSpec.header.scoreRingSize * 2.2,
+          backgroundImage: 'radial-gradient(circle, rgba(255,150,30,.1), transparent 65%)',
+          mixBlendMode: 'screen',
+        }}
+        aria-hidden="true"
+      />
+      {/* Reflection บางๆ ทั่วโซน Header — ใช้โทเคนเดียวกับที่การ์ดทุกใบใช้ (ไม่ใช่ค่าลอยใหม่) */}
+      <div className="absolute -inset-x-4 top-0 h-24 pointer-events-none" style={{ backgroundImage: PAGE_REFLECTION_CSS }} aria-hidden="true" />
+      {/* Texture Titanium จางๆ — ลายเฉียงเดียวกับพื้นหลัง/การ์ด มาส์กให้จางลงจากบนลงล่างเฉพาะในโซน Header
+          (ไม่ใช่พึ่งพาแค่ลายเฉียงระดับพื้นหลังหน้าทั้งหน้าซึ่งจางกว่ามากเมื่อถึงตำแหน่งนี้) */}
+      <div
+        className="absolute -inset-x-4 top-0 h-32 pointer-events-none"
+        style={{
+          backgroundImage: DIAGONAL_TITANIUM_CSS,
+          opacity: 0.5,
+          WebkitMaskImage: 'linear-gradient(180deg, black 0%, black 40%, transparent 100%)',
+          maskImage: 'linear-gradient(180deg, black 0%, black 40%, transparent 100%)',
         }}
         aria-hidden="true"
       />
