@@ -82,6 +82,16 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         }}
         aria-hidden="true"
       />
+      {/* v25: ฟีดแบ็ก "ฝั่งซ้าย-ขวาน้ำหนักยังไม่เท่ากัน ไอคอน Titanium สวยแล้วแต่ฝั่งขวาโล่ง อยากได้
+          Diagonal Reflection แบบ BMW Dashboard ผ่านด้านขวา จางๆ" — ไอคอนวงกลมฝั่งซ้ายมีผิว/glow ของตัวเอง
+          หนาแน่นอยู่แล้ว ฝั่งขวามีแค่ตัวหนังสือ+ลูกศรบางๆ ลอยอยู่ ไม่มีอะไรถ่วงน้ำหนักภาพ — แถบสะท้อนแสง
+          เฉียงกว้าง (115deg องศาเดียวกับลายเฉียงทั่วแอป) stop ทั้งหมดอยู่ฝั่งขวาของการ์ด (55-80%) ให้มีน้ำหนัก
+          เฉพาะฝั่งขวาจริงๆ ไม่ใช่พาดเต็มการ์ดแบบสมมาตร */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: 'linear-gradient(115deg, transparent 55%, rgba(255,255,255,.045) 68%, transparent 82%)' }}
+        aria-hidden="true"
+      />
       <div className="flex items-center gap-3 min-w-0">
         {/* กลับไปใหญ่ขึ้น (24px -> 36px) ตามที่ยืนยันทิศทางแล้ว — เดิมย่อลงไปรอบก่อนหน้า —
             ไอคอนเป้าที่ผู้ใช้สร้างเอง แทนอีโมจิ 🎯 เดิม — รูปมีพื้นวงกลมดำของตัวเองติดมาด้วย (ไม่ใช่
