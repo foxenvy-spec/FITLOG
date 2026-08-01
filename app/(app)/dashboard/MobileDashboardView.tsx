@@ -495,11 +495,12 @@ export default function MobileDashboardView() {
         />
       )}
       <style jsx>{`
+        /* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation — Background: page-light-sweep 20s" — ช้าลงจาก 10s เป็น 20s */
         .page-light-sweep {
           background: linear-gradient(180deg, transparent 45%, rgba(255, 255, 255, 0.035) 50%, transparent 55%);
           background-size: 100% 400%;
           background-position: 0% -100%;
-          animation: page-light-sweep-move 10s ease-in-out infinite;
+          animation: page-light-sweep-move 20s ease-in-out infinite;
         }
         @keyframes page-light-sweep-move {
           0% {

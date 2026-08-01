@@ -459,7 +459,7 @@ export default function FitnessRing({
         />
       </svg>
 
-      {/* light sweep — highlight ขาว/เงินจางๆ กวาดวนรอบวงช้าๆ (9s/รอบ, animate-ring-sweep-slow ใน
+      {/* light sweep — highlight ขาว/เงินจางๆ กวาดวนรอบวงช้าๆ (12s/รอบ, animate-ring-sweep-slow ใน
           globals.css) จำลองแสงสะท้อนเคลื่อนผ่านผิวโลหะเป็นระยะๆ (ไม่ใช่ไฟพลังงานแบบ ProgressRing ที่ใช้
           animate-ring-sweep 4s + จุดสีครีม/ส้ม) — ไม่มี boxShadow/blur เพิ่ม กันไม่ให้กลายเป็น glow ใหม่
           ตามที่ขอให้หยุดเพิ่ม แค่วงกลมทึบจางๆ ผสม screen blend เท่านั้น ปิดอัตโนมัติเมื่อ
@@ -479,6 +479,22 @@ export default function FitnessRing({
           }}
         />
       </div>
+      {/* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation — ...Ring: spark ตอน Sweep ผ่าน" — จุดนิ่ง (ไม่หมุนตาม
+          wrapper ด้านบน) อยู่ตำแหน่ง 12 นาฬิกาเดียวกับจุดเริ่มของ light sweep พอดี กะพริบสว่างจ้าสั้นๆ
+          จังหวะเดียวกับที่จุดหมุน (sweep) วนครบรอบมาผ่านตำแหน่งนี้อีกครั้ง — ใช้ duration เท่ากับ sweep
+          เป๊ะ (12s) ให้ synced กันโดยไม่ต้องคำนวณ offset เอง (ทั้งคู่เริ่มที่ 12 นาฬิกาพร้อมกันตอน t=0) */}
+      <span
+        className="animate-ring-spark-flash absolute rounded-full pointer-events-none"
+        aria-hidden="true"
+        style={{
+          width: Math.max(3, sw * 0.45),
+          height: Math.max(3, sw * 0.45),
+          left: '50%',
+          top: sw / 2,
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(circle, rgba(255,255,255,.95), transparent 70%)',
+        }}
+      />
 
       {/* metal highlight dots — จุดสว่างนิ่ง 2 จุดที่ 11 กับ 5 นาฬิกา (คนละแบบจาก highlight arc บางๆ
           ในวง track ด้านบน ซึ่งเป็นเส้นโค้ง ไม่ใช่จุดกลม) จำลอง specular highlight แบบจุดกลมเล็กๆ ที่แสง

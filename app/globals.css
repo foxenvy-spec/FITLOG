@@ -236,12 +236,27 @@
   animation: ring-sweep 4s linear infinite;
 }
 
-/* FitnessRing (Dashboard header) — sweep คนละแบบจาก ProgressRing ด้านบน: ช้ากว่ามาก (8s แทน 4s) และ
-   เป็น highlight สีขาว/เงินจางๆ (ไม่ใช่จุด glow ครีม/ส้ม) ให้ความรู้สึก "แสงสะท้อนกวาดผ่านผิวโลหะ"
-   เป็นระยะๆ แทนไฟพลังงาน — ใช้ keyframe ring-sweep เดิม (แค่ rotate) ต่างกันแค่ duration/สไตล์จุด —
-   ปรับ 9s -> 8s ให้ตรงกับที่ขอ "แสงวิ่งทุก 8 วินาที" เป๊ะๆ */
+/* FitnessRing (Dashboard header) — sweep คนละแบบจาก ProgressRing ด้านบน: ช้ากว่ามาก และเป็น highlight
+   ขาว/เงินจางๆ (ไม่ใช่จุด glow ครีม/ส้ม) ให้ความรู้สึก "แสงสะท้อนกวาดผ่านผิวโลหะ" เป็นระยะๆ แทนไฟพลังงาน —
+   ใช้ keyframe ring-sweep เดิม (แค่ rotate) ต่างกันแค่ duration/สไตล์จุด
+   v31: ฟีดแบ็ก "เหลือแค่ 7 Animation ทั้งแอป — Ring: rotate 12s" — นี่คือ animation "Ring: rotate" ตัวเดียว
+   ที่เหลืออยู่ของวง Fitness Score (เดิม 8s ปรับเป็น 12s ตามสเปคใหม่) — FitnessScore.tsx เคยมี sweep ของ
+   ตัวเองซ้อนทับอีกชั้น (ring-sweep-wrap/ring-tiny-spark) ซึ่งเป็นวง sweep ที่ 2 หมุนรอบวงเดียวกันพร้อมกัน
+   ตัดออกไปแล้ว รวม "spark ตอน sweep ผ่าน" เข้ามาเป็นการกะพริบของจุดสว่างในชั้นนี้แทน (ดู JSX ในไฟล์นี้) */
 .animate-ring-sweep-slow {
-  animation: ring-sweep 8s linear infinite;
+  animation: ring-sweep 12s linear infinite;
+}
+
+/* v31: "Ring: spark ตอน Sweep ผ่าน" — จุดประกายนิ่งที่ 12 นาฬิกาบนวง (ดู FitnessRing.tsx) กะพริบสั้นๆ
+   ตอนต้นของทุกรอบ 12s เดียวกับ ring-sweep พอดี (ทั้งคู่เริ่มที่ตำแหน่งเดียวกันตอน t=0) จำลองแสงกระทบจ้า
+   ตอนจุดหมุนวนผ่านตำแหน่งนี้ */
+@keyframes ring-spark-flash {
+  0%, 4%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  1% { opacity: 1; transform: translate(-50%, -50%) scale(1.8); }
+  2% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+.animate-ring-spark-flash {
+  animation: ring-spark-flash 12s linear infinite;
 }
 
 /* ปุ่ม Start Workout (BottomNav) — เดิม box-shadow นิ่ง (drop shadow + AMBER_GLOW_SHADOW + inset
@@ -313,7 +328,7 @@
   50% { transform: translate(-50%, -50%) scale(1.3); }
 }
 .animate-ring-tip-pulse {
-  animation: ring-tip-pulse 2.4s ease-in-out infinite;
+  animation: ring-tip-pulse 2.5s ease-in-out infinite;
 }
 
 /* เทมเพลตหน้ามือถือ — วง glow หลังไอคอนวงกลม "หายใจ" เบาๆ ต่อเนื่อง ให้รู้สึกว่ามีไฟอยู่ข้างในโดยไม่รบกวน
@@ -349,6 +364,7 @@
   .animate-streak-sweep,
   .animate-ring-sweep,
   .animate-ring-sweep-slow,
+  .animate-ring-spark-flash,
   .animate-ring-tip-pulse,
   .animate-icon-glow-breathe,
   .skeleton-shimmer,
