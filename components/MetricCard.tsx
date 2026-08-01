@@ -7,6 +7,7 @@ import {
   CARD_GRADIENT_CSS,
   CARD_REFLECTION_CSS,
   CARD_CURVATURE_HIGHLIGHT_CSS,
+  CARD_BEVEL_CSS,
   CARD_FLOAT_SHADOW,
   DIAGONAL_TITANIUM_CSS,
   glowAlphaHex,
@@ -131,19 +132,22 @@ export default function MetricCard({
           // v18: ฟีดแบ็ก "Card ยังดูเป็นการ์ด ไม่ใช่ Surface" — เพิ่ม CARD_CURVATURE_HIGHLIGHT_CSS (วงรี
           // ไฮไลต์แคบตรงกลางขอบบน) เป็นชั้นบนสุด (compact เท่านั้น) จำลองผิวโค้งเล็กน้อยที่แสงจับเป็นจุด
           // แทนที่จะเป็นแค่เส้นสะท้อนแสงตรงยาวทั้งเส้นแบบ CARD_REFLECTION_CSS เดิมอย่างเดียว
+          // v19: ฟีดแบ็ก "อยากได้ Micro Bevel ไม่ใช่แค่ Dark Card + Glow" — เดิมขอบ (border-box) มีแค่
+          // ไล่สีธีม (เรืองแสงสี ไม่ใช่มิติ) เพิ่ม CARD_BEVEL_CSS (ไล่สีกลาง มุมบนซ้ายสว่าง/มุมล่างขวามืด)
+          // ซ้อนบนไล่สีธีมเดิม (border-box เหมือนกัน) ให้ขอบมีทั้งมิติจริงแบบร่องสลักโลหะ + สีธีมพร้อมกัน
           backgroundImage: compact
-            ? `${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
+            ? `${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), ${CARD_BEVEL_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
             : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
           backgroundClip: compact
-            ? 'padding-box, padding-box, padding-box, padding-box, border-box, border-box, border-box'
+            ? 'padding-box, padding-box, padding-box, padding-box, border-box, border-box, border-box, border-box'
             : 'padding-box, padding-box, border-box, border-box, border-box',
           // มือถือ (compact) เท่านั้น: ขยายชั้นที่ 2 (CARD_REFLECTION_CSS) สูงกว่ากล่องจริง (150%) ให้
           // .metric-card-compact:active เลื่อนตำแหน่งชั้นนี้ลงมาได้ (ดู style jsx) จำลอง "แถบสะท้อนแสง
           // ขยับ" ตอนแตะ เหมือน PremiumCard — เดสก์ท็อปไม่ตั้งค่านี้เลย (undefined) ใช้ auto/0 0 ปกติ
           // ทุกประการ ไม่กระทบ — ชั้นแรก (curvature highlight) ใหม่คงที่ ไม่ขยับตาม
-          backgroundSize: compact ? 'auto, 100% 150%, auto, auto, auto, auto, auto' : undefined,
-          backgroundPosition: compact ? '0 0, 0% 0%, 0 0, 0 0, 0 0, 0 0, 0 0' : undefined,
+          backgroundSize: compact ? 'auto, 100% 150%, auto, auto, auto, auto, auto, auto' : undefined,
+          backgroundPosition: compact ? '0 0, 0% 0%, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0' : undefined,
           // ชั้นซ้อนกัน: ambient shadow (มือถือ (compact) ใช้ CARD_FLOAT_SHADOW เบาบางกว่าเดิมให้การ์ด
           // ดูลอย เดสก์ท็อปยังใช้ contact+ambient shadow คู่เดิมทุกประการ) + inset highlight (มือถือ
           // (compact) ใช้ inset แนวทแยงมุมบนซ้ายแบบเดียวกับ CARD_INSET_SHADOW ของ PremiumCard ให้ความสว่าง
@@ -378,7 +382,7 @@ export default function MetricCard({
           }
         }
         .metric-card-compact:active {
-          background-position: 0 0, 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0;
+          background-position: 0 0, 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
           /* Card Press Effect v2 — เดิมกดจมลง (translateY(1px)) ตามที่ขอตอนนั้น ตอนนี้เปลี่ยนเป็น
              "ยกขึ้น 2px" ตาม Phase 5 Motion spec ใหม่เจาะจง MetricCard (คนละพฤติกรรมจาก
              TodaysFocusCard/TodaysWorkoutCompactCard ที่ยังกดจมลงเหมือนเดิม ไม่แตะ) */
