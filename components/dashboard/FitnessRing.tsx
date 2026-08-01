@@ -203,6 +203,28 @@ export default function FitnessRing({
           style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
         />
 
+        {/* ทำให้วง track (ไทเทเนียม) กับวง progress (สีตาม tier) เป็น "วัสดุเดียวกัน" แทนที่จะดูเหมือน
+            สีทาแปะทับกัน — เดิม ring-progress ใช้แค่ ring-gradient สีล้วน + bloom filter (เทคนิคคนละ
+            แบบจาก titanium-track ที่เป็นแถบเงา/สว่างสลับกันแบบโลหะขัดเงาจริง ไม่มี blur เลย) เพิ่มชั้นนี้
+            ซ้อนทับ ใช้ titanium-track gradient เดิม (ไม่สร้างใหม่ ใช้ def เดียวกับวง track เป๊ะๆ) ผสม
+            mixBlendMode: overlay ให้แถบสว่าง/มืดของโลหะมาปรับความสว่างของสีตาม tier ที่อยู่ข้างล่าง —
+            ผลคือ "ไทเทเนียมฐาน + สีส้ม (หรือสี tier อื่น) เคลือบโลหะ" วัสดุเดียวกันจริงๆ ไม่ใช่วงสีส้ม
+            แบนๆ แปะอยู่บนวงโลหะอีกที */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={`url(#${idPrefix}-titanium-track)`}
+          strokeWidth={sw}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          opacity={0.55}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ mixBlendMode: 'overlay', transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
+        />
+
         {/* glossy reflection rim — เส้นบางสว่างจ้าเกือบขาว แนบผิวด้านในของวงหลัก จำลองผิวมันวาว/สะท้อน
             แสง (เหมือนวัสดุทรงกลมจริงๆ ไม่ใช่แค่เส้น flat) */}
         <circle
