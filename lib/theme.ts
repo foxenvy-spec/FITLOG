@@ -151,6 +151,13 @@ export const DIAGONAL_TITANIUM_FADE_MASK =
 export const AMBIENT_ORANGE_CSS =
   'linear-gradient(195deg, transparent 0%, transparent 30%, rgba(255,138,0,.01) 50%, rgba(255,142,20,.025) 70%, rgba(255,150,30,.04) 88%, rgba(255,150,30,.02) 100%)'
 
+// v15: "Soft Reflection" ของพื้นหลังทั้งหน้า — เดิมมีแค่ไล่สีเทาเย็น + ลายเฉียง + noise + vignette
+// (ฟีดแบ็ก: "ยังสะอาดเกินไป") เพิ่มแถบสว่างจางๆ แนวนอนใกล้ขอบบนสุด (เหมือนแสงตกกระทบผิวไทเทเนียมจากด้านบน
+// แบบเดียวกับ CARD_REFLECTION_CSS ที่การ์ดใช้กันอยู่แล้ว แต่สเกลใหญ่ขึ้นสำหรับทั้งหน้า) — ตั้งใจให้เป็น
+// เส้น/แถบ ไม่ใช่วงกลม (ตามฟีดแบ็ก "Glow ไม่ควรเป็นวงกลม") จางมาก (~3% สูงสุด) จางหมดก่อนถึง 45% ของความสูง
+export const PAGE_REFLECTION_CSS =
+  'linear-gradient(180deg, rgba(255,255,255,.03) 0%, rgba(255,255,255,.012) 20%, transparent 45%)'
+
 // เดิม (v13, radial แคบ) เก็บไว้เป็นคอมเมนต์อ้างอิง เผื่อย้อนกลับ:
 // 'radial-gradient(80% 55% at 65% 68%, rgba(255,138,0,.05), transparent 55%)'
 

@@ -162,6 +162,16 @@ export default function MetricCard({
             style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.5 }}
           />
         )}
+        {/* v15: การ์ดยังดู "Matte" — เพิ่มแถบสะท้อนแสงเฉียง (diagonal reflection) มุมบนซ้ายไล่ไปขวาล่าง
+            แยกจาก CARD_REFLECTION_CSS เดิม (ซึ่งเป็นแถบแนวนอนบนสุดล้วนๆ) อันนี้เอียงตามทิศทางเดียวกับ
+            DIAGONAL_TITANIUM_CSS ให้ความรู้สึกผิวโลหะสะท้อนแสงจริง ไม่ใช่พื้นเรียบทึบ (~4% ตามที่ขอ) */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+            style={{ backgroundImage: 'linear-gradient(115deg, rgba(255,255,255,.04) 0%, transparent 35%)' }}
+          />
+        )}
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ —
             v12: มือถือ (compact) ลดจาก 14 (~8%) เหลือ 0a (~4%) ตามคำขอลดสีธีมให้ titanium โชว์ชัดขึ้น
             เดสก์ท็อปคงเดิม 14 ทุกประการ */}
@@ -177,22 +187,26 @@ export default function MetricCard({
           className={`pointer-events-none absolute inset-0 ${radiusClass}`}
           style={{ backgroundImage: `radial-gradient(circle at top left, rgba(255,255,255,.03), transparent 50%)` }}
         />
-        {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — v12: มือถือ
-            (compact) ลดจาก opacity 0.08 เหลือ 0.045 (~ครึ่งเดียว) ตามคำขอลดสีธีมให้ titanium โชว์ชัดขึ้น
-            เดสก์ท็อปคงเดิม 0.08 ทุกประการ */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute rounded-full"
-          style={{
-            width: 160,
-            height: 160,
-            left: -60,
-            top: -60,
-            background: theme.main,
-            filter: 'blur(60px)',
-            opacity: compact ? 0.045 : 0.08,
-          }}
-        />
+        {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — เดสก์ท็อปคงเป็น
+            วงกลมเบลอเดิมทุกประการ (opacity 0.08) ไม่กระทบ */}
+        {!compact && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-full"
+            style={{ width: 160, height: 160, left: -60, top: -60, background: theme.main, filter: 'blur(60px)', opacity: 0.08 }}
+          />
+        )}
+        {/* v15: มือถือ (compact) เปลี่ยนจากวงกลมเบลอ (glow blob) เป็นแถบสะท้อนแสงเฉียงสีธีม (linear
+            reflection) แทน ตามฟีดแบ็ก "Glow ยังเป็นวงกลม ควรเป็นเส้น/แถบสะท้อนแสงบนโลหะ ไม่ใช่ glow แบบเกม"
+            — ทิศทางเดียวกับลายเฉียง 115deg ให้ดูเหมือนแสงสะท้อนผิวไทเทเนียมจริงๆ ไม่ใช่แสงฟุ้งจากไอคอน
+            (opacity คงเดิม 0.045 เท่าของ v12 ไม่เปลี่ยนความเข้มโดยรวม แค่เปลี่ยนรูปทรง) */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+            style={{ backgroundImage: `linear-gradient(115deg, ${theme.main} 0%, transparent 30%)`, opacity: 0.045 }}
+          />
+        )}
 
         <div className={compact ? 'relative h-full flex flex-col justify-between' : 'relative h-full'}>
           <p

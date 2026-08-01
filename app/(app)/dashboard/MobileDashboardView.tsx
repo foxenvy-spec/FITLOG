@@ -34,6 +34,7 @@ import {
   DIAGONAL_TITANIUM_CSS,
   DIAGONAL_TITANIUM_FADE_MASK,
   AMBIENT_ORANGE_CSS,
+  PAGE_REFLECTION_CSS,
 } from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
@@ -297,6 +298,9 @@ export default function MobileDashboardView() {
           {/* v13: ลายเฉียงไทเทเนียมไล่จางจากบน (ชัด ~4%) ลงล่าง (แทบมองไม่เห็น) แทนที่จะสม่ำเสมอทั้งหน้า
               เหมือน v12 (ฟีดแบ็ก: "สม่ำเสมอเกินไป เหมือน Overlay วางทับทั้งหน้า") — ใช้ mask-image แนวตั้ง
               ควบคุมความเข้มตาม Y แทนการลด opacity เฉยๆ */}
+          {/* v15: "Soft Reflection" — แถบสว่างจางๆ แนวนอนใกล้ขอบบน จำลองแสงตกกระทบผิวไทเทเนียม (เส้น/แถบ
+              ไม่ใช่วงกลม ตามฟีดแบ็ก) วางไว้ชั้นล่างสุด (ใต้ลายเฉียง/แสงส้ม) ให้เป็นชั้นฐานของ "ผิวโลหะ" */}
+          <div className="absolute inset-0" style={{ backgroundImage: PAGE_REFLECTION_CSS }} />
           <div
             className="absolute inset-0"
             style={{
@@ -306,7 +310,9 @@ export default function MobileDashboardView() {
             }}
           />
           <div className="absolute inset-0" style={{ backgroundImage: AMBIENT_ORANGE_CSS }} />
-          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }} />
+          {/* v15: noise ลดจาก 0.02 (2%) เหลือ 0.01 (1%) ตามที่ขอ "Noise 1%" — ตอนนี้พื้นหลังมี soft
+              reflection + ลายเฉียง (brushed) แล้ว noise เดิม 2% เลยรู้สึกหนาไปเมื่อรวมกับเลเยอร์ใหม่ */}
+          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.01, mixBlendMode: 'overlay' }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>
 
