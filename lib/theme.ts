@@ -135,6 +135,13 @@ export const VIGNETTE_CSS = 'radial-gradient(circle, transparent 45%, rgba(0,0,0
 export const DIAGONAL_TITANIUM_CSS =
   'repeating-linear-gradient(115deg, rgba(255,255,255,.04) 0px, rgba(255,255,255,.04) 1px, transparent 1px, transparent 40px)'
 
+// v16: "Micro Reflection" — เส้นลายเฉียงเดิม (DIAGONAL_TITANIUM_CSS) สม่ำเสมอทุกเส้นเท่ากันหมด (ฟีดแบ็ก:
+// "ยังเรียบไปนิด") ไม่มีจุดที่ดู "โดนแสงจับ" ต่างจากเส้นอื่น — เพิ่มแถบสว่างจางมาก (2%) ทิศทางเดียวกับลาย
+// (115deg) พาดคาดกลางๆ ให้เกิดจุดที่ "แสงสะท้อนกระทบพอดี" ต่างจากส่วนอื่นของลาย เหมือนผิวไทเทเนียมจริงที่
+// ไม่ได้สะท้อนแสงสม่ำเสมอทุกจุด — ใช้ร่วมกับ DIAGONAL_TITANIUM_FADE_MASK เดิมเพื่อให้จางลงล่างเหมือนกัน
+export const DIAGONAL_TITANIUM_MICRO_REFLECTION_CSS =
+  'linear-gradient(115deg, transparent 42%, rgba(255,255,255,.02) 50%, transparent 58%)'
+
 // mask-image แนวตั้ง ใช้คู่กับ DIAGONAL_TITANIUM_CSS เพื่อไล่จาง (fade) ลายเฉียงจากบนลงล่าง — ทึบเต็มที่
 // (100%) แถว Header ค่อยๆ จางลงเหลือ ~50% กลางหน้า แล้วเกือบหายไปหมด (~5%) ตอนล่างสุด แทนที่จะสม่ำเสมอ
 // ทั้งหน้าแบบเดิม (v12) — ใช้ mask (ไม่ใช่ opacity เฉยๆ) เพราะต้องการควบคุมความเข้มไล่ระดับตามตำแหน่ง Y

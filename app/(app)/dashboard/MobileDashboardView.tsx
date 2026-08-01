@@ -33,6 +33,7 @@ import {
   VIGNETTE_CSS,
   DIAGONAL_TITANIUM_CSS,
   DIAGONAL_TITANIUM_FADE_MASK,
+  DIAGONAL_TITANIUM_MICRO_REFLECTION_CSS,
   AMBIENT_ORANGE_CSS,
   PAGE_REFLECTION_CSS,
 } from '@/lib/theme'
@@ -305,6 +306,17 @@ export default function MobileDashboardView() {
             className="absolute inset-0"
             style={{
               backgroundImage: DIAGONAL_TITANIUM_CSS,
+              WebkitMaskImage: DIAGONAL_TITANIUM_FADE_MASK,
+              maskImage: DIAGONAL_TITANIUM_FADE_MASK,
+            }}
+          />
+          {/* v16: "Micro Reflection" — แถบสว่างจางมาก (2%) พาดคาดกลางลายเฉียง ให้ลายดูมีจุดโดนแสงจับ
+              ไม่สม่ำเสมอทุกเส้นเท่ากันหมดแบบเดิม (ฟีดแบ็ก: "Titanium ยังเรียบไปนิด") ใช้ fade mask เดียวกับ
+              ลายเฉียงเพื่อให้จางลงล่างพร้อมกัน */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: DIAGONAL_TITANIUM_MICRO_REFLECTION_CSS,
               WebkitMaskImage: DIAGONAL_TITANIUM_FADE_MASK,
               maskImage: DIAGONAL_TITANIUM_FADE_MASK,
             }}

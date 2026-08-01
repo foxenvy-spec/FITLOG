@@ -187,6 +187,16 @@ export default function MetricCard({
           className={`pointer-events-none absolute inset-0 ${radiusClass}`}
           style={{ backgroundImage: `radial-gradient(circle at top left, rgba(255,255,255,.03), transparent 50%)` }}
         />
+        {/* v16: "Center Highlight" — เดิมการ์ดทั้ง 4 ใบสีดำเท่ากันหมดตรงกลาง (แสง/glow ทุกจุดกระจุกอยู่แค่
+            มุมซ้ายบน) ฟีดแบ็ก: อยากได้ไฮไลต์เบามากตรงกลางการ์ดแบบผิวโลหะที่โค้งเล็กน้อยสะท้อนแสงตรงกลาง —
+            radial ขาวล้วนจางมาก ไม่ใช่สีธีม (compact/มือถือเท่านั้น) */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+            style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,.025), transparent 55%)' }}
+          />
+        )}
         {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — เดสก์ท็อปคงเป็น
             วงกลมเบลอเดิมทุกประการ (opacity 0.08) ไม่กระทบ */}
         {!compact && (
