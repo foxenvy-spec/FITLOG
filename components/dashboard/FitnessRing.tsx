@@ -2,7 +2,7 @@
 
 import { useId } from 'react'
 import type { ReactNode } from 'react'
-import { FIRE_GRADIENT_STOPS, NEUTRAL, DIAGONAL_TITANIUM_CSS } from '@/lib/theme'
+import { FIRE_GRADIENT_STOPS, NEUTRAL, DIAGONAL_TITANIUM_CSS, HAIRLINE_SCRATCH_BG } from '@/lib/theme'
 
 interface GradientStop {
   offset: string
@@ -67,6 +67,16 @@ export default function FitnessRing({
   // ผ่าน CSS color-mix ไม่ได้รองรับกว้างพอ จึงใช้เทคนิคง่ายกว่า: วาง hex ตรงๆ ใน radial-gradient แล้วลด
   // ความเข้มด้วย transparent stop แทนการต่อ alpha suffix)
   const innerGlowColor = gradientStops[0]?.color ?? '#FF8A00'
+
+  // v26: ฟีดแบ็ก "Ring ยังเหมือน Gradient อยากได้ Titanium จริง - Outer Ring -> Brushed Metal ->
+  // Micro Scratch -> Specular -> Orange Core" - Outer Ring/Brushed Metal/Orange Core มีอยู่แล้ว
+  // (Outer Bevel + titanium-track gradient / Brushed Metal ผ่าน DIAGONAL_TITANIUM_CSS มาส์กโดนัท /
+  // Orange Inner Glow) แต่ "Micro Scratch" กับ "Specular" (จุดสว่างจ้าเล็กๆ จุดเดียว ต่างจาก Soft
+  // Reflection ซึ่งเป็นเส้นโค้งสว่างสม่ำเสมอทั้งเส้น) ยังไม่มี — ตำแหน่ง specular ใช้สูตรเดียวกับ metal
+  // highlight dots ในเวอร์ชันเต็ม (11 นาฬิกา) คำนวณไว้ที่นี่ให้ทั้ง simple/เวอร์ชันเต็มใช้ตำแหน่งตรงกัน
+  const specularAngle = (11 / 12) * 2 * Math.PI - Math.PI / 2
+  const specularX = size / 2 + radius * Math.cos(specularAngle)
+  const specularY = size / 2 + radius * Math.sin(specularAngle)
 
   // ตำแหน่งจุด tip — พารามิเตอร์มุมเดียวกับที่ strokeDasharray/strokeDashoffset วาดเส้นจริง (เริ่มที่ 3
   // นาฬิกาแล้วหมุน -90deg ให้ไปเริ่มที่ 12 นาฬิกาแทน) ลบ 90deg ออกจากมุม raw ให้ตรงกับตำแหน่งที่ตาเห็นจริง
@@ -165,6 +175,39 @@ export default function FitnessRing({
             maskImage: ringDonutMask,
           }}
           aria-hidden="true"
+        />
+        {/* v26: Micro Scratch — ริ้วรอยขัดเงาแบบ anisotropic (โทเคนเดียวกับที่ใช้บนพื้นหลังหน้า) ต่างจาก
+            Brushed Metal ด้านบนซึ่งเป็นเส้นเรขาคณิตห่างเท่ากันเป๊ะ อันนี้ริ้วไม่สม่ำเสมอแบบรอยขัดโลหะจริง
+            ให้วง "รู้สึกเป็นวัสดุ" ไม่ใช่แค่ gradient เรียบ */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: HAIRLINE_SCRATCH_BG,
+            backgroundSize: '60px 60px',
+            opacity: 0.05,
+            mixBlendMode: 'overlay',
+            WebkitMaskImage: ringDonutMask,
+            maskImage: ringDonutMask,
+          }}
+          aria-hidden="true"
+        />
+        {/* v26: Specular — จุดสว่างจ้าเล็กๆ จุดเดียวที่ 11 นาฬิกา จำลองแสงกระทบจุดเดียวแบบผิวโลหะโค้งจริง
+            (ต่างจาก Soft Reflection ด้านบนซึ่งเป็นเส้นโค้งสว่างสม่ำเสมอตลอดทั้งเส้น) — simple mode เดิม
+            ไม่มี specular hotspot เลย ทำให้วงอ่านเป็น "ไล่สี" มากกว่า "โลหะสะท้อนแสง" */}
+        <span
+          className="absolute rounded-full pointer-events-none"
+          aria-hidden="true"
+          style={{
+            width: Math.max(2, sw * 0.35),
+            height: Math.max(2, sw * 0.35),
+            left: specularX,
+            top: specularY,
+            transform: 'translate(-50%, -50%)',
+            background: '#FFFFFF',
+            opacity: 0.55,
+            mixBlendMode: 'screen',
+            filter: 'blur(0.5px)',
+          }}
         />
         {/* CNC Edge — inset shadow บางรอบนอกวง จำลองขอบตัดคมแบบชิ้นงานกัด CNC ไม่ใช่ขอบมนนุ่ม */}
         <div
@@ -494,6 +537,22 @@ export default function FitnessRing({
         style={{
           backgroundImage: DIAGONAL_TITANIUM_CSS,
           opacity: 0.6,
+          WebkitMaskImage: ringDonutMask,
+          maskImage: ringDonutMask,
+        }}
+        aria-hidden="true"
+      />
+      {/* v26: Micro Scratch — เวอร์ชันเต็ม (Hero Ring) เดิมมี highlight arc/dots/reflection rim ทำหน้าที่
+          "Specular" อยู่แล้วหลายชั้น แต่ยังไม่มีริ้วรอยขัดแบบ anisotropic เหมือนที่เพิ่มใน simple mode —
+          เพิ่มชั้นเดียวกันตรงนี้ ให้ Hero Ring/Banner Ring เป็นวัสดุเดียวกันจริงๆ ตามหลัก Consistency
+          เดิมของไฟล์นี้ (ดูคอมเมนต์ titanium-track ด้านบน) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: HAIRLINE_SCRATCH_BG,
+          backgroundSize: '60px 60px',
+          opacity: 0.05,
+          mixBlendMode: 'overlay',
           WebkitMaskImage: ringDonutMask,
           maskImage: ringDonutMask,
         }}

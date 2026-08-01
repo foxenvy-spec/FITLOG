@@ -3,7 +3,15 @@
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, DIAGONAL_TITANIUM_CSS, CARD_REFLECTION_CSS, PAGE_REFLECTION_CSS } from '@/lib/theme'
+import {
+  NOISE_BG,
+  DIAGONAL_TITANIUM_CSS,
+  CARD_REFLECTION_CSS,
+  PAGE_REFLECTION_CSS,
+  VERTICAL_BRUSHED_CSS,
+  MICRO_GRAIN_BG,
+  HAIRLINE_REFLECTION_CSS,
+} from '@/lib/theme'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -130,7 +138,19 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // (แสงจับกลาง) และ "ขอบมืดลงเล็กน้อย" (ขอบบน/ล่างมืดกว่าเดิม) ในสต็อปเดียวกัน + เพิ่ม
             // CARD_REFLECTION_CSS เป็นชั้นแยกต่างหาก (โทเคนเดียวกับที่การ์ดทุกใบใช้ ไม่ใช่ค่าลอยใหม่) ให้ตัว
             // อักษรใช้ "แสงสะท้อนแนวตั้ง" ภาษาเดียวกับผิวการ์ดทั้งแอปจริงๆ ตามที่ขอ (Consistency)
+            // v26: ฟีดแบ็ก "BANK ดู Matte แต่ด้านล่างเป็น Titanium - อยากได้ Hairline Reflection ->
+            // Vertical Brushed -> Micro Grain แบบ Apple Watch Stainless Steel" - 3 ชั้นใหม่ต่อไปนี้วาง
+            // นำหน้าสุด (ทับบนสุด): (1) HAIRLINE_REFLECTION_CSS เส้นสะท้อนแสงคมชัด 1 เส้นพาดกลางตัวอักษร
+            // (คนละจุดประสงค์จากแถบนุ่ม 0.02 alpha เดิมด้านล่าง ซึ่งยังคงไว้เป็นแสงฟุ้งกว้างเหมือนเดิม)
+            // (2) VERTICAL_BRUSHED_CSS เส้นแปรงแนวตั้งถี่ๆ (90deg) ต่างทิศจาก DIAGONAL_TITANIUM_CSS เดิม
+            // (115deg) ให้ wordmark รู้สึกเป็น "แท่งโลหะกลึงแนวตั้ง" แบบเคสนาฬิกา ไม่ใช่แผ่นเดียวกับพื้นหลัง
+            // (3) MICRO_GRAIN_BG เกรนละเอียดกว่า NOISE_BG เดิม (ซึ่งยังคงไว้ด้วยเป็นเกรนระดับหยาบกว่า) ให้มี
+            // เกรน 2 สเกลซ้อนกันแบบผิวโลหะขัดจริง — blend เป็น overlay ทั้ง 3 ชั้นยกเว้น Hairline
+            // Reflection ที่ใช้ screen (เติมแสงเข้าไปตรงๆ ไม่ใช่ผสมกับโทนสีข้างใต้แบบ overlay)
             backgroundImage: [
+              HAIRLINE_REFLECTION_CSS,
+              VERTICAL_BRUSHED_CSS,
+              MICRO_GRAIN_BG,
               DIAGONAL_TITANIUM_CSS,
               NOISE_BG,
               CARD_REFLECTION_CSS,
@@ -138,7 +158,7 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
               'linear-gradient(90deg, #D2D2D2, #A8A8A8, #DADADA, #7C7C7C)',
               'linear-gradient(180deg, #6E7074 0%, #B7B8BB 15%, #E4E4E4 45%, #A8A9AC 72%, #5A5C60 100%)',
             ].join(', '),
-            backgroundBlendMode: 'overlay, overlay, normal, normal, overlay, normal',
+            backgroundBlendMode: 'screen, overlay, overlay, overlay, overlay, normal, normal, overlay, normal',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
