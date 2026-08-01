@@ -36,7 +36,6 @@ export const dashboardSpec = {
     height: 112,
     borderRadius: 24,
     padding: 10,
-    imageWidthPct: 27,
     // badge วงกลม+arc progress รอบไอคอนดัมเบล (ใช้ FitnessRing) — แทนที่ไอคอนแบนเดิม ให้ตรงกับ mockup
     ringSize: 46,
   },
