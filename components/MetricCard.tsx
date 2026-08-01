@@ -1,7 +1,16 @@
 'use client'
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, TEXT, CARD_GRADIENT_CSS, CARD_REFLECTION_CSS, CARD_FLOAT_SHADOW, DIAGONAL_TITANIUM_CSS, glowAlphaHex } from '@/lib/theme'
+import {
+  NOISE_BG,
+  TEXT,
+  CARD_GRADIENT_CSS,
+  CARD_REFLECTION_CSS,
+  CARD_CURVATURE_HIGHLIGHT_CSS,
+  CARD_FLOAT_SHADOW,
+  DIAGONAL_TITANIUM_CSS,
+  glowAlphaHex,
+} from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
@@ -119,19 +128,22 @@ export default function MetricCard({
           // "ลดความเข้มข้นสีธีมลง ให้ titanium โชว์ชัดขึ้น" — เดสก์ท็อปคงค่าเดิม 14/40/14 ทุกประการ ไม่กระทบ
           // (ไม่ได้ตั้งใจให้เป็น titanium อยู่แล้ว) glow มุม (radial 3-4) ยังใช้ glowAlpha ต่อการ์ดเดิม
           // ไม่แตะ เพราะเป็นอัตลักษณ์สีที่ปรับทีละใบมาหลายรอบแล้ว (weight 14/bodyFat 11/muscle 9/ฯลฯ)
+          // v18: ฟีดแบ็ก "Card ยังดูเป็นการ์ด ไม่ใช่ Surface" — เพิ่ม CARD_CURVATURE_HIGHLIGHT_CSS (วงรี
+          // ไฮไลต์แคบตรงกลางขอบบน) เป็นชั้นบนสุด (compact เท่านั้น) จำลองผิวโค้งเล็กน้อยที่แสงจับเป็นจุด
+          // แทนที่จะเป็นแค่เส้นสะท้อนแสงตรงยาวทั้งเส้นแบบ CARD_REFLECTION_CSS เดิมอย่างเดียว
           backgroundImage: compact
-            ? `${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
+            ? `${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
             : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
           backgroundClip: compact
-            ? 'padding-box, padding-box, padding-box, border-box, border-box, border-box'
+            ? 'padding-box, padding-box, padding-box, padding-box, border-box, border-box, border-box'
             : 'padding-box, padding-box, border-box, border-box, border-box',
-          // มือถือ (compact) เท่านั้น: ขยายชั้นแรก (CARD_REFLECTION_CSS) สูงกว่ากล่องจริง (150%) ให้
+          // มือถือ (compact) เท่านั้น: ขยายชั้นที่ 2 (CARD_REFLECTION_CSS) สูงกว่ากล่องจริง (150%) ให้
           // .metric-card-compact:active เลื่อนตำแหน่งชั้นนี้ลงมาได้ (ดู style jsx) จำลอง "แถบสะท้อนแสง
           // ขยับ" ตอนแตะ เหมือน PremiumCard — เดสก์ท็อปไม่ตั้งค่านี้เลย (undefined) ใช้ auto/0 0 ปกติ
-          // ทุกประการ ไม่กระทบ
-          backgroundSize: compact ? '100% 150%, auto, auto, auto, auto, auto' : undefined,
-          backgroundPosition: compact ? '0% 0%, 0 0, 0 0, 0 0, 0 0, 0 0' : undefined,
+          // ทุกประการ ไม่กระทบ — ชั้นแรก (curvature highlight) ใหม่คงที่ ไม่ขยับตาม
+          backgroundSize: compact ? 'auto, 100% 150%, auto, auto, auto, auto, auto' : undefined,
+          backgroundPosition: compact ? '0 0, 0% 0%, 0 0, 0 0, 0 0, 0 0, 0 0' : undefined,
           // ชั้นซ้อนกัน: ambient shadow (มือถือ (compact) ใช้ CARD_FLOAT_SHADOW เบาบางกว่าเดิมให้การ์ด
           // ดูลอย เดสก์ท็อปยังใช้ contact+ambient shadow คู่เดิมทุกประการ) + inset highlight (มือถือ
           // (compact) ใช้ inset แนวทแยงมุมบนซ้ายแบบเดียวกับ CARD_INSET_SHADOW ของ PremiumCard ให้ความสว่าง
@@ -366,7 +378,7 @@ export default function MetricCard({
           }
         }
         .metric-card-compact:active {
-          background-position: 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0;
+          background-position: 0 0, 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0;
           /* Card Press Effect v2 — เดิมกดจมลง (translateY(1px)) ตามที่ขอตอนนั้น ตอนนี้เปลี่ยนเป็น
              "ยกขึ้น 2px" ตาม Phase 5 Motion spec ใหม่เจาะจง MetricCard (คนละพฤติกรรมจาก
              TodaysFocusCard/TodaysWorkoutCompactCard ที่ยังกดจมลงเหมือนเดิม ไม่แตะ) */
