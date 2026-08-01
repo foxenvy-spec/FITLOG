@@ -56,7 +56,9 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
           {/* เศษส่วนตัวใหญ่ — จุดเด่นหลักของการ์ด — ลดจาก 30px เป็น 24px เพื่อให้พอดีกับความสูงการ์ด
               102px (128px เดิม -20%) ตัดบรรทัด "ท่าที่ทำแล้ว" ออก (label บนสุด + เศษส่วนสื่อความหมาย
               พอแล้วโดยไม่ต้องมีบรรทัดอธิบายซ้ำ) — physical constraint: ที่ความสูงนี้ไม่มีที่พอสำหรับ
-              4 บรรทัด (label/value/caption/progress) พร้อมกันถ้าไม่ตัดอะไรออกเลย */}
+              4 บรรทัด (label/value/caption/progress) พร้อมกันถ้าไม่ตัดอะไรออกเลย
+              v2: เพิ่มคำว่า "Exercises" ต่อท้ายบรรทัดเดียวกัน (ไม่ใช่บรรทัดใหม่ ไม่กินพื้นที่แนวตั้ง
+              เพิ่ม) ให้ "0/6" ไม่ลอยห้วนๆ โดยไม่มีบริบท ตามที่ขอ "0/6 Exercises" */}
           <div className="flex items-baseline gap-1">
             <span className="font-mono font-bold leading-none" style={{ fontSize: 24, color: TEXT.title }}>
               {completed}
@@ -64,10 +66,15 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
             <span className="text-muted leading-none" style={{ fontSize: 14 }}>
               /{total}
             </span>
+            <span className="text-muted leading-none uppercase tracked" style={{ fontSize: 9 }}>
+              Exercises
+            </span>
           </div>
 
-          {/* progress bar + ปุ่มลูกศรวงกลม — อยู่ในคอลัมน์ซ้ายทั้งคู่ ไม่ล้ำเข้าไปในโซนรูปฝั่งขวาแน่นอน */}
-          <div className="flex items-center gap-2 mt-2">
+          {/* progress bar + ปุ่มลูกศรวงกลม — อยู่ในคอลัมน์ซ้ายทั้งคู่ ไม่ล้ำเข้าไปในโซนรูปฝั่งขวาแน่นอน —
+              ระยะห่างจากบรรทัดเศษส่วนลดจาก mt-2 (8px) เหลือ mt-1.5 (6px) ให้เศษส่วน+bar อ่านเป็นกลุ่ม
+              เดียวกันชัดขึ้น (ตามที่ขอ "ให้สัมพันธ์กันมากขึ้น") แทนที่จะดูเป็นสองบล็อกแยกกัน */}
+          <div className="flex items-center gap-2 mt-1.5">
             <div className="h-1.5 rounded-full bg-surface2 flex-1 overflow-hidden">
               <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
             </div>

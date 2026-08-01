@@ -111,15 +111,21 @@ export default function FitnessRing({
 
         {/* วง track เดิมมีแค่ไล่สีทแยงเส้นเดียว ยัง "สะอาด/แบน" เกินไป — เพิ่มส่วนโค้งนิ่ง (ไม่ผูกกับ
             progress เหมือนจุดอื่นในไฟล์นี้) จำลอง highlight สว่าง 2 จุดที่ 11 กับ 5 นาฬิกา (ตำแหน่งตรง
-            ข้ามกันบนวงกลม, กว้างจุดละ ~10% ของเส้นรอบวง) + shadow มืดด้านล่างขวา ให้วง track เองมี
-            reflection/highlight/micro-shadow ในตัวจริงๆ แทนที่จะพึ่งแค่ linearGradient เส้นเดียว — ไม่มี
-            filter/blur ทั้งคู่ (แค่ stroke-opacity ธรรมดา) ไม่นับเป็น glow ใหม่ตามที่ขอให้หยุดเพิ่ม
+            ข้ามกันบนวงกลม) + shadow มืดด้านล่างขวา ให้วง track เองมี reflection/highlight/micro-shadow
+            ในตัวจริงๆ แทนที่จะพึ่งแค่ linearGradient เส้นเดียว — ไม่มี filter/blur ทั้งคู่ (แค่
+            stroke-opacity ธรรมดา) ไม่นับเป็น glow ใหม่ตามที่ขอให้หยุดเพิ่ม
 
             บั๊กรอบก่อน: 3 วงนี้ลืมใส่ transform rotate(-90) เหมือนวงอื่นๆ ในไฟล์นี้ (ring-glow/ring-progress/
             reflection rim/highlight arc ด้านล่างทุกวงมี) ทำให้คำนวณตำแหน่งนาฬิกาโดยอิงกรอบอ้างอิงผิด (คิด
             ว่า s=0 คือ 12 นาฬิกา แต่จริงๆ ไม่หมุนเลยจึงยังเป็น 3 นาฬิกาแบบ default SVG circle) ผลคือ
             highlight ที่ตั้งใจไว้ 11/5 นาฬิกาไปโผล่ที่ ~2/~8 นาฬิกาแทน — เพิ่ม transform เดียวกับวงอื่น
-            ให้กรอบอ้างอิงตรงกัน สูตร dashOffset เดิม (คำนวณสำหรับกรอบหลังหมุนอยู่แล้ว) ใช้ได้เลยไม่ต้องแก้ */}
+            ให้กรอบอ้างอิงตรงกัน สูตร dashOffset เดิม (คำนวณสำหรับกรอบหลังหมุนอยู่แล้ว) ใช้ได้เลยไม่ต้องแก้
+
+            v2: ความกว้าง 10% ของเส้นรอบวงยัง "สั้น" เกินไป (อ่านเป็นจุดมากกว่าแถบสะท้อนแสงยาว) — ขยาย
+            เป็น 22% พร้อมลด opacity ลงตามสัดส่วน (26/24 -> 20/18) ให้ "น้ำหนักภาพรวม" ของ highlight
+            ใกล้เคียงเดิม ไม่ใช่แค่แรงขึ้นเพราะยาวขึ้น — dashOffset คำนวณใหม่ตามสูตรเดิม (C - s_center +
+            width/2) ด้วย width 0.22 แทน 0.10 เดิม กันจุดศูนย์กลางเลื่อนหนีจาก 11/5 นาฬิกา (ถ้าใช้ offset
+            เดิมกับ width ใหม่ตรงๆ จุดกึ่งกลางจะเลื่อนไปประมาณ 43 นาทีจากตำแหน่งตั้งใจ) */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -128,9 +134,9 @@ export default function FitnessRing({
           stroke="#FFFFFF"
           strokeWidth={Math.max(1, sw * 0.22)}
           strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.1} ${circumference * 0.9}`}
-          strokeDashoffset={circumference * 0.1333}
-          strokeOpacity={0.26}
+          strokeDasharray={`${circumference * 0.22} ${circumference * 0.78}`}
+          strokeDashoffset={circumference * 0.1933}
+          strokeOpacity={0.2}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ mixBlendMode: 'screen' }}
         />
@@ -142,9 +148,9 @@ export default function FitnessRing({
           stroke="#FFFFFF"
           strokeWidth={Math.max(1, sw * 0.22)}
           strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.1} ${circumference * 0.9}`}
-          strokeDashoffset={circumference * 0.6333}
-          strokeOpacity={0.24}
+          strokeDasharray={`${circumference * 0.22} ${circumference * 0.78}`}
+          strokeDashoffset={circumference * 0.6933}
+          strokeOpacity={0.18}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ mixBlendMode: 'screen' }}
         />

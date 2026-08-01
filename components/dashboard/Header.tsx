@@ -3,6 +3,7 @@
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { NOISE_BG } from '@/lib/theme'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -62,22 +63,27 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // แถบสะท้อนแสงแนวนอนบางๆ (เข้ม→สว่างจาง 2%→เข้ม) พาดกลางตัวอักษรพอดี จำลองเส้นสะท้อนแสงคาดผ่าน
             // ผิวโลหะขัดเงาจริง (ไม่ใช่ไล่เฉดกว้างทั้งตัวอักษรแบบ 2 ชั้นล่าง) — blend เป็น normal (ไม่ใช่
             // overlay) เพราะพื้นเกือบทั้งหมดโปร่งใสอยู่แล้ว แค่แต้มสว่างจางๆ ตรงกลางเท่านั้น
+            //
+            // v7: ยังอ่านเป็น "Gradient Text" มากกว่า "Brushed Titanium" ต่างกันแค่นิดเดียว — เพิ่มชั้น
+            // บนสุด NOISE_BG (เกรนเดียวกับที่ใช้กับผิวการ์ด/พื้นหลังทั้งแอป) ผสม overlay อัลฟาต่ำมากๆ
+            // จำลองรอยขัดเงาละเอียดแบบไทเทเนียมแปรงจริง แทนที่จะเป็นผิวเรียบไล่สีล้วนๆ
             backgroundImage: [
+              NOISE_BG,
               'linear-gradient(180deg, transparent 0%, transparent 42%, rgba(255,255,255,.02) 50%, transparent 58%, transparent 100%)',
               'linear-gradient(90deg, #EAEAEA, #BFBFBF, #F5F5F5, #8E8E8E)',
               'linear-gradient(180deg, #DADADA 0%, #6F6F72 20%, #A9A9A9 45%, #E6E6E6 75%, #FFFFFF 100%)',
             ].join(', '),
-            backgroundBlendMode: 'normal, overlay, normal',
+            backgroundBlendMode: 'overlay, normal, overlay, normal',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
             // เงาเข้มขึ้นเล็กน้อย (.5 -> .6) ให้ตัวอักษรดูจมสลักลงในผิวโลหะ (inner-shadow จำลอง) ชัดขึ้น
             filter: 'drop-shadow(0 2px 1px rgba(0,0,0,.6)) drop-shadow(0 1px 0 rgba(255,255,255,.14))',
             // text-shadow เพิ่มเติม (แยกจาก filter:drop-shadow ด้านบน) — ไฮไลต์เส้นบางสว่างขอบบนตัวอักษร
-            // (rgba ขาว 15%) + เงาฟุ้งนุ่มด้านล่าง (ไม่ใช่เงาคมชัด) ให้ตัวอักษรดูมีความหนา/ลอยเหนือพื้นหลัง
-            // เล็กน้อย ใช้ได้พร้อมกับ background-clip:text เพราะ text-shadow วาดตามรูปทรงตัวอักษรจริง
-            // ไม่สนใจสี fill (ซึ่งตอนนี้ตั้งเป็น transparent)
-            textShadow: '0 1px 0 rgba(255,255,255,.15), 0 10px 20px rgba(0,0,0,.35)',
+            // (rgba ขาว 15% -> 20% ตาม "Metallic Highlight" ที่ขอเพิ่ม) + เงาฟุ้งนุ่มด้านล่าง (ไม่ใช่เงา
+            // คมชัด) ให้ตัวอักษรดูมีความหนา/ลอยเหนือพื้นหลังเล็กน้อย ใช้ได้พร้อมกับ background-clip:text
+            // เพราะ text-shadow วาดตามรูปทรงตัวอักษรจริง ไม่สนใจสี fill (ซึ่งตอนนี้ตั้งเป็น transparent)
+            textShadow: '0 1px 0 rgba(255,255,255,.20), 0 10px 20px rgba(0,0,0,.35)',
           }}
         >
           {displayName}
