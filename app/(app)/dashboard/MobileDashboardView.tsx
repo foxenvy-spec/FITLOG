@@ -38,6 +38,7 @@ import {
   BLUE_AMBIENT_CSS,
   RADIAL_SHADOW_CSS,
   PAGE_REFLECTION_CSS,
+  HAIRLINE_SCRATCH_BG,
 } from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
@@ -327,6 +328,27 @@ export default function MobileDashboardView() {
               maskImage: DIAGONAL_TITANIUM_FADE_MASK,
             }}
           />
+          {/* v19: ฟีดแบ็ก "Background ยังสะอาดเกินไป ไม่ต้องเห็นชัด แต่ซูมแล้วต้องรู้ว่าเป็นโลหะ" —
+              HAIRLINE_SCRATCH_BG (feTurbulence แบบ anisotropic ให้ริ้วเส้นบางไม่สม่ำเสมอ ต่างจาก
+              DIAGONAL_TITANIUM_CSS ที่เป็นเส้นเรขาคณิตห่างเท่ากันเป๊ะ) — ครอบ wrapper ที่ไม่หมุน (มี mask
+              เดียวกับลายเฉียงอื่นๆ ให้จางลงล่างพร้อมกัน) แล้วซ้อนชั้นในที่หมุน 115deg (ทิศเดียวกับลายเฉียง)
+              + ขยายเกินขอบจอ (inset -50%) กันมุมโล่งตอนหมุน ไม่งั้น mask จะหมุนตามไปด้วยแล้วจางผิดทิศ */}
+          <div
+            className="absolute inset-0 overflow-hidden"
+            style={{ WebkitMaskImage: DIAGONAL_TITANIUM_FADE_MASK, maskImage: DIAGONAL_TITANIUM_FADE_MASK }}
+          >
+            <div
+              className="absolute"
+              style={{
+                inset: '-50%',
+                backgroundImage: HAIRLINE_SCRATCH_BG,
+                backgroundSize: '160px 160px',
+                transform: 'rotate(115deg)',
+                opacity: 0.02,
+                mixBlendMode: 'overlay',
+              }}
+            />
+          </div>
           <div className="absolute inset-0" style={{ backgroundImage: AMBIENT_ORANGE_CSS }} />
           {/* v18: noise ขยับจาก 0.01 (1%) เป็น 0.015 (1.5%) ตามที่ขอ "Noise 1-2%" (เดิมอยู่ปลายล่างสุด
               ของช่วง) — ยังอยู่ในเพดานที่ขอ ไม่ใช่กลับไปเป็น 2% เต็มแบบรอบก่อนๆ ที่เคยหนาไป */}

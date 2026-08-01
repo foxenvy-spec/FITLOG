@@ -97,6 +97,18 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             mixBlendMode: 'screen',
           }}
         />
+        {/* v19: ฟีดแบ็ก "ด้านซ้ายยังมืดไป อยากให้มี Orange Bloom วิ่งเข้ามาแล้วค่อย Fade จะเชื่อมกับ Ring
+            และ Hero ด้านบนทันที" — เดิมความอุ่นทั้งหมดมาจากไล่สีแนวนอน (ขวา->ซ้าย) ซึ่งจางเกือบหมดแล้วตอน
+            ถึงโซน badge/ข้อความฝั่งซ้าย ชั้นนี้เป็นวงรีแยกต่างหาก ยึดตำแหน่งใกล้ badge วงแหวน (มุมซ้ายบน)
+            จำลองแสงจากวง Fitness Score ด้านบน Header ไหลต่อเนื่องลงมาถึงการ์ดนี้ ไม่ใช่แค่แสงจากรูปดัมเบล
+            ฝั่งขวาอย่างเดียว — screen blend เหมือนชั้นอื่น ให้เชื่อมกันจริงไม่ใช่ทาสีทับ */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'radial-gradient(ellipse 65% 90% at 10% 25%, rgba(255,142,20,.12), transparent 60%)',
+            mixBlendMode: 'screen',
+          }}
+        />
       </div>
 
       {/* เนื้อหา — badge วงแหวนซ้าย + ข้อความในแถวเดียวกัน (จัดกึ่งกลางแนวตั้งด้วยกัน) ลอยทับพื้นหลังรูป

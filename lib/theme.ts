@@ -181,6 +181,15 @@ export const BLUE_AMBIENT_CSS =
 // จริง ไม่ใช่ลอยแบนๆ เท่ากันทุกด้าน — ซ้อนทับ VIGNETTE_CSS เดิม ไม่ได้แทนที่
 export const RADIAL_SHADOW_CSS = 'radial-gradient(ellipse 90% 45% at 50% 100%, rgba(0,0,0,.32), transparent 60%)'
 
+// v19: ฟีดแบ็ก "Background ยังสะอาดเกินไป เหมือนสีเรียบ ไม่ต้องเห็นชัด แต่ซูมแล้วต้องรู้ว่าเป็นโลหะ" —
+// DIAGONAL_TITANIUM_CSS เดิมเป็นเส้นทแยงห่างเท่ากันเป๊ะทุกเส้น (repeating-linear-gradient) อ่านเป็น
+// "ลายกราฟิก" มากกว่าผิวโลหะจริงที่รอยขัดแต่ละเส้นความยาว/ความเข้มไม่เท่ากัน — ใช้ feTurbulence แบบ
+// anisotropic (baseFrequency แกน x/y ต่างกันมาก: 0.012 แนวนอน ทำให้ลายยืดยาวในทิศนั้น, 0.9 แนวตั้ง ทำให้
+// สลับเข้ม/จางถี่ในทิศตั้งฉาก) ได้ลายเส้นริ้วบางไม่สม่ำเสมอแบบรอยขัดโลหะจริง (ไม่ใช่จุดกลมๆ แบบ NOISE_BG
+// เดิมซึ่งเป็น isotropic) ผสม feColorMatrix เพิ่ม contrast/threshold ให้เป็นเส้นริ้วชัดขึ้นแทนที่จะเป็น
+// grayscale noise นุ่มๆ — ใช้คู่กับ CSS transform: rotate ให้ทิศเดียวกับ DIAGONAL_TITANIUM_CSS (115deg)
+export const HAIRLINE_SCRATCH_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='hs'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -0.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23hs)'/%3E%3C/svg%3E")`
+
 // ไล่สีการ์ด — v2: เปลี่ยนจากเทากลาง (#242424/#171717/#101010, R=G=B เป๊ะ) เป็นเทาเย็นจริง (B สูงกว่า
 // R เล็กน้อยทุกสต็อป) ตามค่าที่ขอ เพื่อให้ผิวการ์ดเป็น "โลหะเย็น" ไม่ใช่เทาดิบเฉยๆ — สว่างกว่าเดิมตรงกลาง
 // บนแล้วค่อยจางลงล่าง ให้ผิวการ์ดดูมีมิติแบบแผ่นโลหะจริง ใช้คู่กับ CARD_INSET_SHADOW/CARD_REFLECTION_CSS
@@ -213,6 +222,14 @@ export const CARD_REFLECTION_CSS =
 // จะสะท้อนเป็นเส้นตรง ผิวโค้งจะสะท้อนเป็นจุด/วงรีแคบ) เบามาก ไม่ให้แย่งซีน reflection หลัก
 export const CARD_CURVATURE_HIGHLIGHT_CSS =
   'radial-gradient(ellipse 65% 40% at 50% 0%, rgba(255,255,255,.05), transparent 60%)'
+
+// v19: ฟีดแบ็ก "Metric Card ยังเหมือน Dark Card + Glow อยากได้ Titanium Surface -> Reflection ->
+// Micro Bevel -> Soft Bloom" — CARD_REFLECTION_CSS/CARD_CURVATURE_HIGHLIGHT_CSS ทำ Reflection ไปแล้ว,
+// glow มุมทำ Soft Bloom ไปแล้ว แต่ยังไม่มี "Micro Bevel" จริง (ขอบที่ดูเหมือนถูกกัดเป็นร่อง/สลักลงในผิว
+// โลหะ) — ก่อนหน้านี้ขอบใช้แค่ไล่สีธีม (สี, ไม่ใช่กลาง) เป็นแค่ "ขอบเรืองแสง" ไม่ใช่ "ขอบที่มีมิติ" —
+// โทเคนนี้เป็นไล่สีกลาง (ไม่ผูกสีธีม) มุมบนซ้ายสว่าง (สะท้อนแสง) ไล่ไปมุมล่างขวามืด (เงาจม) วาดถึง
+// border-box ซ้อนกับขอบไล่สีธีมเดิม (ไม่ได้แทนที่) ให้ขอบมีทั้งมิติจริง + สีธีมพร้อมกัน
+export const CARD_BEVEL_CSS = 'linear-gradient(135deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.02) 30%, transparent 55%, rgba(0,0,0,.22) 100%)'
 
 // v2: shadow เดิม (0 10px 30px rgba(0,0,0,.45)) หนัก/มืดเกินไป ทำให้การ์ดดู "ติดพื้น" แทนที่จะลอยเบาๆ
 // เหนือพื้นหลัง — ลด blur/opacity ลงให้เป็นเงาลอยแบบเบาบาง (float) จริง
