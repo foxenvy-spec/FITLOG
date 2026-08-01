@@ -178,7 +178,10 @@ export default function MetricCard({
           // — มือถือ (compact) ใช้ glowAlpha ต่อการ์ดแทน alpha "33" คงที่เดิม
           // v21: เพิ่ม CARD_AMBIENT_SHADOW_CSS (เงากว้าง/นุ่ม/จางกว่า CARD_FLOAT_SHADOW) นำหน้า compact
           // เท่านั้น ให้การ์ดมีทั้งเงาชิดขอบ + เงาแวดล้อมกว้างๆ เหมือน PremiumCard — เดสก์ท็อปไม่กระทบ
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.09)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
+          // v23: ฟีดแบ็ก "Card Metrics ยัง Flat อยากให้ดูหนากว่าเดิมประมาณ 15%" — เพิ่ม Top Highlight
+          // (.09->.105 alpha) และ Bottom Shadow (10px->11.5px blur, .6->.68 alpha) ขึ้นราว 15% ตามที่ขอ
+          // เป๊ะ — glow มุม (theme.main/second) ไม่แตะ (อัตลักษณ์สีต่อการ์ดที่ปรับมาหลายรอบแล้ว)
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.105)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4.6px 11.5px rgba(0,0,0,.68), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
@@ -238,6 +241,16 @@ export default function MetricCard({
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
             style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,.025), transparent 55%)' }}
+          />
+        )}
+        {/* v23: "Inner Glass" — ฟีดแบ็ก "Card Metrics ยัง Flat อยากได้ Inner Glass" — ต่างจาก Center
+            Highlight ด้านบน (วงกลมจางกลางการ์ด) อันนี้เป็นวงรีกว้างเอียงไปทางขอบบน จำลองแผ่นกระจก/เลนส์
+            โค้งวางทับผิวโลหะ (แสงจับเป็นแถบกว้างใกล้ขอบบน ไม่ใช่จุดกลมกลางการ์ด) */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+            style={{ backgroundImage: 'radial-gradient(ellipse 80% 45% at 50% 8%, rgba(255,255,255,.05), transparent 65%)' }}
           />
         )}
         {/* จุดแสงฟุ้ง (glow blob) มุมซ้ายบน ให้ความรู้สึกมีแสงจากไอคอนกระจายเข้าไปในการ์ด — เดสก์ท็อปคงเป็น

@@ -2,7 +2,7 @@
 
 import { useId } from 'react'
 import type { ReactNode } from 'react'
-import { FIRE_GRADIENT_STOPS, NEUTRAL } from '@/lib/theme'
+import { FIRE_GRADIENT_STOPS, NEUTRAL, DIAGONAL_TITANIUM_CSS } from '@/lib/theme'
 
 interface GradientStop {
   offset: string
@@ -54,6 +54,19 @@ export default function FitnessRing({
   const dashOffset = circumference * (1 - clamped / 100)
   const rawId = useId()
   const idPrefix = `fr-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`
+
+  // v23: ฟีดแบ็ก "Ring Icon ยังแบน อยากได้ Brushed Metal บนตัววง ไม่ใช่แค่ gradient เรียบ" — mask-image
+  // รูปโดนัท (โปร่งใส -> ทึบ -> โปร่งใส) ตรงกับตำแหน่งแถบ track จริง (รัศมี radius±sw/2) แปลงเป็น % ของ
+  // ครึ่งความกว้างกล่อง (size/2) เพราะ mask-image ใช้พิกัดสัมพัทธ์กับกล่อง element ไม่ใช่ SVG user space
+  const innerMaskPct = (Math.max(0, radius - sw / 2) / (size / 2)) * 100
+  const outerMaskPct = (Math.min(size / 2, radius + sw / 2) / (size / 2)) * 100
+  const ringDonutMask = `radial-gradient(circle, transparent ${innerMaskPct}%, black ${innerMaskPct}%, black ${outerMaskPct}%, transparent ${outerMaskPct}%)`
+  // Orange Inner Glow — สีใช้สต็อปแรกของ gradientStops (สีสว่างสุดของวง ณ tier ปัจจุบัน) แทนที่จะ hardcode
+  // สีส้มตายตัว ให้ยังสัมพันธ์กับ tier เหมือนจุดอื่นในระบบ (ไม่ใช้ ${...}xx hex-alpha suffix เพราะสี tier
+  // มาจาก lib/fitnessScore.ts ไม่ได้การันตีเป็น 6-digit hex ล้วนเหมือน COLORS ในนี้เสมอไป ใช้ rgba wrapper
+  // ผ่าน CSS color-mix ไม่ได้รองรับกว้างพอ จึงใช้เทคนิคง่ายกว่า: วาง hex ตรงๆ ใน radial-gradient แล้วลด
+  // ความเข้มด้วย transparent stop แทนการต่อ alpha suffix)
+  const innerGlowColor = gradientStops[0]?.color ?? '#FF8A00'
 
   // ตำแหน่งจุด tip — พารามิเตอร์มุมเดียวกับที่ strokeDasharray/strokeDashoffset วาดเส้นจริง (เริ่มที่ 3
   // นาฬิกาแล้วหมุน -90deg ให้ไปเริ่มที่ 12 นาฬิกาแทน) ลบ 90deg ออกจากมุม raw ให้ตรงกับตำแหน่งที่ตาเห็นจริง
@@ -131,12 +144,57 @@ export default function FitnessRing({
             style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
           />
         </svg>
+        {/* v23: ฟีดแบ็ก "Ring Icon ยังแบน อยากได้ Outer Bevel/Brushed Metal/Orange Inner Glow/Center
+            Glass ไม่ใช่แค่ gradient เรียบๆ" — 4 ชั้นใหม่ ทั้งหมดเป็น HTML div ทับ SVG (ไม่ใช่ SVG stroke
+            เพิ่ม เพราะ viewBox ปัจจุบันพอดีกับวง ไม่มีที่เหลือให้วาดขอบเพิ่มรอบนอกโดยไม่ถูกตัด) */}
+        {/* Outer Bevel — box-shadow (ไม่ใช่ inset) มุมบนซ้ายสว่าง/มุมล่างขวามืด รอบนอกวง จำลองขอบยกนูน
+            แบบเบเซล จริง (ต่างจาก CNC Edge ด้านล่างซึ่งเป็น inset = ขอบบุ๋ม/ตัดเข้า) */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{ inset: 0, boxShadow: '1.5px 1.5px 2px rgba(0,0,0,.35), -1px -1px 2px rgba(255,255,255,.12)' }}
+          aria-hidden="true"
+        />
+        {/* Brushed Metal — ลายเฉียงไทเทเนียมเดียวกับพื้นหลัง/การ์ดทั่วแอป มาส์กเป็นรูปโดนัทให้อยู่แค่
+            แถบ track จริงๆ (ไม่ทะลุเข้าไปในพื้นที่เนื้อหากลางวง) */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: DIAGONAL_TITANIUM_CSS,
+            opacity: 0.6,
+            WebkitMaskImage: ringDonutMask,
+            maskImage: ringDonutMask,
+          }}
+          aria-hidden="true"
+        />
         {/* CNC Edge — inset shadow บางรอบนอกวง จำลองขอบตัดคมแบบชิ้นงานกัด CNC ไม่ใช่ขอบมนนุ่ม */}
         <div
           className="absolute rounded-full pointer-events-none"
           style={{ inset: -1, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.06), inset 0 1px 2px rgba(0,0,0,.5)' }}
           aria-hidden="true"
         />
+        {/* Orange Inner Glow — วางก่อน children (อยู่หลัง) ให้ตัวเลข/ไอคอนกลางวงยังอ่านชัดทับแสงได้ */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            inset: sw * 1.4,
+            background: `radial-gradient(circle, ${innerGlowColor}33, transparent 70%)`,
+          }}
+          aria-hidden="true"
+        />
+        {/* Center Glass — ไฮไลต์วงรีจางบางส่วนบนของพื้นที่กลางวง จำลองผิวกระจก/เลนส์โค้งครอบเนื้อหา */}
+        <div
+          className="absolute rounded-full pointer-events-none overflow-hidden"
+          style={{ inset: sw * 1.4 }}
+          aria-hidden="true"
+        >
+          <div
+            className="absolute"
+            style={{
+              inset: 0,
+              backgroundImage: 'radial-gradient(ellipse 70% 40% at 50% 15%, rgba(255,255,255,.08), transparent 60%)',
+            }}
+          />
+        </div>
         <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
       </div>
     )
@@ -173,12 +231,17 @@ export default function FitnessRing({
               shadow/reflection ครบใน "วงเดียว" ตามที่ขอ ไม่ใช่แค่ไล่ทางเดียวจากสว่างไปมืด — เพิ่ม opacity
               จาก 0.85 เป็น 0.95 ให้ contrast โลหะเด่นชัดขึ้น (ยังไม่ถึง 1 เพื่อให้ trackColor เบสด้านล่าง
               ยังช่วยกันวงคะแนนสีสดด้านหน้าไม่ให้กลืนไปกับพื้นหลัง) */}
+          {/* v23: บั๊กที่เพิ่งเจอ — รอบ v22 ("Dark Titanium -> Cold -> Warm -> Specular") ตั้งใจแก้ def
+              นี้ทั้ง 2 จุด (simple mode + เวอร์ชันเต็มนี้) แต่ Edit tool แทนที่ได้แค่จุดเดียว (simple mode
+              เท่านั้น) จุดนี้ยังเป็นสต็อปเทาล้วนเดิมมาตลอด — อธิบายตรงกับฟีดแบ็กรอบนี้ "Hero Ring ยังดู
+              Silver" เป๊ะๆ (Hero Ring ใช้เวอร์ชันเต็มนี้ Banner Ring ใช้ simple mode ซึ่งได้อัปเดตไปแล้ว
+              จริง) แก้ให้ตรงกับ simple mode เป๊ะๆ ตอนนี้ */}
           <linearGradient id={`${idPrefix}-titanium-track`} x1="10%" y1="0%" x2="90%" y2="100%">
-            <stop offset="0%" stopColor="#F2F2F2" />
-            <stop offset="25%" stopColor="#7D7D80" />
-            <stop offset="50%" stopColor="#2B2B2C" />
-            <stop offset="75%" stopColor="#7D7D80" />
-            <stop offset="100%" stopColor="#BEBEBE" />
+            <stop offset="0%" stopColor="#3A3B3D" />
+            <stop offset="22%" stopColor="#6B7A8C" />
+            <stop offset="50%" stopColor="#1C1C1D" />
+            <stop offset="75%" stopColor="#9C8058" />
+            <stop offset="100%" stopColor="#E8E4DC" />
           </linearGradient>
         </defs>
 
@@ -415,12 +478,52 @@ export default function FitnessRing({
         />
       )}
 
+      {/* v23: ฟีดแบ็ก "Ring Icon ยังแบน" — เพิ่มชุดเดียวกับที่เพิ่งเพิ่มใน simple mode (Outer Bevel/
+          Brushed Metal/Orange Inner Glow/Center Glass) ให้ Hero Ring กับ Banner Ring ใช้เทคนิคเดียวกัน
+          จริงๆ ไม่ใช่แค่สีวงเดียวกัน — Hero Ring มีชั้น Fog/Bloom/Core อยู่แล้วจาก FitnessScore.tsx แต่
+          นั่นคือแสงด้านนอกวง (ambient) ส่วนนี้คือแสงด้านในเนื้อวง (inner) คนละตำแหน่งกัน ไม่ซ้ำกัน */}
+      {/* Outer Bevel */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{ inset: 0, boxShadow: '1.5px 1.5px 2px rgba(0,0,0,.35), -1px -1px 2px rgba(255,255,255,.12)' }}
+        aria-hidden="true"
+      />
+      {/* Brushed Metal */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: DIAGONAL_TITANIUM_CSS,
+          opacity: 0.6,
+          WebkitMaskImage: ringDonutMask,
+          maskImage: ringDonutMask,
+        }}
+        aria-hidden="true"
+      />
       {/* inner shadow บางๆ ด้านในวง ให้เนื้อหากึ่งกลางดูจมลงไปนิดหนึ่งแทนที่จะลอยแบน */}
       <div
         className="absolute rounded-full pointer-events-none"
         style={{ inset: sw, boxShadow: 'inset 0 3px 8px rgba(0,0,0,.5)' }}
         aria-hidden="true"
       />
+      {/* Orange Inner Glow — อยู่หลัง children เพื่อไม่บังตัวเลข/ไอคอนกลางวง */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          inset: sw * 1.4,
+          background: `radial-gradient(circle, ${innerGlowColor}33, transparent 70%)`,
+        }}
+        aria-hidden="true"
+      />
+      {/* Center Glass */}
+      <div className="absolute rounded-full pointer-events-none overflow-hidden" style={{ inset: sw * 1.4 }} aria-hidden="true">
+        <div
+          className="absolute"
+          style={{
+            inset: 0,
+            backgroundImage: 'radial-gradient(ellipse 70% 40% at 50% 15%, rgba(255,255,255,.08), transparent 60%)',
+          }}
+        />
+      </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
     </div>
   )
