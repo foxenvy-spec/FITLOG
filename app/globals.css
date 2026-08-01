@@ -188,32 +188,11 @@
     hero-glow-pulse 2.2s ease-in-out 620ms 3;
 }
 
-/* Dashboard header background FX — soft glow blob + floating particles behind the
-   greeting/name/score-ring content, and a slow drift on the decorative wave line.
-   Kept purely decorative (pointer-events-none, aria-hidden at the component level). */
-@keyframes header-glow-pulse {
-  0%, 100% { opacity: 0.12; transform: scale(1); }
-  50% { opacity: 0.22; transform: scale(1.06); }
-}
-.animate-header-glow {
-  animation: header-glow-pulse 4s ease-in-out infinite;
-}
-
-@keyframes header-particle-float {
-  0%, 100% { transform: translateY(0); opacity: 0.25; }
-  50% { transform: translateY(-6px); opacity: 0.8; }
-}
-.animate-header-particle {
-  animation: header-particle-float 3.6s ease-in-out infinite;
-}
-
-@keyframes header-wave-drift {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(1.5%); }
-}
-.animate-header-wave {
-  animation: header-wave-drift 5s ease-in-out infinite;
-}
+/* v30: ฟีดแบ็ก "ระดับ C ควรลบ — ไม่ได้เพิ่ม UX แต่เพิ่ม CPU" — header-glow-pulse/header-particle-float/
+   header-wave-drift ลบออกทั้งชุด (ตรวจสอบแล้วว่า component ที่ใช้ 3 คลาสนี้ — AmbientGlow.tsx/
+   EnergyParticles.tsx/ui+dashboard AnimatedWave.tsx — ไม่ได้ถูก import ใช้งานที่ไหนในแอปเลยจริงๆ อยู่
+   แล้ว เป็นโค้ดตายจาก Header เวอร์ชันก่อนหน้าที่เปลี่ยนมาใช้ FitnessScore/FitnessRing แทน) ลบทั้ง
+   keyframes/class ที่นี่ + ลบไฟล์ component กำพร้าทั้ง 5 ไฟล์ออกจากโปรเจกต์ */
 
 /* Fitness Score ring — เดิมมีแค่ glow แวดล้อม (Glow blob ที่ pulse อยู่แล้ว) มา "หายใจ" แต่ตัวเส้นวง
    เองนิ่งสนิท เพิ่มการหายใจเบาๆ ให้ตัวเส้น glow ของวงเองด้วย (opacity ไม่ใช่ scale กัน layout สั่น) */
@@ -321,43 +300,10 @@
   animation: fade-scale-in 0.4s ease-out both;
 }
 
-/* HeroEnergyWave — เส้นบางสองชั้นที่ซ้อนทับเส้นแกนไฟหลัก ใช้ dash ไหลต่อเนื่องคนละความเร็ว/ทิศทาง
-   (stroke-dashoffset ไล่ลบ = มองเห็นเป็นลายไหลไปทางขวา) ให้ผิวเส้นดูมีประกายเคลื่อนไหวจริง ไม่ใช่
-   เส้นทึบนิ่งๆ */
-@keyframes wave-flow {
-  to { stroke-dashoffset: -32; }
-}
-.animate-wave-flow {
-  animation: wave-flow 1.6s linear infinite;
-}
-
-@keyframes wave-flow-slow {
-  to { stroke-dashoffset: -36; }
-}
-.animate-wave-flow-slow {
-  animation: wave-flow-slow 2.6s linear infinite reverse;
-}
-
-/* FitnessRing — ไล่เฉด hue ของ conic-gradient วนช้าๆ (Orange → Amber → Yellow → กลับมา Orange) ให้
-   วงดูมีพลังงาน "ไหลอยู่" เบาๆ โดยไม่ต้องคำนวณ conic-gradient ใหม่ทุกเฟรมด้วย JS — หมุนแค่ hue ในช่วง
-   แคบๆ (±18deg) พอให้เห็นการไล่สี ไม่ทำให้วงเพี้ยนไปเป็นโทนอื่น (เขียว/ฟ้า) */
-@keyframes ring-gradient-shift {
-  0%, 100% { filter: hue-rotate(0deg); }
-  50% { filter: hue-rotate(18deg); }
-}
-.animate-ring-gradient-shift {
-  animation: ring-gradient-shift 9s ease-in-out infinite;
-}
-
-/* SubtitleAccent — จุดสว่างกลางเส้นใต้ subtitle หายใจ (scale) เบาๆ ต่อเนื่อง */
-@keyframes subtitle-accent-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50% { transform: scale(1.25); opacity: 1; }
-}
-.animate-subtitle-accent-pulse {
-  animation: subtitle-accent-pulse 2.6s ease-in-out infinite;
-  transform-origin: center;
-}
+/* v30: ลบ wave-flow/wave-flow-slow (HeroEnergyWave.tsx เจ้าของเดิม — ไฟล์นั้นก็ไม่ได้ถูก import ใช้งาน
+   ที่ไหนอยู่แล้วเช่นกัน) และ ring-gradient-shift (ฟีดแบ็ก "Gradient เปลี่ยนตลอด ดู Gaming มาก") ทั้งคู่
+   ไม่มี component ไหนอ้างอิงคลาสเหล่านี้จริงในแอปแล้ว — ลบ subtitle-accent-pulse ด้วย (ฟีดแบ็ก "ระดับ C
+   ควรลบ") เปลี่ยน SubtitleAccent.tsx ให้จุดกลางเส้นนิ่งแทน ดูคอมเมนต์ที่ไฟล์นั้น */
 
 /* FitnessRing v3 — จุด tip นิ่งตรงตำแหน่ง progress ปัจจุบัน หายใจ (scale) เบาๆ แทนวงหมุนรอบต่อเนื่อง
    ของเวอร์ชันก่อน — ใส่ translate(-50%,-50%) ไว้ในคีย์เฟรมเองเลย (แทนที่จะพึ่ง inline style) เพราะ
@@ -398,18 +344,11 @@
   .animate-hero-enter,
   .animate-pr-glow,
   .animate-pop-in,
-  .animate-header-glow,
-  .animate-header-particle,
-  .animate-header-wave,
   .animate-ring-pulse,
   .animate-badge-pulse,
   .animate-streak-sweep,
   .animate-ring-sweep,
   .animate-ring-sweep-slow,
-  .animate-wave-flow,
-  .animate-wave-flow-slow,
-  .animate-ring-gradient-shift,
-  .animate-subtitle-accent-pulse,
   .animate-ring-tip-pulse,
   .animate-icon-glow-breathe,
   .skeleton-shimmer,

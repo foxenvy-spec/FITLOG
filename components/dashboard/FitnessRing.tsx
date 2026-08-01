@@ -83,10 +83,12 @@ export default function FitnessRing({
 
   // ตำแหน่งจุด tip — พารามิเตอร์มุมเดียวกับที่ strokeDasharray/strokeDashoffset วาดเส้นจริง (เริ่มที่ 3
   // นาฬิกาแล้วหมุน -90deg ให้ไปเริ่มที่ 12 นาฬิกาแทน) ลบ 90deg ออกจากมุม raw ให้ตรงกับตำแหน่งที่ตาเห็นจริง
+  // v30: ปัดทศนิยมเหลือ 2 ตำแหน่งเหมือน specularX/Y (ดู comment v27 ด้านบน) — เจอ hydration mismatch
+  // เดียวกันที่จุดนี้ตอนตรวจ Header จริง (พลาดจุดนี้ตอนแก้ specular รอบก่อน)
   const rawAngleRad = (clamped / 100) * 2 * Math.PI
   const tipAngle = rawAngleRad - Math.PI / 2
-  const tipX = size / 2 + radius * Math.cos(tipAngle)
-  const tipY = size / 2 + radius * Math.sin(tipAngle)
+  const tipX = Math.round((size / 2 + radius * Math.cos(tipAngle)) * 100) / 100
+  const tipY = Math.round((size / 2 + radius * Math.sin(tipAngle)) * 100) / 100
 
   // โหมด simple — เดิม 3 เลเยอร์ล้วน: วง track ไทเทเนียม -> วง progress สีตาม tier -> children กลางวง
   // ไม่มี glow/reflection/highlight arc/light sweep/highlight dots/tip pulse/inner shadow เลยสักอย่าง
@@ -484,8 +486,8 @@ export default function FitnessRing({
           angle = (k/12)*2π - π/2) ไม่มี boxShadow/blur เพิ่ม กันไม่ให้กลายเป็น glow ใหม่ */}
       {[11, 5].map((clockHour) => {
         const angle = (clockHour / 12) * 2 * Math.PI - Math.PI / 2
-        const dotX = size / 2 + radius * Math.cos(angle)
-        const dotY = size / 2 + radius * Math.sin(angle)
+        const dotX = Math.round((size / 2 + radius * Math.cos(angle)) * 100) / 100
+        const dotY = Math.round((size / 2 + radius * Math.sin(angle)) * 100) / 100
         return (
           <span
             key={clockHour}
