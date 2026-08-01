@@ -39,13 +39,37 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
       <div className="relative flex items-center justify-center animate-pop-in">
         {/* Bloom หลังวง — เดิมไม่มีเลย (ตัด Glow wrapper ออกตอนลดความสูง header รอบก่อน) ทำให้วงลอย
             อยู่บนพื้นเปล่าๆ ไม่มี "แสงส่องจากด้านหลัง" แบบภาพอ้างอิง — ใช้สี tier ปัจจุบัน (score.color)
-            ไม่ตายตัวเป็นส้มเสมอ ให้ยังสัมพันธ์กับสีวง/ข้อความเหมือนจุดอื่นในหน้า */}
+            ไม่ตายตัวเป็นส้มเสมอ ให้ยังสัมพันธ์กับสีวง/ข้อความเหมือนจุดอื่นในหน้า
+            v18: ฟีดแบ็ก "Orange Glow ยังเป็น Layer เดียว อยากให้รู้สึกว่ามันเรืองจริง" — แยกจาก 1 ชั้นเป็น
+            5 ชั้นตามลำดับที่ขอ (Core/Bloom/Fog อยู่หลังวง, Particle/Specular อยู่หน้าวงแต่นอกรัศมีตัวเลข
+            กลาง ไม่บังเนื้อหา) ทั้งหมด static ตามที่ยืนยัน ไม่มี animation/gyroscope */}
+        {/* Fog — วงนอกสุด กว้างที่สุด จางที่สุด จำลองหมอกแสงฟุ้งไกลรอบนอก */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: size * 2.6,
+            height: size * 2.6,
+            background: `radial-gradient(circle, ${score.color}14, transparent 60%)`,
+          }}
+          aria-hidden="true"
+        />
+        {/* Bloom — ชั้นเดิม ปรับอัลฟาลงเล็กน้อยเพราะตอนนี้มี Fog ห่อรอบนอกอีกชั้นแล้ว */}
         <div
           className="absolute rounded-full pointer-events-none"
           style={{
             width: size * 1.7,
             height: size * 1.7,
-            background: `radial-gradient(circle, ${score.color}2E, transparent 65%)`,
+            background: `radial-gradient(circle, ${score.color}26, transparent 65%)`,
+          }}
+          aria-hidden="true"
+        />
+        {/* Core — วงในสุด แคบ เข้มกว่าจุดอื่น จำลองแกนแสงตรงกลางที่ตัววงลอยอยู่เหนือ */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: size * 1.05,
+            height: size * 1.05,
+            background: `radial-gradient(circle, ${score.color}40, transparent 55%)`,
           }}
           aria-hidden="true"
         />
@@ -57,6 +81,32 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
             /100
           </span>
         </FitnessRing>
+        {/* Tiny Particle — จุดแสงเล็กๆ กระจายรอบวง (คงที่ ไม่ animate) จำลองประกายฝุ่นแสงที่ลอยอยู่ในหมอก */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: [
+              `radial-gradient(circle 2px at 14% 20%, ${score.color}99, transparent 100%)`,
+              `radial-gradient(circle 1.5px at 88% 26%, ${score.color}80, transparent 100%)`,
+              `radial-gradient(circle 1.5px at 80% 88%, ${score.color}70, transparent 100%)`,
+              `radial-gradient(circle 1px at 20% 84%, ${score.color}60, transparent 100%)`,
+            ].join(', '),
+          }}
+          aria-hidden="true"
+        />
+        {/* Specular Highlight — จุดสว่างจ้าเล็กๆ จุดเดียว มุมบนขวาของวง จำลองแสงกระทบผิวมันวาว
+            (offset ด้วย top/right ไม่ใช่กึ่งกลาง กันไม่ให้ทับตัวเลขกลางวง) */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 8,
+            height: 8,
+            top: size * 0.08,
+            right: size * 0.12,
+            background: 'radial-gradient(circle, rgba(255,255,255,.85), transparent 70%)',
+          }}
+          aria-hidden="true"
+        />
       </div>
       {/* ตัดบรรทัด "Fitness Score" micro-label ออก (เดิมอยู่เหนือ tier label) — ความหมายของวงชัดเจน
           อยู่แล้วจากบริบท (ตัวเลข 0-100 + /100 กลางวง) ไม่ต้องมีป้ายชื่อซ้ำ ประหยัดพื้นที่แนวตั้งได้อีก

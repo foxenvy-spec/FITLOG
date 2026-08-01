@@ -35,6 +35,8 @@ import {
   DIAGONAL_TITANIUM_FADE_MASK,
   DIAGONAL_TITANIUM_MICRO_REFLECTION_CSS,
   AMBIENT_ORANGE_CSS,
+  BLUE_AMBIENT_CSS,
+  RADIAL_SHADOW_CSS,
   PAGE_REFLECTION_CSS,
 } from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
@@ -302,6 +304,10 @@ export default function MobileDashboardView() {
           {/* v15: "Soft Reflection" — แถบสว่างจางๆ แนวนอนใกล้ขอบบน จำลองแสงตกกระทบผิวไทเทเนียม (เส้น/แถบ
               ไม่ใช่วงกลม ตามฟีดแบ็ก) วางไว้ชั้นล่างสุด (ใต้ลายเฉียง/แสงส้ม) ให้เป็นชั้นฐานของ "ผิวโลหะ" */}
           <div className="absolute inset-0" style={{ backgroundImage: PAGE_REFLECTION_CSS }} />
+          {/* v18: "Blue Ambient" — แสงฟ้าเย็นจาง เข้มสุดใกล้ Header สวนทางกับแสงส้มด้านล่าง (AMBIENT_
+              ORANGE_CSS) ให้พื้นหลังมีแหล่งแสง 2 โทนตัดกัน แทนที่จะเป็นไล่เฉดสีเดียว วางไว้ก่อนลายเฉียง/
+              noise ให้เป็นชั้นแสงพื้นฐาน ไม่ใช่ชั้นบนสุด */}
+          <div className="absolute inset-0" style={{ backgroundImage: BLUE_AMBIENT_CSS }} />
           <div
             className="absolute inset-0"
             style={{
@@ -322,9 +328,12 @@ export default function MobileDashboardView() {
             }}
           />
           <div className="absolute inset-0" style={{ backgroundImage: AMBIENT_ORANGE_CSS }} />
-          {/* v15: noise ลดจาก 0.02 (2%) เหลือ 0.01 (1%) ตามที่ขอ "Noise 1%" — ตอนนี้พื้นหลังมี soft
-              reflection + ลายเฉียง (brushed) แล้ว noise เดิม 2% เลยรู้สึกหนาไปเมื่อรวมกับเลเยอร์ใหม่ */}
-          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.01, mixBlendMode: 'overlay' }} />
+          {/* v18: noise ขยับจาก 0.01 (1%) เป็น 0.015 (1.5%) ตามที่ขอ "Noise 1-2%" (เดิมอยู่ปลายล่างสุด
+              ของช่วง) — ยังอยู่ในเพดานที่ขอ ไม่ใช่กลับไปเป็น 2% เต็มแบบรอบก่อนๆ ที่เคยหนาไป */}
+          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.015, mixBlendMode: 'overlay' }} />
+          {/* v18: "Radial Shadow" — เงามืดนุ่มเฉพาะโซนล่างสุดของจอ ซ้อนทับ VIGNETTE_CSS (ซึ่งมืดขอบสม่ำเสมอ
+              ทุกด้าน) ให้จอมีน้ำหนักกดลงด้านล่างเหมือนวางอยู่บนพื้นผิวจริง ไม่ใช่ลอยแบนเท่ากันทุกด้าน */}
+          <div className="absolute inset-0" style={{ backgroundImage: RADIAL_SHADOW_CSS }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>
 

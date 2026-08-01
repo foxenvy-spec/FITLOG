@@ -1,7 +1,15 @@
 'use client'
 
 import type { PointerEvent, ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
-import { NOISE_BG, CARD_GRADIENT_CSS, CARD_INSET_SHADOW, CARD_BORDER_CSS, CARD_REFLECTION_CSS, CARD_FLOAT_SHADOW } from '@/lib/theme'
+import {
+  NOISE_BG,
+  CARD_GRADIENT_CSS,
+  CARD_INSET_SHADOW,
+  CARD_BORDER_CSS,
+  CARD_REFLECTION_CSS,
+  CARD_CURVATURE_HIGHLIGHT_CSS,
+  CARD_FLOAT_SHADOW,
+} from '@/lib/theme'
 import { hapticTap } from '@/lib/haptics'
 
 interface PremiumCardOwnProps {
@@ -48,17 +56,22 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // ไล่สีการ์ดเทาเย็น (CARD_GRADIENT_CSS) + rim light เฉียง 135deg มุมบนซ้าย (แสงสตูดิโอ) +
           // CARD_REFLECTION_CSS แถบสะท้อนแสงแนวนอนตรงจากขอบบน (brushed titanium) — สองชั้นนี้คนละมุม
           // แสง ซ้อนกันให้ผิวการ์ดดูเป็นโลหะขัดเงาจริง ไม่ใช่พลาสติกด้าน (matte) เหมือนก่อนหน้า
+          //
+          // v18: ฟีดแบ็ก "Card ยังดูเป็นการ์ด ไม่ใช่ Surface" — CARD_REFLECTION_CSS เป็นเส้นสะท้อนแสงตรง
+          // ยาวทั้งเส้น (จำลองผิวเรียบสนิท) เพิ่ม CARD_CURVATURE_HIGHLIGHT_CSS (วงรีไฮไลต์แคบตรงกลางขอบบน)
+          // ซ้อนบนสุดอีกชั้น จำลองผิวโลหะโค้งเล็กน้อยที่แสงจับเป็น "จุด" ไม่ใช่เส้นตรงทั้งเส้น
           backgroundImage: [
+            CARD_CURVATURE_HIGHLIGHT_CSS,
             CARD_REFLECTION_CSS,
             'linear-gradient(135deg, rgba(255,255,255,.06) 0%, transparent 35%)',
             CARD_GRADIENT_CSS,
           ].join(', '),
-          // ชั้นแรก (CARD_REFLECTION_CSS) ขยายสูงกว่ากล่องจริง (150%) + ตั้ง backgroundPosition ไว้ —
+          // ชั้นที่ 2 (CARD_REFLECTION_CSS) ขยายสูงกว่ากล่องจริง (150%) + ตั้ง backgroundPosition ไว้ —
           // ให้ :active เลื่อนตำแหน่งชั้นนี้ลงมานิดหน่อยได้ (ดู style jsx) จำลอง "แถบสะท้อนแสงขยับ" ตอน
-          // แตะการ์ด แทนที่จะเป็นภาพนิ่งตลอด — ชั้นอื่น (rim light เฉียง, CARD_GRADIENT_CSS) คงขนาด/
-          // ตำแหน่งปกติไม่ขยับตาม
-          backgroundSize: '100% 150%, 100% 100%, 100% 100%',
-          backgroundPosition: '0% 0%, 0% 0%, 0% 0%',
+          // แตะการ์ด แทนที่จะเป็นภาพนิ่งตลอด — ชั้นอื่น (curvature highlight, rim light เฉียง,
+          // CARD_GRADIENT_CSS) คงขนาด/ตำแหน่งปกติไม่ขยับตาม
+          backgroundSize: '100% 100%, 100% 150%, 100% 100%, 100% 100%',
+          backgroundPosition: '0% 0%, 0% 0%, 0% 0%, 0% 0%',
           // ขอบเทาเย็นจางๆ (CARD_BORDER_CSS) แทนขอบส้ม rgba(255,180,70,.12) เดิม — เดิมทำให้ทุกการ์ด
           // (รวม Today's Focus/Today's Workout ที่ไม่ใช่จุดเน้นสีส้มเสมอไป) มีขอบอมส้มตลอดเวลา
           border: `1px solid ${CARD_BORDER_CSS}`,
@@ -90,7 +103,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
             0 10px 30px rgba(0, 0, 0, 0.45),
             0 0 30px rgba(255, 138, 0, 0.15),
             inset 0 1px rgba(255, 255, 255, 0.04);
-          background-position: 0% 8%, 0% 0%, 0% 0%;
+          background-position: 0% 0%, 0% 8%, 0% 0%, 0% 0%;
         }
       `}</style>
     </>
