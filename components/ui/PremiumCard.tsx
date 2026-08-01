@@ -37,6 +37,12 @@ export default function PremiumCard<T extends ElementType = 'div'>({
             'linear-gradient(135deg, rgba(255,255,255,.06) 0%, transparent 35%)',
             CARD_GRADIENT_CSS,
           ].join(', '),
+          // ชั้นแรก (CARD_REFLECTION_CSS) ขยายสูงกว่ากล่องจริง (150%) + ตั้ง backgroundPosition ไว้ —
+          // ให้ :active เลื่อนตำแหน่งชั้นนี้ลงมานิดหน่อยได้ (ดู style jsx) จำลอง "แถบสะท้อนแสงขยับ" ตอน
+          // แตะการ์ด แทนที่จะเป็นภาพนิ่งตลอด — ชั้นอื่น (rim light เฉียง, CARD_GRADIENT_CSS) คงขนาด/
+          // ตำแหน่งปกติไม่ขยับตาม
+          backgroundSize: '100% 150%, 100% 100%, 100% 100%',
+          backgroundPosition: '0% 0%, 0% 0%, 0% 0%',
           // ขอบเทาเย็นจางๆ (CARD_BORDER_CSS) แทนขอบส้ม rgba(255,180,70,.12) เดิม — เดิมทำให้ทุกการ์ด
           // (รวม Today's Focus/Today's Workout ที่ไม่ใช่จุดเน้นสีส้มเสมอไป) มีขอบอมส้มตลอดเวลา
           border: `1px solid ${CARD_BORDER_CSS}`,
@@ -44,7 +50,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // แทนที่จะติดพื้น + CARD_INSET_SHADOW (highlight ขอบบน + เงาจมขอบล่าง, bevel แบบแผ่นโลหะจริง)
           // แสงส้มยังโผล่ได้ตอน :active เท่านั้น (ดู style jsx ด้านล่าง) ไม่ใช่ทุกการ์ดตลอดเวลา
           boxShadow: `${CARD_FLOAT_SHADOW}, ${CARD_INSET_SHADOW}`,
-          transition: 'box-shadow 150ms ease',
+          transition: 'box-shadow 150ms ease, background-position 200ms ease',
         }}
         {...rest}
       >
@@ -52,19 +58,22 @@ export default function PremiumCard<T extends ElementType = 'div'>({
             backgroundImage หลัก) เพราะต้องคุม opacity ของตัวเองอิสระจากพื้นเบส */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: NOISE_BG, opacity: 0.01, mixBlendMode: 'overlay' }}
+          style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }}
           aria-hidden="true"
         />
         {children}
       </Comp>
       {/* glow เพิ่มเฉพาะตอนแตะ (:active) เท่านั้น ไม่ใช่ hover ถาวร — กันไม่ให้ล้นตาบนมือถือที่ไม่มี
-          hover จริงอยู่แล้ว แค่ให้ความรู้สึก "ตอบสนอง" ตอนกดจริงๆ */}
+          hover จริงอยู่แล้ว แค่ให้ความรู้สึก "ตอบสนอง" ตอนกดจริงๆ — เพิ่ม background-position เลื่อนชั้น
+          CARD_REFLECTION_CSS ลงมา 8% (Material Animation: "Card เวลาแตะ Reflection ขยับนิดๆ") ชั้นอื่น
+          ไม่ขยับตาม (ยังคง 0% 0% เหมือน default) */}
       <style jsx>{`
         .premium-card:active {
           box-shadow:
             0 10px 30px rgba(0, 0, 0, 0.45),
             0 0 30px rgba(255, 138, 0, 0.15),
             inset 0 1px rgba(255, 255, 255, 0.04);
+          background-position: 0% 8%, 0% 0%, 0% 0%;
         }
       `}</style>
     </>

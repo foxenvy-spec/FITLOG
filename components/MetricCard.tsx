@@ -90,9 +90,11 @@ export default function MetricCard({
   return (
     <>
       <div
-        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? '' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
+        className={`metric-card relative overflow-hidden ${radiusClass} flex flex-col justify-between ${compact ? 'metric-card-compact' : tall ? 'h-[138px] 2xl:h-[142px]' : 'h-[124px] 2xl:h-[128px]'}`}
         style={{
-          transition: 'transform 200ms ease, filter 200ms ease, box-shadow 200ms ease', // duration 180-220ms ตามที่ขอ
+          // duration 180-220ms ตามที่ขอ — มือถือ (compact) เพิ่ม background-position เข้าไปด้วย (ให้
+          // Reflection ขยับตอนแตะทำงานนุ่มๆ ไม่กระตุก) เดสก์ท็อปไม่มี transition ส่วนนี้เหมือนเดิม
+          transition: `transform 200ms ease, filter 200ms ease, box-shadow 200ms ease${compact ? ', background-position 200ms ease' : ''}`,
           // ความสูง/padding มือถือ (compact) มาจาก dashboardSpec.metricCard (160px / 16px) — ค่าคงที่
           // (ไม่ใช่ min-height เหมือนรอบก่อน) ตาม Tailwind class แบบไดนามิกใช้ JIT ไม่ได้ (ตรวจจับตอน build
           // ไม่เจอค่าที่มาจากตัวแปร) จึงกำหนดผ่าน style ตรงๆ แทน — เดสก์ท็อป (compact=false) ไม่กระทบ
@@ -120,6 +122,12 @@ export default function MetricCard({
           backgroundClip: compact
             ? 'padding-box, padding-box, padding-box, border-box, border-box, border-box'
             : 'padding-box, padding-box, border-box, border-box, border-box',
+          // มือถือ (compact) เท่านั้น: ขยายชั้นแรก (CARD_REFLECTION_CSS) สูงกว่ากล่องจริง (150%) ให้
+          // .metric-card-compact:active เลื่อนตำแหน่งชั้นนี้ลงมาได้ (ดู style jsx) จำลอง "แถบสะท้อนแสง
+          // ขยับ" ตอนแตะ เหมือน PremiumCard — เดสก์ท็อปไม่ตั้งค่านี้เลย (undefined) ใช้ auto/0 0 ปกติ
+          // ทุกประการ ไม่กระทบ
+          backgroundSize: compact ? '100% 150%, auto, auto, auto, auto, auto' : undefined,
+          backgroundPosition: compact ? '0% 0%, 0 0, 0 0, 0 0, 0 0, 0 0' : undefined,
           // ชั้นซ้อนกัน: ambient shadow (มือถือ (compact) ใช้ CARD_FLOAT_SHADOW เบาบางกว่าเดิมให้การ์ด
           // ดูลอย เดสก์ท็อปยังใช้ contact+ambient shadow คู่เดิมทุกประการ) + inset highlight (มือถือ
           // (compact) ใช้ inset แนวทแยงมุมบนซ้ายแบบเดียวกับ CARD_INSET_SHADOW ของ PremiumCard ให้ความสว่าง
@@ -136,7 +144,7 @@ export default function MetricCard({
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: NOISE_BG, opacity: 0.01, mixBlendMode: 'overlay' }}
+            style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }}
           />
         )}
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ */}
@@ -303,13 +311,19 @@ export default function MetricCard({
       </div>
       {/* Hover effect เฉพาะเว็บ/เดสก์ท็อป (@media hover:hover กันไม่ให้ค้างบนมือถือที่ไม่มี hover จริง)
           scale 1.00→1.015 + translateY -2px ตามสเปคที่ขอ, ส่วน "shadow/glow เพิ่ม 10%" ใช้ brightness+contrast
-          แทนการคำนวณ alpha สีธีมทีละใบ (ง่ายกว่า/เสถียรกว่า แต่ให้ความรู้สึกใกล้เคียงกัน คือการ์ดดู "เด่นขึ้น" เมื่อชี้เมาส์) */}
+          แทนการคำนวณ alpha สีธีมทีละใบ (ง่ายกว่า/เสถียรกว่า แต่ให้ความรู้สึกใกล้เคียงกัน คือการ์ดดู "เด่นขึ้น" เมื่อชี้เมาส์)
+          .metric-card-compact:active — ใช้ class แยกจาก .metric-card เดิม (ผูกเฉพาะตอน compact=true
+          เท่านั้น) เลื่อน background-position ของชั้น CARD_REFLECTION_CSS ลงมา 8% ตอนแตะการ์ด (Material
+          Animation เดียวกับ PremiumCard) เดสก์ท็อปไม่มี class นี้เลยจึง selector ไม่ match ไม่กระทบแน่นอน */}
       <style jsx>{`
         @media (hover: hover) {
           .metric-card:hover {
             transform: translateY(-2px) scale(1.015);
             filter: brightness(1.06) contrast(1.04);
           }
+        }
+        .metric-card-compact:active {
+          background-position: 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0;
         }
       `}</style>
     </>

@@ -257,6 +257,13 @@
   animation: ring-sweep 4s linear infinite;
 }
 
+/* FitnessRing (Dashboard header) — sweep คนละแบบจาก ProgressRing ด้านบน: ช้ากว่ามาก (9s แทน 4s) และ
+   เป็น highlight สีขาว/เงินจางๆ (ไม่ใช่จุด glow ครีม/ส้ม) ให้ความรู้สึก "แสงสะท้อนกวาดผ่านผิวโลหะ"
+   เป็นระยะๆ แทนไฟพลังงาน — ใช้ keyframe ring-sweep เดิม (แค่ rotate) ต่างกันแค่ duration/สไตล์จุด */
+.animate-ring-sweep-slow {
+  animation: ring-sweep 9s linear infinite;
+}
+
 /* HeroEnergyWave — เส้นบางสองชั้นที่ซ้อนทับเส้นแกนไฟหลัก ใช้ dash ไหลต่อเนื่องคนละความเร็ว/ทิศทาง
    (stroke-dashoffset ไล่ลบ = มองเห็นเป็นลายไหลไปทางขวา) ให้ผิวเส้นดูมีประกายเคลื่อนไหวจริง ไม่ใช่
    เส้นทึบนิ่งๆ */
@@ -329,6 +336,7 @@
   .animate-badge-pulse,
   .animate-streak-sweep,
   .animate-ring-sweep,
+  .animate-ring-sweep-slow,
   .animate-wave-flow,
   .animate-wave-flow-slow,
   .animate-ring-gradient-shift,
