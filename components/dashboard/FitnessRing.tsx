@@ -234,6 +234,27 @@ export default function FitnessRing({
         />
       </svg>
 
+      {/* light sweep — highlight ขาว/เงินจางๆ กวาดวนรอบวงช้าๆ (9s/รอบ, animate-ring-sweep-slow ใน
+          globals.css) จำลองแสงสะท้อนเคลื่อนผ่านผิวโลหะเป็นระยะๆ (ไม่ใช่ไฟพลังงานแบบ ProgressRing ที่ใช้
+          animate-ring-sweep 4s + จุดสีครีม/ส้ม) — ไม่มี boxShadow/blur เพิ่ม กันไม่ให้กลายเป็น glow ใหม่
+          ตามที่ขอให้หยุดเพิ่ม แค่วงกลมทึบจางๆ ผสม screen blend เท่านั้น ปิดอัตโนมัติเมื่อ
+          prefers-reduced-motion (ดู .animate-ring-sweep-slow ใน globals.css) */}
+      <div className="absolute inset-0 pointer-events-none animate-ring-sweep-slow" aria-hidden="true">
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: Math.max(3, sw * 0.45),
+            height: Math.max(3, sw * 0.45),
+            left: '50%',
+            top: sw / 2,
+            transform: 'translate(-50%, -50%)',
+            background: '#FFFFFF',
+            opacity: 0.3,
+            mixBlendMode: 'screen',
+          }}
+        />
+      </div>
+
       {/* ring-tip — จุดสว่างนิ่งตรงตำแหน่ง progress ปัจจุบัน หายใจ (scale) เบาๆ แทนวงหมุนรอบต่อเนื่อง */}
       {clamped > 1 && (
         <span
