@@ -74,9 +74,12 @@ export default function FitnessRing({
   // Orange Inner Glow) แต่ "Micro Scratch" กับ "Specular" (จุดสว่างจ้าเล็กๆ จุดเดียว ต่างจาก Soft
   // Reflection ซึ่งเป็นเส้นโค้งสว่างสม่ำเสมอทั้งเส้น) ยังไม่มี — ตำแหน่ง specular ใช้สูตรเดียวกับ metal
   // highlight dots ในเวอร์ชันเต็ม (11 นาฬิกา) คำนวณไว้ที่นี่ให้ทั้ง simple/เวอร์ชันเต็มใช้ตำแหน่งตรงกัน
+  // v27: ปัดทศนิยมเหลือ 2 ตำแหน่ง (พอสำหรับตำแหน่งจุดขนาด 2-5px) — ไม่ปัดแล้ว SSR/CSR ได้ float
+  // ไม่ตรงกันเป๊ะที่ตำแหน่งทศนิยมท้ายๆ (ความต่างระดับ 1 ulp จาก Math.cos/sin คนละ JS engine build)
+  // ทำให้ React แจ้ง hydration mismatch ที่ style ของจุด specular ทุกครั้งที่โหลดหน้า
   const specularAngle = (11 / 12) * 2 * Math.PI - Math.PI / 2
-  const specularX = size / 2 + radius * Math.cos(specularAngle)
-  const specularY = size / 2 + radius * Math.sin(specularAngle)
+  const specularX = Math.round((size / 2 + radius * Math.cos(specularAngle)) * 100) / 100
+  const specularY = Math.round((size / 2 + radius * Math.sin(specularAngle)) * 100) / 100
 
   // ตำแหน่งจุด tip — พารามิเตอร์มุมเดียวกับที่ strokeDasharray/strokeDashoffset วาดเส้นจริง (เริ่มที่ 3
   // นาฬิกาแล้วหมุน -90deg ให้ไปเริ่มที่ 12 นาฬิกาแทน) ลบ 90deg ออกจากมุม raw ให้ตรงกับตำแหน่งที่ตาเห็นจริง
