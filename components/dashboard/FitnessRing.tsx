@@ -255,6 +255,33 @@ export default function FitnessRing({
         />
       </div>
 
+      {/* metal highlight dots — จุดสว่างนิ่ง 2 จุดที่ 11 กับ 5 นาฬิกา (คนละแบบจาก highlight arc บางๆ
+          ในวง track ด้านบน ซึ่งเป็นเส้นโค้ง ไม่ใช่จุดกลม) จำลอง specular highlight แบบจุดกลมเล็กๆ ที่แสง
+          ตกกระทบผิวโลหะโค้งจริง — ตำแหน่งคำนวณด้วยสูตรเดียวกับ tipX/tipY ด้านล่าง (มุม k นาฬิกา:
+          angle = (k/12)*2π - π/2) ไม่มี boxShadow/blur เพิ่ม กันไม่ให้กลายเป็น glow ใหม่ */}
+      {[11, 5].map((clockHour) => {
+        const angle = (clockHour / 12) * 2 * Math.PI - Math.PI / 2
+        const dotX = size / 2 + radius * Math.cos(angle)
+        const dotY = size / 2 + radius * Math.sin(angle)
+        return (
+          <span
+            key={clockHour}
+            className="absolute rounded-full pointer-events-none"
+            aria-hidden="true"
+            style={{
+              width: Math.max(2, sw * 0.32),
+              height: Math.max(2, sw * 0.32),
+              left: dotX,
+              top: dotY,
+              transform: 'translate(-50%, -50%)',
+              background: '#FFFFFF',
+              opacity: 0.45,
+              mixBlendMode: 'screen',
+            }}
+          />
+        )
+      })}
+
       {/* ring-tip — จุดสว่างนิ่งตรงตำแหน่ง progress ปัจจุบัน หายใจ (scale) เบาๆ แทนวงหมุนรอบต่อเนื่อง */}
       {clamped > 1 && (
         <span

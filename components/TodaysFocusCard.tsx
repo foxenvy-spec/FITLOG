@@ -11,9 +11,26 @@ interface TodaysFocusCardProps {
   href: string
 }
 
+// ชื่อโปรแกรม (scheduledDay.title) เป็นข้อความอิสระที่ผู้ใช้พิมพ์เอง (เช่น "Day 5 — Lower
+// (Hamstring/Glute)") ไม่มีฟิลด์กล้ามเนื้อแยกต่างหากใน ProgramDay (lib/types.ts) ให้ดึงมาแสดงบรรทัด 2
+// ตรงๆ — เดิม label ยาวๆ แบบนี้โดน `truncate` (1 บรรทัด + ...) ตัดจนอ่านไม่รู้เรื่อง ("DAY 5 — LOWER
+// (HAMSTRING/GLUT...") ถ้าเจอวงเล็บ แยกเป็น 2 บรรทัดแทน: บรรทัดหลัก (ก่อนวงเล็บ) + บรรทัดรายละเอียด
+// (ในวงเล็บ, "/" แทนด้วย " • ") — ถ้าไม่มีวงเล็บเลย (label สั้น/ไม่มีรายละเอียดเพิ่ม) แสดงบรรทัดเดียว
+// เหมือนเดิมทุกประการ ไม่กระทบ
+function splitTitleDetail(text: string): { main: string; detail: string | null } {
+  const openIdx = text.indexOf('(')
+  if (openIdx === -1) return { main: text, detail: null }
+  const closeIdx = text.lastIndexOf(')')
+  const main = text.slice(0, openIdx).trim() || text
+  const inner = closeIdx > openIdx ? text.slice(openIdx + 1, closeIdx) : text.slice(openIdx + 1)
+  const detail = inner.replace(/\//g, ' • ').trim()
+  return { main, detail: detail || null }
+}
+
 // "Today's Focus" ตามมอคอัพ — ใช้ workoutTitle (โปรแกรมที่ตั้งไว้วันนี้) ถ้ามี ไม่งั้น fallback
 // ไปกล้ามเนื้อที่แนะนำวันนี้ (data.muscleRecommendation) ซึ่ง MobileDashboardView เป็นคนเลือกส่งมาให้แล้ว
 export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
+  const { main, detail } = label ? splitTitleDetail(label) : { main: 'ยังไม่ได้ตั้งโปรแกรม', detail: null }
   return (
     <PremiumCard
       as={Link}
@@ -56,8 +73,13 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         <div className="min-w-0">
           <p className="text-[10px] tracked uppercase text-muted">Today&apos;s Focus</p>
           <p className="font-display tracked uppercase text-amber truncate" style={{ fontSize: 14 }}>
-            {label ?? 'ยังไม่ได้ตั้งโปรแกรม'}
+            {main}
           </p>
+          {detail && (
+            <p className="text-muted truncate" style={{ fontSize: 10, marginTop: 1 }}>
+              {detail}
+            </p>
+          )}
         </div>
       </div>
       <span className="text-muted shrink-0" aria-hidden="true">›</span>
