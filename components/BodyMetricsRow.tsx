@@ -28,12 +28,14 @@ const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
 // glow (0-100): ความเข้ม glow มุมการ์ดต่อเมตริก — เดิมทุกใบใช้ alpha คงที่เท่ากันหมด (33 hex ≈ 20%)
 // ทำให้ glow ทุกใบสว่างเท่ากันดูไม่เป็นธรรมชาติ ตามฟีดแบ็กที่ขอให้แต่ละใบไม่เท่ากัน — น้ำหนัก (การ์ด
 // แรกสุด สายตาเห็นก่อน) เข้มสุด ไล่ลงตามลำดับความสำคัญ/ตำแหน่งในกริด
+// v2: ลดทั้งชุดลงอีก ~20% (18/14/12/10 -> 14/11/9/8) ตามคำขอ "Less glow, more material" รอบล่าสุด —
+// สีธีมต่อเมตริก (ส้ม/ชมพู/ฟ้า/เขียว) ไม่แตะ ยังคงเดิมทุกประการตามที่ขอ "Keep all current colors"
 const METRIC_THEME_VIBRANT: Record<MetricIconImageKey, MetricCardTheme> = {
-  weight: { main: '#F59E0B', second: '#D97706', glow: 18 },
-  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 14 },
-  muscle: { main: '#3B82F6', second: '#2563EB', glow: 12 },
-  fatMass: { main: '#22C55E', second: '#16A34A', glow: 10 },
-  bmi: { main: '#1b8cff', second: '#3f6cff', glow: 12 },
+  weight: { main: '#F59E0B', second: '#D97706', glow: 14 },
+  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 11 },
+  muscle: { main: '#3B82F6', second: '#2563EB', glow: 9 },
+  fatMass: { main: '#22C55E', second: '#16A34A', glow: 8 },
+  bmi: { main: '#1b8cff', second: '#3f6cff', glow: 9 },
 }
 
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
