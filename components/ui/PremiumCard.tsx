@@ -23,6 +23,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
   className = '',
   as,
   onPointerDown,
+  style,
   ...rest
 }: PremiumCardProps<T>) {
   const Comp = (as || 'div') as ElementType
@@ -37,6 +38,12 @@ export default function PremiumCard<T extends ElementType = 'div'>({
       <Comp
         className={`premium-card relative overflow-hidden rounded-[24px] ${className}`}
         onPointerDown={handlePointerDown}
+        // v2: เดิม `style={{...}} {...rest}` — ถ้า rest มี style ของตัวเอง (เช่น TodaysFocusCard/
+        // TodaysWorkoutCompactCard ที่ส่ง padding/minHeight/clipPath มา) จะ "แทนที่" ทั้งก้อนแทนที่จะ
+        // merge (JSX ให้ค่าซ้ำตัวหลังชนะทั้งอ็อบเจกต์เสมอ ไม่ใช่ shallow merge ทีละ key) ทำให้ไล่สี
+        // การ์ด/border/boxShadow ของ PremiumCard หายไปเงียบๆ ทุกจุดที่ส่ง style เข้ามา (ตรวจพบจาก
+        // getComputedStyle จริง: backgroundImage/boxShadow กลายเป็น "none" ทั้งที่ตั้งใจให้มี) —
+        // ดึง style ออกมา destructure แยกแล้ว merge เอง กันปัญหานี้ทั้งไฟล์
         style={{
           // ไล่สีการ์ดเทาเย็น (CARD_GRADIENT_CSS) + rim light เฉียง 135deg มุมบนซ้าย (แสงสตูดิโอ) +
           // CARD_REFLECTION_CSS แถบสะท้อนแสงแนวนอนตรงจากขอบบน (brushed titanium) — สองชั้นนี้คนละมุม
@@ -60,6 +67,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // แสงส้มยังโผล่ได้ตอน :active เท่านั้น (ดู style jsx ด้านล่าง) ไม่ใช่ทุกการ์ดตลอดเวลา
           boxShadow: `${CARD_FLOAT_SHADOW}, ${CARD_INSET_SHADOW}`,
           transition: 'box-shadow 150ms ease, background-position 200ms ease',
+          ...style,
         }}
         {...rest}
       >

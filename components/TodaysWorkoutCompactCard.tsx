@@ -37,8 +37,12 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
       as={Link}
       href={href}
       // active:translate-y-[1px] ผสมกับ active:scale-[0.99] เดิม — การ์ดรู้สึก "กดจมลง" ตอนแตะ
-      // (Card Press Effect) เหมือน TodaysFocusCard
-      className="relative overflow-hidden active:scale-[0.99] active:translate-y-[1px] transition"
+      // (Card Press Effect) เหมือน TodaysFocusCard — ต้องมี `block` เสมอ: as={Link} เรนเดอร์เป็น <a>
+      // ซึ่ง display เริ่มต้นเป็น inline (ไม่ใช่ block) และ min-height/height ไม่มีผลกับ inline element
+      // ตามสเปก CSS เลย — ถ้าลืมใส่ block/flex การ์ดจะยุบเหลือแค่ความสูงจาก inline content จริง (~88px
+      // แทนที่จะเป็น 112px ตาม spec) แล้วรูปพื้นหลัง (position:absolute; inset:0) ก็ไปวัดขนาดตามกล่อง
+      // ที่ยุบผิดนั้นด้วย ทำให้ครอปรูปผิดสัดส่วน (บั๊กที่เจอจริงตอนขึ้น production — v9 fix)
+      className="relative overflow-hidden block active:scale-[0.99] active:translate-y-[1px] transition"
       style={{ padding: 0, minHeight: dashboardSpec.workoutCard.height }}
     >
       {/* พื้นหลังรูปเต็มการ์ด + ไล่สีมืดทับ (ซ้ายทึบสุด 92% -> ขวาโปร่งใส) ให้ตัวหนังสือฝั่งซ้ายอ่านออก
