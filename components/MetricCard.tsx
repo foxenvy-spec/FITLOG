@@ -324,6 +324,9 @@ export default function MetricCard({
         }
         .metric-card-compact:active {
           background-position: 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0;
+          /* Card Press Effect — เดิม MetricCard ไม่มี :active feedback เลย (มีแต่ hover เดสก์ท็อป)
+             เพิ่มกดจมลงเล็กน้อยตอนแตะ (มือถือเท่านั้น เพราะ scope ด้วย .metric-card-compact) */
+          transform: translateY(1px) scale(0.985);
         }
       `}</style>
     </>

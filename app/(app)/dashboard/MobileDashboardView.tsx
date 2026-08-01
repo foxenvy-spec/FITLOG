@@ -29,7 +29,7 @@ import { computeFitnessScore } from '@/lib/fitnessScore'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { NOISE_BG, DASHBOARD_BG_CSS, VIGNETTE_CSS } from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
-import DashboardSkeleton from '@/components/DashboardSkeleton'
+import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
@@ -161,8 +161,11 @@ export default function MobileDashboardView() {
   // data ได้เลย ไม่ต้องคำนวณซ้ำฝั่ง client
   const muscleRecommendation = data?.muscleRecommendation ?? null
 
+  // MobileDashboardSkeleton (แทน DashboardSkeleton ตัวกลางเดิม) — mirror ความสูง/gap จาก
+  // dashboardSpec ตัวเดียวกับที่โครงจริงของหน้านี้ใช้ กันไม่ให้เนื้อหา "กระโดด" ตอนโหลดข้อมูลเสร็จ
+  // (DashboardSkeleton เดิมยังใช้อยู่ที่เดสก์ท็อป/page.tsx เหมือนเดิม ไม่กระทบ)
   if (isLoading || !data) {
-    return <DashboardSkeleton />
+    return <MobileDashboardSkeleton />
   }
 
   if (isError) {

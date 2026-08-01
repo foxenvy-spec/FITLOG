@@ -24,7 +24,9 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
     <PremiumCard
       as={Link}
       href={href}
-      className="relative overflow-hidden flex active:scale-[0.99] transition"
+      // active:translate-y-[1px] ผสมกับ active:scale-[0.99] เดิม — การ์ดรู้สึก "กดจมลง" ตอนแตะ
+      // (Card Press Effect) เหมือน TodaysFocusCard
+      className="relative overflow-hidden flex active:scale-[0.99] active:translate-y-[1px] transition"
       style={{ padding: 0, minHeight: dashboardSpec.workoutCard.height }}
     >
       {/* คอลัมน์เนื้อหา — padding ของตัวเองแทนที่ padding ของ PremiumCard (ปิดไว้ที่ 0 ด้านบน เพราะ
