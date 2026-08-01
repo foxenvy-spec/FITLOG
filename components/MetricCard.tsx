@@ -324,9 +324,10 @@ export default function MetricCard({
         }
         .metric-card-compact:active {
           background-position: 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0;
-          /* Card Press Effect — เดิม MetricCard ไม่มี :active feedback เลย (มีแต่ hover เดสก์ท็อป)
-             เพิ่มกดจมลงเล็กน้อยตอนแตะ (มือถือเท่านั้น เพราะ scope ด้วย .metric-card-compact) */
-          transform: translateY(1px) scale(0.985);
+          /* Card Press Effect v2 — เดิมกดจมลง (translateY(1px)) ตามที่ขอตอนนั้น ตอนนี้เปลี่ยนเป็น
+             "ยกขึ้น 2px" ตาม Phase 5 Motion spec ใหม่เจาะจง MetricCard (คนละพฤติกรรมจาก
+             TodaysFocusCard/TodaysWorkoutCompactCard ที่ยังกดจมลงเหมือนเดิม ไม่แตะ) */
+          transform: translateY(-2px);
         }
       `}</style>
     </>

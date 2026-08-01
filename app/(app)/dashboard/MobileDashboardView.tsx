@@ -270,7 +270,11 @@ export default function MobileDashboardView() {
           ambient เต็มจอแบบเดิม ให้สายตาโฟกัสเฉพาะจุดที่ควรสนใจ — noise กลับขึ้นจาก 0.01 เป็น 0.02
           (deferred item จากรอบก่อนๆ ที่บอกว่า "เพิ่มทีหลังได้" — ตอนนี้ถึงคิวแล้ว) ตาม micro noise ~2%
           ที่ขอ ยังคงเบากว่า micro-gradient ในการสร้างความต่างของพื้นผิวหลัก */}
-      <div className="relative" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
+      {/* animate-fade-scale-in (Phase 5 Motion "Card Fade + Scale เมื่อโหลดข้อมูล") — div นี้ (root
+          ของเนื้อหาจริง) render ได้ก็ต่อเมื่อผ่าน isLoading||!data check ด้านบนไปแล้วเท่านั้น จึงเป็น
+          จุดเดียวที่ trigger พอดีตอนสลับจาก MobileDashboardSkeleton มาเป็นเนื้อหาจริง ไม่ต้องแก้การ์ด
+          แต่ละใบทีละตัว */}
+      <div className="relative animate-fade-scale-in" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
           <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />

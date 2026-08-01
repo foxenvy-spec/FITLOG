@@ -45,7 +45,10 @@ export default function BottomNav() {
                 onPointerDown={hapticSuccess}
               >
                 <span
-                  className="absolute rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
+                  // animate-start-workout-pulse — Phase 5 Motion: glow วงนอกหายใจเบาๆ ต่อเนื่อง
+                  // (globals.css bake ทั้ง shadow stack ไว้ในทุก keyframe กัน layer อื่นหายตอนแอนิเมชัน
+                  // ทำงาน ดู comment ที่นั่น) — ไม่ใช่สีส้มใหม่/glow ใหม่ แค่ให้ glow เดิมเคลื่อนไหว
+                  className="absolute rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition animate-start-workout-pulse"
                   style={{
                     top: -Math.round(btnSize * 0.42),
                     width: btnSize,

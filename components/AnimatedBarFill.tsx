@@ -10,7 +10,11 @@ export default function AnimatedBarFill({
   pct,
   color,
   background,
-  className = 'h-full rounded-full transition-all duration-700 ease-out',
+  // easing เดิม ease-out ธรรมดา — เปลี่ยนเป็น cubic-bezier แบบ spring (ค่าเดียวกับ animate-pop-in ใน
+  // globals.css) ให้แถบ "เด้ง" เกินเป้าเล็กน้อยก่อนตกกลับที่ค่าจริง แทนที่จะไถลนิ่งๆ ทางเดียว — ใช้
+  // ค่าเดียวกันทุกจุดที่เรียก AnimatedBarFill (Today's Workout, Weekly Volume/Cardio/Muscle Heatmap)
+  // เพราะเป็นแค่ timing function ไม่กระทบสี/เลย์เอาต์/พฤติกรรมอื่นเลย
+  className = 'h-full rounded-full transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
 }: {
   pct: number
   color: string
