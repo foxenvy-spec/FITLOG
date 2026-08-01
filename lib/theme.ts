@@ -231,6 +231,17 @@ export const CARD_CURVATURE_HIGHLIGHT_CSS =
 // border-box ซ้อนกับขอบไล่สีธีมเดิม (ไม่ได้แทนที่) ให้ขอบมีทั้งมิติจริง + สีธีมพร้อมกัน
 export const CARD_BEVEL_CSS = 'linear-gradient(135deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.02) 30%, transparent 55%, rgba(0,0,0,.22) 100%)'
 
+// v20: "Titanium Reflection" — ฟีดแบ็ก "เพิ่ม Reflection บางๆ บน Card แบบเส้นสั้นๆ หลายเส้น ไม่เท่ากัน
+// opacity 2-3% แทบมองไม่เห็น แต่ทำให้การ์ดดูเป็นโลหะ" — CARD_REFLECTION_CSS/CARD_CURVATURE_HIGHLIGHT_CSS
+// เดิมเป็นแถบสะท้อนแสงต่อเนื่องเส้นเดียว (จำลองพื้นผิวโค้งเดียว) โทเคนนี้คือ 3 เส้นทแยงสั้นๆ ยาวไม่เท่ากัน
+// ตำแหน่ง/มุมเดียวกับ DIAGONAL_TITANIUM_CSS (115deg) แยกจากกัน จำลองรอยขัดเงาหลายจุดที่แสงกระทบไม่พร้อมกัน
+// ต่างจากรอยขัดเดียวยาวต่อเนื่อง — ใช้ร่วมกับการ์ดทุกใบผ่าน PremiumCard และ MetricCard (compact)
+export const CARD_MULTI_REFLECTION_CSS = [
+  'linear-gradient(115deg, transparent 12%, rgba(255,255,255,.03) 18%, transparent 26%)',
+  'linear-gradient(115deg, transparent 42%, rgba(255,255,255,.025) 47%, transparent 53%)',
+  'linear-gradient(115deg, transparent 66%, rgba(255,255,255,.02) 70%, transparent 76%)',
+].join(', ')
+
 // v2: shadow เดิม (0 10px 30px rgba(0,0,0,.45)) หนัก/มืดเกินไป ทำให้การ์ดดู "ติดพื้น" แทนที่จะลอยเบาๆ
 // เหนือพื้นหลัง — ลด blur/opacity ลงให้เป็นเงาลอยแบบเบาบาง (float) จริง
 export const CARD_FLOAT_SHADOW = '0 8px 18px rgba(0,0,0,.32)'

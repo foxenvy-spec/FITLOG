@@ -145,7 +145,16 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         </FitnessRing>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] tracked uppercase text-muted">Today&apos;s Workout</p>
+          {/* v20: ฟีดแบ็ก "TODAY'S WORKOUT อยากเพิ่ม Tracking อีกนิด ประมาณ +8~10 ให้ดู Luxury ขึ้น" —
+              class .tracked กลาง (0.08em) ใช้ร่วมกับ label อื่นทั่วแอป ไม่แตะเพื่อไม่ให้กระทบจุดอื่น ตั้ง
+              letter-spacing ตรงจุดนี้แทนที่จะเพิ่ม em สูงขึ้นเฉพาะป้ายนี้จุดเดียว — ทดสอบจริงแล้วคอลัมน์นี้
+              กว้างแค่ ~131px (ถูกบีบด้วย maxWidth 68% ของการ์ด + ring badge + gap) ค่า 0.17em ตามที่ขอเป๊ะ
+              ทำให้ตัดบรรทัดเป็น 2 บรรทัด ("TODAY'S" / "WORKOUT") ดันเนื้อหาอื่นเลื่อนลง — วัดหาค่าสูงสุดที่
+              ยังอยู่บรรทัดเดียวจริงได้ 0.14em (ทดสอบทีละ step ด้วย getBoundingClientRect ในเบราว์เซอร์จริง)
+              ใกล้เคียงที่ขอที่สุดโดยไม่ทำให้ layout พัง + เพิ่ม nowrap กันเผื่อกรณีฟอนต์โหลดช้า/fallback */}
+          <p className="text-[11px] uppercase text-muted whitespace-nowrap" style={{ letterSpacing: '0.14em' }}>
+            Today&apos;s Workout
+          </p>
 
           {/* เศษส่วนตัวใหญ่ + "Exercises" ต่อท้ายบรรทัดเดียวกัน (ไม่กินพื้นที่แนวตั้งเพิ่ม) */}
           <div className="flex items-baseline gap-1">
