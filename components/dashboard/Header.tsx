@@ -3,7 +3,7 @@
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG } from '@/lib/theme'
+import { NOISE_BG, DIAGONAL_TITANIUM_CSS } from '@/lib/theme'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -67,18 +67,26 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // v7: ยังอ่านเป็น "Gradient Text" มากกว่า "Brushed Titanium" ต่างกันแค่นิดเดียว — เพิ่มชั้น
             // บนสุด NOISE_BG (เกรนเดียวกับที่ใช้กับผิวการ์ด/พื้นหลังทั้งแอป) ผสม overlay อัลฟาต่ำมากๆ
             // จำลองรอยขัดเงาละเอียดแบบไทเทเนียมแปรงจริง แทนที่จะเป็นผิวเรียบไล่สีล้วนๆ
+            //
+            // v16: ฟีดแบ็ก "BANK สว่างเกินทุกอย่าง สายตาไปที่ชื่อก่อน Fitness Score" — ชื่อควรเป็นแค่
+            // Branding ไม่ใช่ Hero ของหน้า เพิ่มลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เป็นอีกชั้น
+            // ผสม overlay (ให้ผิวตัวอักษรมีลายเดียวกับพื้นหลัง/การ์ดทั้งแอป) + ลด brightness ของทั้งบล็อก
+            // ด้วย filter (ดูด้านล่าง) แทนการลดสี stop ทีละจุด เพื่อคุมความสว่างโดยรวมได้ตรงเป้าหมายกว่า
             backgroundImage: [
+              DIAGONAL_TITANIUM_CSS,
               NOISE_BG,
               'linear-gradient(180deg, transparent 0%, transparent 42%, rgba(255,255,255,.02) 50%, transparent 58%, transparent 100%)',
               'linear-gradient(90deg, #EAEAEA, #BFBFBF, #F5F5F5, #8E8E8E)',
               'linear-gradient(180deg, #DADADA 0%, #6F6F72 20%, #A9A9A9 45%, #E6E6E6 75%, #FFFFFF 100%)',
             ].join(', '),
-            backgroundBlendMode: 'overlay, normal, overlay, normal',
+            backgroundBlendMode: 'overlay, overlay, normal, overlay, normal',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
-            // เงาเข้มขึ้นเล็กน้อย (.5 -> .6) ให้ตัวอักษรดูจมสลักลงในผิวโลหะ (inner-shadow จำลอง) ชัดขึ้น
-            filter: 'drop-shadow(0 2px 1px rgba(0,0,0,.6)) drop-shadow(0 1px 0 rgba(255,255,255,.14))',
+            // เงาเข้มขึ้นเล็กน้อย (.5 -> .6) ให้ตัวอักษรดูจมสลักลงในผิวโลหะ (inner-shadow จำลอง) ชัดขึ้น —
+            // v16: เพิ่ม brightness(.82) นำหน้า (ลดความสว่างโดยรวมของทั้งบล็อกลง ~18% ตามที่ขอ "100% ->
+            // 82%") ให้ Score Ring เด่นกว่าชื่อ ไม่ใช่ให้ชื่อสว่างจ้าแย่งซีนก่อน
+            filter: 'brightness(.82) drop-shadow(0 2px 1px rgba(0,0,0,.6)) drop-shadow(0 1px 0 rgba(255,255,255,.14))',
             // text-shadow เพิ่มเติม (แยกจาก filter:drop-shadow ด้านบน) — ไฮไลต์เส้นบางสว่างขอบบนตัวอักษร
             // (rgba ขาว 15% -> 20% ตาม "Metallic Highlight" ที่ขอเพิ่ม) + เงาฟุ้งนุ่มด้านล่าง (ไม่ใช่เงา
             // คมชัด) ให้ตัวอักษรดูมีความหนา/ลอยเหนือพื้นหลังเล็กน้อย ใช้ได้พร้อมกับ background-clip:text
