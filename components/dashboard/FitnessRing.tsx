@@ -62,9 +62,17 @@ export default function FitnessRing({
   const tipX = size / 2 + radius * Math.cos(tipAngle)
   const tipY = size / 2 + radius * Math.sin(tipAngle)
 
-  // โหมด simple — 3 เลเยอร์ล้วน: วง track ไทเทเนียม (gradient เดียว ไม่มีฐานสีทึบซ้อน) -> วง progress
-  // สีตาม tier (gradient เดียว ไม่มี bloom/overlay ผสมวัสดุ) -> children กลางวง ไม่มี glow/reflection/
-  // highlight arc/light sweep/highlight dots/tip pulse/inner shadow เลยสักอย่าง
+  // โหมด simple — เดิม 3 เลเยอร์ล้วน: วง track ไทเทเนียม -> วง progress สีตาม tier -> children กลางวง
+  // ไม่มี glow/reflection/highlight arc/light sweep/highlight dots/tip pulse/inner shadow เลยสักอย่าง
+  //
+  // v21: ฟีดแบ็ก "Ring Icon ใน Banner ยังดูต่างจาก Ring Hero อยากใช้ Material เดียวกัน (Soft Reflection/
+  // CNC Edge)" — เพิ่ม 2 อย่างที่ "ราคาถูก" ที่สุด (ไม่มี SVG filter/blur ซึ่งเป็นตัวที่ทำให้เวอร์ชันเต็ม
+  // หนัก) คือ (1) glossy reflection rim บางๆ แนบผิวด้านในวงหลัก (เหมือนเวอร์ชันเต็มแต่ตัด mixBlendMode:
+  // screen ออก ใช้แค่ strokeOpacity ธรรมดา) (2) inset shadow รอบนอกจำลอง "CNC Edge" (ขอบตัดคม) — ยังคง
+  // ไม่มี glow/bloom filter/highlight dots/tip/light-sweep เหมือนเดิม กันไม่ให้กลับไปหนักแบบเวอร์ชันเต็ม
+  // ("Orange Core" ที่ขอ implement แยกเป็นชั้น wrapper รอบนอก component นี้แทน — ดู TodaysWorkoutCompactCard
+  // เพราะเป็นเรื่องของแสงแวดล้อมรอบ badge ไม่ใช่ตัว ring เอง — ทำให้ component นี้ยังคง reusable/ไม่ผูก
+  // กับสีอำพันตายตัว)
   if (simple) {
     return (
       <div className={`relative ${className}`} style={{ width: size, height: size }}>
@@ -97,7 +105,29 @@ export default function FitnessRing({
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
             style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
           />
+          {/* Soft Reflection — เส้นบางสว่างจ้าแนบผิวด้านในวงหลัก (rim เดียวกับเวอร์ชันเต็ม แต่ไม่มี
+              mixBlendMode/filter เพิ่ม กันไม่ให้หนักขึ้น) */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius - sw * 0.3}
+            fill="none"
+            stroke="#FFF4CC"
+            strokeWidth={Math.max(1, sw * 0.14)}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            strokeOpacity={0.45}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
+          />
         </svg>
+        {/* CNC Edge — inset shadow บางรอบนอกวง จำลองขอบตัดคมแบบชิ้นงานกัด CNC ไม่ใช่ขอบมนนุ่ม */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{ inset: -1, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.06), inset 0 1px 2px rgba(0,0,0,.5)' }}
+          aria-hidden="true"
+        />
         <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
       </div>
     )

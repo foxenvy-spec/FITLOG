@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { COLORS, FIRE_GRADIENT_CSS, NEUTRAL, TEXT, withAlpha } from '@/lib/theme'
+import { COLORS, FIRE_GRADIENT_CSS, NEUTRAL, TEXT, withAlpha, CARD_MULTI_REFLECTION_CSS, CARD_AMBIENT_SHADOW_CSS, CARD_FLOAT_SHADOW } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from './AnimatedBarFill'
 import PremiumCard from './ui/PremiumCard'
@@ -62,7 +62,13 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         // อยู่แล้ว (ปุ่ม arrow, progress bar, ไอคอนดัมเบลล้วนอำพัน) จึงเพิ่ม rim เฉพาะใบนี้แทนที่จะแก้
         // border กลางของ PremiumCard (จะกระทบการ์ดอื่นที่ไม่ต้องการโทนอำพันซ้ำ) — บางมากตามที่ขอ
         // ("แทบมองไม่เห็น") แค่ให้รู้สึกขอบมีไฟจางๆ ตอนเลื่อนผ่าน ไม่ใช่เส้นส้มชัดเจน
-        boxShadow: '0 0 0 1px rgba(255,154,22,.14), inset 0 0 12px rgba(255,138,0,.05)',
+        //
+        // v21: ค้นพบระหว่างตรวจ "Ambient Shadow" ที่ขอ — การ์ดนี้ส่ง boxShadow ของตัวเองมา ซึ่งไป
+        // "แทนที่" boxShadow เริ่มต้นของ PremiumCard ทั้งก้อน (shallow merge ทับทั้ง key ไม่ใช่ merge
+        // ทีละค่าใน string เดียวกัน) แปลว่าการ์ดนี้ไม่เคยมี CARD_FLOAT_SHADOW/เงาลอยจริงๆ เลยมาตลอด (มีแค่
+        // เส้นขอบอำพัน+inset glow) เพิ่ม CARD_AMBIENT_SHADOW_CSS + CARD_FLOAT_SHADOW นำหน้า rim light เดิม
+        // ให้การ์ดนี้ได้เงาลอย/เงาแวดล้อมเหมือนการ์ดอื่นด้วย ไม่ใช่แค่เส้นขอบเรืองแสงอย่างเดียว
+        boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}, 0 0 0 1px rgba(255,154,22,.14), inset 0 0 12px rgba(255,138,0,.05)`,
       }}
     >
       {/* พื้นหลังรูปเต็มการ์ด + ไล่สีมืดทับ — v11: asset ใหม่ (เดิม v10 ครอปไว้ตอนพื้นซ้ายเกือบดำสนิท
@@ -109,6 +115,16 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             mixBlendMode: 'screen',
           }}
         />
+        {/* v21: ฟีดแบ็ก "Card Reflection ผมอยากเพิ่ม Reflection แบบนี้ opacity 2% พอ" — การ์ดนี้ใช้
+            PremiumCard เป็น wrapper ซึ่งมี CARD_MULTI_REFLECTION_CSS อยู่แล้วจาก v20 แต่รูปพื้นหลังเต็ม
+            การ์ด (absolute inset-0 ด้านบน) วาดทับปิดมันหมดเงียบๆ (children วาดทีหลัง = อยู่บนสุดเสมอ) —
+            เพิ่มชั้นเดียวกันตรงนี้แทน ให้เห็นจริงบนการ์ดใบนี้ด้วย ไม่ใช่แค่ทฤษฎีว่ามีอยู่ใน PremiumCard */}
+        <div className="absolute inset-0" style={{ backgroundImage: CARD_MULTI_REFLECTION_CSS }} />
+        {/* v21: ฟีดแบ็ก "Orange Highlight อยากเพิ่ม Light Sweep บางๆ วิ่งผ่าน Banner ช้าๆ ทุก 20 วินาที
+            แทบไม่รู้สึกแต่ดูแพงมาก" — แถบแสงเฉียงกว้าง กวาดจากซ้ายไปขวาเต็มการ์ด รอบละ 20 วิ อัลฟาต่ำมาก
+            (peak 6%) + screen blend ให้เห็นเป็นแค่ "แสงวาบผ่าน" ไม่ใช่แถบสีทึบ เคารพ prefers-reduced-motion
+            (ปิด animation เหลือ opacity 0 นิ่งๆ) เหมือนแอนิเมชันอื่นในระบบนี้ */}
+        <div className="workout-banner-sweep absolute inset-0 pointer-events-none" aria-hidden="true" />
       </div>
 
       {/* เนื้อหา — badge วงแหวนซ้าย + ข้อความในแถวเดียวกัน (จัดกึ่งกลางแนวตั้งด้วยกัน) ลอยทับพื้นหลังรูป
@@ -118,31 +134,45 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         className="relative z-10 flex min-w-0 items-center gap-3"
         style={{ padding: dashboardSpec.workoutCard.padding, maxWidth: '68%' }}
       >
-        <FitnessRing
-          value={pct}
-          size={dashboardSpec.workoutCard.ringSize}
-          strokeWidth={5}
-          trackColor={NEUTRAL.ringTrack}
-          className="shrink-0"
-          simple
-        >
-          {/* ไอคอนใหญ่ขึ้นมาก (24 -> 56px) ตาม ringSize ที่ขยายจาก 46 -> 76 — ให้พอมีพื้นที่เห็นวงแหวน/
-              glow/เงาที่ฝังอยู่ในตัวไอคอนเองชัดเจน (ที่ 24px เดิมมันบีบจนมัว มองไม่ออกเลยว่ามีวง) */}
-          <span
-            className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden"
-            style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
+        <div className="relative shrink-0 flex items-center justify-center">
+          {/* v21: "Orange Core" — ฟีดแบ็ก "Ring Icon ใน Banner ยังดูต่างจาก Ring Hero" — Hero Ring
+              (FitnessScore.tsx) มีชั้น Fog/Bloom/Core อยู่หลังวงอยู่แล้ว badge เล็กในนี้ไม่มีเลย เพิ่ม
+              glow อำพันชั้นเดียว (ไม่ใช่ 3 ชั้นแบบ Hero เพราะ badge เล็กกว่ามาก 76px vs 110px) ไว้หลังวง
+              ให้รู้สึกว่าเป็น "แกนแสง" เดียวกับ Ring Hero ไม่ใช่ badge ลอยเดี่ยวๆ ไม่มีแสงรอบตัวเลย */}
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: dashboardSpec.workoutCard.ringSize * 1.6,
+              height: dashboardSpec.workoutCard.ringSize * 1.6,
+              background: `radial-gradient(circle, ${COLORS.amber}40, transparent 60%)`,
+            }}
             aria-hidden="true"
+          />
+          <FitnessRing
+            value={pct}
+            size={dashboardSpec.workoutCard.ringSize}
+            strokeWidth={5}
+            trackColor={NEUTRAL.ringTrack}
+            simple
           >
-            <Image
-              src="/icons/today-workout-icon-dumbbell.png"
-              alt=""
-              width={56}
-              height={56}
-              className="w-full h-full object-cover"
-              style={{ mixBlendMode: 'screen' }}
-            />
-          </span>
-        </FitnessRing>
+            {/* ไอคอนใหญ่ขึ้นมาก (24 -> 56px) ตาม ringSize ที่ขยายจาก 46 -> 76 — ให้พอมีพื้นที่เห็นวงแหวน/
+                glow/เงาที่ฝังอยู่ในตัวไอคอนเองชัดเจน (ที่ 24px เดิมมันบีบจนมัว มองไม่ออกเลยว่ามีวง) */}
+            <span
+              className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden"
+              style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
+              aria-hidden="true"
+            >
+              <Image
+                src="/icons/today-workout-icon-dumbbell.png"
+                alt=""
+                width={56}
+                height={56}
+                className="w-full h-full object-cover"
+                style={{ mixBlendMode: 'screen' }}
+              />
+            </span>
+          </FitnessRing>
+        </div>
 
         <div className="min-w-0 flex-1">
           {/* v20: ฟีดแบ็ก "TODAY'S WORKOUT อยากเพิ่ม Tracking อีกนิด ประมาณ +8~10 ให้ดู Luxury ขึ้น" —
@@ -199,6 +229,30 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
       >
         <Image src="/icons/today-workout-icon-arrow.png" alt="" width={32} height={32} className="w-full h-full object-cover" />
       </span>
+      <style jsx>{`
+        .workout-banner-sweep {
+          background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.06) 50%, transparent 60%);
+          background-size: 300% 300%;
+          background-position: -120% -120%;
+          mix-blend-mode: screen;
+          animation: workout-banner-sweep-move 20s linear infinite;
+        }
+        @keyframes workout-banner-sweep-move {
+          0% {
+            background-position: -120% -120%;
+          }
+          35%,
+          100% {
+            background-position: 120% 120%;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .workout-banner-sweep {
+            animation: none;
+            background-position: 120% 120%;
+          }
+        }
+      `}</style>
     </PremiumCard>
   )
 }

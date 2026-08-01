@@ -242,6 +242,13 @@ export const CARD_MULTI_REFLECTION_CSS = [
   'linear-gradient(115deg, transparent 66%, rgba(255,255,255,.02) 70%, transparent 76%)',
 ].join(', ')
 
+// v21: ฟีดแบ็ก "Card ยังเป็น Dark + Glow อยากได้ Titanium -> Reflection -> Micro Bevel -> Ambient
+// Shadow" — 3 อย่างแรกมีแล้ว (CARD_GRADIENT_CSS+grain, CARD_REFLECTION_CSS/CURVATURE/MULTI_REFLECTION,
+// CARD_BEVEL_CSS) มีแค่ "เงา" ที่ยังเป็นแค่ contact shadow ชิดขอบเดียว (CARD_FLOAT_SHADOW) ไม่มีมิติของ
+// "แสงแวดล้อม" กว้างๆ นุ่มๆ แบบที่การ์ดวางอยู่ในห้องจริง — เพิ่มชั้นเงาที่สองนี้ กว้างกว่า/นุ่มกว่า/จางกว่า
+// ซ้อนกับ CARD_FLOAT_SHADOW เดิม (เทคนิคเดียวกับ Material Design elevation: umbra ชิด + penumbra กว้าง)
+export const CARD_AMBIENT_SHADOW_CSS = '0 24px 48px -12px rgba(0,0,0,.38)'
+
 // v2: shadow เดิม (0 10px 30px rgba(0,0,0,.45)) หนัก/มืดเกินไป ทำให้การ์ดดู "ติดพื้น" แทนที่จะลอยเบาๆ
 // เหนือพื้นหลัง — ลด blur/opacity ลงให้เป็นเงาลอยแบบเบาบาง (float) จริง
 export const CARD_FLOAT_SHADOW = '0 8px 18px rgba(0,0,0,.32)'
