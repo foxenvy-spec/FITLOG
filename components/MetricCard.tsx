@@ -187,12 +187,24 @@ export default function MetricCard({
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
             เดสก์ท็อปไม่กระทบ (ดีไซน์ของตัวเองอยู่แล้ว ไม่ได้ตั้งใจให้เป็น titanium)
             v22: ฟีดแบ็ก "Tiny Noise เบามาก แทบมองไม่เห็น แต่ถือแล้วรู้สึกว่าเป็นวัสดุจริง" — ขยับจาก 0.02
-            เป็น 0.03 เหมือน PremiumCard ให้สองจุดสอดคล้องกัน */}
+            เป็น 0.03 เหมือน PremiumCard ให้สองจุดสอดคล้องกัน
+            v24: ให้คะแนน 9.2/10 "ยังขาด Titanium Noise" — ขยับอีกนิดจาก 0.03 เป็น 0.035 */}
         {compact && (
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
+            style={{ backgroundImage: NOISE_BG, opacity: 0.035, mixBlendMode: 'overlay' }}
+          />
+        )}
+        {/* v24: "Hairline Highlight" — ฟีดแบ็ก "ยังขาด Hairline Highlight" ต่างจาก CARD_REFLECTION_CSS
+            เดิม (แถบไล่สีนุ่มกว้าง ~40% ของความสูงการ์ด) อันนี้คือเส้นคมชัด 1px เส้นเดียวแนบขอบบนสุดจริงๆ
+            จำลองขอบโลหะที่ถูกเจียรเรียบจนสะท้อนแสงเป็นเส้นคมแทนแถบนุ่ม (ทั้งสองอย่างอยู่ร่วมกันได้ คนละ
+            layer คนละจุดประสงค์: แถบนุ่ม = ผิวโค้งสะท้อนกว้าง, เส้นคม = ขอบเจียรจริง) */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-x-0 top-0 ${radiusClass}`}
+            style={{ height: 1, backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,.22) 25%, rgba(255,255,255,.22) 75%, transparent)' }}
           />
         )}
         {/* v13: ลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เดียวกับที่ใช้ในพื้นหลังหน้า/รูป Today's
