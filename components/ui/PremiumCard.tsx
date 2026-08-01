@@ -1,7 +1,8 @@
 'use client'
 
-import type { ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
+import type { PointerEvent, ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
 import { NOISE_BG, CARD_GRADIENT_CSS, CARD_INSET_SHADOW, CARD_BORDER_CSS, CARD_REFLECTION_CSS, CARD_FLOAT_SHADOW } from '@/lib/theme'
+import { hapticTap } from '@/lib/haptics'
 
 interface PremiumCardOwnProps {
   children: ReactNode
@@ -21,13 +22,21 @@ export default function PremiumCard<T extends ElementType = 'div'>({
   children,
   className = '',
   as,
+  onPointerDown,
   ...rest
 }: PremiumCardProps<T>) {
   const Comp = (as || 'div') as ElementType
+  // Haptic Feedback (แตะการ์ด) — feature-detect ใน hapticTap เอง (no-op บน iOS Safari/เดสก์ท็อป) —
+  // เรียกต่อจาก onPointerDown เดิมที่ผู้ใช้ component ส่งมา (ถ้ามี) ไม่ใช่แทนที่
+  function handlePointerDown(e: PointerEvent) {
+    hapticTap()
+    ;(onPointerDown as ((e: PointerEvent) => void) | undefined)?.(e)
+  }
   return (
     <>
       <Comp
         className={`premium-card relative overflow-hidden rounded-[24px] ${className}`}
+        onPointerDown={handlePointerDown}
         style={{
           // ไล่สีการ์ดเทาเย็น (CARD_GRADIENT_CSS) + rim light เฉียง 135deg มุมบนซ้าย (แสงสตูดิโอ) +
           // CARD_REFLECTION_CSS แถบสะท้อนแสงแนวนอนตรงจากขอบบน (brushed titanium) — สองชั้นนี้คนละมุม

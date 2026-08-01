@@ -323,6 +323,18 @@
   animation: icon-glow-breathe 4.6s ease-in-out infinite;
 }
 
+/* Skeleton loading — แถบสว่างจางๆ กวาดผ่านซ้าย→ขวาต่อเนื่อง แทน Tailwind animate-pulse เดิม (opacity
+   หายใจเข้า-ออก) ที่ Skeleton.tsx เคยใช้ ให้ placeholder รู้สึกพรีเมียมสอดคล้องกับผิวโลหะของการ์ดจริง */
+@keyframes skeleton-shimmer {
+  0% { background-position: -150% 0; }
+  100% { background-position: 150% 0; }
+}
+.skeleton-shimmer {
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  background-size: 150% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-hero-glow,
@@ -342,7 +354,8 @@
   .animate-ring-gradient-shift,
   .animate-subtitle-accent-pulse,
   .animate-ring-tip-pulse,
-  .animate-icon-glow-breathe {
+  .animate-icon-glow-breathe,
+  .skeleton-shimmer {
     animation: none !important;
   }
 }

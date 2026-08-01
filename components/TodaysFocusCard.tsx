@@ -35,7 +35,10 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
     <PremiumCard
       as={Link}
       href={href}
-      className="flex items-center justify-between gap-3 active:scale-[0.99] transition"
+      // active:translate-y-[1px] ผสมกับ active:scale-[0.99] เดิม (Tailwind ประกอบ transform เดียวกัน
+      // จาก --tw-translate-y/--tw-scale-x/y ร่วมกัน) ให้การ์ดรู้สึก "กดจมลง" จริงๆ ตอนแตะ ไม่ใช่แค่
+      // ย่อขนาดเฉยๆ (Card Press Effect ตามที่ขอ)
+      className="flex items-center justify-between gap-3 active:scale-[0.99] active:translate-y-[1px] transition"
       style={{
         // padding/ความสูงจาก dashboardSpec.focusCard (16px / 74px) — ลดลงจากรอบก่อน (18px / 88px)
         // ตามที่ขอ "reduce card padding" + ความสูงเป้าหมายใหม่

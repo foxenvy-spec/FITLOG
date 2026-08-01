@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { COLORS, NEUTRAL, AMBER_GLOW_SHADOW } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { hapticTap, hapticSuccess } from '@/lib/haptics'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -36,7 +37,13 @@ export default function BottomNav() {
           if (href === '/session') {
             const btnSize = dashboardSpec.floatingButton.size
             return (
-              <Link key={href} href={href} className="relative flex items-start justify-center" aria-label="เริ่ม/ไปต่อเวิร์กเอาต์">
+              <Link
+                key={href}
+                href={href}
+                className="relative flex items-start justify-center"
+                aria-label="เริ่ม/ไปต่อเวิร์กเอาต์"
+                onPointerDown={hapticSuccess}
+              >
                 <span
                   className="absolute rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition"
                   style={{
@@ -69,7 +76,7 @@ export default function BottomNav() {
           }
 
           return (
-            <Link key={href} href={href} className="flex flex-col items-center gap-1 py-2.5">
+            <Link key={href} href={href} className="flex flex-col items-center gap-1 py-2.5" onPointerDown={hapticTap}>
               {Icon && <Icon active={active} />}
               <span className={`text-[9.5px] font-display tracked uppercase ${active ? 'text-amber' : 'text-muted'}`}>
                 {label}
