@@ -257,11 +257,68 @@
   animation: ring-sweep 4s linear infinite;
 }
 
-/* FitnessRing (Dashboard header) — sweep คนละแบบจาก ProgressRing ด้านบน: ช้ากว่ามาก (9s แทน 4s) และ
+/* FitnessRing (Dashboard header) — sweep คนละแบบจาก ProgressRing ด้านบน: ช้ากว่ามาก (8s แทน 4s) และ
    เป็น highlight สีขาว/เงินจางๆ (ไม่ใช่จุด glow ครีม/ส้ม) ให้ความรู้สึก "แสงสะท้อนกวาดผ่านผิวโลหะ"
-   เป็นระยะๆ แทนไฟพลังงาน — ใช้ keyframe ring-sweep เดิม (แค่ rotate) ต่างกันแค่ duration/สไตล์จุด */
+   เป็นระยะๆ แทนไฟพลังงาน — ใช้ keyframe ring-sweep เดิม (แค่ rotate) ต่างกันแค่ duration/สไตล์จุด —
+   ปรับ 9s -> 8s ให้ตรงกับที่ขอ "แสงวิ่งทุก 8 วินาที" เป๊ะๆ */
 .animate-ring-sweep-slow {
-  animation: ring-sweep 9s linear infinite;
+  animation: ring-sweep 8s linear infinite;
+}
+
+/* ปุ่ม Start Workout (BottomNav) — เดิม box-shadow นิ่ง (drop shadow + AMBER_GLOW_SHADOW + inset
+   highlight, ประกาศ inline ใน BottomNav.tsx) เพิ่มการ "หายใจ" เบาๆ ให้ glow วงนอกสุด (60px, .12 alpha)
+   ขยาย/จางขึ้นแล้วหดกลับต่อเนื่อง — bake ทั้ง shadow stack ไว้ในทุก keyframe (เหมือน hero-glow-pulse
+   ด้านบน) กันไม่ให้ชั้นอื่นๆ (drop shadow เงาใต้ปุ่ม, inset highlight ขอบบน) หายไปตอนแอนิเมชันทำงาน —
+   ตัวเลข rgba ต้องตรงกับ AMBER_GLOW_SHADOW ใน lib/theme.ts เป๊ะ (คนละภาษา คนละไฟล์ เหมือน
+   --fitness-gradient ด้านบนสุดของไฟล์นี้) */
+@keyframes start-workout-pulse {
+  0%, 100% {
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.45),
+      0 0 2px rgba(255, 255, 255, 0.6),
+      0 0 8px rgba(255, 210, 120, 0.6),
+      0 0 22px rgba(255, 150, 20, 0.35),
+      0 0 60px rgba(255, 130, 0, 0.12),
+      inset 0 1px rgba(255, 255, 255, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.45),
+      0 0 2px rgba(255, 255, 255, 0.6),
+      0 0 8px rgba(255, 210, 120, 0.6),
+      0 0 22px rgba(255, 150, 20, 0.35),
+      0 0 78px rgba(255, 130, 0, 0.2),
+      inset 0 1px rgba(255, 255, 255, 0.35);
+  }
+}
+.animate-start-workout-pulse {
+  animation: start-workout-pulse 3s ease-in-out infinite;
+}
+
+/* กระดิ่งแจ้งเตือน — แกว่งเบาๆ (rotate สลับซ้าย/ขวาไม่กี่องศา) เมื่อมีรายการแจ้งเตือนใหม่เท่านั้น
+   (NotificationButton.tsx ผูก class นี้แบบมีเงื่อนไข items.length > 0) เล่นไม่กี่รอบแล้วหยุดนิ่ง
+   ไม่ใช่วนตลอดไปแบบ badge-pulse (จะรบกวนสายตาถ้าแกว่งไม่หยุด) */
+@keyframes bell-swing {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-6deg); }
+  80% { transform: rotate(3deg); }
+}
+.animate-bell-swing {
+  animation: bell-swing 2.4s ease-in-out 1;
+  transform-origin: top center;
+}
+
+/* Card fade+scale เมื่อข้อมูลโหลดเสร็จ (สลับจาก skeleton -> เนื้อหาจริง) — คนละแบบจาก animate-rise
+   (fade+translateY ใช้ตอน mount หน้าครั้งแรก) อันนี้ fade+scale จากเล็กไปปกติ ใช้เฉพาะตอนสลับจาก
+   skeleton เป็นเนื้อหาจริงเท่านั้น */
+@keyframes fade-scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-scale-in {
+  animation: fade-scale-in 0.4s ease-out both;
 }
 
 /* HeroEnergyWave — เส้นบางสองชั้นที่ซ้อนทับเส้นแกนไฟหลัก ใช้ dash ไหลต่อเนื่องคนละความเร็ว/ทิศทาง
@@ -355,7 +412,10 @@
   .animate-subtitle-accent-pulse,
   .animate-ring-tip-pulse,
   .animate-icon-glow-breathe,
-  .skeleton-shimmer {
+  .skeleton-shimmer,
+  .animate-start-workout-pulse,
+  .animate-bell-swing,
+  .animate-fade-scale-in {
     animation: none !important;
   }
 }

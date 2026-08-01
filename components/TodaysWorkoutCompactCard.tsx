@@ -75,7 +75,15 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
               ระยะห่างจากบรรทัดเศษส่วนลดจาก mt-2 (8px) เหลือ mt-1.5 (6px) ให้เศษส่วน+bar อ่านเป็นกลุ่ม
               เดียวกันชัดขึ้น (ตามที่ขอ "ให้สัมพันธ์กันมากขึ้น") แทนที่จะดูเป็นสองบล็อกแยกกัน */}
           <div className="flex items-center gap-2 mt-1.5">
-            <div className="h-1.5 rounded-full bg-surface2 flex-1 overflow-hidden">
+            {/* v2: เพิ่ม inner shadow เบาๆ (จมลงเล็กน้อย) + reflection บาง 2% ด้านบน ให้รางดูเป็นร่อง
+                โลหะจริง (ไม่ใช่แถบสีทึบแบน) — ไม่มี glow เพิ่มตามที่ขอ */}
+            <div
+              className="h-1.5 rounded-full bg-surface2 flex-1 overflow-hidden"
+              style={{
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,.5)',
+                backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,.02), transparent 60%)',
+              }}
+            >
               <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
             </div>
             <span className="shrink-0 w-6 h-6" aria-hidden="true">

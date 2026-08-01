@@ -69,8 +69,16 @@ export default function NotificationButton({
         className="relative w-11 h-11 flex items-center justify-center hover:brightness-110 transition"
       >
         {/* SVG แทน emoji 🔔 เดิม — emoji บังคับสีตามสเปกไม่ได้ (มีสีของตัวเองมากับฟอนต์/แพลตฟอร์ม)
-            ใช้ fill ตรงๆ ให้ตรงสเปก icon #FFD24A ได้จริง */}
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            ใช้ fill ตรงๆ ให้ตรงสเปก icon #FFD24A ได้จริง — animate-bell-swing (Phase 5 Motion) แกว่งเบาๆ
+            เฉพาะตอนมีรายการแจ้งเตือนจริง (items.length > 0) เล่นครั้งเดียวไม่วนตลอด */}
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          className={items.length > 0 ? 'animate-bell-swing' : undefined}
+        >
           <path
             d="M12 3a4 4 0 0 0-4 4v2.2c0 .9-.32 1.77-.9 2.45L5.6 13.8c-.63.74-.12 1.87.85 1.87h11.1c.97 0 1.48-1.13.85-1.87l-1.5-2.15A3.75 3.75 0 0 1 16 9.2V7a4 4 0 0 0-4-4Z"
             fill="#FFD24A"
