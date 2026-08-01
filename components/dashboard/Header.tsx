@@ -57,11 +57,17 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // แล้วผสมด้วย backgroundBlendMode:'overlay' (ไม่ใช่วาดทับตรงๆ ซึ่งจะบังไล่สีแนวตั้งจนหายไป
             // เพราะสต็อปแนวนอนเป็นสีทึบไม่มี alpha) ให้เกิดลาย "ไขว้" สองทิศทางพร้อมกันแบบผิวโลหะขัดเงาจริง
             // ที่แสงสะท้อนไม่ได้มาจากทิศทางเดียว
+            //
+            // v6: การไขว้ 2 gradient ยังอ่านเป็น "ไล่เฉด" อยู่ดี ไม่ใช่ "โลหะ" — เพิ่มชั้นที่ 3 (บนสุด) เป็น
+            // แถบสะท้อนแสงแนวนอนบางๆ (เข้ม→สว่างจาง 2%→เข้ม) พาดกลางตัวอักษรพอดี จำลองเส้นสะท้อนแสงคาดผ่าน
+            // ผิวโลหะขัดเงาจริง (ไม่ใช่ไล่เฉดกว้างทั้งตัวอักษรแบบ 2 ชั้นล่าง) — blend เป็น normal (ไม่ใช่
+            // overlay) เพราะพื้นเกือบทั้งหมดโปร่งใสอยู่แล้ว แค่แต้มสว่างจางๆ ตรงกลางเท่านั้น
             backgroundImage: [
+              'linear-gradient(180deg, transparent 0%, transparent 42%, rgba(255,255,255,.02) 50%, transparent 58%, transparent 100%)',
               'linear-gradient(90deg, #EAEAEA, #BFBFBF, #F5F5F5, #8E8E8E)',
               'linear-gradient(180deg, #DADADA 0%, #6F6F72 20%, #A9A9A9 45%, #E6E6E6 75%, #FFFFFF 100%)',
             ].join(', '),
-            backgroundBlendMode: 'overlay',
+            backgroundBlendMode: 'normal, overlay, normal',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',
