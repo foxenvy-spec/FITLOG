@@ -7,6 +7,7 @@ import {
   CARD_GRADIENT_CSS,
   CARD_REFLECTION_CSS,
   CARD_CURVATURE_HIGHLIGHT_CSS,
+  CARD_MULTI_REFLECTION_CSS,
   CARD_BEVEL_CSS,
   CARD_FLOAT_SHADOW,
   DIAGONAL_TITANIUM_CSS,
@@ -97,6 +98,12 @@ export default function MetricCard({
   // ความเข้ม glow ต่อการ์ด (compact เท่านั้น) — ดีฟอลต์ 20 = พฤติกรรมเดิมก่อนมีฟิลด์ theme.glow
   // (เทียบเท่า alpha hex "33" เดิมที่ hardcode คงที่ทุกใบ)
   const glowAlpha = glowAlphaHex(theme.glow ?? 20)
+  // v20: "Orange Core" — ฟีดแบ็ก "Metric Card อยากทำเป็น Core -> Reflection -> Bevel -> Shadow" คู่กับ
+  // glow มุมเดิม (รัศมีกว้าง 120%, alpha ตาม glowAlpha ต่อการ์ด — ทำหน้าที่เป็น "Bloom") เพิ่มจุดแกนแสง
+  // แคบ/เข้มกว่าซ้อนตรงมุมเดียวกัน (รัศมี 45% เท่านั้น, alpha สูงกว่าเดิม ~2 เท่าแต่ไม่เกิน 100) จำลอง
+  // แกนแสงจริงที่มุมเป็นจุดแหล่งกำเนิด ไม่ใช่แค่แสงฟุ้งกว้างอย่างเดียวเหมือน Ring ที่ทำ Core/Bloom/Fog
+  // แยกชั้นกันไปแล้วก่อนหน้านี้
+  const coreAlpha = glowAlphaHex(Math.min(100, (theme.glow ?? 20) * 2.2))
   return (
     <>
       <div
@@ -135,19 +142,32 @@ export default function MetricCard({
           // v19: ฟีดแบ็ก "อยากได้ Micro Bevel ไม่ใช่แค่ Dark Card + Glow" — เดิมขอบ (border-box) มีแค่
           // ไล่สีธีม (เรืองแสงสี ไม่ใช่มิติ) เพิ่ม CARD_BEVEL_CSS (ไล่สีกลาง มุมบนซ้ายสว่าง/มุมล่างขวามืด)
           // ซ้อนบนไล่สีธีมเดิม (border-box เหมือนกัน) ให้ขอบมีทั้งมิติจริงแบบร่องสลักโลหะ + สีธีมพร้อมกัน
+          // v20: "Orange Core -> Reflection -> Bevel -> Shadow" — เพิ่ม CARD_MULTI_REFLECTION_CSS (เส้น
+          // ทแยงสั้นๆ) เป็นชั้นบนสุด + จุด "Core" แคบ/เข้มกว่าซ้อนตรงมุมเดียวกับ glow เดิม (ซึ่งทำหน้าที่
+          // เป็น Bloom กว้างอยู่แล้ว) — coreAlpha คำนวณจาก glow ต่อการ์ดเดิมคูณ 2.2 (ไม่แตะ glowAlpha/
+          // theme.glow ต่อการ์ดที่ tuned มาหลายรอบ แค่เพิ่มชั้นใหม่ซ้อน ไม่แก้ค่าเดิม)
           backgroundImage: compact
-            ? `${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), ${CARD_BEVEL_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
+            ? `${CARD_MULTI_REFLECTION_CSS}, ${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(45% 45% at 0% 0%, ${theme.main}${coreAlpha}, transparent 70%), radial-gradient(45% 45% at 100% 100%, ${theme.second}${coreAlpha}, transparent 70%), radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), ${CARD_BEVEL_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
             : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
           backgroundOrigin: 'border-box',
+          // หมายเหตุ: CARD_MULTI_REFLECTION_CSS รวม 3 เกรเดียนต์ไว้ในตัวเอง (คั่น comma) นับเป็น 3 layer
+          // ไม่ใช่ 1 — clip/size/position ด้านล่างต้องมี 3 ค่าแรกตรงกับ 3 layer นั้นเสมอ (ไม่งั้น CSS จะ
+          // วนค่าซ้ำผิดตำแหน่งไปให้ layer อื่นแทนเงียบๆ ไม่ error) รวมทั้งหมด compact = 13 layer:
+          // multi-reflection(3) + curvature(1) + reflection(1) + core x2(2) + dark-center(1) +
+          // gradient(1) = 9 padding-box, ตามด้วย glow x2(2) + bevel(1) + border(1) = 4 border-box
           backgroundClip: compact
-            ? 'padding-box, padding-box, padding-box, padding-box, border-box, border-box, border-box, border-box'
+            ? 'padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, border-box, border-box, border-box, border-box'
             : 'padding-box, padding-box, border-box, border-box, border-box',
-          // มือถือ (compact) เท่านั้น: ขยายชั้นที่ 2 (CARD_REFLECTION_CSS) สูงกว่ากล่องจริง (150%) ให้
-          // .metric-card-compact:active เลื่อนตำแหน่งชั้นนี้ลงมาได้ (ดู style jsx) จำลอง "แถบสะท้อนแสง
-          // ขยับ" ตอนแตะ เหมือน PremiumCard — เดสก์ท็อปไม่ตั้งค่านี้เลย (undefined) ใช้ auto/0 0 ปกติ
-          // ทุกประการ ไม่กระทบ — ชั้นแรก (curvature highlight) ใหม่คงที่ ไม่ขยับตาม
-          backgroundSize: compact ? 'auto, 100% 150%, auto, auto, auto, auto, auto, auto' : undefined,
-          backgroundPosition: compact ? '0 0, 0% 0%, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0' : undefined,
+          // มือถือ (compact) เท่านั้น: ขยายชั้นที่ 5 (CARD_REFLECTION_CSS, หลัง multi-reflection 3 +
+          // curvature 1) สูงกว่ากล่องจริง (150%) ให้ .metric-card-compact:active เลื่อนตำแหน่งชั้นนี้ลงมา
+          // ได้ (ดู style jsx) จำลอง "แถบสะท้อนแสงขยับ" ตอนแตะ เหมือน PremiumCard — เดสก์ท็อปไม่ตั้งค่านี้
+          // เลย (undefined) ใช้ auto/0 0 ปกติทุกประการ ไม่กระทบ
+          backgroundSize: compact
+            ? 'auto, auto, auto, auto, 100% 150%, auto, auto, auto, auto, auto, auto, auto, auto'
+            : undefined,
+          backgroundPosition: compact
+            ? '0 0, 0 0, 0 0, 0 0, 0% 0%, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0'
+            : undefined,
           // ชั้นซ้อนกัน: ambient shadow (มือถือ (compact) ใช้ CARD_FLOAT_SHADOW เบาบางกว่าเดิมให้การ์ด
           // ดูลอย เดสก์ท็อปยังใช้ contact+ambient shadow คู่เดิมทุกประการ) + inset highlight (มือถือ
           // (compact) ใช้ inset แนวทแยงมุมบนซ้ายแบบเดียวกับ CARD_INSET_SHADOW ของ PremiumCard ให้ความสว่าง
@@ -382,7 +402,7 @@ export default function MetricCard({
           }
         }
         .metric-card-compact:active {
-          background-position: 0 0, 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+          background-position: 0 0, 0 0, 0 0, 0 0, 0% 8%, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
           /* Card Press Effect v2 — เดิมกดจมลง (translateY(1px)) ตามที่ขอตอนนั้น ตอนนี้เปลี่ยนเป็น
              "ยกขึ้น 2px" ตาม Phase 5 Motion spec ใหม่เจาะจง MetricCard (คนละพฤติกรรมจาก
              TodaysFocusCard/TodaysWorkoutCompactCard ที่ยังกดจมลงเหมือนเดิม ไม่แตะ) */

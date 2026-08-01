@@ -8,6 +8,7 @@ import {
   CARD_BORDER_CSS,
   CARD_REFLECTION_CSS,
   CARD_CURVATURE_HIGHLIGHT_CSS,
+  CARD_MULTI_REFLECTION_CSS,
   CARD_FLOAT_SHADOW,
 } from '@/lib/theme'
 import { hapticTap } from '@/lib/haptics'
@@ -60,18 +61,26 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // v18: ฟีดแบ็ก "Card ยังดูเป็นการ์ด ไม่ใช่ Surface" — CARD_REFLECTION_CSS เป็นเส้นสะท้อนแสงตรง
           // ยาวทั้งเส้น (จำลองผิวเรียบสนิท) เพิ่ม CARD_CURVATURE_HIGHLIGHT_CSS (วงรีไฮไลต์แคบตรงกลางขอบบน)
           // ซ้อนบนสุดอีกชั้น จำลองผิวโลหะโค้งเล็กน้อยที่แสงจับเป็น "จุด" ไม่ใช่เส้นตรงทั้งเส้น
+          // v20: "Titanium Reflection" — เพิ่ม CARD_MULTI_REFLECTION_CSS (เส้นทแยงสั้นๆ 3 เส้น ยาวไม่
+          // เท่ากัน 2-3%) ซ้อนบนสุดอีกชั้น จำลองรอยขัดเงาหลายจุดที่แสงกระทบไม่พร้อมกัน ไม่ใช่รอยเดียวยาว
+          // ต่อเนื่องแบบ CARD_REFLECTION_CSS อย่างเดียว
           backgroundImage: [
+            CARD_MULTI_REFLECTION_CSS,
             CARD_CURVATURE_HIGHLIGHT_CSS,
             CARD_REFLECTION_CSS,
             'linear-gradient(135deg, rgba(255,255,255,.06) 0%, transparent 35%)',
             CARD_GRADIENT_CSS,
           ].join(', '),
-          // ชั้นที่ 2 (CARD_REFLECTION_CSS) ขยายสูงกว่ากล่องจริง (150%) + ตั้ง backgroundPosition ไว้ —
+          // ชั้นที่ 3 (CARD_REFLECTION_CSS) ขยายสูงกว่ากล่องจริง (150%) + ตั้ง backgroundPosition ไว้ —
           // ให้ :active เลื่อนตำแหน่งชั้นนี้ลงมานิดหน่อยได้ (ดู style jsx) จำลอง "แถบสะท้อนแสงขยับ" ตอน
-          // แตะการ์ด แทนที่จะเป็นภาพนิ่งตลอด — ชั้นอื่น (curvature highlight, rim light เฉียง,
-          // CARD_GRADIENT_CSS) คงขนาด/ตำแหน่งปกติไม่ขยับตาม
-          backgroundSize: '100% 100%, 100% 150%, 100% 100%, 100% 100%',
-          backgroundPosition: '0% 0%, 0% 0%, 0% 0%, 0% 0%',
+          // แตะการ์ด แทนที่จะเป็นภาพนิ่งตลอด — ชั้นอื่น (multi reflection, curvature highlight, rim
+          // light เฉียง, CARD_GRADIENT_CSS) คงขนาด/ตำแหน่งปกติไม่ขยับตาม
+          // หมายเหตุ: CARD_MULTI_REFLECTION_CSS เป็นสตริงที่รวม 3 เกรเดียนต์ไว้ในตัวเองแล้ว (คั่นด้วย
+          // comma) ดังนั้นนับเป็น 3 layer ไม่ใช่ 1 — background-size/position ด้านล่างต้องมี 3 ค่าแรก
+          // ตรงกับ 3 layer นั้นด้วย ไม่งั้น CSS จะไล่ค่าผิดตำแหน่งไปให้ layer อื่นแทน (spec: ถ้าจำนวนค่า
+          // น้อยกว่าจำนวน layer จะวนซ้ำ (cycle) ไม่ error แต่เลื่อนตำแหน่งผิดเงียบๆ)
+          backgroundSize: 'auto, auto, auto, 100% 100%, 100% 150%, 100% 100%, 100% 100%',
+          backgroundPosition: '0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%',
           // ขอบเทาเย็นจางๆ (CARD_BORDER_CSS) แทนขอบส้ม rgba(255,180,70,.12) เดิม — เดิมทำให้ทุกการ์ด
           // (รวม Today's Focus/Today's Workout ที่ไม่ใช่จุดเน้นสีส้มเสมอไป) มีขอบอมส้มตลอดเวลา
           border: `1px solid ${CARD_BORDER_CSS}`,
@@ -103,7 +112,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
             0 10px 30px rgba(0, 0, 0, 0.45),
             0 0 30px rgba(255, 138, 0, 0.15),
             inset 0 1px rgba(255, 255, 255, 0.04);
-          background-position: 0% 0%, 0% 8%, 0% 0%, 0% 0%;
+          background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 8%, 0% 0%, 0% 0%;
         }
       `}</style>
     </>
