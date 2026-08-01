@@ -12,6 +12,8 @@ import {
   CARD_AMBIENT_SHADOW_CSS,
   CARD_FLOAT_SHADOW,
   DIAGONAL_TITANIUM_CSS,
+  CNC_CORNER_CLIP_PATH_DEFAULT,
+  TITANIUM_MESH_CSS,
   glowAlphaHex,
 } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
@@ -119,6 +121,12 @@ export default function MetricCard({
           height: compact ? dashboardSpec.metricCard.height : undefined,
           padding: compact ? dashboardSpec.metricCard.padding : '16px 18px 12px',
           border: '1.5px solid transparent',
+          // v27: "Titanium Geometry" — ฟีดแบ็ก "ทุก Card อยากได้มุมตัดแบบ CNC เป็นลายเซ็นเดียวกันทั้งแอป"
+          // ค่าเดียวกับ CNC_CORNER_CLIP_PATH_DEFAULT ที่ PremiumCard ใช้เป็นดีฟอลต์แล้ว (มุมบนซ้ายตัด 18px
+          // มุมอื่นตัดเบา 4px) — MetricCard ไม่ได้ใช้ PremiumCard เป็น wrapper (มีดีไซน์ผูกสีธีมของตัวเอง
+          // ซับซ้อนกว่า) จึงต้องใส่ตรงนี้แยกต่างหาก แทน radiusClass เดิม (compact/มือถือเท่านั้น —
+          // เดสก์ท็อปยังคงมุมโค้งปกติทุกประการ ไม่กระทบ)
+          clipPath: compact ? CNC_CORNER_CLIP_PATH_DEFAULT : undefined,
           // 5 background ซ้อนกัน วาดถึง border-box (เพื่อทำ "ขอบไล่สี"), เรียงจากบนสุด(วาดทับ)ไปล่างสุด:
           // 1) CARD_REFLECTION_CSS แถบสะท้อนแสงตรงจากขอบบน (มือถือ (compact) เท่านั้น — ให้วัสดุการ์ด
           //    สอดคล้องกับ PremiumCard, แทน rim light เฉียง 135deg เดิมซึ่งไม่ใช่ทิศทางแสงแบบโลหะขัดเงา
@@ -231,6 +239,15 @@ export default function MetricCard({
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
             style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.65 }}
+          />
+        )}
+        {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (โทเคนเดียวกับ PremiumCard ใช้) ซ้อนแยกจากลายเฉียง
+            ทิศทางเดียวด้านบน ให้การ์ดนี้มีลายตารางแบบเดียวกับการ์ดอื่นทั่วแอปด้วย ไม่ใช่แค่ลายเฉียงเดิม */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+            style={{ backgroundImage: TITANIUM_MESH_CSS }}
           />
         )}
         {/* v15: การ์ดยังดู "Matte" — เพิ่มแถบสะท้อนแสงเฉียง (diagonal reflection) มุมบนซ้ายไล่ไปขวาล่าง

@@ -44,32 +44,14 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         // ตามที่ขอ "reduce card padding" + ความสูงเป้าหมายใหม่
         padding: dashboardSpec.focusCard.padding,
         minHeight: dashboardSpec.focusCard.height,
-        // มุมตัด (cut-corner) ที่ขอบซ้ายบน — ให้ความรู้สึก "แผ่นโลหะ/ตั๋วเข้างาน" แทนมุมโค้งมนเรียบๆ
-        // เหมือนการ์ดอื่น ตัดเฉพาะการ์ดนี้ใบเดียว (จุดสนใจของหน้า ไม่ใช่ทุกการ์ดตัดหมด) มุมที่เหลือ
-        // (บนขวา/ล่างขวา/ล่างซ้าย) เป็นมุมตัดเล็ก 4px แทนมุมโค้งเดิม (clip-path ทับ border-radius ของ
-        // PremiumCard ไปเลย ไม่ต้องแก้ radius ของ component กลาง) ค่าเป็น calc() ทั้งหมดกันพัง ถ้าการ์ด
-        // เปลี่ยนความสูง/กว้างทีหลัง
-        clipPath:
-          'polygon(18px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 18px)',
+        // v27: มุมตัด (CNC_CORNER_CLIP_PATH_DEFAULT) ย้ายไปเป็นดีฟอลต์กลางของ PremiumCard เองแล้ว (ทุก
+        // การ์ดตัดมุมเดียวกันหมดตามฟีดแบ็ก "ทุก Card คนจะจำได้เลย") ค่าที่การ์ดนี้เคย hardcode ไว้ตรงกับ
+        // ดีฟอลต์ใหม่เป๊ะอยู่แล้ว จึงตัด override ตรงนี้ทิ้งได้เลย ไม่ต้องประกาศซ้ำ
       }}
     >
-      {/* v23: ฟีดแบ็ก "Focus Card ยังเรียบไปนิด อยากได้ Titanium Mesh/Diagonal Cut/Orange Accent/Micro
-          Reflection ให้เหมือน Dashboard รถยุโรป" — การ์ดนี้ใช้ PremiumCard เป็น wrapper อยู่แล้ว (ได้
-          grain/reflection/bevel/ambient shadow มาตรฐานทุกใบครบ) แต่การ์ดนี้มีจุดต่างจากใบอื่นตรงมุมตัด
-          (clipPath ด้านบน) ซึ่งยังไม่มีการตกแต่งอะไรเสริมเลย — เพิ่ม 2 อย่างเฉพาะจุดนี้: (1) ลายตาข่าย
-          ไทเทเนียม (mesh) ไขว้ 2 ทิศทาง แยกจากลายเฉียงทิศทางเดียวที่การ์ดอื่นมี ให้ใบนี้มีลายเป็นเอกลักษณ์
-          ของตัวเอง (2) เส้นสีอำพันบางๆ พาดตามแนวมุมตัดพอดี (คำนวณจากจุดตัดจริง 18,0 -> 0,18 ในclipPath
-          ด้านบน) ให้มุมตัดดูเหมือนขอบโลหะเจียรมีเส้นไฮไลต์ ไม่ใช่แค่ถูกตัดเฉยๆ */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: [
-            'repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px, transparent 1px, transparent 22px)',
-            'repeating-linear-gradient(25deg, rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px, transparent 1px, transparent 22px)',
-          ].join(', '),
-        }}
-        aria-hidden="true"
-      />
+      {/* v23/v27: ลายตาข่ายไทเทเนียม (mesh) ย้ายไปเป็นดีฟอลต์กลางของ PremiumCard แล้วเช่นกัน (ทุกการ์ด
+          ได้ลายเดียวกัน ละเอียดขึ้นกว่าเดิม 22px -> 12px) — เหลือไว้เฉพาะจุดที่ยังเป็นเอกลักษณ์เฉพาะการ์ด
+          นี้จริงๆ คือเส้นไฮไลต์สีอำพันพาดตามแนวมุมตัด ด้านล่าง */}
       <div
         className="absolute pointer-events-none"
         style={{

@@ -12,6 +12,7 @@ import {
   CARD_AMBIENT_SHADOW_CSS,
   CARD_FLOAT_SHADOW,
   DIAGONAL_TITANIUM_CSS,
+  DUST_PARTICLES_BG,
 } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from './AnimatedBarFill'
@@ -136,10 +137,57 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             ตรงๆ (โทเคนเดียวกับที่ FitnessRing.tsx ใช้ทำ Brushed Metal บนวงเป๊ะๆ ไม่ใช่ค่าลอยใหม่ มุม 115deg
             เดียวกัน) ให้เส้นบนการ์ดกับเส้นบนวงเป็นลายต่อเนื่องเดียวกันจริงๆ ไม่ใช่แค่โทนสีคล้ายกัน */}
         <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.7 }} />
+        {/* v27: "Hero Card Product Shot" — ฟีดแบ็ก "Workout Card 9.5/10 อยากได้ดัมเบล Rim Light เพิ่ม
+            อีกนิด มี Dust มี Spark มี Reflection เหมือนภาพโฆษณา Nike ไม่ใช่แค่ Render" — Rim Light: แถบสว่าง
+            จ้าแคบๆ เฉียงตามขอบดัมเบล (ประมาณตำแหน่งจริงของรูป objectPosition 68% 55%) จำลองแสงสตูดิโอ
+            กระทบขอบวัตถุแบบ rim light จริง (คมกว่า diagonal reflection ทั่วไปที่การ์ดอื่นใช้ ไม่ใช่แถบนุ่ม
+            กว้าง) */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'linear-gradient(112deg, transparent 42%, rgba(255,244,224,.16) 50%, transparent 56%)',
+            mixBlendMode: 'screen',
+          }}
+        />
+        {/* Dust — ฝุ่นละเอียดฟุ้งในอากาศโดนแสงสตูดิโอ (DUST_PARTICLES_BG: feTurbulence + threshold สูง
+            ให้เหลือแค่จุดกระจายห่างๆ ไม่ใช่เกรนทึบ) ทับทั้งการ์ด แต่จางมากจนแทบมองไม่เห็นเว้นแต่จ้องนาน */}
+        <div
+          className="absolute inset-0"
+          style={{ backgroundImage: DUST_PARTICLES_BG, backgroundSize: '180px 180px', opacity: 0.09, mixBlendMode: 'screen' }}
+        />
+        {/* Spark — จุดประกายเล็กๆ 2 จุด (ไม่ใช่เส้นโค้งยาวแบบ specular ทั่วไป) ตำแหน่งใกล้บริเวณหัวดัมเบล
+            ในรูปจริง จุดหนึ่งกะพริบเบาๆ (twinkle) อีกจุดนิ่ง ให้ความรู้สึกแสงกระทบผิวโลหะมันวาวเป็นจุดๆ
+            แบบภาพโฆษณาสินค้าจริง ไม่ใช่ CGI render เรียบๆ */}
+        <span
+          className="workout-spark-twinkle absolute rounded-full pointer-events-none"
+          style={{
+            width: 5,
+            height: 5,
+            left: '71%',
+            top: '32%',
+            background: '#FFF8E8',
+            boxShadow: '0 0 6px 1px rgba(255,244,224,.9), 0 0 14px 3px rgba(255,180,90,.5)',
+          }}
+          aria-hidden="true"
+        />
+        <span
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 3,
+            height: 3,
+            left: '58%',
+            top: '48%',
+            background: '#FFF8E8',
+            opacity: 0.7,
+            boxShadow: '0 0 4px 1px rgba(255,244,224,.7)',
+          }}
+          aria-hidden="true"
+        />
         {/* v21: ฟีดแบ็ก "Orange Highlight อยากเพิ่ม Light Sweep บางๆ วิ่งผ่าน Banner ช้าๆ ทุก 20 วินาที
             แทบไม่รู้สึกแต่ดูแพงมาก" — แถบแสงเฉียงกว้าง กวาดจากซ้ายไปขวาเต็มการ์ด รอบละ 20 วิ อัลฟาต่ำมาก
             (peak 6%) + screen blend ให้เห็นเป็นแค่ "แสงวาบผ่าน" ไม่ใช่แถบสีทึบ เคารพ prefers-reduced-motion
-            (ปิด animation เหลือ opacity 0 นิ่งๆ) เหมือนแอนิเมชันอื่นในระบบนี้ */}
+            (ปิด animation เหลือ opacity 0 นิ่งๆ) เหมือนแอนิเมชันอื่นในระบบนี้ — v27: reflection sweep เดิม
+            ยังอยู่ครบ ถือเป็นส่วนหนึ่งของ "Reflection" ในสเปค Product Shot รอบนี้ ไม่ต้องเพิ่มซ้ำ */}
         <div className="workout-banner-sweep absolute inset-0 pointer-events-none" aria-hidden="true" />
       </div>
 
@@ -280,6 +328,28 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             opacity: 1;
           }
         }
+        /* v27: Spark twinkle — จุดประกายจุดหลักกะพริบเบาๆ ไม่สม่ำเสมอ (มี "ค้าง" ที่ปลายทั้งสองฝั่งของ
+           คีย์เฟรม 0%/100% นานกว่าปกติ) จำลองประกายแสงกระทบผิวโลหะที่ริบหรี่ไม่สม่ำเสมอจริง ไม่ใช่หายใจ
+           เรียบๆ แบบ breathe อื่นในไฟล์นี้ */
+        .workout-spark-twinkle {
+          animation: workout-spark-twinkle 3.6s ease-in-out infinite;
+        }
+        @keyframes workout-spark-twinkle {
+          0%,
+          40%,
+          100% {
+            opacity: 0.55;
+            transform: scale(0.85);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.2);
+          }
+          60% {
+            opacity: 0.7;
+            transform: scale(0.95);
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           .workout-banner-sweep {
             animation: none;
@@ -287,6 +357,11 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           }
           .workout-core-breathe {
             animation: none;
+          }
+          .workout-spark-twinkle {
+            animation: none;
+            opacity: 0.85;
+            transform: none;
           }
         }
       `}</style>

@@ -11,6 +11,8 @@ import {
   CARD_MULTI_REFLECTION_CSS,
   CARD_AMBIENT_SHADOW_CSS,
   CARD_FLOAT_SHADOW,
+  CNC_CORNER_CLIP_PATH_DEFAULT,
+  TITANIUM_MESH_CSS,
 } from '@/lib/theme'
 import { hapticTap } from '@/lib/haptics'
 
@@ -85,6 +87,13 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // ขอบเทาเย็นจางๆ (CARD_BORDER_CSS) แทนขอบส้ม rgba(255,180,70,.12) เดิม — เดิมทำให้ทุกการ์ด
           // (รวม Today's Focus/Today's Workout ที่ไม่ใช่จุดเน้นสีส้มเสมอไป) มีขอบอมส้มตลอดเวลา
           border: `1px solid ${CARD_BORDER_CSS}`,
+          // v27: "Titanium Geometry" — ฟีดแบ็ก "Card ยัง Rounded Rectangle ธรรมดา อยากได้มุมตัดแบบ CNC
+          // ทุก Card ให้เป็นลายเซ็นเดียวกันทั้งแอป" — ค่าเดียวกับที่ TodaysFocusCard.tsx ใช้อยู่ก่อนแล้ว
+          // (มุมบนซ้ายตัด 18px มุมอื่นตัดเบา 4px) ย้ายมาเป็นดีฟอลต์กลางที่นี่แทน ให้การ์ดทุกใบที่ใช้
+          // PremiumCard (Focus/Workout/AI Coach/Recommended Program/Streak ฯลฯ) ได้มุมตัดเดียวกันโดย
+          // อัตโนมัติ — consumer ที่ส่ง clipPath ของตัวเองมาทาง prop `style` (เช่น TodaysFocusCard ซึ่ง
+          // ตั้งค่าเดียวกันนี้อยู่แล้ว) ยังชนะได้ตามปกติเพราะ `...style` ยังวางท้ายสุดเหมือนเดิม ไม่กระทบ
+          clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
           // CARD_FLOAT_SHADOW (เบาบางกว่าเดิม 0 10px 30px rgba(0,0,0,.45)) ให้การ์ดดูลอยเหนือพื้นหลัง
           // แทนที่จะติดพื้น + CARD_INSET_SHADOW (highlight ขอบบน + เงาจมขอบล่าง, bevel แบบแผ่นโลหะจริง)
           // แสงส้มยังโผล่ได้ตอน :active เท่านั้น (ดู style jsx ด้านล่าง) ไม่ใช่ทุกการ์ดตลอดเวลา
@@ -106,6 +115,9 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
           aria-hidden="true"
         />
+        {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (12px, ~2%) แยกชั้นจาก noise ด้านบน (คนละเทคนิค:
+            grain = feTurbulence สุ่ม, mesh = เส้นเรขาคณิตไขว้จริง) จำลองผิวโลหะกัด CNC เป็นตารางละเอียด */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: TITANIUM_MESH_CSS }} aria-hidden="true" />
         {children}
       </Comp>
       {/* glow เพิ่มเฉพาะตอนแตะ (:active) เท่านั้น ไม่ใช่ hover ถาวร — กันไม่ให้ล้นตาบนมือถือที่ไม่มี

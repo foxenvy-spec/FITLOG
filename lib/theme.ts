@@ -316,3 +316,42 @@ export const TEXT = {
   secondary: '#818181',
   caption: '#676767',
 } as const
+
+// ===================================================================================
+// v27: "Titanium Geometry" — ฟีดแบ็ก "Card ยังเป็น Rounded Rectangle ธรรมดา อยากได้มุมตัดแบบ CNC/Micro
+// Cut เหมือน Apple Vision Pro / Alienware ทุก Card คนจะจำได้เลย" — TodaysFocusCard.tsx มีมุมตัด
+// (clip-path) เฉพาะใบเดียวอยู่ก่อนแล้ว (มุมบนซ้าย 18px, มุมที่เหลือ 4px) แต่เป็นค่า hardcode เฉพาะไฟล์
+// นั้น — ดึงออกมาเป็นฟังก์ชันกลางตรงนี้ ให้ "ทุกการ์ด" ใช้สูตรเดียวกัน มุมเดียวกัน (บนซ้าย) เป็นลายเซ็น
+// เดียวกันทั้งแอปจริงๆ (ไม่ใช่แค่โทนสี/พื้นผิวคล้ายกันแบบเดิม) — ทุกจุดคำนวณด้วย calc() ทั้งหมด ใช้ได้กับ
+// การ์ดทุกขนาดโดยไม่ต้องรู้ width/height จริงล่วงหน้า
+export function cncCornerClipPath(primary: 'tl' | 'tr' | 'bl' | 'br' = 'tl', primaryCut = 18, minorCut = 4): string {
+  const cutTL = primary === 'tl' ? primaryCut : minorCut
+  const cutTR = primary === 'tr' ? primaryCut : minorCut
+  const cutBR = primary === 'br' ? primaryCut : minorCut
+  const cutBL = primary === 'bl' ? primaryCut : minorCut
+  return `polygon(${cutTL}px 0, calc(100% - ${cutTR}px) 0, 100% ${cutTR}px, 100% calc(100% - ${cutBR}px), calc(100% - ${cutBR}px) 100%, ${cutBL}px 100%, 0 calc(100% - ${cutBL}px), 0 ${cutTL}px)`
+}
+
+// ค่าดีฟอลต์ที่ใช้ร่วมกันทั้งแอป (มุมบนซ้าย 18px/มุมอื่น 4px) — เท่ากับที่ TodaysFocusCard ใช้อยู่แล้วเป๊ะ
+// เอ็กซ์พอร์ตแยกไว้เผื่อ component อื่นอยากอ้างอิงค่าตัวเลขตรงๆ (เช่น ทำเส้นไฮไลต์ตามแนวมุมตัด)
+export const CNC_CORNER_PRIMARY_CUT = 18
+export const CNC_CORNER_MINOR_CUT = 4
+export const CNC_CORNER_CLIP_PATH_DEFAULT = cncCornerClipPath('tl', CNC_CORNER_PRIMARY_CUT, CNC_CORNER_MINOR_CUT)
+
+// v27: "Titanium Mesh" — ฟีดแบ็ก "มีเส้นเฉียงแล้ว แต่จะเพิ่ม Mesh ไขว้ 2 ทิศ ละเอียดมาก Opacity 2%
+// แทบมองไม่เห็น แต่ scroll แล้วดูแพงขึ้น" — TodaysFocusCard.tsx มีลายไขว้แบบนี้อยู่ก่อนแล้วเฉพาะใบเดียว
+// (ระยะห่าง 22px) ดึงออกมาเป็นโทเคนกลาง + ถี่ขึ้น (12px แทน 22px ตามคำขอ "ละเอียดมาก") ให้ทุกการ์ดใช้
+// ร่วมกันได้ — แยกจาก DIAGONAL_TITANIUM_CSS เดิม (ทิศทางเดียว 115deg) เพราะ mesh คือไขว้ 2 ทิศ (115deg +
+// 25deg) จำลองผิวโลหะกัด CNC เป็นตาราง ไม่ใช่แค่รอยขัดทิศทางเดียว
+export const TITANIUM_MESH_CSS = [
+  'repeating-linear-gradient(115deg, rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px, transparent 1px, transparent 12px)',
+  'repeating-linear-gradient(25deg, rgba(255,255,255,.016) 0px, rgba(255,255,255,.016) 1px, transparent 1px, transparent 12px)',
+].join(', ')
+
+// ===================================================================================
+// v27: "Hero Card Product Shot" — ฟีดแบ็ก "Workout Card 9.5/10 อยากได้ดัมเบล Rim Light/Dust/Spark/
+// Reflection เหมือนภาพโฆษณา Nike ไม่ใช่แค่ Render" — DUST_PARTICLES_BG จำลองฝุ่นละเอียดฟุ้งในอากาศที่
+// โดนแสงสตูดิโอส่องผ่าน (เทคนิคเดียวกับ HAIRLINE_SCRATCH_BG/MICRO_GRAIN_BG คือ feTurbulence + threshold
+// ทาง alpha) แต่ตั้ง threshold สูงกว่ามาก (สูตร alpha*9-8.3 แทน *1.6-0.55) ให้เหลือรอดแค่จุดที่สว่างสุด
+// ของ noise เป็นจุดกระจายห่างๆ แบบฝุ่นจริง ไม่ใช่เกรนทึบเหมือน grain ทั่วไป
+export const DUST_PARTICLES_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='dust'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch' result='n'/%3E%3CfeColorMatrix in='n' type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 9 -8.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23dust)'/%3E%3C/svg%3E")`

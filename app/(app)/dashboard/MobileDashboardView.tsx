@@ -364,6 +364,14 @@ export default function MobileDashboardView() {
               พร้อมกันแทน — ง่ายกว่าและทนกว่าการพยายามซิงก์เวลาข้าม component/mount cycle จริง — เคารพ
               prefers-reduced-motion */}
           <div className="page-light-sweep absolute inset-0 pointer-events-none" aria-hidden="true" />
+          {/* v27: "Orange Energy Flow" — ฟีดแบ็ก "แสงส้มตอนนี้อยู่เป็นจุด (Fitness Score bloom/glow มุม
+              การ์ด/FAB) อยากให้มันไหลจาก Header -> Focus -> Workout -> Start Workout เหมือนพลังงานวิ่งผ่าน
+              ทั้งหน้า คนจะรู้สึกว่า UI มีชีวิต" — page-light-sweep เดิม (บนสุด) เป็นแถบขาวบาง จำลอง
+              "แสงสะท้อนผิวโลหะ" ล้วนๆ ไม่ใช่สีธีม อันนี้เป็นชั้นแยกต่างหาก สีอำพัน/ส้มจริง ทรงรีนุ่มกว้างกว่า
+              มาก (ไม่ใช่เส้นคม) จำลอง "หยดพลังงาน" ไหลลงมาเรื่อยๆ ทับ AMBIENT_ORANGE_CSS เดิม (ซึ่งเป็นแค่
+              ไล่เฉดนิ่ง ไม่เคลื่อนไหว) — จงใจให้คาบ (12s) ไม่ตรงกับ page-light-sweep (10s) กันไม่ให้สอง
+              ชั้นเคลื่อนที่ประกบกันแข็งๆ แบบกลไก ให้ความรู้สึกเป็นแสงธรรมชาติสองแหล่งที่ไม่ซิงก์กันเป๊ะ */}
+          <div className="energy-flow-sweep absolute inset-0 pointer-events-none" aria-hidden="true" />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>
 
@@ -509,6 +517,31 @@ export default function MobileDashboardView() {
         }
         @media (prefers-reduced-motion: reduce) {
           .page-light-sweep {
+            animation: none;
+            opacity: 0;
+          }
+        }
+        /* v27: "Orange Energy Flow" — ทรงรีนุ่มกว้าง (140% ของความกว้างจอ, เตี้ย 22% ของความสูงตัวเอง)
+           ไล่จากบนขอบจอ (-60%) ลงไปเลยขอบล่าง (200%) แล้ววนกลับ จำลองหยดพลังงานไหลผ่าน Header/Focus/
+           Workout ต่อเนื่องกันเป็นเส้นเดียว — screen blend ให้แสงบวกเข้าไปตรงๆ ไม่ทาบสีทับของเดิม */
+        .energy-flow-sweep {
+          background-image: radial-gradient(ellipse 140% 22% at 50% 50%, rgba(255, 150, 30, 0.05), transparent 70%);
+          background-size: 100% 260%;
+          background-position: 50% -60%;
+          mix-blend-mode: screen;
+          animation: energy-flow-move 12s ease-in-out infinite;
+        }
+        @keyframes energy-flow-move {
+          0% {
+            background-position: 50% -60%;
+          }
+          55%,
+          100% {
+            background-position: 50% 200%;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .energy-flow-sweep {
             animation: none;
             opacity: 0;
           }
