@@ -9,6 +9,7 @@ import {
   CARD_REFLECTION_CSS,
   CARD_CURVATURE_HIGHLIGHT_CSS,
   CARD_MULTI_REFLECTION_CSS,
+  CARD_AMBIENT_SHADOW_CSS,
   CARD_FLOAT_SHADOW,
 } from '@/lib/theme'
 import { hapticTap } from '@/lib/haptics'
@@ -87,7 +88,9 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // CARD_FLOAT_SHADOW (เบาบางกว่าเดิม 0 10px 30px rgba(0,0,0,.45)) ให้การ์ดดูลอยเหนือพื้นหลัง
           // แทนที่จะติดพื้น + CARD_INSET_SHADOW (highlight ขอบบน + เงาจมขอบล่าง, bevel แบบแผ่นโลหะจริง)
           // แสงส้มยังโผล่ได้ตอน :active เท่านั้น (ดู style jsx ด้านล่าง) ไม่ใช่ทุกการ์ดตลอดเวลา
-          boxShadow: `${CARD_FLOAT_SHADOW}, ${CARD_INSET_SHADOW}`,
+          // v21: เพิ่ม CARD_AMBIENT_SHADOW_CSS (เงากว้าง/นุ่ม/จางกว่า) ซ้อนก่อน CARD_FLOAT_SHADOW เดิม
+          // (เทียบ contact shadow) ให้การ์ดมีทั้งเงาชิดขอบ + เงาแวดล้อมกว้างๆ แบบวางอยู่ในห้องจริง
+          boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}, ${CARD_INSET_SHADOW}`,
           transition: 'box-shadow 150ms ease, background-position 200ms ease',
           ...style,
         }}

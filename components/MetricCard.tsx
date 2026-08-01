@@ -9,6 +9,7 @@ import {
   CARD_CURVATURE_HIGHLIGHT_CSS,
   CARD_MULTI_REFLECTION_CSS,
   CARD_BEVEL_CSS,
+  CARD_AMBIENT_SHADOW_CSS,
   CARD_FLOAT_SHADOW,
   DIAGONAL_TITANIUM_CSS,
   glowAlphaHex,
@@ -175,7 +176,9 @@ export default function MetricCard({
           // เงาเข้มขอบล่างแบบจม (compact/มือถือเท่านั้น เดสก์ท็อปไม่กระทบ) + glow สีธีมเยื้อง offset ไปมุม
           // ซ้ายบน/ขวาล่าง (แทนที่จะเป็น 0 0 แผ่เท่ากันทุกด้าน) ให้ธีมสีเรืองแสงเฉพาะ 2 มุมตรงข้ามให้เข้ากับขอบ
           // — มือถือ (compact) ใช้ glowAlpha ต่อการ์ดแทน alpha "33" คงที่เดิม
-          boxShadow: `${compact ? CARD_FLOAT_SHADOW : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.09)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
+          // v21: เพิ่ม CARD_AMBIENT_SHADOW_CSS (เงากว้าง/นุ่ม/จางกว่า CARD_FLOAT_SHADOW) นำหน้า compact
+          // เท่านั้น ให้การ์ดมีทั้งเงาชิดขอบ + เงาแวดล้อมกว้างๆ เหมือน PremiumCard — เดสก์ท็อปไม่กระทบ
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.09)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -4px 10px rgba(0,0,0,.6), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
