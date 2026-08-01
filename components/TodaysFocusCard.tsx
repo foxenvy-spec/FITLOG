@@ -72,12 +72,12 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         style={{ backgroundImage: 'linear-gradient(115deg, transparent 55%, rgba(255,255,255,.06) 68%, transparent 82%)' }}
         aria-hidden="true"
       />
-      {/* v28: "Mission Card" — ฟีดแบ็ก "อยากให้เหมือนอุปกรณ์ทางทหาร มีเส้น CNC มี Titanium Layers มี
-          Energy Line มี Reflection" — Reflection เพิ่มไปแล้วด้านบน เหลือ 3 อย่าง: (1) CNC seam — เส้นคู่
-          บาง (สว่าง+มืด) แนวตั้งใกล้ขอบขวา จำลองรอยต่อแผงโลหะที่กัด CNC จริง (2) Titanium Layers — กรอบ
-          ชั้นในเยื้องจากขอบนอก 5px พร้อมมุมตัดเล็กกว่าของตัวเอง จำลอง "แผงซ้อนแผง" แบบเกราะ/อุปกรณ์ทหาร
-          ไม่ใช่การ์ดแผ่นเดียวเรียบๆ (3) Energy Line — เส้นเรืองแสงอำพันบางๆ ขอบล่างสุด หายใจเบาๆ ต่อเนื่อง
-          จำลองไฟสถานะ (status strip) ของอุปกรณ์จริง */}
+      {/* v29: ฟีดแบ็ก "Hero Card ควรมีแค่ใบเดียว — Focus Card กับ Today's Workout ใช้โทนส้มใกล้กันเกินไป
+          แข่งกันเอง Focus Card → Titanium ล้วน + เส้น Orange บางๆ เหมือนแผง CNC, Today's Workout → Hero
+          ใบเดียวที่ได้ Glow/Motion มากกว่าใบอื่น" — ตัด "Energy Line" (เส้นเรืองแสงหายใจที่ขอบล่าง จาก v28)
+          ออกทั้งหมด เพราะเป็น Motion ที่ควรอยู่แค่การ์ด Hero ใบเดียว เหลือ CNC seam + Titanium Layers
+          (โครงสร้าง/ไม่ใช่สีส้ม) ไว้ตามเดิม ให้การ์ดนี้เป็น "Titanium ล้วน" นิ่งๆ จริงๆ + เส้นสีส้มบางๆ
+          เส้นเดียว (มุมตัดด้านบน) ไม่มีอะไรเรืองแสง/เคลื่อนไหวแข่งกับ Hero */}
       <div
         className="absolute pointer-events-none"
         style={{ top: 10, bottom: 10, right: 30, width: 1, background: 'rgba(255,255,255,.14)' }}
@@ -94,17 +94,6 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
           inset: 5,
           clipPath: cncCornerClipPath('tl', 12, 3),
           boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 0 rgba(255,255,255,.06)',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="focus-energy-line absolute pointer-events-none"
-        style={{
-          left: 14,
-          right: 14,
-          bottom: 4,
-          height: 1.5,
-          background: 'linear-gradient(90deg, transparent, rgba(255,180,90,.75) 30%, rgba(255,180,90,.75) 70%, transparent)',
         }}
         aria-hidden="true"
       />
@@ -141,26 +130,6 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         </div>
       </div>
       <span className="text-muted shrink-0" aria-hidden="true">›</span>
-      <style jsx>{`
-        .focus-energy-line {
-          animation: focus-energy-line-breathe 2.8s ease-in-out infinite;
-        }
-        @keyframes focus-energy-line-breathe {
-          0%,
-          100% {
-            opacity: 0.55;
-          }
-          50% {
-            opacity: 1;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .focus-energy-line {
-            animation: none;
-            opacity: 0.8;
-          }
-        }
-      `}</style>
     </PremiumCard>
   )
 }

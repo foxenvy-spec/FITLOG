@@ -103,27 +103,23 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
               'linear-gradient(90deg, rgba(20,20,20,.82) 0%, rgba(20,20,20,.68) 30%, rgba(20,20,20,.4) 50%, rgba(20,20,20,.14) 68%, rgba(20,20,20,0) 84%)',
           }}
         />
-        {/* v16: Orange Reflection ลากเข้ามาทางซ้ายอีก ~25% ตามฟีดแบ็ก "รูปดัมเบลยังตัดกับพื้นหลังเกินไป
-            ฝั่งขวา" — ต้องการให้ Ring → ข้อความ → รูปดัมเบล เชื่อมเป็นชิ้นเดียวกันชัดเจนขึ้น (เดิม v12
-            เริ่มขึ้นที่ ~32%/50% ตอนนี้เริ่มเร็วขึ้นที่ ~7%/25% แต่ละสต็อปเลื่อนซ้ายมาประมาณ 25 จุดเท่ากัน
-            หมด ความเข้มสูงสุดคงเดิมไม่เปลี่ยน) mixBlendMode: screen ผสมกับพื้นหลังเดิม ไม่ใช่ทาสีทับ */}
+        {/* v16/v29: Orange Reflection — ฟีดแบ็ก "Design Language: Titanium 70% / Matte Black 20% /
+            Orange 10% — Orange มีหน้าที่ดึงสายตา ไม่ใช่ระบายพื้น" — สต็อปเดิมเข้มถึง .2 ทำให้สีส้มกลาย
+            เป็น "พื้น" ของรูปแทนที่จะเป็นแค่จุดเน้น ลดทุกสต็อปลง ~40% (.05/.1/.16/.2 -> .03/.06/.1/.12) */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(90deg, transparent 0%, transparent 7%, rgba(255,138,0,.05) 25%, rgba(255,150,20,.1) 43%, rgba(255,164,40,.16) 60%, rgba(255,170,50,.2) 75%, rgba(255,170,50,.2) 100%)',
+              'linear-gradient(90deg, transparent 0%, transparent 7%, rgba(255,138,0,.03) 25%, rgba(255,150,20,.06) 43%, rgba(255,164,40,.1) 60%, rgba(255,170,50,.12) 75%, rgba(255,170,50,.12) 100%)',
             mixBlendMode: 'screen',
           }}
         />
-        {/* v19: ฟีดแบ็ก "ด้านซ้ายยังมืดไป อยากให้มี Orange Bloom วิ่งเข้ามาแล้วค่อย Fade จะเชื่อมกับ Ring
-            และ Hero ด้านบนทันที" — เดิมความอุ่นทั้งหมดมาจากไล่สีแนวนอน (ขวา->ซ้าย) ซึ่งจางเกือบหมดแล้วตอน
-            ถึงโซน badge/ข้อความฝั่งซ้าย ชั้นนี้เป็นวงรีแยกต่างหาก ยึดตำแหน่งใกล้ badge วงแหวน (มุมซ้ายบน)
-            จำลองแสงจากวง Fitness Score ด้านบน Header ไหลต่อเนื่องลงมาถึงการ์ดนี้ ไม่ใช่แค่แสงจากรูปดัมเบล
-            ฝั่งขวาอย่างเดียว — screen blend เหมือนชั้นอื่น ให้เชื่อมกันจริงไม่ใช่ทาสีทับ */}
+        {/* v19/v29: Orange Bloom — ลดจาก .12 เหลือ .08 ตามสัดส่วนเดียวกับ Orange Reflection ด้านบน ให้
+            รวมกันแล้วยัง "เชื่อม Ring กับดัมเบล" ได้แต่ไม่กลืนเป็นพื้นสีส้มทั้งการ์ด */}
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: 'radial-gradient(ellipse 65% 90% at 10% 25%, rgba(255,142,20,.12), transparent 60%)',
+            backgroundImage: 'radial-gradient(ellipse 65% 90% at 10% 25%, rgba(255,142,20,.08), transparent 60%)',
             mixBlendMode: 'screen',
           }}
         />
@@ -137,31 +133,22 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             ลายเฉียงต่อเนื่องแบบ DIAGONAL_TITANIUM_CSS ที่ Ring/พื้นหลังหน้าใช้ — เพิ่ม DIAGONAL_TITANIUM_CSS
             ตรงๆ (โทเคนเดียวกับที่ FitnessRing.tsx ใช้ทำ Brushed Metal บนวงเป๊ะๆ ไม่ใช่ค่าลอยใหม่ มุม 115deg
             เดียวกัน) ให้เส้นบนการ์ดกับเส้นบนวงเป็นลายต่อเนื่องเดียวกันจริงๆ ไม่ใช่แค่โทนสีคล้ายกัน */}
-        <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.7 }} />
+        {/* v29: ฟีดแบ็ก "Titanium 70% / Matte Black 20% / Orange 10% — ใช้ Brushed Titanium แทน Orange
+            Fog ที่ตัดออก" — ขยับความเข้มขึ้นเล็กน้อย (.7 -> .85) ให้ผิวโลหะเด่นขึ้นมาแทนที่ปริมาณสีส้มที่
+            ลดลง */}
+        <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.85 }} />
         {/* v28: "Brushed Titanium" เพิ่มเติม — TITANIUM_MESH_CSS โทเคนเดียวกับที่การ์ดอื่นทั่วแอปใช้ (ไขว้
             2 ทิศ 12px) ซ้อนกับลายเฉียงทิศทางเดียวเดิมด้านบน ให้ Workout Card มีลายตารางไทเทเนียมชุดเดียว
             กับการ์ดอื่นด้วย (เดิมมีแค่ลายเฉียงทิศทางเดียว ไม่มีลายตาข่าย) */}
         <div className="absolute inset-0" style={{ backgroundImage: TITANIUM_MESH_CSS }} />
-        {/* v28: ฟีดแบ็ก "Workout Card ยังไม่ Hero พอ อยากได้ Brushed Titanium/Orange Fog/Particles/
-            Reflection/Lens Bloom บางๆ ด้านหลังดัมเบล ให้การ์ดดูราคาแพงขึ้นอีกเยอะ" — Orange Fog: หมอกอุ่น
-            ฟุ้งกระจายทั่วการ์ด (ต่างจาก Orange Reflection/Bloom เดิมที่เป็นไล่สีมีทิศทาง/ตำแหน่งชัดเจน)
-            เบลอนุ่มด้วย filter:blur ให้ไม่มีขอบเขตชัด เหมือนหมอกจริงลอยอยู่ในอากาศเหนือผิวโลหะ */}
+        {/* v28/v29: ฟีดแบ็ก "Orange Fog ตอนนี้เยอะไป ลดเหลือ 10% แล้วใช้ Brushed Titanium แทน" — ลด
+            alpha ลงเหลือเกือบครึ่งหนึ่งของเดิม (.1 -> .04) ให้เป็นแค่ "ไอความอุ่นบางๆ" ไม่ใช่หมอกเห็นชัด
+            ผิวโลหะ (ลายเฉียง+ตาข่าย ด้านบน) รับหน้าที่เพิ่มมิติแทนตามที่ขอ */}
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: 'radial-gradient(ellipse 90% 70% at 60% 40%, rgba(255,150,40,.1), transparent 65%)',
+            backgroundImage: 'radial-gradient(ellipse 90% 70% at 60% 40%, rgba(255,150,40,.04), transparent 65%)',
             filter: 'blur(10px)',
-            mixBlendMode: 'screen',
-          }}
-        />
-        {/* Lens Bloom — วงเบลอนุ่มใหญ่ตรงจุดที่สว่างที่สุดของภาพ (ตำแหน่งเดียวกับ Spark หลักด้านล่าง
-            71%,32%) จำลองแสงจ้าล้นออกมาแบบเลนส์กล้องจริง (anamorphic bloom) ต่างจาก Spark ซึ่งเป็นจุด
-            คมเล็กๆ — อันนี้ใหญ่/นุ่ม/จางกว่ามาก ให้ความรู้สึก "แสงจ้าเกินจนล้นเลนส์" ไม่ใช่แค่จุดสะท้อน */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 71% 32%, rgba(255,244,224,.22), transparent 38%)',
-            filter: 'blur(4px)',
             mixBlendMode: 'screen',
           }}
         />
@@ -190,11 +177,11 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             aria-hidden="true"
           />
         ))}
-        {/* v27: "Hero Card Product Shot" — ฟีดแบ็ก "Workout Card 9.5/10 อยากได้ดัมเบล Rim Light เพิ่ม
-            อีกนิด มี Dust มี Spark มี Reflection เหมือนภาพโฆษณา Nike ไม่ใช่แค่ Render" — Rim Light: แถบสว่าง
-            จ้าแคบๆ เฉียงตามขอบดัมเบล (ประมาณตำแหน่งจริงของรูป objectPosition 68% 55%) จำลองแสงสตูดิโอ
-            กระทบขอบวัตถุแบบ rim light จริง (คมกว่า diagonal reflection ทั่วไปที่การ์ดอื่นใช้ ไม่ใช่แถบนุ่ม
-            กว้าง) */}
+        {/* v27/v29: "Edge Highlight" — ฟีดแบ็ก "Dumbbell ตอนนี้ Glow เยอะ ผมจะเหลือ Edge Highlight แบบนี้
+            ให้ดูเหมือน Titanium จริง" — เดิมมี Rim Light + Lens Bloom + Spark 2 จุด แยกกัน 4 ชั้น (glow
+            กระจายหลายจุด) รวมเหลือชั้นเดียว: แถบสว่างจ้าแคบๆ เฉียงตามขอบดัมเบล จำลองแสงสตูดิโอกระทบขอบผิว
+            โลหะขัดเงาเป็น "เส้นคม" เส้นเดียว (ตัด Lens Bloom + Spark ทั้งสองจุดออกทั้งหมด — glow ควรอยู่ที่
+            Ring เท่านั้น ไม่ใช่กระจายทุกจุดบนดัมเบลด้วย) */}
         <div
           className="absolute inset-0"
           style={{
@@ -208,49 +195,20 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           className="absolute inset-0"
           style={{ backgroundImage: DUST_PARTICLES_BG, backgroundSize: '180px 180px', opacity: 0.09, mixBlendMode: 'screen' }}
         />
-        {/* Spark — จุดประกายเล็กๆ 2 จุด (ไม่ใช่เส้นโค้งยาวแบบ specular ทั่วไป) ตำแหน่งใกล้บริเวณหัวดัมเบล
-            ในรูปจริง จุดหนึ่งกะพริบเบาๆ (twinkle) อีกจุดนิ่ง ให้ความรู้สึกแสงกระทบผิวโลหะมันวาวเป็นจุดๆ
-            แบบภาพโฆษณาสินค้าจริง ไม่ใช่ CGI render เรียบๆ */}
-        <span
-          className="workout-spark-twinkle absolute rounded-full pointer-events-none"
-          style={{
-            width: 5,
-            height: 5,
-            left: '71%',
-            top: '32%',
-            background: '#FFF8E8',
-            boxShadow: '0 0 6px 1px rgba(255,244,224,.9), 0 0 14px 3px rgba(255,180,90,.5)',
-          }}
-          aria-hidden="true"
-        />
-        <span
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 3,
-            height: 3,
-            left: '58%',
-            top: '48%',
-            background: '#FFF8E8',
-            opacity: 0.7,
-            boxShadow: '0 0 4px 1px rgba(255,244,224,.7)',
-          }}
-          aria-hidden="true"
-        />
         {/* Floor Reflection — แถบสะท้อนแสงแนวนอนบางๆ ใกล้ขอบล่างสุด จำลองพื้นสตูดิโอมันวาวที่สะท้อนแสงอุ่น
-            จากดัมเบล ต่างจาก Reflection sweep เดิม (แสงเฉียงวิ่งผ่านทั้งการ์ด) อันนี้อยู่นิ่งเฉพาะแถบล่างสุด */}
+            จากดัมเบล ต่างจาก Reflection sweep เดิม (แสงเฉียงวิ่งผ่านทั้งการ์ด) อันนี้อยู่นิ่งเฉพาะแถบล่างสุด
+            v29: ลด alpha ลงเล็กน้อย (.08 -> .05) พร้อมกับ Orange Reflection/Bloom/Fog ด้านบน */}
         <div
           className="absolute inset-x-0 bottom-0"
           style={{
             height: '18%',
-            backgroundImage: 'linear-gradient(0deg, rgba(255,160,60,.08), transparent)',
+            backgroundImage: 'linear-gradient(0deg, rgba(255,160,60,.05), transparent)',
             mixBlendMode: 'screen',
           }}
         />
-        {/* v21: ฟีดแบ็ก "Orange Highlight อยากเพิ่ม Light Sweep บางๆ วิ่งผ่าน Banner ช้าๆ ทุก 20 วินาที
-            แทบไม่รู้สึกแต่ดูแพงมาก" — แถบแสงเฉียงกว้าง กวาดจากซ้ายไปขวาเต็มการ์ด รอบละ 20 วิ อัลฟาต่ำมาก
-            (peak 6%) + screen blend ให้เห็นเป็นแค่ "แสงวาบผ่าน" ไม่ใช่แถบสีทึบ เคารพ prefers-reduced-motion
-            (ปิด animation เหลือ opacity 0 นิ่งๆ) เหมือนแอนิเมชันอื่นในระบบนี้ — v27: reflection sweep เดิม
-            ยังอยู่ครบ ถือเป็นส่วนหนึ่งของ "Reflection" ในสเปค Product Shot รอบนี้ ไม่ต้องเพิ่มซ้ำ */}
+        {/* v21/v29: ฟีดแบ็ก "Animation เหลือแค่ 3 อย่าง: Ring Glow (15-20s), Light Sweep (8-10s ครั้งเดียว),
+            Particle" — Light Sweep เดิมกวาดทุก 20 วิ ช้าไปตามสเปคใหม่ ปรับเหลือ 9 วิ (อยู่ในช่วง 8-10 ที่
+            ขอ) โครงสร้างเดิม (กวาดครั้งเดียวใน 35% แรกของรอบ แล้วค้างจนครบรอบ) ยังเหมือนเดิมทุกประการ */}
         <div className="workout-banner-sweep absolute inset-0 pointer-events-none" aria-hidden="true" />
       </div>
 
@@ -265,17 +223,28 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           {/* v21: "Orange Core" — ฟีดแบ็ก "Ring Icon ใน Banner ยังดูต่างจาก Ring Hero" — Hero Ring
               (FitnessScore.tsx) มีชั้น Fog/Bloom/Core อยู่หลังวงอยู่แล้ว badge เล็กในนี้ไม่มีเลย เพิ่ม
               glow อำพันชั้นเดียว (ไม่ใช่ 3 ชั้นแบบ Hero เพราะ badge เล็กกว่ามาก 76px vs 110px) ไว้หลังวง
-              ให้รู้สึกว่าเป็น "แกนแสง" เดียวกับ Ring Hero ไม่ใช่ badge ลอยเดี่ยวๆ ไม่มีแสงรอบตัวเลย */}
-          {/* v22: ฟีดแบ็ก "Motion: Orange Glow หายใจเบาๆ" — ใช้ animation เดียวกับ Bloom ของ Hero Ring
-              (ring-bloom-breathe ใน FitnessScore.tsx) ชื่อ class คนละไฟล์กัน (styled-jsx scope ต่อไฟล์)
-              แต่ keyframe values เดียวกันเป๊ะ (scale 1-1.06, opacity .85-1, 4s) ให้ทั้งสองจุด "หายใจ"
-              จังหวะเดียวกันแม้จะเป็นคนละ DOM/คนละ mount cycle ก็ตาม */}
+              ให้รู้สึกว่าเป็น "แกนแสง" เดียวกับ Ring Hero ไม่ใช่ badge ลอยเดี่ยวๆ ไม่มีแสงรอบตัวเลย —
+              v29: ตัด animation หายใจ (v22) ออก ให้เป็นแกนแสงนิ่งๆ ฐาน — Motion ของวงย้ายไปอยู่ที่ชั้น
+              "Ring Glow" หมุนด้านล่างแทน (สเปคใหม่: Animation เหลือแค่ 3 อย่างทั้งแอป) */}
           <div
-            className="workout-core-breathe absolute rounded-full pointer-events-none"
+            className="absolute rounded-full pointer-events-none"
             style={{
               width: dashboardSpec.workoutCard.ringSize * 1.6,
               height: dashboardSpec.workoutCard.ringSize * 1.6,
               background: `radial-gradient(circle, ${COLORS.amber}40, transparent 60%)`,
+            }}
+            aria-hidden="true"
+          />
+          {/* v29: "Ring Glow" — ฟีดแบ็ก "Animation เหลือแค่ 3 อย่าง: 1) Ring Glow หมุนช้ามาก 15-20 วิ/รอบ"
+              — conic-gradient ส่วนโค้งสว่างจุดเดียว (ไม่ใช่วงเต็มสมมาตรแบบ Orange Core ด้านบนซึ่งหมุนแล้ว
+              มองไม่ออก) หมุนรอบช้าๆ 18 วิ/รอบ จำลองแสงที่ "กวาดวนรอบวง" ต่อเนื่อง แทนการหายใจ scale/opacity
+              เดิม — นี่คือ 1 ใน 3 animation ที่เหลืออยู่ทั้งการ์ด (อีก 2: Light Sweep, Particle) */}
+          <div
+            className="workout-ring-glow-rotate absolute rounded-full pointer-events-none"
+            style={{
+              width: dashboardSpec.workoutCard.ringSize * 1.6,
+              height: dashboardSpec.workoutCard.ringSize * 1.6,
+              backgroundImage: `conic-gradient(from 0deg, transparent 0deg, ${COLORS.amber}4d 35deg, transparent 90deg, transparent 360deg)`,
             }}
             aria-hidden="true"
           />
@@ -361,12 +330,15 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         <Image src="/icons/today-workout-icon-arrow.png" alt="" width={32} height={32} className="w-full h-full object-cover" />
       </span>
       <style jsx>{`
+        /* v29: "Light Sweep" — 1 ใน 3 animation ที่เหลืออยู่ทั้งการ์ด — ปรับจาก 20s เหลือ 9s (สเปคใหม่
+           "8-10 วินาที ครั้งเดียว") โครงสร้างเดิมไม่เปลี่ยน (กวาดครั้งเดียวใน 35% แรกของรอบแล้วค้างจน
+           ครบรอบ ไม่ใช่กวาดวนซ้ำในรอบเดียว) */
         .workout-banner-sweep {
           background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.06) 50%, transparent 60%);
           background-size: 300% 300%;
           background-position: -120% -120%;
           mix-blend-mode: screen;
-          animation: workout-banner-sweep-move 20s linear infinite;
+          animation: workout-banner-sweep-move 9s linear infinite;
         }
         @keyframes workout-banner-sweep-move {
           0% {
@@ -377,40 +349,14 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             background-position: 120% 120%;
           }
         }
-        .workout-core-breathe {
-          animation: workout-core-breathe 4s ease-in-out infinite;
+        /* v29: "Ring Glow" — 2 ใน 3 animation ที่เหลืออยู่ — หมุนรอบตัวเองช้ามาก (18s, อยู่ในช่วง 15-20s
+           ที่ขอ) แทนการหายใจ scale/opacity เดิม (workout-core-breathe, ตัดออกแล้ว) */
+        .workout-ring-glow-rotate {
+          animation: workout-ring-glow-rotate 18s linear infinite;
         }
-        @keyframes workout-core-breathe {
-          0%,
-          100% {
-            transform: scale(1);
-            opacity: 0.85;
-          }
-          50% {
-            transform: scale(1.06);
-            opacity: 1;
-          }
-        }
-        /* v27: Spark twinkle — จุดประกายจุดหลักกะพริบเบาๆ ไม่สม่ำเสมอ (มี "ค้าง" ที่ปลายทั้งสองฝั่งของ
-           คีย์เฟรม 0%/100% นานกว่าปกติ) จำลองประกายแสงกระทบผิวโลหะที่ริบหรี่ไม่สม่ำเสมอจริง ไม่ใช่หายใจ
-           เรียบๆ แบบ breathe อื่นในไฟล์นี้ */
-        .workout-spark-twinkle {
-          animation: workout-spark-twinkle 3.6s ease-in-out infinite;
-        }
-        @keyframes workout-spark-twinkle {
-          0%,
-          40%,
-          100% {
-            opacity: 0.55;
-            transform: scale(0.85);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.2);
-          }
-          60% {
-            opacity: 0.7;
-            transform: scale(0.95);
+        @keyframes workout-ring-glow-rotate {
+          to {
+            transform: rotate(360deg);
           }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -418,13 +364,8 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             animation: none;
             background-position: 120% 120%;
           }
-          .workout-core-breathe {
+          .workout-ring-glow-rotate {
             animation: none;
-          }
-          .workout-spark-twinkle {
-            animation: none;
-            opacity: 0.85;
-            transform: none;
           }
         }
       `}</style>
