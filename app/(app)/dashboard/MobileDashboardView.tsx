@@ -27,7 +27,7 @@ import {
 } from './DashboardView'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, DASHBOARD_BG_CSS, VIGNETTE_CSS } from '@/lib/theme'
+import { NOISE_BG, DASHBOARD_BG_CSS, VIGNETTE_CSS, DIAGONAL_TITANIUM_CSS, AMBIENT_ORANGE_CSS } from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import OnboardingBanner from '@/components/OnboardingBanner'
@@ -275,13 +275,20 @@ export default function MobileDashboardView() {
           ที่จุด Interactive เฉพาะ (Fitness Score bloom, ปุ่ม Start Workout, กระดิ่งแจ้งเตือน) แทนที่จะเป็น
           ambient เต็มจอแบบเดิม ให้สายตาโฟกัสเฉพาะจุดที่ควรสนใจ — noise กลับขึ้นจาก 0.01 เป็น 0.02
           (deferred item จากรอบก่อนๆ ที่บอกว่า "เพิ่มทีหลังได้" — ตอนนี้ถึงคิวแล้ว) ตาม micro noise ~2%
-          ที่ขอ ยังคงเบากว่า micro-gradient ในการสร้างความต่างของพื้นผิวหลัก */}
+          ที่ขอ ยังคงเบากว่า micro-gradient ในการสร้างความต่างของพื้นผิวหลัก
+          v12: กลับมาเพิ่มลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) + แสงส้ม ambient จางมาก
+          (AMBIENT_ORANGE_CSS) ทั่วทั้งหน้าอีกครั้ง ตามคำขอ "Dark Titanium Material System" ที่ตั้งใจย้อน
+          ทิศทาง v3 ข้างบนบางส่วนแบบมีเหตุผล — ครั้งนี้บางกว่าของเดิมที่เคยตัดออกมาก (2.5%/3.5% ไม่ใช่จุด
+          แสงส้มฟุ้งเข้มแบบเดิม) ให้แค่ "รู้สึกได้" ว่าการ์ดทุกใบอยู่ในห้อง/วัสดุเดียวกัน ไม่ใช่กลืนกันจนสูญเสีย
+          ความรู้สึกโลหะเย็นแบบที่เคยเป็นปัญหา */}
       {/* animate-fade-scale-in (Phase 5 Motion "Card Fade + Scale เมื่อโหลดข้อมูล") — div นี้ (root
           ของเนื้อหาจริง) render ได้ก็ต่อเมื่อผ่าน isLoading||!data check ด้านบนไปแล้วเท่านั้น จึงเป็น
           จุดเดียวที่ trigger พอดีตอนสลับจาก MobileDashboardSkeleton มาเป็นเนื้อหาจริง ไม่ต้องแก้การ์ด
           แต่ละใบทีละตัว */}
       <div className="relative animate-fade-scale-in" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS }} />
+          <div className="absolute inset-0" style={{ backgroundImage: AMBIENT_ORANGE_CSS }} />
           <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
         </div>
