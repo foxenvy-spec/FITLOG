@@ -30,14 +30,12 @@ const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
 // แรกสุด สายตาเห็นก่อน) เข้มสุด ไล่ลงตามลำดับความสำคัญ/ตำแหน่งในกริด
 // v2: ลดทั้งชุดลงอีก ~20% (18/14/12/10 -> 14/11/9/8) ตามคำขอ "Less glow, more material" รอบล่าสุด —
 // สีธีมต่อเมตริก (ส้ม/ชมพู/ฟ้า/เขียว) ไม่แตะ ยังคงเดิมทุกประการตามที่ขอ "Keep all current colors"
-// v28: ฟีดแบ็ก "Metric Cards เสียคะแนนสุด ทุกใบเหมือนกันหมด ต่างแค่สี อยากให้ Weight=Titanium,
-// Fat=Purple Smoke, Muscle=Blue Energy, Fat Mass=Green Crystal คือ Texture ไม่เหมือนกันเลย" —
-// MetricCard.tsx เลือก texture ต่อใบจาก icon โดยตรงแล้ว (ดูคอมเมนต์ v28 ที่นั่น) จุดนี้แค่เปลี่ยนสี
-// bodyFat จากชมพู (#EC4899) เป็นม่วงจริง (Tailwind purple-500/600) ให้ตรงกับคอนเซปต์ "Purple Smoke"
-// ตามที่ขอ (สีอื่น weight/muscle/fatMass อยู่ในโทนที่ขอแล้วพอดี ไม่ต้องเปลี่ยน)
+// v29: ฟีดแบ็ก "การ์ดภาพรวมร่างกาย ขอแบบเดิมได้ไหม" — ย้อน v28 (Metric Card แยกวัสดุ/สีต่อ icon —
+// Purple Smoke/Blue Energy/Green Crystal) กลับไปเป็นไทเทเนียมชุดเดียวกันทุกใบเหมือนเดิม รวมสี bodyFat
+// ที่เคยเปลี่ยนเป็นม่วง (#A855F7) กลับไปเป็นชมพูเดิม (#EC4899) ด้วย
 const METRIC_THEME_VIBRANT: Record<MetricIconImageKey, MetricCardTheme> = {
   weight: { main: '#F59E0B', second: '#D97706', glow: 14 },
-  bodyFat: { main: '#A855F7', second: '#9333EA', glow: 11 },
+  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 11 },
   muscle: { main: '#3B82F6', second: '#2563EB', glow: 9 },
   fatMass: { main: '#22C55E', second: '#16A34A', glow: 8 },
   bmi: { main: '#1b8cff', second: '#3f6cff', glow: 9 },

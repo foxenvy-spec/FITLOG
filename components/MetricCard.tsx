@@ -228,13 +228,10 @@ export default function MetricCard({
             style={{ height: 1, backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,.25) 25%, rgba(255,255,255,.25) 75%, transparent)' }}
           />
         )}
-        {/* v28: ฟีดแบ็ก "Metric Cards เสียคะแนนสุด ทุกใบเหมือนกันหมด ต่างแค่สี อยากให้ Weight=Titanium,
-            Fat=Purple Smoke, Muscle=Blue Energy, Fat Mass=Green Crystal คือ Texture ไม่เหมือนกันเลย" —
-            เดิมทุกใบ (compact) ใช้ DIAGONAL_TITANIUM_CSS + TITANIUM_MESH_CSS ชุดเดียวกันหมด ต่างแค่สี
-            glow มุม/theme.main — เปลี่ยนเป็นแยกวัสดุตาม icon จริงๆ: weight/bmi ยังคงเป็น "ไทเทเนียม"
-            เดิม (ลายเฉียง+ตาข่าย) ส่วน bodyFat/muscle/fatMass สลับเป็นวัสดุของตัวเอง (ดูบล็อกถัดไป) แทน
-            การซ้อนทับกัน — ให้เป็น "คนละวัสดุ" จริงๆ ไม่ใช่ไทเทเนียมฐาน+สีต่างกัน */}
-        {compact && (icon === 'weight' || icon === 'bmi') && (
+        {/* v29: ฟีดแบ็ก "การ์ดภาพรวมร่างกาย ขอแบบเดิมได้ไหม" — ย้อนกลับ v28 (Purple Smoke/Blue Energy/
+            Green Crystal แยกวัสดุตาม icon) กลับไปเป็นไทเทเนียมชุดเดียวกันทุกใบเหมือนเดิม (มุมตัด CNC/
+            ลายตาข่ายจาก v27 ยังอยู่ครบ ไม่แตะ) */}
+        {compact && (
           <>
             {/* v13: ลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เดียวกับที่ใช้ในพื้นหลังหน้า/รูป Today's
                 Workout — เดิม MetricCard มีแค่ NOISE_BG (grain สุ่มแบบ feTurbulence) ซึ่งเป็นลายคนละแบบกับ
@@ -255,69 +252,6 @@ export default function MetricCard({
               style={{ backgroundImage: TITANIUM_MESH_CSS }}
             />
           </>
-        )}
-        {/* v28: "Purple Smoke" — ฟุ้งเป็นกลุ่มควัน 3 จุด ขนาด/ตำแหน่งไม่เท่ากัน (ไม่ใช่วงเดียวสมมาตร)
-            เบลอนุ่มด้วย filter:blur ให้ขอบฟุ้งจริงแบบควัน ไม่ใช่ขอบคมของ radial-gradient เฉยๆ — ดริฟท์
-            ช้าๆ ต่อเนื่อง (18s) จำลองควันลอยตัวเบาๆ ไม่หยุดนิ่ง ใช้สี theme.main ตรงๆ (ม่วงจาก
-            METRIC_THEME_VIBRANT.bodyFat) ไม่ hardcode สีซ้ำ เผื่ออนาคตเปลี่ยนสีธีมจุดเดียวพอ */}
-        {compact && icon === 'bodyFat' && (
-          <div
-            aria-hidden="true"
-            className={`metric-smoke-drift pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{
-              backgroundImage: [
-                `radial-gradient(ellipse 60% 50% at 20% 25%, ${theme.main}2e, transparent 65%)`,
-                `radial-gradient(ellipse 55% 45% at 78% 55%, ${theme.main}22, transparent 70%)`,
-                `radial-gradient(ellipse 65% 40% at 42% 88%, ${theme.main}1a, transparent 70%)`,
-              ].join(', '),
-              backgroundSize: '160% 160%',
-              filter: 'blur(7px)',
-              mixBlendMode: 'screen',
-            }}
-          />
-        )}
-        {/* v28: "Blue Energy" — เส้นแนวนอนบาง 3 เส้น (จำลองวงจร/circuit trace) + แถบสว่างที่ไล่วิ่งผ่าน
-            ซ้าย->ขวาแล้ววนซ้ำ (จำลองพัลส์พลังงานวิ่งผ่านเส้น) ต่างจากไทเทเนียม (ลายผิววัสดุนิ่ง) ตรงที่มี
-            "การเคลื่อนไหวของพลังงาน" เป็นตัวบอกวัสดุจริง ไม่ใช่แค่สีฟ้า */}
-        {compact && icon === 'muscle' && (
-          <>
-            <div
-              aria-hidden="true"
-              className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-              style={{
-                backgroundImage: [
-                  `linear-gradient(180deg, transparent 21%, ${theme.main}26 22%, transparent 23%)`,
-                  `linear-gradient(180deg, transparent 47%, ${theme.main}33 48%, transparent 49%)`,
-                  `linear-gradient(180deg, transparent 73%, ${theme.main}26 74%, transparent 75%)`,
-                ].join(', '),
-              }}
-            />
-            <div
-              aria-hidden="true"
-              className={`metric-energy-pulse pointer-events-none absolute inset-0 ${radiusClass}`}
-              style={{
-                backgroundImage: `linear-gradient(90deg, transparent, ${theme.main}66, transparent)`,
-                backgroundSize: '45% 100%',
-                mixBlendMode: 'screen',
-              }}
-            />
-          </>
-        )}
-        {/* v28: "Green Crystal" — repeating-conic-gradient จากจุดเยื้องศูนย์ 2 จุด ให้เกิดเหลี่ยมมุมแหลม
-            แบบผลึก/คริสตัลตัดเหลี่ยม (สลับทึบ/โปร่งใสเป็นเสี้ยววงกลม) แทนลายเรขาคณิตขนานแบบไทเทเนียม —
-            จุดศูนย์กลาง 2 จุดคนละตำแหน่ง/มุมเริ่ม ให้เหลี่ยมชนกันไม่สม่ำเสมอแบบผลึกจริง ไม่ใช่ลายซ้ำเป๊ะทั้งใบ */}
-        {compact && icon === 'fatMass' && (
-          <div
-            aria-hidden="true"
-            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{
-              backgroundImage: [
-                `repeating-conic-gradient(from 15deg at 22% 18%, ${theme.main}22 0deg 12deg, transparent 12deg 34deg)`,
-                `repeating-conic-gradient(from -25deg at 88% 78%, ${theme.main}18 0deg 10deg, transparent 10deg 30deg)`,
-              ].join(', '),
-              mixBlendMode: 'screen',
-            }}
-          />
         )}
         {/* v15: การ์ดยังดู "Matte" — เพิ่มแถบสะท้อนแสงเฉียง (diagonal reflection) มุมบนซ้ายไล่ไปขวาล่าง
             แยกจาก CARD_REFLECTION_CSS เดิม (ซึ่งเป็นแถบแนวนอนบนสุดล้วนๆ) อันนี้เอียงตามทิศทางเดียวกับ
@@ -540,38 +474,6 @@ export default function MetricCard({
              "ยกขึ้น 2px" ตาม Phase 5 Motion spec ใหม่เจาะจง MetricCard (คนละพฤติกรรมจาก
              TodaysFocusCard/TodaysWorkoutCompactCard ที่ยังกดจมลงเหมือนเดิม ไม่แตะ) */
           transform: translateY(-2px);
-        }
-        /* v28: "Purple Smoke" (bodyFat) — ดริฟท์ตำแหน่งกลุ่มควันช้าๆ ไปมา (ไม่ใช่วนรอบทิศทางเดียว)
-           จำลองควันลอยตัวไม่แน่นอน */
-        .metric-smoke-drift {
-          animation: metric-smoke-drift 18s ease-in-out infinite alternate;
-        }
-        @keyframes metric-smoke-drift {
-          0% {
-            background-position: 0% 0%;
-          }
-          100% {
-            background-position: 12% 8%;
-          }
-        }
-        /* v28: "Blue Energy" (muscle) — แถบสว่างวิ่งซ้าย->ขวาแล้ววนซ้ำ จำลองพัลส์พลังงานวิ่งผ่านเส้นวงจร */
-        .metric-energy-pulse {
-          background-position: -60% 0;
-          animation: metric-energy-pulse 3.2s linear infinite;
-        }
-        @keyframes metric-energy-pulse {
-          0% {
-            background-position: -60% 0;
-          }
-          100% {
-            background-position: 160% 0;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .metric-smoke-drift,
-          .metric-energy-pulse {
-            animation: none;
-          }
         }
       `}</style>
     </>
