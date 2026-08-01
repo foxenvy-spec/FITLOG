@@ -92,21 +92,23 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         <FitnessRing
           value={pct}
           size={dashboardSpec.workoutCard.ringSize}
-          strokeWidth={4}
+          strokeWidth={5}
           trackColor={NEUTRAL.ringTrack}
           className="shrink-0"
           simple
         >
+          {/* ไอคอนใหญ่ขึ้นมาก (24 -> 56px) ตาม ringSize ที่ขยายจาก 46 -> 76 — ให้พอมีพื้นที่เห็นวงแหวน/
+              glow/เงาที่ฝังอยู่ในตัวไอคอนเองชัดเจน (ที่ 24px เดิมมันบีบจนมัว มองไม่ออกเลยว่ามีวง) */}
           <span
-            className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
+            className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden"
             style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
             aria-hidden="true"
           >
             <Image
               src="/icons/today-workout-icon-dumbbell.png"
               alt=""
-              width={24}
-              height={24}
+              width={56}
+              height={56}
               className="w-full h-full object-cover"
               style={{ mixBlendMode: 'screen' }}
             />
