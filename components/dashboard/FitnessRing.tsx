@@ -83,12 +83,21 @@ export default function FitnessRing({
                 <stop key={s.offset} offset={s.offset} stopColor={s.color} />
               ))}
             </linearGradient>
+            {/* v22: ฟีดแบ็ก "Titanium ยังดู Silver อยากได้ Dark Titanium -> Cold Reflection -> Warm
+                Reflection -> Specular แบบ Apple Watch Ultra" — สต็อปเดิมเป็นเทาล้วน (achromatic, R=G=B
+                ทุกจุด) สว่างเฉลี่ยสูง (เริ่ม/จบเกือบขาว) อ่านเป็น "silver" ไม่ใช่ไทเทเนียมเข้ม — เปลี่ยนเป็น
+                เข้มลงทั้งเฉด (จุดเริ่ม/กลาง/จบไม่มีจุดไหนใกล้ขาวจ้าแล้ว) + แยกโทนสีสองฝั่งอย่างจงใจ: จุด 22%
+                เป็นฟ้าเทา (B>R ~10 จุด, "Cold") จุด 75% เป็นน้ำตาลทอง (R>B ~40 จุด, "Warm") ตรงข้ามกันจริง
+                ไม่ใช่แค่ต่างความสว่าง จบด้วยจุด specular ที่ยังอมทอง (#E8E4DC) ไม่ใช่ขาวเป๊ะ #FFFFFF —
+                def เดียวกันนี้ใช้ทั้ง simple mode (Banner Ring) และเวอร์ชันเต็ม (Hero Ring) อยู่แล้ว
+                เปลี่ยนที่นี่จุดเดียวทั้งสองที่ได้วัสดุเดียวกันทันที (ตามฟีดแบ็กข้อ 2 "Hero/Banner/Icon
+                Ring ต้องเป็น material เดียวกัน") */}
             <linearGradient id={`${idPrefix}-titanium-track`} x1="10%" y1="0%" x2="90%" y2="100%">
-              <stop offset="0%" stopColor="#F2F2F2" />
-              <stop offset="25%" stopColor="#7D7D80" />
-              <stop offset="50%" stopColor="#2B2B2C" />
-              <stop offset="75%" stopColor="#7D7D80" />
-              <stop offset="100%" stopColor="#BEBEBE" />
+              <stop offset="0%" stopColor="#3A3B3D" />
+              <stop offset="22%" stopColor="#6B7A8C" />
+              <stop offset="50%" stopColor="#1C1C1D" />
+              <stop offset="75%" stopColor="#9C8058" />
+              <stop offset="100%" stopColor="#E8E4DC" />
             </linearGradient>
           </defs>
           <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={`url(#${idPrefix}-titanium-track)`} strokeWidth={sw} />
