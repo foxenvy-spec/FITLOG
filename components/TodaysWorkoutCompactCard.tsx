@@ -73,11 +73,16 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           เยอะพอที่จะโผล่ผ่าน scrim เข้มได้โดยไม่ดูว่างเปล่าเหมือนรูปเก่า */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '68% 55%' }} />
+        {/* v14: สี scrim เปลี่ยนจาก rgb(13,14,16) เป็น rgb(20,20,20) — #141414 ตามที่ขอ "Hero Card
+            background #141414 vs Background #0B0B0D ต่างกันประมาณ 8%" — เดิมสี scrim (13,14,16) ใกล้เคียง
+            กับสีมืดสุดของพื้นหลังหน้าเว็บ (DASHBOARD_BG_CSS จบที่ #090909) มากจนการ์ดกับพื้นหลังกลืนกัน
+            ไม่ลอยเด่นขึ้นมา ค่าใหม่สว่างกว่าเดิมเล็กน้อยพอให้แยกออกจากกันชัดเจน แต่ยังมืดพอให้ตัวหนังสือ
+            อ่านออก (สัดส่วนความทึบ 0%/30%/50%/68%/84% เดิมทุกจุด ไม่เปลี่ยน แค่เปลี่ยนสีฐาน) */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(90deg, rgba(13,14,16,.82) 0%, rgba(13,14,16,.68) 30%, rgba(13,14,16,.4) 50%, rgba(13,14,16,.14) 68%, rgba(13,14,16,0) 84%)',
+              'linear-gradient(90deg, rgba(20,20,20,.82) 0%, rgba(20,20,20,.68) 30%, rgba(20,20,20,.4) 50%, rgba(20,20,20,.14) 68%, rgba(20,20,20,0) 84%)',
           }}
         />
         {/* v12: Orange Reflection ไล่จากขวาเข้ามาถึงกลางการ์ด — เดิมความอุ่นของการ์ดมาจากรูปเองล้วนๆ
