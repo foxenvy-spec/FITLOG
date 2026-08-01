@@ -109,10 +109,13 @@ export const NOISE_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 // v4: ยังแบนอยู่แม้มี noise+vignette — เพิ่ม "micro gradient" 2 จุด (สีขาวล้วน อัลฟาต่ำมาก 1.2-1.5%
 // ไม่ใช่สีส้ม ไม่ใช่ glow) จำลองความไม่สม่ำเสมอเล็กๆ ของผิวโลหะจริง (ไม่ใช่พื้นเรียบเนียนทางเดียวแบบ
 // linear-gradient เดียว) ตามคำขอ "เพิ่มความต่างของเฉดสีเทา" แทนการเพิ่มแสง/glow
+// v5: ปรับ 4 สต็อปหลักให้ตรงกับ palette ที่ขอเป๊ะ (#181A1C/#131416/#0E0F10/#090909) — ค่าเดิมใกล้เคียง
+// อยู่แล้วแต่ไม่ตรงเป๊ะทีละ digit เปลี่ยนแค่ hex ไม่แตะโครงสร้าง (ยังเป็น 4 สต็อป + micro-gradient
+// เดิมทุกอย่าง)
 export const DASHBOARD_BG_CSS = [
   'radial-gradient(circle at 30% 20%, rgba(255,255,255,.015), transparent 50%)',
   'radial-gradient(circle at 75% 65%, rgba(255,255,255,.012), transparent 55%)',
-  'linear-gradient(180deg, #16181B 0%, #121315 25%, #0D0E10 55%, #09090A 100%)',
+  'linear-gradient(180deg, #181A1C 0%, #131416 25%, #0E0F10 55%, #090909 100%)',
 ].join(', ')
 
 // Vignette — ขอบจอมืดกว่ากลางจอเล็กน้อย กันไม่ให้พื้นหลังดำสนิทเป็นแผ่นเดียวเรียบๆ ทั้งขอบจอ
@@ -165,9 +168,12 @@ export function glowAlphaHex(pct: number): string {
 
 // ระดับสีตัวหนังสือ — แทนขาวล้วน (#FFFFFF) ที่แบน/จ้าเกินไปบนพื้นเข้ม ไล่ทึบมากไปน้อยตามลำดับ
 // ความสำคัญ (Title > Body > Secondary > Caption) แบบเดียวกับที่ Apple ใช้
+// v2: ปรับตาม palette "metallic silver, avoid pure white" ที่ขอเป๊ะ — Primary #F4F4F4 (เดิม #F8F8F8
+// ยังจ้าเกิน), Secondary รวม body/secondary เดิมเข้าใกล้กับ #BDBDBD/#818181 ที่ขอมากขึ้น — caption
+// (เฉดเงียบสุด ไม่มีในสเปคใหม่ที่ให้มาแค่ 3 ระดับ) คงไว้เป็นชั้นที่ 4 เหมือนเดิม ไม่ตัดออก
 export const TEXT = {
-  title: '#F8F8F8',
-  body: '#CFCFCF',
-  secondary: '#8D8D8D',
+  title: '#F4F4F4',
+  body: '#BDBDBD',
+  secondary: '#818181',
   caption: '#676767',
 } as const
