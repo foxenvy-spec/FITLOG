@@ -1,7 +1,7 @@
 'use client'
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, TEXT, CARD_GRADIENT_CSS, CARD_REFLECTION_CSS, CARD_FLOAT_SHADOW, glowAlphaHex } from '@/lib/theme'
+import { NOISE_BG, TEXT, CARD_GRADIENT_CSS, CARD_REFLECTION_CSS, CARD_FLOAT_SHADOW, DIAGONAL_TITANIUM_CSS, glowAlphaHex } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
@@ -149,6 +149,17 @@ export default function MetricCard({
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${radiusClass}`}
             style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }}
+          />
+        )}
+        {/* v13: ลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เดียวกับที่ใช้ในพื้นหลังหน้า/รูป Today's
+            Workout — เดิม MetricCard มีแค่ NOISE_BG (grain สุ่มแบบ feTurbulence) ซึ่งเป็นลายคนละแบบกับ
+            เส้นทแยงที่ Workout Card มี ทำให้ซูมดูแล้ว texture ยังเรียบกว่า — เพิ่มชั้นนี้ที่ opacity ต่ำมาก
+            (2%) ให้ผิวการ์ดมีลายเส้นทแยงแบบเดียวกันจริงๆ ไม่ใช่แค่โทนสีเดียวกัน (compact/มือถือเท่านั้น) */}
+        {compact && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+            style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.5 }}
           />
         )}
         {/* ไล่เฉด radial สีธีมจางๆ กลางค่อนไปทางบน ซ้อนอยู่หลังเนื้อหา ให้พื้นหลังดูลึกมีมิติแทนที่จะเป็น dark navy เรียบๆ —

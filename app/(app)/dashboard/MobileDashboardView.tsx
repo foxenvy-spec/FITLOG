@@ -27,7 +27,14 @@ import {
 } from './DashboardView'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { NOISE_BG, DASHBOARD_BG_CSS, VIGNETTE_CSS, DIAGONAL_TITANIUM_CSS, AMBIENT_ORANGE_CSS } from '@/lib/theme'
+import {
+  NOISE_BG,
+  DASHBOARD_BG_CSS,
+  VIGNETTE_CSS,
+  DIAGONAL_TITANIUM_CSS,
+  DIAGONAL_TITANIUM_FADE_MASK,
+  AMBIENT_ORANGE_CSS,
+} from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import OnboardingBanner from '@/components/OnboardingBanner'
@@ -287,7 +294,17 @@ export default function MobileDashboardView() {
           แต่ละใบทีละตัว */}
       <div className="relative animate-fade-scale-in" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS }} />
+          {/* v13: ลายเฉียงไทเทเนียมไล่จางจากบน (ชัด ~4%) ลงล่าง (แทบมองไม่เห็น) แทนที่จะสม่ำเสมอทั้งหน้า
+              เหมือน v12 (ฟีดแบ็ก: "สม่ำเสมอเกินไป เหมือน Overlay วางทับทั้งหน้า") — ใช้ mask-image แนวตั้ง
+              ควบคุมความเข้มตาม Y แทนการลด opacity เฉยๆ */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: DIAGONAL_TITANIUM_CSS,
+              WebkitMaskImage: DIAGONAL_TITANIUM_FADE_MASK,
+              maskImage: DIAGONAL_TITANIUM_FADE_MASK,
+            }}
+          />
           <div className="absolute inset-0" style={{ backgroundImage: AMBIENT_ORANGE_CSS }} />
           <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }} />
           <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
