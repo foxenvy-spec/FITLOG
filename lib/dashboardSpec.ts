@@ -30,10 +30,15 @@ export const dashboardSpec = {
     labelFontSize: 15, // คงเดิม
   },
   workoutCard: {
-    height: 92, // -10% จาก 102
+    // v7: กลับมาสูงขึ้น (92 -> 112) ตามคำขอ "ใช้ไฟล์นี้เลยทำออกมาให้เหมือนนี้" (มอคอัพมีบรรทัดกลุ่ม
+    // กล้ามเนื้อ "Chest • Triceps" ที่เคยตัดออกไปตอน v6 เพราะพื้นที่ไม่พอ) — ยืนยันแล้วว่ายอมให้การ์ด
+    // สูงขึ้นเพื่อใส่บรรทัดนี้กลับมา แทนที่จะพยายามยัดใส่ความสูงเดิม
+    height: 112,
     borderRadius: 24,
-    padding: 8, // -11% จาก 9
+    padding: 10,
     imageWidthPct: 27,
+    // badge วงกลม+arc progress รอบไอคอนดัมเบล (ใช้ FitnessRing) — แทนที่ไอคอนแบนเดิม ให้ตรงกับ mockup
+    ringSize: 46,
   },
   healthBanner: {
     height: 66, // -11% จาก 74
