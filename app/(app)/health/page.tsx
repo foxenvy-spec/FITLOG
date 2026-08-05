@@ -41,12 +41,26 @@ function bmiOf(weightKg: number | null, heightCm: number | null) {
   return weightKg / (h * h)
 }
 
-// สัดส่วนโปรตีนต่อน้ำหนักตัว (%) — เกณฑ์แยกตามเพศ (มวลกล้ามเนื้อ/สัดส่วนร่างกายชาย-หญิงต่างกัน):
-// ชาย: ต่ำ < 18%, มาตรฐาน 18-22%, สูง > 22% | หญิง: ต่ำ < 14%, มาตรฐาน 14-18%, สูง > 18%
-// ถ้ายังไม่ตั้งเพศไว้ในโปรไฟล์ จะคืนค่า null (ยังประเมินไม่ได้ ไม่เดาเพศให้)
-function proteinPctZone(proteinKg: number, weightKg: number, sex: 'male' | 'female' | null): Zone | null {
-  if (!weightKg || !sex) return null
-  const pct = (proteinKg / weightKg) * 100
+// มวลไร้ไขมัน (Lean Body Mass) = น้ำหนักตัว - มวลไขมัน — ใช้ body_fat_kg ถ้ามีจากเครื่องชั่ง bioimpedance
+// โดยตรง ไม่งั้นคำนวณจาก weight * body_fat_pct (สูตรเดียวกับ fatMassOf ใน lib/bodyMetricsSummary.ts)
+function lbmOf(m: { weight_kg: number | null; body_fat_kg: number | null; body_fat_pct: number | null }): number | null {
+  const w = m.weight_kg
+  if (w == null) return null
+  const fatMass = m.body_fat_kg ?? (m.body_fat_pct != null ? (w * m.body_fat_pct) / 100 : null)
+  if (fatMass == null) return null
+  return w - fatMass
+}
+
+// v40: บั๊กที่พบ — เดิมหารด้วยน้ำหนักตัวรวม (proteinKg / weightKg) แต่โปรตีนเป็นส่วนประกอบของ "มวลไร้ไขมัน
+// (LBM)" เท่านั้น (ไขมันมีโปรตีนแทบ 0%) หารด้วยน้ำหนักตัวรวมทำให้คนที่มีไขมันมากขึ้นโดนตัดสินว่า "โปรตีนต่ำ"
+// เกินจริง ทั้งที่โปรตีน/กล้ามเนื้อจริงอาจปกติดี — หลักฐานยืนยัน: เกณฑ์เดิมในนี้ (ชาย 18-22%/หญิง 14-18%)
+// ตรงกับสัดส่วนโปรตีนใน LBM ตามหลักสรีรวิทยาทั่วไปพอดี (LBM ≈ น้ำ ~73% + โปรตีน ~20% + แร่ธาตุ ~7%)
+// ไม่ใช่สัดส่วนต่อน้ำหนักตัวรวม (ปกติจะอยู่แค่ ~16%) แปลว่าเกณฑ์ถูกคิดมาสำหรับ LBM ตั้งแต่แรกแต่โค้ดหารผิดตัว
+// เปลี่ยนมาหารด้วย LBM แทนน้ำหนักตัวรวม — เกณฑ์ตัวเลขคงเดิมทั้งหมด ไม่ต้องปรับ เพราะตรงกับ LBM อยู่แล้ว
+// ถ้ายังไม่ตั้งเพศไว้ในโปรไฟล์ หรือไม่มีข้อมูลไขมันให้คำนวณ LBM จะคืนค่า null (ยังประเมินไม่ได้ ไม่เดาให้)
+function proteinPctZone(proteinKg: number, lbmKg: number, sex: 'male' | 'female' | null): Zone | null {
+  if (!lbmKg || !sex) return null
+  const pct = (proteinKg / lbmKg) * 100
   const [low, high] = sex === 'male' ? [18, 22] : [14, 18]
   if (pct < low) return 'Low'
   if (pct > high) return 'High'
@@ -182,6 +196,7 @@ export default function HealthPage() {
 
   const latest = metrics[0] ?? null
   const bmi = bmiOf(latest?.weight_kg ?? null, profile?.height_cm ?? null)
+  const latestLbm = latest ? lbmOf(latest) : null
 
   // เฉพาะข้อมูลในช่วงเวลาที่เลือกดู (7/30/90 วัน) ใช้กับกราฟแนวโน้มเท่านั้น — แท็บภาพรวมยังใช้ค่าล่าสุดจาก metrics ทั้งหมด
   const periodMetrics = useMemo(() => {
@@ -665,8 +680,9 @@ export default function HealthPage() {
     if (row?.inorganic_salt_kg != null && saltRangeLow !== null && saltRangeHigh !== null) {
       items.push({ label: 'เกลือแร่', status: classifyMetric(zoneOf(row.inorganic_salt_kg, saltRangeLow, saltRangeHigh), 'neutral') })
     }
-    if (row?.protein_kg != null && row?.weight_kg != null) {
-      const zone = proteinPctZone(row.protein_kg, row.weight_kg, profile?.sex ?? null)
+    if (row?.protein_kg != null) {
+      const lbm = lbmOf(row)
+      const zone = lbm != null ? proteinPctZone(row.protein_kg, lbm, profile?.sex ?? null) : null
       if (zone) items.push({ label: 'โปรตีน', status: classifyMetric(zone, 'higherBetter') })
     }
     if (row?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
@@ -972,8 +988,8 @@ export default function HealthPage() {
               deltaUnit={unit}
               direction="neutral"
               zone={
-                latest?.protein_kg != null && latest?.weight_kg != null
-                  ? proteinPctZone(latest.protein_kg, latest.weight_kg, profile?.sex ?? null)
+                latest?.protein_kg != null && latestLbm != null
+                  ? proteinPctZone(latest.protein_kg, latestLbm, profile?.sex ?? null)
                   : null
               }
               zoneScheme="higherOk"
