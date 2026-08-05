@@ -14,8 +14,9 @@ interface AICoachCompactCardProps {
    * ไม่มี (ยังไม่เคยฝึกกลุ่มไหนเลย) fallback กลับไปโชว์ message เฉยๆ แบบเดิม */
   muscleRecommendation: { muscleGroup: string; pct: number } | null
   href?: string
-  /** เผื่อมีรูป AI Coach จริงในอนาคต (สี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส ตามสเปคที่คุยกันไว้) —
-   * ยังไม่มีไฟล์ตอนนี้ (optional) ไม่ส่งมาจะใช้ไอคอนเรขาคณิต (AiVisorFace) แทนแบบเดิม */
+  /** รูป AI Coach จริง (public/icons/ai-coach-avatar.png ที่ผู้ใช้ให้มา — 1024x1024 โปร่งใสอยู่แล้ว
+   * ไม่ต้อง crop/แก้พื้นหลังเพิ่ม) ดีฟอลต์เป็นไฟล์นี้เสมอ — ส่ง avatarSrc={undefined} เพื่อกลับไปใช้
+   * ไอคอนเรขาคณิต fallback ใน AiRingAvatar แทนได้ถ้าต้องการจุดอื่นที่ยังไม่มีรูป */
   avatarSrc?: string
 }
 
@@ -26,7 +27,15 @@ interface AICoachCompactCardProps {
 // เหลือแค่ "ความพร้อม" ที่คำนวณจาก muscleRecommendation.pct จริง
 // v35: ตัด "ความเครียด" ออก (chip ที่ 4 เดิม) ตามคำขอ — เหลือ 3 chip (grid-cols-4 -> grid-cols-3) และขยาย
 // avatar ใหญ่ขึ้น (64px -> 88px) ตามคำขอ "อยากให้รูปใหญ่กว่านี้"
-export default function AICoachCompactCard({ message, muscleRecommendation, href = '/coach', avatarSrc }: AICoachCompactCardProps) {
+// v36: ผู้ใช้ส่งรูป AI Coach จริงมาแล้ว (public/icons/ai-coach-avatar.png) — มี alpha โปร่งใสอยู่แล้ว
+// (ตรวจสอบแล้วว่าไม่ใช่พื้นขาวทึบตามที่กังวลไว้ตอนแรก) วงแหวนทองในรูปพอดีกับวงแหวนอำพัน CSS เดิมที่ห่อ
+// อยู่แล้วเป๊ะๆ ไม่ต้อง crop/แก้ไฟล์เพิ่มเลย — ตั้งเป็นดีฟอลต์ของ avatarSrc แทนที่ไอคอนเรขาคณิต fallback เดิม
+export default function AICoachCompactCard({
+  message,
+  muscleRecommendation,
+  href = '/coach',
+  avatarSrc = '/icons/ai-coach-avatar.png',
+}: AICoachCompactCardProps) {
   const barColor = muscleRecommendation ? recoveryStatusColor(muscleRecommendation.pct) : COLORS.amber
 
   return (
