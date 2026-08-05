@@ -2,9 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { COLORS, NEUTRAL, AMBER_GLOW_SHADOW } from '@/lib/theme'
+import {
+  COLORS,
+  NEUTRAL,
+  AMBER_GLOW_SHADOW,
+  CARD_GRADIENT_CSS,
+  DIAGONAL_TITANIUM_CSS,
+  TITANIUM_MESH_CSS,
+  NOISE_BG,
+  TITANIUM_TRACK_GRADIENT_CSS,
+} from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
+
+// v32: สีตัวอักษร/ไอคอนบนปุ่ม Start Workout ใหม่ — เดิม NEUTRAL.onAmberText (เข้ม) ใช้เพราะพื้นหลังปุ่ม
+// เป็นสีอำพันสว่างล้วน ตอนนี้พื้นตรงกลางปุ่มเปลี่ยนเป็นแผ่นเข้ม (Orange Energy Core บนพื้นมืด แบบ Hero
+// Ring) ต้องใช้สีอ่อน/อุ่นแทนเพื่อให้อ่านออกบนพื้นเข้ม — โทนเดียวกับ hot-spot ของ AMBER_GLOW_SHADOW/
+// AMBER_GRADIENT_CSS (ครีมอมทอง) ไม่ใช่สีใหม่ที่ไม่เกี่ยวกับธีม
+const START_BUTTON_ACCENT = '#FFE3B0'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -25,9 +40,39 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-surface/95 backdrop-blur border-t border-line safe-bottom">
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 z-20 backdrop-blur safe-bottom"
+      // v32: "Bottom Nav ยังไม่ใช่ Titanium จริง" — เดิม bg-surface/95 (สีทึบเรียบเดียว) + border-t
+      // border-line (เส้นขอบแบนสีเดียว) เป็นพื้นผิว Material Design ธรรมดา คนละวัสดุกับการ์ดด้านบน
+      // ทั้งหมดที่ใช้ CARD_GRADIENT_CSS + ลายเฉียง/mesh ไทเทเนียมชุดเดียวกัน — เปลี่ยนมาใช้วัสดุชุดเดียวกัน
+      // เป๊ะๆ (Titanium Plate) ให้ Nav อ่านว่าเป็น "แผ่นเดียวกัน" กับ Dashboard ด้านบน ไม่ใช่แถบ UI
+      // มาตรฐานแปะซ้อนไว้ — Orange Reflection เป็นแสงอุ่นจางๆ (screen blend, 6%) กระจายลงมาจากตำแหน่งปุ่ม
+      // Start เท่านั้น (ไม่ใช่พื้นหลังสีส้มเต็มแถบ) จำลองแสงสะท้อนจาก Energy Core ของปุ่มตกกระทบแผ่นโลหะ
+      style={{
+        backgroundImage: [
+          'radial-gradient(ellipse 55% 100% at 50% 0%, rgba(255,150,30,.06), transparent 70%)',
+          TITANIUM_MESH_CSS,
+          DIAGONAL_TITANIUM_CSS,
+          CARD_GRADIENT_CSS,
+        ].join(', '),
+        backgroundBlendMode: 'screen, normal, normal, normal, normal',
+        // Glass Shadow — เงากว้างทอด "ขึ้น" จากแผ่น Nav ทับเนื้อหาด้านบนเล็กน้อย (offset ลบ) แทน border-t
+        // เส้นเดียวเดิม จำลองแผ่นกระจก/โลหะหนาวางทับอยู่ ไม่ใช่เส้นแบ่งบางๆ ระหว่างสองพื้นผิว
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.05), 0 -18px 32px -14px rgba(0,0,0,.55)',
+      }}
+    >
+      {/* Hairline Highlight — เส้นคมชัดสว่างจ้าเส้นเดียวชิดขอบบนสุดเป๊ะ ต่างจาก inset boxShadow ด้านบน
+          ที่นุ่ม/จาง จำลองขอบแผ่นโลหะกลึงที่แสงจับเป็นเส้นคม (ไม่ใช่แถบฟุ้ง) */}
+      <div className="absolute top-0 inset-x-0 pointer-events-none" style={{ height: 1, background: 'rgba(255,255,255,.22)' }} aria-hidden="true" />
+      {/* CNC Edge — ร่องคู่มืด/สว่างต่ำจาก Hairline Highlight ลงมาอีกนิด (เทคนิคเดียวกับ CNC seam ของ
+          TodaysFocusCard.tsx แต่แนวนอนแทนแนวตั้ง) จำลองรอยกลึงเป็นแผงแยกออกจากเนื้อโลหะ ไม่ใช่ผิวเรียบ
+          ต่อเนื่องชิ้นเดียว */}
+      <div className="absolute inset-x-0 pointer-events-none" style={{ top: 4, height: 1, background: 'rgba(0,0,0,.4)' }} aria-hidden="true" />
+      <div className="absolute inset-x-0 pointer-events-none" style={{ top: 5, height: 1, background: 'rgba(255,255,255,.08)' }} aria-hidden="true" />
+      {/* เกรนผิวโลหะบางๆ ชุดเดียวกับ PremiumCard (NOISE_BG) — แยกชั้นต่างหากคุม opacity อิสระจากพื้นเบส */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }} aria-hidden="true" />
       {/* ความสูงจาก dashboardSpec.bottomNav.height (80px, เดิม 82px) */}
-      <div className="max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
+      <div className="max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 items-center relative" style={{ minHeight: dashboardSpec.bottomNav.height }}>
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
 
@@ -47,31 +92,48 @@ export default function BottomNav() {
                 <span
                   // animate-start-workout-pulse — Phase 5 Motion: glow วงนอกหายใจเบาๆ ต่อเนื่อง
                   // (globals.css bake ทั้ง shadow stack ไว้ในทุก keyframe กัน layer อื่นหายตอนแอนิเมชัน
-                  // ทำงาน ดู comment ที่นั่น) — ไม่ใช่สีส้มใหม่/glow ใหม่ แค่ให้ glow เดิมเคลื่อนไหว
-                  className="absolute rounded-full flex flex-col items-center justify-center shrink-0 active:scale-[0.97] transition animate-start-workout-pulse"
+                  // ทำงาน ดู comment ที่นั่น) — box-shadow ของ span นี้ต้องตรงกับ keyframes เป๊ะเหมือนเดิม
+                  // ไม่แตะ (แก้แค่พื้นผิวด้านใน ไม่แก้ glow ของทั้งปุ่ม)
+                  className="absolute rounded-full shrink-0 active:scale-[0.97] transition animate-start-workout-pulse"
                   style={{
                     top: -Math.round(btnSize * 0.42),
                     width: btnSize,
                     height: btnSize,
-                    // v2: เดิมสต็อปกลาง/นอก (#FFD166/#FF8A00/#D96A00) เป็นโทนส้มสดเกินไป เปลี่ยนเป็นโทน
-                    // อมทอง (เทียบเท่า AMBER_GRADIENT_CSS) ให้เข้ากับ "ทองเข้ม" แทน "ส้มสด" — เก็บ
-                    // hot-spot ครีมกลางไว้เหมือนเดิม (ไม่ใช่จุดที่ขอเปลี่ยน)
-                    background: `radial-gradient(circle at 35% 30%, #FFF4CC, #FFB84A 35%, #FF9A16 70%, #E77A00 100%)`,
-                    // AMBER_GLOW_SHADOW = glow หลายสต็อป (ขาว→เหลือง→ส้ม→โปร่งใส) แทน glow สีส้มเดียว
-                    // แบนๆ เดิม ให้ความรู้สึกแสงจริงที่มี hot-spot ขาวจ้าตรงกลางก่อนไล่โทนอุ่นออกไป
+                    // v32: "Titanium Button" — เดิมพื้นหลังทั้งลูกเป็น radial-gradient สีอำพันสว่างล้วน (ปุ่ม
+                    // สีส้มแบนๆ) เปลี่ยนตัวลูกนอกสุดนี้เป็น "Bezel" ไทเทเนียม (ไล่สีเดียวกับ Hero Ring เป๊ะ —
+                    // TITANIUM_TRACK_GRADIENT_CSS) แทน — แผ่นสีส้มเดิมย้ายไปเป็น "Energy Core" ชั้นในแทน
+                    // (ดู span ลูกด้านล่าง) ให้ปุ่มอ่านเป็น "วัสดุไทเทเนียม" ก่อน สีส้มเหลือแค่แกนพลังงานตรงกลาง
+                    background: TITANIUM_TRACK_GRADIENT_CSS,
                     boxShadow: `0 6px 18px rgba(0,0,0,.45), ${AMBER_GLOW_SHADOW}, inset 0 1px rgba(255,255,255,.35)`,
-                    border: `3px solid ${NEUTRAL.onAmberText}`,
                   }}
                 >
-                  <DumbbellIcon />
+                  {/* Orange Energy Core — จานเข้มตรงกลาง เว้นระยะ 7px จากขอบ (= strokeWidth เดียวกับ
+                      Hero Ring ที่ size 84px พอดี, ดู FitnessRing.tsx: sw = size * 0.08) ให้ bezel
+                      ไทเทเนียมรอบนอกหนาพอจะ "อ่านออก" ว่าเป็นวงแหวนจริง ไม่ใช่แค่เส้นขอบบางๆ + glow อำพัน
+                      กลางจานหดขอบเขตลง (72% -> 58%) ให้เห็นจานเข้มรอบๆ core ชัดขึ้น แทนที่ glow จะไหลจน
+                      เกือบชนขอบ bezel เหมือนรอบแรก (ดูเหมือนสีส้มทึบทั้งลูกอีกครั้ง) */}
                   <span
-                    className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center"
-                    style={{ color: NEUTRAL.onAmberText }}
-                    aria-hidden="true"
+                    className="absolute rounded-full flex flex-col items-center justify-center"
+                    style={{
+                      inset: 7,
+                      backgroundImage: [
+                        'radial-gradient(circle at 50% 42%, rgba(255,244,204,.95) 0%, rgba(255,154,22,.55) 32%, transparent 58%)',
+                        'linear-gradient(180deg, #1C1D1F 0%, #131416 60%, #0C0D0E 100%)',
+                      ].join(', '),
+                      backgroundBlendMode: 'screen, normal',
+                      boxShadow: 'inset 0 0 10px rgba(0,0,0,.55)',
+                    }}
                   >
-                    START
-                    <br />
-                    WORKOUT
+                    <DumbbellIcon color={START_BUTTON_ACCENT} />
+                    <span
+                      className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center"
+                      style={{ color: START_BUTTON_ACCENT }}
+                      aria-hidden="true"
+                    >
+                      START
+                      <br />
+                      WORKOUT
+                    </span>
                   </span>
                 </span>
               </Link>
@@ -92,12 +154,12 @@ export default function BottomNav() {
   )
 }
 
-function DumbbellIcon() {
+function DumbbellIcon({ color }: { color: string }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M2 12h2M5 9v6M8 7v10M16 7v10M19 9v6M22 12h-2M8 12h8"
-        stroke={NEUTRAL.onAmberText}
+        stroke={color}
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
