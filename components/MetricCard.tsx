@@ -242,11 +242,14 @@ export default function MetricCard({
             v45: ฟีดแบ็ก "Metric Card ยังแบน อยากได้ Brushed Metal เบาๆ 5%" — ชั้นลายเฉียง+ตาข่ายนี้เดิมมี
             แค่ compact (มือถือ) เท่านั้น เดสก์ท็อป (!compact) ไม่เคยมีเลยตั้งแต่แรก (มีแค่ NOISE_BG grain
             สุ่มแบบจุด ไม่ใช่ลายเส้นบรัชเมทัลทิศทางเดียวแบบนี้) — ตัดเงื่อนไข compact ออก ให้ทั้งสองแพลตฟอร์ม
-            ได้ลายเดียวกัน (opacity เท่าเดิมทุกประการ ไม่ได้ปรับเพิ่ม) */}
+            ได้ลายเดียวกัน
+            v47: ฟีดแบ็ก "ลายเยอะไปนิด เหลือประมาณ 30% ของตอนนี้ เพราะ Titanium จริงๆ จะเห็น Texture น้อยมาก
+            จะดูแพงกว่า" — ลดจาก 0.65 เหลือ 0.65*0.3 ≈ 0.2 ตามสัดส่วนที่ขอเป๊ะ ไม่แตะ TITANIUM_MESH_CSS
+            ด้านล่าง (ลายตาข่าย คนละชั้นกับลายเฉียงนี้ ไม่ได้ถูกพูดถึง) */}
         <div
           aria-hidden="true"
           className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-          style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.65 }}
+          style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.2 }}
         />
         {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (โทเคนเดียวกับ PremiumCard ใช้) ซ้อนแยกจากลายเฉียง
             ทิศทางเดียวด้านบน ให้การ์ดนี้มีลายตารางแบบเดียวกับการ์ดอื่นทั่วแอปด้วย ไม่ใช่แค่ลายเฉียงเดิม */}

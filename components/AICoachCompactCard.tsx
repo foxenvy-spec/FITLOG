@@ -35,6 +35,25 @@ interface AICoachCompactCardProps {
    * ไม่ต้อง crop/แก้พื้นหลังเพิ่ม) ดีฟอลต์เป็นไฟล์นี้เสมอ — ส่ง avatarSrc={undefined} เพื่อกลับไปใช้
    * ไอคอนเรขาคณิต fallback ใน AiRingAvatar แทนได้ถ้าต้องการจุดอื่นที่ยังไม่มีรูป */
   avatarSrc?: string
+  /** เวลาที่ดึงข้อมูล dashboard สำเร็จล่าสุดจริง (React Query `dataUpdatedAt` ของ query ['dashboard', ...]
+   * ในหน้า Dashboard) — ใช้แสดง "อัปเดตล่าสุด Xนาทีที่แล้ว" แบบมีข้อมูลจริงรองรับ ไม่ใช่ป้ายลอยๆ ที่ไม่มี
+   * ความหมาย ไม่ระบุ = ยังโชว์ป้าย "อัปเดตล่าสุด" เฉยๆ แบบเดิม (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
+  lastUpdatedAt?: number
+}
+
+// v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
+// แอปคำนวณจริง (เคยถูกปฏิเสธไปแล้วรอบก่อนหน้าด้วยเหตุผลเดียวกัน — ไม่ใช้ข้อมูลสมมติ) เลือกทำแค่ "Updated
+// X min ago" ซึ่งมีข้อมูลจริงรองรับ (lastUpdatedAt จาก React Query) แทน — ปัดเป็นหน่วยที่หยาบพอจะไม่ต้อง
+// re-render ทุกวินาที (นาที/ชั่วโมง/วัน) พอสำหรับความหมาย "เพิ่งอัปเดต" ไม่ต้องเป๊ะระดับวินาที
+function relativeUpdatedLabel(lastUpdatedAt: number): string {
+  const diffMs = Date.now() - lastUpdatedAt
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'เมื่อสักครู่'
+  if (mins < 60) return `${mins} นาทีที่แล้ว`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} ชม.ที่แล้ว`
+  const days = Math.floor(hours / 24)
+  return `${days} วันที่แล้ว`
 }
 
 async function fetchTemplatesWithExercises(supabase: ReturnType<typeof createClient>) {
@@ -79,6 +98,7 @@ export default function AICoachCompactCard({
   muscleRecommendation,
   href = '/coach',
   avatarSrc = '/icons/ai-coach-avatar.png',
+  lastUpdatedAt,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -149,7 +169,7 @@ export default function AICoachCompactCard({
     <PremiumCard className="flex flex-col gap-3 px-4 py-4">
       <span className="absolute top-3 right-3 flex items-center gap-1 text-[8px] tracked uppercase text-muted" aria-hidden="true">
         <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
-        อัปเดตล่าสุด
+        {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
       </span>
 
       <Link href={href} className="flex items-center gap-3 active:opacity-80 transition">

@@ -120,7 +120,7 @@ export default function MobileDashboardView() {
     setBannerDismissed(true)
   }
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ['dashboard', today],
     queryFn: () => fetchDashboardData(supabase),
   })
@@ -422,7 +422,7 @@ export default function MobileDashboardView() {
             เพราะเป็นข้อมูลที่อยากให้เห็นทันทีโดยไม่ต้องปัด ตามดีไซน์ที่เลือก */}
         <WorkoutStreakCard streak={data.streak} weekDayTicks={data.weekDayTicks} today={today} />
 
-        <AICoachCompactCard message={data.aiDailySummary} muscleRecommendation={muscleRecommendation} />
+        <AICoachCompactCard message={data.aiDailySummary} muscleRecommendation={muscleRecommendation} lastUpdatedAt={dataUpdatedAt} />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม */}
         <div className="flex gap-2 overflow-x-auto animate-rise" style={{ animationDelay: '160ms', scrollbarWidth: 'none' }}>
