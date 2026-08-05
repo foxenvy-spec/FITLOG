@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -371,6 +371,25 @@ export default function DashboardPage() {
   // ตอน mount — ค่อยเปิดออกถ้าเช็คแล้วว่ายังไม่เคยปิด
   const [bannerDismissed, setBannerDismissed] = useState(true)
 
+  // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
+  // Card (การ์ดเดียวที่ควรมี effect ใหม่ตามกฎ "Hero มีแค่ใบเดียว") จำลองแสงสะท้อนผิวโลหะเปลี่ยนมุมตามที่
+  // มองจริง — ใช้ ref เขียน style ตรงๆ ตอน mousemove แทน useState (กัน re-render ทั้ง component ทุก
+  // เฟรมที่เมาส์ขยับ ซึ่งจะหนักเกินจำเป็นสำหรับแค่ตำแหน่ง highlight เดียว)
+  const heroSpotlightRef = useRef<HTMLDivElement>(null)
+  function handleHeroMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
+    if (heroSpotlightRef.current) {
+      heroSpotlightRef.current.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(255,255,255,.09), transparent 45%)`
+    }
+  }
+  function handleHeroMouseLeave() {
+    if (heroSpotlightRef.current) {
+      heroSpotlightRef.current.style.background = 'transparent'
+    }
+  }
+
   useEffect(() => {
     setPrefs(loadDashboardPrefs())
     setGreetingText(greeting())
@@ -623,9 +642,16 @@ export default function DashboardPage() {
 
         {/* v45: ฟีดแบ็ก "Header ยังโล่งเกินไป มีพื้นที่ว่างเกือบ 40%" — เติมช่องว่างระหว่างชื่อกับป้ายวันที่
             ด้วยป้าย Fitness Score (คำนวณจริงด้านบน ไม่ใช่เลขสมมติ) วงแหวนเล็ก+ตัวเลข+ระดับ (Excellent/Good
-            ฯลฯ) สีตาม tier เดียวกับที่มือถือใช้ (fitnessScore.color) */}
+            ฯลฯ) สีตาม tier เดียวกับที่มือถือใช้ (fitnessScore.color)
+            v46: ฟีดแบ็ก "Hero Dashboard" (10/10 wishlist) — มอคอัพขอ "👋 Good Evening / BANK / Ready for
+            Upper Body / Fitness Score 84 / Recovery Excellent" แบบ Apple Fitness/Whoop — เลือกไม่รื้อ
+            เลย์เอาต์ทักทาย/ชื่อทั้งหมด (เพิ่งทำ Fitness Score pill รอบ v45 ไปแล้ว เปลี่ยนโครงทั้งหมดจะทับ
+            งานเดิม + เสี่ยงพังเลย์เอาต์ที่ทดสอบแล้ว) แต่เพิ่มสัญญาณ "Recovery" ที่มอคอัพขอเข้ามาแบบเสริม
+            (ป้ายที่สอง สีฟ้าไซแอนเดียวกับการ์ด Recovery) วางคู่กับ Fitness Score pill — ครบทั้ง 2 สัญญาณ
+            ที่มอคอัพต้องการโดยไม่ต้องรื้อโครงสร้างเดิม — ไม่โชว์ถ้ายังไม่เคยฝึกกลุ่มกล้ามเนื้อไหนเลย (ข้อมูล
+            จริงไม่พอให้ประเมิน ไม่เดาให้ ดู fitnessScoreRecoveryPct ด้านบน) */}
         {fitnessScore && (
-          <div className="hidden md:flex flex-1 justify-center self-center">
+          <div className="hidden md:flex flex-1 justify-center items-center gap-2.5 self-center">
             <div
               className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5"
               style={{
@@ -651,6 +677,26 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
+            {fitnessScoreRecoveryPct != null && (
+              <div
+                className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+                style={{
+                  border: '1.5px solid transparent',
+                  backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, #22D3EE14, #22D3EE40, #22D3EE14)`,
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                  boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 8px #22D3EE1F',
+                }}
+              >
+                <span aria-hidden="true">💤</span>
+                <div className="leading-tight">
+                  <p className="text-[9px] tracked uppercase text-muted">Recovery</p>
+                  <p className="text-xs font-display tracked uppercase" style={{ color: '#22D3EE' }}>
+                    {fitnessScoreRecoveryPct >= 76 ? 'Excellent' : fitnessScoreRecoveryPct >= 41 ? 'Good' : 'Needs Rest'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -717,6 +763,8 @@ export default function DashboardPage() {
           boxShadow: '0 0 8px #E8A33D26, 0 0 1px #E8A33D66',
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
+        onMouseMove={handleHeroMouseMove}
+        onMouseLeave={handleHeroMouseLeave}
       >
         {/* v45: ฟีดแบ็ก "ภาพคนดูธรรมดา ใช้ Dumbbell/Orange Spark จะเข้ากับ Theme มากกว่า" — เดิมเป็นรูปถ่าย
             จริง (/images/workout-hero.jpg) คนละภาษากับวัสดุไทเทเนียม/แสงพลังงานส้มที่การ์ดอื่นทั้งแอปใช้
@@ -752,13 +800,30 @@ export default function DashboardPage() {
           </svg>
         </div>
 
+        {/* v46: "Titanium Reflection" — จุดสว่างจางๆ ตามตำแหน่งเมาส์ (เขียน background ตรงผ่าน ref ใน
+            handleHeroMouseMove ด้านบน ไม่ผ่าน React state) วางไว้เหนือชั้นวัสดุพื้นแต่ใต้เนื้อหา (z-10) */}
+        <div ref={heroSpotlightRef} className="absolute inset-0 pointer-events-none" aria-hidden="true" />
+
         <div className="relative z-10 px-5 py-6">
           <p className="text-[10px] tracked uppercase text-muted flex items-center gap-1.5">
             <span aria-hidden="true">🔥</span> Today&apos;s Workout
           </p>
 
           <div className="mt-4 flex items-center justify-between gap-4">
-            <div className="min-w-0 flex-1">
+            {/* v46: "Glass Layer" — ฟีดแบ็ก "Card มี Layer 2 ชั้นเหมือน Apple Vision Pro" — เพิ่มแผ่นกระจก
+                (backdrop-blur) ลอยอยู่หลังโซนตัวหนังสือเท่านั้น (ไม่ครอบทั้งการ์ด กันไม่ให้เบลอโซน
+                Dumbbell/Spark ทางขวาซึ่งควรคมชัด) แยกชั้น "โลหะ" (พื้นการ์ด) ออกจากชั้น "กระจก" (แผงข้อความ)
+                ให้เห็นความลึก 2 ชั้นจริง ไม่ใช่พื้นผิวเดียวแบน */}
+            <div className="min-w-0 flex-1 relative">
+              <div
+                className="absolute -inset-3 rounded-xl backdrop-blur-sm pointer-events-none"
+                style={{
+                  backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,.008))',
+                  border: '1px solid rgba(255,255,255,.05)',
+                }}
+                aria-hidden="true"
+              />
+              <div className="relative">
               {(() => {
                 const title = workoutTitle ?? 'ยังไม่ได้ตั้งโปรแกรม'
                 const splitAt = title.search(/\s[—-]\s/)
@@ -829,6 +894,7 @@ export default function DashboardPage() {
                   </Link>
                 </p>
               )}
+              </div>
             </div>
 
             <GoalRing
@@ -838,6 +904,7 @@ export default function DashboardPage() {
               color="#E8A33D"
               label="ความพร้อม"
               ariaLabel="ความพร้อมของวันนี้"
+              glow
             />
           </div>
         </div>
@@ -942,6 +1009,7 @@ export default function DashboardPage() {
                             color="#22D3EE"
                             label="พื้นตัวรวม"
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
+                            glow
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
@@ -999,6 +1067,7 @@ export default function DashboardPage() {
                 color="#E8A33D"
                 label="Goal"
                 ariaLabel="Weekly Goal"
+                glow
               />
             </div>
             <div className="min-w-0 flex-1">
