@@ -414,6 +414,7 @@ export default function DashboardPage() {
     data,
     isLoading,
     isError,
+    dataUpdatedAt,
   } = useQuery({
     queryKey: ['dashboard', today],
     queryFn: () => fetchDashboardData(supabase),
@@ -771,7 +772,12 @@ export default function DashboardPage() {
             (Energy Core ของปุ่ม Start Workout, glow อำพันทั่วไป) — เปลี่ยนเป็น CSS/SVG ล้วน (ไม่ต้องมี asset
             รูปใหม่): แสงพลังงานส้มระเบิดจากมุมขวา (Orange Spark, โทนเดียวกับ FIRE_GRADIENT/Energy Core) +
             เงาดัมเบลขนาดใหญ่จางๆ ทับอยู่ ให้ความรู้สึก "อุปกรณ์ฝึก" แทนภาพคนจริง ยังคง fade ซ้ายให้ตัวหนังสือ
-            อ่านง่ายเหมือนเดิมทุกประการ */}
+            อ่านง่ายเหมือนเดิมทุกประการ
+            v47: ฟีดแบ็ก "Dumbbell Blur เยอะไป (~70%) จนแทบไม่รู้ว่าเป็นอะไร ผมว่าประมาณ 40% ก็พอ" — เพิ่ม
+            opacity 0.16 -> 0.4 + ขยายพื้นที่ 58%/240px -> 78%/320px ตามที่เลือก "Option A: ใช้ Dumbbell
+            เต็มพื้นที่ Ring ซ้อนอยู่มุมขวาล่าง แบบ Apple Fitness" — Ring ย้ายออกจาก flex row เดิม (เคยอยู่ข้าง
+            ตัวหนังสือ) ไปวางลอย absolute มุมขวาล่างแทน (ดูด้านล่าง) ให้ Dumbbell เป็นพื้นหลังเต็มพื้นที่จริงๆ
+            ไม่ใช่แค่ไอคอนเล็กๆ ลอยเดี่ยว */}
         <div className="absolute inset-0 bg-surface overflow-hidden">
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3"
@@ -785,7 +791,7 @@ export default function DashboardPage() {
           />
           <svg
             className="absolute pointer-events-none"
-            style={{ right: '3%', top: '52%', width: '58%', maxWidth: 240, transform: 'translateY(-50%) rotate(-16deg)', opacity: 0.16 }}
+            style={{ right: '2%', top: '50%', width: '78%', maxWidth: 320, transform: 'translateY(-50%) rotate(-16deg)', opacity: 0.4 }}
             viewBox="0 0 24 24"
             fill="none"
             aria-hidden="true"
@@ -804,17 +810,34 @@ export default function DashboardPage() {
             handleHeroMouseMove ด้านบน ไม่ผ่าน React state) วางไว้เหนือชั้นวัสดุพื้นแต่ใต้เนื้อหา (z-10) */}
         <div ref={heroSpotlightRef} className="absolute inset-0 pointer-events-none" aria-hidden="true" />
 
+        {/* v47: "Option A" — Ring ลอย absolute มุมขวาล่าง ซ้อนทับบน Dumbbell background แบบ Apple Fitness
+            hero (เดิมอยู่เป็น flex sibling ข้างตัวหนังสือ ดันเลย์เอาต์ให้ Dumbbell เหลือพื้นที่แคบ) —
+            glow เดิม (AMBER) คงไว้ผ่าน filter drop-shadow เดียวกับวงอื่นๆ ในหน้า ให้เข้าธีม */}
+        <div className="absolute bottom-4 right-4 z-10" style={{ filter: 'drop-shadow(0 0 6px #E8A33D40)' }}>
+          <GoalRing
+            pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
+            size={100}
+            strokeWidth={8}
+            color="#E8A33D"
+            label="ความพร้อม"
+            ariaLabel="ความพร้อมของวันนี้"
+            glow
+          />
+        </div>
+
         <div className="relative z-10 px-5 py-6">
           <p className="text-[10px] tracked uppercase text-muted flex items-center gap-1.5">
             <span aria-hidden="true">🔥</span> Today&apos;s Workout
           </p>
 
-          <div className="mt-4 flex items-center justify-between gap-4">
+          <div className="mt-4">
             {/* v46: "Glass Layer" — ฟีดแบ็ก "Card มี Layer 2 ชั้นเหมือน Apple Vision Pro" — เพิ่มแผ่นกระจก
                 (backdrop-blur) ลอยอยู่หลังโซนตัวหนังสือเท่านั้น (ไม่ครอบทั้งการ์ด กันไม่ให้เบลอโซน
                 Dumbbell/Spark ทางขวาซึ่งควรคมชัด) แยกชั้น "โลหะ" (พื้นการ์ด) ออกจากชั้น "กระจก" (แผงข้อความ)
-                ให้เห็นความลึก 2 ชั้นจริง ไม่ใช่พื้นผิวเดียวแบน */}
-            <div className="min-w-0 flex-1 relative">
+                ให้เห็นความลึก 2 ชั้นจริง ไม่ใช่พื้นผิวเดียวแบน
+                v47: "Option A" — เลิก flex row ร่วมกับ Ring เดิม (ย้ายไปลอย absolute มุมขวาล่างแล้ว ดูด้านบน)
+                จำกัด max-width แทน กันตัวหนังสือยาวเกินไปชนโซน Ring/Dumbbell มุมขวาล่าง */}
+            <div className="min-w-0 max-w-[230px] relative">
               <div
                 className="absolute -inset-3 rounded-xl backdrop-blur-sm pointer-events-none"
                 style={{
@@ -896,16 +919,6 @@ export default function DashboardPage() {
               )}
               </div>
             </div>
-
-            <GoalRing
-              pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-              size={100}
-              strokeWidth={8}
-              color="#E8A33D"
-              label="ความพร้อม"
-              ariaLabel="ความพร้อมของวันนี้"
-              glow
-            />
           </div>
         </div>
       </div>
@@ -1000,12 +1013,14 @@ export default function DashboardPage() {
                     return (
                       <div className="flex items-center gap-4">
                         {/* สีฟ้าไซแอน + glow ตามมอคอัพ v3 — เดิมใช้ recoveryStatusColor() ที่เปลี่ยนสีตามเปอร์เซ็นต์
-                            (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ */}
+                            (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ
+                            v47: ฟีดแบ็ก "การ์ดนี้ข้อมูลเยอะแต่ Ring ยังเล็ก ขยายประมาณ 15% จะบาลานซ์กว่า" —
+                            84 -> 97 (+15%), strokeWidth ขยายตามสัดส่วนเดียวกัน (8 -> 9) */}
                         <div style={{ filter: 'drop-shadow(0 0 4px #22D3EE40)' }}>
                           <GoalRing
                             pct={overallRecoveryPct}
-                            size={84}
-                            strokeWidth={8}
+                            size={97}
+                            strokeWidth={9}
                             color="#22D3EE"
                             label="พื้นตัวรวม"
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
@@ -1138,7 +1153,12 @@ export default function DashboardPage() {
           className="flex flex-col gap-3 animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2 lg:row-span-2"
           style={{ animationDelay: '360ms' }}
         >
-          <AICoachCompactCard message={data.aiDailySummary} muscleRecommendation={data.muscleRecommendation} href="/coach" />
+          <AICoachCompactCard
+            message={data.aiDailySummary}
+            muscleRecommendation={data.muscleRecommendation}
+            href="/coach"
+            lastUpdatedAt={dataUpdatedAt}
+          />
           {combinedInsights.length > 0 && (
             <div className="space-y-2">
               {combinedInsights.map((insight) => (
@@ -1260,14 +1280,19 @@ function QuickAction({
       {/* v45: ฟีดแบ็ก "Quick Action ยังเรียบไป อยากได้ Glass Button + Glow ตอน Hover" — เดิมพื้นทึบ
           bg-surface เรียบๆ ไม่มี glow เลย — เปลี่ยนพื้นเป็นกระจกโปร่งแสง (backdrop-blur เดียวกับ
           GlassCard.tsx) พักตอนปกติไม่มี glow เลย (กัน 4-5 ปุ่มเรืองแสงพร้อมกันทั้งแถว ขัดกฎ "Less Glow
-          More Material") glow สีตามแอคเซนต์เดิมของแต่ละปุ่มโผล่เฉพาะตอน hover เท่านั้น */}
+          More Material") glow สีตามแอคเซนต์เดิมของแต่ละปุ่มโผล่เฉพาะตอน hover เท่านั้น
+          v47: ฟีดแบ็ก "ยังดูเป็น Button ธรรมดา ถ้าทำ Hover Glow + Glass Shadow จะดูเหมือน Apple มาก" —
+          เพิ่ม inset rim light บางๆ ขอบบน (มองเห็นได้แม้ตอนปกติ ไม่ต้อง hover ก่อน ให้รู้สึกเป็น "กระจก" ตั้งแต่
+          แรกเห็น ไม่ใช่กล่องทึบ) + เงาลอยเบาๆ ตอนปกติ (contact shadow) — ตอน hover ยกขึ้นเล็กน้อย (-1px)
+          พร้อม glow สีแอคเซนต์ + เงากว้างขึ้น ให้รู้สึกเป็นปุ่มกระจกยกตัวแบบ Apple จริงๆ ไม่ใช่แค่ขอบเรืองแสง —
+          border/boxShadow ย้ายจาก inline style มาไว้ใน <style jsx> ทั้งคู่ (rest + hover) เพราะ inline
+          style attribute มี specificity สูงกว่า stylesheet เสมอ (ไม่ว่า pseudo-class จะเจาะจงแค่ไหน) —
+          ตอนแรก border/boxShadow ยังอยู่ใน inline style เดิมทำให้กฎ :hover ด้านล่างไม่มีทางชนะ เขียนสอง
+          property นี้ไปแล้วแต่ hover ไม่เห็นผลจริงเลย (ตรวจพบจาก computed style ไม่ตรงกับที่คาด) */}
       <Link
         href={href}
         className="quick-action relative rounded-lg backdrop-blur-md flex items-center gap-2.5 px-3 py-3 transition active:scale-[0.99]"
-        style={{
-          border: '1px solid rgba(255,255,255,.06)',
-          backgroundImage: 'linear-gradient(180deg, #1B1D20cc, #0D0E10cc)',
-        }}
+        style={{ backgroundImage: 'linear-gradient(180deg, #1B1D20cc, #0D0E10cc)' }}
       >
         <span
           className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base"
@@ -1279,10 +1304,15 @@ function QuickAction({
         <span className="text-[11px] font-display tracked uppercase text-ink truncate">{label}</span>
       </Link>
       <style jsx>{`
+        .quick-action {
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
         @media (hover: hover) {
           .quick-action:hover {
             border-color: ${hex}66;
-            box-shadow: 0 0 16px ${hex}4d;
+            transform: translateY(-1px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 16px ${hex}4d;
           }
         }
       `}</style>
