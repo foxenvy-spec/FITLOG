@@ -155,9 +155,14 @@ export default function MetricCard({
           // ทแยงสั้นๆ) เป็นชั้นบนสุด + จุด "Core" แคบ/เข้มกว่าซ้อนตรงมุมเดียวกับ glow เดิม (ซึ่งทำหน้าที่
           // เป็น Bloom กว้างอยู่แล้ว) — coreAlpha คำนวณจาก glow ต่อการ์ดเดิมคูณ 2.2 (ไม่แตะ glowAlpha/
           // theme.glow ต่อการ์ดที่ tuned มาหลายรอบ แค่เพิ่มชั้นใหม่ซ้อน ไม่แก้ค่าเดิม)
+          // v41: ฟีดแบ็ก "ทำเป็น Version 3 (Minimal Dark Titanium)" — เดสก์ท็อป (!compact) เดิมพื้นเป็น
+          // กระจกกรมท่า (#13233A -> #08121F, ธีมเดียวกับ GlassCard.tsx เก่า) + glow มุมสีเต็มความอิ่มตัว
+          // (ไม่มี alpha เลย) คนละวัสดุกับ Dark Titanium ที่มือถือใช้ทั้งแอปมาหลายสิบรอบ — เปลี่ยนพื้นเป็น
+          // CARD_GRADIENT_CSS (โทเคนเดียวกับทุกการ์ดในแอป) + glow มุมใส่ glowAlpha ต่อการ์ด (จาก theme.glow
+          // เดียวกับที่มือถือใช้ ผ่าน colorScheme="vibrant" ที่ DashboardView ส่งมาแล้ว) แทนสีเต็มความอิ่มตัว
           backgroundImage: compact
             ? `${CARD_MULTI_REFLECTION_CSS}, ${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(45% 45% at 0% 0%, ${theme.main}${coreAlpha}, transparent 70%), radial-gradient(45% 45% at 100% 100%, ${theme.second}${coreAlpha}, transparent 70%), radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), ${CARD_BEVEL_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
-            : `radial-gradient(circle at 50% 55%, #1B2230, transparent 60%), linear-gradient(180deg, #13233A, #08121F), radial-gradient(120% 120% at 0% 0%, ${theme.main}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}, transparent 55%), linear-gradient(135deg, ${theme.main}14, ${theme.main}40, ${theme.main}14)`,
+            : `radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`,
           backgroundOrigin: 'border-box',
           // หมายเหตุ: CARD_MULTI_REFLECTION_CSS รวม 3 เกรเดียนต์ไว้ในตัวเอง (คั่น comma) นับเป็น 3 layer
           // ไม่ใช่ 1 — clip/size/position ด้านล่างต้องมี 3 ค่าแรกตรงกับ 3 layer นั้นเสมอ (ไม่งั้น CSS จะ
@@ -198,23 +203,26 @@ export default function MetricCard({
           // v26: ฟีดแบ็ก "Card ยัง Flat กว่า Workout ~15%" อีกรอบ - Top Reflection (inset highlight
           // .105 -> .12) และ Bottom Shadow (offset 4.6px -> 5.3px, blur 11.5px -> 13.2px, alpha
           // .68 -> .78) ขยับขึ้นอีก ~15% ตามสัดส่วนเดียวกับรอบ v23 ก่อนหน้า
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.12)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -5.3px 13.2px rgba(0,0,0,.78), ' : ''}-6px -6px 20px ${theme.main}${compact ? glowAlpha : '33'}, 6px 6px 20px ${theme.second}${compact ? glowAlpha : '33'}${compact ? ', 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)' : ''}`,
+          // v41: glow มุม box-shadow เดสก์ท็อป (-6px/-6px, 6px/6px) เดิม hardcode alpha "33" (~20%) คงที่
+          // ทุกใบเท่ากันหมด — เปลี่ยนเป็น glowAlpha ต่อการ์ด (เดียวกับที่ backgroundImage ด้านบนใช้ และ
+          // เดียวกับที่มือถือ tune มาแล้วผ่าน theme.glow) ให้ลดหลั่นตามความสำคัญเหมือนกันทั้งสองแพลตฟอร์ม
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.12)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -5.3px 13.2px rgba(0,0,0,.78), ' : ''}-6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}${compact ? ', 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)' : ''}`,
         }}
       >
-        {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard) — compact/มือถือเท่านั้น
-            เดสก์ท็อปไม่กระทบ (ดีไซน์ของตัวเองอยู่แล้ว ไม่ได้ตั้งใจให้เป็น titanium)
+        {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard)
             v22: ฟีดแบ็ก "Tiny Noise เบามาก แทบมองไม่เห็น แต่ถือแล้วรู้สึกว่าเป็นวัสดุจริง" — ขยับจาก 0.02
             เป็น 0.03 เหมือน PremiumCard ให้สองจุดสอดคล้องกัน
             v24: ให้คะแนน 9.2/10 "ยังขาด Titanium Noise" — ขยับอีกนิดจาก 0.03 เป็น 0.035 */}
         {/* v26: ฟีดแบ็ก "Card ยัง Flat กว่า Workout ~15% - Soft Noise" - ขยับ Soft Noise ขึ้นอีกรอบตาม
             สัดส่วนเดียวกับ v23/v24 (0.035 -> 0.04, +15%) */}
-        {compact && (
-          <div
-            aria-hidden="true"
-            className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-            style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }}
-          />
-        )}
+        {/* v41: เดิมชั้นนี้ compact (มือถือ) เท่านั้น เดสก์ท็อปใช้พื้นกรมท่าของตัวเองไม่ใช่ titanium —
+            ตอนนี้เดสก์ท็อปเปลี่ยนไปใช้ CARD_GRADIENT_CSS เดียวกันแล้ว (ดู backgroundImage ด้านบน) เกรนนี้
+            จึงควรมีทั้งสองแพลตฟอร์มเพื่อให้ผิวการ์ดสอดคล้องกัน */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+          style={{ backgroundImage: NOISE_BG, opacity: 0.04, mixBlendMode: 'overlay' }}
+        />
         {/* v24: "Hairline Highlight" — ฟีดแบ็ก "ยังขาด Hairline Highlight" ต่างจาก CARD_REFLECTION_CSS
             เดิม (แถบไล่สีนุ่มกว้าง ~40% ของความสูงการ์ด) อันนี้คือเส้นคมชัด 1px เส้นเดียวแนบขอบบนสุดจริงๆ
             จำลองขอบโลหะที่ถูกเจียรเรียบจนสะท้อนแสงเป็นเส้นคมแทนแถบนุ่ม (ทั้งสองอย่างอยู่ร่วมกันได้ คนละ
