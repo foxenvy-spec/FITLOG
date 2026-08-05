@@ -154,7 +154,11 @@ function AiRingAvatar({ src }: { src?: string }) {
         }}
       >
         {src ? (
-          <Image src={src} alt="" width={size} height={size} className="w-full h-full object-cover" />
+          // v37: ฟีดแบ็ก "รูปยังไม่เต็มวง" — ไฟล์ ai-coach-avatar.png มีระยะขอบในตัวไฟล์เอง (เนื้อรูปกินพื้นที่
+          // แค่ ~87% ของกรอบสี่เหลี่ยม 1024x1024) พอ object-fit: cover แบบ 1:1 ต่อ 1:1 ไม่มีการซูม/ครอปเลย
+          // เห็นพื้นเข้มของ container โผล่มาเป็นวงแหวนบางๆ ก่อนถึงขอบวงแหวนอำพัน — scale(1.16) ขยายภาพให้
+          // วงทองในรูปชนขอบ container พอดี ส่วนที่ล้นออกไปโดน overflow-hidden ของ parent ตัดทิ้งเองอัตโนมัติ
+          <Image src={src} alt="" width={size} height={size} className="w-full h-full object-cover" style={{ transform: 'scale(1.16)' }} />
         ) : (
           <span className="relative block" style={{ width: '58%' }}>
             <span
