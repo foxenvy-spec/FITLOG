@@ -246,6 +246,12 @@ export const CARD_REFLECTION_CSS =
 export const CARD_CURVATURE_HIGHLIGHT_CSS =
   'radial-gradient(ellipse 65% 40% at 50% 0%, rgba(255,255,255,.05), transparent 60%)'
 
+// v48: "Corner Gleam" — ฟีดแบ็ก "Card ตอนนี้ Matte 100% อยากเพิ่ม Reflection ~2% ตรงมุมบน เหมือนโลหะจริง"
+// — CARD_CURVATURE_HIGHLIGHT_CSS ด้านบนเป็นไฮไลต์ตรงกลางขอบบน (50% 0%) ไม่ใช่ "มุม" — โทเคนนี้แยกต่างหาก
+// เป็นจุดสว่างแคบๆ ชิดมุมบนซ้ายจริงๆ (8% 8%) จำลองแสงตกกระทบเป็น "ประกาย" ที่ขอบโค้งของมุม ไม่ใช่แถบ
+// สะท้อนกว้างกลางขอบแบบชั้นข้างบน — alpha .02 ตามที่ขอเป๊ะ (แทบมองไม่เห็น แต่ทำให้ผิวรู้สึกเป็นโลหะขัดเงา)
+export const CARD_CORNER_GLEAM_CSS = 'radial-gradient(circle at 8% 8%, rgba(255,255,255,.02), transparent 22%)'
+
 // v19: ฟีดแบ็ก "Metric Card ยังเหมือน Dark Card + Glow อยากได้ Titanium Surface -> Reflection ->
 // Micro Bevel -> Soft Bloom" — CARD_REFLECTION_CSS/CARD_CURVATURE_HIGHLIGHT_CSS ทำ Reflection ไปแล้ว,
 // glow มุมทำ Soft Bloom ไปแล้ว แต่ยังไม่มี "Micro Bevel" จริง (ขอบที่ดูเหมือนถูกกัดเป็นร่อง/สลักลงในผิว
@@ -343,10 +349,13 @@ export const CNC_CORNER_CLIP_PATH_DEFAULT = cncCornerClipPath('tl', CNC_CORNER_P
 // (ระยะห่าง 22px) ดึงออกมาเป็นโทเคนกลาง + ถี่ขึ้น (12px แทน 22px ตามคำขอ "ละเอียดมาก") ให้ทุกการ์ดใช้
 // ร่วมกันได้ — แยกจาก DIAGONAL_TITANIUM_CSS เดิม (ทิศทางเดียว 115deg) เพราะ mesh คือไขว้ 2 ทิศ (115deg +
 // 25deg) จำลองผิวโลหะกัด CNC เป็นตาราง ไม่ใช่แค่รอยขัดทิศทางเดียว
-export const TITANIUM_MESH_CSS = [
-  'repeating-linear-gradient(115deg, rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px, transparent 1px, transparent 12px)',
-  'repeating-linear-gradient(25deg, rgba(255,255,255,.016) 0px, rgba(255,255,255,.016) 1px, transparent 1px, transparent 12px)',
-].join(', ')
+//
+// v48: ฟีดแบ็ก "Texture ยังเป็น Diagonal ไขว้ 2 ทิศเหมือน Carbon แต่ Titanium จริงเป็น Brushed (เส้นขนาน
+// ทิศทางเดียว) มากกว่า" — ตัดชั้น 25deg (ไขว้) ออก เหลือแค่ชั้น 115deg เดียว (ทิศทางเดียวกับ
+// DIAGONAL_TITANIUM_CSS ที่ใช้ทั่วแอปอยู่แล้ว) เปลี่ยนจากลายตาข่ายไขว้ (อ่านเป็นลายคาร์บอนไฟเบอร์ทอกัน)
+// เป็นเส้นขนานทิศทางเดียว (อ่านเป็นรอยขัดโลหะจริง/Brushed Titanium) — alpha/ระยะห่างเดิมไม่แตะ
+export const TITANIUM_MESH_CSS =
+  'repeating-linear-gradient(115deg, rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px, transparent 1px, transparent 12px)'
 
 // ===================================================================================
 // v27: "Hero Card Product Shot" — ฟีดแบ็ก "Workout Card 9.5/10 อยากได้ดัมเบล Rim Light/Dust/Spark/

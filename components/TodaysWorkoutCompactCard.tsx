@@ -69,18 +69,11 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
       style={{
         padding: 0,
         minHeight: dashboardSpec.workoutCard.height,
-        // rim light สีอำพันบางๆ รอบการ์ด — ขอบเทาเย็นเดิมจาก PremiumCard เป็นค่าพื้นฐานของการ์ดทุกใบ
-        // (ตั้งใจให้ไม่อมส้มทุกใบ ดู CARD_BORDER_CSS ใน lib/theme.ts) แต่การ์ดนี้มีรูป/ธีมไฟเป็นจุดเด่น
-        // อยู่แล้ว (ปุ่ม arrow, progress bar, ไอคอนดัมเบลล้วนอำพัน) จึงเพิ่ม rim เฉพาะใบนี้แทนที่จะแก้
-        // border กลางของ PremiumCard (จะกระทบการ์ดอื่นที่ไม่ต้องการโทนอำพันซ้ำ) — บางมากตามที่ขอ
-        // ("แทบมองไม่เห็น") แค่ให้รู้สึกขอบมีไฟจางๆ ตอนเลื่อนผ่าน ไม่ใช่เส้นส้มชัดเจน
-        //
-        // v21: ค้นพบระหว่างตรวจ "Ambient Shadow" ที่ขอ — การ์ดนี้ส่ง boxShadow ของตัวเองมา ซึ่งไป
-        // "แทนที่" boxShadow เริ่มต้นของ PremiumCard ทั้งก้อน (shallow merge ทับทั้ง key ไม่ใช่ merge
-        // ทีละค่าใน string เดียวกัน) แปลว่าการ์ดนี้ไม่เคยมี CARD_FLOAT_SHADOW/เงาลอยจริงๆ เลยมาตลอด (มีแค่
-        // เส้นขอบอำพัน+inset glow) เพิ่ม CARD_AMBIENT_SHADOW_CSS + CARD_FLOAT_SHADOW นำหน้า rim light เดิม
-        // ให้การ์ดนี้ได้เงาลอย/เงาแวดล้อมเหมือนการ์ดอื่นด้วย ไม่ใช่แค่เส้นขอบเรืองแสงอย่างเดียว
-        boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}, 0 0 0 1px rgba(255,154,22,.14), inset 0 0 12px rgba(255,138,0,.05)`,
+        // v48: ฟีดแบ็ก "Glow ตอนนี้อยู่รอบ Card ทั้งใบ อยากย้ายไปอยู่ที่ Icon แทน การ์ดจะสะอาดขึ้น" — เดิม
+        // ตรงนี้มี rim light สีอำพันรอบการ์ด (0 0 0 1px + inset glow) มาตั้งแต่ v9 (ดูประวัติ comment ที่
+        // เคยอยู่ตรงนี้ผ่าน git log) ตัดทั้งคู่ออก เหลือแค่เงาลอย/แวดล้อมกลาง (ไม่มีสีธีม) — glow อำพันยกไป
+        // อยู่ที่วง badge ดัมเบลแทน (ดู glow blob หลัง FitnessRing ด้านล่าง ซึ่งเข้มขึ้นชดเชย)
+        boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}`,
       }}
     >
       {/* พื้นหลังรูปเต็มการ์ด + ไล่สีมืดทับ — v11: asset ใหม่ (เดิม v10 ครอปไว้ตอนพื้นซ้ายเกือบดำสนิท
@@ -226,13 +219,16 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
               ให้รู้สึกว่าเป็น "แกนแสง" เดียวกับ Ring Hero ไม่ใช่ badge ลอยเดี่ยวๆ ไม่มีแสงรอบตัวเลย —
               v31: ฟีดแบ็ก "เหลือแค่ 7 Animation ทั้งแอป — Hero Card: sweep 10s เท่านั้น" — ตัด "Ring Glow"
               หมุน (v29) ออกทั้งชั้น วงนี้กลับไปเป็นแกนแสงนิ่งเหมือนเดิม การ์ดนี้เหลือ animation เดียวคือ
-              Light Sweep ที่พื้นหลังการ์ดด้านล่าง */}
+              Light Sweep ที่พื้นหลังการ์ดด้านล่าง
+              v48: ฟีดแบ็ก "Glow ย้ายจาก Card ไป Icon" — ตัด rim light อำพันรอบการ์ดทั้งใบออกแล้ว (ดู
+              boxShadow ของ PremiumCard ด้านบน) ชดเชยด้วยการเพิ่มความเข้ม/ขนาดแกนแสงไอคอนนี้ขึ้น
+              (40->55 alpha, 1.6x->1.85x ของ ringSize) ให้ไอคอนเป็นจุดที่ "มีไฟ" แทนขอบการ์ด */}
           <div
             className="absolute rounded-full pointer-events-none"
             style={{
-              width: dashboardSpec.workoutCard.ringSize * 1.6,
-              height: dashboardSpec.workoutCard.ringSize * 1.6,
-              background: `radial-gradient(circle, ${COLORS.amber}40, transparent 60%)`,
+              width: dashboardSpec.workoutCard.ringSize * 1.85,
+              height: dashboardSpec.workoutCard.ringSize * 1.85,
+              background: `radial-gradient(circle, ${COLORS.amber}55, transparent 60%)`,
             }}
             aria-hidden="true"
           />
