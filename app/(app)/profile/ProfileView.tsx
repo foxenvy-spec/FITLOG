@@ -6,6 +6,8 @@ import type { Profile } from '@/lib/types'
 import { saveAge, saveSex } from '@/lib/profile'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import SignOutButton from '@/components/SignOutButton'
+import PremiumCard from '@/components/ui/PremiumCard'
+import { COLORS, CARD_GRADIENT_CSS, withAlpha } from '@/lib/theme'
 
 function emailDisplayName(email: string | null | undefined) {
   if (!email) return ''
@@ -60,7 +62,18 @@ export default function ProfileView() {
   return (
     <div className="space-y-5 pb-4 lg:max-w-2xl lg:mx-auto">
       <div className="flex items-center gap-3">
-        <div className="shrink-0 w-14 h-14 rounded-full bg-surface2 border border-line flex items-center justify-center font-display text-lg tracked uppercase text-amber">
+        {/* วงแหวนอำพัน+พื้นไทเทเนียม เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar/การ์ดผู้ใช้ท้าย
+            SidebarNav) แทนวงกลมทึบ bg-surface2 เดิม */}
+        <div
+          className="shrink-0 rounded-full flex items-center justify-center font-display text-lg tracked uppercase text-amber"
+          style={{
+            width: 56,
+            height: 56,
+            backgroundImage: CARD_GRADIENT_CSS,
+            border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
+            boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '20')}`,
+          }}
+        >
           {name.slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0">
@@ -71,12 +84,12 @@ export default function ProfileView() {
 
       <PersonalInfoCard profile={profile} onSaved={(p) => setProfile(p)} />
 
-      <div className="rounded-xl bg-surface border border-line shadow-elevated divide-y divide-line overflow-hidden">
+      <PremiumCard className="divide-y divide-white/5">
         {LINKS.map((item) => (
           <a
             key={item.href}
             href={item.href}
-            className="flex items-center gap-3 px-4 py-3.5 active:bg-surface2 transition"
+            className="flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition"
           >
             <span className="shrink-0 text-lg w-6 text-center">{item.icon}</span>
             <div className="min-w-0 flex-1">
@@ -86,14 +99,14 @@ export default function ProfileView() {
             <span className="text-muted text-xs">→</span>
           </a>
         ))}
-      </div>
+      </PremiumCard>
 
       <div>
         <p className="text-[10px] tracked uppercase text-muted mb-2">ตั้งค่า</p>
-        <div className="rounded-xl bg-surface border border-line shadow-elevated px-4 py-3.5 flex items-center justify-between">
+        <PremiumCard className="px-4 py-3.5 flex items-center justify-between">
           <p className="text-sm text-ink">หน่วยน้ำหนัก</p>
           <WeightUnitToggle />
-        </div>
+        </PremiumCard>
       </div>
 
       <div className="flex justify-center pt-1">
@@ -146,7 +159,7 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
   }
 
   return (
-    <div className="rounded-xl bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-3">
+    <PremiumCard className="px-4 py-3.5 space-y-3">
       <p className="text-[10px] tracked uppercase text-muted">ข้อมูลส่วนตัว</p>
 
       <div className="flex items-center justify-between gap-3">
@@ -206,6 +219,6 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
       <p className="text-[10px] text-muted/70">
         ใช้คำนวณเกณฑ์มาตรฐานสุขภาพและอัตราการเผาผลาญ (BMR/TDEE) โดยประมาณในหน้า Measures & สุขภาพ
       </p>
-    </div>
+    </PremiumCard>
   )
 }
