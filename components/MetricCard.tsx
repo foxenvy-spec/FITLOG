@@ -160,9 +160,14 @@ export default function MetricCard({
           // (ไม่มี alpha เลย) คนละวัสดุกับ Dark Titanium ที่มือถือใช้ทั้งแอปมาหลายสิบรอบ — เปลี่ยนพื้นเป็น
           // CARD_GRADIENT_CSS (โทเคนเดียวกับทุกการ์ดในแอป) + glow มุมใส่ glowAlpha ต่อการ์ด (จาก theme.glow
           // เดียวกับที่มือถือใช้ ผ่าน colorScheme="vibrant" ที่ DashboardView ส่งมาแล้ว) แทนสีเต็มความอิ่มตัว
+          // v48: ฟีดแบ็ก "Glow ตอนนี้อยู่รอบ Card อยากย้ายไปอยู่ Icon แทน การ์ดจะสะอาดขึ้น" — เดสก์ท็อป
+          // (!compact) เดิมมี glow มุมกว้าง (120%/120% radial 2 มุมตรงข้าม) ซ้อนบนพื้นการ์ดด้วย ตัดออก
+          // เหลือแค่พื้นเข้ม + เส้นขอบไล่สีบางๆ (linear-gradient 135deg ท้ายสุด ยังอยู่ — เป็น "ขอบ" ไม่ใช่
+          // "แสงฟุ้ง") — glow ยกไปอยู่ที่ไอคอนสี่เหลี่ยมมุมโค้งด้านล่างแทน (ดู boxShadow ของ span ไอคอน)
+          // มือถือ (compact) ไม่แตะ เพราะ tune มาแล้วหลายสิบรอบแยกต่างหาก ไม่ใช่จุดที่ฟีดแบ็กรอบนี้พูดถึง
           backgroundImage: compact
             ? `${CARD_MULTI_REFLECTION_CSS}, ${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(45% 45% at 0% 0%, ${theme.main}${coreAlpha}, transparent 70%), radial-gradient(45% 45% at 100% 100%, ${theme.second}${coreAlpha}, transparent 70%), radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), ${CARD_BEVEL_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
-            : `radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`,
+            : `radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`,
           backgroundOrigin: 'border-box',
           // หมายเหตุ: CARD_MULTI_REFLECTION_CSS รวม 3 เกรเดียนต์ไว้ในตัวเอง (คั่น comma) นับเป็น 3 layer
           // ไม่ใช่ 1 — clip/size/position ด้านล่างต้องมี 3 ค่าแรกตรงกับ 3 layer นั้นเสมอ (ไม่งั้น CSS จะ
@@ -171,7 +176,7 @@ export default function MetricCard({
           // gradient(1) = 9 padding-box, ตามด้วย glow x2(2) + bevel(1) + border(1) = 4 border-box
           backgroundClip: compact
             ? 'padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, padding-box, border-box, border-box, border-box, border-box'
-            : 'padding-box, padding-box, border-box, border-box, border-box',
+            : 'padding-box, padding-box, border-box',
           // มือถือ (compact) เท่านั้น: ขยายชั้นที่ 5 (CARD_REFLECTION_CSS, หลัง multi-reflection 3 +
           // curvature 1) สูงกว่ากล่องจริง (150%) ให้ .metric-card-compact:active เลื่อนตำแหน่งชั้นนี้ลงมา
           // ได้ (ดู style jsx) จำลอง "แถบสะท้อนแสงขยับ" ตอนแตะ เหมือน PremiumCard — เดสก์ท็อปไม่ตั้งค่านี้
@@ -203,10 +208,14 @@ export default function MetricCard({
           // v26: ฟีดแบ็ก "Card ยัง Flat กว่า Workout ~15%" อีกรอบ - Top Reflection (inset highlight
           // .105 -> .12) และ Bottom Shadow (offset 4.6px -> 5.3px, blur 11.5px -> 13.2px, alpha
           // .68 -> .78) ขยับขึ้นอีก ~15% ตามสัดส่วนเดียวกับรอบ v23 ก่อนหน้า
-          // v41: glow มุม box-shadow เดสก์ท็อป (-6px/-6px, 6px/6px) เดิม hardcode alpha "33" (~20%) คงที่
-          // ทุกใบเท่ากันหมด — เปลี่ยนเป็น glowAlpha ต่อการ์ด (เดียวกับที่ backgroundImage ด้านบนใช้ และ
-          // เดียวกับที่มือถือ tune มาแล้วผ่าน theme.glow) ให้ลดหลั่นตามความสำคัญเหมือนกันทั้งสองแพลตฟอร์ม
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.12)' : 'inset 0 1px rgba(255,255,255,.05)'}, ${compact ? 'inset 0 -5.3px 13.2px rgba(0,0,0,.78), ' : ''}-6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}${compact ? ', 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)' : ''}`,
+          // v41: glow มุม box-shadow เดิม (-6px/-6px, 6px/6px) hardcode alpha "33" (~20%) คงที่ทุกใบ
+          // เท่ากันหมด — เปลี่ยนเป็น glowAlpha ต่อการ์ด (เดียวกับที่ backgroundImage ใช้ และเดียวกับที่
+          // มือถือ tune มาแล้วผ่าน theme.glow) ให้ลดหลั่นตามความสำคัญเหมือนกันทั้งสองแพลตฟอร์ม
+          // v48: ฟีดแบ็ก "Glow ย้ายจาก Card ไป Icon" — เดสก์ท็อป (!compact) ตัด glow มุม box-shadow นี้
+          // ออกทั้งคู่ (การ์ดสะอาดขึ้น) เหลือแค่เงาจริง (contact/inset) — glowAlpha ยังคำนวณไว้เหมือนเดิม
+          // เพราะไอคอนด้านล่าง (span.rounded-[10px]) ใช้ theme.main33 ของตัวเองอยู่แล้วแยกต่างหาก มือถือ
+          // (compact) ไม่แตะ ยังมี glow มุมเหมือนเดิมทุกประการ (tune มาแล้วหลายสิบรอบ ไม่ใช่จุดที่พูดถึงรอบนี้)
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.12)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.78), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}, 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)` : ''}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard)
@@ -354,7 +363,10 @@ export default function MetricCard({
                 // border บาง 1px สีธีม (คมชัด แทนเส้นหนาๆ) + inset highlight ลดความสว่างลง (.35→.15) ให้เป็น
                 // แค่ "ผิวมัน" บางๆ ไม่ใช่เส้นขอบขาวหนา ปล่อยให้ glow ด้านนอกทำหน้าที่เน้นความเด่นแทน
                 border: `1px solid ${theme.main}55`,
-                boxShadow: `inset 0 1px rgba(255,255,255,.15), inset 0 -3px 6px rgba(0,0,0,.5), 0 0 15px ${theme.main}33`,
+                // v48: ฟีดแบ็ก "Glow ย้ายจาก Card ไป Icon" — เดสก์ท็อป (!compact) ตัด glow มุมระดับการ์ด
+                // ออกแล้ว (ดู boxShadow การ์ดด้านบน) ชดเชยด้วยการเพิ่มรัศมี/ความเข้ม glow ของไอคอนนี้ขึ้น
+                // (15px/33 alpha -> 22px/4d alpha เฉพาะเดสก์ท็อป) มือถือ (compact) คงค่าเดิมทุกประการ
+                boxShadow: `inset 0 1px rgba(255,255,255,.15), inset 0 -3px 6px rgba(0,0,0,.5), 0 0 ${compact ? '15px' : '22px'} ${theme.main}${compact ? '33' : '4d'}`,
               }}
               aria-hidden="true"
             >

@@ -5,9 +5,9 @@ import {
   NOISE_BG,
   CARD_GRADIENT_CSS,
   CARD_INSET_SHADOW,
-  CARD_BORDER_CSS,
   CARD_REFLECTION_CSS,
   CARD_CURVATURE_HIGHLIGHT_CSS,
+  CARD_CORNER_GLEAM_CSS,
   CARD_MULTI_REFLECTION_CSS,
   CARD_AMBIENT_SHADOW_CSS,
   CARD_FLOAT_SHADOW,
@@ -67,26 +67,33 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // v20: "Titanium Reflection" — เพิ่ม CARD_MULTI_REFLECTION_CSS (เส้นทแยงสั้นๆ 3 เส้น ยาวไม่
           // เท่ากัน 2-3%) ซ้อนบนสุดอีกชั้น จำลองรอยขัดเงาหลายจุดที่แสงกระทบไม่พร้อมกัน ไม่ใช่รอยเดียวยาว
           // ต่อเนื่องแบบ CARD_REFLECTION_CSS อย่างเดียว
+          // v48: "Corner Gleam" — เพิ่ม CARD_CORNER_GLEAM_CSS เป็นชั้นบนสุด (ดึงมุมบนซ้ายให้มีประกายจาง
+          // ~2% แยกจาก CARD_CURVATURE_HIGHLIGHT_CSS ซึ่งอยู่กลางขอบบนไม่ใช่มุม) — เพิ่ม 1 layer ทำให้ทุก
+          // อาเรย์ background* ด้านล่างขยับ index ทั้งหมด (ดูหมายเหตุ CARD_MULTI_REFLECTION_CSS ด้านล่าง)
           backgroundImage: [
+            CARD_CORNER_GLEAM_CSS,
             CARD_MULTI_REFLECTION_CSS,
             CARD_CURVATURE_HIGHLIGHT_CSS,
             CARD_REFLECTION_CSS,
             'linear-gradient(135deg, rgba(255,255,255,.06) 0%, transparent 35%)',
             CARD_GRADIENT_CSS,
           ].join(', '),
-          // ชั้นที่ 3 (CARD_REFLECTION_CSS) ขยายสูงกว่ากล่องจริง (150%) + ตั้ง backgroundPosition ไว้ —
+          // ชั้นที่ 4 (CARD_REFLECTION_CSS) ขยายสูงกว่ากล่องจริง (150%) + ตั้ง backgroundPosition ไว้ —
           // ให้ :active เลื่อนตำแหน่งชั้นนี้ลงมานิดหน่อยได้ (ดู style jsx) จำลอง "แถบสะท้อนแสงขยับ" ตอน
-          // แตะการ์ด แทนที่จะเป็นภาพนิ่งตลอด — ชั้นอื่น (multi reflection, curvature highlight, rim
-          // light เฉียง, CARD_GRADIENT_CSS) คงขนาด/ตำแหน่งปกติไม่ขยับตาม
+          // แตะการ์ด แทนที่จะเป็นภาพนิ่งตลอด — ชั้นอื่น (corner gleam, multi reflection, curvature
+          // highlight, rim light เฉียง, CARD_GRADIENT_CSS) คงขนาด/ตำแหน่งปกติไม่ขยับตาม
           // หมายเหตุ: CARD_MULTI_REFLECTION_CSS เป็นสตริงที่รวม 3 เกรเดียนต์ไว้ในตัวเองแล้ว (คั่นด้วย
-          // comma) ดังนั้นนับเป็น 3 layer ไม่ใช่ 1 — background-size/position ด้านล่างต้องมี 3 ค่าแรก
-          // ตรงกับ 3 layer นั้นด้วย ไม่งั้น CSS จะไล่ค่าผิดตำแหน่งไปให้ layer อื่นแทน (spec: ถ้าจำนวนค่า
-          // น้อยกว่าจำนวน layer จะวนซ้ำ (cycle) ไม่ error แต่เลื่อนตำแหน่งผิดเงียบๆ)
-          backgroundSize: 'auto, auto, auto, 100% 100%, 100% 150%, 100% 100%, 100% 100%',
-          backgroundPosition: '0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%',
-          // ขอบเทาเย็นจางๆ (CARD_BORDER_CSS) แทนขอบส้ม rgba(255,180,70,.12) เดิม — เดิมทำให้ทุกการ์ด
-          // (รวม Today's Focus/Today's Workout ที่ไม่ใช่จุดเน้นสีส้มเสมอไป) มีขอบอมส้มตลอดเวลา
-          border: `1px solid ${CARD_BORDER_CSS}`,
+          // comma) ดังนั้นนับเป็น 3 layer ไม่ใช่ 1 — background-size/position ด้านล่างต้องมี 3 ค่าตรงกับ
+          // 3 layer นั้นด้วย ไม่งั้น CSS จะไล่ค่าผิดตำแหน่งไปให้ layer อื่นแทน (spec: ถ้าจำนวนค่าน้อยกว่า
+          // จำนวน layer จะวนซ้ำ (cycle) ไม่ error แต่เลื่อนตำแหน่งผิดเงียบๆ) — รวม corner gleam(1) +
+          // multi-reflection(3) + curvature(1) + reflection(1) + rim light(1) + gradient(1) = 8 layer
+          backgroundSize: 'auto, auto, auto, auto, 100% 100%, 100% 150%, 100% 100%, 100% 100%',
+          backgroundPosition: '0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%',
+          // v48: ฟีดแบ็ก "Border ทุก Card หนาเท่ากันหมด อยากให้ Outer Shadow ทำหน้าที่บอกขอบแทน Border
+          // บางส่วน จะดูแพงกว่า" — ตัด `border: 1px solid CARD_BORDER_CSS` (เส้นกรอบสม่ำเสมอทั้ง 4 ด้าน)
+          // ออกทั้งหมด ให้ CARD_AMBIENT_SHADOW_CSS/CARD_FLOAT_SHADOW (เงาลอย/แวดล้อมที่มีอยู่แล้ว) +
+          // contact shadow ใหม่ด้านล่าง ทำหน้าที่บอกขอบการ์ดแทน — ผิวมองต่อเนื่องกับพื้นหลังมากขึ้น ขอบ
+          // อ่านออกจากเงา/แสงตกกระทบ ไม่ใช่เส้นกรอบวาดทับ (CARD_INSET_SHADOW ยังให้ไฮไลต์มุมบนซ้ายอยู่)
           // v27: "Titanium Geometry" — ฟีดแบ็ก "Card ยัง Rounded Rectangle ธรรมดา อยากได้มุมตัดแบบ CNC
           // ทุก Card ให้เป็นลายเซ็นเดียวกันทั้งแอป" — ค่าเดียวกับที่ TodaysFocusCard.tsx ใช้อยู่ก่อนแล้ว
           // (มุมบนซ้ายตัด 18px มุมอื่นตัดเบา 4px) ย้ายมาเป็นดีฟอลต์กลางที่นี่แทน ให้การ์ดทุกใบที่ใช้
@@ -99,7 +106,10 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // แสงส้มยังโผล่ได้ตอน :active เท่านั้น (ดู style jsx ด้านล่าง) ไม่ใช่ทุกการ์ดตลอดเวลา
           // v21: เพิ่ม CARD_AMBIENT_SHADOW_CSS (เงากว้าง/นุ่ม/จางกว่า) ซ้อนก่อน CARD_FLOAT_SHADOW เดิม
           // (เทียบ contact shadow) ให้การ์ดมีทั้งเงาชิดขอบ + เงาแวดล้อมกว้างๆ แบบวางอยู่ในห้องจริง
-          boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}, ${CARD_INSET_SHADOW}`,
+          // v48: เพิ่ม contact shadow แคบๆ ท้ายสุด (0 0 0 1px เงาดำจาง ไม่ใช่ border) แทนที่เส้นกรอบเดิม —
+          // ให้ขอบยังแยกจากพื้นหลังได้ชัดพอ แต่เป็น "เงา" ไม่ใช่ "เส้น" (blur 0 แต่สีเป็นเงาดำโปร่งแสง
+          // ไม่ใช่สีขาว/เทาแบบ border เดิม จึงยังอ่านเป็นมิติความลึกไม่ใช่กรอบวาดทับ)
+          boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}, 0 0 0 1px rgba(0,0,0,.3), ${CARD_INSET_SHADOW}`,
           transition: 'box-shadow 150ms ease, background-position 200ms ease',
           ...style,
         }}
@@ -130,7 +140,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
             0 10px 30px rgba(0, 0, 0, 0.45),
             0 0 30px rgba(255, 138, 0, 0.15),
             inset 0 1px rgba(255, 255, 255, 0.04);
-          background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 8%, 0% 0%, 0% 0%;
+          background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 8%, 0% 0%, 0% 0%;
         }
       `}</style>
     </>

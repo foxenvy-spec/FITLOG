@@ -18,6 +18,7 @@ import {
   CARD_INSET_SHADOW,
   AMBER_GRADIENT_CSS,
   AMBER_GLOW_SHADOW,
+  CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import { recoveryStatusColor } from '@/lib/dashboardStats'
 import { MUSCLE_GROUP_BODY_REGION, DEFAULT_SECONDARY_BY_PRIMARY, type MuscleGroup } from '@/lib/muscle-groups'
@@ -332,24 +333,34 @@ function AiRingAvatar({ src }: { src?: string }) {
   // (ดูด้านล่าง) เป็นค่าสัมพัทธ์กับ container นี้อยู่แล้ว จึงขยายตามไปเองโดยไม่ต้องปรับเลขนั้นซ้ำ
   // v47: ฟีดแบ็ก "จะดี Hero มาก ถ้า Robot ใหญ่ขึ้นอีกนิด ~15%" — 110 -> 127 (110*1.15 ปัดเศษ) เหตุผลเดียวกับ
   // ด้านบน: scale(1.55)/inset:5 ไม่ต้องแก้ตาม ขยายตาม size โดยอัตโนมัติเพียงพอ
-  const size = 127
+  // v48: "Poster Crop" — ฟีดแบ็ก "Robot ใหญ่ขึ้นอีก ~15% แล้ว Crop แบบ Apple จะดูเหมือน Poster" —
+  // (1) ขนาด 127 -> 146 (127*1.15 ปัดเศษ) เหตุผลเดียวกับรอบก่อน (2) เปลี่ยนกรอบจากวงกลมสมบูรณ์
+  // (rounded-full) เป็นมุมตัด CNC เดียวกับการ์ดอื่นทั่วแอป (CNC_CORNER_CLIP_PATH_DEFAULT) — สี่เหลี่ยม
+  // มุมตัด อ่านเป็น "ภาพโปสเตอร์ที่ถูกจัดกรอบ" มากกว่าวงเหรียญ/badge (3) scale 1.55 -> 1.72 ครอปเข้าไป
+  // อีกนิด ให้ตัวโรบอทเต็มเฟรมแบบภาพสินค้า ไม่เหลือพื้นหลังว่างรอบขอบเยอะแบบก่อนหน้า
+  const size = 146
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       <div
-        className="absolute inset-0 rounded-full"
-        style={{ border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`, boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '25')}` }}
+        className="absolute inset-0"
+        style={{
+          border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
+          boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '25')}`,
+          clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
+        }}
       />
       <div
-        className="absolute rounded-full overflow-hidden flex items-center justify-center"
+        className="absolute overflow-hidden flex items-center justify-center"
         style={{
           inset: 5,
           backgroundImage: [TITANIUM_MESH_CSS, CARD_GRADIENT_CSS].join(', '),
           border: `1px solid ${CARD_BORDER_CSS}`,
           boxShadow: CARD_INSET_SHADOW,
+          clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       >
         {src ? (
-          <Image src={src} alt="" width={size} height={size} className="w-full h-full object-cover" style={{ transform: 'scale(1.55)' }} />
+          <Image src={src} alt="" width={size} height={size} className="w-full h-full object-cover" style={{ transform: 'scale(1.72)' }} />
         ) : (
           <span className="relative block" style={{ width: '58%' }}>
             <span
