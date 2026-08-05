@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useId } from 'react'
 import type { HealthSnapshot } from '@/lib/healthIntegration'
-import { COLORS } from '@/lib/theme'
+import { COLORS, withAlpha } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 
 interface TodayHealthStatsRowProps {
@@ -50,18 +50,58 @@ function MiniHealthWave({ color }: { color: string }) {
  * (connected: true) component นี้จะสลับไป render 3 คอลัมน์พร้อมค่าจริงให้เองทันที ไม่ต้องแก้ตรงนี้เพิ่ม
  */
 export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps) {
+  // v33: "Health App Card ยังไม่เข้าธีม ควรเป็น Glass Card" — เดิม bg-surface + border-dashed (กล่องขอบ
+  // ประ ธรรมดา) ไม่ใช่วัสดุชุดไหนในแอปเลย (ไม่ใช่ titanium ทึบแบบการ์ดข้อมูลจริง ไม่ใช่อะไรทั้งนั้น) —
+  // การ์ดนี้ต่างจากการ์ดอื่น ตรงที่เป็น "ยังไม่เชื่อมต่อ" (ไม่มีข้อมูลจริงให้โชว์) จึงตั้งใจใช้วัสดุคนละ
+  // ชุดกับ titanium ทึบ (CARD_GRADIENT_CSS) ของการ์ดข้อมูลจริงอื่นๆ โดยเจตนา — "Glass" โปร่งแสง/บาง เบา
+  // กว่า ให้ความรู้สึก "ช่องว่างรอเติม" ไม่ใช่ "แผ่นโลหะเหมือนของจริง" (ต่างจาก GlassCard.tsx เดิมที่ใช้
+  // โทนน้ำเงินกรมท่า — ปรับโทนให้เป็นเทาไทเทเนียม/อำพัน ให้ยังอยู่ในธีม Dark Titanium เดียวกับทั้งแอป)
   if (!health.connected) {
     return (
       <Link
         href="/profile"
-        className="rounded-[20px] bg-surface border border-line border-dashed px-4 flex items-center justify-between gap-3 active:bg-surface2 transition"
-        style={{ height: dashboardSpec.healthBanner.height }}
+        className="relative overflow-hidden rounded-[20px] flex items-center justify-between gap-3 px-4 backdrop-blur-md active:scale-[0.99] transition"
+        style={{
+          height: dashboardSpec.healthBanner.height,
+          background: 'linear-gradient(180deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.02) 40%, rgba(255,255,255,.015) 100%), rgba(22,23,26,.5)',
+          border: '1px solid rgba(255,255,255,.12)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,.14), 0 8px 20px rgba(0,0,0,.3)',
+        }}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="text-base shrink-0" aria-hidden="true">🔥👣🌙</span>
-          <p className="text-xs text-muted truncate">เชื่อมต่อ Health App เพื่อดู kcal / ก้าว / นอนหลับ</p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center -space-x-2 shrink-0">
+            {(['calories', 'steps', 'sleepHours'] as const).map((key) => {
+              const meta = METRIC_META[key]
+              return (
+                <span
+                  key={key}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px]"
+                  style={{
+                    backgroundColor: withAlpha(meta.color, '26'),
+                    border: `1px solid ${withAlpha(meta.color, '55')}`,
+                    boxShadow: `0 0 8px ${withAlpha(meta.color, '33')}`,
+                  }}
+                  aria-hidden="true"
+                >
+                  {meta.icon}
+                </span>
+              )
+            })}
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-[11px] tracked uppercase text-ink truncate">เชื่อมต่อ Health App</p>
+            <p className="text-[9.5px] text-muted truncate">ติดตามสุขภาพได้ครบในที่เดียว</p>
+          </div>
         </div>
-        <span className="text-[11px] text-amber shrink-0 whitespace-nowrap">เชื่อมต่อ →</span>
+        <span
+          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.05)' }}
+          aria-hidden="true"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke={COLORS.amber} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </Link>
     )
   }
