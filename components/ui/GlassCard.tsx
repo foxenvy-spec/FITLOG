@@ -25,6 +25,13 @@ const ROUNDED = {
 // GlassCard — พื้นผิว "กระจกฝ้า" (glass/blur/glow แบบ Apple) ใช้ซ้ำได้ทุกจุดในแอปที่ต้องการลุคนี้
 // เช่น ปุ่มกลม (กระดิ่งแจ้งเตือน) หรือการ์ดลอยตัว — ไม่ผูกกับ dashboard โดยเฉพาะ
 //
+// v43: ฟีดแบ็ก "มีอะไรที่ยังไม่ได้ทำไหมครับ" ตามด้วยตรวจสอบทั้งโค้ดเบส — พื้นเดิมเป็นกรมท่า
+// (#13233A/#08121F) วัสดุเดียวกับที่ MetricCard เดสก์ท็อป/DashboardView date badge เคยใช้ก่อนรอบ
+// "Minimal Dark Titanium" (v41) ซึ่งแก้ไปหมดแล้ว ยกเว้นตัวนี้ (กระดิ่งแจ้งเตือนใช้ GlassCard นี้อยู่
+// ทั้งมือถือ/เดสก์ท็อป) — เปลี่ยนพื้นเป็นโทนไทเทเนียมเข้ม (ตระกูลสีเดียวกับ CARD_GRADIENT_CSS แต่เก็บ
+// alpha "cc" ไว้เพื่อความโปร่งแสงแบบกระจกเดิม ไม่ได้เปลี่ยนเป็นทึบ) — glow ขอบ/เงา (glowColor) ไม่แตะ
+// เพราะเป็นปุ่มไอคอนเล็ก ไม่ใช่การ์ดข้อมูลเต็มใบแบบที่ต้องลด glow แรงๆ แบบรอบก่อน
+//
 // polymorphic ผ่าน prop `as` (ดีฟอลต์เป็น div, ส่ง as="button" เพื่อได้ปุ่มที่กดได้พร้อม type ที่ถูกต้อง)
 export default function GlassCard<T extends ElementType = 'div'>({
   children,
@@ -40,7 +47,7 @@ export default function GlassCard<T extends ElementType = 'div'>({
       className={`relative backdrop-blur-md ${ROUNDED[rounded]} ${className}`}
       style={{
         border: '1.5px solid transparent',
-        backgroundImage: `linear-gradient(180deg, #13233Acc, #08121Fcc), linear-gradient(135deg, ${glowColor}14, ${glowColor}40, ${glowColor}14)`,
+        backgroundImage: `linear-gradient(180deg, #1B1D20cc, #0D0E10cc), linear-gradient(135deg, ${glowColor}14, ${glowColor}40, ${glowColor}14)`,
         backgroundOrigin: 'border-box',
         backgroundClip: 'padding-box, border-box',
         boxShadow: `0 4px 14px rgba(0,0,0,.35), 0 0 16px ${glowColor}66`,
