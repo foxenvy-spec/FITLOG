@@ -22,6 +22,8 @@ import type { Insight } from '@/lib/dashboardStats'
 import { zoneOf, classifyMetric, summarizeHealthScore, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
 import { saveAge } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
+import PremiumCard from '@/components/ui/PremiumCard'
+import { CARD_GRADIENT_CSS } from '@/lib/theme'
 
 function todayStr() {
   const d = new Date()
@@ -1055,9 +1057,9 @@ export default function HealthPage() {
             {muscleFatItems.length > 0 ? (
               <MuscleFatAnalysisChart items={muscleFatItems} unit={unit} />
             ) : (
-              <p className="text-[11px] text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
+              <PremiumCard className="text-[11px] text-muted px-4 py-3">
                 อยากดูกราฟ Muscle Fat Analysis (น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน เทียบช่วงมาตรฐาน) — กรอกช่วงมาตรฐานจากรายงานเครื่องชั่งในฟอร์มด้านล่าง (ช่อง &quot;ช่วงมาตรฐาน&quot;) สักครั้ง แล้วกราฟจะขึ้นให้อัตโนมัติ
-              </p>
+              </PremiumCard>
             )}
           </div>
 
@@ -1066,7 +1068,7 @@ export default function HealthPage() {
           {!latest?.bmr_kcal && <BmrEstimateCard profile={profile} weightKg={latest?.weight_kg ?? null} />}
 
           {healthInsights.length > 0 && (
-            <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+            <PremiumCard className="p-4">
               <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
                 Insight &amp; Recommendation
                 <span className="text-muted">
@@ -1087,7 +1089,7 @@ export default function HealthPage() {
                   ดูคำแนะนำเพิ่มเติม
                 </button>
               )}
-            </div>
+            </PremiumCard>
           )}
         </div>
       )}
@@ -1251,16 +1253,16 @@ export default function HealthPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
+                  <PremiumCard className="text-[11px] text-muted px-4 py-3">
                     ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มในหมวดนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งก่อน แล้วกราฟจะขึ้นให้อัตโนมัติ
-                  </p>
+                  </PremiumCard>
                 )
               ) : selectedTrend && selectedTrend.data.length > 1 ? (
                 <MetricRowCard trend={selectedTrend} periodLabel={`${trendPeriodDays} วัน`} />
               ) : (
-                <p className="text-[11px] text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
+                <PremiumCard className="text-[11px] text-muted px-4 py-3">
                   ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มในหมวดนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งก่อน แล้วกราฟจะขึ้นให้อัตโนมัติ
-                </p>
+                </PremiumCard>
               )}
 
               {trendGroup === 'comp' && <ForecastCard metrics={metrics} toDisplay={toDisplay} unit={unit} />}
@@ -1285,9 +1287,9 @@ export default function HealthPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
+                  <PremiumCard className="text-[11px] text-muted px-4 py-3">
                     ยังไม่มีการเปลี่ยนแปลงที่ชัดเจนพอในช่วง {trendPeriodDays} วันนี้
-                  </p>
+                  </PremiumCard>
                 )}
               </div>
 
@@ -1311,7 +1313,7 @@ export default function HealthPage() {
           <section>
             <h2 className="font-display text-sm tracked uppercase text-muted mb-3">ประวัติการวัดผล</h2>
             {metrics.length === 0 ? (
-              <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-8 text-center space-y-3">
+              <PremiumCard className="px-4 py-8 text-center space-y-3">
                 <div className="text-3xl">📏</div>
                 <p className="text-sm text-muted">ยังไม่มีข้อมูล เริ่มบันทึกครั้งแรกได้เลย</p>
                 <a
@@ -1320,11 +1322,11 @@ export default function HealthPage() {
                 >
                   + บันทึกครั้งแรก
                 </a>
-              </div>
+              </PremiumCard>
             ) : (
-              <ul className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+              <PremiumCard className="divide-y divide-white/5">
                 {metrics.map((m) => (
-                  <li key={m.id} className="tally-row px-4 py-3">
+                  <div key={m.id} className="tally-row px-4 py-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono text-muted">{shortLabel(m.measured_at)}</span>
                       <button
@@ -1354,9 +1356,9 @@ export default function HealthPage() {
                       {m.visceral_fat_grade !== null && <span>ไขมันช่องท้อง ระดับ {m.visceral_fat_grade}</span>}
                       {m.bmr_kcal !== null && <span>BMR {m.bmr_kcal} kcal</span>}
                     </p>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </PremiumCard>
             )}
           </section>
         </div>
@@ -1577,22 +1579,31 @@ function imageKeyFor(trendKey: string): string | undefined {
 
 // ไอคอนตัวชี้วัด — ใช้รูปจริงจากชุดไอคอนถ้ามี (ไม่ต้องมีวงกลมพื้นหลัง เพราะรูปมีสี/พื้นหลังในตัวอยู่แล้ว)
 // ถ้าตัวชี้วัดนั้นยังไม่มีรูป (เช่น เกลือแร่, รอบเอว) ใช้ไอคอนเส้น SVG เดิม + วงกลมสีพื้นหลังแทน
+// v47: ฟีดแบ็ก "ตรวจสอบหน้าอื่นๆ ที่ยังไม่ได้ผ่านธีม Dark Titanium" — ไอคอนชิปนี้เดิมไม่มีพื้นวัสดุเลย (รูป
+// ลอยเปล่าๆ) หรือพื้นทึบสีเดียว (แบบ Icon fallback) คนละภาษากับชิปไอคอนของ MetricCard บน Dashboard
+// (CARD_GRADIENT_CSS ไทเทเนียม + จุดสีธีมแต้มมุม) ทั้งที่ใช้ไอคอนชุดเดียวกัน (STAT_ICON_IMAGES ตรงกับ
+// METRIC_ICON_IMAGES ของ Dashboard) — เปลี่ยนให้ใช้สูตรเดียวกันเป๊ะ ให้สองหน้าดูเป็นภาษาเดียวกัน
 function MetricIconChip({ iconKey, imageKey, color, size = 28 }: { iconKey: string; imageKey?: string; color: string; size?: number }) {
   const src = imageKey ? STAT_ICON_IMAGES[imageKey] : undefined
-  if (src) {
-    return (
-      <span className="shrink-0 inline-block" style={{ width: size, height: size }}>
-        <Image src={src} alt="" width={size} height={size} className="w-full h-full object-contain" />
-      </span>
-    )
-  }
   const Icon = TREND_ICONS[iconKey] ?? ScaleIcon
   return (
     <span
-      className="shrink-0 rounded-full flex items-center justify-center"
-      style={{ width: size, height: size, background: `${color}26`, color }}
+      className="relative shrink-0 rounded-[10px] overflow-hidden flex items-center justify-center"
+      style={{
+        width: size,
+        height: size,
+        backgroundImage: `radial-gradient(circle at 30% 25%, ${color}55, transparent 65%), ${CARD_GRADIENT_CSS}`,
+        border: `1px solid ${color}55`,
+        boxShadow: `inset 0 1px rgba(255,255,255,.15), inset 0 -2px 4px rgba(0,0,0,.5), 0 0 10px ${color}33`,
+      }}
     >
-      <Icon />
+      {src ? (
+        <Image src={src} alt="" width={size} height={size} className="relative" style={{ width: '68%', height: '68%', objectFit: 'contain' }} />
+      ) : (
+        <span className="relative flex items-center justify-center" style={{ color }}>
+          <Icon />
+        </span>
+      )}
     </span>
   )
 }
@@ -1636,7 +1647,7 @@ function TopStatCard({
   const gradientId = `spark-${iconKey}-${label}`.replace(/[^a-zA-Z0-9-]/g, '')
 
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
+    <PremiumCard className="px-4 py-3.5">
       <div className="flex items-center gap-2 mb-1.5">
         <MetricIconChip iconKey={iconKey} imageKey={imageKey} color={color} size={24} />
         <span className="text-[11px] tracked uppercase text-muted truncate">{label}</span>
@@ -1670,7 +1681,7 @@ function TopStatCard({
           <ZoneBadge zone={zone} />
         </div>
       ) : null}
-    </div>
+    </PremiumCard>
   )
 }
 
@@ -1686,7 +1697,7 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
   const deltaGood = delta !== null && (trend.direction === 'higherBetter' ? delta >= 0 : delta <= 0)
 
   return (
-    <section className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+    <PremiumCard as="section" className="p-4">
       <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,150px)_1fr_minmax(0,170px)] gap-3 sm:gap-4 sm:items-center">
         {/* คอลัมน์ซ้าย: ไอคอน + ชื่อตัวชี้วัด (อยู่ข้างหน้า) + ค่าปัจจุบัน + การเปลี่ยนแปลง (แสดงติดกับค่า) */}
         <div className="flex items-start gap-2 min-w-0">
@@ -1769,7 +1780,7 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
           <div className="hidden sm:block" />
         )}
       </div>
-    </section>
+    </PremiumCard>
   )
 }
 
@@ -1835,7 +1846,7 @@ function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toD
   }, [metrics, toDisplay, unit])
 
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+    <PremiumCard className="p-4">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-amber">
           <TrendUpIcon />
@@ -1870,7 +1881,7 @@ function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toD
           </p>
         </>
       )}
-    </div>
+    </PremiumCard>
   )
 }
 
@@ -1888,7 +1899,7 @@ function HealthScoreCard({
   const label = pct >= 85 ? 'ดีมาก' : pct >= 65 ? 'ดี' : pct >= 40 ? 'มาตรฐาน' : 'ควรปรับปรุง'
   const ringColor = pct >= 85 ? '#7A9B57' : pct >= 65 ? '#7A9B57' : pct >= 40 ? '#E8A33D' : '#C1503A'
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+    <PremiumCard className="p-4">
       <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คะแนนสุขภาพรวม</h2>
       {score.total === 0 ? (
         <p className="text-[11px] text-muted">กรอกช่วงมาตรฐานในฟอร์มบันทึกข้อมูล เพื่อดูคะแนนสุขภาพตรงนี้</p>
@@ -1930,7 +1941,7 @@ function HealthScoreCard({
           </div>
         </div>
       )}
-    </div>
+    </PremiumCard>
   )
 }
 
@@ -1947,7 +1958,7 @@ function GoalsCard({
   goalProgressPct: (g: Goal) => number | null
 }) {
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+    <PremiumCard className="p-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-sm tracked uppercase text-muted">เป้าหมายของคุณ</h2>
         <a href="/calendar" className="text-[10px] text-amber underline">
@@ -1984,7 +1995,7 @@ function GoalsCard({
       >
         ดูเป้าหมายทั้งหมด
       </a>
-    </div>
+    </PremiumCard>
   )
 }
 
@@ -2012,7 +2023,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
   const waterLiters = latestWeightKg != null ? Math.round((latestWeightKg * 0.035) * 10) / 10 : null
 
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg p-4">
+    <PremiumCard className="p-4">
       <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คำแนะนำสำหรับคุณ</h2>
       <div className="space-y-2">
         {highlight && (
@@ -2055,7 +2066,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
           </div>
         </div>
       </div>
-    </div>
+    </PremiumCard>
   )
 }
 
@@ -2084,11 +2095,11 @@ function ObesityAnalysisChart({
           <InfoIcon />
         </span>
       </h2>
-      <div className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-5">
+      <PremiumCard className="p-4 space-y-5">
         {bmi !== null && (
           <ZoneBarRow label="BMI (kg/m²)" value={bmi} min={10} low={18.5} high={25} max={40} decimals={1} imageKey="bmiObesity" iconKey="bmi" />
         )}
-        {bmi !== null && bodyFatPct !== null && <div className="border-t border-line" />}
+        {bmi !== null && bodyFatPct !== null && <div className="border-t border-white/5" />}
         {bodyFatPct !== null && (
           <ZoneBarRow
             label="Body fat rate (%)"
@@ -2103,7 +2114,7 @@ function ObesityAnalysisChart({
             iconKey="fat"
           />
         )}
-      </div>
+      </PremiumCard>
     </section>
   )
 }
@@ -2206,13 +2217,13 @@ function MuscleFatAnalysisChart({
           <InfoIcon />
         </span>
       </h2>
-      <div className="bg-surface border border-line shadow-elevated rounded-lg divide-y divide-line">
+      <PremiumCard className="divide-y divide-white/5">
         {items.map((it) => (
           <div key={it.label} className="p-4">
             <MuscleFatBarRow {...it} unit={unit} />
           </div>
         ))}
-      </div>
+      </PremiumCard>
     </section>
   )
 }
@@ -2340,7 +2351,7 @@ function IconStatCard({
           : ''
 
   return (
-    <div className="h-full bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5 flex flex-col justify-between">
+    <PremiumCard className="h-full px-4 py-3.5 flex flex-col justify-between">
       <div className="flex items-start gap-2 mb-2">
         <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={32} />
         <div className="min-w-0">
@@ -2364,8 +2375,7 @@ function IconStatCard({
           </span>
         ) : null}
       </div>
-    </div>
-  
+    </PremiumCard>
   )
 }
 
@@ -2388,7 +2398,7 @@ function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profil
   if (dismissed) return null
 
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+    <PremiumCard className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
       <p className="text-xs text-muted">
         ระบุเพศเพื่อประเมินเกณฑ์มาตรฐาน<span className="text-ink">น้ำในร่างกาย โปรตีน และไขมันในร่างกาย</span>ให้แม่นยำขึ้น
       </p>
@@ -2413,7 +2423,7 @@ function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profil
           ข้าม
         </button>
       </div>
-    </div>
+    </PremiumCard>
   )
 }
 
@@ -2675,7 +2685,7 @@ function MetricForm({
   }
 
   return (
-    <form id="metric-form" onSubmit={handleSubmit} className="space-y-3 bg-surface border border-line shadow-elevated rounded-lg p-4">
+    <PremiumCard as="form" id="metric-form" onSubmit={handleSubmit} className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm tracked uppercase text-muted">บันทึกวัดผลใหม่</h2>
         <input
@@ -2755,7 +2765,7 @@ function MetricForm({
       >
         {saving ? 'กำลังบันทึก...' : 'บันทึก'}
       </button>
-    </form>
+    </PremiumCard>
   )
 }
 
@@ -2764,12 +2774,12 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
 
   if (!profile?.age || !profile?.height_cm || !profile?.sex || !weightKg) {
     return (
-      <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
+      <PremiumCard className="px-4 py-3.5">
         <h2 className="font-display text-sm tracked uppercase text-muted mb-1">BMR/TDEE โดยประมาณ</h2>
         <p className="text-[11px] text-muted">
           กรอกอายุ, ส่วนสูง, เพศ และน้ำหนักล่าสุดให้ครบ (แท็บ &quot;บันทึกข้อมูล&quot;) เพื่อประมาณอัตราการเผาผลาญพื้นฐาน
         </p>
-      </div>
+      </PremiumCard>
     )
   }
 
@@ -2777,7 +2787,7 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
   const tdee = computeTdee(bmr, activity)
 
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5 space-y-3">
+    <PremiumCard className="px-4 py-3.5 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm tracked uppercase text-muted">BMR/TDEE โดยประมาณ</h2>
         <span className="text-[10px] text-muted">สูตร Mifflin-St Jeor</span>
@@ -2815,7 +2825,7 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
       <p className="text-[10px] text-muted/70">
         * เป็นค่าประมาณจากสูตรทั่วไป ไม่ใช่ค่าที่วัดจริง ถ้ามีค่า BMR จากรายงานเครื่องชั่งจะใช้ค่านั้นแทนอัตโนมัติ (แม่นกว่า)
       </p>
-    </div>
+    </PremiumCard>
   )
 }
 
@@ -2908,7 +2918,7 @@ function PhotosTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-3">
+      <PremiumCard className="p-4 space-y-3">
         <h2 className="font-display text-sm tracked uppercase text-muted">เพิ่มรูป</h2>
         <input
           value={label}
@@ -2923,7 +2933,7 @@ function PhotosTab({
           <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} className="hidden" />
         </label>
         {error && <p className="text-sm text-rusttext">{error}</p>}
-      </div>
+      </PremiumCard>
 
       {photos.length >= 2 && (
         <section>
@@ -2968,9 +2978,9 @@ function PhotosTab({
       <section>
         <h2 className="font-display text-sm tracked uppercase text-muted mb-3">รูปทั้งหมด</h2>
         {photos.length === 0 ? (
-          <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-6 text-center">
+          <PremiumCard className="text-sm text-muted px-4 py-6 text-center">
             ยังไม่มีรูป
-          </p>
+          </PremiumCard>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
             {photos.map((p) => (
