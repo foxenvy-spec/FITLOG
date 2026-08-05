@@ -1046,20 +1046,30 @@ export default function DashboardPage() {
                             glow
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
+                        {/* v47: ฟีดแบ็ก "Recovery ยังเป็น Box เยอะ ถ้าทำเป็น Heatmap หรือ Muscle Grid จะดู
+                            ฉลาดกว่า" — เปลี่ยนจาก list 2 คอลัมน์ (จุดสี+ชื่อ+%) เป็น grid ไทล์สี่เหลี่ยม 4
+                            คอลัมน์แบบ GitHub contribution graph — สีพื้นไทล์เข้มขึ้นตาม % ฟื้นตัว (ยิ่งฟื้นตัว
+                            มาก ไทล์ยิ่ง "เต็ม") ใช้สีเดียวกับ recoveryStatusColor() เดิมทุกประการ (แดง/เหลือง/
+                            เขียว 3 ระดับ) แค่เปลี่ยนวิธีนำเสนอ ไม่ใช่คิดสเกลสีใหม่ */}
+                        <div className="grid grid-cols-4 gap-1.5 flex-1 min-w-0">
                           {RECOVERY_MUSCLES.map((mg) => {
                             const pct = recoveryPctMap[mg]
                             const color = recoveryStatusColor(pct)
+                            // อัลฟาพื้นไทล์ไล่ตาม % (21-99 hex ~ 13%-60%) ให้ยิ่งฟื้นตัวมากไทล์ยิ่งทึบ/เข้ม
+                            // เหมือน "ชาร์จเต็ม" แทนที่จะเป็นสีเดียวกันหมดแล้วต่างแค่ตัวเลข
+                            const alphaHex = Math.round(33 + (pct / 100) * 120)
+                              .toString(16)
+                              .padStart(2, '0')
                             return (
                               <div
                                 key={mg}
-                                className="flex items-center justify-between gap-2 rounded-md bg-surface2 px-2.5 py-2"
+                                className="rounded-md px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-center"
+                                style={{ backgroundColor: `${color}${alphaHex}`, border: `1px solid ${color}40` }}
                               >
-                                <span className="flex items-center gap-1.5 text-xs text-ink">
-                                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                  {mg}
-                                </span>
-                                <span className="font-mono text-xs shrink-0" style={{ color }}>
+                                {/* leading-tight ให้ตัดขึ้นบรรทัดใหม่แทน truncate — "แกนกลางลำตัว" (ชื่อยาวสุด)
+                                    ตัดกลาง ".." แล้วอ่านไม่รู้เรื่องถ้าใช้ truncate บรรทัดเดียวในไทล์แคบขนาดนี้ */}
+                                <span className="text-[9px] text-ink leading-tight">{mg}</span>
+                                <span className="font-mono text-[10px] leading-none" style={{ color }}>
                                   {pct}%
                                 </span>
                               </div>
