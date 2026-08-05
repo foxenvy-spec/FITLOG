@@ -8,7 +8,15 @@ import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { findExerciseByName } from '@/lib/exercises'
-import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
+import {
+  COLORS,
+  NEUTRAL,
+  withAlpha,
+  CARD_BORDER_CSS,
+  CARD_AMBIENT_SHADOW_CSS,
+  CARD_FLOAT_SHADOW,
+  CNC_CORNER_CLIP_PATH_DEFAULT,
+} from '@/lib/theme'
 import PremiumCard from '@/components/ui/PremiumCard'
 import ProgressRing from '@/components/ui/ProgressRing'
 import {
@@ -802,7 +810,10 @@ export default function SessionPage() {
 
   if (phase === 'empty') {
     return (
-      <div className="rounded-lg bg-surface border border-line shadow-elevated border-dashed px-4 py-10 text-center space-y-3">
+      // เดิม border-dashed สื่อความหมาย "ว่างเปล่า/ยังไม่ตั้งค่า" — PremiumCard ตัด border ทึบออกแล้ว
+      // (v48: ใช้ contact shadow บอกขอบแทน) ส่ง border ทับผ่าน style (ชนะ default ของ PremiumCard เพราะ
+      // ...style วางท้ายสุดเสมอ) แทนที่จะพึ่ง className ซึ่งชนะ inline style ของ PremiumCard ไม่ได้
+      <PremiumCard className="px-4 py-10 text-center space-y-3" style={{ border: `1px dashed ${CARD_BORDER_CSS}` }}>
         <p className="text-sm text-muted">ยังไม่มีโปรแกรมตั้งไว้สำหรับวันนี้ เลยเริ่มเซสชันไม่ได้</p>
         <div className="flex gap-2 justify-center">
           <a href="/program" className="text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 inline-block">
@@ -812,7 +823,7 @@ export default function SessionPage() {
             บันทึกอิสระแทน
           </a>
         </div>
-      </div>
+      </PremiumCard>
     )
   }
 
@@ -985,7 +996,7 @@ export default function SessionPage() {
       </div>
 
       {showAddExercise ? (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-2.5">
+        <PremiumCard className="px-4 py-3.5 space-y-2.5">
           <p className="text-[10px] tracked uppercase text-muted">เพิ่มท่านอกแผน</p>
           <ExercisePicker
             value={newExerciseName}
@@ -1018,7 +1029,7 @@ export default function SessionPage() {
               เพิ่มท่านี้
             </button>
           </div>
-        </div>
+        </PremiumCard>
       ) : (
         <button
           type="button"
@@ -1029,14 +1040,20 @@ export default function SessionPage() {
         </button>
       )}
 
+      {/* v48: การ์ดหลักนี้มีพื้นหลัง radial-gradient เฉพาะตัว (ไม่ใช่ CARD_GRADIENT_CSS ไทเทเนียมทั่วไป) —
+          ไม่ห่อด้วย PremiumCard เพราะจะไปแทนที่พื้นหลังนี้ (backgroundImage ของ PremiumCard ชนะทับ) แค่ตัด
+          border-line เส้นกรอบทึบออก ให้ contact shadow ตัวเดียวกับ PremiumCard บอกขอบแทน + มุมตัด CNC
+          เดียวกับการ์ดอื่นทั่วแอป ให้ยังอยู่ในตระกูลภาพเดียวกันแม้ไม่ได้ใช้ wrapper */}
       <div
-        className="rounded-xl border border-line shadow-elevated overflow-hidden"
+        className="overflow-hidden"
         style={{
           background:
             'radial-gradient(circle at 88% 15%, rgba(255,138,0,0.20), transparent 55%), #1C1F24',
+          boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}, 0 0 0 1px rgba(0,0,0,.3)`,
+          clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       >
-        <div className="relative overflow-hidden border-b border-line min-h-[190px]">
+        <div className="relative overflow-hidden border-b border-white/5 min-h-[190px]">
           {/* รูปท่าออกกำลังกายแบบเต็มมุมขวา — ไม่ mask เนื้อรูปแล้ว (เห็นเต็มภาพตามที่อยากได้) แต่ต้องมี
               ฉากมืดจางๆ (scrim) แยกอีกชั้นทับอยู่บนรูป (ไม่ใช่ตัวรูปเอง) เฉพาะโซนที่วางตัวหนังสือของแอป
               (ชื่อท่า/เป้าหมาย/RIR/พัก) ไม่งั้นตัวหนังสือของแอปจะไปทับกับตัวหนังสือที่ฝังอยู่ในรูปเอง
@@ -1209,7 +1226,7 @@ export default function SessionPage() {
       </div>
 
       {showSwapExercise && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-2.5">
+        <PremiumCard className="px-4 py-3.5 space-y-2.5">
           <p className="text-[10px] tracked uppercase text-muted">
             เปลี่ยนท่า &quot;{current.exercise_name}&quot; เป็นท่าอื่น
             {currentState.setsLog.length > 0 && ` (บันทึก ${currentState.setsLog.length} เซ็ตที่ทำไปแล้วไว้ก่อน)`}
@@ -1246,7 +1263,7 @@ export default function SessionPage() {
               {swapping ? 'กำลังเปลี่ยน...' : 'เปลี่ยนเป็นท่านี้'}
             </button>
           </div>
-        </div>
+        </PremiumCard>
       )}
 
       {errorMsg && <p className="text-xs text-rusttext text-center">{errorMsg}</p>}
@@ -1277,7 +1294,11 @@ export default function SessionPage() {
 
       {/* sidebar รายชื่อท่าทั้งหมด — โชว์เฉพาะจอกว้าง (lg+) แทน progress chips เพื่อใช้พื้นที่ว่างข้างการ์ด */}
       <div className="hidden lg:block">
-        <div className="sticky top-4 rounded-lg bg-surface border border-line shadow-elevated p-3 space-y-0.5">
+        {/* position: sticky ผ่าน style ตรงๆ แทนคลาส Tailwind `sticky` — PremiumCard ใส่คลาส `relative`
+            มาเป็นฐานอยู่แล้ว (className ของ component เอง) การชนกันของ 2 คลาสที่ตั้งค่า position คนละค่า
+            ขึ้นกับลำดับใน stylesheet ที่คอมไพล์ ไม่ใช่ลำดับใน className string — ใช้ style ให้ชนะแน่นอน
+            (inline style ชนะทุกคลาสเสมอตามสเปก CSS specificity) กันสถานะเมนูข้างไม่ sticky จริงเงียบๆ */}
+        <PremiumCard className="p-3 space-y-0.5" style={{ position: 'sticky', top: 16 }}>
           <p className="text-[10px] tracked uppercase text-muted px-1.5 pb-1.5">ท่าในเซสชันนี้</p>
           <ul className="space-y-0.5">
             {exercises.map((ex, i) => {
@@ -1307,7 +1328,7 @@ export default function SessionPage() {
               )
             })}
           </ul>
-        </div>
+        </PremiumCard>
       </div>
     </div>
   )
@@ -1328,23 +1349,23 @@ function GlowIconChip({ icon, color, size = 36 }: { icon: React.ReactNode; color
 
 function GlowStatCell({ icon, color, value, label }: { icon: React.ReactNode; color: string; value: string; label: string }) {
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg py-3.5 px-2 flex flex-col items-center gap-1.5">
+    <PremiumCard className="py-3.5 px-2 flex flex-col items-center gap-1.5">
       <GlowIconChip icon={icon} color={color} size={34} />
       <p className="font-mono text-lg text-ink tabular">{value}</p>
       <p className="text-[9px] tracked uppercase text-muted">{label}</p>
-    </div>
+    </PremiumCard>
   )
 }
 
 function GlowStatRow({ icon, color, value, label }: { icon: React.ReactNode; color: string; value: string; label: string }) {
   return (
-    <div className="bg-surface border border-line shadow-elevated rounded-lg px-3.5 py-3.5 flex items-center gap-3">
+    <PremiumCard className="px-3.5 py-3.5 flex items-center gap-3">
       <GlowIconChip icon={icon} color={color} size={40} />
       <div className="min-w-0 text-left">
         <p className="font-mono text-lg text-ink tabular truncate">{value}</p>
         <p className="text-[9px] tracked uppercase text-muted">{label}</p>
       </div>
-    </div>
+    </PremiumCard>
   )
 }
 
