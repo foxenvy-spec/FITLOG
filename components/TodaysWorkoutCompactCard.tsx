@@ -220,31 +220,19 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         style={{ padding: dashboardSpec.workoutCard.padding, maxWidth: '68%' }}
       >
         <div className="relative shrink-0 flex items-center justify-center">
-          {/* v21: "Orange Core" — ฟีดแบ็ก "Ring Icon ใน Banner ยังดูต่างจาก Ring Hero" — Hero Ring
+          {/* v21/v31: "Orange Core" — ฟีดแบ็ก "Ring Icon ใน Banner ยังดูต่างจาก Ring Hero" — Hero Ring
               (FitnessScore.tsx) มีชั้น Fog/Bloom/Core อยู่หลังวงอยู่แล้ว badge เล็กในนี้ไม่มีเลย เพิ่ม
               glow อำพันชั้นเดียว (ไม่ใช่ 3 ชั้นแบบ Hero เพราะ badge เล็กกว่ามาก 76px vs 110px) ไว้หลังวง
               ให้รู้สึกว่าเป็น "แกนแสง" เดียวกับ Ring Hero ไม่ใช่ badge ลอยเดี่ยวๆ ไม่มีแสงรอบตัวเลย —
-              v29: ตัด animation หายใจ (v22) ออก ให้เป็นแกนแสงนิ่งๆ ฐาน — Motion ของวงย้ายไปอยู่ที่ชั้น
-              "Ring Glow" หมุนด้านล่างแทน (สเปคใหม่: Animation เหลือแค่ 3 อย่างทั้งแอป) */}
+              v31: ฟีดแบ็ก "เหลือแค่ 7 Animation ทั้งแอป — Hero Card: sweep 10s เท่านั้น" — ตัด "Ring Glow"
+              หมุน (v29) ออกทั้งชั้น วงนี้กลับไปเป็นแกนแสงนิ่งเหมือนเดิม การ์ดนี้เหลือ animation เดียวคือ
+              Light Sweep ที่พื้นหลังการ์ดด้านล่าง */}
           <div
             className="absolute rounded-full pointer-events-none"
             style={{
               width: dashboardSpec.workoutCard.ringSize * 1.6,
               height: dashboardSpec.workoutCard.ringSize * 1.6,
               background: `radial-gradient(circle, ${COLORS.amber}40, transparent 60%)`,
-            }}
-            aria-hidden="true"
-          />
-          {/* v29: "Ring Glow" — ฟีดแบ็ก "Animation เหลือแค่ 3 อย่าง: 1) Ring Glow หมุนช้ามาก 15-20 วิ/รอบ"
-              — conic-gradient ส่วนโค้งสว่างจุดเดียว (ไม่ใช่วงเต็มสมมาตรแบบ Orange Core ด้านบนซึ่งหมุนแล้ว
-              มองไม่ออก) หมุนรอบช้าๆ 18 วิ/รอบ จำลองแสงที่ "กวาดวนรอบวง" ต่อเนื่อง แทนการหายใจ scale/opacity
-              เดิม — นี่คือ 1 ใน 3 animation ที่เหลืออยู่ทั้งการ์ด (อีก 2: Light Sweep, Particle) */}
-          <div
-            className="workout-ring-glow-rotate absolute rounded-full pointer-events-none"
-            style={{
-              width: dashboardSpec.workoutCard.ringSize * 1.6,
-              height: dashboardSpec.workoutCard.ringSize * 1.6,
-              backgroundImage: `conic-gradient(from 0deg, transparent 0deg, ${COLORS.amber}4d 35deg, transparent 90deg, transparent 360deg)`,
             }}
             aria-hidden="true"
           />
@@ -330,15 +318,15 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         <Image src="/icons/today-workout-icon-arrow.png" alt="" width={32} height={32} className="w-full h-full object-cover" />
       </span>
       <style jsx>{`
-        /* v29: "Light Sweep" — 1 ใน 3 animation ที่เหลืออยู่ทั้งการ์ด — ปรับจาก 20s เหลือ 9s (สเปคใหม่
-           "8-10 วินาที ครั้งเดียว") โครงสร้างเดิมไม่เปลี่ยน (กวาดครั้งเดียวใน 35% แรกของรอบแล้วค้างจน
-           ครบรอบ ไม่ใช่กวาดวนซ้ำในรอบเดียว) */
+        /* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation ทั้งแอป — Hero Card: sweep 10s" — ปรับจาก 9s เป็น 10s
+           (Ring Glow ของการ์ดนี้ตัดออกแล้ว เหลือ Light Sweep เป็น animation เดียวของการ์ด) โครงสร้างเดิม
+           ไม่เปลี่ยน (กวาดครั้งเดียวใน 35% แรกของรอบแล้วค้างจนครบรอบ ไม่ใช่กวาดวนซ้ำในรอบเดียว) */
         .workout-banner-sweep {
           background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.06) 50%, transparent 60%);
           background-size: 300% 300%;
           background-position: -120% -120%;
           mix-blend-mode: screen;
-          animation: workout-banner-sweep-move 9s linear infinite;
+          animation: workout-banner-sweep-move 10s linear infinite;
         }
         @keyframes workout-banner-sweep-move {
           0% {
@@ -349,23 +337,10 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             background-position: 120% 120%;
           }
         }
-        /* v29: "Ring Glow" — 2 ใน 3 animation ที่เหลืออยู่ — หมุนรอบตัวเองช้ามาก (18s, อยู่ในช่วง 15-20s
-           ที่ขอ) แทนการหายใจ scale/opacity เดิม (workout-core-breathe, ตัดออกแล้ว) */
-        .workout-ring-glow-rotate {
-          animation: workout-ring-glow-rotate 18s linear infinite;
-        }
-        @keyframes workout-ring-glow-rotate {
-          to {
-            transform: rotate(360deg);
-          }
-        }
         @media (prefers-reduced-motion: reduce) {
           .workout-banner-sweep {
             animation: none;
             background-position: 120% 120%;
-          }
-          .workout-ring-glow-rotate {
-            animation: none;
           }
         }
       `}</style>

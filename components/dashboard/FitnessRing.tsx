@@ -83,10 +83,12 @@ export default function FitnessRing({
 
   // ตำแหน่งจุด tip — พารามิเตอร์มุมเดียวกับที่ strokeDasharray/strokeDashoffset วาดเส้นจริง (เริ่มที่ 3
   // นาฬิกาแล้วหมุน -90deg ให้ไปเริ่มที่ 12 นาฬิกาแทน) ลบ 90deg ออกจากมุม raw ให้ตรงกับตำแหน่งที่ตาเห็นจริง
+  // v30: ปัดทศนิยมเหลือ 2 ตำแหน่งเหมือน specularX/Y (ดู comment v27 ด้านบน) — เจอ hydration mismatch
+  // เดียวกันที่จุดนี้ตอนตรวจ Header จริง (พลาดจุดนี้ตอนแก้ specular รอบก่อน)
   const rawAngleRad = (clamped / 100) * 2 * Math.PI
   const tipAngle = rawAngleRad - Math.PI / 2
-  const tipX = size / 2 + radius * Math.cos(tipAngle)
-  const tipY = size / 2 + radius * Math.sin(tipAngle)
+  const tipX = Math.round((size / 2 + radius * Math.cos(tipAngle)) * 100) / 100
+  const tipY = Math.round((size / 2 + radius * Math.sin(tipAngle)) * 100) / 100
 
   // โหมด simple — เดิม 3 เลเยอร์ล้วน: วง track ไทเทเนียม -> วง progress สีตาม tier -> children กลางวง
   // ไม่มี glow/reflection/highlight arc/light sweep/highlight dots/tip pulse/inner shadow เลยสักอย่าง
@@ -457,7 +459,7 @@ export default function FitnessRing({
         />
       </svg>
 
-      {/* light sweep — highlight ขาว/เงินจางๆ กวาดวนรอบวงช้าๆ (9s/รอบ, animate-ring-sweep-slow ใน
+      {/* light sweep — highlight ขาว/เงินจางๆ กวาดวนรอบวงช้าๆ (12s/รอบ, animate-ring-sweep-slow ใน
           globals.css) จำลองแสงสะท้อนเคลื่อนผ่านผิวโลหะเป็นระยะๆ (ไม่ใช่ไฟพลังงานแบบ ProgressRing ที่ใช้
           animate-ring-sweep 4s + จุดสีครีม/ส้ม) — ไม่มี boxShadow/blur เพิ่ม กันไม่ให้กลายเป็น glow ใหม่
           ตามที่ขอให้หยุดเพิ่ม แค่วงกลมทึบจางๆ ผสม screen blend เท่านั้น ปิดอัตโนมัติเมื่อ
@@ -477,6 +479,22 @@ export default function FitnessRing({
           }}
         />
       </div>
+      {/* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation — ...Ring: spark ตอน Sweep ผ่าน" — จุดนิ่ง (ไม่หมุนตาม
+          wrapper ด้านบน) อยู่ตำแหน่ง 12 นาฬิกาเดียวกับจุดเริ่มของ light sweep พอดี กะพริบสว่างจ้าสั้นๆ
+          จังหวะเดียวกับที่จุดหมุน (sweep) วนครบรอบมาผ่านตำแหน่งนี้อีกครั้ง — ใช้ duration เท่ากับ sweep
+          เป๊ะ (12s) ให้ synced กันโดยไม่ต้องคำนวณ offset เอง (ทั้งคู่เริ่มที่ 12 นาฬิกาพร้อมกันตอน t=0) */}
+      <span
+        className="animate-ring-spark-flash absolute rounded-full pointer-events-none"
+        aria-hidden="true"
+        style={{
+          width: Math.max(3, sw * 0.45),
+          height: Math.max(3, sw * 0.45),
+          left: '50%',
+          top: sw / 2,
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(circle, rgba(255,255,255,.95), transparent 70%)',
+        }}
+      />
 
       {/* metal highlight dots — จุดสว่างนิ่ง 2 จุดที่ 11 กับ 5 นาฬิกา (คนละแบบจาก highlight arc บางๆ
           ในวง track ด้านบน ซึ่งเป็นเส้นโค้ง ไม่ใช่จุดกลม) จำลอง specular highlight แบบจุดกลมเล็กๆ ที่แสง
@@ -484,8 +502,8 @@ export default function FitnessRing({
           angle = (k/12)*2π - π/2) ไม่มี boxShadow/blur เพิ่ม กันไม่ให้กลายเป็น glow ใหม่ */}
       {[11, 5].map((clockHour) => {
         const angle = (clockHour / 12) * 2 * Math.PI - Math.PI / 2
-        const dotX = size / 2 + radius * Math.cos(angle)
-        const dotY = size / 2 + radius * Math.sin(angle)
+        const dotX = Math.round((size / 2 + radius * Math.cos(angle)) * 100) / 100
+        const dotY = Math.round((size / 2 + radius * Math.sin(angle)) * 100) / 100
         return (
           <span
             key={clockHour}

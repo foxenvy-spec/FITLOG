@@ -54,12 +54,10 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           aria-hidden="true"
         />
         {/* Bloom — ชั้นเดิม ปรับอัลฟาลงเล็กน้อยเพราะตอนนี้มี Fog ห่อรอบนอกอีกชั้นแล้ว
-            v22: ฟีดแบ็ก "Motion: Orange Glow หายใจเบาๆ (breathing glow)" — เพิ่ม animation หายใจ (scale +
-            opacity ไล่ขึ้น-ลงนุ่มๆ) เฉพาะชั้น Bloom (ไม่แตะ Fog/Core ให้ยังมีชั้นนิ่งเป็นฐานอยู่ ไม่ใช่ทุก
-            ชั้นสั่นพร้อมกันจนดูรก) รอบละ 4s ease-in-out เบามาก (scale 1-1.06, opacity .85-1) เคารพ
-            prefers-reduced-motion */}
+            v30: ฟีดแบ็ก "ring-bloom-breathe ❌ Bloom ควรนิ่ง" — ตัด animation หายใจ (v22) ออก กลับไปนิ่ง
+            เหมือน Fog/Core ชั้นอื่นๆ รอบๆ วง */}
         <div
-          className="ring-bloom-breathe absolute rounded-full pointer-events-none"
+          className="absolute rounded-full pointer-events-none"
           style={{
             width: size * 1.7,
             height: size * 1.7,
@@ -111,123 +109,13 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           }}
           aria-hidden="true"
         />
-        {/* v20: ฟีดแบ็ก "Ring สวยแล้ว อยากเพิ่ม Specular Highlight/Light Sweep/Tiny Spark วิ่งทุก 8-10
-            วินาที เหมือนนาฬิกาหรู" — Specular Highlight คงที่ด้านบนยังอยู่เหมือนเดิม เพิ่มชุดนี้เป็นแอนิเมชัน
-            แยกต่างหาก: จุดสว่างหมุนเป็นส่วนโค้ง (ไม่ใช่วนรอบเต็ม 360 องศาต่อเนื่องแบบ loading spinner)
-            แล้วเงียบไปจนครบรอบ 9 วินาทีค่อยเริ่มใหม่ — จำลองแสงที่ "กวาดผ่าน" ผิวโลหะเป็นครั้งคราว แบบ
-            เข็มนาฬิกาหรูที่ขอบมันวาวจับแสงเวลาเอียง ไม่ใช่หมุนตลอดเวลา — ใช้ wrapper หมุน (transform-origin
-            กึ่งกลางวงพอดีเพราะเป็น absolute inset-0 สี่เหลี่ยมจัตุรัส) ครอบจุดสว่างที่ offset ไปขอบวง แทนการ
-            คำนวณตำแหน่ง x/y เป็นเปอร์เซ็นต์เอง — เคารพ prefers-reduced-motion (ปิดแอนิเมชันให้เหลือแค่นิ่ง)
-            ตรวจสอบด้วย screenshot จริงพบว่าเดิมกวาดตามเข็มนาฬิกา (0->230deg) ซึ่งพาดผ่านโซนวงสีส้มที่สว่าง
-            จัดอยู่แล้ว (progress arc ของคะแนน) จุดขาว 5px เลยจมหายไปในแสงส้ม มองแทบไม่เห็น — เปลี่ยนเป็นกวาด
-            "ทวนเข็ม" (0 -> -60deg) จากจุดเริ่ม 12 นาฬิกาแทน ซึ่งสำหรับคะแนนที่ไม่เต็ม 100 จะพาดผ่านโซน
-            track สีเทาที่ยังไม่ถึงเป้า (มืดกว่ามาก) แทน ทำให้จุดขาวตัดกับพื้นชัดเจนกว่าเดิมมาก */}
-        <div className="ring-sweep-wrap absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div
-            className="ring-sweep-dot absolute rounded-full"
-            style={{
-              width: 6,
-              height: 6,
-              top: -1,
-              left: '50%',
-              marginLeft: -3,
-              background: 'radial-gradient(circle, rgba(255,255,255,.95), transparent 70%)',
-              boxShadow: '0 0 8px 2px rgba(255,255,255,.6)',
-            }}
-          />
-        </div>
-        {/* Tiny Spark — ประกายเล็กจิ๋วแยกจากจุดกวาดหลัก แฟลชสั้นๆ ที่ 24% ของรอบ (ราวๆ วินาทีที่ 2 ของ 9
-            วินาที) ต่อจากจุดกวาดหลักที่จบที่ 20% จำลองแสงกระทบซ้ำที่มุมอื่นของวงหลังแสงหลักกวาดผ่านไปแล้ว
-            เล็กน้อย ไม่ใช่จุดเดียวกัน */}
-        <div
-          className="ring-tiny-spark absolute rounded-full pointer-events-none"
-          style={{
-            width: 3,
-            height: 3,
-            top: size * 0.1,
-            left: size * 0.16,
-            background: 'rgba(255,255,255,.95)',
-          }}
-          aria-hidden="true"
-        />
+        {/* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation ทั้งแอป — Ring: rotate 12s + spark ตอน sweep ผ่าน" — เดิมมี
+            sweep+spark ของตัวเองอยู่ตรงนี้ (ring-sweep-wrap/ring-tiny-spark) ซ้อนทับกับ light sweep ที่
+            FitnessRing.tsx (ซึ่งวงนี้ห่ออยู่) มีอยู่แล้วในตัว (.animate-ring-sweep-slow) — กลายเป็นวงเดียว
+            มีจุดสว่างหมุนอยู่ 2 จุดพร้อมกันโดยไม่จำเป็น ตัดชุดนี้ทิ้งทั้งหมด รวม "spark ตอน sweep ผ่าน" เข้า
+            ไปเป็นการกะพริบของจุดสว่างใน FitnessRing.tsx เองแทน (ดูคอมเมนต์ v31 ที่ไฟล์นั้น) — เหลือ animation
+            เดียวของวงทั้งก้อนจริงๆ ไม่ใช่ 2 ชั้นซ้อนกัน */}
       </div>
-      <style jsx>{`
-        .ring-sweep-wrap {
-          animation: ring-sweep-rotate 9s linear infinite;
-        }
-        .ring-sweep-dot {
-          animation: ring-sweep-fade 9s linear infinite;
-        }
-        .ring-tiny-spark {
-          opacity: 0;
-          animation: ring-spark-flash 9s linear infinite;
-        }
-        .ring-bloom-breathe {
-          animation: ring-bloom-breathe 4s ease-in-out infinite;
-        }
-        @keyframes ring-bloom-breathe {
-          0%,
-          100% {
-            transform: scale(1);
-            opacity: 0.85;
-          }
-          50% {
-            transform: scale(1.06);
-            opacity: 1;
-          }
-        }
-        @keyframes ring-sweep-rotate {
-          0% {
-            transform: rotate(0deg);
-          }
-          20% {
-            transform: rotate(-60deg);
-          }
-          100% {
-            transform: rotate(-60deg);
-          }
-        }
-        @keyframes ring-sweep-fade {
-          0%,
-          100% {
-            opacity: 0;
-          }
-          2%,
-          18% {
-            opacity: 1;
-          }
-          20% {
-            opacity: 0;
-          }
-        }
-        @keyframes ring-spark-flash {
-          0%,
-          22%,
-          100% {
-            opacity: 0;
-            transform: scale(1);
-          }
-          24% {
-            opacity: 0.9;
-            transform: scale(1.6);
-          }
-          27% {
-            opacity: 0;
-            transform: scale(1);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .ring-sweep-wrap,
-          .ring-sweep-dot,
-          .ring-tiny-spark,
-          .ring-bloom-breathe {
-            animation: none !important;
-          }
-          .ring-sweep-dot {
-            opacity: 0;
-          }
-        }
-      `}</style>
       {/* ตัดบรรทัด "Fitness Score" micro-label ออก (เดิมอยู่เหนือ tier label) — ความหมายของวงชัดเจน
           อยู่แล้วจากบริบท (ตัวเลข 0-100 + /100 กลางวง) ไม่ต้องมีป้ายชื่อซ้ำ ประหยัดพื้นที่แนวตั้งได้อีก
           ชั้นหนึ่ง — บรรทัด recommendation ยังคงบังคับบรรทัดเดียว (nowrap+ellipsis) เพราะข้อความยาว

@@ -45,7 +45,9 @@ export default function SubtitleAccent({ className = '' }: SubtitleAccentProps) 
       </defs>
       <line x1="-60" y1="10" x2="150" y2="10" stroke={`url(#${idPrefix}-flare-line)`} strokeWidth="2" filter={`url(#${idPrefix}-glow-soft)`} opacity="0.75" style={{ mixBlendMode: 'screen' }} />
       <line x1="-60" y1="10" x2="150" y2="10" stroke={`url(#${idPrefix}-flare-line)`} strokeWidth="0.8" filter={`url(#${idPrefix}-glow-tight)`} style={{ mixBlendMode: 'screen' }} />
-      <circle cx="36" cy="10" r="5" fill={`url(#${idPrefix}-burst)`} className="animate-subtitle-accent-pulse" style={{ mixBlendMode: 'screen' }} />
+      {/* v30: ฟีดแบ็ก "ระดับ C ควรลบ — ไม่ได้เพิ่ม UX แต่เพิ่ม CPU" — ตัด animate-subtitle-accent-pulse
+          (หายใจ scale ต่อเนื่อง) ออก จุดกลางเส้นนี้นิ่งแทน (keyframe ถูกลบออกจาก globals.css แล้วด้วย) */}
+      <circle cx="36" cy="10" r="5" fill={`url(#${idPrefix}-burst)`} style={{ mixBlendMode: 'screen' }} />
       <circle cx="36" cy="10" r="1" fill="#fff8ea" filter={`url(#${idPrefix}-glow-tight)`} style={{ mixBlendMode: 'screen' }} />
     </svg>
   )
