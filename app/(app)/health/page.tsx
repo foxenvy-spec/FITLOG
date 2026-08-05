@@ -41,12 +41,28 @@ function bmiOf(weightKg: number | null, heightCm: number | null) {
   return weightKg / (h * h)
 }
 
-// สัดส่วนโปรตีนต่อน้ำหนักตัว (%) — เกณฑ์แยกตามเพศ (มวลกล้ามเนื้อ/สัดส่วนร่างกายชาย-หญิงต่างกัน):
-// ชาย: ต่ำ < 18%, มาตรฐาน 18-22%, สูง > 22% | หญิง: ต่ำ < 14%, มาตรฐาน 14-18%, สูง > 18%
-// ถ้ายังไม่ตั้งเพศไว้ในโปรไฟล์ จะคืนค่า null (ยังประเมินไม่ได้ ไม่เดาเพศให้)
-function proteinPctZone(proteinKg: number, weightKg: number, sex: 'male' | 'female' | null): Zone | null {
-  if (!weightKg || !sex) return null
-  const pct = (proteinKg / weightKg) * 100
+// มวลไร้ไขมัน (Lean Body Mass) = น้ำหนักตัว - มวลไขมัน — ใช้ body_fat_kg ถ้ามีจากเครื่องชั่ง bioimpedance
+// โดยตรง ไม่งั้นคำนวณจาก weight * body_fat_pct (สูตรเดียวกับ fatMassOf ใน lib/bodyMetricsSummary.ts)
+function lbmOf(m: { weight_kg: number | null; body_fat_kg: number | null; body_fat_pct: number | null }): number | null {
+  const w = m.weight_kg
+  if (w == null) return null
+  const fatMass = m.body_fat_kg ?? (m.body_fat_pct != null ? (w * m.body_fat_pct) / 100 : null)
+  if (fatMass == null) return null
+  return w - fatMass
+}
+
+// v40: เปลี่ยนจากหารด้วยน้ำหนักตัวรวม (proteinKg / weightKg) มาหารด้วย "มวลไร้ไขมัน (LBM)" แทน —
+// โปรตีนเป็นส่วนประกอบของ LBM เท่านั้น (ไขมันมีโปรตีนแทบ 0%) หารด้วยน้ำหนักตัวรวมจะปนสถานะไขมันเข้ากับ
+// สถานะโปรตีน (คนไขมันเยอะขึ้นจะโดนตัดสินว่า "โปรตีนต่ำ" ทั้งที่โปรตีนจริงอาจปกติดี) — หมายเหตุ: นี่เป็น
+// การตัดสินใจเชิงวิธีคิด ไม่ใช่บั๊กที่ยืนยันได้ชัดเจน — ค้นข้อมูลเพิ่มพบว่าเครื่องชั่ง bioimpedance ทั่วไปใน
+// ตลาดมักรายงาน "Protein %" เทียบกับน้ำหนักตัวรวม (แบบเดิม) ไม่ใช่ LBM และไม่พบแหล่งอ้างอิงที่ยืนยันตรงๆ
+// ว่าเกณฑ์ 18-22%/14-18% ในนี้ถูกออกแบบมาสำหรับฝั่งไหนกันแน่ — เลือกใช้ LBM ตามที่ยืนยันกับผู้ใช้แล้ว เพราะ
+// แยกสถานะโปรตีนออกจากระดับไขมันได้แม่นยำกว่าทางทฤษฎี แม้จะไม่ตรง convention ตลาดทั่วไปก็ตาม — เกณฑ์
+// ตัวเลขคงเดิมทั้งหมด (ตรงกับสัดส่วนโปรตีนใน LBM ตามหลักสรีรวิทยาทั่วไป ~20% พอดี) ไม่ต้องปรับ
+// ถ้ายังไม่ตั้งเพศไว้ในโปรไฟล์ หรือไม่มีข้อมูลไขมันให้คำนวณ LBM จะคืนค่า null (ยังประเมินไม่ได้ ไม่เดาให้)
+function proteinPctZone(proteinKg: number, lbmKg: number, sex: 'male' | 'female' | null): Zone | null {
+  if (!lbmKg || !sex) return null
+  const pct = (proteinKg / lbmKg) * 100
   const [low, high] = sex === 'male' ? [18, 22] : [14, 18]
   if (pct < low) return 'Low'
   if (pct > high) return 'High'
@@ -182,6 +198,7 @@ export default function HealthPage() {
 
   const latest = metrics[0] ?? null
   const bmi = bmiOf(latest?.weight_kg ?? null, profile?.height_cm ?? null)
+  const latestLbm = latest ? lbmOf(latest) : null
 
   // เฉพาะข้อมูลในช่วงเวลาที่เลือกดู (7/30/90 วัน) ใช้กับกราฟแนวโน้มเท่านั้น — แท็บภาพรวมยังใช้ค่าล่าสุดจาก metrics ทั้งหมด
   const periodMetrics = useMemo(() => {
@@ -665,8 +682,9 @@ export default function HealthPage() {
     if (row?.inorganic_salt_kg != null && saltRangeLow !== null && saltRangeHigh !== null) {
       items.push({ label: 'เกลือแร่', status: classifyMetric(zoneOf(row.inorganic_salt_kg, saltRangeLow, saltRangeHigh), 'neutral') })
     }
-    if (row?.protein_kg != null && row?.weight_kg != null) {
-      const zone = proteinPctZone(row.protein_kg, row.weight_kg, profile?.sex ?? null)
+    if (row?.protein_kg != null) {
+      const lbm = lbmOf(row)
+      const zone = lbm != null ? proteinPctZone(row.protein_kg, lbm, profile?.sex ?? null) : null
       if (zone) items.push({ label: 'โปรตีน', status: classifyMetric(zone, 'higherBetter') })
     }
     if (row?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
@@ -972,8 +990,8 @@ export default function HealthPage() {
               deltaUnit={unit}
               direction="neutral"
               zone={
-                latest?.protein_kg != null && latest?.weight_kg != null
-                  ? proteinPctZone(latest.protein_kg, latest.weight_kg, profile?.sex ?? null)
+                latest?.protein_kg != null && latestLbm != null
+                  ? proteinPctZone(latest.protein_kg, latestLbm, profile?.sex ?? null)
                   : null
               }
               zoneScheme="higherOk"
