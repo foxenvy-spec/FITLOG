@@ -11,6 +11,8 @@ import { parseRangeToNumber, rirToRpe } from '@/lib/importWorkoutExcel'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
+import PremiumCard from '@/components/ui/PremiumCard'
+import { CARD_BORDER_CSS } from '@/lib/theme'
 
 export default function ProgramPage() {
   const supabase = createClient()
@@ -398,7 +400,14 @@ export default function ProgramPage() {
       {logMessage && <p className="text-sm text-steel">{logMessage}</p>}
 
       {!currentDay && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated border-dashed px-4 py-8 text-center space-y-3">
+        // เดิม border-dashed สื่อความหมาย "ว่างเปล่า/ยังไม่ตั้งค่า" — PremiumCard ตัด border ทึบออกแล้ว
+        // (v48: ใช้ contact shadow บอกขอบแทน) แต่สถานะว่างเปล่านี้ยังต้องการเส้นประจริงๆ สื่อความหมาย
+        // ต่างจากการ์ดมีข้อมูลปกติ จึงส่ง border ทับผ่าน style (ชนะ default ของ PremiumCard เพราะ ...style
+        // วางท้ายสุดเสมอ) แทนที่จะพึ่ง className ซึ่งชนะ inline style ของ PremiumCard ไม่ได้
+        <PremiumCard
+          className="px-4 py-8 text-center space-y-3"
+          style={{ border: `1px dashed ${CARD_BORDER_CSS}` }}
+        >
           <p className="text-sm text-muted">ยังไม่ได้ตั้งค่าโปรแกรมสำหรับวัน{WEEKDAYS[selectedDow]}</p>
           <div className="flex gap-2 justify-center">
             <a
@@ -414,12 +423,12 @@ export default function ProgramPage() {
               + เพิ่มท่าเอง
             </button>
           </div>
-        </div>
+        </PremiumCard>
       )}
 
       {currentDay && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-          <div className="px-4 py-3 border-b border-line flex items-center gap-2">
+        <PremiumCard className="overflow-hidden">
+          <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
             <input
               value={currentDay.title}
               onChange={(e) => handleRenameDay(currentDay, e.target.value)}
@@ -444,7 +453,7 @@ export default function ProgramPage() {
           </div>
 
           {selectMode && (
-            <div className="px-4 py-2.5 border-b border-line bg-surface2 flex items-center justify-between gap-2 flex-wrap">
+            <div className="px-4 py-2.5 border-b border-white/5 bg-surface2 flex items-center justify-between gap-2 flex-wrap">
               <p className="text-[11px] text-muted">เลือกแล้ว {selectedIds.size} ท่า</p>
               <div className="flex gap-3 shrink-0">
                 <button onClick={exitSelectMode} className="text-[11px] text-muted hover:text-ink">
@@ -462,7 +471,7 @@ export default function ProgramPage() {
           )}
 
           {confirmBulkDelete && (
-            <div className="px-4 py-2.5 border-b border-line bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
+            <div className="px-4 py-2.5 border-b border-white/5 bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
               <p className="text-[11px] text-rusttext">ลบ {selectedIds.size} ท่าที่เลือก?</p>
               <div className="flex gap-3 shrink-0">
                 <button onClick={() => setConfirmBulkDelete(false)} className="text-[11px] text-muted hover:text-ink">
@@ -480,7 +489,7 @@ export default function ProgramPage() {
           )}
 
           {confirmDeleteAll && (
-            <div className="px-4 py-2.5 border-b border-line bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
+            <div className="px-4 py-2.5 border-b border-white/5 bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
               <p className="text-[11px] text-rusttext">ลบท่าทั้งหมด {currentExercises.length} ท่าในวันนี้?</p>
               <div className="flex gap-3 shrink-0">
                 <button onClick={() => setConfirmDeleteAll(false)} className="text-[11px] text-muted hover:text-ink">
@@ -514,7 +523,7 @@ export default function ProgramPage() {
           </ul>
 
           {!selectMode && (
-            <div className="px-4 py-3 border-t border-line">
+            <div className="px-4 py-3 border-t border-white/5">
               <button
                 onClick={() => setAddingExercise(true)}
                 className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
@@ -535,7 +544,7 @@ export default function ProgramPage() {
               </button>
             </div>
           )}
-        </div>
+        </PremiumCard>
       )}
 
       {addingExercise && (
@@ -689,7 +698,7 @@ function AddExerciseForm({
   const [exerciseLibraryId, setExerciseLibraryId] = useState<string | null>(null)
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-4 space-y-3">
+    <PremiumCard className="px-4 py-4 space-y-3">
       <p className="text-sm text-ink font-display tracked uppercase">เพิ่มท่าใหม่</p>
       <ExercisePicker
         value={name}
@@ -735,6 +744,6 @@ function AddExerciseForm({
           เพิ่มท่านี้
         </button>
       </div>
-    </div>
+    </PremiumCard>
   )
 }
