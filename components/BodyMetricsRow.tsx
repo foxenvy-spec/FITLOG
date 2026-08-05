@@ -144,7 +144,14 @@ export default function BodyMetricsRow({
 
   const weightSeries = seriesFor((m) => m.weight_kg)
   const bodyFatSeries = seriesFor((m) => m.body_fat_pct)
-  const muscleSeries = seriesFor((m) => m.skeletal_muscle_kg ?? m.muscle_kg ?? null)
+  // v39: เดิม (m) => m.skeletal_muscle_kg ?? m.muscle_kg ?? null ผสมสองฟิลด์ที่เป็นคนละตัวชี้วัดกันจริง
+  // (ดู comment ยาวใน lib/bodyMetricsSummary.ts) เข้าเป็นเส้นกราฟเดียว — ถ้าเอนทรีเก่ามีแต่ muscle_kg
+  // (กล้ามเนื้อรวม ~58kg) แล้วเอนทรีใหม่เปลี่ยนมาบันทึก skeletal_muscle_kg (กล้ามเนื้อโครงร่าง ~36kg)
+  // กราฟจะวาดเป็นเส้นดิ่งลงหนักที่ไม่ใช่การเปลี่ยนแปลงจริงเลย — ล็อกให้ทั้งกราฟใช้ฟิลด์เดียวกับเอนทรีล่าสุด
+  // เท่านั้น (เอนทรีเก่าที่ไม่มีฟิลด์นั้นจะถูกกรองออกจากกราฟไปเลย ไม่ใช่ไปหยิบฟิลด์อื่นมาแทน)
+  const latestMuscleField: (m: BodyMetric) => number | null =
+    metrics[0]?.skeletal_muscle_kg != null ? (m) => m.skeletal_muscle_kg : (m) => m.muscle_kg
+  const muscleSeries = seriesFor(latestMuscleField)
   const fatMassSeries = seriesFor((m) => {
     if (m.body_fat_kg != null) return m.body_fat_kg
     if (m.weight_kg != null && m.body_fat_pct != null) return (m.weight_kg * m.body_fat_pct) / 100

@@ -68,6 +68,34 @@ function metricDelta(
   return { value, delta, isGood }
 }
 
+// v39: บั๊กที่พบ — "กล้ามเนื้อ" การ์ดโชว์ delta ผิดปกติ (เช่น -22.2kg ใน 4 เดือน ทั้งที่ตัวเลขจริงไม่ได้
+// ลดขนาดนั้น) สาเหตุ: muscleOf เดิม (m) => m.skeletal_muscle_kg ?? m.muscle_kg ?? null ใช้ pick ตัวเดียว
+// แต่ "??" คลี่ออกมาต่อเอนทรี ไม่ใช่ต่อทั้ง series — ถ้าเอนทรีล่าสุดมี skeletal_muscle_kg (ฟีเจอร์ใหม่จาก
+// migration 028 คนละค่ากับ muscle_kg เดิมจริงๆ ตามคอมเมนต์ในนั้น: "กล้ามเนื้อโครงร่าง...ต่างจาก muscle_kg
+// ซึ่งเป็นกล้ามเนื้อรวม") แต่เอนทรีก่อนหน้า (ก่อนมีฟีเจอร์นี้) มีแค่ muscle_kg เก่า จะกลายเป็นเทียบคนละตัวชี้วัด
+// กันข้ามเวลา (กล้ามเนื้อโครงร่างเทียบกับกล้ามเนื้อรวม) ไม่ใช่การเปลี่ยนแปลงจริงของค่าเดียวกันเลย —
+// metricDeltaWithFallbackFields "ล็อก" ให้ latest/previous ต้องใช้ฟิลด์เดียวกันเท่านั้น (เลือกฟิลด์แรกที่
+// latest มีค่า แล้วใช้ฟิลด์นั้นกับ previous ด้วย) ถ้า previous ไม่มีฟิลด์นั้นเลย ให้ delta เป็น null (ไม่โชว์
+// เลขเปรียบเทียบ) แทนที่จะเดาข้ามฟิลด์แบบเดิม — ปลอดภัยกว่าโชว์ตัวเลขหลอกที่ไม่ได้สะท้อนความจริง
+function metricDeltaWithFallbackFields(
+  sortedDesc: BodyMetric[],
+  previous: BodyMetric | null,
+  fields: Array<(m: BodyMetric) => number | null>,
+  higherIsGood: boolean
+): MetricDelta {
+  const latest = sortedDesc[0] ?? null
+  if (!latest) return { value: null, delta: null, isGood: null }
+  const pick = fields.find((f) => f(latest) != null)
+  if (!pick) return { value: null, delta: null, isGood: null }
+  const value = pick(latest)
+  if (value == null) return { value: null, delta: null, isGood: null }
+  const prevValue = previous ? pick(previous) : null
+  if (prevValue == null) return { value, delta: null, isGood: null }
+  const delta = Math.round((value - prevValue) * 10) / 10
+  const isGood = delta === 0 ? null : higherIsGood ? delta > 0 : delta < 0
+  return { value, delta, isGood }
+}
+
 export interface BodyMetricsSummary {
   weight: MetricDelta
   bodyFatPct: MetricDelta
@@ -90,12 +118,12 @@ export function computeBodyMetricsSummary(metrics: BodyMetric[], heightCm: numbe
     if (m.weight_kg != null && m.body_fat_pct != null) return (m.weight_kg * m.body_fat_pct) / 100
     return null
   }
-  const muscleOf = (m: BodyMetric) => m.skeletal_muscle_kg ?? m.muscle_kg ?? null
-
   return {
     weight: metricDelta(metrics, previous, (m) => m.weight_kg, false),
     bodyFatPct: metricDelta(metrics, previous, (m) => m.body_fat_pct, false),
-    skeletalMuscleKg: metricDelta(metrics, previous, muscleOf, true),
+    // ห้าม fallback ข้ามฟิลด์ระหว่าง latest/previous (ดู comment ของ metricDeltaWithFallbackFields
+    // ด้านบน) — skeletal_muscle_kg กับ muscle_kg เป็นคนละตัวชี้วัดกันจริงๆ ไม่ใช่แค่ชื่อคอลัมน์ต่างกัน
+    skeletalMuscleKg: metricDeltaWithFallbackFields(metrics, previous, [(m) => m.skeletal_muscle_kg, (m) => m.muscle_kg], true),
     fatMassKg: metricDelta(metrics, previous, fatMassOf, false),
     bmi: bmiOf(latest?.weight_kg ?? null, heightCm),
     periodLabel: periodLabelOf(latest, previous),
