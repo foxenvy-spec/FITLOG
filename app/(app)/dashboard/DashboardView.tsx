@@ -29,6 +29,7 @@ import {
   getNextScheduledMuscle,
   computeLatestPR,
   computeTopMuscleThisWeek,
+  estimateCaloriesToday,
   type Insight,
   type MuscleRecommendation,
   type VolumeIncrease,
@@ -468,6 +469,15 @@ export default function DashboardPage() {
   )
   const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
 
+  // v47: ฟีดแบ็ก "Workout Card ฝั่งซ้ายล่างยังว่างอยู่บ้าง อยากได้ Calories เติม" — ใช้สูตรประมาณเดียวกับ
+  // หน้า Session/Stats (estimateCaloriesToday ใน lib/dashboardStats.ts) ไม่ใช่ตัวเลขสมมติ — น้ำหนักตัวใช้
+  // ค่าล่าสุดจาก body_metrics ที่มีอยู่แล้ว (bodyMetricsSummary.weight.value) ถ้ายังไม่เคยบันทึกน้ำหนักเลย
+  // ฟังก์ชัน fallback ไป DEFAULT_BODYWEIGHT_KG เอง (70kg) เหมือนจุดอื่นที่เรียกฟังก์ชันนี้ทุกที่
+  const todayCalories = useMemo(
+    () => estimateCaloriesToday(data?.todayWorkouts ?? [], totals.durationMin, data?.bodyMetricsSummary.weight.value ?? null),
+    [data, totals.durationMin]
+  )
+
   // สรุปกลุ่มกล้ามเนื้อหลักที่เทรนวันนี้เป็น label เดียว เช่น "อก + แขน" — ใช้แค่ muscle_group หลัก
   // ของแต่ละ workout (ไม่รวม secondary) เพื่อให้สั้นกระชับพอจะโชว์บน hero card ได้ ไล่ตามลำดับที่เทรนก่อน-หลัง
   const todayMuscleLabel = useMemo(() => {
@@ -883,6 +893,15 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-[10px] text-muted mt-0.5">นาที</p>
                 </div>
+                {/* v47: โชว์เฉพาะมีกิจกรรมจริงวันนี้แล้ว (ไม่เหมือน Exercises/Sets/นาทีด้านบนที่โชว์แผนได้แม้
+                    ยังไม่เริ่ม) เพราะแคลอรี่คำนวณจาก workout ที่บันทึกจริงเท่านั้น โชว์ "0 kcal" ก่อนเริ่มจะดู
+                    เหมือนบัคมากกว่าข้อมูลที่มีความหมาย */}
+                {todayCalories > 0 && (
+                  <div>
+                    <p className="font-mono text-lg text-ink leading-none">{todayCalories}</p>
+                    <p className="text-[10px] text-muted mt-0.5">kcal</p>
+                  </div>
+                )}
               </div>
 
               {/* กล้ามเนื้อที่เทรนวันนี้ — ฝังเป็นชิปเล็กในการ์ดนี้เลย แทนที่จะแยกเป็นการ์ดใหญ่
@@ -1027,20 +1046,30 @@ export default function DashboardPage() {
                             glow
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
+                        {/* v47: ฟีดแบ็ก "Recovery ยังเป็น Box เยอะ ถ้าทำเป็น Heatmap หรือ Muscle Grid จะดู
+                            ฉลาดกว่า" — เปลี่ยนจาก list 2 คอลัมน์ (จุดสี+ชื่อ+%) เป็น grid ไทล์สี่เหลี่ยม 4
+                            คอลัมน์แบบ GitHub contribution graph — สีพื้นไทล์เข้มขึ้นตาม % ฟื้นตัว (ยิ่งฟื้นตัว
+                            มาก ไทล์ยิ่ง "เต็ม") ใช้สีเดียวกับ recoveryStatusColor() เดิมทุกประการ (แดง/เหลือง/
+                            เขียว 3 ระดับ) แค่เปลี่ยนวิธีนำเสนอ ไม่ใช่คิดสเกลสีใหม่ */}
+                        <div className="grid grid-cols-4 gap-1.5 flex-1 min-w-0">
                           {RECOVERY_MUSCLES.map((mg) => {
                             const pct = recoveryPctMap[mg]
                             const color = recoveryStatusColor(pct)
+                            // อัลฟาพื้นไทล์ไล่ตาม % (21-99 hex ~ 13%-60%) ให้ยิ่งฟื้นตัวมากไทล์ยิ่งทึบ/เข้ม
+                            // เหมือน "ชาร์จเต็ม" แทนที่จะเป็นสีเดียวกันหมดแล้วต่างแค่ตัวเลข
+                            const alphaHex = Math.round(33 + (pct / 100) * 120)
+                              .toString(16)
+                              .padStart(2, '0')
                             return (
                               <div
                                 key={mg}
-                                className="flex items-center justify-between gap-2 rounded-md bg-surface2 px-2.5 py-2"
+                                className="rounded-md px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-center"
+                                style={{ backgroundColor: `${color}${alphaHex}`, border: `1px solid ${color}40` }}
                               >
-                                <span className="flex items-center gap-1.5 text-xs text-ink">
-                                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                  {mg}
-                                </span>
-                                <span className="font-mono text-xs shrink-0" style={{ color }}>
+                                {/* leading-tight ให้ตัดขึ้นบรรทัดใหม่แทน truncate — "แกนกลางลำตัว" (ชื่อยาวสุด)
+                                    ตัดกลาง ".." แล้วอ่านไม่รู้เรื่องถ้าใช้ truncate บรรทัดเดียวในไทล์แคบขนาดนี้ */}
+                                <span className="text-[9px] text-ink leading-tight">{mg}</span>
+                                <span className="font-mono text-[10px] leading-none" style={{ color }}>
                                   {pct}%
                                 </span>
                               </div>
@@ -1073,8 +1102,14 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             {/* v45: ฟีดแบ็ก "วงกลมชมพูโดดออกมา ไม่เข้ากับ Dark Titanium — เปลี่ยนเป็น Orange/Titanium
                 Gold เข้ากว่า" — สีม่วงชมพูนีออน (#E339A6) เดิมมาจากมอคอัพ v3 ตอนนั้น ไม่ใช่โทนไทเทเนียม/
-                อำพันที่เหลือทั้งแอปใช้ — เปลี่ยนเป็น COLORS.amber เดียวกับ Hero Ring/ปุ่ม CTA ทั่วแอป */}
-            <div style={{ filter: 'drop-shadow(0 0 4px #E8A33D40)' }}>
+                อำพันที่เหลือทั้งแอปใช้ — เปลี่ยนเป็น COLORS.amber เดียวกับ Hero Ring/ปุ่ม CTA ทั่วแอป
+                v47: ฟีดแบ็ก "อยากให้มี Animation เช่น Ring Glow เวลาครบเป้า" — ครบเป้า (pct >= 100) เดียว
+                เท่านั้นที่ขึ้น (ไม่ใช่ ambient ตลอดเวลา ตามงบ motion ที่คุยกันไว้) ยืม .animate-pr-glow
+                (ripple 2 ครั้งแล้วหยุด ใช้กับการ์ด PR celebration อยู่แล้ว) มาใช้ซ้ำแทนสร้าง keyframe ใหม่ */}
+            <div
+              className={data.weeklyGoalPct >= 100 ? 'rounded-full animate-pr-glow' : undefined}
+              style={{ filter: 'drop-shadow(0 0 4px #E8A33D40)', ...({ '--pr-glow': 'rgba(232,163,61,.5)' } as React.CSSProperties) }}
+            >
               <GoalRing
                 pct={data.weeklyGoalPct}
                 size={72}
