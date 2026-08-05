@@ -620,15 +620,12 @@ export default function DashboardPage() {
           week-over-week deltas, pulled from the same body_metrics rows as the /health page.
           Sits above the fold since it's the first thing a user checks each morning. */}
       <div className="lg:col-span-12 lg:order-3 animate-rise" style={{ animationDelay: '15ms' }}>
-        {/* v41: ฟีดแบ็ก "ทำเป็น Version 3 (Minimal Dark Titanium)" — เดสก์ท็อปยังใช้ METRIC_THEME เดิม
-            (สีนีออนอิ่มตัวเต็มที่ #00ff88/#ff00c8 ฯลฯ ไม่มี glow field เลย เท่ากับ glowAlphaHex ดีฟอลต์
-            20% ทุกใบเท่ากันหมด) คนละชุดกับสีที่มือถือปรับแต่งมาหลายรอบ (METRIC_THEME_VIBRANT — โทนเดียว
-            กับ Apple/muted, glow ลดหลั่นตามความสำคัญ) — สลับมาใช้ colorScheme="vibrant" เดียวกับมือถือ
-            แทนที่จะคิดชุดสี/glow ใหม่แยกต่างหากสำหรับเดสก์ท็อป ให้แอปรู้สึกเป็นวัสดุเดียวกันทั้งสองแพลตฟอร์ม
+        {/* v41: ฟีดแบ็ก "ทำเป็น Version 3 (Minimal Dark Titanium)" — เดสก์ท็อปเคยใช้ชุดสีนีออนอิ่มตัวเต็มที่
+            แยกต่างหากจากมือถือ (ผ่าน colorScheme="vibrant") — สลับมาใช้ชุดสี/glow เดียวกับมือถือแล้ว
             (compact ยังเป็น false ตามเดิม — โครงเลย์เอาต์ 5 คอลัมน์ของเดสก์ท็อปไม่กระทบ แค่สี/ความเข้ม glow
-            เปลี่ยน — พื้นหลังการ์ด non-compact เอง ดู MetricCard.tsx v41 ที่เปลี่ยนจากพื้นกรมท่า/glow เต็ม
-            ความอิ่มตัวเป็นไทเทเนียม + glowAlpha ต่อการ์ดแทน) */}
-        <BodyMetricsRow colorScheme="vibrant" />
+            เปลี่ยน) v43: prop colorScheme ตัดออกทั้งหมดแล้ว (ไม่มีจุดไหนใช้ "default" อีกเลย ดู
+            BodyMetricsRow.tsx) เหลือแค่ชุดสีเดียวเป็นดีฟอลต์ ไม่ต้องส่ง prop นี้อีกต่อไป */}
+        <BodyMetricsRow />
       </div>
 
       {/* PR ล่าสุด / ฝึกมากสุดสัปดาห์นี้ ย้ายไปอยู่ในกระดิ่งแจ้งเตือนที่ header แล้ว (ดู NotificationButton)

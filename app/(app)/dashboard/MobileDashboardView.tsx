@@ -227,8 +227,10 @@ export default function MobileDashboardView() {
   // อันนี้คือ "รายละเอียดเต็ม" สำหรับคนที่อยากดูเจาะจงเป็นกล้ามเนื้อ ไม่ต้องโชว์ตลอดเวลา
   // (เดิมเคยอยู่ในแถบปัด (carousel) คู่กับ AI Coach — แต่ AI Coach มี AICoachCompactCard
   // แสดงอยู่แล้วด้านบน โชว์ซ้ำสองที่จึงตัดออกจากแถบปัดไปเลย ไม่ย้ายไปไว้ที่ไหนอีก)
+  // v43: "Minimal Dark Titanium" — เหตุผลเดียวกับที่ตัด glow ระดับการ์ดออกจาก Recovery/Weekly Goal
+  // เดสก์ท็อป (v41) — การ์ดนี้เป็นการ์ดรอง (ซ่อนหลัง "ดูสถิติเพิ่มเติม") ไม่ควร glow ถาวรทั้งใบ
   const recoveryDetailCard = prefs.showRecovery ? (
-    <Link href="/recovery" className="block rounded-lg bg-surface2/40 border overflow-hidden px-5 py-4 active:bg-surface2 transition" style={{ borderColor: '#60A5FA4D', boxShadow: '0 0 10px #60A5FA33' }}>
+    <Link href="/recovery" className="block rounded-lg bg-surface2/40 border border-line overflow-hidden px-5 py-4 active:bg-surface2 transition">
           <p className="text-[10px] tracked uppercase text-muted mb-3">Recovery</p>
           {muscleRecommendation &&
             (() => {
@@ -255,7 +257,7 @@ export default function MobileDashboardView() {
               )
             })()}
           <div className="flex items-center gap-4">
-            <div style={{ filter: 'drop-shadow(0 0 8px #22D3EE88)' }}>
+            <div style={{ filter: 'drop-shadow(0 0 4px #22D3EE40)' }}>
               <GoalRing pct={overallRecoveryPct} size={72} strokeWidth={7} color="#22D3EE" label="ฟื้นตัวรวม" ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ" />
             </div>
             <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
@@ -399,7 +401,9 @@ export default function MobileDashboardView() {
               ดูทั้งหมด →
             </Link>
           </div>
-          <BodyMetricsRow colorScheme="vibrant" maxCards={4} compact />
+          {/* v43: prop colorScheme ตัดออกแล้ว (ดู BodyMetricsRow.tsx) — ดีฟอลต์เป็นชุดสีนี้อยู่แล้ว
+              เดสก์ท็อปก็ใช้ชุดเดียวกันนี้ตั้งแต่ v41 ไม่ต้องส่ง prop แยกอีกต่อไป */}
+          <BodyMetricsRow maxCards={4} compact />
         </div>
 
         {/* Today's Workout (แบบย่อ) + สถิติย่อวันนี้ — ใช้ข้อมูลจริงที่คำนวณได้ (เซ็ต/นาที/recovery)

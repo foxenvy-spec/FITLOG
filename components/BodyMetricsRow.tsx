@@ -10,20 +10,9 @@ import MetricCard, { type MetricIconImageKey, type MetricCardTheme } from './Met
 import { COLORS, NEUTRAL } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 
-// ธีมสีต่อการ์ด (main + second) ตามสเปคที่ให้มา — มี 4 ธีม (เขียว/แดง/ส้ม/ฟ้า) แต่ 5 การ์ด
-// น้ำหนักกับกล้ามเนื้อโครงร่างใช้ธีมเขียวร่วมกัน (ทั้งคู่เป็นโทนเขียวอยู่แล้วก่อนหน้านี้)
-const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
-  weight: { main: '#00ff88', second: '#00d0ff' },
-  muscle: { main: '#00ff88', second: '#00d0ff' },
-  bodyFat: { main: '#ff2f5d', second: '#ff00c8' },
-  fatMass: { main: '#ff9d00', second: '#ff6600' },
-  bmi: { main: '#1b8cff', second: '#3f6cff' },
-}
-
-// ธีมสีชุดที่ 2 (colorScheme="vibrant") — ตาม Color token ล่าสุด: น้ำหนัก=ส้ม #F59E0B, ไขมัน=ชมพู
-// #EC4899, กล้ามเนื้อ=ฟ้า #3B82F6, มวลไขมัน=เขียว #22C55E ต่างจากชุดเดิมด้านบนไปเลย (ที่ยังใช้กับ
-// เดสก์ท็อปอยู่) จึงแยกเป็นอีกชุดแทนที่จะแก้ของเดิม — ป้องกันไม่ให้กระทบหน้าเดสก์ท็อปที่ยังอ้างอิง
-// METRIC_THEME ชุดแรก — second เป็นเฉดเข้มกว่าของสีเดียวกัน (ใช้กับ glow มุมขวาล่างของการ์ด)
+// ธีมสีต่อการ์ด (main + second) ตาม Color token ล่าสุด: น้ำหนัก=ส้ม #F59E0B, ไขมัน=ชมพู #EC4899,
+// กล้ามเนื้อ=ฟ้า #3B82F6, มวลไขมัน=เขียว #22C55E — second เป็นเฉดเข้มกว่าของสีเดียวกัน (ใช้กับ glow
+// มุมขวาล่างของการ์ด)
 //
 // glow (0-100): ความเข้ม glow มุมการ์ดต่อเมตริก — เดิมทุกใบใช้ alpha คงที่เท่ากันหมด (33 hex ≈ 20%)
 // ทำให้ glow ทุกใบสว่างเท่ากันดูไม่เป็นธรรมชาติ ตามฟีดแบ็กที่ขอให้แต่ละใบไม่เท่ากัน — น้ำหนัก (การ์ด
@@ -33,7 +22,11 @@ const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
 // v29: ฟีดแบ็ก "การ์ดภาพรวมร่างกาย ขอแบบเดิมได้ไหม" — ย้อน v28 (Metric Card แยกวัสดุ/สีต่อ icon —
 // Purple Smoke/Blue Energy/Green Crystal) กลับไปเป็นไทเทเนียมชุดเดียวกันทุกใบเหมือนเดิม รวมสี bodyFat
 // ที่เคยเปลี่ยนเป็นม่วง (#A855F7) กลับไปเป็นชมพูเดิม (#EC4899) ด้วย
-const METRIC_THEME_VIBRANT: Record<MetricIconImageKey, MetricCardTheme> = {
+// v43: เดิมมีสองชุดสี (METRIC_THEME นีออนอิ่มตัวเต็มที่ ใช้เฉพาะเดสก์ท็อป colorScheme="default" กับชุดนี้
+// ที่ใช้กับ colorScheme="vibrant") — ตั้งแต่ v41 ("Minimal Dark Titanium") เดสก์ท็อปสลับมาใช้ "vibrant"
+// เหมือนมือถือแล้ว ไม่มีจุดไหนเรียก "default" อีกเลย เอา METRIC_THEME (ชุดนีออน) กับ prop colorScheme
+// ออกทั้งคู่ ให้เหลือชุดสีเดียวที่ทั้งแอปใช้จริง ไม่ใช่โค้ดตายที่ต้องดูแลคู่ขนานไปเรื่อยๆ
+const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
   weight: { main: '#F59E0B', second: '#D97706', glow: 14 },
   bodyFat: { main: '#EC4899', second: '#DB2777', glow: 11 },
   muscle: { main: '#3B82F6', second: '#2563EB', glow: 9 },
@@ -75,12 +68,10 @@ function fmtSigned(n: number, decimals: number, suffix: string): string {
 
 export default function BodyMetricsRow({
   showLastMeasuredDate = false,
-  colorScheme = 'default',
   maxCards,
   compact = false,
 }: {
   showLastMeasuredDate?: boolean
-  colorScheme?: 'default' | 'vibrant'
   maxCards?: number
   // เฉพาะ Mobile Dashboard v2 — ลด padding การ์ดเมตริกลงให้กระชับขึ้นใน grid 2x2 (ดู MetricCard.tsx)
   compact?: boolean
@@ -239,10 +230,10 @@ export default function BodyMetricsRow({
           deltaColor={c.deltaColor}
           deltaDir={c.deltaDir}
           series={c.series}
-          theme={colorScheme === 'vibrant' ? METRIC_THEME_VIBRANT[c.icon] : METRIC_THEME[c.icon]}
+          theme={METRIC_THEME[c.icon]}
           lastMeasuredText={lastMeasuredText}
           tall={showLastMeasuredDate}
-          radius={colorScheme === 'vibrant' ? 'xl20' : 'lg'}
+          radius="xl20"
           compact={compact}
         />
       ))}
