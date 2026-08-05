@@ -19,11 +19,13 @@ interface AICoachCompactCardProps {
   avatarSrc?: string
 }
 
-// v34: ทำตามมอคอัพ "AI Coach Card" ที่ส่งมา (avatar วงแหวน + headline ใหญ่ + recovery bar + stat chip 4
-// ช่อง + CTA pill พร้อมปุ่มลูกศรวงกลม) — แต่ 3 ใน 4 chip ในมอคอัพ (พลังงาน/การนอน/ความเครียด) เป็นข้อมูลที่
-// แอปยังไม่มีจริง (ยังไม่เชื่อมต่อ Health App — ดู TodayHealthStatsRow ที่ตั้งใจโชว์การ์ด "เชื่อมต่อ"
-// แทนตัวเลขปลอมด้วยเหตุผลเดียวกัน) — ยืนยันกับผู้ใช้แล้วว่าให้โชว์ 3 ช่องนี้เป็น Locked/Coming Soon (ไอคอน
-// กุญแจ จางลง) แทนตัวเลขที่ไม่มีจริง เหลือแค่ "ความพร้อม" ที่คำนวณจาก muscleRecommendation.pct จริง
+// v34: ทำตามมอคอัพ "AI Coach Card" ที่ส่งมา (avatar วงแหวน + headline ใหญ่ + recovery bar + stat chip +
+// CTA pill พร้อมปุ่มลูกศรวงกลม) — 2 ใน 3 chip (พลังงาน/การนอน) เป็นข้อมูลที่แอปยังไม่มีจริง (ยังไม่เชื่อมต่อ
+// Health App — ดู TodayHealthStatsRow ที่ตั้งใจโชว์การ์ด "เชื่อมต่อ" แทนตัวเลขปลอมด้วยเหตุผลเดียวกัน) —
+// ยืนยันกับผู้ใช้แล้วว่าให้โชว์ 2 ช่องนี้เป็น Locked/Coming Soon (ไอคอนกุญแจ จางลง) แทนตัวเลขที่ไม่มีจริง
+// เหลือแค่ "ความพร้อม" ที่คำนวณจาก muscleRecommendation.pct จริง
+// v35: ตัด "ความเครียด" ออก (chip ที่ 4 เดิม) ตามคำขอ — เหลือ 3 chip (grid-cols-4 -> grid-cols-3) และขยาย
+// avatar ใหญ่ขึ้น (64px -> 88px) ตามคำขอ "อยากให้รูปใหญ่กว่านี้"
 export default function AICoachCompactCard({ message, muscleRecommendation, href = '/coach', avatarSrc }: AICoachCompactCardProps) {
   const barColor = muscleRecommendation ? recoveryStatusColor(muscleRecommendation.pct) : COLORS.amber
 
@@ -57,11 +59,10 @@ export default function AICoachCompactCard({ message, muscleRecommendation, href
       </div>
 
       {muscleRecommendation && (
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-3 gap-1.5">
           <StatChip icon="💪" label="ความพร้อม" value={readinessLabel(muscleRecommendation.pct)} color={barColor} />
           <LockedChip icon="⚡" label="พลังงาน" />
           <LockedChip icon="🌙" label="การนอน" />
-          <LockedChip icon="💗" label="ความเครียด" />
         </div>
       )}
 
@@ -102,7 +103,7 @@ function StatChip({ icon, label, value, color }: { icon: string; label: string; 
   )
 }
 
-// chip "เร็วๆ นี้" — พลังงาน/การนอน/ความเครียด ต้องเชื่อมต่อ Health App ก่อนถึงจะมีข้อมูลจริง (เหตุผล
+// chip "เร็วๆ นี้" — พลังงาน/การนอน ต้องเชื่อมต่อ Health App ก่อนถึงจะมีข้อมูลจริง (เหตุผล
 // เดียวกับ TodayHealthStatsRow) โชว์ไอคอนกุญแจแทนตัวเลข ไม่ใช้ค่า hardcode ที่ไม่มีอะไรรองรับจริง
 function LockedChip({ icon, label }: { icon: string; label: string }) {
   return (
@@ -127,7 +128,7 @@ function LockedChip({ icon, label }: { icon: string; label: string }) {
 // (ไม่มีรูปหุ่นยนต์จริงให้ใช้) นิ่งสนิท ไม่มี pulse/rotate ตามกฎ "Hero มีแค่ใบเดียว" — รับ src ไว้เผื่อมี
 // ไฟล์รูปจริงในอนาคต (สลับมาโชว์รูปแทนไอคอนได้ทันทีโดยไม่ต้องแก้โครงสร้างการ์ด)
 function AiRingAvatar({ src }: { src?: string }) {
-  const size = 64
+  const size = 88
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       <div
