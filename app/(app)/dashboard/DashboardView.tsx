@@ -55,6 +55,7 @@ import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
+import { computeFitnessScore } from '@/lib/fitnessScore'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
@@ -492,6 +493,34 @@ export default function DashboardPage() {
   const recoveryLabelPct =
     progressPct !== null ? progressPct : (data?.todayWorkouts.length ?? 0) > 0 ? 100 : null
 
+  // v45: ฟีดแบ็ก "Header ยังโล่งเกินไป มีพื้นที่ว่างเกือบ 40%" — เพิ่ม Fitness Score (สูตรจริงเดียวกับที่
+  // มือถือใช้อยู่แล้ว ดู MobileDashboardView.tsx, ไม่ใช่เลขสมมติใหม่) ลงไปเติมช่องว่างระหว่างชื่อกับ
+  // ป้ายวันที่ — สูตร/น้ำหนักปัจจัยตรงกับ MobileDashboardView.tsx เป๊ะ (Workout Completion 30% / Streak
+  // 20% / Sleep 20% (ไม่มีข้อมูลเสมอ กระจายน้ำหนักให้ปัจจัยอื่น) / Recovery 15% / Weekly Goal 10% /
+  // Activity วันนี้ 5%) — เดสก์ท็อปไม่เคยมี Fitness Score เลยมาก่อนรอบนี้
+  const trainedRecoveryMuscles = data ? RECOVERY_MUSCLES.filter((mg) => data.recoveryDates[mg]) : []
+  const recoveryPctMap: Record<string, number> = {}
+  if (data) {
+    RECOVERY_MUSCLES.forEach((mg) => {
+      recoveryPctMap[mg] = computeRecoveryPct(data.recoveryDates[mg] ?? null, mg)
+    })
+  }
+  const fitnessScoreRecoveryPct =
+    trainedRecoveryMuscles.length > 0
+      ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / trainedRecoveryMuscles.length)
+      : null
+  const fitnessScore = useMemo(() => {
+    if (!data) return null
+    return computeFitnessScore([
+      { key: 'workout', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
+      { key: 'streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
+      { key: 'sleep', value: null, weight: 20 },
+      { key: 'recovery', value: fitnessScoreRecoveryPct, weight: 15 },
+      { key: 'weeklyGoal', value: data.weeklyGoalPct, weight: 10 },
+      { key: 'activityToday', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
+    ])
+  }, [data, fitnessScoreRecoveryPct, progressPct, totals.entryCount])
+
   if (isLoading || !data) {
     return <DashboardSkeleton />
   }
@@ -591,6 +620,40 @@ export default function DashboardPage() {
             )
           })()}
         </div>
+
+        {/* v45: ฟีดแบ็ก "Header ยังโล่งเกินไป มีพื้นที่ว่างเกือบ 40%" — เติมช่องว่างระหว่างชื่อกับป้ายวันที่
+            ด้วยป้าย Fitness Score (คำนวณจริงด้านบน ไม่ใช่เลขสมมติ) วงแหวนเล็ก+ตัวเลข+ระดับ (Excellent/Good
+            ฯลฯ) สีตาม tier เดียวกับที่มือถือใช้ (fitnessScore.color) */}
+        {fitnessScore && (
+          <div className="hidden md:flex flex-1 justify-center self-center">
+            <div
+              className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5"
+              style={{
+                border: '1.5px solid transparent',
+                backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${fitnessScore.color}14, ${fitnessScore.color}40, ${fitnessScore.color}14)`,
+                backgroundOrigin: 'border-box',
+                backgroundClip: 'padding-box, border-box',
+                boxShadow: `0 4px 14px rgba(0,0,0,.35), 0 0 8px ${fitnessScore.color}1F`,
+              }}
+            >
+              <GoalRing
+                pct={fitnessScore.score}
+                size={38}
+                strokeWidth={4}
+                color={fitnessScore.color}
+                valueLabel={String(fitnessScore.score)}
+                ariaLabel={`Fitness Score ${fitnessScore.score}`}
+              />
+              <div className="leading-tight">
+                <p className="text-[9px] tracked uppercase text-muted">Fitness Score</p>
+                <p className="text-xs font-display tracked uppercase" style={{ color: fitnessScore.color }}>
+                  {fitnessScore.tierLabel}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 shrink-0">
           <span
             // v41: "Version 3" — พื้นกรมท่าเดิม (#13233A/#08121F) เปลี่ยนเป็น CARD_GRADIENT_CSS (titanium
@@ -655,26 +718,38 @@ export default function DashboardPage() {
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
       >
-        {/* decorative background — dark vignette + real photo on the right, faded into the
-            card's own bg on the left so text stays readable. Photo lives at
-            /public/images/workout-hero.jpg. (Previously an abstract <HeroTorsoArt /> SVG
-            silhouette rendered on top of this as a fallback for when no photo existed yet —
-            now that a real photo is in place, that overlay has been removed since it was
-            painting a gray shape over the photo with no way to condition it off.) */}
-        <div className="absolute inset-0 bg-surface">
+        {/* v45: ฟีดแบ็ก "ภาพคนดูธรรมดา ใช้ Dumbbell/Orange Spark จะเข้ากับ Theme มากกว่า" — เดิมเป็นรูปถ่าย
+            จริง (/images/workout-hero.jpg) คนละภาษากับวัสดุไทเทเนียม/แสงพลังงานส้มที่การ์ดอื่นทั้งแอปใช้
+            (Energy Core ของปุ่ม Start Workout, glow อำพันทั่วไป) — เปลี่ยนเป็น CSS/SVG ล้วน (ไม่ต้องมี asset
+            รูปใหม่): แสงพลังงานส้มระเบิดจากมุมขวา (Orange Spark, โทนเดียวกับ FIRE_GRADIENT/Energy Core) +
+            เงาดัมเบลขนาดใหญ่จางๆ ทับอยู่ ให้ความรู้สึก "อุปกรณ์ฝึก" แทนภาพคนจริง ยังคง fade ซ้ายให้ตัวหนังสือ
+            อ่านง่ายเหมือนเดิมทุกประการ */}
+        <div className="absolute inset-0 bg-surface overflow-hidden">
           <div
-            className="absolute inset-y-0 right-0 w-full sm:w-2/3 opacity-90"
+            className="absolute inset-y-0 right-0 w-full sm:w-2/3"
             style={{
-              backgroundImage:
-                "linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%), url('/images/workout-hero.jpg')",
-              backgroundSize: 'cover',
-              // Anchored to the right — the subject in workout-hero.jpg sits near the photo's
-              // right edge, with empty dark space on the left. 'center' cropped symmetrically
-              // and cut the subject down to a sliver of an arm; anchoring right instead crops
-              // away the empty left side and keeps the torso fully in frame.
-              backgroundPosition: 'right center',
+              backgroundImage: [
+                'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.22), transparent 62%)',
+                'radial-gradient(ellipse 55% 50% at 96% 78%, rgba(255,180,70,.14), transparent 65%)',
+                'linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%)',
+              ].join(', '),
             }}
           />
+          <svg
+            className="absolute pointer-events-none"
+            style={{ right: '3%', top: '52%', width: '58%', maxWidth: 240, transform: 'translateY(-50%) rotate(-16deg)', opacity: 0.16 }}
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M2 12h2M20 12h2M5 9v6M19 9v6M8 7v10M16 7v10M8 12h8"
+              stroke="#FFB84A"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
 
         <div className="relative z-10 px-5 py-6">
@@ -803,10 +878,8 @@ export default function DashboardPage() {
             </div>
 
             {(() => {
-              const recoveryPctMap: Record<string, number> = {}
-              RECOVERY_MUSCLES.forEach((mg) => {
-                recoveryPctMap[mg] = computeRecoveryPct(data.recoveryDates[mg] ?? null, mg)
-              })
+              // recoveryPctMap คำนวณไว้แล้วที่ระดับ component (ใช้ร่วมกับ Fitness Score บน header ด้วย)
+              // ไม่ต้องคำนวณซ้ำในนี้อีกรอบ
               // ใช้ตัวที่คำนวณไว้แล้วฝั่งบน (ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน ถ้ามี) แทนที่จะคำนวณใหม่
               // จาก recovery % ล้วนๆ ตรงนี้ กันไม่ให้การ์ดนี้แนะนำสวนทางกับ hero message ด้านบน
               const recommendation = data.muscleRecommendation
@@ -814,7 +887,13 @@ export default function DashboardPage() {
                 <>
                   {recommendation &&
                     (() => {
-                      const recColor = recoveryStatusColor(recommendation.pct)
+                      // v45: ฟีดแบ็ก "Recovery เป็นสีเขียว แต่ Ring เป็นฟ้า อยากได้ Palette เดียวกัน" —
+                      // ป้ายแนะนำ + badge "พร้อมลุย" เดิมใช้ recoveryStatusColor() (เขียว/เหลือง/แดงตาม %)
+                      // ขณะที่วงแหวน "ฟื้นตัวรวม" ด้านล่าง fix เป็นฟ้าไซแอนคงที่ตามธีมการ์ดนี้อยู่แล้ว —
+                      // เปลี่ยนป้ายให้ใช้สีฟ้าไซแอนเดียวกับวงแหวนแทน ให้ทั้งการ์ดเป็นโทนเดียวกัน (เฉพาะ
+                      // 2 จุดนี้ — จุดสีเขียว/เหลือง/แดงในลิสต์รายกลุ่มกล้ามเนื้อด้านล่างยังคงไว้ เพราะเป็น
+                      // สัญญาณข้อมูลจริงว่ากลุ่มไหนพร้อม/ไม่พร้อม ไม่ใช่แค่สีตกแต่ง)
+                      const recColor = '#22D3EE'
                       // 90 mirrors FULLY_RECOVERED_PCT in lib/dashboardStats.ts (not exported,
                       // so re-checked here purely for the badge — doesn't change any computed pct)
                       const isFullyReady = recommendation.pct >= 90
@@ -909,14 +988,15 @@ export default function DashboardPage() {
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
           <div className="flex items-center gap-4">
-            {/* สีม่วงชมพูนีออน + glow ตามมอคอัพ v3 (เดิมใช้สี amber ปกติเหมือนวงแหวนอื่นๆ) — v41: glow ลดลง
-                ครึ่งหนึ่งตามทิศทาง "Minimal Dark Titanium" */}
-            <div style={{ filter: 'drop-shadow(0 0 4px #E339A640)' }}>
+            {/* v45: ฟีดแบ็ก "วงกลมชมพูโดดออกมา ไม่เข้ากับ Dark Titanium — เปลี่ยนเป็น Orange/Titanium
+                Gold เข้ากว่า" — สีม่วงชมพูนีออน (#E339A6) เดิมมาจากมอคอัพ v3 ตอนนั้น ไม่ใช่โทนไทเทเนียม/
+                อำพันที่เหลือทั้งแอปใช้ — เปลี่ยนเป็น COLORS.amber เดียวกับ Hero Ring/ปุ่ม CTA ทั่วแอป */}
+            <div style={{ filter: 'drop-shadow(0 0 4px #E8A33D40)' }}>
               <GoalRing
                 pct={data.weeklyGoalPct}
                 size={72}
                 strokeWidth={7}
-                color="#E339A6"
+                color="#E8A33D"
                 label="Goal"
                 ariaLabel="Weekly Goal"
               />
@@ -1107,18 +1187,36 @@ function QuickAction({
 }) {
   const hex = QUICK_ACTION_ACCENTS[accent]
   return (
-    <Link
-      href={href}
-      className="rounded-lg border border-line bg-surface flex items-center gap-2.5 px-3 py-3 transition active:scale-[0.99] hover:border-line/40"
-    >
-      <span
-        className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base"
-        style={{ backgroundColor: `${hex}22` }}
-        aria-hidden="true"
+    <>
+      {/* v45: ฟีดแบ็ก "Quick Action ยังเรียบไป อยากได้ Glass Button + Glow ตอน Hover" — เดิมพื้นทึบ
+          bg-surface เรียบๆ ไม่มี glow เลย — เปลี่ยนพื้นเป็นกระจกโปร่งแสง (backdrop-blur เดียวกับ
+          GlassCard.tsx) พักตอนปกติไม่มี glow เลย (กัน 4-5 ปุ่มเรืองแสงพร้อมกันทั้งแถว ขัดกฎ "Less Glow
+          More Material") glow สีตามแอคเซนต์เดิมของแต่ละปุ่มโผล่เฉพาะตอน hover เท่านั้น */}
+      <Link
+        href={href}
+        className="quick-action relative rounded-lg backdrop-blur-md flex items-center gap-2.5 px-3 py-3 transition active:scale-[0.99]"
+        style={{
+          border: '1px solid rgba(255,255,255,.06)',
+          backgroundImage: 'linear-gradient(180deg, #1B1D20cc, #0D0E10cc)',
+        }}
       >
-        {icon}
-      </span>
-      <span className="text-[11px] font-display tracked uppercase text-ink truncate">{label}</span>
-    </Link>
+        <span
+          className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base"
+          style={{ backgroundColor: `${hex}22` }}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+        <span className="text-[11px] font-display tracked uppercase text-ink truncate">{label}</span>
+      </Link>
+      <style jsx>{`
+        @media (hover: hover) {
+          .quick-action:hover {
+            border-color: ${hex}66;
+            box-shadow: 0 0 16px ${hex}4d;
+          }
+        }
+      `}</style>
+    </>
   )
 }

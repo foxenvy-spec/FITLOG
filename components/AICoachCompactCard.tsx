@@ -306,7 +306,11 @@ function LockedChip({ icon, label }: { icon: string; label: string }) {
 // แยกวัสดุ) ให้ AI Coach avatar อยู่ในตระกูลเดียวกับวง progress อื่นๆ — นิ่งสนิท ไม่มี pulse/rotate ตามกฎ
 // "Hero มีแค่ใบเดียว" — รับ src ไว้เผื่อไม่มีรูป (fallback ไอคอนเรขาคณิต)
 function AiRingAvatar({ src }: { src?: string }) {
-  const size = 88
+  // v45: ฟีดแบ็ก "Robot ยังเล็ก อยากให้ใหญ่ขึ้นอีกประมาณ 25%" (ราว 88 -> 110px) — รอบก่อนหน้าทำแค่ scale
+  // รูปข้างในให้เต็มวงเดิม (88px คงที่) ตามที่ขอตอนนั้น "ไม่ต้องเพิ่มขนาดวงแหวน" — รอบนี้ขอเพิ่มสัดส่วน
+  // Robot ต่อการ์ดจริง (40/60) ซึ่งต้องขยายวงเองด้วย ไม่ใช่แค่ scale รูปในวงเดิม — scale(1.55) ของรูปข้างใน
+  // (ดูด้านล่าง) เป็นค่าสัมพัทธ์กับ container นี้อยู่แล้ว จึงขยายตามไปเองโดยไม่ต้องปรับเลขนั้นซ้ำ
+  const size = 110
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       <div
