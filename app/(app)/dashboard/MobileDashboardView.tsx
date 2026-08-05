@@ -51,7 +51,6 @@ import Header from '@/components/dashboard/Header'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
 import WeeklyVolumeRecoveryCard from '@/components/WeeklyVolumeRecoveryCard'
-import RecommendedProgramCard from '@/components/RecommendedProgramCard'
 import TodaysFocusCard from '@/components/TodaysFocusCard'
 import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
 import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
@@ -478,8 +477,6 @@ export default function MobileDashboardView() {
             <WeeklyCardioVolume />
           </div>
         )}
-
-        <RecommendedProgramCard recommendedMuscle={data.muscleRecommendation?.muscleGroup ?? null} />
         </div>
       </div>
 
