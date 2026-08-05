@@ -355,14 +355,3 @@ export const TITANIUM_MESH_CSS = [
 // ทาง alpha) แต่ตั้ง threshold สูงกว่ามาก (สูตร alpha*9-8.3 แทน *1.6-0.55) ให้เหลือรอดแค่จุดที่สว่างสุด
 // ของ noise เป็นจุดกระจายห่างๆ แบบฝุ่นจริง ไม่ใช่เกรนทึบเหมือน grain ทั่วไป
 export const DUST_PARTICLES_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='dust'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch' result='n'/%3E%3CfeColorMatrix in='n' type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 9 -8.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23dust)'/%3E%3C/svg%3E")`
-
-// ===================================================================================
-// v32: "Bottom Nav ยังไม่ใช่ Titanium จริง" — ฟีดแบ็ก "ตอนนี้เป็น Material Design ธรรมดา ปุ่ม Start
-// ลอยอยู่ ให้ความรู้สึก Android App ทั้งที่ Dashboard ด้านบน Premium มาก" — FitnessRing.tsx มี SVG
-// <linearGradient id="...-titanium-track"> (stop 0%/22%/50%/75%/100% = #3A3B3D/#6B7A8C/#1C1C1D/#9C8058/
-// #E8E4DC, x1="10%" y1="0%" x2="90%" y2="100%") ใช้เป็นวัสดุ "Hero Ring" อยู่แล้ว — ดึงค่าสต็อปเดียวกัน
-// เป๊ะออกมาเป็น CSS linear-gradient token กลาง (มุม x1/y1->x2/y2 ของ SVG ~= 174deg ใน CSS) ให้ปุ่ม
-// Start Workout ใน BottomNav.tsx ใช้ "วัสดุเดียวกันจริงๆ" กับ Hero Ring ตามคำขอ "เหมือน Hero Ring ย่อส่วน"
-// ไม่ใช่แค่ไล่สีเทาคล้ายๆ กันเฉยๆ
-export const TITANIUM_TRACK_GRADIENT_CSS =
-  'linear-gradient(174deg, #3A3B3D 0%, #6B7A8C 22%, #1C1C1D 50%, #9C8058 75%, #E8E4DC 100%)'
