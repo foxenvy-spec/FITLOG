@@ -350,8 +350,10 @@ export default function MetricCard({
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
                 // + จุดสีธีมจางๆ ที่มุมบนซ้าย เป็นการ "แต้ม" สี ไม่ใช่ "ย้อม" ทั้งกล่อง
-                background: `linear-gradient(180deg, #232C40, #0A0E18)`,
-                backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), linear-gradient(180deg, #232C40, #0A0E18)`,
+                // v43: ฐานกรมท่า (#232C40/#0A0E18) เปลี่ยนเป็น CARD_GRADIENT_CSS (โทนไทเทเนียมเดียวกับ
+                // พื้นการ์ดหลัก) ตามที่พบใน audit รอบสุดท้าย — จุดสีธีมด้านบนไม่แตะ ยังแต้มทับเหมือนเดิม
+                background: CARD_GRADIENT_CSS,
+                backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), ${CARD_GRADIENT_CSS}`,
                 // border บาง 1px สีธีม (คมชัด แทนเส้นหนาๆ) + inset highlight ลดความสว่างลง (.35→.15) ให้เป็น
                 // แค่ "ผิวมัน" บางๆ ไม่ใช่เส้นขอบขาวหนา ปล่อยให้ glow ด้านนอกทำหน้าที่เน้นความเด่นแทน
                 border: `1px solid ${theme.main}55`,
