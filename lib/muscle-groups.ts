@@ -105,8 +105,26 @@ const SECONDARY_MUSCLE_RULES: SecondaryMuscleRule[] = [
   { keywords: /lunge|ก้าวย่อ/, secondary: ['แกนกลางลำตัว'] },
 ]
 
+// v37: หมวดร่างกายกว้างๆ (Upper/Lower/Core/Full Body) — ใช้กับหัวข้อการ์ด AI Coach ("วันนี้เหมาะกับ
+// Upper Body") จัดกลุ่มตามกายวิภาคทั่วไป เป็น derived category จาก MuscleGroup ที่มีอยู่แล้ว ไม่ใช่
+// ข้อมูลใหม่ที่ต้องเก็บเพิ่ม/เดา — ทุกกลุ่มกล้ามเนื้อ map ไปหมวดใดหมวดหนึ่งเสมอ (ไม่มี undefined)
+export const MUSCLE_GROUP_BODY_REGION: Record<MuscleGroup, string> = {
+  'อก': 'Upper Body',
+  'หลัง': 'Upper Body',
+  'ไหล่': 'Upper Body',
+  'แขน': 'Upper Body',
+  'ขา': 'Lower Body',
+  'น่อง': 'Lower Body',
+  'แกนกลางลำตัว': 'Core',
+  'ทั้งตัว': 'Full Body',
+  'อื่นๆ': 'Full Body',
+}
+
 // ค่า fallback สุดท้ายถ้าไม่เจอ keyword ไหนเลย — จับคู่มัดรองที่พบบ่อยตามมัดหลัก
-const DEFAULT_SECONDARY_BY_PRIMARY: Record<MuscleGroup, MuscleGroup[]> = {
+// v37: export เพิ่ม (เดิม private ในไฟล์นี้) — AICoachCompactCard เอาไปใช้แสดงกลุ่มกล้ามเนื้อที่ฝึกด้วยกัน
+// บ่อยๆ ในหัวข้อการ์ด ("อก • ไหล่ • แขน") ใช้ตารางเดียวกับที่ guessSecondaryMuscles ใช้อยู่แล้วเป๊ะๆ
+// ไม่สร้างชุดข้อมูลใหม่ซ้ำซ้อน
+export const DEFAULT_SECONDARY_BY_PRIMARY: Record<MuscleGroup, MuscleGroup[]> = {
   'อก': ['ไหล่', 'แขน'],
   'หลัง': ['แขน'],
   'ขา': ['แกนกลางลำตัว'],
