@@ -238,29 +238,23 @@ export default function MetricCard({
         )}
         {/* v29: ฟีดแบ็ก "การ์ดภาพรวมร่างกาย ขอแบบเดิมได้ไหม" — ย้อนกลับ v28 (Purple Smoke/Blue Energy/
             Green Crystal แยกวัสดุตาม icon) กลับไปเป็นไทเทเนียมชุดเดียวกันทุกใบเหมือนเดิม (มุมตัด CNC/
-            ลายตาข่ายจาก v27 ยังอยู่ครบ ไม่แตะ) */}
-        {compact && (
-          <>
-            {/* v13: ลายเฉียงไทเทเนียม (DIAGONAL_TITANIUM_CSS) เดียวกับที่ใช้ในพื้นหลังหน้า/รูป Today's
-                Workout — เดิม MetricCard มีแค่ NOISE_BG (grain สุ่มแบบ feTurbulence) ซึ่งเป็นลายคนละแบบกับ
-                เส้นทแยงที่ Workout Card มี ทำให้ซูมดูแล้ว texture ยังเรียบกว่า — เพิ่มชั้นนี้ที่ opacity ต่ำมาก
-                (2%) ให้ผิวการ์ดมีลายเส้นทแยงแบบเดียวกันจริงๆ ไม่ใช่แค่โทนสีเดียวกัน (compact/มือถือเท่านั้น)
-                v22: ฟีดแบ็ก "Fine Brushed Texture เบามาก" — ขยับ multiplier จาก 0.5 เป็น 0.65 (effective ~2.6%
-                แทน 2%) เล็กน้อย ยังอยู่ในเพดาน "แทบมองไม่เห็น" */}
-            <div
-              aria-hidden="true"
-              className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-              style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.65 }}
-            />
-            {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (โทเคนเดียวกับ PremiumCard ใช้) ซ้อนแยกจากลายเฉียง
-                ทิศทางเดียวด้านบน ให้การ์ดนี้มีลายตารางแบบเดียวกับการ์ดอื่นทั่วแอปด้วย ไม่ใช่แค่ลายเฉียงเดิม */}
-            <div
-              aria-hidden="true"
-              className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-              style={{ backgroundImage: TITANIUM_MESH_CSS }}
-            />
-          </>
-        )}
+            ลายตาข่ายจาก v27 ยังอยู่ครบ ไม่แตะ)
+            v45: ฟีดแบ็ก "Metric Card ยังแบน อยากได้ Brushed Metal เบาๆ 5%" — ชั้นลายเฉียง+ตาข่ายนี้เดิมมี
+            แค่ compact (มือถือ) เท่านั้น เดสก์ท็อป (!compact) ไม่เคยมีเลยตั้งแต่แรก (มีแค่ NOISE_BG grain
+            สุ่มแบบจุด ไม่ใช่ลายเส้นบรัชเมทัลทิศทางเดียวแบบนี้) — ตัดเงื่อนไข compact ออก ให้ทั้งสองแพลตฟอร์ม
+            ได้ลายเดียวกัน (opacity เท่าเดิมทุกประการ ไม่ได้ปรับเพิ่ม) */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+          style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.65 }}
+        />
+        {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (โทเคนเดียวกับ PremiumCard ใช้) ซ้อนแยกจากลายเฉียง
+            ทิศทางเดียวด้านบน ให้การ์ดนี้มีลายตารางแบบเดียวกับการ์ดอื่นทั่วแอปด้วย ไม่ใช่แค่ลายเฉียงเดิม */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-0 ${radiusClass}`}
+          style={{ backgroundImage: TITANIUM_MESH_CSS }}
+        />
         {/* v15: การ์ดยังดู "Matte" — เพิ่มแถบสะท้อนแสงเฉียง (diagonal reflection) มุมบนซ้ายไล่ไปขวาล่าง
             แยกจาก CARD_REFLECTION_CSS เดิม (ซึ่งเป็นแถบแนวนอนบนสุดล้วนๆ) อันนี้เอียงตามทิศทางเดียวกับ
             DIAGONAL_TITANIUM_CSS ให้ความรู้สึกผิวโลหะสะท้อนแสงจริง ไม่ใช่พื้นเรียบทึบ (~4% ตามที่ขอ) */}
