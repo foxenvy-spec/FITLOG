@@ -53,6 +53,7 @@ import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
+import { CARD_GRADIENT_CSS } from '@/lib/theme'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
@@ -591,14 +592,15 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span
+            // v41: "Version 3" — พื้นกรมท่าเดิม (#13233A/#08121F) เปลี่ยนเป็น CARD_GRADIENT_CSS (titanium
+            // เดียวกับทั้งแอป) + glow ลดลง (12px/33 -> 8px/1F)
             className="hidden sm:inline-flex items-center gap-1.5 rounded-full text-[11px] text-ink px-3 py-1.5"
             style={{
               border: '1.5px solid transparent',
-              backgroundImage:
-                'linear-gradient(180deg, #13233A, #08121F), linear-gradient(135deg, #E8A33D14, #E8A33D40, #E8A33D14)',
+              backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, #E8A33D14, #E8A33D40, #E8A33D14)`,
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
-              boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 12px #E8A33D33',
+              boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 8px #E8A33D1F',
             }}
           >
             📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -617,7 +619,15 @@ export default function DashboardPage() {
           week-over-week deltas, pulled from the same body_metrics rows as the /health page.
           Sits above the fold since it's the first thing a user checks each morning. */}
       <div className="lg:col-span-12 lg:order-3 animate-rise" style={{ animationDelay: '15ms' }}>
-        <BodyMetricsRow />
+        {/* v41: ฟีดแบ็ก "ทำเป็น Version 3 (Minimal Dark Titanium)" — เดสก์ท็อปยังใช้ METRIC_THEME เดิม
+            (สีนีออนอิ่มตัวเต็มที่ #00ff88/#ff00c8 ฯลฯ ไม่มี glow field เลย เท่ากับ glowAlphaHex ดีฟอลต์
+            20% ทุกใบเท่ากันหมด) คนละชุดกับสีที่มือถือปรับแต่งมาหลายรอบ (METRIC_THEME_VIBRANT — โทนเดียว
+            กับ Apple/muted, glow ลดหลั่นตามความสำคัญ) — สลับมาใช้ colorScheme="vibrant" เดียวกับมือถือ
+            แทนที่จะคิดชุดสี/glow ใหม่แยกต่างหากสำหรับเดสก์ท็อป ให้แอปรู้สึกเป็นวัสดุเดียวกันทั้งสองแพลตฟอร์ม
+            (compact ยังเป็น false ตามเดิม — โครงเลย์เอาต์ 5 คอลัมน์ของเดสก์ท็อปไม่กระทบ แค่สี/ความเข้ม glow
+            เปลี่ยน — พื้นหลังการ์ด non-compact เอง ดู MetricCard.tsx v41 ที่เปลี่ยนจากพื้นกรมท่า/glow เต็ม
+            ความอิ่มตัวเป็นไทเทเนียม + glowAlpha ต่อการ์ดแทน) */}
+        <BodyMetricsRow colorScheme="vibrant" />
       </div>
 
       {/* PR ล่าสุด / ฝึกมากสุดสัปดาห์นี้ ย้ายไปอยู่ในกระดิ่งแจ้งเตือนที่ header แล้ว (ดู NotificationButton)
@@ -637,11 +647,13 @@ export default function DashboardPage() {
           intentionally quieter (no shadow-hero, smaller type) so the eye has exactly one
           obvious place to land first. */}
       <div
-        className={`relative rounded-lg border border-amber/60 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
+        className={`relative rounded-lg border border-amber/30 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
         style={{
-          boxShadow: '0 0 14px #E8A33D40, 0 0 1px #E8A33D',
+          // v41: "Version 3 (Minimal Dark Titanium)" — glow เดิม 14px/40 alpha เข้มไป ลดลงให้ Hero
+          // ยังเด่นอยู่ (การ์ดเดียวที่ควรมี glow ตามกฎ "Hero มีแค่ใบเดียว") แต่ไม่จัดจ้านเท่าเดิม
+          boxShadow: '0 0 8px #E8A33D26, 0 0 1px #E8A33D66',
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
       >
@@ -781,12 +793,11 @@ export default function DashboardPage() {
           padding than the hero card above, so it reads as supporting info, not competing for focus */}
       {prefs.showRecovery && (
         <div
-          className="rounded-lg bg-surface2/40 border overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1"
-          style={{
-            animationDelay: '240ms',
-            borderColor: '#60A5FA4D',
-            boxShadow: '0 0 10px #60A5FA33',
-          }}
+          // v41: "Version 3 (Minimal Dark Titanium)" — เดิมมี border+boxShadow สีฟ้าเรืองแสงถาวรทั้งใบ
+          // (Recovery เป็นการ์ดรอง ไม่ใช่ Hero) ตัด glow ระดับการ์ดออก เหลือแค่ border-line กลางเหมือน
+          // การ์ดรองอื่นๆ ในแอป — สีฟ้ายังอยู่ที่วงแหวนด้านในเท่านั้น (ดู drop-shadow ของ GoalRing ด้านล่าง)
+          className="rounded-lg bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1"
+          style={{ animationDelay: '240ms' }}
         >
           <Link href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
@@ -846,7 +857,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-4">
                         {/* สีฟ้าไซแอน + glow ตามมอคอัพ v3 — เดิมใช้ recoveryStatusColor() ที่เปลี่ยนสีตามเปอร์เซ็นต์
                             (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ */}
-                        <div style={{ filter: 'drop-shadow(0 0 8px #22D3EE88)' }}>
+                        <div style={{ filter: 'drop-shadow(0 0 4px #22D3EE40)' }}>
                           <GoalRing
                             pct={overallRecoveryPct}
                             size={84}
@@ -892,19 +903,17 @@ export default function DashboardPage() {
           consistently as a ring throughout the dashboard, instead of a ring in one place
           and a flat percent-bar in another. */}
       <div
-        className="rounded-lg bg-surface2/40 border overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
-        style={{
-          animationDelay: '300ms',
-          borderColor: '#60A5FA4D',
-          boxShadow: '0 0 10px #60A5FA33',
-        }}
+        // v41: เหตุผลเดียวกับการ์ด Recovery ด้านบน — ตัด glow ระดับการ์ดออก เหลือ border-line กลาง
+        className="rounded-lg bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
+        style={{ animationDelay: '300ms' }}
       >
         <div className="px-4 py-4">
           <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
 
           <div className="flex items-center gap-4">
-            {/* สีม่วงชมพูนีออน + glow ตามมอคอัพ v3 (เดิมใช้สี amber ปกติเหมือนวงแหวนอื่นๆ) */}
-            <div style={{ filter: 'drop-shadow(0 0 8px #E339A688)' }}>
+            {/* สีม่วงชมพูนีออน + glow ตามมอคอัพ v3 (เดิมใช้สี amber ปกติเหมือนวงแหวนอื่นๆ) — v41: glow ลดลง
+                ครึ่งหนึ่งตามทิศทาง "Minimal Dark Titanium" */}
+            <div style={{ filter: 'drop-shadow(0 0 4px #E339A640)' }}>
               <GoalRing
                 pct={data.weeklyGoalPct}
                 size={72}
