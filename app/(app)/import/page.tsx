@@ -13,6 +13,8 @@ import {
   type ParsedExerciseRow,
   type ParsedBodyLogRow,
 } from '@/lib/importWorkoutExcel'
+import PremiumCard from '@/components/ui/PremiumCard'
+import { CARD_BORDER_CSS } from '@/lib/theme'
 
 type Mode = 'log' | 'program'
 
@@ -299,7 +301,7 @@ export default function ImportPage() {
       </div>
 
       {!parsed && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated border-dashed px-4 py-8 text-center">
+        <PremiumCard className="px-4 py-8 text-center" style={{ border: `1px dashed ${CARD_BORDER_CSS}` }}>
           <input
             ref={fileInputRef}
             type="file"
@@ -315,7 +317,7 @@ export default function ImportPage() {
             {parsing ? 'กำลังอ่านไฟล์...' : 'เลือกไฟล์ .xlsx'}
           </label>
           <p className="text-xs text-muted mt-3">รองรับไฟล์ที่มีตารางท่าออกกำลังกายแบบ Sets / Reps / RIR ต่อวัน</p>
-        </div>
+        </PremiumCard>
       )}
 
       {error && <p className="text-sm text-rusttext">{error}</p>}
@@ -331,7 +333,7 @@ export default function ImportPage() {
       )}
 
       {result && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-4 text-center space-y-2">
+        <PremiumCard className="px-4 py-4 text-center space-y-2">
           <p className="text-sm text-ink font-display tracked uppercase">นำเข้าสำเร็จ ✓</p>
           <p className="text-xs text-muted">
             {result.workouts > 0 && `บันทึกท่าออกกำลังกาย ${result.workouts} รายการ`}
@@ -349,7 +351,7 @@ export default function ImportPage() {
               นำเข้าไฟล์อื่น
             </button>
           </div>
-        </div>
+        </PremiumCard>
       )}
 
       {parsed && !result && (
@@ -357,9 +359,7 @@ export default function ImportPage() {
           <p className="text-xs text-muted font-mono truncate">{fileName}</p>
 
           {parsed.days.length === 0 && parsed.bodyLog.length === 0 && (
-            <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-6 text-center">
-              ไม่พบข้อมูลที่รองรับในไฟล์นี้
-            </p>
+            <PremiumCard className="text-sm text-muted px-4 py-6 text-center">ไม่พบข้อมูลที่รองรับในไฟล์นี้</PremiumCard>
           )}
 
           {parsed.days.map((day) => (
@@ -425,8 +425,8 @@ function DayCard({
   const includedCount = day.exercises.filter((e) => e.include).length
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-      <div className="px-4 py-3 border-b border-line flex items-center justify-between gap-2">
+    <PremiumCard className="overflow-hidden">
+      <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm text-ink font-display tracked uppercase truncate">{day.title}</p>
           <p className="text-[11px] text-muted">
@@ -470,9 +470,9 @@ function DayCard({
         </button>
       </div>
 
-      <ul>
+      <div className="divide-y divide-white/5">
         {day.exercises.map((ex) => (
-          <li key={ex.id} className="tally-row px-4 py-3 space-y-2">
+          <div key={ex.id} className="px-4 py-3 space-y-2">
             <div className="flex items-start gap-2">
               <input
                 type="checkbox"
@@ -544,10 +544,10 @@ function DayCard({
                 )}
               </div>
             )}
-          </li>
+          </div>
         ))}
-      </ul>
-    </div>
+      </div>
+    </PremiumCard>
   )
 }
 
@@ -559,14 +559,14 @@ function BodyLogCard({
   onUpdate: (id: string, patch: Partial<ParsedBodyLogRow>) => void
 }) {
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-      <div className="px-4 py-3 border-b border-line">
+    <PremiumCard className="overflow-hidden">
+      <div className="px-4 py-3 border-b border-white/5">
         <p className="text-sm text-ink font-display tracked uppercase">บันทึกสัดส่วนร่างกาย</p>
         <p className="text-[11px] text-muted">พบ {bodyLog.length} แถวที่มีวันที่กรอกไว้</p>
       </div>
-      <ul>
+      <div className="divide-y divide-white/5">
         {bodyLog.map((row) => (
-          <li key={row.id} className="tally-row px-4 py-3 flex items-center gap-2">
+          <div key={row.id} className="px-4 py-3 flex items-center gap-2">
             <input
               type="checkbox"
               checked={row.include}
@@ -576,10 +576,10 @@ function BodyLogCard({
             <span className="text-xs font-mono text-muted shrink-0">{row.date}</span>
             <NumberField label="กก." value={row.weight_kg} step={0.1} onChange={(v) => onUpdate(row.id, { weight_kg: v })} />
             <NumberField label="เอว" value={row.waist_cm} step={0.5} onChange={(v) => onUpdate(row.id, { waist_cm: v })} />
-          </li>
+          </div>
         ))}
-      </ul>
-    </div>
+      </div>
+    </PremiumCard>
   )
 }
 

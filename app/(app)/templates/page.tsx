@@ -11,7 +11,8 @@ import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import Image from 'next/image'
-import { COLORS, withAlpha, lighten, NOISE_BG } from '@/lib/theme'
+import { COLORS, withAlpha, lighten, NOISE_BG, CARD_BORDER_CSS } from '@/lib/theme'
+import PremiumCard from '@/components/ui/PremiumCard'
 
 // Dark Titanium — พื้นการ์ดยังเป็นผิวโลหะเข้มเดียวกันหมด (ไม่ใช่ glow สีจัดๆ แบบก่อนหน้า) แต่เอาสัญญะสี
 // ต่อวันกลับมาบางๆ (ขอบซ้าย + glow รอบไอคอนแบบเบาๆ) เพราะฟีดแบ็กบอกว่าไม่มีสีเลยรู้สึกจืดไป — ต่างจาก
@@ -532,7 +533,7 @@ export default function TemplatesPage() {
       {importMessage && <p className="text-sm text-steel">{importMessage}</p>}
 
       {templates.length === 0 && !creating && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated border-dashed px-4 py-8 text-center">
+        <PremiumCard className="px-4 py-8 text-center" style={{ border: `1px dashed ${CARD_BORDER_CSS}` }}>
           <p className="text-sm text-muted mb-3">ยังไม่มีเทมเพลต</p>
           <button
             onClick={() => setCreating(true)}
@@ -540,7 +541,7 @@ export default function TemplatesPage() {
           >
             + สร้างเทมเพลตแรก
           </button>
-        </div>
+        </PremiumCard>
       )}
 
       {templates.map((t, i) => {
@@ -1017,7 +1018,7 @@ function BlurTextArea({ label, value, onBlur }: { label: string; value: string; 
 function NewTemplateForm({ onCancel, onSubmit }: { onCancel: () => void; onSubmit: (title: string) => void }) {
   const [title, setTitle] = useState('')
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-4 space-y-3">
+    <PremiumCard className="px-4 py-4 space-y-3">
       <p className="text-sm text-ink font-display tracked uppercase">เทมเพลตใหม่</p>
       <input
         value={title}
@@ -1036,7 +1037,7 @@ function NewTemplateForm({ onCancel, onSubmit }: { onCancel: () => void; onSubmi
           สร้าง แล้วเพิ่มท่า
         </button>
       </div>
-    </div>
+    </PremiumCard>
   )
 }
 

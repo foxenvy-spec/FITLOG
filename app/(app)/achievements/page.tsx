@@ -7,6 +7,7 @@ import { todayStr } from '@/lib/weekdays'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
+import PremiumCard from '@/components/ui/PremiumCard'
 
 interface Stats {
   totalLogs: number
@@ -170,9 +171,9 @@ export default function AchievementsPage() {
 
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated px-2 py-3">
+    <PremiumCard className="px-2 py-3">
       <p className="text-lg font-display text-amber">{value}</p>
       <p className="text-[10px] text-muted tracked uppercase mt-0.5">{label}</p>
-    </div>
+    </PremiumCard>
   )
 }

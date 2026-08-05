@@ -19,6 +19,7 @@ import MuscleDiagram from '@/components/MuscleDiagram'
 import { computePaceSpeed, formatPace } from '@/lib/cardioPace'
 import { classifyHRZone, HR_ZONES, DEFAULT_MAX_HEART_RATE } from '@/lib/heartRate'
 import { cadenceUnitFor, cadenceUnitLabel, cadenceFieldLabel } from '@/lib/cadence'
+import PremiumCard from '@/components/ui/PremiumCard'
 
 const CARDIO_PRESETS = ['วิ่ง', 'ปั่นจักรยาน', 'ว่ายน้ำ', 'เดินเร็ว', 'กระโดดเชือก']
 
@@ -814,7 +815,7 @@ function LogPageInner() {
             </button>
           </div>
         ) : today.length === 0 ? (
-          <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-8 text-center space-y-3">
+          <PremiumCard className="px-4 py-8 text-center space-y-3">
             <div className="text-3xl">🏋️</div>
             <p className="text-sm text-muted">ยังไม่มีรายการวันนี้ เริ่มบันทึกเซ็ตแรกได้เลย</p>
             <a
@@ -823,11 +824,11 @@ function LogPageInner() {
             >
               + บันทึกเซ็ตแรก
             </a>
-          </div>
+          </PremiumCard>
         ) : (
-          <ul className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+          <PremiumCard className="divide-y divide-white/5">
             {today.map((w) => (
-              <li key={w.id} className="tally-row flex items-center justify-between px-4 py-3">
+              <div key={w.id} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0">
                   {w.type === 'strength' ? (
                     <p className="text-ink leading-snug">
@@ -876,9 +877,9 @@ function LogPageInner() {
                     ลบ
                   </button>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </PremiumCard>
         )}
       </div>
 
