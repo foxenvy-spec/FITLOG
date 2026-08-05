@@ -53,6 +53,7 @@ import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
+import AICoachCompactCard from '@/components/AICoachCompactCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
@@ -973,52 +974,30 @@ export default function DashboardPage() {
       {/* card 5 (optional): AI coach — sits under Weekly Goal in the rightmost column and
           spans down alongside the quick-actions/heatmap rows (lg:row-span-2 — the cluster is
           now only 3 rows tall since the standalone "today muscle" row was folded into the
-          hero card above), showing the same insights as before but as a proper card. */}
+          hero card above).
+          v42: ฟีดแบ็ก "Version 3" มอคอัพมี AI Coach panel เป็นทรง ring-avatar + headline + recovery bar
+          + gradient CTA เหมือนกับที่มือถือมี AICoachCompactCard อยู่แล้ว (ไม่ใช่ list InsightCard เฉยๆ
+          แบบเดิม) — สลับมาใช้ AICoachCompactCard ตัวเดียวกับมือถือตรงๆ (รับ props message/
+          muscleRecommendation ชุดเดียวกับที่ MobileDashboardView ส่งอยู่แล้ว ไม่ต้องเขียนใหม่) เป็นชิ้นบนสุด
+          — insight list เดิม (เทรนด์ไขมัน/กล้ามเนื้อ/วอลุ่ม ฯลฯ) ยังเก็บไว้ครบ วางต่อท้ายด้านล่างแทนที่จะ
+          ทิ้ง เพราะเป็นข้อมูลที่ AICoachCompactCard เองไม่ได้ครอบคลุม — เอา wrapper กรอบ/พื้นหลังเดิมออก
+          (bg-surface2/40 border) เพราะ AICoachCompactCard มีกรอบไทเทเนียม+badge "อัปเดตล่าสุด" ของตัวเอง
+          อยู่แล้ว ซ้อนกรอบซ้ำจะกลายเป็นการ์ดในการ์ด ส่วน InsightCard เองก็มีกรอบตัวเองอยู่แล้วเช่นกัน —
+          ป้าย "อัปเดต" เดิมตรงนี้ตัดออกด้วย (ซ้ำกับ badge ในตัว AICoachCompactCard) เช่นเดียวกับ fallback
+          block เดิม (ไม่มี insight) เพราะ AICoachCompactCard เองมี fallback แสดง message อยู่แล้วในตัว —
+          ส่วนบล็อกสรุปสถิติรายสัปดาห์ที่เคยอยู่ใน fallback นั้นตัดออกเพราะซ้ำกับการ์ด Weekly Goal ที่อยู่
+          เหนือขึ้นไปแล้ว (ครั้งที่ฝึกสัปดาห์นี้ + weeklyGoalPct) */}
       {prefs.showAICoach && (
         <div
-          className="rounded-lg bg-surface2/40 border border-line/60 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2 lg:row-span-2"
+          className="flex flex-col gap-3 animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2 lg:row-span-2"
           style={{ animationDelay: '360ms' }}
         >
-          <div className="px-4 py-4 flex items-center justify-between">
-            <p className="text-[10px] tracked uppercase text-muted">✨ AI Coach</p>
-            {combinedInsights.length > 0 && (
-              <span className="text-[10px] tracked uppercase text-amber bg-amber/10 rounded-full px-2 py-0.5">
-                อัปเดต
-              </span>
-            )}
-          </div>
-          {combinedInsights.length > 0 ? (
-            <div className="px-4 pb-4 space-y-2">
+          <AICoachCompactCard message={data.aiDailySummary} muscleRecommendation={data.muscleRecommendation} href="/coach" />
+          {combinedInsights.length > 0 && (
+            <div className="space-y-2">
               {combinedInsights.map((insight) => (
                 <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_IMAGE[`${insight.id}|${insight.kind}`]} />
               ))}
-            </div>
-          ) : (
-            <div className="px-4 pb-4 space-y-2">
-              {/* ยังไม่มี insight คำนวณได้ (เช่น ข้อมูลยังน้อยเกินไป) — โชว์เป็นการ์ดสไตล์เดียวกับ
-                  InsightCard แทนที่จะเป็นข้อความลอยบรรทัดเดียว กันไม่ให้การ์ดดูโล่งว่างเปล่า */}
-              <div className="rounded-lg bg-surface border border-line shadow-elevated border-l-[3px] border-l-amber px-4 py-3 flex items-start gap-3">
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-base leading-none"
-                  style={{ backgroundColor: '#E8A33D22' }}
-                  aria-hidden="true"
-                >
-                  🤖
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] tracked uppercase text-muted">Insight</p>
-                  <p className="font-display text-sm tracked uppercase mt-0.5 text-amber">แนะนำวันนี้</p>
-                  <p className="text-xs text-muted mt-0.5 whitespace-pre-line">{data.aiDailySummary}</p>
-                </div>
-              </div>
-              <div className="rounded-lg bg-surface2/60 border border-line/60 px-4 py-3">
-                <p className="text-xs text-ink">
-                  สัปดาห์นี้ฝึกไปแล้ว{' '}
-                  <span className="font-mono text-amber">{data.thisWeekWorkoutDays}</span>
-                  <span className="text-muted">/{data.weeklyWorkoutGoal} ครั้ง</span> — เฉลี่ยเป้าหมายรวม{' '}
-                  <span className="font-mono text-amber">{data.weeklyGoalPct}%</span>
-                </p>
-              </div>
             </div>
           )}
         </div>
