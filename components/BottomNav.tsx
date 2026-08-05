@@ -194,7 +194,9 @@ function DumbbellIcon() {
   )
 }
 
-function HomeIcon({ active }: { active: boolean }) {
+// ไอคอนพวกนี้ export ไว้ให้ SidebarNav.tsx (เมนูซ้ายเดสก์ท็อป) ใช้ร่วมด้วย — แท็บที่ตรงกัน
+// (หน้าแรก/โปรแกรม/สถิติ/โปรไฟล์) ควรเป็นเส้นเดียวกันเป๊ะทั้งมือถือ/เดสก์ท็อป ไม่ใช่วาดซ้ำคนละไฟล์
+export function HomeIcon({ active }: { active: boolean }) {
   const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
@@ -205,7 +207,7 @@ function HomeIcon({ active }: { active: boolean }) {
   )
 }
 
-function ProgramIcon({ active }: { active: boolean }) {
+export function ProgramIcon({ active }: { active: boolean }) {
   const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
@@ -217,7 +219,7 @@ function ProgramIcon({ active }: { active: boolean }) {
   )
 }
 
-function ChartIcon({ active }: { active: boolean }) {
+export function ChartIcon({ active }: { active: boolean }) {
   const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
@@ -226,7 +228,7 @@ function ChartIcon({ active }: { active: boolean }) {
   )
 }
 
-function ProfileIcon({ active }: { active: boolean }) {
+export function ProfileIcon({ active }: { active: boolean }) {
   const c = active ? COLORS.amber : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
