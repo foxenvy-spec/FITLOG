@@ -41,10 +41,11 @@ import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
-import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS } from '@/lib/muscle-groups'
+import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
+import RecoveryBodyDiagram from '@/components/dashboard/RecoveryBodyDiagram'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCarousel from '@/components/InsightCarousel'
 import TodayMuscleChips from '@/components/TodayMuscleChips'
@@ -371,6 +372,10 @@ export default function DashboardPage() {
   // เริ่มด้วย true (ซ่อนไว้ก่อน) กันไม่ให้ banner กระพริบโผล่มาแวบเดียวระหว่างรอเช็ค localStorage
   // ตอน mount — ค่อยเปิดออกถ้าเช็คแล้วว่ายังไม่เคยปิด
   const [bannerDismissed, setBannerDismissed] = useState(true)
+  // กลุ่มกล้ามเนื้อที่ hover อยู่ตอนนี้ในการ์ด Recovery (จากตัวคนหรือจาก bar ก็ได้ ใช้ state เดียวกัน
+  // ทั้งสองทาง) null = ไม่ได้ hover อะไรอยู่ — ยกขึ้นมาไว้ระดับนี้ (ไม่ใช่ local state ในการ์ด) เพราะ
+  // ต้อง sync ระหว่าง 2 component คนละตัว (RecoveryBodyDiagram กับลิสต์ bar ข้างๆ)
+  const [hoveredRecoveryGroup, setHoveredRecoveryGroup] = useState<MuscleGroup | null>(null)
 
   // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
   // Card (การ์ดเดียวที่ควรมี effect ใหม่ตามกฎ "Hero มีแค่ใบเดียว") จำลองแสงสะท้อนผิวโลหะเปลี่ยนมุมตามที่
@@ -1058,39 +1063,51 @@ export default function DashboardPage() {
                             glow
                           />
                         </div>
-                        {/* v47: ฟีดแบ็ก "Recovery ยังเป็น Box เยอะ ถ้าทำเป็น Heatmap หรือ Muscle Grid จะดู
-                            ฉลาดกว่า" — เปลี่ยนจาก list 2 คอลัมน์ (จุดสี+ชื่อ+%) เป็น grid ไทล์สี่เหลี่ยม 4
-                            คอลัมน์แบบ GitHub contribution graph — สีพื้นไทล์เข้มขึ้นตาม % ฟื้นตัว (ยิ่งฟื้นตัว
-                            มาก ไทล์ยิ่ง "เต็ม") ใช้สีเดียวกับ recoveryStatusColor() เดิมทุกประการ (แดง/เหลือง/
-                            เขียว 3 ระดับ) แค่เปลี่ยนวิธีนำเสนอ ไม่ใช่คิดสเกลสีใหม่ */}
-                        <div className="grid grid-cols-4 gap-1.5 flex-1 min-w-0">
-                          {RECOVERY_MUSCLES.map((mg) => {
-                            const pct = recoveryPctMap[mg]
-                            const color = recoveryStatusColor(pct)
-                            // อัลฟาพื้นไทล์ไล่ตาม % (21-99 hex ~ 13%-60%) ให้ยิ่งฟื้นตัวมากไทล์ยิ่งทึบ/เข้ม
-                            // เหมือน "ชาร์จเต็ม" แทนที่จะเป็นสีเดียวกันหมดแล้วต่างแค่ตัวเลข
-                            const alphaHex = Math.round(33 + (pct / 100) * 120)
-                              .toString(16)
-                              .padStart(2, '0')
-                            return (
-                              <div
-                                key={mg}
-                                className="rounded-md px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-center"
-                                style={{ backgroundColor: `${color}${alphaHex}`, border: `1px solid ${color}40` }}
-                              >
-                                {/* leading-tight ให้ตัดขึ้นบรรทัดใหม่แทน truncate — "แกนกลางลำตัว" (ชื่อยาวสุด)
-                                    ตัดกลาง ".." แล้วอ่านไม่รู้เรื่องถ้าใช้ truncate บรรทัดเดียวในไทล์แคบขนาดนี้ */}
-                                <span className="text-[9px] text-ink leading-tight">{mg}</span>
-                                <span className="font-mono text-[10px] leading-none" style={{ color }}>
-                                  {pct}%
-                                </span>
-                              </div>
-                            )
-                          })}
-                        </div>
                       </div>
                     )
                   })()}
+                  {/* v48: ฟีดแบ็ก "Heatmap ตอนนี้ List กับ Body คนละส่วน อยาก Hover ที่ตัวคนแล้ว Bar ฝั่ง
+                      ลิสต์เรืองแสงตามกัน" — เดิม grid ไทล์สี่เหลี่ยม 4 คอลัมน์ (GitHub heatmap style)
+                      แทนที่ด้วยคู่ตัวคน (RecoveryBodyDiagram) + ลิสต์แท่งยาวตาม % ข้างๆ — hover ฝั่งไหน
+                      ก็ได้ (ตัวคนหรือแท่ง) แล้วอีกฝั่ง sync ตามด้วย hoveredRecoveryGroup ตัวเดียวกัน
+                      ที่ยกขึ้นไปอยู่ระดับ component หลักแล้ว (ดู useState ด้านบนไฟล์) */}
+                  <div className="flex items-start gap-3 mt-3">
+                    <RecoveryBodyDiagram
+                      recoveryPctMap={recoveryPctMap}
+                      hoveredGroup={hoveredRecoveryGroup}
+                      onHoverGroup={setHoveredRecoveryGroup}
+                    />
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      {RECOVERY_MUSCLES.map((mg) => {
+                        const pct = recoveryPctMap[mg]
+                        const color = recoveryStatusColor(pct)
+                        const isHovered = mg === hoveredRecoveryGroup
+                        return (
+                          <div
+                            key={mg}
+                            onMouseEnter={() => setHoveredRecoveryGroup(mg)}
+                            onMouseLeave={() => setHoveredRecoveryGroup(null)}
+                            className="rounded-md px-2 py-1.5 flex items-center gap-2 transition"
+                            style={{
+                              backgroundColor: `${color}${isHovered ? '2E' : '14'}`,
+                              boxShadow: isHovered ? `0 0 8px ${color}80` : undefined,
+                            }}
+                          >
+                            <span className="text-[9px] text-ink w-16 shrink-0 truncate">{mg}</span>
+                            <span className="relative flex-1 h-1 rounded-full bg-bg/60 overflow-hidden">
+                              <span
+                                className="absolute inset-y-0 left-0 rounded-full transition-[width]"
+                                style={{ width: `${pct}%`, backgroundColor: color }}
+                              />
+                            </span>
+                            <span className="font-mono text-[10px] w-8 shrink-0 text-right" style={{ color }}>
+                              {pct}%
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                   <p className="mt-3 text-right text-xs text-amber">View Detail →</p>
                 </>
               )
