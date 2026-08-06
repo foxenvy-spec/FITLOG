@@ -45,7 +45,6 @@ import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS, type MuscleGroup } fro
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
-import RecoveryBodyDiagram from '@/components/dashboard/RecoveryBodyDiagram'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCarousel from '@/components/InsightCarousel'
 import TodayMuscleChips from '@/components/TodayMuscleChips'
@@ -373,9 +372,8 @@ export default function DashboardPage() {
   // เริ่มด้วย true (ซ่อนไว้ก่อน) กันไม่ให้ banner กระพริบโผล่มาแวบเดียวระหว่างรอเช็ค localStorage
   // ตอน mount — ค่อยเปิดออกถ้าเช็คแล้วว่ายังไม่เคยปิด
   const [bannerDismissed, setBannerDismissed] = useState(true)
-  // กลุ่มกล้ามเนื้อที่ hover อยู่ตอนนี้ในการ์ด Recovery (จากตัวคนหรือจาก bar ก็ได้ ใช้ state เดียวกัน
-  // ทั้งสองทาง) null = ไม่ได้ hover อะไรอยู่ — ยกขึ้นมาไว้ระดับนี้ (ไม่ใช่ local state ในการ์ด) เพราะ
-  // ต้อง sync ระหว่าง 2 component คนละตัว (RecoveryBodyDiagram กับลิสต์ bar ข้างๆ)
+  // กลุ่มกล้ามเนื้อที่ hover อยู่ตอนนี้ในการ์ด Recovery — ใช้ไฮไลต์แท่งของกลุ่มนั้นในลิสต์ (v48d: เดิม
+  // sync กับ RecoveryBodyDiagram ด้วย แต่ตัดรูปตัวคนออกแล้วตามฟีดแบ็ก เหลือแค่ highlight แท่งตัวเอง)
   const [hoveredRecoveryGroup, setHoveredRecoveryGroup] = useState<MuscleGroup | null>(null)
 
   // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
@@ -1095,62 +1093,53 @@ export default function DashboardPage() {
                       </div>
                     )
                   })()}
-                  {/* v48: ฟีดแบ็ก "Heatmap ตอนนี้ List กับ Body คนละส่วน อยาก Hover ที่ตัวคนแล้ว Bar ฝั่ง
-                      ลิสต์เรืองแสงตามกัน" — เดิม grid ไทล์สี่เหลี่ยม 4 คอลัมน์ (GitHub heatmap style)
-                      แทนที่ด้วยคู่ตัวคน (RecoveryBodyDiagram) + ลิสต์แท่งยาวตาม % ข้างๆ — hover ฝั่งไหน
-                      ก็ได้ (ตัวคนหรือแท่ง) แล้วอีกฝั่ง sync ตามด้วย hoveredRecoveryGroup ตัวเดียวกัน
-                      ที่ยกขึ้นไปอยู่ระดับ component หลักแล้ว (ดู useState ด้านบนไฟล์) */}
-                  <div className="flex items-start gap-3 mt-3">
-                    <RecoveryBodyDiagram
-                      recoveryPctMap={recoveryPctMap}
-                      hoveredGroup={hoveredRecoveryGroup}
-                      onHoverGroup={setHoveredRecoveryGroup}
-                    />
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      {RECOVERY_MUSCLES.map((mg) => {
-                        const pct = recoveryPctMap[mg]
-                        const color = recoveryStatusColor(pct)
-                        const isHovered = mg === hoveredRecoveryGroup
-                        return (
-                          <div
-                            key={mg}
-                            onMouseEnter={() => setHoveredRecoveryGroup(mg)}
-                            onMouseLeave={() => setHoveredRecoveryGroup(null)}
-                            className="rounded-md px-2 py-1.5 flex items-center gap-2 transition"
-                            style={{
-                              backgroundColor: `${color}${isHovered ? '2E' : '14'}`,
-                              boxShadow: isHovered ? `0 0 8px ${color}80` : undefined,
-                            }}
+                  {/* v48d: ฟีดแบ็ก "ไม่อยากได้รูปกล้ามเนื้อ (ตัวคน) จุดนี้" — ตัด RecoveryBodyDiagram ออก
+                      ทั้งหมด เหลือแค่ลิสต์แท่งยาวตาม % (เต็มความกว้างการ์ด) hover ยังไฮไลต์แท่งตัวเองได้
+                      เหมือนเดิม แค่ไม่มีคู่ตัวคนให้ sync ด้วยแล้ว */}
+                  <div className="mt-3 space-y-1.5">
+                    {RECOVERY_MUSCLES.map((mg) => {
+                      const pct = recoveryPctMap[mg]
+                      const color = recoveryStatusColor(pct)
+                      const isHovered = mg === hoveredRecoveryGroup
+                      return (
+                        <div
+                          key={mg}
+                          onMouseEnter={() => setHoveredRecoveryGroup(mg)}
+                          onMouseLeave={() => setHoveredRecoveryGroup(null)}
+                          className="rounded-md px-2 py-1.5 flex items-center gap-2 transition"
+                          style={{
+                            backgroundColor: `${color}${isHovered ? '2E' : '14'}`,
+                            boxShadow: isHovered ? `0 0 8px ${color}80` : undefined,
+                          }}
+                        >
+                          <span className="text-[9px] text-ink w-16 shrink-0 truncate">{mg}</span>
+                          {/* v48: ฟีดแบ็ก "Recovery bars ยังแบน อยากได้ Titanium Progress — inner glow +
+                              subtle reflection + gradient ตามสถานะ" — เดิม track/fill เป็นสีเรียบล้วน
+                              ทั้งคู่ (bg-bg/60 + backgroundColor เดียว) เปลี่ยน track ให้เป็นร่องบุ๋ม
+                              (inset shadow มืดด้านบน/สว่างบางๆ ขอบล่าง จำลองร่องกัดลงในแผ่นโลหะ) fill
+                              ใช้ AnimatedBarFill เดิม (มี glow prop ใหม่แล้ว) ผสม 2 เลเยอร์: แถบสะท้อนแสง
+                              ขาวจางบางๆ ที่ขอบบน + ไล่สีเข้ม(ล่าง)-อ่อน(บน)ของสีสถานะเอง (ไม่ใช่สีขาวไล่
+                              เรียบๆ ยังคงเป็นสีเดียวกับสถานะ แค่มีมิติ) */}
+                          <span
+                            className="relative flex-1 h-1.5 rounded-full overflow-hidden"
+                            style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,.65), inset 0 -1px 0 rgba(255,255,255,.04)', backgroundColor: '#0A0B0D' }}
                           >
-                            <span className="text-[9px] text-ink w-16 shrink-0 truncate">{mg}</span>
-                            {/* v48: ฟีดแบ็ก "Recovery bars ยังแบน อยากได้ Titanium Progress — inner glow +
-                                subtle reflection + gradient ตามสถานะ" — เดิม track/fill เป็นสีเรียบล้วน
-                                ทั้งคู่ (bg-bg/60 + backgroundColor เดียว) เปลี่ยน track ให้เป็นร่องบุ๋ม
-                                (inset shadow มืดด้านบน/สว่างบางๆ ขอบล่าง จำลองร่องกัดลงในแผ่นโลหะ) fill
-                                ใช้ AnimatedBarFill เดิม (มี glow prop ใหม่แล้ว) ผสม 2 เลเยอร์: แถบสะท้อนแสง
-                                ขาวจางบางๆ ที่ขอบบน + ไล่สีเข้ม(ล่าง)-อ่อน(บน)ของสีสถานะเอง (ไม่ใช่สีขาวไล่
-                                เรียบๆ ยังคงเป็นสีเดียวกับสถานะ แค่มีมิติ) */}
-                            <span
-                              className="relative flex-1 h-1.5 rounded-full overflow-hidden"
-                              style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,.65), inset 0 -1px 0 rgba(255,255,255,.04)', backgroundColor: '#0A0B0D' }}
-                            >
-                              <AnimatedBarFill
-                                pct={pct}
-                                color={color}
-                                glow
-                                background={[
-                                  'linear-gradient(180deg, rgba(255,255,255,.35) 0%, transparent 45%)',
-                                  `linear-gradient(180deg, ${lighten(color, 0.3)} 0%, ${color} 100%)`,
-                                ].join(', ')}
-                              />
-                            </span>
-                            <span className="font-mono text-[10px] w-8 shrink-0 text-right" style={{ color }}>
-                              {pct}%
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
+                            <AnimatedBarFill
+                              pct={pct}
+                              color={color}
+                              glow
+                              background={[
+                                'linear-gradient(180deg, rgba(255,255,255,.35) 0%, transparent 45%)',
+                                `linear-gradient(180deg, ${lighten(color, 0.3)} 0%, ${color} 100%)`,
+                              ].join(', ')}
+                            />
+                          </span>
+                          <span className="font-mono text-[10px] w-8 shrink-0 text-right" style={{ color }}>
+                            {pct}%
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
                   <p className="mt-3 text-right text-xs text-amber">View Detail →</p>
                 </>
