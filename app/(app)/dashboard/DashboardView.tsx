@@ -1101,13 +1101,24 @@ export default function DashboardPage() {
                         // (สัดส่วนเดียวกัน ~-17%), Glow ลดลงประมาณ 30%" — 128 -> 106 (-17%) strokeWidth
                         // ตามสัดส่วน (12 -> 10) — glow: alpha .40 (25%) ลด 30% เหลือ ~18% (.2D) + blur
                         // 4px -> 3px ให้จางลงตามสัดส่วนเดียวกัน
-                        <div className="shrink-0" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '2D')})` }}>
+                        //
+                        // v51: ฟีดแบ็ก "Ring ยังชิดซ้ายไปนิด ขยับไปทางขวาอีก 12-16px ให้ Card ดูกึ่งกลางขึ้น"
+                        // — เพิ่ม ml-3 (12px) ที่ wrapper นี้ ไม่กระทบตำแหน่ง/ความกว้างของลิสต์ด้านขวา
+                        // (ยังเป็น flex-1 เท่าเดิม แค่ปรับจุดเริ่มต้นของ ring เข้ามาจากขอบซ้ายของการ์ด)
+                        //
+                        // v51: ฟีดแบ็ก "คำว่า Recovering ใต้ % สื่อว่า 'กำลังฟื้นตัว' (เหมือนสถานะ) ไม่ใช่
+                        // 'คะแนนการฟื้นตัวโดยรวม' อยากได้ Overall/Recovery/ฟื้นตัวรวม แทน" — เดิม label เป็น
+                        // recoveryTier(...).labelEn (คำสถานะ 1 ใน 4 คำ เปลี่ยนไปตาม % เช่น Recovering ที่
+                        // ทำให้เข้าใจผิดได้) เปลี่ยนกลับเป็นข้อความคงที่ แต่เลือก "Overall" (ไม่ใช่ "Recovery"
+                        // ที่จะซ้ำกับหัวการ์ดตรงๆ ตามเหตุผลเดิมของ v49) ให้สื่อว่าเป็น "ภาพรวม" ของตัวเลข ไม่ใช่
+                        // สถานะที่เปลี่ยนไปตาม tier
+                        <div className="shrink-0 ml-3" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '2D')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
                             size={106}
                             strokeWidth={10}
                             color={COLORS.cyan}
-                            label={recoveryTier(overallRecoveryPct).labelEn}
+                            label="Overall"
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
                             glow
                           />

@@ -230,11 +230,18 @@ export interface RecoveryTier {
   labelTh: string
 }
 
+// v51: ฟีดแบ็ก "Excellent พื้นเขียวสดไป (~10-15% saturation เกิน), REST แดงจัดไป — Apple แทบไม่ใช้แดงสด
+// เลย" — ตอน v49 อ้าง COLORS.green/COLORS.rust ตรงๆ (โทเคนรวมที่ใช้ที่อื่นด้วย — green ผูกกับ Fitness
+// Score tier Elite, rust ผูกกับสถานะ error/danger ทั่วแอป) ถ้าลด saturation โทเคนเหล่านั้นตรงๆ จะกระทบ
+// จุดอื่นที่ไม่เกี่ยวกับ badge นี้ไปด้วยโดยไม่ได้ตั้งใจ — แยกเป็นค่า hex เฉพาะของ badge สถานะฟื้นตัวเท่านั้น
+// (ไม่ผูกกับ COLORS อีกต่อไปสำหรับ 2 ระดับนี้) ตามค่าที่ขอเป๊ะ: Excellent #4ADE80 -> #6CBF74 (เขียวมอสอุ่น
+// กว่า, ตัดสดออก), Rest #C1503A -> #C96A57 (แดงอมส้ม ไม่ใช่แดงจัด) — Good/Recovering ยังอ้าง COLORS.amber/
+// FIRE_ACCENT เดิม เพราะฟีดแบ็กรอบนี้พูดถึงแค่ 2 ระดับนี้เท่านั้น
 const RECOVERY_TIERS: readonly { min: number; color: string; labelEn: string; labelTh: string }[] = [
-  { min: 90, color: COLORS.green, labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' },
+  { min: 90, color: '#6CBF74', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' },
   { min: 65, color: COLORS.amber, labelEn: 'Good', labelTh: 'ดี' },
   { min: 35, color: FIRE_ACCENT, labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว' },
-  { min: 0, color: COLORS.rust, labelEn: 'Rest', labelTh: 'ควรพัก' },
+  { min: 0, color: '#C96A57', labelEn: 'Rest', labelTh: 'ควรพัก' },
 ]
 
 export function recoveryTier(pct: number): RecoveryTier {
