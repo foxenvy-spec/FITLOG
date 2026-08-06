@@ -824,7 +824,12 @@ export default function DashboardPage() {
             เป็น "บรรยากาศพื้นหลัง" แทนที่จะเป็น product shot คมกริบ — ลดขนาดดัมเบลลง ~8-10% ผ่าน
             transform: scale(.92) (จำเป็นต้องมี overflow-hidden เพิ่มที่กรอบรูปกันรูปสเกลแล้วล้นออกนอก
             กรอบตอน blur) + transform-origin ขยับจุดหมุนไปทาง 60% 42% ให้พื้นที่ว่างที่เพิ่มมาไปอยู่ฝั่งขวา/
-            ล่างเป็นหลัก (ไม่ดันชนข้อความฝั่งซ้าย ตามที่ขอ "บาลานซ์กับข้อความ") */}
+            ล่างเป็นหลัก (ไม่ดันชนข้อความฝั่งซ้าย ตามที่ขอ "บาลานซ์กับข้อความ")
+            v55: ฟีดแบ็ก "ภาพยังอยู่กลางเกินไป อยากเลื่อนไปทางขวาอีก 8-10%" — objectPosition 68% -> 76%
+            (เลื่อนจุดโฟกัสของรูปไปทางขวาเพิ่ม ให้พื้นที่ว่างฝั่งซ้าย ซึ่งเป็นที่อยู่ของ panel ข้อความ
+            "หายใจ" มากขึ้นตามที่ขอ) — "ปรับแสงของดัมเบล ตอนนี้ขาวไป อยากให้ warm ขึ้น (4200K)" — เพิ่ม
+            sepia(.18) saturate(1.15) hue-rotate(-6deg) บน filter เดิม (blur/contrast คงไว้) ให้โทนสีรูป
+            อุ่นขึ้นไปทางเดียวกับสีอำพัน (accent สีเดียวที่ใช้ทั้งแอป) แทนแสงขาวเย็นเดิม */}
         <div className="absolute inset-0 bg-surface overflow-hidden">
           <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box overflow-hidden">
             <div className="absolute inset-0" style={{ transform: 'scale(0.92)', transformOrigin: '60% 42%' }}>
@@ -833,7 +838,10 @@ export default function DashboardPage() {
                 alt=""
                 fill
                 className="object-cover"
-                style={{ objectPosition: '68% 45%', filter: 'blur(1.5px) contrast(0.92)' }}
+                style={{
+                  objectPosition: '76% 45%',
+                  filter: 'blur(1.5px) contrast(0.92) sepia(0.18) saturate(1.15) hue-rotate(-6deg) brightness(0.98)',
+                }}
                 priority
               />
             </div>
@@ -856,20 +864,33 @@ export default function DashboardPage() {
               v54: ฟีดแบ็ก "เพิ่มฝุ่นหรือ Spark ไม่ต้องเยอะ 2-3 จุดพอ จะดู Cinematic แบบ Nike/Under Armour" —
               เดิมมี 5 จุดเล็กคมเท่ากันหมด (sharp dot ล้วน) ลดเหลือ 3 จุด ผสม 2 แบบ: ฝุ่น/chalk (วงกลม
               เบลอนุ่มๆ ใหญ่กว่า ให้ความรู้สึกเป็นละอองฝุ่นลอย ไม่ใช่จุดคมแข็ง) 2 จุด + spark สว่างคมจุดเดียว
-              (คงกลิ่นอายแสงระยิบเดิมไว้ 1 จุด ไม่ให้หายไปทั้งหมด) */}
+              (คงกลิ่นอายแสงระยิบเดิมไว้ 1 จุด ไม่ให้หายไปทั้งหมด)
+              v55: ฟีดแบ็ก "เพิ่ม particle อีกนิด: ฝุ่นทอง 2-3 จุด + bokeh เล็กๆ เฉพาะบริเวณบนของดัมเบล" —
+              เพิ่มอีก 2 จุด (bokeh วงใหญ่เบลอจาง + ฝุ่นทองเล็ก) รวมเป็น 5 ทั้งหมด แต่ทุกจุดใหม่กระจุกอยู่
+              โซนบนของดัมเบล (top ~10-22%) ตามที่ขอเจาะจง ไม่ใช่กระจายทั่วการ์ดเหมือนเซ็ตเดิม */}
           <div
             className="absolute rounded-full pointer-events-none"
-            style={{ left: '60%', top: '28%', width: 16, height: 16, background: 'radial-gradient(circle, rgba(255,244,224,.4), transparent 70%)', filter: 'blur(1.5px)' }}
+            style={{ left: '58%', top: '16%', width: 22, height: 22, background: 'radial-gradient(circle, rgba(255,200,120,.22), transparent 70%)', filter: 'blur(3px)' }}
             aria-hidden="true"
           />
           <div
             className="absolute rounded-full pointer-events-none"
-            style={{ left: '82%', top: '62%', width: 20, height: 20, background: 'radial-gradient(circle, rgba(255,184,74,.32), transparent 70%)', filter: 'blur(2px)' }}
+            style={{ left: '68%', top: '10%', width: 10, height: 10, background: 'radial-gradient(circle, rgba(255,244,224,.35), transparent 70%)', filter: 'blur(1.5px)' }}
+            aria-hidden="true"
+          />
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '86%', top: '22%', width: 14, height: 14, background: 'radial-gradient(circle, rgba(255,184,74,.28), transparent 70%)', filter: 'blur(2px)' }}
             aria-hidden="true"
           />
           <span
             className="absolute rounded-full pointer-events-none"
-            style={{ left: '72%', top: '20%', width: 2.5, height: 2.5, background: '#FFF4E0', opacity: 0.85, boxShadow: '0 0 5px 1.5px rgba(255,184,74,.7)' }}
+            style={{ left: '73%', top: '14%', width: 2.5, height: 2.5, background: '#FFF4E0', opacity: 0.85, boxShadow: '0 0 5px 1.5px rgba(255,184,74,.7)' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '80%', top: '58%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.6, boxShadow: '0 0 4px 1px rgba(255,184,74,.55)' }}
             aria-hidden="true"
           />
         </div>
@@ -888,7 +909,12 @@ export default function DashboardPage() {
             ตัวเลข "% + label" อยู่กลางวงเสมอ พอพลิกกลับแล้วข้อความอ่านไม่ออกกลายเป็นเงาตัวหนังสือเบลอๆ
             ดูเหมือนจุดบกพร่องมากกว่าลูกเล่น (ตรวจด้วยสกรีนช็อตซูม) — ตัดออก เหลือแค่วงรีเรืองแสงอำพันเบลอ
             กว้างวางอยู่ใต้/หลัง ring จำลองแสงตกกระทบพื้นผิวการ์ดเพียงอย่างเดียว (ไม่มีตัวอักษรให้พลิกผิด
-            รูปทรง) ก็ให้ความรู้สึก "วางอยู่บนพื้นผิว" มากขึ้นกว่าเดิมแล้วโดยไม่เสี่ยงเรื่อง readability */}
+            รูปทรง) ก็ให้ความรู้สึก "วางอยู่บนพื้นผิว" มากขึ้นกว่าเดิมแล้วโดยไม่เสี่ยงเรื่อง readability
+            v55: ฟีดแบ็ก "วง 100% สวยแล้ว แต่ถ้าทำให้เหมือน HUD อีกนิด เช่น outer ring หมุนช้าๆ + จุดเล็กๆ
+            วิ่งรอบวง จะดู Premium มาก" — เพิ่มอีก 2 เลเยอร์ตกแต่งล้วนๆ (ไม่แตะ GoalRing/ตรรกะคำนวณ %
+            เดิมเลย): วงประ (dashed) รัศมีกว้างกว่า ring จริงเล็กน้อยหมุนช้าๆ รอบตัวเอง (8s/รอบ, .hud-outer-
+            ring ใน globals.css) จำลองกรอบ HUD + จุดสว่างเล็กดวงเดียวโคจรรอบ ring (4s/รอบ, .hud-bead-orbit)
+            ทั้งคู่ pointer-events-none และอยู่ z ต่ำกว่า ring จริง (z-10) ไม่บังคลิก/ไม่ทับตัวเลข % */}
         <div
           className="absolute pointer-events-none"
           style={{
@@ -901,6 +927,17 @@ export default function DashboardPage() {
           }}
           aria-hidden="true"
         />
+        <div
+          className="absolute rounded-full pointer-events-none hud-outer-ring"
+          style={{ bottom: -3, right: -3, width: 93, height: 93, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
+          aria-hidden="true"
+        />
+        <div className="absolute bottom-4 right-4 pointer-events-none hud-bead-orbit" style={{ width: 87, height: 87 }} aria-hidden="true">
+          <span
+            className="absolute rounded-full"
+            style={{ left: '50%', top: -1, width: 4, height: 4, transform: 'translateX(-50%)', background: '#FFF4E0', boxShadow: '0 0 6px 2px rgba(255,184,74,.8)' }}
+          />
+        </div>
         <div className="absolute bottom-4 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
@@ -924,13 +961,20 @@ export default function DashboardPage() {
                 Dumbbell/Spark ทางขวาซึ่งควรคมชัด) แยกชั้น "โลหะ" (พื้นการ์ด) ออกจากชั้น "กระจก" (แผงข้อความ)
                 ให้เห็นความลึก 2 ชั้นจริง ไม่ใช่พื้นผิวเดียวแบน
                 v47: "Option A" — เลิก flex row ร่วมกับ Ring เดิม (ย้ายไปลอย absolute มุมขวาล่างแล้ว ดูด้านบน)
-                จำกัด max-width แทน กันตัวหนังสือยาวเกินไปชนโซน Ring/Dumbbell มุมขวาล่าง */}
+                จำกัด max-width แทน กันตัวหนังสือยาวเกินไปชนโซน Ring/Dumbbell มุมขวาล่าง
+                v55: ฟีดแบ็ก "เพิ่ม Depth ระหว่างข้อความกับพื้นหลัง กล่องข้อความเรียบไป ลองทำ Glass เบาๆ" —
+                ของเดิม (v46) เบาบางมาก (blur-sm 4px, bg แทบมองไม่เห็นแค่ highlight gradient จาง ๆ) อัปเกรด
+                ตามค่าที่ขอเป๊ะ: bg ทึบขึ้น rgba(18,20,26,.55) + backdrop-blur 16px (blur-sm -> ตัวเลขตรง
+                ผ่าน style ปกติเพราะ Tailwind ไม่มี blur-16 ในสเกลดีฟอลต์) + border rgba(255,255,255,.06)
+                ให้แผงข้อความ "ลอย" เหนือภาพชัดเจนขึ้นตามที่ขอ */}
             <div className="min-w-0 max-w-[230px] relative">
               <div
-                className="absolute -inset-3 rounded-xl backdrop-blur-sm pointer-events-none"
+                className="absolute -inset-3 rounded-xl pointer-events-none"
                 style={{
-                  backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,.008))',
-                  border: '1px solid rgba(255,255,255,.05)',
+                  background: 'rgba(18,20,26,.55)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,.06)',
                 }}
                 aria-hidden="true"
               />
