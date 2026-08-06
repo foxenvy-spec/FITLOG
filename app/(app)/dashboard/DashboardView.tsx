@@ -818,22 +818,31 @@ export default function DashboardPage() {
             น้อยกว่าที่ 24" มาก (วัดจริง: การ์ดกว้าง ~431px ที่ viewport 1280px ให้กรอบรูป aspect ~1.84 เทียบ
             กับ ~2.98 ที่การ์ดกว้าง ~697px ของ viewport 1920px) — ใช้ container query (.hero-card-cq ใน
             globals.css) ขยายกรอบรูปเป็น 92% เฉพาะตอนการ์ดแคบกว่า 550px เท่านั้น ให้เห็นดัมเบลครบขึ้นชัดเจน
-            จอ 24" (การ์ดกว้างเกิน threshold มาก) ไม่โดนกฎนี้เลย หน้าตาเดิม 100% */}
+            จอ 24" (การ์ดกว้างเกิน threshold มาก) ไม่โดนกฎนี้เลย หน้าตาเดิม 100%
+            v54: ฟีดแบ็ก "ภาพดัมเบลคมเกินไป เหมือนรูปสินค้า แย่งความสนใจจากข้อความ" — เพิ่ม blur(1.5px) +
+            contrast(.92) บนตัวรูป และรวม overlay มืดแนวตั้ง (บาง 18-32%) เข้ากับ gradient เดิม ให้รูปกลาย
+            เป็น "บรรยากาศพื้นหลัง" แทนที่จะเป็น product shot คมกริบ — ลดขนาดดัมเบลลง ~8-10% ผ่าน
+            transform: scale(.92) (จำเป็นต้องมี overflow-hidden เพิ่มที่กรอบรูปกันรูปสเกลแล้วล้นออกนอก
+            กรอบตอน blur) + transform-origin ขยับจุดหมุนไปทาง 60% 42% ให้พื้นที่ว่างที่เพิ่มมาไปอยู่ฝั่งขวา/
+            ล่างเป็นหลัก (ไม่ดันชนข้อความฝั่งซ้าย ตามที่ขอ "บาลานซ์กับข้อความ") */}
         <div className="absolute inset-0 bg-surface overflow-hidden">
-          <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box">
-            <Image
-              src="/images/today-workout-hero-dumbbell.png"
-              alt=""
-              fill
-              className="object-cover"
-              style={{ objectPosition: '68% 45%' }}
-              priority
-            />
+          <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box overflow-hidden">
+            <div className="absolute inset-0" style={{ transform: 'scale(0.92)', transformOrigin: '60% 42%' }}>
+              <Image
+                src="/images/today-workout-hero-dumbbell.png"
+                alt=""
+                fill
+                className="object-cover"
+                style={{ objectPosition: '68% 45%', filter: 'blur(1.5px) contrast(0.92)' }}
+                priority
+              />
+            </div>
           </div>
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-gradient-box"
             style={{
               backgroundImage: [
+                'linear-gradient(180deg, rgba(7,9,13,.18), rgba(7,9,13,.32))',
                 'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.16), transparent 62%)',
                 'linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%)',
               ].join(', '),
@@ -843,29 +852,26 @@ export default function DashboardPage() {
               เบาๆ ให้ดูมีชีวิต" — จุดกระพริบเล็กๆ กระจายรอบไอคอน (เทคนิคเดียวกับ "Particles" ใน
               TodaysWorkoutCompactCard.tsx ขนาด/ตำแหน่งไม่เท่ากันจำลองประกายลอยในอากาศ ไม่ใช่ pattern
               ซ้ำเป๊ะ) — สีทองอุ่นเดียวกับ spark SVG เดิม (#FFB84A) ให้เป็นชุดสีเดียวกัน ยังใช้ได้ดีทับรูปถ่าย
-              จริง เพราะรูปที่เลือกมามีฝุ่นกระจายอยู่แล้ว เข้ากับธีมประกายลอยในอากาศพอดี */}
-          {[
-            { left: '68%', top: '20%', size: 2.5, opacity: 0.6 },
-            { left: '85%', top: '35%', size: 1.5, opacity: 0.45 },
-            { left: '92%', top: '65%', size: 2, opacity: 0.5 },
-            { left: '72%', top: '78%', size: 1.5, opacity: 0.4 },
-            { left: '58%', top: '52%', size: 1, opacity: 0.35 },
-          ].map((p, i) => (
-            <span
-              key={i}
-              className="absolute rounded-full pointer-events-none"
-              style={{
-                left: p.left,
-                top: p.top,
-                width: p.size,
-                height: p.size,
-                background: '#FFF4E0',
-                opacity: p.opacity,
-                boxShadow: '0 0 4px 1px rgba(255,184,74,.55)',
-              }}
-              aria-hidden="true"
-            />
-          ))}
+              จริง เพราะรูปที่เลือกมามีฝุ่นกระจายอยู่แล้ว เข้ากับธีมประกายลอยในอากาศพอดี
+              v54: ฟีดแบ็ก "เพิ่มฝุ่นหรือ Spark ไม่ต้องเยอะ 2-3 จุดพอ จะดู Cinematic แบบ Nike/Under Armour" —
+              เดิมมี 5 จุดเล็กคมเท่ากันหมด (sharp dot ล้วน) ลดเหลือ 3 จุด ผสม 2 แบบ: ฝุ่น/chalk (วงกลม
+              เบลอนุ่มๆ ใหญ่กว่า ให้ความรู้สึกเป็นละอองฝุ่นลอย ไม่ใช่จุดคมแข็ง) 2 จุด + spark สว่างคมจุดเดียว
+              (คงกลิ่นอายแสงระยิบเดิมไว้ 1 จุด ไม่ให้หายไปทั้งหมด) */}
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '60%', top: '28%', width: 16, height: 16, background: 'radial-gradient(circle, rgba(255,244,224,.4), transparent 70%)', filter: 'blur(1.5px)' }}
+            aria-hidden="true"
+          />
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '82%', top: '62%', width: 20, height: 20, background: 'radial-gradient(circle, rgba(255,184,74,.32), transparent 70%)', filter: 'blur(2px)' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '72%', top: '20%', width: 2.5, height: 2.5, background: '#FFF4E0', opacity: 0.85, boxShadow: '0 0 5px 1.5px rgba(255,184,74,.7)' }}
+            aria-hidden="true"
+          />
         </div>
 
         {/* v46: "Titanium Reflection" — จุดสว่างจางๆ ตามตำแหน่งเมาส์ (เขียน background ตรงผ่าน ref ใน
@@ -876,7 +882,25 @@ export default function DashboardPage() {
             hero (เดิมอยู่เป็น flex sibling ข้างตัวหนังสือ ดันเลย์เอาต์ให้ Dumbbell เหลือพื้นที่แคบ) —
             glow เดิม (AMBER) คงไว้ผ่าน filter drop-shadow เดียวกับวงอื่นๆ ในหน้า ให้เข้าธีม
             v48: ฟีดแบ็ก "Ring ยังเด่นไปนิด สายตาไปที่ Ring ก่อนแทนที่จะไป DAY 3 / LEGS อยากลดประมาณ
-            10-15%" — 100 -> 87 (-13%) strokeWidth ลดตามสัดส่วนเดียวกัน 8 -> 7 */}
+            10-15%" — 100 -> 87 (-13%) strokeWidth ลดตามสัดส่วนเดียวกัน 8 -> 7
+            v54: ฟีดแบ็ก "วงกลม 100% ดูลอย อยากให้มี Glow จากพื้นหรือ Reflection จางๆ เหมือน HUD" — ลองทำ
+            reflection จริง (ring พลิกกลับแนวตั้งวางใต้ตัวจริง + mask ไล่จาง) ก่อน แต่ GoalRing render
+            ตัวเลข "% + label" อยู่กลางวงเสมอ พอพลิกกลับแล้วข้อความอ่านไม่ออกกลายเป็นเงาตัวหนังสือเบลอๆ
+            ดูเหมือนจุดบกพร่องมากกว่าลูกเล่น (ตรวจด้วยสกรีนช็อตซูม) — ตัดออก เหลือแค่วงรีเรืองแสงอำพันเบลอ
+            กว้างวางอยู่ใต้/หลัง ring จำลองแสงตกกระทบพื้นผิวการ์ดเพียงอย่างเดียว (ไม่มีตัวอักษรให้พลิกผิด
+            รูปทรง) ก็ให้ความรู้สึก "วางอยู่บนพื้นผิว" มากขึ้นกว่าเดิมแล้วโดยไม่เสี่ยงเรื่อง readability */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            bottom: -14,
+            right: -10,
+            width: 140,
+            height: 50,
+            background: `radial-gradient(ellipse 55% 100% at 50% 50%, ${withAlpha(COLORS.amber, '4D')}, transparent 72%)`,
+            filter: 'blur(3px)',
+          }}
+          aria-hidden="true"
+        />
         <div className="absolute bottom-4 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
