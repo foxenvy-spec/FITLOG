@@ -1447,9 +1447,14 @@ function DropletsIcon() {
 
 const ZONE_LABEL_TH: Record<'Low' | 'Standard' | 'High', string> = { Low: 'ต่ำ', Standard: 'มาตรฐาน', High: 'สูง' }
 
-function ZoneBadge({ zone }: { zone: 'Low' | 'Standard' | 'High' }) {
-  const cls =
-    zone === 'Low' ? 'bg-steeldim text-steel' : zone === 'High' ? 'bg-rustdim text-rusttext' : 'bg-mossdim text-moss'
+// v: สีป้ายเดิมตายตัวตามโซน (Low=ฟ้า, Standard=เขียว, High=แดง) ไม่สนทิศทางที่ "ดี" ของตัวชี้วัดนั้นเลย —
+// ทำให้กล้ามเนื้อโครงร่าง "สูง" (ซึ่งเป็นเรื่องดี เพราะยิ่งเยอะยิ่งดี) ขึ้นสีแดงเหมือนน้ำหนัก/ไขมัน/BMI "สูง"
+// ที่เป็นเรื่องไม่ดี ดูสับสนว่า "ทำไมสูงหมด" — เปลี่ยนมาใช้ classifyMetric ตัวเดียวกับที่คำนวณคะแนนสุขภาพ
+// รวม (ดูฟังก์ชันด้านบนสุดของไฟล์) ให้สีป้ายสะท้อนว่าค่านั้น "ดี/มาตรฐาน" (เขียว) หรือ "ควรปรับปรุง" (แดง)
+// จริงๆ ตามทิศทางของตัวชี้วัด ไม่ใช่แค่ตำแหน่งบน/ล่างช่วงมาตรฐานเฉยๆ
+function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' | 'High'; direction?: Direction }) {
+  const status = classifyMetric(zone, direction)
+  const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : 'bg-mossdim text-moss'
   return (
     <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
       {ZONE_LABEL_TH[zone]}
@@ -1678,7 +1683,7 @@ function TopStatCard({
         </div>
       ) : zone ? (
         <div className="mt-1.5">
-          <ZoneBadge zone={zone} />
+          <ZoneBadge zone={zone} direction={direction} />
         </div>
       ) : null}
     </PremiumCard>
@@ -1715,7 +1720,7 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
             )}
             {zone && (
               <div className="mt-1">
-                <ZoneBadge zone={zone} />
+                <ZoneBadge zone={zone} direction={trend.direction} />
               </div>
             )}
           </div>
@@ -2070,10 +2075,21 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
   )
 }
 
-const MUSCLE_FAT_META: Record<string, { Icon: () => JSX.Element; bg: string; fg: string; color: string; imageKey?: string; iconKey: string }> = {
-  Weight: { Icon: ScaleIcon, bg: 'bg-moss/15', fg: 'text-moss', color: '#7A9B57', imageKey: 'weight', iconKey: 'weight' },
-  'Skeletal Muscle': { Icon: MuscleIcon, bg: 'bg-violet/15', fg: 'text-violet', color: '#9C7CC4', imageKey: 'skeletalMuscle', iconKey: 'muscle' },
-  'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber', color: '#E8A33D', imageKey: 'fatMass', iconKey: 'fat' },
+const MUSCLE_FAT_META: Record<
+  string,
+  { Icon: () => JSX.Element; bg: string; fg: string; color: string; imageKey?: string; iconKey: string; direction: Direction }
+> = {
+  Weight: { Icon: ScaleIcon, bg: 'bg-moss/15', fg: 'text-moss', color: '#7A9B57', imageKey: 'weight', iconKey: 'weight', direction: 'neutral' },
+  'Skeletal Muscle': {
+    Icon: MuscleIcon,
+    bg: 'bg-violet/15',
+    fg: 'text-violet',
+    color: '#9C7CC4',
+    imageKey: 'skeletalMuscle',
+    iconKey: 'muscle',
+    direction: 'higherBetter',
+  },
+  'Fat Mass': { Icon: DropletsIcon, bg: 'bg-amber/15', fg: 'text-amber', color: '#E8A33D', imageKey: 'fatMass', iconKey: 'fat', direction: 'lowerBetter' },
 }
 
 function ObesityAnalysisChart({
@@ -2097,7 +2113,18 @@ function ObesityAnalysisChart({
       </h2>
       <PremiumCard className="p-4 space-y-5">
         {bmi !== null && (
-          <ZoneBarRow label="BMI (kg/m²)" value={bmi} min={10} low={18.5} high={25} max={40} decimals={1} imageKey="bmiObesity" iconKey="bmi" />
+          <ZoneBarRow
+            label="BMI (kg/m²)"
+            value={bmi}
+            min={10}
+            low={18.5}
+            high={25}
+            max={40}
+            decimals={1}
+            imageKey="bmiObesity"
+            iconKey="bmi"
+            direction="neutral"
+          />
         )}
         {bmi !== null && bodyFatPct !== null && <div className="border-t border-white/5" />}
         {bodyFatPct !== null && (
@@ -2112,6 +2139,7 @@ function ObesityAnalysisChart({
             unit="%"
             imageKey="bodyFatObesity"
             iconKey="fat"
+            direction="lowerBetter"
           />
         )}
       </PremiumCard>
@@ -2130,6 +2158,7 @@ function ZoneBarRow({
   unit = '',
   imageKey,
   iconKey,
+  direction = 'neutral',
 }: {
   label: string
   value: number
@@ -2141,6 +2170,7 @@ function ZoneBarRow({
   unit?: string
   imageKey?: string
   iconKey?: string
+  direction?: Direction
 }) {
   const pct = (v: number) => ((Math.min(Math.max(v, min), max) - min) / (max - min)) * 100
   const lowPct = pct(low)
@@ -2165,7 +2195,7 @@ function ZoneBarRow({
             {value.toFixed(decimals)}
             {unit && <span className="text-xs text-muted ml-0.5">{unit}</span>}
           </span>
-          <ZoneBadge zone={zone} />
+          <ZoneBadge zone={zone} direction={direction} />
           <span className="text-muted">
             <ChevronRightIcon />
           </span>
@@ -2249,7 +2279,7 @@ function MuscleFatBarRow({
   const highPct = pct(high)
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
-  const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel', color: '#6C8CA8', iconKey: 'ruler' }
+  const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel', color: '#6C8CA8', iconKey: 'ruler', direction: 'neutral' as Direction }
 
   return (
     <div>
@@ -2268,7 +2298,7 @@ function MuscleFatBarRow({
             {value.toFixed(1)}
             <span className="text-xs text-muted ml-0.5">{unit}</span>
           </span>
-          <ZoneBadge zone={zone} />
+          <ZoneBadge zone={zone} direction={meta.direction} />
           <span className="text-muted">
             <ChevronRightIcon />
           </span>
