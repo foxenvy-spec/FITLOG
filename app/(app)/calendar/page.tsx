@@ -11,6 +11,7 @@ import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import PremiumCard from '@/components/ui/PremiumCard'
+import Button from '@/components/ui/Button'
 
 // 'weight' และ 'strength_volume' เก็บ target_value/starting_value เป็น kg เสมอ (เหมือน weight_kg
 // ทุกที่ในแอป) — ต้องแปลงเป็นหน่วยที่เลือกแสดงตอนเรนเดอร์ และแปลงกลับเป็น kg ตอนบันทึกฟอร์ม
@@ -584,13 +585,9 @@ function GoalForm({
         />
       </div>
       {error && <p className="text-sm text-rusttext">{error}</p>}
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-full rounded-lg font-display tracked uppercase py-3 text-sm bg-amber text-bg disabled:opacity-50"
-      >
+      <Button type="submit" disabled={saving} size="md" className="w-full">
         {saving ? 'กำลังบันทึก...' : 'บันทึกเป้าหมาย'}
-      </button>
+      </Button>
     </PremiumCard>
   )
 }
