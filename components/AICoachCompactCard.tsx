@@ -16,13 +16,12 @@ import {
   TITANIUM_MESH_CSS,
   CARD_BORDER_CSS,
   CARD_INSET_SHADOW,
-  AMBER_GRADIENT_CSS,
-  AMBER_GLOW_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import { recoveryStatusColor } from '@/lib/dashboardStats'
 import { MUSCLE_GROUP_BODY_REGION, DEFAULT_SECONDARY_BY_PRIMARY, type MuscleGroup } from '@/lib/muscle-groups'
 import PremiumCard from './ui/PremiumCard'
+import Button from './ui/Button'
 import AnimatedBarFill from './AnimatedBarFill'
 
 interface AICoachCompactCardProps {
@@ -236,12 +235,7 @@ export default function AICoachCompactCard({
         <p className="text-xs text-moss flex items-center gap-1.5">✓ {startedMessage}</p>
       ) : (
         <div className="flex items-center gap-2">
-          <Link
-            href={href}
-            aria-label="ดูคำแนะนำจาก AI Coach"
-            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-            style={{ border: `1px solid ${withAlpha(COLORS.amber, '40')}` }}
-          >
+          <Button as={Link} href={href} variant="icon" aria-label="ดูคำแนะนำจาก AI Coach">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
                 d="M4 4h16v11H8l-4 4V4z"
@@ -251,29 +245,19 @@ export default function AICoachCompactCard({
                 strokeLinejoin="round"
               />
             </svg>
-          </Link>
+          </Button>
 
           {templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />
           ) : chosen && chosenExercises.length > 0 ? (
-            <button
-              type="button"
-              onClick={handleStart}
-              disabled={starting}
-              className="flex-1 min-w-0 flex items-center justify-center gap-1.5 text-[11px] font-display tracked uppercase rounded-full px-4 py-2 active:scale-[0.99] transition disabled:opacity-50"
-              style={{ background: AMBER_GRADIENT_CSS, boxShadow: AMBER_GLOW_SHADOW, color: NEUTRAL.onAmberText }}
-            >
+            <Button type="button" onClick={handleStart} disabled={starting} className="flex-1 min-w-0">
               <span className="truncate">{starting ? '...' : `เริ่ม ${chosen.title}`}</span>
               {!starting && <span aria-hidden="true">▶</span>}
-            </button>
+            </Button>
           ) : (
-            <Link
-              href="/templates"
-              className="flex-1 min-w-0 flex items-center justify-center gap-1.5 text-[11px] font-display tracked uppercase rounded-full px-4 py-2 active:scale-[0.99] transition"
-              style={{ background: AMBER_GRADIENT_CSS, boxShadow: AMBER_GLOW_SHADOW, color: NEUTRAL.onAmberText }}
-            >
+            <Button as={Link} href="/templates" className="flex-1 min-w-0">
               สร้างโปรแกรมแรก
-            </Link>
+            </Button>
           )}
         </div>
       )}

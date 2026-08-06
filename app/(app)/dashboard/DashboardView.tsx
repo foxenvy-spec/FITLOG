@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
+import Button from '@/components/ui/Button'
 import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import {
@@ -955,20 +956,17 @@ export default function DashboardPage() {
                   ต่างหาก (เคยซ้ำซ้อนกับการ์ด "สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)" ด้านล่าง) */}
               <TodayMuscleChips todayWorkouts={data.todayWorkouts} />
 
+              {/* v49 (Design System Phase 2): เดิม bg-amber เรียบๆ ไม่มี glow ต่างจากปุ่ม CTA หลักของ
+                  AI Coach (AMBER_GRADIENT_CSS+glow) ทั้งที่ทำหน้าที่เดียวกัน (primary action) — เปลี่ยน
+                  มาใช้ Button component กลาง (components/ui/Button.tsx) ให้เป็นสไตล์เดียวกันทั้งแอป */}
               {scheduledDay ? (
-                <Link
-                  href="/session"
-                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition"
-                >
+                <Button as={Link} href="/session" size="md" className="mt-4">
                   {totals.entryCount > 0 ? 'ไปต่อ' : 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
-                </Link>
+                </Button>
               ) : (
-                <Link
-                  href="/log"
-                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-display tracked uppercase text-bg bg-amber rounded-full px-5 py-2.5 active:scale-[0.99] transition"
-                >
+                <Button as={Link} href="/log" size="md" className="mt-4">
                   เริ่มเทรนเลย <span aria-hidden="true">▶</span>
-                </Link>
+                </Button>
               )}
 
               {!scheduledDay && (
