@@ -41,6 +41,8 @@ import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import PremiumCard from '@/components/ui/PremiumCard'
+import Button from '@/components/ui/Button'
+import { COLORS } from '@/lib/theme'
 
 const MAX_OVERLOAD_EXERCISES = 3
 
@@ -385,10 +387,13 @@ export default function CoachPage() {
       {error ? (
         <ErrorState title="โหลด AI Coach ไม่สำเร็จ" message={error} onRetry={load} />
       ) : loading ? (
+        // v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม rounded-lg (8px) ไม่ตรงกับ
+        // PremiumCard ที่ตัว skeleton นี้จำลอง (rounded-card, 24px) เปลี่ยนให้ตรงกัน กันไม่ให้กระตุก
+        // ตอนสลับจาก skeleton เป็นการ์ดจริง
         <div className="space-y-3">
-          <Skeleton className="h-16 w-full rounded-lg" />
-          <Skeleton className="h-32 w-full rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-16 w-full rounded-card" />
+          <Skeleton className="h-32 w-full rounded-card" />
+          <Skeleton className="h-40 w-full rounded-card" />
         </div>
       ) : data ? (
         <>
@@ -439,14 +444,12 @@ export default function CoachPage() {
                       ))}
                     </ul>
                     {swapError && <p className="text-[11px] text-rusttext">{swapError}</p>}
+                    {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-amber เรียบๆ
+                        ไม่มี glow เปลี่ยนมาใช้ Button component กลาง (Phase 2) */}
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleStartGeneratedWorkout}
-                        className="text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-3 py-2 active:scale-[0.99] transition"
-                      >
+                      <Button type="button" onClick={handleStartGeneratedWorkout}>
                         ▶ Start Workout
-                      </button>
+                      </Button>
                       {generatedWorkout.source === 'rule' && (
                         <button
                           type="button"
@@ -503,14 +506,14 @@ export default function CoachPage() {
                       <span className="font-mono text-ink">{data.balance.pushSets} เซ็ต</span>
                     </div>
                     <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
-                      <AnimatedBarFill pct={pushPct} color="#C1503A" />
+                      <AnimatedBarFill pct={pushPct} color={COLORS.rust} />
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted">Pull (หลัง)</span>
                       <span className="font-mono text-ink">{data.balance.pullSets} เซ็ต</span>
                     </div>
                     <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
-                      <AnimatedBarFill pct={pullPct} color="#6C8CA8" />
+                      <AnimatedBarFill pct={pullPct} color={COLORS.steel} />
                     </div>
                   </>
                 )
