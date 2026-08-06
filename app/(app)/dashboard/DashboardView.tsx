@@ -1068,20 +1068,24 @@ export default function DashboardPage() {
                         </div>
                       )
                     })()}
-                  {(() => {
-                    // ฟื้นตัวรวม — ค่าเฉลี่ยของทุกกลุ่มกล้ามเนื้อ แสดงเป็นวงแหวนคู่กับลิสต์รายกลุ่ม
-                    // (ตามมอคอัพ v3: ring "พื้นตัวรวม" ข้างๆ list แทนที่จะโชว์แค่ list เดี่ยวๆ)
-                    const overallRecoveryPct = Math.round(
-                      RECOVERY_MUSCLES.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) /
-                        RECOVERY_MUSCLES.length
-                    )
-                    return (
-                      <div className="flex items-center gap-4">
-                        {/* สีฟ้าไซแอน + glow ตามมอคอัพ v3 — เดิมใช้ recoveryStatusColor() ที่เปลี่ยนสีตามเปอร์เซ็นต์
-                            (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ
-                            v47: ฟีดแบ็ก "การ์ดนี้ข้อมูลเยอะแต่ Ring ยังเล็ก ขยายประมาณ 15% จะบาลานซ์กว่า" —
-                            84 -> 97 (+15%), strokeWidth ขยายตามสัดส่วนเดียวกัน (8 -> 9) */}
-                        <div style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.cyan, '40')})` }}>
+                  {/* v49: ฟีดแบ็ก "ย้าย ring มาอยู่ด้านข้างแบบมอคอัพ V1" — เดิม ring กับลิสต์อยู่กันคนละ
+                      บล็อก (ring บล็อกเดี่ยวด้านบน, ลิสต์เต็มความกว้างด้านล่าง) ย้ายมาอยู่แถวเดียวกัน
+                      (ring ซ้าย, ลิสต์ขวาเต็มที่เหลือ) items-center ให้ ring อยู่กึ่งกลางแนวตั้งของลิสต์
+                      4-7 แถว ตามมอคอัพเป๊ะ — ไม่แตะ logic การคำนวณ/hover/สีใดๆ แค่ย้ายเลย์เอาต์ */}
+                  <div className="flex items-center gap-4 mt-3">
+                    {(() => {
+                      // ฟื้นตัวรวม — ค่าเฉลี่ยของทุกกลุ่มกล้ามเนื้อ แสดงเป็นวงแหวนคู่กับลิสต์รายกลุ่ม
+                      // (ตามมอคอัพ v3: ring "พื้นตัวรวม" ข้างๆ list แทนที่จะโชว์แค่ list เดี่ยวๆ)
+                      const overallRecoveryPct = Math.round(
+                        RECOVERY_MUSCLES.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) /
+                          RECOVERY_MUSCLES.length
+                      )
+                      return (
+                        // สีฟ้าไซแอน + glow ตามมอคอัพ v3 — เดิมใช้ recoveryStatusColor() ที่เปลี่ยนสีตามเปอร์เซ็นต์
+                        // (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ
+                        // v47: ฟีดแบ็ก "การ์ดนี้ข้อมูลเยอะแต่ Ring ยังเล็ก ขยายประมาณ 15% จะบาลานซ์กว่า" —
+                        // 84 -> 97 (+15%), strokeWidth ขยายตามสัดส่วนเดียวกัน (8 -> 9)
+                        <div className="shrink-0" style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.cyan, '40')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
                             size={97}
@@ -1092,13 +1096,12 @@ export default function DashboardPage() {
                             glow
                           />
                         </div>
-                      </div>
-                    )
-                  })()}
-                  {/* v48d: ฟีดแบ็ก "ไม่อยากได้รูปกล้ามเนื้อ (ตัวคน) จุดนี้" — ตัด RecoveryBodyDiagram ออก
-                      ทั้งหมด เหลือแค่ลิสต์แท่งยาวตาม % (เต็มความกว้างการ์ด) hover ยังไฮไลต์แท่งตัวเองได้
-                      เหมือนเดิม แค่ไม่มีคู่ตัวคนให้ sync ด้วยแล้ว */}
-                  <div className="mt-3 space-y-1.5">
+                      )
+                    })()}
+                    {/* v48d: ฟีดแบ็ก "ไม่อยากได้รูปกล้ามเนื้อ (ตัวคน) จุดนี้" — ตัด RecoveryBodyDiagram ออก
+                        ทั้งหมด เหลือแค่ลิสต์แท่งยาวตาม % hover ยังไฮไลต์แท่งตัวเองได้เหมือนเดิม แค่ไม่มีคู่
+                        ตัวคนให้ sync ด้วยแล้ว */}
+                    <div className="flex-1 min-w-0 space-y-1.5">
                     {RECOVERY_MUSCLES.map((mg) => {
                       const pct = recoveryPctMap[mg]
                       const color = recoveryStatusColor(pct)
@@ -1153,6 +1156,7 @@ export default function DashboardPage() {
                         </div>
                       )
                     })}
+                    </div>
                   </div>
                   <p className="mt-3 text-right text-xs text-amber">View Detail →</p>
                 </>
