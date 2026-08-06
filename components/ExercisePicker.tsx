@@ -146,7 +146,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
                         width={36}
                         height={36}
                         loading="lazy"
-                        className="shrink-0 w-9 h-9 rounded-md object-cover bg-panel"
+                        className="shrink-0 w-9 h-9 rounded-md object-cover bg-surface2"
                       />
                     ) : (
                       <span
