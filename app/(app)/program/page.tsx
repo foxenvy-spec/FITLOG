@@ -12,6 +12,7 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import PremiumCard from '@/components/ui/PremiumCard'
+import Button from '@/components/ui/Button'
 import { CARD_BORDER_CSS } from '@/lib/theme'
 
 export default function ProgramPage() {
@@ -387,13 +388,12 @@ export default function ProgramPage() {
         </p>
       )}
 
+      {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-amber เรียบๆ ไม่มี glow เปลี่ยนมาใช้
+          Button component กลาง (components/ui/Button.tsx, Phase 2) ให้ตรงกับปุ่ม CTA หลักทั่วแอปแล้ว */}
       {isToday && currentDay && currentExercises.length > 0 && (
-        <a
-          href="/session"
-          className="flex items-center justify-center gap-1.5 rounded-lg bg-amber text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] transition"
-        >
+        <Button as="a" href="/session" size="md" className="w-full">
           ▶ เริ่มเซสชันแบบเรียลไทม์
-        </a>
+        </Button>
       )}
 
       {error && <p className="text-sm text-rusttext">{error}</p>}
@@ -535,13 +535,9 @@ export default function ProgramPage() {
 
           {currentExercises.length > 0 && !selectMode && (
             <div className="px-4 pb-4">
-              <button
-                onClick={handleLogAllToday}
-                disabled={logging}
-                className="w-full rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-sm active:scale-[0.99] disabled:opacity-50 transition"
-              >
+              <Button type="button" onClick={handleLogAllToday} disabled={logging} size="md" className="w-full">
                 {logging ? 'กำลังบันทึก...' : `บันทึกเข้า Log วันนี้ทั้งหมด (${currentExercises.length} ท่า)`}
-              </button>
+              </Button>
             </div>
           )}
         </PremiumCard>
@@ -577,8 +573,11 @@ function ExerciseRow({
   const [editing, setEditing] = useState(false)
 
   return (
+    // v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิมแถวนี้ไม่มี hover feedback เลย (มีแค่
+    // border คั่นจาก tally-row) เพิ่ม hover:bg-white/5 ให้ตรงกับลิสต์แบบ divide-y ที่อื่นในแอป (Profile,
+    // Stats) — ไม่ใส่ตอน selected (มีพื้นหลังสีตัวเองอยู่แล้ว จะซ้อนกันดูสกปรก)
     <li
-      className={`tally-row px-4 py-3 space-y-2 ${selectMode ? 'cursor-pointer' : ''} ${selected ? 'bg-rustdim/20' : ''}`}
+      className={`tally-row px-4 py-3 space-y-2 transition ${selectMode ? 'cursor-pointer' : ''} ${selected ? 'bg-rustdim/20' : 'hover:bg-white/5'}`}
       onClick={selectMode ? onToggleSelect : undefined}
     >
       <div className="flex items-start gap-2">
