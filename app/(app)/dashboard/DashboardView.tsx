@@ -829,7 +829,15 @@ export default function DashboardPage() {
             (เลื่อนจุดโฟกัสของรูปไปทางขวาเพิ่ม ให้พื้นที่ว่างฝั่งซ้าย ซึ่งเป็นที่อยู่ของ panel ข้อความ
             "หายใจ" มากขึ้นตามที่ขอ) — "ปรับแสงของดัมเบล ตอนนี้ขาวไป อยากให้ warm ขึ้น (4200K)" — เพิ่ม
             sepia(.18) saturate(1.15) hue-rotate(-6deg) บน filter เดิม (blur/contrast คงไว้) ให้โทนสีรูป
-            อุ่นขึ้นไปทางเดียวกับสีอำพัน (accent สีเดียวที่ใช้ทั้งแอป) แทนแสงขาวเย็นเดิม */}
+            อุ่นขึ้นไปทางเดียวกับสีอำพัน (accent สีเดียวที่ใช้ทั้งแอป) แทนแสงขาวเย็นเดิม
+            v56: ฟีดแบ็ก "ตอนนี้ blur+มืด+contrast ต่ำ เลยกลายเป็นเหมือน Texture มากกว่า Hero Image อยากได้
+            ความรู้สึก 'วันนี้คือวันลุย' ไม่ใช่ 'มีดัมเบลอยู่'" — v54/v55 กดหนักไปฝั่ง "กลืนเป็นพื้นหลัง" จน
+            รายละเอียดหาย ปรับกลับ: blur 1.5px -> 0.4px, contrast .92 -> 1.05, brightness .98 -> 1.02
+            (คมและสว่างขึ้นชัดเจน เห็นลาย/พื้นผิวดัมเบลจริง) overlay มืดแนวตั้งลดจาก .18/.32 -> .08/.18
+            (บางลงเกินครึ่ง) glow อำพันเดิม (radial 88% 28%) เพิ่ม alpha .16 -> .28 (~75%) ให้ความรู้สึก
+            "แสงพลังงาน" เด่นขึ้นแทนที่จะจมอยู่ใต้ความมืด — เพิ่มเลเยอร์ "rim light" ใหม่ (เส้นไล่สีอำพันแนวตั้ง
+            บางๆ ตรงรอยต่อระหว่างรูปกับ gradient fade ซ้าย, mixBlendMode: screen ให้เรืองแสงจริงไม่ใช่ทาสีทับ)
+            จำลองขอบแสงกระทบดัมเบล ให้มีมิติมากกว่าแค่ภาพแบน */}
         <div className="absolute inset-0 bg-surface overflow-hidden">
           <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box overflow-hidden">
             <div className="absolute inset-0" style={{ transform: 'scale(0.92)', transformOrigin: '60% 42%' }}>
@@ -840,18 +848,26 @@ export default function DashboardPage() {
                 className="object-cover"
                 style={{
                   objectPosition: '76% 45%',
-                  filter: 'blur(1.5px) contrast(0.92) sepia(0.18) saturate(1.15) hue-rotate(-6deg) brightness(0.98)',
+                  filter: 'blur(0.4px) contrast(1.05) sepia(0.15) saturate(1.25) hue-rotate(-6deg) brightness(1.02)',
                 }}
                 priority
               />
             </div>
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `linear-gradient(90deg, ${withAlpha(COLORS.amber, '00')} 0%, ${withAlpha(COLORS.amber, '55')} 8%, transparent 22%)`,
+                mixBlendMode: 'screen',
+              }}
+              aria-hidden="true"
+            />
           </div>
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-gradient-box"
             style={{
               backgroundImage: [
-                'linear-gradient(180deg, rgba(7,9,13,.18), rgba(7,9,13,.32))',
-                'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.16), transparent 62%)',
+                'linear-gradient(180deg, rgba(7,9,13,.08), rgba(7,9,13,.18))',
+                'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.28), transparent 62%)',
                 'linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%)',
               ].join(', '),
             }}
@@ -867,7 +883,9 @@ export default function DashboardPage() {
               (คงกลิ่นอายแสงระยิบเดิมไว้ 1 จุด ไม่ให้หายไปทั้งหมด)
               v55: ฟีดแบ็ก "เพิ่ม particle อีกนิด: ฝุ่นทอง 2-3 จุด + bokeh เล็กๆ เฉพาะบริเวณบนของดัมเบล" —
               เพิ่มอีก 2 จุด (bokeh วงใหญ่เบลอจาง + ฝุ่นทองเล็ก) รวมเป็น 5 ทั้งหมด แต่ทุกจุดใหม่กระจุกอยู่
-              โซนบนของดัมเบล (top ~10-22%) ตามที่ขอเจาะจง ไม่ใช่กระจายทั่วการ์ดเหมือนเซ็ตเดิม */}
+              โซนบนของดัมเบล (top ~10-22%) ตามที่ขอเจาะจง ไม่ใช่กระจายทั่วการ์ดเหมือนเซ็ตเดิม
+              v56: ฟีดแบ็ก "particle/dust/orange glow เพิ่มความรู้สึก 'วันนี้คือวันลุย'" — เพิ่มอีก 2 จุด
+              (bokeh กลางเฟรม + spark ฝั่งขวาล่าง) รวมเป็น 7 จุด ให้ภาพดูมีพลัง/เคลื่อนไหวมากขึ้น */}
           <div
             className="absolute rounded-full pointer-events-none"
             style={{ left: '58%', top: '16%', width: 22, height: 22, background: 'radial-gradient(circle, rgba(255,200,120,.22), transparent 70%)', filter: 'blur(3px)' }}
@@ -883,6 +901,11 @@ export default function DashboardPage() {
             style={{ left: '86%', top: '22%', width: 14, height: 14, background: 'radial-gradient(circle, rgba(255,184,74,.28), transparent 70%)', filter: 'blur(2px)' }}
             aria-hidden="true"
           />
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '50%', top: '45%', width: 12, height: 12, background: 'radial-gradient(circle, rgba(255,184,74,.18), transparent 70%)', filter: 'blur(2px)' }}
+            aria-hidden="true"
+          />
           <span
             className="absolute rounded-full pointer-events-none"
             style={{ left: '73%', top: '14%', width: 2.5, height: 2.5, background: '#FFF4E0', opacity: 0.85, boxShadow: '0 0 5px 1.5px rgba(255,184,74,.7)' }}
@@ -891,6 +914,11 @@ export default function DashboardPage() {
           <span
             className="absolute rounded-full pointer-events-none"
             style={{ left: '80%', top: '58%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.6, boxShadow: '0 0 4px 1px rgba(255,184,74,.55)' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '92%', top: '38%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.55, boxShadow: '0 0 4px 1px rgba(255,184,74,.5)' }}
             aria-hidden="true"
           />
         </div>
@@ -914,7 +942,11 @@ export default function DashboardPage() {
             วิ่งรอบวง จะดู Premium มาก" — เพิ่มอีก 2 เลเยอร์ตกแต่งล้วนๆ (ไม่แตะ GoalRing/ตรรกะคำนวณ %
             เดิมเลย): วงประ (dashed) รัศมีกว้างกว่า ring จริงเล็กน้อยหมุนช้าๆ รอบตัวเอง (8s/รอบ, .hud-outer-
             ring ใน globals.css) จำลองกรอบ HUD + จุดสว่างเล็กดวงเดียวโคจรรอบ ring (4s/รอบ, .hud-bead-orbit)
-            ทั้งคู่ pointer-events-none และอยู่ z ต่ำกว่า ring จริง (z-10) ไม่บังคลิก/ไม่ทับตัวเลข % */}
+            ทั้งคู่ pointer-events-none และอยู่ z ต่ำกว่า ring จริง (z-10) ไม่บังคลิก/ไม่ทับตัวเลข %
+            v56: ฟีดแบ็ก "Today's Workout Ring ค่อนข้างใหญ่ ลดลงประมาณ 15% จะบาลานซ์กว่า เพราะพระเอกของ
+            การ์ดคือ DAY 3 / LEGS ไม่ใช่วงกลม" — 87 -> 74 (-15%, วิธีคิดแบบเดียวกับ v48 ที่เคยลด 100 -> 87
+            มาก่อน) strokeWidth ตามสัดส่วนเดียวกัน 7 -> 6 — HUD dashed ring/bead orbit (v55) ปรับขนาดตาม
+            ring จริงให้ยังพอดีรอบวงเหมือนเดิม (93 -> 80, คงระยะห่างจาก ring จริง +6px เท่าเดิม) */}
         <div
           className="absolute pointer-events-none"
           style={{
@@ -929,10 +961,10 @@ export default function DashboardPage() {
         />
         <div
           className="absolute rounded-full pointer-events-none hud-outer-ring"
-          style={{ bottom: -3, right: -3, width: 93, height: 93, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
+          style={{ bottom: -3, right: -3, width: 80, height: 80, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
           aria-hidden="true"
         />
-        <div className="absolute bottom-4 right-4 pointer-events-none hud-bead-orbit" style={{ width: 87, height: 87 }} aria-hidden="true">
+        <div className="absolute bottom-4 right-4 pointer-events-none hud-bead-orbit" style={{ width: 74, height: 74 }} aria-hidden="true">
           <span
             className="absolute rounded-full"
             style={{ left: '50%', top: -1, width: 4, height: 4, transform: 'translateX(-50%)', background: '#FFF4E0', boxShadow: '0 0 6px 2px rgba(255,184,74,.8)' }}
@@ -941,8 +973,8 @@ export default function DashboardPage() {
         <div className="absolute bottom-4 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-            size={87}
-            strokeWidth={7}
+            size={74}
+            strokeWidth={6}
             color={COLORS.amber}
             label="ความพร้อม"
             ariaLabel="ความพร้อมของวันนี้"
@@ -1032,13 +1064,19 @@ export default function DashboardPage() {
 
               {/* v49 (Design System Phase 2): เดิม bg-amber เรียบๆ ไม่มี glow ต่างจากปุ่ม CTA หลักของ
                   AI Coach (AMBER_GRADIENT_CSS+glow) ทั้งที่ทำหน้าที่เดียวกัน (primary action) — เปลี่ยน
-                  มาใช้ Button component กลาง (components/ui/Button.tsx) ให้เป็นสไตล์เดียวกันทั้งแอป */}
+                  มาใช้ Button component กลาง (components/ui/Button.tsx) ให้เป็นสไตล์เดียวกันทั้งแอป
+                  v56: ฟีดแบ็ก "ปุ่มไปต่อดีมากแล้ว แต่ถ้าจะสุด ทำ Glow วิ่งช้าๆ ทุก 5-6 วินาที จะดูเหมือน App
+                  จริง" — เพิ่ม className "cta-sweep" (นิยามใน globals.css) สโคปเฉพาะปุ่มนี้เท่านั้น ไม่แตะ
+                  Button.tsx ที่ใช้ร่วมกันทั่วแอป (Program/Session/Coach/ฯลฯ ยังไม่มี sweep นี้ — ฟีดแบ็กพูดถึง
+                  ปุ่มนี้ปุ่มเดียวบน Dashboard) ทำผ่าน ::after pseudo-element ล้วนๆ ไม่ต้องแก้ Button component
+                  เลย คุมจังหวะด้วย keyframe ที่ sweep ผ่านเร็ว (~1s) แล้วหยุดนิ่งอยู่นอกกรอบที่เหลือของรอบ
+                  5.5s ให้ความรู้สึก "แสงวิ่งผ่านเป็นระยะ" ไม่ใช่ sweep วนต่อเนื่องซึ่งจะดูรบกวนเกินไป */}
               {scheduledDay ? (
-                <Button as={Link} href="/session" size="md" className="mt-4">
+                <Button as={Link} href="/session" size="md" className="mt-4 cta-sweep">
                   {totals.entryCount > 0 ? 'ไปต่อ' : 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
                 </Button>
               ) : (
-                <Button as={Link} href="/log" size="md" className="mt-4">
+                <Button as={Link} href="/log" size="md" className="mt-4 cta-sweep">
                   เริ่มเทรนเลย <span aria-hidden="true">▶</span>
                 </Button>
               )}
@@ -1193,13 +1231,28 @@ export default function DashboardPage() {
                         // ทำให้เข้าใจผิดได้) เปลี่ยนกลับเป็นข้อความคงที่ แต่เลือก "Overall" (ไม่ใช่ "Recovery"
                         // ที่จะซ้ำกับหัวการ์ดตรงๆ ตามเหตุผลเดิมของ v49) ให้สื่อว่าเป็น "ภาพรวม" ของตัวเลข ไม่ใช่
                         // สถานะที่เปลี่ยนไปตาม tier
+                        //
+                        // v56: ฟีดแบ็ก "Ring ดูโล่งไปนิด อยากได้ 'Recovery' ตามด้วยสถานะ (Recovering/...) 2
+                        // บรรทัด แทน 'Overall' บรรทัดเดียว" — v51 กังวลว่าโชว์แค่คำสถานะ (Recovering) เดี่ยวๆ
+                        // จะเข้าใจผิดว่าเป็นสถานะลอยๆ ไม่ใช่คะแนนภาพรวม — รอบนี้แก้ตรงจุดกังวลนั้นได้จริง โดย
+                        // โชว์ทั้งคู่พร้อมกัน "Recovery" (บริบท, มา ก่อน) + "Recovering" (สถานะจาก
+                        // recoveryTier() ตัวเดียวกับที่ใช้กับแท่งรายกลุ่มด้านล่าง สีตาม tier) ให้อ่านออกว่า
+                        // เป็น "สถานะของ Recovery" ไม่ใช่คำลอยๆ — GoalRing.label เพิ่งขยายรับ ReactNode ได้
+                        // (ดู GoalRing.tsx) เลยส่ง 2 บรรทัดสีต่างกันเข้าไปแทน string เดี่ยว
                         <div className="shrink-0 ml-3" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '2D')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
                             size={106}
                             strokeWidth={10}
                             color={COLORS.cyan}
-                            label="Overall"
+                            label={
+                              <span className="flex flex-col items-center leading-tight">
+                                <span className="text-muted">Recovery</span>
+                                <span style={{ color: recoveryStatusColor(overallRecoveryPct) }}>
+                                  {recoveryTier(overallRecoveryPct).labelEn}
+                                </span>
+                              </span>
+                            }
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
                             glow
                           />
@@ -1252,21 +1305,23 @@ export default function DashboardPage() {
                           {/* v50: ฟีดแบ็ก "% อยู่ห่างจาก Badge เหมือนมีข้อมูล 3 จุด (ชื่อ/Badge/%) สายตา
                               กระโดด อยากให้ Badge กับ % รู้สึกเป็นคู่เดียวกัน" — ห่อ badge+% ไว้ในกลุ่มเดียว
                               gap แคบกว่า (gap-1) แยกจาก gap ของแถวหลัก (gap-2) ให้ 2 ตัวนี้อ่านเป็นหน่วย
-                              เดียวกันจริงๆ แทนที่จะเป็น element เรียงเท่าๆ กัน 3 ชิ้น */}
-                          <span className="flex items-center gap-1 shrink-0">
-                            <span
-                              className="recovery-tier-badge text-[8px] font-display font-semibold tracked uppercase rounded-full px-1.5 py-0.5"
-                              style={{
-                                backgroundColor: withAlpha(color, '22'),
-                                color,
-                                boxShadow: `0 0 4px ${withAlpha(color, '55')}`,
-                              }}
-                            >
-                              {recoveryTier(pct).labelEn}
-                            </span>
-                            <span className="font-mono text-[10px] w-7 text-right" style={{ color }}>
-                              {pct}%
-                            </span>
+                              เดียวกันจริงๆ แทนที่จะเป็น element เรียงเท่าๆ กัน 3 ชิ้น
+                              v56: ฟีดแบ็ก "แถวนี้ดูเป็น Table มากกว่า Dashboard อยากได้ ●ชื่อ + แท่ง +
+                              สถานะ (Excellent) แทนที่จะมีเลข % แยกอีกคอลัมน์" — ตัดเลข % ตัวเลขดิบออก
+                              (สีของแท่ง + badge สถานะ สื่อระดับเดียวกันอยู่แล้ว ตัวเลขดิบเป็นข้อมูลซ้ำที่ทำให้
+                              รู้สึกเหมือนตาราง/สเปรดชีต) เหลือ dot+ชื่อ+แท่ง+badge บนแถวเดียวเหมือนเดิม — เลือก
+                              ไม่ตัดขึ้นเป็น 3 บรรทัดแยก (ตามมอคอัพทางเลือกที่ 2 ที่เสนอมา) เพราะจะทำให้ลิสต์นี้
+                              สูงขึ้น ~3 เท่า ชนกับสัดส่วน ring/list ที่ปรับสมดุลกันมาหลายรอบแล้ว (v49-v51)
+                              ยุบ wrapper กลุ่ม badge+% เดิม (v50) ออกด้วยเพราะเหลือ badge ตัวเดียวแล้ว */}
+                          <span
+                            className="recovery-tier-badge shrink-0 text-[8px] font-display font-semibold tracked uppercase rounded-full px-1.5 py-0.5"
+                            style={{
+                              backgroundColor: withAlpha(color, '22'),
+                              color,
+                              boxShadow: `0 0 4px ${withAlpha(color, '55')}`,
+                            }}
+                          >
+                            {recoveryTier(pct).labelEn}
                           </span>
                         </div>
                       )
@@ -1275,9 +1330,15 @@ export default function DashboardPage() {
                   </div>
                   {/* v49: ฟีดแบ็ก "View Detail เล็กไปนิด ลองทำเป็นเส้นคั่นด้านบน + View Recovery Detail →
                       จะดูเป็น Apple มากกว่า" — เพิ่มเส้นคั่นบาง (border-t) แยกจากลิสต์ด้านบนชัดเจน แล้ว
-                      ขยายข้อความจาก "View Detail" เป็น "View Recovery Detail" ตามตัวอย่างแรกที่ให้มา */}
+                      ขยายข้อความจาก "View Detail" เป็น "View Recovery Detail" ตามตัวอย่างแรกที่ให้มา
+                      v56: ฟีดแบ็ก "'View Recovery Detail' ยังเป็น Link แต่การ์ดทั้งใบ Premium มากแล้ว
+                      ลองเปลี่ยนเป็น 'See Full Recovery'/'Recovery Details'/'View Insights'" — เลือก
+                      "Recovery Details" (ตัวเลือกที่ 2 ที่เสนอมา) เพราะสั้นกระชับสุดใน 3 ตัวเลือกแต่ยัง
+                      สื่อตรงว่าลิงก์นี้พาไปหน้ารายละเอียด (/recovery) เหมือนเดิมทุกประการ ไม่ใช้ "View
+                      Insights" เพราะกว้างเกินไป ฟังดูเหมือนมีบทวิเคราะห์/คำแนะนำเพิ่มที่หน้า /recovery
+                      ไม่มีจริง */}
                   <p className="mt-3 pt-3 border-t border-white/5 text-right text-xs text-amber">
-                    View Recovery Detail →
+                    Recovery Details →
                   </p>
                 </>
               )

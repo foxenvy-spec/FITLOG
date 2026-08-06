@@ -375,6 +375,10 @@
   .hud-bead-orbit {
     animation: none !important;
   }
+  .cta-sweep::after {
+    animation: none !important;
+    display: none;
+  }
 }
 
 /* v53: ฟีดแบ็ก "จอ 14 นิ้ว ตัวเลข % ทะลุกรอบ Recovery การ์ด + รูปดัมเบลใน Hero การ์ดเห็นไม่ครบ แต่จอ 24
@@ -419,4 +423,37 @@
 }
 .hud-bead-orbit {
   animation: hud-bead-spin 4s linear infinite;
+}
+
+/* v56: ฟีดแบ็ก "ปุ่มไปต่อดีมากแล้ว แต่ถ้าจะสุด ทำ Glow วิ่งช้าๆ ทุก 5-6 วินาที จะดูเหมือน App จริง" —
+   สโคปเฉพาะปุ่ม CTA หลักบน Dashboard (className="cta-sweep" ที่ DashboardView.tsx) ผ่าน ::after
+   pseudo-element ล้วนๆ ไม่แตะ components/ui/Button.tsx ที่ใช้ร่วมกันทั่วแอป (ฟีดแบ็กพูดถึงปุ่มนี้ปุ่ม
+   เดียว ไม่ได้ขอให้ทุกปุ่ม primary ในแอปมี sweep นี้) — keyframe คุมจังหวะให้แสงวิ่งผ่านเร็ว (~1s แรกของ
+   รอบ 5.5s) แล้วหยุดนิ่งอยู่นอกกรอบที่เหลือ ไม่ใช่ sweep วนต่อเนื่องซึ่งจะรบกวนสายตาเกินไปสำหรับปุ่มที่
+   อยู่บนจอตลอดเวลา */
+.cta-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.cta-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-20deg);
+  animation: cta-sweep-move 5.5s ease-in-out infinite;
+}
+@keyframes cta-sweep-move {
+  0% {
+    left: -60%;
+  }
+  18% {
+    left: 130%;
+  }
+  100% {
+    left: 130%;
+  }
 }
