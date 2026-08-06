@@ -8,6 +8,9 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import PremiumCard from '@/components/ui/PremiumCard'
+import AnimatedBarFill from '@/components/AnimatedBarFill'
+import { COLORS, withAlpha } from '@/lib/theme'
+import { useCountUp } from '@/lib/useCountUp'
 
 interface Stats {
   totalLogs: number
@@ -130,21 +133,26 @@ export default function AchievementsPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
-        <StatBox label="ต่อเนื่องตอนนี้" value={`${stats.currentStreak} วัน`} />
-        <StatBox label="สถิติต่อเนื่อง" value={`${stats.longestStreak} วัน`} />
-        <StatBox label="วันฝึกรวม" value={`${stats.totalDays} วัน`} />
+        <StatBox label="ต่อเนื่องตอนนี้" value={stats.currentStreak} unit="วัน" />
+        <StatBox label="สถิติต่อเนื่อง" value={stats.longestStreak} unit="วัน" />
+        <StatBox label="วันฝึกรวม" value={stats.totalDays} unit="วัน" />
       </div>
 
+      {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม badge แต่ละใบเป็น div เขียนเอง
+          (rounded-lg 8px + bg/border ตรงๆ) ไม่ได้ใช้ PremiumCard เลยทั้งที่เป็นเนื้อหาหลักของหน้า —
+          เปลี่ยนเป็น PremiumCard (rounded-card 24px + material เดียวกับทั้งแอป) ส่วนสถานะ unlocked/locked
+          ยังคงไว้ผ่าน className (dimmed) + style border override (สีอำพันตอน unlocked ชนะ default ของ
+          PremiumCard ได้เพราะ ...style วางท้ายสุดเสมอ) — progress bar เปลี่ยนจาก div width คงที่เป็น
+          AnimatedBarFill ให้เติมพร้อม micro-interaction เดียวกับที่อื่นในแอป */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {badges.map((b) => {
           const unlocked = b.current >= b.target
           const pct = Math.min(100, Math.round((b.current / b.target) * 100))
           return (
-            <div
+            <PremiumCard
               key={b.key}
-              className={`rounded-lg border px-3 py-4 text-center space-y-1.5 ${
-                unlocked ? 'bg-surface border-amber/40' : 'bg-surface2 border-line opacity-60'
-              }`}
+              className={`px-3 py-4 text-center space-y-1.5 ${unlocked ? '' : 'opacity-60'}`}
+              style={unlocked ? { border: `1px solid ${withAlpha(COLORS.amber, '40')}` } : undefined}
             >
               <div className={`text-3xl ${unlocked ? '' : 'grayscale opacity-50'}`}>{b.icon}</div>
               <p className={`text-xs font-display tracked uppercase ${unlocked ? 'text-ink' : 'text-muted'}`}>{b.title}</p>
@@ -152,7 +160,7 @@ export default function AchievementsPage() {
               {!unlocked && (
                 <div className="pt-1">
                   <div className="h-1 rounded-full bg-line overflow-hidden">
-                    <div className="h-full bg-steel" style={{ width: `${pct}%` }} />
+                    <AnimatedBarFill pct={pct} color={COLORS.steel} />
                   </div>
                   <p className="text-[9px] text-muted mt-1 font-mono">
                     {b.isWeight
@@ -161,7 +169,7 @@ export default function AchievementsPage() {
                   </p>
                 </div>
               )}
-            </div>
+            </PremiumCard>
           )
         })}
       </div>
@@ -169,10 +177,15 @@ export default function AchievementsPage() {
   )
 }
 
-function StatBox({ label, value }: { label: string; value: string }) {
+// v52: ฟีดแบ็ก "ทำ Micro-interactions (count-up, ...)" — เดิมตัวเลขโผล่มานิ่งๆ ทันที ใช้ useCountUp
+// เดียวกับที่ GoalRing/StatCard (หน้า Stats) ใช้อยู่แล้ว ให้ตัวเลขไต่ขึ้นตอนโหลดแทน
+function StatBox({ label, value, unit }: { label: string; value: number; unit: string }) {
+  const animatedValue = useCountUp(value)
   return (
     <PremiumCard className="px-2 py-3">
-      <p className="text-lg font-display text-amber">{value}</p>
+      <p className="text-lg font-display text-amber">
+        {Math.round(animatedValue)} {unit}
+      </p>
       <p className="text-[10px] text-muted tracked uppercase mt-0.5">{label}</p>
     </PremiumCard>
   )
