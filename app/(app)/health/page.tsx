@@ -1084,7 +1084,7 @@ export default function HealthPage() {
                 <button
                   type="button"
                   onClick={() => setTab('trends')}
-                  className="mt-3 w-full text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2"
+                  className="mt-3 w-full text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
                 >
                   ดูคำแนะนำเพิ่มเติม
                 </button>
@@ -1334,7 +1334,7 @@ export default function HealthPage() {
                           await supabase.from('body_metrics').delete().eq('id', m.id)
                           setMetrics((prev) => prev.filter((x) => x.id !== m.id))
                         }}
-                        className="text-muted hover:text-rust text-xs"
+                        className="text-muted hover:text-rust text-xs transition"
                       >
                         ลบ
                       </button>
@@ -1991,7 +1991,7 @@ function GoalsCard({
       )}
       <a
         href="/calendar"
-        className="mt-3 block text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2"
+        className="mt-3 block text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
       >
         ดูเป้าหมายทั้งหมด
       </a>
@@ -2037,7 +2037,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
                 <p className="text-[11px] text-muted mt-0.5">{highlight.detail}</p>
                 <a
                   href="/program"
-                  className="inline-block mt-2 text-[10px] font-display tracked uppercase text-bg bg-amber rounded-full px-3 py-1.5"
+                  className="inline-block mt-2 text-[10px] font-display tracked uppercase text-bg bg-amber rounded-full px-3 py-1.5 transition active:scale-[0.99] hover:opacity-90"
                 >
                   ดูโปรแกรมแนะนำ
                 </a>
@@ -2407,7 +2407,7 @@ function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profil
           type="button"
           onClick={() => handlePick('male')}
           disabled={saving !== null}
-          className="px-3 py-1.5 rounded-lg bg-steeldim text-steel text-xs font-display tracked uppercase disabled:opacity-50"
+          className="px-3 py-1.5 rounded-lg bg-steeldim text-steel text-xs font-display tracked uppercase transition active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
         >
           {saving === 'male' ? '...' : 'ชาย'}
         </button>
@@ -2415,11 +2415,11 @@ function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profil
           type="button"
           onClick={() => handlePick('female')}
           disabled={saving !== null}
-          className="px-3 py-1.5 rounded-lg bg-rustdim text-rusttext text-xs font-display tracked uppercase disabled:opacity-50"
+          className="px-3 py-1.5 rounded-lg bg-rustdim text-rusttext text-xs font-display tracked uppercase transition active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
         >
           {saving === 'female' ? '...' : 'หญิง'}
         </button>
-        <button type="button" onClick={() => setDismissed(true)} className="text-[10px] text-muted underline">
+        <button type="button" onClick={() => setDismissed(true)} className="text-[10px] text-muted underline transition hover:text-ink">
           ข้าม
         </button>
       </div>
@@ -2761,7 +2761,7 @@ function MetricForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-lg font-display tracked uppercase py-3 text-sm bg-amber text-bg disabled:opacity-50"
+        className="w-full rounded-lg font-display tracked uppercase py-3 text-sm bg-amber text-bg transition active:scale-[0.99] hover:opacity-90 disabled:opacity-50 disabled:active:scale-100"
       >
         {saving ? 'กำลังบันทึก...' : 'บันทึก'}
       </button>
@@ -2927,7 +2927,7 @@ function PhotosTab({
           className="input"
         />
         <label className="block">
-          <span className="w-full block text-center rounded-lg font-display tracked uppercase py-3 text-sm bg-rust text-ink cursor-pointer">
+          <span className="w-full block text-center rounded-lg font-display tracked uppercase py-3 text-sm bg-rust text-ink cursor-pointer transition active:scale-[0.99] hover:opacity-90">
             {uploading ? 'กำลังอัปโหลด...' : 'เลือกรูปถ่าย'}
           </span>
           <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} className="hidden" />
@@ -2993,7 +2993,7 @@ function PhotosTab({
                 <button
                   type="button"
                   onClick={() => handleDelete(p)}
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-bg/80 text-rusttext text-xs flex items-center justify-center"
+                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-bg/80 text-rusttext text-xs flex items-center justify-center transition hover:bg-bg active:scale-90"
                   aria-label="ลบรูป"
                 >
                   ×
