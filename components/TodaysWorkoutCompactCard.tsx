@@ -240,17 +240,21 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             simple
           >
             {/* ไอคอนใหญ่ขึ้นมาก (24 -> 56px) ตาม ringSize ที่ขยายจาก 46 -> 76 — ให้พอมีพื้นที่เห็นวงแหวน/
-                glow/เงาที่ฝังอยู่ในตัวไอคอนเองชัดเจน (ที่ 24px เดิมมันบีบจนมัว มองไม่ออกเลยว่ามีวง) */}
+                glow/เงาที่ฝังอยู่ในตัวไอคอนเองชัดเจน (ที่ 24px เดิมมันบีบจนมัว มองไม่ออกเลยว่ามีวง)
+                v48: ฟีดแบ็ก "Ring ใหญ่ไป ลด 10% แล้วเพิ่มรูป Dumbbell ให้เด่นขึ้น" — ring หด 76->68
+                (ดู dashboardSpec.workoutCard.ringSize) ไอคอนขยับตามจาก 56->52 (ไม่ใช่คงที่ 56 เดิม
+                เพราะ inner diameter ของวงที่ 68px เหลือแค่ 58px คง 56px ไว้จะบีบจนเกือบชนขอบวง) แต่
+                สัดส่วนไอคอนต่อวง (52/68=76%) ยังสูงกว่าเดิม (56/76=74%) จริง อ่านว่า "ดัมเบลเด่นขึ้น" ได้ */}
             <span
-              className="w-14 h-14 rounded-full flex items-center justify-center overflow-hidden"
+              className="w-[52px] h-[52px] rounded-full flex items-center justify-center overflow-hidden"
               style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
               aria-hidden="true"
             >
               <Image
                 src="/icons/today-workout-icon-dumbbell.png"
                 alt=""
-                width={56}
-                height={56}
+                width={52}
+                height={52}
                 className="w-full h-full object-cover"
                 style={{ mixBlendMode: 'screen' }}
               />

@@ -46,7 +46,7 @@ import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type D
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
-import InsightCard from '@/components/InsightCard'
+import InsightCarousel from '@/components/InsightCarousel'
 import TodayMuscleChips from '@/components/TodayMuscleChips'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
@@ -1206,13 +1206,10 @@ export default function DashboardPage() {
             href="/coach"
             lastUpdatedAt={dataUpdatedAt}
           />
-          {combinedInsights.length > 0 && (
-            <div className="space-y-2">
-              {combinedInsights.map((insight) => (
-                <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_IMAGE[`${insight.id}|${insight.kind}`]} />
-              ))}
-            </div>
-          )}
+          {/* v48: ฟีดแบ็ก "Insight มี 2 ใบ วางซ้อนกันแนวตั้งกินพื้นที่ ทำเป็น Carousel จะดีกว่า" —
+              เดิม map วาง InsightCard เรียงต่อกัน space-y-2 (สูงเท่าจำนวนใบรวมกัน) เปลี่ยนเป็น
+              InsightCarousel ปัดแนวนอนทีละใบแทน สูงคงที่แค่ 1 ใบเสมอไม่ว่าจะมีกี่ insight */}
+          <InsightCarousel insights={combinedInsights} imageFor={(insight) => INSIGHT_IMAGE[`${insight.id}|${insight.kind}`]} />
         </div>
       )}
       </div>
