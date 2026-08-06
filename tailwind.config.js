@@ -35,6 +35,15 @@ module.exports = {
         violet: '#9C7CC4',
         violetdim: '#372B49',
       },
+      // Foundation token — v49: ฟีดแบ็ก "แต่ละ Card เริ่มใช้สีคนละแบบ...ถ้ามี Design System ทุกอย่างจะ
+      // อิง Token เดียว" — สืบจริงพบว่า PremiumCard/AICoachCompactCard/WeeklyVolume ใช้ rounded-[24px]
+      // (magic string ซ้ำกันหลายไฟล์) ขณะที่การ์ดมือเขียนเองในหน้า Dashboard (Hero Workout/Recovery/
+      // Weekly Goal/Next Up) และ WeeklyMuscleHeatmap/WeeklyCardioVolume ยังเหลือ rounded-lg (8px) เดิม
+      // จากก่อนมี PremiumCard — เพิ่ม token กลางตรงนี้ (rounded-card) ให้ทุกจุดอ้างอิงชุดเดียวกันจริงๆ
+      // แทนพิมพ์ 24px ซ้ำเป็น string คนละที่ ไม่ใช่แค่ "บังเอิญเลขตรงกัน"
+      borderRadius: {
+        card: '24px',
+      },
       fontFamily: {
         display: ['var(--font-oswald)', 'var(--font-kanit)'],
         body: ['var(--font-inter)', 'var(--font-plex-thai)'],
