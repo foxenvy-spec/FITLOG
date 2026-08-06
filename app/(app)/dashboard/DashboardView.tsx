@@ -877,6 +877,15 @@ export default function DashboardPage() {
               }}
               aria-hidden="true"
             />
+            {/* v61: ฟีดแบ็ก "พื้นที่หลังดัมเบลยังโล่ง อยากเพิ่มฝุ่น/particle/แสง/หมอกบางๆ ให้หลังดัมเบล แบบ
+                Nike/Apple Fitness/Whoop" — โซนล่างขวาของรูป (หลัง/ใต้ดัมเบล) ค่อนข้างว่างเปล่าหลังผ่าน
+                overlay มืด/vignette หลายรอบ เพิ่มหมอกอุ่นบางๆ (radial ต่ำมาก 10% alpha) เติมเต็มโซนนั้น
+                โดยเฉพาะ ไม่ใช่ครอบทั้งรูป */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'radial-gradient(ellipse 70% 60% at 82% 72%, rgba(255,180,90,.10), transparent 75%)' }}
+              aria-hidden="true"
+            />
           </div>
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-gradient-box"
@@ -955,6 +964,23 @@ export default function DashboardPage() {
           <span
             className="absolute rounded-full pointer-events-none"
             style={{ left: '-2%', top: '68%', width: 1.5, height: 1.5, background: '#FFF4E0', opacity: 0.22, boxShadow: '0 0 3px 1px rgba(255,184,74,.25)' }}
+            aria-hidden="true"
+          />
+          {/* v61: อีก 3 จุดเติมโซนล่างขวาที่ว่างเปล่า (ดูคอมเมนต์หมอกด้านบน) — bokeh ใหญ่จาง 1 จุด + spark
+              เล็ก 2 จุด ให้สอดคล้องกับสัดส่วน bokeh:spark ของคลัสเตอร์เดิมด้านบน */}
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '95%', top: '75%', width: 16, height: 16, background: 'radial-gradient(circle, rgba(255,190,110,.2), transparent 70%)', filter: 'blur(2.5px)' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '88%', top: '80%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.5, boxShadow: '0 0 4px 1px rgba(255,184,74,.45)' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '78%', top: '85%', width: 1.5, height: 1.5, background: '#FFF4E0', opacity: 0.4, boxShadow: '0 0 3px 1px rgba(255,184,74,.4)' }}
             aria-hidden="true"
           />
         </div>
@@ -1130,13 +1156,39 @@ export default function DashboardPage() {
                   Button.tsx ที่ใช้ร่วมกันทั่วแอป (Program/Session/Coach/ฯลฯ ยังไม่มี sweep นี้ — ฟีดแบ็กพูดถึง
                   ปุ่มนี้ปุ่มเดียวบน Dashboard) ทำผ่าน ::after pseudo-element ล้วนๆ ไม่ต้องแก้ Button component
                   เลย คุมจังหวะด้วย keyframe ที่ sweep ผ่านเร็ว (~1s) แล้วหยุดนิ่งอยู่นอกกรอบที่เหลือของรอบ
-                  5.5s ให้ความรู้สึก "แสงวิ่งผ่านเป็นระยะ" ไม่ใช่ sweep วนต่อเนื่องซึ่งจะดูรบกวนเกินไป */}
+                  5.5s ให้ความรู้สึก "แสงวิ่งผ่านเป็นระยะ" ไม่ใช่ sweep วนต่อเนื่องซึ่งจะดูรบกวนเกินไป
+                  v61: ฟีดแบ็ก "ปุ่มไปต่อยังเด่นเกินไปนิด Glow เยอะ ลด Glow ลงประมาณ 20% แล้วเพิ่ม Inner
+                  Shadow แทน จะ Premium กว่า" + "Hover ยกขึ้น 2px" — เดิมปุ่มใช้ AMBER_GLOW_SHADOW (ค่า
+                  กลางใน lib/theme.ts ใช้ร่วมกับ Button ทุกจุดในแอป) override เฉพาะจุดนี้ผ่าน style prop
+                  (Button.tsx spread ...style ทับ default อยู่แล้ว) เป็นเวอร์ชัน alpha ทุกสต็อปลด ~20% +
+                  inset shadow มืดด้านบน/สว่างจางด้านล่างให้ผิวปุ่มดูนูน ไม่ใช่แบนเรืองแสง — ไม่แตะ
+                  AMBER_GLOW_SHADOW เดิมหรือ Button.tsx เลย (ฟีดแบ็กพูดถึงปุ่มนี้ปุ่มเดียว เหมือน cta-sweep
+                  ด้านบน) — hover:-translate-y-0.5 (Tailwind, -2px) ยกปุ่มขึ้นตอน hover ใช้ transition
+                  ที่ Button.tsx มีอยู่แล้ว (ครอบคลุม transform) ไม่ต้องเพิ่ม utility ใหม่ */}
               {scheduledDay ? (
-                <Button as={Link} href="/session" size="md" className="mt-4 cta-sweep">
+                <Button
+                  as={Link}
+                  href="/session"
+                  size="md"
+                  className="mt-4 cta-sweep hover:-translate-y-0.5"
+                  style={{
+                    boxShadow:
+                      '0 0 2px rgba(255,255,255,.48), 0 0 8px rgba(255,210,120,.48), 0 0 22px rgba(255,150,20,.28), 0 0 60px rgba(255,130,0,.10), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
+                  }}
+                >
                   {totals.entryCount > 0 ? 'ไปต่อ' : 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
                 </Button>
               ) : (
-                <Button as={Link} href="/log" size="md" className="mt-4 cta-sweep">
+                <Button
+                  as={Link}
+                  href="/log"
+                  size="md"
+                  className="mt-4 cta-sweep hover:-translate-y-0.5"
+                  style={{
+                    boxShadow:
+                      '0 0 2px rgba(255,255,255,.48), 0 0 8px rgba(255,210,120,.48), 0 0 22px rgba(255,150,20,.28), 0 0 60px rgba(255,130,0,.10), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
+                  }}
+                >
                   เริ่มเทรนเลย <span aria-hidden="true">▶</span>
                 </Button>
               )}
@@ -1383,9 +1435,16 @@ export default function DashboardPage() {
                               ล้วนบางๆ h-1 (4px) แบบ Apple/Notion) คั่นกลางระหว่างชื่อกับ badge/%
                               v58: ฟีดแบ็ก "Bar หนาได้อีกนิด ตอนนี้ ~5px ลองใช้ 7-8px จะดู Luxury กว่า แบบ
                               Apple Fitness/Garmin/Oura" — h-1 (4px) -> h-2 (8px, ตรงกับตัวเลือกบนของ 2 ค่า
-                              ที่เสนอมาเป๊ะ และเป็น Tailwind step มาตรฐานพอดี ไม่ต้องใช้ arbitrary value */}
+                              ที่เสนอมาเป๊ะ และเป็น Tailwind step มาตรฐานพอดี ไม่ต้องใช้ arbitrary value
+                              v61: ฟีดแบ็ก "Bar ยังดูแบน อยากได้ glow บางๆ/highlight บนแท่ง แบบ Apple
+                              Activity" — ย้อนกลับการตัดสินใจ v50 บางส่วน (ตอนนั้นตัด glow ออกเพราะรู้สึก
+                              "หนัก" — แต่ตอนนี้ bar หนาขึ้นเป็น h-2 แล้วตั้งแต่ v58 บาลานซ์กับ inset
+                              highlight ได้ดีกว่าตอน h-1 บางๆ) — เปิด prop glow ของ AnimatedBarFill (มีอยู่
+                              แล้วตั้งแต่ v48 แต่ปิดไว้ default false ไม่กระทบจุดเรียกอื่น) ให้ inset highlight
+                              บนแท่ง (rgba(255,255,255,.3)) + inset shadow ล่าง + glow นอกบางๆ สีเดียวกับ
+                              badge/สถานะแถวนั้นอยู่แล้ว ไม่ต้องเพิ่ม prop สีใหม่ */}
                           <span className="relative flex-1 min-w-[18px] h-2 rounded-full overflow-hidden bg-black/40">
-                            <AnimatedBarFill pct={pct} color={color} />
+                            <AnimatedBarFill pct={pct} color={color} glow />
                           </span>
                           {/* v50: ฟีดแบ็ก "% อยู่ห่างจาก Badge เหมือนมีข้อมูล 3 จุด (ชื่อ/Badge/%) สายตา
                               กระโดด อยากให้ Badge กับ % รู้สึกเป็นคู่เดียวกัน" — ห่อ badge+% ไว้ในกลุ่มเดียว
