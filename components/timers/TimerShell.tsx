@@ -1,5 +1,7 @@
 'use client'
 
+import PremiumCard from '@/components/ui/PremiumCard'
+
 export function TimerShell({
   phaseLabel,
   subLabel,
@@ -22,8 +24,14 @@ export function TimerShell({
   const pct = Math.min(1, Math.max(0, progress))
 
   return (
+    // v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-surface border-line rounded-xl
+    // เขียนเอง (ไม่ใช้ PremiumCard เลย) เปลี่ยนเป็น PremiumCard (rounded-card, 24px + material เดียวกับ
+    // ทั้งแอป) — component นี้ใช้ร่วมกันทุกโหมดไทม์เมอร์ (Rest/HIIT/Tabata/EMOM/AMRAP) แก้จุดเดียวได้ครบ
+    // แถบ progress ยังคงเป็น transition ธรรมดา (ไม่เปลี่ยนเป็น AnimatedBarFill) เพราะค่านี้อัปเดตทุกวินาที
+    // ต่อเนื่อง — easing แบบ spring/bounce ของ AnimatedBarFill ออกแบบมาสำหรับ reveal ครั้งเดียวตอนโหลด
+    // ถ้าเด้งซ้ำทุกวินาทีจะดูกระตุกรบกวนสายตา ไม่ใช่ "premium" แบบที่ตั้งใจ
     <div className="space-y-5">
-      <div className="bg-surface border border-line shadow-elevated rounded-xl px-5 py-8 text-center">
+      <PremiumCard className="px-5 py-8 text-center">
         <p className={`font-display tracked uppercase text-sm mb-2 ${textColor}`}>{phaseLabel}</p>
         <p className="font-mono tabular text-6xl text-ink leading-none">{timeText}</p>
         {subLabel && <p className="text-xs text-muted mt-3">{subLabel}</p>}
@@ -33,7 +41,7 @@ export function TimerShell({
             style={{ width: `${pct * 100}%` }}
           />
         </div>
-      </div>
+      </PremiumCard>
       {children}
       {footer}
     </div>
