@@ -116,18 +116,33 @@ export default function PremiumCard<T extends ElementType = 'div'>({
         {...rest}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต) — ชั้นแยกต่างหาก (ไม่รวมเข้า
-            backgroundImage หลัก) เพราะต้องคุม opacity ของตัวเองอิสระจากพื้นเบส */}
+            backgroundImage หลัก) เพราะต้องคุม opacity ของตัวเองอิสระจากพื้นเบส
+            v48b: บั๊ก — consumer ที่ส่ง `divide-y` มาทาง className (เช่น รายการ divide-y divide-white/5
+            หลายจุดทั่วแอป) ทำให้ div ชั้นนี้ (เป็น sibling ตัวที่ 2 ของ Comp นับจาก div เกรนตัวแรก) โดน
+            เลือกด้วย selector ของ divide-y (`:not([hidden]) ~ :not([hidden])`) ไปด้วย — ผลคือ children
+            ตัวแรกสุด (แถวแรกของลิสต์) ก็โดนนับเป็น "ตัวที่ 3" (ไม่ใช่ตัวแรก) แล้วได้ border-top ที่ไม่ควรมี
+            ขึ้นมาเงียบๆ (ตรวจพบจริงจาก getComputedStyle: แถวแรกมี borderTopWidth 1px ทั้งที่ควรเป็น 0)
+            — ใส่ attribute `hidden` จริง (ไม่ใช่แค่ aria-hidden) ให้ selector ข้าม div นี้ไปเลย แล้ว
+            override `display` ผ่าน style (ชนะกฎ UA stylesheet [hidden]{display:none} เสมอ เพราะ inline
+            style ชนะทุก selector-based rule) กันไม่ให้ hidden attribute ทำให้เลเยอร์เกรนหายไปจริงๆ */}
         <div
+          hidden
           className="absolute inset-0 pointer-events-none"
           // v22: ฟีดแบ็ก "Tiny Noise/Fine Brushed Texture เบามาก แทบมองไม่เห็น แต่เวลาถือมือถือจะรู้สึกว่า
           // เป็นวัสดุจริง" — ขยับจาก 0.02 (2%) เป็น 0.03 (3%) เล็กน้อย ยังอยู่ในเพดาน "แทบมองไม่เห็น" ตาม
           // ที่ขอ ไม่ใช่เพิ่มจนเห็นชัดเป็นลายกราฟิก
-          style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
+          style={{ display: 'block', backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
           aria-hidden="true"
         />
         {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (12px, ~2%) แยกชั้นจาก noise ด้านบน (คนละเทคนิค:
-            grain = feTurbulence สุ่ม, mesh = เส้นเรขาคณิตไขว้จริง) จำลองผิวโลหะกัด CNC เป็นตารางละเอียด */}
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: TITANIUM_MESH_CSS }} aria-hidden="true" />
+            grain = feTurbulence สุ่ม, mesh = เส้นเรขาคณิตไขว้จริง) จำลองผิวโลหะกัด CNC เป็นตารางละเอียด
+            v48b: hidden + display override เหตุผลเดียวกับ div เกรนด้านบน */}
+        <div
+          hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{ display: 'block', backgroundImage: TITANIUM_MESH_CSS }}
+          aria-hidden="true"
+        />
         {children}
       </Comp>
       {/* glow เพิ่มเฉพาะตอนแตะ (:active) เท่านั้น ไม่ใช่ hover ถาวร — กันไม่ให้ล้นตาบนมือถือที่ไม่มี
