@@ -5,6 +5,7 @@ import {
   computeTodayTotals,
   computeRecoveryPct,
   recoveryStatusColor,
+  recoveryTier,
   computeRecoveryReadyInHours,
   estimateCaloriesToday,
   suggestNextPR,
@@ -188,19 +189,38 @@ describe('computeRecoveryPct (Recovery Logic)', () => {
 })
 
 describe('recoveryStatusColor', () => {
-  it('is red (rust) from 0-40%', () => {
+  it('is red (rust) from 0-34%', () => {
     expect(recoveryStatusColor(0)).toBe('#C1503A')
-    expect(recoveryStatusColor(40)).toBe('#C1503A')
+    expect(recoveryStatusColor(34)).toBe('#C1503A')
   })
 
-  it('is yellow (amber) from 41-75%', () => {
-    expect(recoveryStatusColor(41)).toBe('#E8A33D')
-    expect(recoveryStatusColor(75)).toBe('#E8A33D')
+  it('is orange (fire accent) from 35-64%', () => {
+    expect(recoveryStatusColor(35)).toBe('#FF8A00')
+    expect(recoveryStatusColor(64)).toBe('#FF8A00')
   })
 
-  it('is green (moss) from 76-100%', () => {
-    expect(recoveryStatusColor(76)).toBe('#7A9B57')
-    expect(recoveryStatusColor(100)).toBe('#7A9B57')
+  it('is amber from 65-89%', () => {
+    expect(recoveryStatusColor(65)).toBe('#E8A33D')
+    expect(recoveryStatusColor(89)).toBe('#E8A33D')
+  })
+
+  it('is green from 90-100%', () => {
+    expect(recoveryStatusColor(90)).toBe('#4ADE80')
+    expect(recoveryStatusColor(100)).toBe('#4ADE80')
+  })
+})
+
+describe('recoveryTier', () => {
+  it('matches the example thresholds from feedback: 67% -> Good, 0% -> Rest', () => {
+    expect(recoveryTier(67).labelEn).toBe('Good')
+    expect(recoveryTier(0).labelEn).toBe('Rest')
+  })
+
+  it('returns matching label + color for each tier', () => {
+    expect(recoveryTier(95)).toEqual({ color: '#4ADE80', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' })
+    expect(recoveryTier(70)).toEqual({ color: '#E8A33D', labelEn: 'Good', labelTh: 'ดี' })
+    expect(recoveryTier(40)).toEqual({ color: '#FF8A00', labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว' })
+    expect(recoveryTier(10)).toEqual({ color: '#C1503A', labelEn: 'Rest', labelTh: 'ควรพัก' })
   })
 })
 

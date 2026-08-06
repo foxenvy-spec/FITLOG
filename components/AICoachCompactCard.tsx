@@ -18,7 +18,7 @@ import {
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
-import { recoveryStatusColor } from '@/lib/dashboardStats'
+import { recoveryStatusColor, recoveryTier } from '@/lib/dashboardStats'
 import { MUSCLE_GROUP_BODY_REGION, DEFAULT_SECONDARY_BY_PRIMARY, type MuscleGroup } from '@/lib/muscle-groups'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
@@ -265,20 +265,17 @@ export default function AICoachCompactCard({
   )
 }
 
-// เกณฑ์เดียวกับ recoveryStatusColor (lib/dashboardStats.ts) — 0-40% แดง/41-75% เหลือง/76-100% เขียว —
-// แปลงเป็นข้อความแทนสีเฉยๆ ให้ chip "ความพร้อม" อ่านออกว่าคืออะไร ไม่ใช่แค่แถบสี
+// v49: เดิม hardcode เกณฑ์ของตัวเอง (0-40/41-75/76-100) แยกจาก recoveryStatusColor ผูกกันแค่ด้วย
+// คอมเมนต์ — ดึงจาก recoveryTier() (lib/dashboardStats.ts) ตัวเดียวกับที่คุมสี ให้เกณฑ์ตรงกันจริง
+// ไม่มีทางหลุดซิงค์กันอีก (ดูเหตุผลเต็มที่ recoveryTier)
 function readinessLabel(pct: number): string {
-  if (pct >= 76) return 'ดีมาก'
-  if (pct >= 41) return 'ปานกลาง'
-  return 'ยังไม่พร้อม'
+  return recoveryTier(pct).labelTh
 }
 
 // เวอร์ชันอังกฤษตัวพิมพ์ใหญ่ — ใช้กับบรรทัด Recovery โดยตรง (แยกจาก readinessLabel ภาษาไทยที่ใช้ใน
 // chip "ความพร้อม" อยู่แล้ว) ให้เข้าชุดกับ label ภาษาอังกฤษตัวพิมพ์ใหญ่อื่นในการ์ดนี้ (AI COACH, RECOVERY)
 function readinessLabelEn(pct: number): string {
-  if (pct >= 76) return 'Excellent'
-  if (pct >= 41) return 'Good'
-  return 'Needs Rest'
+  return recoveryTier(pct).labelEn
 }
 
 // chip "ความพร้อม" ต้องเด่นกว่า 2 chip ที่เหลือ — พื้น/ขอบใช้สีของค่าจริง (barColor) แทนสีเทากลางเดิม +
