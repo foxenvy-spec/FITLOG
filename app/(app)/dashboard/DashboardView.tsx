@@ -946,7 +946,13 @@ export default function DashboardPage() {
             v56: ฟีดแบ็ก "Today's Workout Ring ค่อนข้างใหญ่ ลดลงประมาณ 15% จะบาลานซ์กว่า เพราะพระเอกของ
             การ์ดคือ DAY 3 / LEGS ไม่ใช่วงกลม" — 87 -> 74 (-15%, วิธีคิดแบบเดียวกับ v48 ที่เคยลด 100 -> 87
             มาก่อน) strokeWidth ตามสัดส่วนเดียวกัน 7 -> 6 — HUD dashed ring/bead orbit (v55) ปรับขนาดตาม
-            ring จริงให้ยังพอดีรอบวงเหมือนเดิม (93 -> 80, คงระยะห่างจาก ring จริง +6px เท่าเดิม) */}
+            ring จริงให้ยังพอดีรอบวงเหมือนเดิม (93 -> 80, คงระยะห่างจาก ring จริง +6px เท่าเดิม)
+            v57: ฟีดแบ็ก "ยังรู้สึกใหญ่กว่าที่ควรนิดเดียว ลดอีกประมาณ 10-15%" — 74 -> 64 (-13%, วิธีคิด
+            เดียวกันต่อเนื่อง) strokeWidth ตามสัดส่วน 6 -> 5 — HUD outer ring/bead orbit ตามขนาดใหม่ (80 ->
+            70, คงระยะห่าง +6px เท่าเดิม) — ที่ 64px ตัว label "ความพร้อม" (ฟอนต์ text-[9px] คงที่ใน GoalRing
+            ไม่ผูกกับ size) เริ่มกว้างเกินเส้นผ่านศูนย์กลางวงจริง ล้นทับเส้นวง (ตรวจด้วยสกรีนช็อตซูม) — ใช้
+            GoalRing.label แบบ ReactNode (เพิ่งขยายรองรับจาก v56) ส่ง span ฟอนต์เล็กลงเฉพาะจุดนี้แทน string
+            เดิม (text-[9px] -> text-[7px]) ไม่กระทบ instance อื่นของ GoalRing ที่ยังพอดีที่ขนาดเดิมอยู่แล้ว */}
         <div
           className="absolute pointer-events-none"
           style={{
@@ -961,10 +967,10 @@ export default function DashboardPage() {
         />
         <div
           className="absolute rounded-full pointer-events-none hud-outer-ring"
-          style={{ bottom: -3, right: -3, width: 80, height: 80, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
+          style={{ bottom: -3, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
           aria-hidden="true"
         />
-        <div className="absolute bottom-4 right-4 pointer-events-none hud-bead-orbit" style={{ width: 74, height: 74 }} aria-hidden="true">
+        <div className="absolute bottom-4 right-4 pointer-events-none hud-bead-orbit" style={{ width: 64, height: 64 }} aria-hidden="true">
           <span
             className="absolute rounded-full"
             style={{ left: '50%', top: -1, width: 4, height: 4, transform: 'translateX(-50%)', background: '#FFF4E0', boxShadow: '0 0 6px 2px rgba(255,184,74,.8)' }}
@@ -973,10 +979,10 @@ export default function DashboardPage() {
         <div className="absolute bottom-4 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-            size={74}
-            strokeWidth={6}
+            size={64}
+            strokeWidth={5}
             color={COLORS.amber}
-            label="ความพร้อม"
+            label={<span className="text-[7px]">ความพร้อม</span>}
             ariaLabel="ความพร้อมของวันนี้"
             glow
           />
@@ -1239,6 +1245,13 @@ export default function DashboardPage() {
                         // recoveryTier() ตัวเดียวกับที่ใช้กับแท่งรายกลุ่มด้านล่าง สีตาม tier) ให้อ่านออกว่า
                         // เป็น "สถานะของ Recovery" ไม่ใช่คำลอยๆ — GoalRing.label เพิ่งขยายรับ ReactNode ได้
                         // (ดู GoalRing.tsx) เลยส่ง 2 บรรทัดสีต่างกันเข้าไปแทน string เดี่ยว
+                        //
+                        // v57: ฟีดแบ็ก "ด้านซ้าย (ในวง) ยังค่อนข้างโล่ง ลองเพิ่มบรรทัดเล็กๆ เช่น 'Recovered
+                        // 4/7' ให้วงดูมีน้ำหนักขึ้นโดยไม่รก" — เพิ่มบรรทัดที่ 3 (เล็กกว่า 2 บรรทัดบน, มืดกว่า)
+                        // นับจำนวนกลุ่มกล้ามเนื้อที่ pct >= 65 (เกณฑ์ "Good" เดียวกับ RECOVERY_TIERS ใน
+                        // dashboardStats.ts — ต่ำกว่านี้คือ Recovering/Rest แปลว่ายังไม่พร้อมจริง) จาก
+                        // ทั้งหมด RECOVERY_MUSCLES.length (7) ให้ตัวเลขสอดคล้องกับสีของแท่ง/badge รายกลุ่ม
+                        // ด้านขวาเป๊ะ ไม่ใช่เกณฑ์แยกต่างหาก
                         <div className="shrink-0 ml-3" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '2D')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
@@ -1250,6 +1263,10 @@ export default function DashboardPage() {
                                 <span className="text-muted">Recovery</span>
                                 <span style={{ color: recoveryStatusColor(overallRecoveryPct) }}>
                                   {recoveryTier(overallRecoveryPct).labelEn}
+                                </span>
+                                <span className="text-[7px] text-muted/70 mt-0.5">
+                                  Recovered {RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] >= 65).length}/
+                                  {RECOVERY_MUSCLES.length}
                                 </span>
                               </span>
                             }
@@ -1274,7 +1291,7 @@ export default function DashboardPage() {
                           onMouseLeave={() => setHoveredRecoveryGroup(null)}
                           className="rounded-md px-2 py-1.5 flex items-center gap-2 transition"
                           style={{
-                            backgroundColor: `${color}${isHovered ? '2E' : '14'}`,
+                            backgroundColor: isHovered ? '#1D2129' : '#171A20',
                             boxShadow: isHovered ? `0 0 8px ${color}80` : undefined,
                           }}
                         >
@@ -1283,7 +1300,16 @@ export default function DashboardPage() {
                               "ฟื้นตัวแค่ไหน" (แท่ง+% ด้านล่าง ใช้ recoveryStatusColor ตามเดิม) — เดิมทั้งแถว
                               ใช้ recoveryStatusColor เดียวกันหมด (พื้นหลัง/glow/แท่ง/%) ทำให้ไม่มีสัญญาณสีที่
                               บอกกล้ามเนื้อเลย ต้องอ่านจากตัวหนังสือเท่านั้น — พื้นหลัง/glow ของทั้งแถวยังคงเป็น
-                              status color เดิม (เอาไว้บอก hover state ทั้งแถว ไม่ใช่จุดประสงค์เดียวกับจุดนี้) */}
+                              status color เดิม (เอาไว้บอก hover state ทั้งแถว ไม่ใช่จุดประสงค์เดียวกับจุดนี้)
+                              v57: ฟีดแบ็ก "พื้นหลังแต่ละแถวสีต่างกันหมด (เขียว/น้ำตาล/แดง/ม่วง) สวยแต่มีโอกาส
+                              ดู Premium ขึ้นอีกถ้าพื้นทุกแถวเหมือนกัน (#171A20) แล้วใช้แค่จุดสี/แท่ง/badge
+                              บอกสถานะแทน ลดจำนวนสีที่แข่งกันบนจอ" — background พื้นแถว (idle) เปลี่ยนจาก
+                              status-color tint (${'{'}color{'}'}14) เป็น #171A20 คงที่ทุกแถวทุกสถานะ hover
+                              ก็เปลี่ยนเป็นสีเทาเข้มขึ้นเล็กน้อยคงที่ (#1D2129) แทน status-color tint เดิม
+                              เช่นกัน — glow ตอน hover (boxShadow) ยังคงใช้สี status เดิม เพราะเป็น interaction
+                              feedback ชั่วคราวตอนโฟกัสแถวเดียว ไม่ใช่สีพื้นถาวรที่แข่งกันบนจอเหมือนที่ฟีดแบ็ก
+                              บ่น — สัญญาณสถานะทั้งหมดตอนนี้อยู่ที่จุดสี(กล้ามเนื้อ)/แท่ง(สถานะ)/badge(สถานะ)
+                              ล้วนๆ ตามที่ขอ */}
                           <span
                             className="w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }}
