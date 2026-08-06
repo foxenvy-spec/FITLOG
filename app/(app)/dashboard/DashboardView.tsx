@@ -57,6 +57,7 @@ import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
+import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 
@@ -1095,11 +1096,16 @@ export default function DashboardPage() {
                         // เดียวกัน (9 -> 12) — label เปลี่ยนจากข้อความคงที่ "พื้นตัวรวม" (ซ้ำกับหัวการ์ด
                         // "Recovery" ที่มีอยู่แล้วด้านบน) เป็นคำสถานะ (Excellent/Good/...) จาก recoveryTier()
                         // เดียวกับที่ใช้กับแท่งรายกลุ่ม ให้ตรงกับตัวอย่างที่ขอ ("95% Recovery Excellent")
-                        <div className="shrink-0" style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.cyan, '40')})` }}>
+                        //
+                        // v50: ฟีดแบ็ก "Ring ยังใหญ่ไปนิด ดึงสายตาเยอะกว่ารายการทั้งหมด ลดประมาณ 70→58-60px
+                        // (สัดส่วนเดียวกัน ~-17%), Glow ลดลงประมาณ 30%" — 128 -> 106 (-17%) strokeWidth
+                        // ตามสัดส่วน (12 -> 10) — glow: alpha .40 (25%) ลด 30% เหลือ ~18% (.2D) + blur
+                        // 4px -> 3px ให้จางลงตามสัดส่วนเดียวกัน
+                        <div className="shrink-0" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '2D')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
-                            size={128}
-                            strokeWidth={12}
+                            size={106}
+                            strokeWidth={10}
                             color={COLORS.cyan}
                             label={recoveryTier(overallRecoveryPct).labelEn}
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
@@ -1138,24 +1144,37 @@ export default function DashboardPage() {
                             style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }}
                             aria-hidden="true"
                           />
-                          <span className="text-[9px] text-ink flex-1 min-w-0 truncate">{mg}</span>
+                          <span className="text-[9px] text-ink w-11 shrink-0 truncate">{mg}</span>
                           {/* v49: ฟีดแบ็ก "ทุกแท่งหน้าตาเหมือนกันหมด (██████) เลยอ่านยาก อยากใช้ Badge
                               สถานะ (Excellent/Good/Recovering/Rest) แทน Progress Bar ทั้งหมด จะ Premium
                               กว่า" — เดิม AnimatedBarFill (แท่งยาว ∝ %) ตัดออกทั้งหมด แทนที่ด้วย badge
                               ข้อความสถานะจาก recoveryTier() (ตัวเดียวกับที่คุม color ของแถวนี้อยู่แล้ว —
-                              ไม่มีทางหลุดซิงค์กัน) — glow เบาๆ ตามฟีดแบ็ก "ใช้ Glow เบาๆ" ข้อ 5 */}
-                          <span
-                            className="shrink-0 text-[8px] font-display tracked uppercase rounded-full px-1.5 py-0.5"
-                            style={{
-                              backgroundColor: withAlpha(color, '22'),
-                              color,
-                              boxShadow: `0 0 4px ${withAlpha(color, '55')}`,
-                            }}
-                          >
-                            {recoveryTier(pct).labelEn}
+                              ไม่มีทางหลุดซิงค์กัน) — glow เบาๆ ตามฟีดแบ็ก "ใช้ Glow เบาๆ" ข้อ 5
+                              v50: ฟีดแบ็ก "อยากได้ทั้ง Bar บางๆ (5-6px) กับ Badge คู่กัน ไม่ใช่แค่อย่างใด
+                              อย่างหนึ่ง" — เพิ่ม AnimatedBarFill กลับมาแบบเรียบที่สุด (ไม่มี glow/gradient/
+                              inset-shadow เหมือนรอบ v48 ที่ทำให้ "รู้สึกหนัก" — พร็อพดีฟอลต์ทั้งหมด สีเรียบ
+                              ล้วนบางๆ h-1 (4px) แบบ Apple/Notion) คั่นกลางระหว่างชื่อกับ badge/% */}
+                          <span className="relative flex-1 min-w-[18px] h-1 rounded-full overflow-hidden bg-black/40">
+                            <AnimatedBarFill pct={pct} color={color} />
                           </span>
-                          <span className="font-mono text-[10px] w-8 shrink-0 text-right" style={{ color }}>
-                            {pct}%
+                          {/* v50: ฟีดแบ็ก "% อยู่ห่างจาก Badge เหมือนมีข้อมูล 3 จุด (ชื่อ/Badge/%) สายตา
+                              กระโดด อยากให้ Badge กับ % รู้สึกเป็นคู่เดียวกัน" — ห่อ badge+% ไว้ในกลุ่มเดียว
+                              gap แคบกว่า (gap-1) แยกจาก gap ของแถวหลัก (gap-2) ให้ 2 ตัวนี้อ่านเป็นหน่วย
+                              เดียวกันจริงๆ แทนที่จะเป็น element เรียงเท่าๆ กัน 3 ชิ้น */}
+                          <span className="flex items-center gap-1 shrink-0">
+                            <span
+                              className="text-[8px] font-display font-semibold tracked uppercase rounded-full px-1.5 py-0.5"
+                              style={{
+                                backgroundColor: withAlpha(color, '22'),
+                                color,
+                                boxShadow: `0 0 4px ${withAlpha(color, '55')}`,
+                              }}
+                            >
+                              {recoveryTier(pct).labelEn}
+                            </span>
+                            <span className="font-mono text-[10px] w-7 text-right" style={{ color }}>
+                              {pct}%
+                            </span>
                           </span>
                         </div>
                       )
