@@ -865,9 +865,15 @@ export default function DashboardPage() {
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-gradient-box"
             style={{
+              // v58: ฟีดแบ็ก "ใส่ glow สีส้มอ่อนด้านหลังดัมเบลนิดเดียว ไม่ใช่ให้เห็นเป็นวง แต่ให้รู้สึกว่า
+              // 'แสงกำลังตกที่ดัมเบล'" — glow เดิม (v56, ellipse 65%/55% ค่อนข้างกลม + fade ที่ 62% ค่อนข้าง
+              // แข็ง) เริ่มอ่านเป็นรูปทรงวง/blob ชัดเจนไป — ขยาย ellipse ให้ใหญ่/รีกว่าเดิมมาก (95%/80%,
+              // ไม่กลมแบบเดิม) ลด alpha (.28 -> .18) และยืด fade ให้นุ่มมาก (62% -> 82%) ให้ไม่มีขอบชัดเจน
+              // ตำแหน่งศูนย์กลางยังอยู่บริเวณเดิม (มุมบนขวา เหนือหัวดัมเบล) ตามภาพร่างที่ให้มา (ประกาย/แสงอยู่
+              // เหนือวัตถุ) — อ่านเป็น "แสงกระจายอุ่นๆ ตกกระทบ" แทนที่จะเป็นวงเรืองแสงลอยอยู่ต่างหาก
               backgroundImage: [
                 'linear-gradient(180deg, rgba(7,9,13,.08), rgba(7,9,13,.18))',
-                'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.28), transparent 62%)',
+                'radial-gradient(ellipse 95% 80% at 85% 25%, rgba(255,154,22,.18), transparent 82%)',
                 'linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%)',
               ].join(', '),
             }}
@@ -952,11 +958,15 @@ export default function DashboardPage() {
             70, คงระยะห่าง +6px เท่าเดิม) — ที่ 64px ตัว label "ความพร้อม" (ฟอนต์ text-[9px] คงที่ใน GoalRing
             ไม่ผูกกับ size) เริ่มกว้างเกินเส้นผ่านศูนย์กลางวงจริง ล้นทับเส้นวง (ตรวจด้วยสกรีนช็อตซูม) — ใช้
             GoalRing.label แบบ ReactNode (เพิ่งขยายรองรับจาก v56) ส่ง span ฟอนต์เล็กลงเฉพาะจุดนี้แทน string
-            เดิม (text-[9px] -> text-[7px]) ไม่กระทบ instance อื่นของ GoalRing ที่ยังพอดีที่ขนาดเดิมอยู่แล้ว */}
+            เดิม (text-[9px] -> text-[7px]) ไม่กระทบ instance อื่นของ GoalRing ที่ยังพอดีที่ขนาดเดิมอยู่แล้ว
+            v58: ฟีดแบ็ก "ตอนนี้เกือบชนขอบล่าง ขยับขึ้นอีกนิดประมาณ 8px จะหายใจมากขึ้น" — ขยับทั้งชุด (glow
+            พื้น, HUD outer ring, bead orbit, ring จริง) ขึ้นพร้อมกัน +8px คงระยะห่างสัมพัทธ์ระหว่างกันทุกจุด
+            เท่าเดิมทุกประการ (bottom-4 -> bottom-6 ของ ring จริง/bead orbit, -14 -> -6 / -3 -> 5 ของ glow/
+            outer ring ตามกัน) ไม่แตะแกน right เลย เพราะฟีดแบ็กพูดถึงแค่แนวตั้ง */}
         <div
           className="absolute pointer-events-none"
           style={{
-            bottom: -14,
+            bottom: -6,
             right: -10,
             width: 140,
             height: 50,
@@ -967,16 +977,16 @@ export default function DashboardPage() {
         />
         <div
           className="absolute rounded-full pointer-events-none hud-outer-ring"
-          style={{ bottom: -3, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
+          style={{ bottom: 5, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
           aria-hidden="true"
         />
-        <div className="absolute bottom-4 right-4 pointer-events-none hud-bead-orbit" style={{ width: 64, height: 64 }} aria-hidden="true">
+        <div className="absolute bottom-6 right-4 pointer-events-none hud-bead-orbit" style={{ width: 64, height: 64 }} aria-hidden="true">
           <span
             className="absolute rounded-full"
             style={{ left: '50%', top: -1, width: 4, height: 4, transform: 'translateX(-50%)', background: '#FFF4E0', boxShadow: '0 0 6px 2px rgba(255,184,74,.8)' }}
           />
         </div>
-        <div className="absolute bottom-4 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
+        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
             size={64}
@@ -1324,8 +1334,11 @@ export default function DashboardPage() {
                               v50: ฟีดแบ็ก "อยากได้ทั้ง Bar บางๆ (5-6px) กับ Badge คู่กัน ไม่ใช่แค่อย่างใด
                               อย่างหนึ่ง" — เพิ่ม AnimatedBarFill กลับมาแบบเรียบที่สุด (ไม่มี glow/gradient/
                               inset-shadow เหมือนรอบ v48 ที่ทำให้ "รู้สึกหนัก" — พร็อพดีฟอลต์ทั้งหมด สีเรียบ
-                              ล้วนบางๆ h-1 (4px) แบบ Apple/Notion) คั่นกลางระหว่างชื่อกับ badge/% */}
-                          <span className="relative flex-1 min-w-[18px] h-1 rounded-full overflow-hidden bg-black/40">
+                              ล้วนบางๆ h-1 (4px) แบบ Apple/Notion) คั่นกลางระหว่างชื่อกับ badge/%
+                              v58: ฟีดแบ็ก "Bar หนาได้อีกนิด ตอนนี้ ~5px ลองใช้ 7-8px จะดู Luxury กว่า แบบ
+                              Apple Fitness/Garmin/Oura" — h-1 (4px) -> h-2 (8px, ตรงกับตัวเลือกบนของ 2 ค่า
+                              ที่เสนอมาเป๊ะ และเป็น Tailwind step มาตรฐานพอดี ไม่ต้องใช้ arbitrary value */}
+                          <span className="relative flex-1 min-w-[18px] h-2 rounded-full overflow-hidden bg-black/40">
                             <AnimatedBarFill pct={pct} color={color} />
                           </span>
                           {/* v50: ฟีดแบ็ก "% อยู่ห่างจาก Badge เหมือนมีข้อมูล 3 จุด (ชื่อ/Badge/%) สายตา
