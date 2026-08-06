@@ -88,7 +88,7 @@ export default function ExercisesPage() {
               <div key={ex.id}>
                 <button
                   onClick={() => setExpandedId(expanded ? null : ex.id)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 active:bg-surface2 transition"
                 >
                   {ex.imageUrl ? (
                     <Image
@@ -97,7 +97,7 @@ export default function ExercisesPage() {
                       width={44}
                       height={44}
                       loading="lazy"
-                      className="shrink-0 w-11 h-11 rounded-lg object-cover bg-panel"
+                      className="shrink-0 w-11 h-11 rounded-lg object-cover bg-surface2"
                     />
                   ) : (
                     <span
@@ -139,7 +139,7 @@ function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }
       {(ex.imageUrl || ex.highlighterMuscles.length > 0) && (
         <div className="grid grid-cols-2 gap-3">
           {ex.imageUrl && (
-            <div className="relative w-full aspect-square rounded-xl bg-panel overflow-hidden">
+            <div className="relative w-full aspect-square rounded-xl bg-surface2 overflow-hidden">
               <Image
                 src={ex.imageUrl}
                 alt={ex.name}
@@ -151,7 +151,7 @@ function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }
             </div>
           )}
           {ex.highlighterMuscles.length > 0 && (
-            <div className="rounded-xl bg-panel flex items-center justify-center py-2">
+            <div className="rounded-xl bg-surface2 flex items-center justify-center py-2">
               <MuscleDiagram exerciseName={ex.name} highlighterMuscles={ex.highlighterMuscles} />
             </div>
           )}
