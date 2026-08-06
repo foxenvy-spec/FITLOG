@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -800,45 +801,42 @@ export default function DashboardPage() {
       >
         {/* v45: ฟีดแบ็ก "ภาพคนดูธรรมดา ใช้ Dumbbell/Orange Spark จะเข้ากับ Theme มากกว่า" — เดิมเป็นรูปถ่าย
             จริง (/images/workout-hero.jpg) คนละภาษากับวัสดุไทเทเนียม/แสงพลังงานส้มที่การ์ดอื่นทั้งแอปใช้
-            (Energy Core ของปุ่ม Start Workout, glow อำพันทั่วไป) — เปลี่ยนเป็น CSS/SVG ล้วน (ไม่ต้องมี asset
-            รูปใหม่): แสงพลังงานส้มระเบิดจากมุมขวา (Orange Spark, โทนเดียวกับ FIRE_GRADIENT/Energy Core) +
-            เงาดัมเบลขนาดใหญ่จางๆ ทับอยู่ ให้ความรู้สึก "อุปกรณ์ฝึก" แทนภาพคนจริง ยังคง fade ซ้ายให้ตัวหนังสือ
-            อ่านง่ายเหมือนเดิมทุกประการ
-            v47: ฟีดแบ็ก "Dumbbell Blur เยอะไป (~70%) จนแทบไม่รู้ว่าเป็นอะไร ผมว่าประมาณ 40% ก็พอ" — เพิ่ม
-            opacity 0.16 -> 0.4 + ขยายพื้นที่ 58%/240px -> 78%/320px ตามที่เลือก "Option A: ใช้ Dumbbell
-            เต็มพื้นที่ Ring ซ้อนอยู่มุมขวาล่าง แบบ Apple Fitness" — Ring ย้ายออกจาก flex row เดิม (เคยอยู่ข้าง
-            ตัวหนังสือ) ไปวางลอย absolute มุมขวาล่างแทน (ดูด้านล่าง) ให้ Dumbbell เป็นพื้นหลังเต็มพื้นที่จริงๆ
-            ไม่ใช่แค่ไอคอนเล็กๆ ลอยเดี่ยว */}
+            เปลี่ยนเป็น CSS/SVG ล้วนตอนนั้น (เงาดัมเบล + orange spark) แทนรูปถ่าย
+            v47: ฟีดแบ็ก "Dumbbell Blur เยอะไป (~70%) จนแทบไม่รู้ว่าเป็นอะไร ผมว่าประมาณ 40% ก็พอ" — ปรับ
+            opacity/พื้นที่ตาม "Option A: ใช้ Dumbbell เต็มพื้นที่ Ring ซ้อนอยู่มุมขวาล่าง แบบ Apple Fitness"
+            v52: วิเคราะห์มอคอัพหลายชุด (ฉาก gym เต็ม + คำโปรยอังกฤษ vs. product shot ดัมเบลพื้นดำ) แล้วให้
+            คะแนน product shot สูงสุด (ตรงกับทิศทาง CSS เดิมที่สุด แค่เป็นรูปถ่ายจริงแทนเงา SVG) ผู้ใช้อัปโหลด
+            รูปที่เลือกมาที่ public/images/today-workout-hero-dumbbell.png — เปลี่ยนจากเงา SVG + orange spark
+            กลับมาเป็นรูปถ่ายจริงอีกครั้ง (คนละจุดกับ workout-hero.jpg เดิมที่ถูกตัดไปเพราะ "เป็นภาพคนดู
+            ธรรมดา" — รูปนี้เป็น product shot ดัมเบลพื้นดำ ไม่มีคน ตรงกับที่ฟีดแบ็กบอกว่าอยากได้ตั้งแต่ v45)
+            ยังคง gradient fade ซ้ายให้ตัวหนังสืออ่านง่ายเหมือนเดิมทุกประการ วางรูปเป็นชั้นล่างสุด แล้ว
+            gradient ทับอยู่ชั้นบน (สลับจากเดิมที่ gradient เป็นพื้นแล้ว SVG ลอยทับ เพราะตอนนี้รูปคือเนื้อหา
+            หลัก ไม่ใช่ของตกแต่งอีกต่อไป) */}
         <div className="absolute inset-0 bg-surface overflow-hidden">
+          <div className="absolute inset-y-0 right-0 w-full sm:w-2/3">
+            <Image
+              src="/images/today-workout-hero-dumbbell.png"
+              alt=""
+              fill
+              className="object-cover"
+              style={{ objectPosition: '68% 45%' }}
+              priority
+            />
+          </div>
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3"
             style={{
               backgroundImage: [
-                'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.22), transparent 62%)',
-                'radial-gradient(ellipse 55% 50% at 96% 78%, rgba(255,180,70,.14), transparent 65%)',
+                'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.16), transparent 62%)',
                 'linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%)',
               ].join(', '),
             }}
           />
-          <svg
-            className="absolute pointer-events-none"
-            style={{ right: '2%', top: '50%', width: '78%', maxWidth: 320, transform: 'translateY(-50%) rotate(-16deg)', opacity: 0.4 }}
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M2 12h2M20 12h2M5 9v6M19 9v6M8 7v10M16 7v10M8 12h8"
-              stroke="#FFB84A"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
           {/* v48: ฟีดแบ็ก "โซน Dumbbell (~35% ของการ์ด) มีแค่รูปดัมเบลอย่างเดียว อยากเพิ่ม Glow/Particle
               เบาๆ ให้ดูมีชีวิต" — จุดกระพริบเล็กๆ กระจายรอบไอคอน (เทคนิคเดียวกับ "Particles" ใน
               TodaysWorkoutCompactCard.tsx ขนาด/ตำแหน่งไม่เท่ากันจำลองประกายลอยในอากาศ ไม่ใช่ pattern
-              ซ้ำเป๊ะ) — สีทองอุ่นเดียวกับ spark SVG ด้านบน (#FFB84A) ให้เป็นชุดสีเดียวกัน */}
+              ซ้ำเป๊ะ) — สีทองอุ่นเดียวกับ spark SVG เดิม (#FFB84A) ให้เป็นชุดสีเดียวกัน ยังใช้ได้ดีทับรูปถ่าย
+              จริง เพราะรูปที่เลือกมามีฝุ่นกระจายอยู่แล้ว เข้ากับธีมประกายลอยในอากาศพอดี */}
           {[
             { left: '68%', top: '20%', size: 2.5, opacity: 0.6 },
             { left: '85%', top: '35%', size: 1.5, opacity: 0.45 },
