@@ -16,6 +16,7 @@ import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, type MuscleGroup } from '@/lib/musc
 import {
   computeRecoveryPct,
   recoveryStatusColor,
+  recoveryTier,
   computeRecoveryReadyInHours,
   RECOVERY_WINDOW_DAYS,
   relativeDayLabel,
@@ -39,11 +40,13 @@ interface MuscleRow {
 }
 
 
-// เกณฑ์เดียวกับ recoveryStatusColor: 0-40% แดง (กำลังพักฟื้น), 41-75% เหลือง (ใกล้พร้อมแล้ว), 76-100% เขียว (พร้อมฝึกแล้ว)
+// v49: เดิม hardcode เกณฑ์ของตัวเอง (0-40/41-75/76-100 — คนละรอยต่อกับ recoveryStatusColor ที่เปลี่ยน
+// เป็น 4 ระดับแล้ว 0-34/35-64/65-89/90-100) ดึงจาก recoveryTier() แทน ให้ข้อความ+สีตรงกับแท่ง/จุดสีที่
+// ใช้ recoveryStatusColor() อยู่แล้วในหน้าเดียวกันจริงๆ (คืนค่า hex ตรงๆ แทน Tailwind class เพราะ
+// recoveryTier ใช้โทเคนสีที่ไม่มี Tailwind class คู่กันครบทุกตัว เช่น FIRE_ACCENT)
 function statusLabel(pct: number) {
-  if (pct >= 76) return { text: 'พร้อมฝึกแล้ว', color: 'text-moss' }
-  if (pct >= 41) return { text: 'ใกล้พร้อมแล้ว', color: 'text-amber' }
-  return { text: 'กำลังพักฟื้น', color: 'text-rusttext' }
+  const tier = recoveryTier(pct)
+  return { text: tier.labelTh, color: tier.color }
 }
 
 export default function RecoveryPage() {
@@ -226,7 +229,7 @@ export default function RecoveryPage() {
                       'ยังไม่มีประวัติ'
                     )}
                   </p>
-                  <p className={`text-[11px] ${status.color}`}>{status.text}</p>
+                  <p className="text-[11px]" style={{ color: status.color }}>{status.text}</p>
                 </div>
 
                 <p className="text-[10px] text-muted mt-1">

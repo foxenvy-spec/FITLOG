@@ -15,6 +15,7 @@ import {
   computeTodayTotals,
   computeRecoveryPct,
   recoveryStatusColor,
+  recoveryTier,
   findNextProgramDay,
   getWeekRange,
   getPreviousWeekRange,
@@ -56,8 +57,7 @@ import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
-import { CARD_GRADIENT_CSS, lighten, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
-import AnimatedBarFill from '@/components/AnimatedBarFill'
+import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
@@ -1043,12 +1043,16 @@ export default function DashboardPage() {
                       // so re-checked here purely for the badge — doesn't change any computed pct)
                       const isFullyReady = recommendation.pct >= 90
                       return (
+                        // v49: ฟีดแบ็ก "แถบ Notification สูงเกิน กินพื้นที่เกือบ 20% ทั้งที่ข้อความสั้น
+                        // อยากลดความสูงประมาณ 20%" — py-2 (8px) -> py-1.5 (6px) และไอคอน 💪 text-sm (14px)
+                        // -> text-xs (12px) ให้ line-height สูงสุดในแถวลดลงด้วย (ไม่ใช่แค่ padding อย่าง
+                        // เดียว) รวมกันลดความสูงจริงประมาณ 20% ตามที่ขอ
                         <div
-                          className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 mb-3"
+                          className="flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 mb-3"
                           style={{ backgroundColor: withAlpha(recColor, '1A') }}
                         >
                           <span className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm shrink-0" aria-hidden="true">💪</span>
+                            <span className="text-xs shrink-0" aria-hidden="true">💪</span>
                             <p className="text-xs text-ink whitespace-pre-line">
                               {recoveryRecommendationLabel(recoveryLabelPct)}{' '}
                               <span className="font-display tracked uppercase" style={{ color: recColor }}>
@@ -1082,16 +1086,22 @@ export default function DashboardPage() {
                       )
                       return (
                         // สีฟ้าไซแอน + glow ตามมอคอัพ v3 — เดิมใช้ recoveryStatusColor() ที่เปลี่ยนสีตามเปอร์เซ็นต์
-                        // (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ
+                        // (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ (v45 —
+                        // ring คงสีฟ้าคงที่เป็น "ภาพรวม" เสมอ ไม่ผูกกับ tier แบบแท่งรายกลุ่มด้านล่าง)
                         // v47: ฟีดแบ็ก "การ์ดนี้ข้อมูลเยอะแต่ Ring ยังเล็ก ขยายประมาณ 15% จะบาลานซ์กว่า" —
-                        // 84 -> 97 (+15%), strokeWidth ขยายตามสัดส่วนเดียวกัน (8 -> 9)
+                        // 84 -> 97 (+15%)
+                        // v49: ฟีดแบ็ก "Ring ควรเป็น Hero ของการ์ด ตอนนี้ดูเหมือน icon — อยากได้สัดส่วน
+                        // Ring 35% / List 65% (เดิม ~20/80)" — 97 -> 128 (+32%) strokeWidth ขยายตามสัดส่วน
+                        // เดียวกัน (9 -> 12) — label เปลี่ยนจากข้อความคงที่ "พื้นตัวรวม" (ซ้ำกับหัวการ์ด
+                        // "Recovery" ที่มีอยู่แล้วด้านบน) เป็นคำสถานะ (Excellent/Good/...) จาก recoveryTier()
+                        // เดียวกับที่ใช้กับแท่งรายกลุ่ม ให้ตรงกับตัวอย่างที่ขอ ("95% Recovery Excellent")
                         <div className="shrink-0" style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.cyan, '40')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
-                            size={97}
-                            strokeWidth={9}
+                            size={128}
+                            strokeWidth={12}
                             color={COLORS.cyan}
-                            label="พื้นตัวรวม"
+                            label={recoveryTier(overallRecoveryPct).labelEn}
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
                             glow
                           />
@@ -1128,27 +1138,21 @@ export default function DashboardPage() {
                             style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }}
                             aria-hidden="true"
                           />
-                          <span className="text-[9px] text-ink w-14 shrink-0 truncate">{mg}</span>
-                          {/* v48: ฟีดแบ็ก "Recovery bars ยังแบน อยากได้ Titanium Progress — inner glow +
-                              subtle reflection + gradient ตามสถานะ" — เดิม track/fill เป็นสีเรียบล้วน
-                              ทั้งคู่ (bg-bg/60 + backgroundColor เดียว) เปลี่ยน track ให้เป็นร่องบุ๋ม
-                              (inset shadow มืดด้านบน/สว่างบางๆ ขอบล่าง จำลองร่องกัดลงในแผ่นโลหะ) fill
-                              ใช้ AnimatedBarFill เดิม (มี glow prop ใหม่แล้ว) ผสม 2 เลเยอร์: แถบสะท้อนแสง
-                              ขาวจางบางๆ ที่ขอบบน + ไล่สีเข้ม(ล่าง)-อ่อน(บน)ของสีสถานะเอง (ไม่ใช่สีขาวไล่
-                              เรียบๆ ยังคงเป็นสีเดียวกับสถานะ แค่มีมิติ) */}
+                          <span className="text-[9px] text-ink flex-1 min-w-0 truncate">{mg}</span>
+                          {/* v49: ฟีดแบ็ก "ทุกแท่งหน้าตาเหมือนกันหมด (██████) เลยอ่านยาก อยากใช้ Badge
+                              สถานะ (Excellent/Good/Recovering/Rest) แทน Progress Bar ทั้งหมด จะ Premium
+                              กว่า" — เดิม AnimatedBarFill (แท่งยาว ∝ %) ตัดออกทั้งหมด แทนที่ด้วย badge
+                              ข้อความสถานะจาก recoveryTier() (ตัวเดียวกับที่คุม color ของแถวนี้อยู่แล้ว —
+                              ไม่มีทางหลุดซิงค์กัน) — glow เบาๆ ตามฟีดแบ็ก "ใช้ Glow เบาๆ" ข้อ 5 */}
                           <span
-                            className="relative flex-1 h-1.5 rounded-full overflow-hidden"
-                            style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,.65), inset 0 -1px 0 rgba(255,255,255,.04)', backgroundColor: '#0A0B0D' }}
+                            className="shrink-0 text-[8px] font-display tracked uppercase rounded-full px-1.5 py-0.5"
+                            style={{
+                              backgroundColor: withAlpha(color, '22'),
+                              color,
+                              boxShadow: `0 0 4px ${withAlpha(color, '55')}`,
+                            }}
                           >
-                            <AnimatedBarFill
-                              pct={pct}
-                              color={color}
-                              glow
-                              background={[
-                                'linear-gradient(180deg, rgba(255,255,255,.35) 0%, transparent 45%)',
-                                `linear-gradient(180deg, ${lighten(color, 0.3)} 0%, ${color} 100%)`,
-                              ].join(', ')}
-                            />
+                            {recoveryTier(pct).labelEn}
                           </span>
                           <span className="font-mono text-[10px] w-8 shrink-0 text-right" style={{ color }}>
                             {pct}%
@@ -1158,7 +1162,12 @@ export default function DashboardPage() {
                     })}
                     </div>
                   </div>
-                  <p className="mt-3 text-right text-xs text-amber">View Detail →</p>
+                  {/* v49: ฟีดแบ็ก "View Detail เล็กไปนิด ลองทำเป็นเส้นคั่นด้านบน + View Recovery Detail →
+                      จะดูเป็น Apple มากกว่า" — เพิ่มเส้นคั่นบาง (border-t) แยกจากลิสต์ด้านบนชัดเจน แล้ว
+                      ขยายข้อความจาก "View Detail" เป็น "View Recovery Detail" ตามตัวอย่างแรกที่ให้มา */}
+                  <p className="mt-3 pt-3 border-t border-white/5 text-right text-xs text-amber">
+                    View Recovery Detail →
+                  </p>
                 </>
               )
             })()}

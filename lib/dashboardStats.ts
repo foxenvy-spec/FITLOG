@@ -1,6 +1,7 @@
 import type { ProgramDay, Workout } from './types'
 import { todayStr } from './weekdays'
 import type { ExerciseDef } from './exerciseLibrary'
+import { COLORS, FIRE_ACCENT } from './theme'
 
 export function computeCurrentStreak(performedDates: string[]): number {
   const days = Array.from(new Set(performedDates)).sort()
@@ -210,12 +211,39 @@ export function computeRecoveryPct(lastTrainedDate: string | null, muscleGroup: 
   return Math.max(0, Math.min(100, Math.round((daysSince / windowDays) * 100)))
 }
 
-// สี badge ตามสถานะการฟื้นตัว: แดง (ยังไม่พร้อม) / เหลือง (ปานกลาง) / เขียว (พร้อมฝึกแล้ว)
-// เกณฑ์: 0-40% แดง, 41-75% เหลือง, 76-100% เขียว
+// v49: ฟีดแบ็ก "สีเขียว/เหลือง/แดง/ดำอยู่ติดกัน ยังดู UI Dashboard มากกว่า Luxury UI อยากได้ 4 ระดับ:
+// 100% เขียวอ่อน, 80% Amber, 50% Orange, ต่ำ Red" — เดิมมี 3 ระดับ (0-40 แดง/41-75 เหลือง/76-100 เขียว)
+// ใช้ COLORS.amber ตัวเดียวคุมทั้งช่วงกลาง ไม่มีขั้นบอก "ใกล้เต็ม" (80%) กับ "กำลังฟื้น" (50%) แยกกัน —
+// เปลี่ยนเป็น 4 ระดับ ใช้โทเคนสีที่มีอยู่แล้วทั้งหมด (ไม่เพิ่มสีใหม่): COLORS.green (เขียวอ่อนกว่า moss,
+// ใช้กับ Fitness Score tier Elite อยู่แล้ว) / COLORS.amber (สีหลักแบรนด์) / FIRE_ACCENT (ส้ม, ใช้กับ Fire
+// gradient อยู่แล้ว) / COLORS.rust (แดง) — เกณฑ์ยึดจากตัวอย่างที่ขอเป๊ะ: 67% ต้องได้ "Good"(amber), 0%
+// ต้องได้ "Rest"(แดง) จึงวางรอยต่อที่ 65/35 (90 สำหรับ "เกือบเต็ม/Excellent" ที่ 100% ต้องเข้าเกณฑ์แน่ๆ)
+//
+// พบว่ามีฟังก์ชันป้ายกำกับซ้ำอีก 3 ตัวกระจายอยู่คนละไฟล์ (AICoachCompactCard.tsx: readinessLabel/
+// readinessLabelEn, WeeklyVolumeRecoveryCard.tsx: recoveryScoreLabel) แต่ละตัว hardcode เกณฑ์ของตัวเอง
+// แยกกัน (บางตัว 3 ระดับ บางตัว 4 ระดับ คนละรอยต่อกันหมด) ผูกกันแค่ด้วยคอมเมนต์ "เกณฑ์เดียวกับ
+// recoveryStatusColor" ที่ไม่มีอะไรบังคับให้จริง — รวมเป็นแหล่งเดียว (RECOVERY_TIERS) ตรงนี้ ให้ทุกจุด
+// ดึงทั้งสี+ป้ายจากที่เดียวกันจริงๆ แทน
+export interface RecoveryTier {
+  color: string
+  labelEn: string
+  labelTh: string
+}
+
+const RECOVERY_TIERS: readonly { min: number; color: string; labelEn: string; labelTh: string }[] = [
+  { min: 90, color: COLORS.green, labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' },
+  { min: 65, color: COLORS.amber, labelEn: 'Good', labelTh: 'ดี' },
+  { min: 35, color: FIRE_ACCENT, labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว' },
+  { min: 0, color: COLORS.rust, labelEn: 'Rest', labelTh: 'ควรพัก' },
+]
+
+export function recoveryTier(pct: number): RecoveryTier {
+  const tier = RECOVERY_TIERS.find((t) => pct >= t.min) ?? RECOVERY_TIERS[RECOVERY_TIERS.length - 1]
+  return { color: tier.color, labelEn: tier.labelEn, labelTh: tier.labelTh }
+}
+
 export function recoveryStatusColor(pct: number): string {
-  if (pct >= 76) return '#7A9B57' // moss
-  if (pct >= 41) return '#E8A33D' // amber
-  return '#C1503A' // rust
+  return recoveryTier(pct).color
 }
 
 // ประมาณจำนวนชั่วโมงที่เหลือก่อนกล้ามเนื้อกลุ่มนั้นจะฟื้นตัวเต็มที่ (100%)

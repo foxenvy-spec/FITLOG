@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, getPreviousWeekRange } from '@/lib/dashboardStats'
+import { getWeekRange, getPreviousWeekRange, recoveryTier } from '@/lib/dashboardStats'
 import GoalRing from './GoalRing'
 import Skeleton from './Skeleton'
 import { COLORS } from '@/lib/theme'
@@ -27,13 +27,10 @@ async function fetchWeekVolume(supabase: ReturnType<typeof createClient>, start:
   return (data as VolumeRow[]) ?? []
 }
 
-// ป้ายกำกับเชิงคุณภาพของ Recovery Score รวม — ไม่มีอยู่ในโค้ดเดิม (recoveryStatusColor ให้แค่สี)
-// เพิ่มเฉพาะที่นี่เพราะใช้แค่จุดเดียว (การ์ดนี้)
+// v49: เดิม hardcode เกณฑ์ของตัวเอง (80/60/40 — คนละรอยต่อกับ recoveryStatusColor ที่ใช้ 76/41 ตอนนั้น)
+// ดึงจาก recoveryTier() (lib/dashboardStats.ts) แทน ให้เกณฑ์+ป้ายตรงกับทุกจุดที่ใช้ recovery tier จริง
 function recoveryScoreLabel(pct: number): string {
-  if (pct >= 80) return 'ดีมาก'
-  if (pct >= 60) return 'ดี'
-  if (pct >= 40) return 'ปานกลาง'
-  return 'ควรพักผ่อน'
+  return recoveryTier(pct).labelTh
 }
 
 interface WeeklyVolumeRecoveryCardProps {
