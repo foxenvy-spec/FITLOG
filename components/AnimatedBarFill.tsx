@@ -10,6 +10,7 @@ export default function AnimatedBarFill({
   pct,
   color,
   background,
+  glow = false,
   // easing เดิม ease-out ธรรมดา — เปลี่ยนเป็น cubic-bezier แบบ spring (ค่าเดียวกับ animate-pop-in ใน
   // globals.css) ให้แถบ "เด้ง" เกินเป้าเล็กน้อยก่อนตกกลับที่ค่าจริง แทนที่จะไถลนิ่งๆ ทางเดียว — ใช้
   // ค่าเดียวกันทุกจุดที่เรียก AnimatedBarFill (Today's Workout, Weekly Volume/Cardio/Muscle Heatmap)
@@ -20,6 +21,10 @@ export default function AnimatedBarFill({
   color: string
   // เกรเดียนต์ (เช่น FIRE_GRADIENT_CSS) แทนสีเรียบ — ถ้าระบุจะวาดทับ color เดิม (color ยังเป็น fallback)
   background?: string
+  // v48: ฟีดแบ็ก "Recovery bars ยังแบน อยากได้ Titanium Progress — inner glow" — เพิ่ม box-shadow
+  // เรืองแสงรอบแท่ง (สีเดียวกับ color ที่ส่งมาอยู่แล้ว ไม่ต้องรับสีแยก) ดีฟอลต์ false เพื่อไม่กระทบจุดเรียก
+  // เดิมทั้งหมด (Today's Workout, Weekly Volume/Cardio/Muscle Heatmap) ที่ไม่ได้ขอ glow นี้
+  glow?: boolean
   className?: string
 }) {
   const [width, setWidth] = useState(0)
@@ -36,5 +41,15 @@ export default function AnimatedBarFill({
     }
   }, [clamped])
 
-  return <div className={className} style={{ width: `${width}%`, backgroundColor: color, backgroundImage: background }} />
+  return (
+    <div
+      className={className}
+      style={{
+        width: `${width}%`,
+        backgroundColor: color,
+        backgroundImage: background,
+        boxShadow: glow ? `0 0 4px ${color}99, inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 1px rgba(0,0,0,.35)` : undefined,
+      }}
+    />
+  )
 }
