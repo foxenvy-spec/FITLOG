@@ -787,7 +787,7 @@ export default function DashboardPage() {
         // v49: ฟีดแบ็ก "แต่ละ Card ใช้ Radius คนละแบบ" — เดิม rounded-lg (8px) ต่างจาก PremiumCard/
         // AICoachCompactCard/WeeklyVolume ที่ 24px มาก เปลี่ยนเป็น rounded-card (token เดียวกัน) ให้
         // มุมโค้งตรงกันทั้งแอป — border/shadow-hero ยังคงไว้เหมือนเดิม (จุดเด่นเฉพาะ Hero การ์ดเดียว)
-        className={`relative rounded-card border border-amber/30 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
+        className={`relative rounded-card border border-amber/30 shadow-hero overflow-hidden hero-card-cq lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
         style={{
@@ -811,9 +811,16 @@ export default function DashboardPage() {
             ธรรมดา" — รูปนี้เป็น product shot ดัมเบลพื้นดำ ไม่มีคน ตรงกับที่ฟีดแบ็กบอกว่าอยากได้ตั้งแต่ v45)
             ยังคง gradient fade ซ้ายให้ตัวหนังสืออ่านง่ายเหมือนเดิมทุกประการ วางรูปเป็นชั้นล่างสุด แล้ว
             gradient ทับอยู่ชั้นบน (สลับจากเดิมที่ gradient เป็นพื้นแล้ว SVG ลอยทับ เพราะตอนนี้รูปคือเนื้อหา
-            หลัก ไม่ใช่ของตกแต่งอีกต่อไป) */}
+            หลัก ไม่ใช่ของตกแต่งอีกต่อไป)
+            v53: ฟีดแบ็ก "จอ 14 นิ้ว รูปดัมเบลเห็นไม่ครบ แต่จอ 24 นิ้วไม่ต้องแก้ไขอะไร" — ความสูงการ์ดนี้
+            ค่อนข้างคงที่ (คุมด้วยเนื้อหาตัวหนังสือ/ring ไม่ใช่ %) ขณะที่ความกว้างการ์ดแปรผันมากตาม viewport
+            (12-col grid) ทำให้กรอบรูป (w-2/3 เดิม) ที่ 14" แคบกว่ามาก อัตราส่วนภาพเลยแคบลงจนเห็นดัมเบลได้
+            น้อยกว่าที่ 24" มาก (วัดจริง: การ์ดกว้าง ~431px ที่ viewport 1280px ให้กรอบรูป aspect ~1.84 เทียบ
+            กับ ~2.98 ที่การ์ดกว้าง ~697px ของ viewport 1920px) — ใช้ container query (.hero-card-cq ใน
+            globals.css) ขยายกรอบรูปเป็น 92% เฉพาะตอนการ์ดแคบกว่า 550px เท่านั้น ให้เห็นดัมเบลครบขึ้นชัดเจน
+            จอ 24" (การ์ดกว้างเกิน threshold มาก) ไม่โดนกฎนี้เลย หน้าตาเดิม 100% */}
         <div className="absolute inset-0 bg-surface overflow-hidden">
-          <div className="absolute inset-y-0 right-0 w-full sm:w-2/3">
+          <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box">
             <Image
               src="/images/today-workout-hero-dumbbell.png"
               alt=""
@@ -824,7 +831,7 @@ export default function DashboardPage() {
             />
           </div>
           <div
-            className="absolute inset-y-0 right-0 w-full sm:w-2/3"
+            className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-gradient-box"
             style={{
               backgroundImage: [
                 'radial-gradient(ellipse 65% 55% at 88% 28%, rgba(255,154,22,.16), transparent 62%)',
@@ -1013,8 +1020,16 @@ export default function DashboardPage() {
           // (Recovery เป็นการ์ดรอง ไม่ใช่ Hero) ตัด glow ระดับการ์ดออก เหลือแค่ border-line กลางเหมือน
           // การ์ดรองอื่นๆ ในแอป — สีฟ้ายังอยู่ที่วงแหวนด้านในเท่านั้น (ดู drop-shadow ของ GoalRing ด้านล่าง)
           // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
-          className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1"
-          style={{ animationDelay: '240ms' }}
+          // v53: ฟีดแบ็ก "จอ 14 นิ้ว ตัวเลข % ทะลุกรอบการ์ด แต่จอ 24 นิ้วไม่ต้องแก้" — วัดจริงพบว่าที่ความ
+          // กว้างการ์ด ~341-355px (viewport 1280-1366px ซึ่งเป็นช่วง 14" laptop ทั่วไป) แถบ badge สถานะ
+          // (Excellent/Good/...) + เลข % รวมกันกว้างเกินพื้นที่ที่เหลือหลังจาก ring หัก min-width ของ bar
+          // ไปแล้ว ทะลุกรอบแถวออกมาจริงตามที่แจ้ง — ใช้ CSS container query (ไม่ใช่ viewport breakpoint)
+          // ผูกกับความกว้างจริงของการ์ดนี้เอง ให้ซ่อน badge สถานะเฉพาะตอนการ์ดแคบกว่า 360px (ครอบคลุม
+          // ช่วง 14" ที่วัดได้พอดี พร้อม margin กันขอบ) เหลือแค่เลข % (สีเดียวกับ badge เดิม ข้อมูลไม่หาย
+          // แค่กระชับขึ้น) — จอ 24" (การ์ดกว้าง ~555px+) กว้างกว่า threshold มาก ไม่โดนกฎนี้เลย หน้าตาเดิม
+          // 100% ตามที่ขอ ("จอ 24 นิ้วไม่ต้องแก้ไขอะไร")
+          className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1 recovery-card-cq"
+          style={{ animationDelay: '240ms', containerType: 'inline-size' }}
         >
           <Link href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
@@ -1172,7 +1187,7 @@ export default function DashboardPage() {
                               เดียวกันจริงๆ แทนที่จะเป็น element เรียงเท่าๆ กัน 3 ชิ้น */}
                           <span className="flex items-center gap-1 shrink-0">
                             <span
-                              className="text-[8px] font-display font-semibold tracked uppercase rounded-full px-1.5 py-0.5"
+                              className="recovery-tier-badge text-[8px] font-display font-semibold tracked uppercase rounded-full px-1.5 py-0.5"
                               style={{
                                 backgroundColor: withAlpha(color, '22'),
                                 color,

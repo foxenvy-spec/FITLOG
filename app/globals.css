@@ -374,3 +374,28 @@
     animation: none !important;
   }
 }
+
+/* v53: ฟีดแบ็ก "จอ 14 นิ้ว ตัวเลข % ทะลุกรอบ Recovery การ์ด + รูปดัมเบลใน Hero การ์ดเห็นไม่ครบ แต่จอ 24
+   นิ้วไม่ต้องแก้ไขอะไร" — ผูกกับความกว้างจริงของการ์ด (container query) แทน viewport breakpoint เพราะ
+   ความกว้างการ์ดจริงไม่ได้แปรผันตรงกับ viewport breakpoint ของ Tailwind (ขึ้นกับ sidebar + grid column
+   math ด้วย) การ์ดที่แคบพอจะโดนกฎนี้เฉพาะช่วง 14" laptop (~1280-1366px viewport วัดจริงได้การ์ดกว้าง
+   ~341-370px) ส่วนจอ 24" (การ์ดกว้าง ~555px+ ที่ viewport 1920px) กว้างกว่า threshold มาก จึงไม่โดนกฎนี้
+   เลย หน้าตาเดิม 100% ตามที่ขอ */
+.recovery-card-cq {
+  container-type: inline-size;
+}
+@container (max-width: 360px) {
+  .recovery-card-cq .recovery-tier-badge {
+    display: none;
+  }
+}
+
+.hero-card-cq {
+  container-type: inline-size;
+}
+@container (max-width: 550px) {
+  .hero-card-cq .hero-image-box,
+  .hero-card-cq .hero-gradient-box {
+    width: 92% !important;
+  }
+}
