@@ -210,7 +210,7 @@ export default function ExportPage() {
           />
           <label
             htmlFor="restore-upload"
-            className="shrink-0 cursor-pointer text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2"
+            className="shrink-0 cursor-pointer text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 transition active:scale-[0.98] hover:opacity-90"
           >
             {busy === 'restore' ? '...' : 'Restore'}
           </label>
@@ -242,7 +242,7 @@ function SectionRow({
       <button
         onClick={onClick}
         disabled={busy}
-        className="shrink-0 text-xs font-display tracked uppercase text-bg bg-steel rounded-lg px-4 py-2 disabled:opacity-50"
+        className="shrink-0 text-xs font-display tracked uppercase text-bg bg-steel rounded-lg px-4 py-2 transition active:scale-[0.98] hover:opacity-90 disabled:opacity-50 disabled:active:scale-100"
       >
         {busy ? '...' : buttonLabel}
       </button>
