@@ -370,7 +370,9 @@
   .skeleton-shimmer,
   .animate-start-workout-pulse,
   .animate-bell-swing,
-  .animate-fade-scale-in {
+  .animate-fade-scale-in,
+  .hud-outer-ring,
+  .hud-bead-orbit {
     animation: none !important;
   }
 }
@@ -398,4 +400,23 @@
   .hero-card-cq .hero-gradient-box {
     width: 92% !important;
   }
+}
+
+/* v55: ฟีดแบ็ก "วง 100% ทำให้เหมือน HUD อีกนิด เช่น outer ring หมุนช้าๆ + จุดเล็กๆ วิ่งรอบวง" — วงประรอบ
+   ring จริงหมุนช้าๆ รอบตัวเอง กับจุดสว่างเล็กโคจรรอบวง (ดู DashboardView.tsx .hud-outer-ring/.hud-bead-orbit) */
+@keyframes hud-outer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.hud-outer-ring {
+  animation: hud-outer-spin 8s linear infinite;
+}
+@keyframes hud-bead-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.hud-bead-orbit {
+  animation: hud-bead-spin 4s linear infinite;
 }
