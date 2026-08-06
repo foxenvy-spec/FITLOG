@@ -11,6 +11,7 @@ import MuscleLangToggle from '@/components/MuscleLangToggle'
 import LoadingState from '@/components/LoadingState'
 import ErrorState from '@/components/ErrorState'
 import MuscleDiagram from '@/components/MuscleDiagram'
+import PremiumCard from '@/components/ui/PremiumCard'
 
 export default function ExercisesPage() {
   const [query, setQuery] = useState('')
@@ -78,15 +79,13 @@ export default function ExercisesPage() {
       )}
 
       {list.length === 0 ? (
-        <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-6 text-center">
-          ไม่พบท่านี้ในฐานข้อมูล
-        </p>
+        <PremiumCard className="text-sm text-muted px-4 py-6 text-center">ไม่พบท่านี้ในฐานข้อมูล</PremiumCard>
       ) : (
-        <ul className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+        <PremiumCard className="divide-y divide-white/5">
           {list.map((ex) => {
             const expanded = expandedId === ex.id
             return (
-              <li key={ex.id} className="tally-row">
+              <div key={ex.id}>
                 <button
                   onClick={() => setExpandedId(expanded ? null : ex.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
@@ -125,10 +124,10 @@ export default function ExercisesPage() {
                 </button>
 
                 {expanded && <ExerciseDetail ex={ex} lang={lang} />}
-              </li>
+              </div>
             )
           })}
-        </ul>
+        </PremiumCard>
       )}
     </div>
   )

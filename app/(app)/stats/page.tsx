@@ -27,6 +27,8 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import EmptyState from '@/components/EmptyState'
+import PremiumCard from '@/components/ui/PremiumCard'
+import { COLORS, withAlpha } from '@/lib/theme'
 
 const RANGE_DAYS = 180
 const WEEKS_SHOWN = 8
@@ -346,7 +348,7 @@ export default function StatsPage() {
         <h2 className="font-display text-sm tracked uppercase text-muted mb-3">
           Weekly Volume ({WEEKS_SHOWN} สัปดาห์ล่าสุด, {unit})
         </h2>
-        <div className="h-48 bg-surface border border-line shadow-elevated rounded-lg p-3">
+        <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyVolume.map((b) => ({ ...b, value: Math.round(toDisplay(b.value)) }))} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <CartesianGrid stroke="#2E333A" vertical={false} />
@@ -367,13 +369,13 @@ export default function StatsPage() {
               <Bar dataKey="value" fill="#6C8CA8" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </PremiumCard>
       </section>
 
       {muscleDistribution.length > 0 && (
         <section>
           <h2 className="font-display text-sm tracked uppercase text-muted mb-3">Muscle Distribution (วอลุ่มรวม)</h2>
-          <div className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-3">
+          <PremiumCard className="p-4 space-y-3">
             {muscleDistribution.map((m) => (
               <div key={m.name}>
                 <div className="flex items-center justify-between text-xs mb-1">
@@ -391,7 +393,7 @@ export default function StatsPage() {
                 </div>
               </div>
             ))}
-          </div>
+          </PremiumCard>
         </section>
       )}
 
@@ -399,7 +401,7 @@ export default function StatsPage() {
         <h2 className="font-display text-sm tracked uppercase text-muted mb-3">
           ระยะทางคาร์ดิโอ (กม. ต่อวัน, 28 วันล่าสุด)
         </h2>
-        <div className="h-48 bg-surface border border-line shadow-elevated rounded-lg p-3">
+        <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distanceByDay} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <CartesianGrid stroke="#2E333A" vertical={false} />
@@ -421,7 +423,7 @@ export default function StatsPage() {
               <Bar dataKey="value" fill="#C1503A" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </PremiumCard>
       </section>
 
       {exerciseNames.length > 0 && (
@@ -441,7 +443,7 @@ export default function StatsPage() {
             </select>
           </div>
           {oneRmTrend.length > 1 ? (
-            <div className="h-44 bg-surface border border-line shadow-elevated rounded-lg p-3">
+            <PremiumCard className="h-44 p-3">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={oneRmTrend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <CartesianGrid stroke="#2E333A" vertical={false} />
@@ -456,11 +458,9 @@ export default function StatsPage() {
                   <Line type="monotone" dataKey="value" stroke="#C1503A" strokeWidth={2} dot={{ r: 2, fill: '#C1503A' }} />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </PremiumCard>
           ) : (
-            <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-6 text-center">
-              บันทึกท่านี้อีกอย่างน้อย 2 ครั้งเพื่อดูแนวโน้ม
-            </p>
+            <PremiumCard className="text-sm text-muted px-4 py-6 text-center">บันทึกท่านี้อีกอย่างน้อย 2 ครั้งเพื่อดูแนวโน้ม</PremiumCard>
           )}
           <p className="text-[11px] text-muted mt-2">คำนวณด้วยสูตร Epley: น้ำหนัก × (1 + reps/30) — เป็นค่าประมาณ ไม่ใช่ค่าวัดจริง</p>
         </section>
@@ -505,50 +505,51 @@ export default function StatsPage() {
       {prs.length > 0 && (
         <section>
           <h2 className="font-display text-sm tracked uppercase text-muted mb-3">🏆 Personal Records (น้ำหนักสูงสุด)</h2>
-          <ul className="rounded-lg bg-surface border border-violet/20 shadow-elevated overflow-hidden">
+          {/* border-violet/20 เดิม เน้นการ์ดนี้ว่าเป็น Personal Records แยกจากลิสต์ทั่วไป — PremiumCard
+              ตัด border สีกลางทึบออกแล้ว (v48: ใช้ contact shadow บอกขอบแทน) ยังคงสีม่วงไว้ผ่าน style
+              override (ชนะ default เพราะ ...style วางท้ายสุดเสมอ) แทนที่จะเสียจุดเด่นสีนี้ไปเฉยๆ */}
+          <PremiumCard className="divide-y divide-white/5" style={{ border: `1px solid ${withAlpha(COLORS.violet, '33')}` }}>
             {prs.map((p) => {
               const isNewPR = p.date === todayStr()
               return (
-                <li key={p.name} className="tally-row">
-                  <a
-                    href={`/exercises/${encodeURIComponent(p.name)}`}
-                    className="flex items-center justify-between px-4 py-3 active:bg-surface2 transition"
-                  >
-                    <span className="text-sm text-ink flex items-center gap-1.5">
-                      {p.name}
-                      {isNewPR && (
-                        <span className="animate-pop-in text-[9px] font-display tracked uppercase text-bg bg-violet rounded-full px-1.5 py-0.5">
-                          NEW
-                        </span>
-                      )}
-                    </span>
-                    <span className="font-mono text-sm text-violet">
-                      {format(p.weight)}{p.reps ? ` × ${p.reps}` : ''}
-                    </span>
-                  </a>
-                </li>
+                <a
+                  key={p.name}
+                  href={`/exercises/${encodeURIComponent(p.name)}`}
+                  className="flex items-center justify-between px-4 py-3 active:bg-surface2 transition"
+                >
+                  <span className="text-sm text-ink flex items-center gap-1.5">
+                    {p.name}
+                    {isNewPR && (
+                      <span className="animate-pop-in text-[9px] font-display tracked uppercase text-bg bg-violet rounded-full px-1.5 py-0.5">
+                        NEW
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-mono text-sm text-violet">
+                    {format(p.weight)}{p.reps ? ` × ${p.reps}` : ''}
+                  </span>
+                </a>
               )
             })}
-          </ul>
+          </PremiumCard>
         </section>
       )}
 
       {topExercises.length > 0 && (
         <section>
           <h2 className="font-display text-sm tracked uppercase text-muted mb-3">ท่ายอดฮิต</h2>
-          <ul className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+          <PremiumCard className="divide-y divide-white/5">
             {topExercises.map(([name, count]) => (
-              <li key={name} className="tally-row">
-                <a
-                  href={`/exercises/${encodeURIComponent(name)}`}
-                  className="flex items-center justify-between px-4 py-3 active:bg-surface2 transition"
-                >
-                  <span className="text-sm text-ink">{name}</span>
-                  <span className="font-mono text-sm text-amber">{count}×</span>
-                </a>
-              </li>
+              <a
+                key={name}
+                href={`/exercises/${encodeURIComponent(name)}`}
+                className="flex items-center justify-between px-4 py-3 active:bg-surface2 transition"
+              >
+                <span className="text-sm text-ink">{name}</span>
+                <span className="font-mono text-sm text-amber">{count}×</span>
+              </a>
             ))}
-          </ul>
+          </PremiumCard>
         </section>
       )}
 

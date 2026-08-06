@@ -10,6 +10,7 @@ import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
+import PremiumCard from '@/components/ui/PremiumCard'
 
 // 'weight' และ 'strength_volume' เก็บ target_value/starting_value เป็น kg เสมอ (เหมือน weight_kg
 // ทุกที่ในแอป) — ต้องแปลงเป็นหน่วยที่เลือกแสดงตอนเรนเดอร์ และแปลงกลับเป็น kg ตอนบันทึกฟอร์ม
@@ -238,13 +239,13 @@ export default function CalendarPage() {
       <h1 className="font-display text-2xl tracked uppercase">ปฏิทิน</h1>
 
       {streak > 0 && (
-        <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5 flex items-center justify-between">
+        <PremiumCard className="px-4 py-3.5 flex items-center justify-between">
           <span className="text-sm text-ink">🔥 Streak ต่อเนื่อง</span>
           <span className="font-mono text-2xl tabular text-amber">
             {streak}
             <span className="text-xs text-muted ml-1">วัน</span>
           </span>
-        </div>
+        </PremiumCard>
       )}
 
       {loadError ? (
@@ -352,9 +353,7 @@ export default function CalendarPage() {
             </div>
           )}
           {selectedWorkouts.length === 0 ? (
-            <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-6 text-center">
-              ไม่มีรายการวันนี้
-            </p>
+            <PremiumCard className="text-sm text-muted px-4 py-6 text-center">ไม่มีรายการวันนี้</PremiumCard>
           ) : (
             <>
               {(() => {
@@ -428,15 +427,13 @@ export default function CalendarPage() {
         )}
 
         {goals.length === 0 ? (
-          <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-6 text-center">
-            ยังไม่มีเป้าหมาย ลองตั้งเป้าหมายแรกดู
-          </p>
+          <PremiumCard className="text-sm text-muted px-4 py-6 text-center">ยังไม่มีเป้าหมาย ลองตั้งเป้าหมายแรกดู</PremiumCard>
         ) : (
           <ul className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-3 md:items-start">
             {goals.map((g) => {
               const progress = goalProgress(g)
               return (
-                <li key={g.id} className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
+                <PremiumCard as="li" key={g.id} className="px-4 py-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className={`text-sm ${g.status === 'done' ? 'text-muted line-through' : 'text-ink'}`}>
@@ -474,7 +471,7 @@ export default function CalendarPage() {
                       />
                     </div>
                   )}
-                </li>
+                </PremiumCard>
               )
             })}
           </ul>
@@ -551,7 +548,7 @@ function GoalForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-surface border border-line shadow-elevated rounded-lg p-4 space-y-3">
+    <PremiumCard as="form" onSubmit={handleSubmit} className="p-4 space-y-3">
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -594,6 +591,6 @@ function GoalForm({
       >
         {saving ? 'กำลังบันทึก...' : 'บันทึกเป้าหมาย'}
       </button>
-    </form>
+    </PremiumCard>
   )
 }
