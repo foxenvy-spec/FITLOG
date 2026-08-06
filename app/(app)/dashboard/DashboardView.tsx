@@ -56,7 +56,8 @@ import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
-import { CARD_GRADIENT_CSS } from '@/lib/theme'
+import { CARD_GRADIENT_CSS, lighten } from '@/lib/theme'
+import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
@@ -1122,10 +1123,25 @@ export default function DashboardPage() {
                             }}
                           >
                             <span className="text-[9px] text-ink w-16 shrink-0 truncate">{mg}</span>
-                            <span className="relative flex-1 h-1 rounded-full bg-bg/60 overflow-hidden">
-                              <span
-                                className="absolute inset-y-0 left-0 rounded-full transition-[width]"
-                                style={{ width: `${pct}%`, backgroundColor: color }}
+                            {/* v48: ฟีดแบ็ก "Recovery bars ยังแบน อยากได้ Titanium Progress — inner glow +
+                                subtle reflection + gradient ตามสถานะ" — เดิม track/fill เป็นสีเรียบล้วน
+                                ทั้งคู่ (bg-bg/60 + backgroundColor เดียว) เปลี่ยน track ให้เป็นร่องบุ๋ม
+                                (inset shadow มืดด้านบน/สว่างบางๆ ขอบล่าง จำลองร่องกัดลงในแผ่นโลหะ) fill
+                                ใช้ AnimatedBarFill เดิม (มี glow prop ใหม่แล้ว) ผสม 2 เลเยอร์: แถบสะท้อนแสง
+                                ขาวจางบางๆ ที่ขอบบน + ไล่สีเข้ม(ล่าง)-อ่อน(บน)ของสีสถานะเอง (ไม่ใช่สีขาวไล่
+                                เรียบๆ ยังคงเป็นสีเดียวกับสถานะ แค่มีมิติ) */}
+                            <span
+                              className="relative flex-1 h-1.5 rounded-full overflow-hidden"
+                              style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,.65), inset 0 -1px 0 rgba(255,255,255,.04)', backgroundColor: '#0A0B0D' }}
+                            >
+                              <AnimatedBarFill
+                                pct={pct}
+                                color={color}
+                                glow
+                                background={[
+                                  'linear-gradient(180deg, rgba(255,255,255,.35) 0%, transparent 45%)',
+                                  `linear-gradient(180deg, ${lighten(color, 0.3)} 0%, ${color} 100%)`,
+                                ].join(', ')}
                               />
                             </span>
                             <span className="font-mono text-[10px] w-8 shrink-0 text-right" style={{ color }}>

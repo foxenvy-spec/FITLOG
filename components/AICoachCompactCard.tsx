@@ -168,6 +168,22 @@ export default function AICoachCompactCard({
 
   return (
     <PremiumCard className="flex flex-col gap-3 px-4 py-4">
+      {/* v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — เพิ่ม Background Particle" — จุดกระพริบเล็กๆ กระจายห่างๆ
+          (เทคนิคเดียวกับที่การ์ด Hero Workout ใช้อยู่แล้วรอบก่อน) วางเฉพาะโซนขวา/ล่างของการ์ด หลีกเลี่ยง
+          โซน avatar+ข้อความฝั่งซ้ายที่ยังต้องอ่านออกชัดเจน */}
+      {[
+        { left: '78%', top: '8%', size: 2, opacity: 0.5 },
+        { left: '92%', top: '28%', size: 1.5, opacity: 0.4 },
+        { left: '85%', top: '55%', size: 1.5, opacity: 0.35 },
+        { left: '95%', top: '75%', size: 1, opacity: 0.3 },
+      ].map((p, i) => (
+        <span
+          key={i}
+          className="absolute rounded-full pointer-events-none"
+          style={{ left: p.left, top: p.top, width: p.size, height: p.size, background: '#FFF4E0', opacity: p.opacity, boxShadow: '0 0 3px 1px rgba(255,244,224,.5)' }}
+          aria-hidden="true"
+        />
+      ))}
       <span className="absolute top-3 right-3 flex items-center gap-1 text-[8px] tracked uppercase text-muted" aria-hidden="true">
         <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
         {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
@@ -338,7 +354,10 @@ function AiRingAvatar({ src }: { src?: string }) {
   // (rounded-full) เป็นมุมตัด CNC เดียวกับการ์ดอื่นทั่วแอป (CNC_CORNER_CLIP_PATH_DEFAULT) — สี่เหลี่ยม
   // มุมตัด อ่านเป็น "ภาพโปสเตอร์ที่ถูกจัดกรอบ" มากกว่าวงเหรียญ/badge (3) scale 1.55 -> 1.72 ครอปเข้าไป
   // อีกนิด ให้ตัวโรบอทเต็มเฟรมแบบภาพสินค้า ไม่เหลือพื้นหลังว่างรอบขอบเยอะแบบก่อนหน้า
-  const size = 146
+  // v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — Robot ใหญ่ขึ้นอีก 20%, Crop แบบ Cinematic" — 146 -> 175
+  // (146*1.2 ปัดเศษ) scale 1.72 -> 1.85 (ครอปเข้าไปอีกนิด ให้เป็น close-up มากกว่า "เห็นทั้งหัว+ไหล่"
+  // แบบเดิม สมชื่อ cinematic) — inset:5 ไม่ต้องแก้ตาม ขยายตาม size โดยอัตโนมัติเพียงพอเหมือนรอบก่อนๆ
+  const size = 175
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       <div
@@ -360,7 +379,28 @@ function AiRingAvatar({ src }: { src?: string }) {
         }}
       >
         {src ? (
-          <Image src={src} alt="" width={size} height={size} className="w-full h-full object-cover" style={{ transform: 'scale(1.72)' }} />
+          <>
+            <Image src={src} alt="" width={size} height={size} className="w-full h-full object-cover" style={{ transform: 'scale(1.85)' }} />
+            {/* v48b: ฟีดแบ็ก "เพิ่ม Eye Glow เบาๆ" — รูปต้นฉบับ (ai-coach-avatar.png) มีตาเรืองแสงอำพันอยู่
+                แล้วในตัวรูป แต่ที่ crop/scale ปัจจุบัน (scale 1.85 จากจุดกึ่งกลาง) ตาอยู่ที่ประมาณ (36%,
+                33%) ของกรอบที่เห็นจริง (คำนวณจากตำแหน่งตาในรูปต้นฉบับ ~42%,40% ผ่านสูตร zoom เดียวกับที่
+                transform ใช้) — วาง radial glow บางๆ ทับตำแหน่งนั้นแบบ mix-blend-mode:screen (เติมแสง
+                เข้าไปตรงๆ ไม่ทับสีเดิม) แทนที่จะเดาตำแหน่งมั่วๆ — นิ่งสนิทไม่มี pulse (งบ animation ทั้งแอป
+                เต็มแล้ว ตามที่คุยกันไว้หลายรอบ "เหลือแค่ 7 Animation ทั้งแอป") */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: '36%',
+                top: '33%',
+                width: '30%',
+                height: '18%',
+                transform: 'translate(-50%, -50%)',
+                background: 'radial-gradient(ellipse, rgba(255,180,70,.4), transparent 70%)',
+                mixBlendMode: 'screen',
+              }}
+              aria-hidden="true"
+            />
+          </>
         ) : (
           <span className="relative block" style={{ width: '58%' }}>
             <span
