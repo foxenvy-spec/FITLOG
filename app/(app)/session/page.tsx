@@ -18,6 +18,7 @@ import {
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import PremiumCard from '@/components/ui/PremiumCard'
+import Button from '@/components/ui/Button'
 import ProgressRing from '@/components/ui/ProgressRing'
 import {
   parseRestSeconds,
@@ -933,12 +934,11 @@ export default function SessionPage() {
         {errorMsg && <p className="text-xs text-rusttext">{errorMsg}</p>}
 
         <div className="flex gap-2 pt-2">
-          <a
-            href="/dashboard"
-            className="flex-1 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 text-sm active:scale-[0.99] transition"
-          >
+          {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-amber เรียบๆ ไม่มี glow
+              เปลี่ยนมาใช้ Button component กลาง (Phase 2) ให้ตรงกับปุ่ม CTA หลักทั่วแอปแล้ว */}
+          <Button as="a" href="/dashboard" size="md" className="flex-1">
             กลับหน้าแรก
-          </a>
+          </Button>
           <button
             type="button"
             onClick={shareSession}
@@ -1277,18 +1277,23 @@ export default function SessionPage() {
         >
           ข้ามท่านี้
         </button>
-        <button
+        {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — ปุ่มนี้เป็น CTA หลักที่กดบ่อยที่สุดใน
+            flow เวิร์กเอาต์สด เดิม bg-amber เรียบๆ ไม่มี glow เปลี่ยนมาใช้ Button component กลาง —
+            size="md" (ไม่ใช่ดีฟอลต์ sm) เพื่อรักษาพื้นที่แตะใกล้เคียงของเดิม (py-3 เดิม vs md py-2.5) เพราะ
+            เป็นปุ่มที่กดถี่ที่สุดในทั้งแอป ลด touch target ลงไม่คุ้มความเสี่ยง */}
+        <Button
           type="button"
           onClick={logCurrentExercise}
           disabled={saving || currentState.setsLog.length === 0}
-          className="flex-[2] rounded-full bg-amber text-bg font-display tracked uppercase py-3 text-xs disabled:opacity-40 active:scale-[0.99] transition"
+          size="md"
+          className="flex-[2]"
         >
           {saving
             ? 'กำลังบันทึก...'
             : index >= exercises.length - 1
               ? 'บันทึก & จบเซสชัน'
               : 'บันทึก & ท่าถัดไป ▶'}
-        </button>
+        </Button>
       </div>
       </div>
 
