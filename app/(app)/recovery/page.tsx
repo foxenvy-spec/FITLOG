@@ -29,6 +29,8 @@ import { todayStr } from '@/lib/weekdays'
 import Skeleton from '@/components/Skeleton'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import ErrorState from '@/components/ErrorState'
+import PremiumCard from '@/components/ui/PremiumCard'
+import { withAlpha } from '@/lib/theme'
 
 interface MuscleRow {
   mg: MuscleGroup
@@ -164,7 +166,7 @@ export default function RecoveryPage() {
         return (
           <div
             className="flex items-center gap-2.5 rounded-lg px-4 py-3"
-            style={{ backgroundColor: recColor + '1A' }}
+            style={{ backgroundColor: withAlpha(recColor, '1A') }}
           >
             <span className="text-lg">💪</span>
             <p className="text-sm text-ink whitespace-pre-line">
@@ -183,10 +185,12 @@ export default function RecoveryPage() {
       ) : loading ? (
         <div className="space-y-3">
           {MUSCLE_GROUPS.map((mg) => (
-            <div key={mg} className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5 space-y-2">
+            // v49 (Design System Phase 3): เดิม rounded-lg (8px) bg-surface border-line เขียนเอง — เปลี่ยน
+            // เป็น PremiumCard (24px, token เดียวกับ Dashboard/Profile/AI Coach) ให้ radius สอดคล้องกันเต็มแอป
+            <PremiumCard key={mg} className="px-4 py-3.5 space-y-2">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-2.5 w-full rounded-full" />
-            </div>
+            </PremiumCard>
           ))}
         </div>
       ) : (
@@ -196,7 +200,7 @@ export default function RecoveryPage() {
             const color = recoveryStatusColor(pct)
             const hoursLeft = computeRecoveryReadyInHours(lastTrained, mg)
             return (
-              <div key={mg} className="rounded-lg bg-surface border border-line shadow-elevated px-4 py-3.5">
+              <PremiumCard key={mg} className="px-4 py-3.5">
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span
@@ -231,7 +235,7 @@ export default function RecoveryPage() {
                 <p className="text-[10px] text-muted">
                   {hoursLeft !== null ? `พร้อมฝึกในอีก ~${hoursLeft} ชม.` : 'พร้อมฝึกได้เลย'}
                 </p>
-              </div>
+              </PremiumCard>
             )
           })}
         </div>
@@ -260,7 +264,7 @@ export default function RecoveryPage() {
               ))}
             </div>
           </div>
-          <div className="h-44 bg-surface border border-line shadow-elevated rounded-lg p-3">
+          <PremiumCard className="h-44 p-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={recoveryHistory} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <CartesianGrid stroke="#2E333A" vertical={false} />
@@ -287,7 +291,7 @@ export default function RecoveryPage() {
                 <Line type="monotone" dataKey="value" stroke="#7A9B57" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </PremiumCard>
           <p className="text-[10px] text-muted mt-2">
             ค่าเฉลี่ยรวมทุกกลุ่มกล้ามเนื้อ คำนวณย้อนหลังจากวันที่ฝึกจริง — เป็นค่าประมาณเช่นเดียวกับตัวเลขด้านบน
           </p>
