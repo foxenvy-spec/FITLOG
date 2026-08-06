@@ -189,9 +189,9 @@ describe('computeRecoveryPct (Recovery Logic)', () => {
 })
 
 describe('recoveryStatusColor', () => {
-  it('is red (rust) from 0-34%', () => {
-    expect(recoveryStatusColor(0)).toBe('#C1503A')
-    expect(recoveryStatusColor(34)).toBe('#C1503A')
+  it('is red-orange (rest) from 0-34%', () => {
+    expect(recoveryStatusColor(0)).toBe('#C96A57')
+    expect(recoveryStatusColor(34)).toBe('#C96A57')
   })
 
   it('is orange (fire accent) from 35-64%', () => {
@@ -204,9 +204,9 @@ describe('recoveryStatusColor', () => {
     expect(recoveryStatusColor(89)).toBe('#E8A33D')
   })
 
-  it('is green from 90-100%', () => {
-    expect(recoveryStatusColor(90)).toBe('#4ADE80')
-    expect(recoveryStatusColor(100)).toBe('#4ADE80')
+  it('is muted green (excellent) from 90-100%', () => {
+    expect(recoveryStatusColor(90)).toBe('#6CBF74')
+    expect(recoveryStatusColor(100)).toBe('#6CBF74')
   })
 })
 
@@ -217,10 +217,10 @@ describe('recoveryTier', () => {
   })
 
   it('returns matching label + color for each tier', () => {
-    expect(recoveryTier(95)).toEqual({ color: '#4ADE80', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' })
+    expect(recoveryTier(95)).toEqual({ color: '#6CBF74', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' })
     expect(recoveryTier(70)).toEqual({ color: '#E8A33D', labelEn: 'Good', labelTh: 'ดี' })
     expect(recoveryTier(40)).toEqual({ color: '#FF8A00', labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว' })
-    expect(recoveryTier(10)).toEqual({ color: '#C1503A', labelEn: 'Rest', labelTh: 'ควรพัก' })
+    expect(recoveryTier(10)).toEqual({ color: '#C96A57', labelEn: 'Rest', labelTh: 'ควรพัก' })
   })
 })
 
