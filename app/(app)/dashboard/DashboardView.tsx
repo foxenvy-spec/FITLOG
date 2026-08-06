@@ -831,6 +831,32 @@ export default function DashboardPage() {
               strokeLinejoin="round"
             />
           </svg>
+          {/* v48: ฟีดแบ็ก "โซน Dumbbell (~35% ของการ์ด) มีแค่รูปดัมเบลอย่างเดียว อยากเพิ่ม Glow/Particle
+              เบาๆ ให้ดูมีชีวิต" — จุดกระพริบเล็กๆ กระจายรอบไอคอน (เทคนิคเดียวกับ "Particles" ใน
+              TodaysWorkoutCompactCard.tsx ขนาด/ตำแหน่งไม่เท่ากันจำลองประกายลอยในอากาศ ไม่ใช่ pattern
+              ซ้ำเป๊ะ) — สีทองอุ่นเดียวกับ spark SVG ด้านบน (#FFB84A) ให้เป็นชุดสีเดียวกัน */}
+          {[
+            { left: '68%', top: '20%', size: 2.5, opacity: 0.6 },
+            { left: '85%', top: '35%', size: 1.5, opacity: 0.45 },
+            { left: '92%', top: '65%', size: 2, opacity: 0.5 },
+            { left: '72%', top: '78%', size: 1.5, opacity: 0.4 },
+            { left: '58%', top: '52%', size: 1, opacity: 0.35 },
+          ].map((p, i) => (
+            <span
+              key={i}
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                left: p.left,
+                top: p.top,
+                width: p.size,
+                height: p.size,
+                background: '#FFF4E0',
+                opacity: p.opacity,
+                boxShadow: '0 0 4px 1px rgba(255,184,74,.55)',
+              }}
+              aria-hidden="true"
+            />
+          ))}
         </div>
 
         {/* v46: "Titanium Reflection" — จุดสว่างจางๆ ตามตำแหน่งเมาส์ (เขียน background ตรงผ่าน ref ใน
@@ -839,12 +865,14 @@ export default function DashboardPage() {
 
         {/* v47: "Option A" — Ring ลอย absolute มุมขวาล่าง ซ้อนทับบน Dumbbell background แบบ Apple Fitness
             hero (เดิมอยู่เป็น flex sibling ข้างตัวหนังสือ ดันเลย์เอาต์ให้ Dumbbell เหลือพื้นที่แคบ) —
-            glow เดิม (AMBER) คงไว้ผ่าน filter drop-shadow เดียวกับวงอื่นๆ ในหน้า ให้เข้าธีม */}
+            glow เดิม (AMBER) คงไว้ผ่าน filter drop-shadow เดียวกับวงอื่นๆ ในหน้า ให้เข้าธีม
+            v48: ฟีดแบ็ก "Ring ยังเด่นไปนิด สายตาไปที่ Ring ก่อนแทนที่จะไป DAY 3 / LEGS อยากลดประมาณ
+            10-15%" — 100 -> 87 (-13%) strokeWidth ลดตามสัดส่วนเดียวกัน 8 -> 7 */}
         <div className="absolute bottom-4 right-4 z-10" style={{ filter: 'drop-shadow(0 0 6px #E8A33D40)' }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-            size={100}
-            strokeWidth={8}
+            size={87}
+            strokeWidth={7}
             color="#E8A33D"
             label="ความพร้อม"
             ariaLabel="ความพร้อมของวันนี้"
