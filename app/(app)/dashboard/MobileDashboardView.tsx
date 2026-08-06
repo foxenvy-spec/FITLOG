@@ -364,7 +364,9 @@ export default function MobileDashboardView() {
               อิสระอยู่แล้ว) ใช้แถบแสงแนวนอนบางๆ กวาดจากบนลงล่างทั้งหน้าเดียว (10s/รอบ) พาดผ่านทั้ง 3 โซน
               พร้อมกันแทน — ง่ายกว่าและทนกว่าการพยายามซิงก์เวลาข้าม component/mount cycle จริง — เคารพ
               prefers-reduced-motion */}
-          <div className="page-light-sweep absolute inset-0 pointer-events-none" aria-hidden="true" />
+          <div className="page-light-sweep absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+            <div className="page-light-sweep-band" />
+          </div>
           {/* v30: ฟีดแบ็ก "energy-flow-sweep ❌ คนไม่รู้ด้วยซ้ำว่ามันคืออะไร" — ตัด "Orange Energy Flow"
               (v27) ออกทั้งชั้น ไม่ได้เพิ่มความเข้าใจ/UX ที่วัดได้ แค่เพิ่ม animation loop อีกจุดหนึ่งบนพื้น
               หลังทั้งหน้า — AMBIENT_ORANGE_CSS (ไล่เฉดนิ่ง) ที่มันเคยซ้อนทับยังอยู่เหมือนเดิม ไม่กระทบ */}
@@ -496,24 +498,34 @@ export default function MobileDashboardView() {
         />
       )}
       <style jsx>{`
-        /* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation — Background: page-light-sweep 20s" — ช้าลงจาก 10s เป็น 20s */
-        .page-light-sweep {
+        /* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation — Background: page-light-sweep 20s" — ช้าลงจาก 10s เป็น 20s
+           v: เดิม animate ด้วย background-position ตรงๆ บน div ที่สูงเท่าคอนเทนต์ทั้งหน้า (ไม่ใช่แค่
+           viewport) — background-position ไม่ใช่ property ที่ compositor เร่งด้วย GPU ได้ ต้อง repaint
+           จริงทุกเฟรม ตลอดเวลาที่หน้าเปิดอยู่ (infinite) แถมอยู่ในสแต็กเดียวกับพื้นหลังลายอีกหลายชั้น
+           (บาง layer ใช้ mix-blend-mode/mask-image) ทำให้ต้อง recomposite ทั้งสแต็กพร้อมกันทุกเฟรม —
+           เปลี่ยนมาใช้ transform บนเลเยอร์ลูกแยกต่างหาก (.page-light-sweep-band สูงเท่า parent พอดี
+           translateY(-100%→200%) ระยะทางเทียบเท่า background-position เดิมเป๊ะ) ซึ่ง GPU compositor รับ
+           ภาระได้ ภาพที่เห็นเหมือนเดิมทุกอย่าง แค่ implementation คนละวิธี */
+        .page-light-sweep-band {
+          position: absolute;
+          inset: 0;
+          height: 100%;
           background: linear-gradient(180deg, transparent 45%, rgba(255, 255, 255, 0.035) 50%, transparent 55%);
-          background-size: 100% 400%;
-          background-position: 0% -100%;
+          transform: translateY(-100%);
           animation: page-light-sweep-move 20s ease-in-out infinite;
+          will-change: transform;
         }
         @keyframes page-light-sweep-move {
           0% {
-            background-position: 0% -100%;
+            transform: translateY(-100%);
           }
           45%,
           100% {
-            background-position: 0% 200%;
+            transform: translateY(200%);
           }
         }
         @media (prefers-reduced-motion: reduce) {
-          .page-light-sweep {
+          .page-light-sweep-band {
             animation: none;
             opacity: 0;
           }

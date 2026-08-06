@@ -97,6 +97,9 @@ export default function BottomNav() {
           // เสมอ ไม่ใช่ progress จริง — ปุ่มนี้เป็น CTA ไม่ใช่ตัวบอกความคืบหน้า) ล้อมรอบแกนพลังงานสีส้ม
           // (Energy Core) ตรงกลางแทนพื้นหลังทึบเดิม — glow วง pulse เดิม (animate-start-workout-pulse)
           // ยังอยู่เป็นชั้นนอกสุด ห่อ ring ไว้อีกที
+          // v: glow เดิม animate บน box-shadow ของ span เดียวกับ ring โดยตรง (ไม่ compositable, repaint
+          // จริงทุกเฟรมตลอดไป) — แยกเป็น span glow ต่างหาก (box-shadow คงที่ ไม่ animate) วางไว้ใต้ span
+          // ring แล้ว animate แค่ opacity/scale ของมันแทน (ดู .animate-start-workout-pulse ใน globals.css)
           if (href === '/session') {
             const btnSize = dashboardSpec.floatingButton.size
             const coreSize = Math.round(btnSize * 0.52)
@@ -109,12 +112,22 @@ export default function BottomNav() {
                 onPointerDown={hapticSuccess}
               >
                 <span
-                  className="absolute rounded-full active:scale-[0.97] transition animate-start-workout-pulse"
+                  className="absolute rounded-full pointer-events-none animate-start-workout-pulse"
+                  aria-hidden="true"
                   style={{
                     top: -Math.round(btnSize * 0.42),
                     width: btnSize,
                     height: btnSize,
-                    boxShadow: `0 8px 20px rgba(0,0,0,.5), ${AMBER_GLOW_SHADOW}`,
+                    boxShadow: AMBER_GLOW_SHADOW,
+                  }}
+                />
+                <span
+                  className="absolute rounded-full active:scale-[0.97] transition"
+                  style={{
+                    top: -Math.round(btnSize * 0.42),
+                    width: btnSize,
+                    height: btnSize,
+                    boxShadow: '0 6px 18px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.35)',
                   }}
                 >
                   <FitnessRing value={100} size={btnSize} simple>
