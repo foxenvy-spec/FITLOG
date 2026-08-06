@@ -537,7 +537,7 @@ export default function TemplatesPage() {
           <p className="text-sm text-muted mb-3">ยังไม่มีเทมเพลต</p>
           <button
             onClick={() => setCreating(true)}
-            className="text-xs font-display tracked uppercase text-bg bg-steel rounded-lg px-4 py-2"
+            className="text-xs font-display tracked uppercase text-bg bg-steel rounded-lg px-4 py-2 transition active:scale-[0.98] hover:opacity-90"
           >
             + สร้างเทมเพลตแรก
           </button>
@@ -921,10 +921,10 @@ function ExerciseRow({
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-ink truncate">{exercise.exercise_name}</p>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onToggleEdit} className="text-[11px] text-muted hover:text-amber">
+            <button onClick={onToggleEdit} className="text-[11px] text-muted hover:text-amber transition">
               {editing ? 'เสร็จ' : 'แก้ไข'}
             </button>
-            <button onClick={onDelete} className="text-[11px] text-muted hover:text-rust">
+            <button onClick={onDelete} className="text-[11px] text-muted hover:text-rust transition">
               ลบ
             </button>
           </div>
@@ -1027,12 +1027,12 @@ function NewTemplateForm({ onCancel, onSubmit }: { onCancel: () => void; onSubmi
         className="w-full bg-surface2 text-ink text-sm rounded px-3 py-2 border border-line outline-none focus:border-amber"
       />
       <div className="flex gap-2">
-        <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2.5 text-xs">
+        <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2.5 text-xs transition active:scale-[0.98] hover:bg-white/5">
           ยกเลิก
         </button>
         <button
           onClick={() => title.trim() && onSubmit(title.trim())}
-          className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99]"
+          className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs transition active:scale-[0.99] hover:opacity-90"
         >
           สร้าง แล้วเพิ่มท่า
         </button>
@@ -1111,14 +1111,14 @@ function AddExerciseForm({
         />
       </label>
       <div className="flex gap-2">
-        <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2 text-[11px]">
+        <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2 text-[11px] transition active:scale-[0.98] hover:bg-white/5">
           ยกเลิก
         </button>
         <button
           onClick={() =>
             name.trim() && onSubmit({ name: name.trim(), sets, reps, rir, rest, notes, muscleGroup, secondaryMuscles, exerciseLibraryId })
           }
-          className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2 text-[11px] active:scale-[0.99]"
+          className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2 text-[11px] transition active:scale-[0.99] hover:opacity-90"
         >
           เพิ่มท่านี้
         </button>
