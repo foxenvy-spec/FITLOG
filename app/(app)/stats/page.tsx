@@ -28,7 +28,8 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import EmptyState from '@/components/EmptyState'
 import PremiumCard from '@/components/ui/PremiumCard'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
+import { useCountUp } from '@/lib/useCountUp'
 
 const RANGE_DAYS = 180
 const WEEKS_SHOWN = 8
@@ -334,14 +335,14 @@ export default function StatsPage() {
       <h1 className="font-display text-2xl tracked uppercase">สถิติ · {RANGE_DAYS} วันล่าสุด</h1>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        <StatCard label="Total Volume" value={Math.round(toDisplay(totals.totalVolume)).toLocaleString()} unit={unit} accent="steel" />
-        <StatCard label="Total Reps" value={totals.totalReps.toLocaleString()} unit="ครั้ง" accent="amber" />
-        <StatCard label="Volume สัปดาห์นี้" value={Math.round(toDisplay(totals.thisWeekVolume)).toLocaleString()} unit={unit} accent="rust" />
-        <StatCard label="วันที่ออกกำลังกาย" value={totals.activeDays.toString()} unit="วัน" accent="moss" />
-        <StatCard label="เซสชันเวท" value={totals.strengthCount.toString()} unit="ครั้ง" accent="moss" />
-        <StatCard label="ระยะทางคาร์ดิโอรวม" value={totals.totalDistance.toFixed(1)} unit="กม." accent="rust" />
-        <StatCard label="แคลอรี่ที่เผาผลาญรวม" value={totals.totalCalories.toLocaleString()} unit="kcal" accent="amber" />
-        <StatCard label="เวลาเฉลี่ย/วัน" value={totals.avgDurationMin.toString()} unit="นาที" accent="steel" />
+        <StatCard label="Total Volume" value={Math.round(toDisplay(totals.totalVolume))} unit={unit} accent="steel" />
+        <StatCard label="Total Reps" value={totals.totalReps} unit="ครั้ง" accent="amber" />
+        <StatCard label="Volume สัปดาห์นี้" value={Math.round(toDisplay(totals.thisWeekVolume))} unit={unit} accent="rust" />
+        <StatCard label="วันที่ออกกำลังกาย" value={totals.activeDays} unit="วัน" accent="moss" />
+        <StatCard label="เซสชันเวท" value={totals.strengthCount} unit="ครั้ง" accent="moss" />
+        <StatCard label="ระยะทางคาร์ดิโอรวม" value={totals.totalDistance} unit="กม." accent="rust" decimals={1} />
+        <StatCard label="แคลอรี่ที่เผาผลาญรวม" value={totals.totalCalories} unit="kcal" accent="amber" />
+        <StatCard label="เวลาเฉลี่ย/วัน" value={totals.avgDurationMin} unit="นาที" accent="steel" />
       </div>
 
       <section>
@@ -351,22 +352,22 @@ export default function StatsPage() {
         <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyVolume.map((b) => ({ ...b, value: Math.round(toDisplay(b.value)) }))} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid stroke="#2E333A" vertical={false} />
+              <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: '#9498A0', fontSize: 10 }}
-                axisLine={{ stroke: '#2E333A' }}
+                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                axisLine={{ stroke: NEUTRAL.chipInactive }}
                 tickLine={false}
               />
-              <YAxis tick={{ fill: '#9498A0', fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
+              <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
               <Tooltip
                 cursor={{ fill: 'rgba(108,140,168,0.08)' }}
-                contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: '#9498A0' }}
+                contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: NEUTRAL.mutedIcon }}
                 itemStyle={{ color: '#F3F0E8' }}
                 formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
               />
-              <Bar dataKey="value" fill="#6C8CA8" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="value" fill={COLORS.steel} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </PremiumCard>
@@ -387,7 +388,7 @@ export default function StatsPage() {
                     className="h-full rounded-full"
                     style={{
                       width: `${Math.max(4, m.pct * 100)}%`,
-                      background: MUSCLE_GROUP_COLORS[m.name as keyof typeof MUSCLE_GROUP_COLORS] || '#9498A0',
+                      background: MUSCLE_GROUP_COLORS[m.name as keyof typeof MUSCLE_GROUP_COLORS] || NEUTRAL.mutedIcon,
                     }}
                   />
                 </div>
@@ -404,23 +405,23 @@ export default function StatsPage() {
         <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distanceByDay} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid stroke="#2E333A" vertical={false} />
+              <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: '#9498A0', fontSize: 10 }}
+                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
                 interval={6}
-                axisLine={{ stroke: '#2E333A' }}
+                axisLine={{ stroke: NEUTRAL.chipInactive }}
                 tickLine={false}
               />
-              <YAxis tick={{ fill: '#9498A0', fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
+              <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
               <Tooltip
                 cursor={{ fill: 'rgba(193,80,58,0.08)' }}
-                contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: '#9498A0' }}
+                contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: NEUTRAL.mutedIcon }}
                 itemStyle={{ color: '#F3F0E8' }}
                 formatter={(v: number) => [`${v} กม.`, 'ระยะทาง']}
               />
-              <Bar dataKey="value" fill="#C1503A" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="value" fill={COLORS.rust} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </PremiumCard>
@@ -446,16 +447,16 @@ export default function StatsPage() {
             <PremiumCard className="h-44 p-3">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={oneRmTrend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="#2E333A" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#9498A0', fontSize: 10 }} axisLine={{ stroke: '#2E333A' }} tickLine={false} />
-                  <YAxis tick={{ fill: '#9498A0', fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={['auto', 'auto']} />
+                  <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={{ stroke: NEUTRAL.chipInactive }} tickLine={false} />
+                  <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={['auto', 'auto']} />
                   <Tooltip
-                    contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
-                    labelStyle={{ color: '#9498A0' }}
+                    contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: NEUTRAL.mutedIcon }}
                     itemStyle={{ color: '#F3F0E8' }}
                     formatter={(v: number) => [`${v} ${unit}`, 'Estimated 1RM']}
                   />
-                  <Line type="monotone" dataKey="value" stroke="#C1503A" strokeWidth={2} dot={{ r: 2, fill: '#C1503A' }} />
+                  <Line type="monotone" dataKey="value" stroke={COLORS.rust} strokeWidth={2} dot={{ r: 2, fill: COLORS.rust }} />
                 </LineChart>
               </ResponsiveContainer>
             </PremiumCard>
@@ -471,12 +472,15 @@ export default function StatsPage() {
           <h2 className="font-display text-sm tracked uppercase text-muted mb-3">🎯 Next PR แนะนำ</h2>
           <a
             href={`/exercises/${encodeURIComponent(nextPR.exerciseName)}`}
-            className="block rounded-lg border border-violet/25 shadow-glow px-5 py-5 active:bg-surface2 transition"
+            // v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — rounded-lg (8px) -> rounded-card (24px,
+            // token เดียวกับ PremiumCard) + เพิ่ม hover:bg-surface2 คู่กับ active:bg-surface2 เดิม (เดิมมีแค่
+            // active ซึ่งรองรับแตะบนมือถือ แต่ไม่มี feedback ตอน hover ด้วยเมาส์บนเดสก์ท็อป)
+            className="block rounded-card border border-violet/25 shadow-glow px-5 py-5 hover:bg-surface2 active:bg-surface2 transition"
             style={
               {
                 backgroundColor: '#1C1F24',
-                '--glow-color': '#9C7CC426',
-                '--glow-color-soft': '#9C7CC41A',
+                '--glow-color': withAlpha(COLORS.violet, '26'),
+                '--glow-color-soft': withAlpha(COLORS.violet, '1A'),
               } as React.CSSProperties & { '--glow-color'?: string; '--glow-color-soft'?: string }
             }
           >
@@ -515,7 +519,7 @@ export default function StatsPage() {
                 <a
                   key={p.name}
                   href={`/exercises/${encodeURIComponent(p.name)}`}
-                  className="flex items-center justify-between px-4 py-3 active:bg-surface2 transition"
+                  className="flex items-center justify-between px-4 py-3 hover:bg-surface2 active:bg-surface2 transition"
                 >
                   <span className="text-sm text-ink flex items-center gap-1.5">
                     {p.name}
@@ -543,7 +547,7 @@ export default function StatsPage() {
               <a
                 key={name}
                 href={`/exercises/${encodeURIComponent(name)}`}
-                className="flex items-center justify-between px-4 py-3 active:bg-surface2 transition"
+                className="flex items-center justify-between px-4 py-3 hover:bg-surface2 active:bg-surface2 transition"
               >
                 <span className="text-sm text-ink">{name}</span>
                 <span className="font-mono text-sm text-amber">{count}×</span>
@@ -577,23 +581,30 @@ const STAT_ACCENT_TEXT = {
   violet: 'text-violet',
 } as const
 
+// v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิมไฟล์นี้มี STAT_ACCENT_HEX ประกาศ hex ซ้ำกับ
+// COLORS ใน lib/theme.ts เป๊ะทั้ง 5 ค่า (ตัวเดียวกับที่เคยแก้ QUICK_ACTION_ACCENTS ใน DashboardView.tsx
+// รอบ Phase 1) — ดึงจาก COLORS ตรงๆ แทน (หมายเหตุ: STAT_ACCENT_TEXT ยังคงแยกไว้ เพราะ text-rusttext ≠
+// COLORS.rust จริงๆ — rusttext เป็นเฉดที่ปรับให้ผ่าน WCAG AA สำหรับตัวหนังสือ ต่างจาก rust ที่ใช้กับ
+// border/glow/background เท่านั้น ไม่ใช่ duplicate ที่ควรรวม)
 const STAT_ACCENT_HEX = {
-  amber: '#E8A33D',
-  steel: '#6C8CA8',
-  rust: '#C1503A',
-  moss: '#7A9B57',
-  violet: '#9C7CC4',
+  amber: COLORS.amber,
+  steel: COLORS.steel,
+  rust: COLORS.rust,
+  moss: COLORS.moss,
+  violet: COLORS.violet,
 } as const
 
 function StatCard({
   label,
   value,
   unit,
+  decimals = 0,
   accent,
 }: {
   label: string
-  value: string
+  value: number
   unit: string
+  decimals?: number
   accent: 'amber' | 'steel' | 'rust' | 'moss' | 'violet'
 }) {
   const hex = STAT_ACCENT_HEX[accent]
@@ -603,11 +614,14 @@ function StatCard({
     '--glow-color': `${hex}26`,
     '--glow-color-soft': `${hex}1A`,
   }
+  // v52: ฟีดแบ็ก "ทำ Micro-interactions (count-up, ...)" — เดิมตัวเลขโผล่มานิ่งๆ ทันทีตอนโหลดหน้า
+  // ใช้ useCountUp เดียวกับที่ GoalRing ใช้อยู่แล้วทั่ว Dashboard ให้ตัวเลขไต่ขึ้นตอนโหลดแทน
+  const animatedValue = useCountUp(value)
   return (
-    <div className="border shadow-glow rounded-lg px-4 py-3.5" style={glowStyle}>
+    <div className="border shadow-glow rounded-card px-4 py-3.5" style={glowStyle}>
       <p className="text-[11px] tracked uppercase text-muted mb-1">{label}</p>
       <p className={`font-mono text-2xl tabular ${STAT_ACCENT_TEXT[accent]}`}>
-        {value}
+        {animatedValue.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
         <span className="text-xs text-muted ml-1">{unit}</span>
       </p>
     </div>
