@@ -42,7 +42,7 @@ import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
-import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
+import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, type MuscleGroup } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
@@ -1114,7 +1114,18 @@ export default function DashboardPage() {
                             boxShadow: isHovered ? `0 0 8px ${color}80` : undefined,
                           }}
                         >
-                          <span className="text-[9px] text-ink w-16 shrink-0 truncate">{mg}</span>
+                          {/* v49: วิเคราะห์มอคอัพ 4 เวอร์ชัน — จุดร่วมที่ดีที่สุดคือแยกสี "กล้ามเนื้อไหน"
+                              (จุดนี้ ใช้ MUSCLE_GROUP_COLORS เดียวกับ WeeklyVolume/WorkoutHeatmap) ออกจากสี
+                              "ฟื้นตัวแค่ไหน" (แท่ง+% ด้านล่าง ใช้ recoveryStatusColor ตามเดิม) — เดิมทั้งแถว
+                              ใช้ recoveryStatusColor เดียวกันหมด (พื้นหลัง/glow/แท่ง/%) ทำให้ไม่มีสัญญาณสีที่
+                              บอกกล้ามเนื้อเลย ต้องอ่านจากตัวหนังสือเท่านั้น — พื้นหลัง/glow ของทั้งแถวยังคงเป็น
+                              status color เดิม (เอาไว้บอก hover state ทั้งแถว ไม่ใช่จุดประสงค์เดียวกับจุดนี้) */}
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }}
+                            aria-hidden="true"
+                          />
+                          <span className="text-[9px] text-ink w-14 shrink-0 truncate">{mg}</span>
                           {/* v48: ฟีดแบ็ก "Recovery bars ยังแบน อยากได้ Titanium Progress — inner glow +
                               subtle reflection + gradient ตามสถานะ" — เดิม track/fill เป็นสีเรียบล้วน
                               ทั้งคู่ (bg-bg/60 + backgroundColor เดียว) เปลี่ยน track ให้เป็นร่องบุ๋ม
