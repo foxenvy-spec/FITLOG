@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useCountUp } from '@/lib/useCountUp'
 
 interface GoalRingProps {
@@ -8,7 +9,12 @@ interface GoalRingProps {
   strokeWidth?: number
   color?: string
   trackColor?: string
-  label?: string
+  // v56: ฟีดแบ็ก "Recovery Ring ดูโล่งไป อยากได้ 'Recovery' + สถานะ (Recovering/Excellent/...) 2 บรรทัด
+  // แทน 'Overall' บรรทัดเดียว" — เดิม string ล้วน พอต้อง render 2 บรรทัดคนละสี (บรรทัดบน muted, บรรทัดล่าง
+  // สีตาม tier) ต้องขยับเป็น ReactNode แทน ยังรองรับ string เดิมได้ปกติ (ReactNode เป็น superset)
+  // ตัว aria-label fallback ด้านล่างเช็ค typeof === 'string' ก่อนใช้ กัน ReactNode หลุดไปเป็นค่า aria-label
+  // ที่ไม่ถูกต้อง (ผู้เรียกทุกจุดในโค้ดตอนนี้ส่ง ariaLabel ชัดเจนอยู่แล้วจริงๆ แต่กันไว้เผื่ออนาคต)
+  label?: ReactNode
   // ข้อความสำหรับ screen reader เท่านั้น ใช้ตอนที่มี caption แสดงอยู่นอกวงแล้ว (เช่น header ด้านบน)
   // และไม่อยากให้ label ไปแสดงซ้ำข้างในวงอีกที ถ้าไม่ระบุจะ fallback ไปใช้ label แทน
   ariaLabel?: string
@@ -48,7 +54,7 @@ export default function GoalRing({
       aria-valuenow={Math.round(animatedPct)}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-label={ariaLabel ?? label ?? 'ความคืบหน้า'}
+      aria-label={ariaLabel ?? (typeof label === 'string' ? label : undefined) ?? 'ความคืบหน้า'}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden="true">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackColor} strokeWidth={strokeWidth} />
