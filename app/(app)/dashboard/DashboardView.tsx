@@ -855,7 +855,13 @@ export default function DashboardPage() {
                 className="object-cover"
                 style={{
                   objectPosition: '76% 45%',
-                  filter: 'blur(0.4px) contrast(1.05) sepia(0.15) saturate(1.25) hue-rotate(-6deg) brightness(1.02)',
+                  // v62: ฟีดแบ็ก "ภาพดัมเบลยังคมกว่า Card ฝั่งข้อความมาก สายตาโดนดึงไปที่ดัมเบลก่อน DAY 3/
+                  // LEGS อยากได้ Text เป็น Hero รูปเป็น Supporting แบบ Apple" — ลด contrast ~10% (1.05 ->
+                  // 0.95) + เพิ่ม blur เล็กน้อย (0.4px -> 0.7px, "sharpness ลดนิดเดียว") ให้รูปถอยไปเป็น
+                  // บรรยากาศพื้นหลังชัดเจนขึ้น ไม่แย่งสายตาจากข้อความ — saturate ลดตามสัดส่วนเดียวกันเล็กน้อย
+                  // (1.25 -> 1.2) กัน contrast ที่ลดลงทำให้สีดูซีดขึ้นสวนทาง (คงความอุ่นไว้) brightness 1.02 ->
+                  // 1.0 (เดิมชดเชย overlay มืดที่ตัดไปเยอะแล้วจาก v56 ไม่จำเป็นต้องชดเชยเพิ่มอีก)
+                  filter: 'blur(0.7px) contrast(0.95) sepia(0.15) saturate(1.2) hue-rotate(-6deg) brightness(1.0)',
                 }}
                 priority
               />
@@ -994,6 +1000,16 @@ export default function DashboardPage() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse 130% 130% at 50% 45%, transparent 55%, rgba(0,0,0,.30) 100%)' }}
+          aria-hidden="true"
+        />
+
+        {/* v62: ฟีดแบ็ก "อยากได้ Warm Glow ด้านหลังข้อความแทน ให้ Text เป็น Hero รูปเป็น Supporting" —
+            วงรีเรืองแสงอำพันนุ่มๆ วางไว้หลังโซนข้อความ (ซ้าย) โดยเฉพาะ ทะลุผ่านแผ่นกระจกกึ่งโปร่งแสง
+            (rgba(18,20,26,.55) ด้านล่าง) ออกมาเป็นไอความอุ่นรอบๆ panel แทนที่จะให้ข้อความลอยอยู่บนพื้นเรียบ
+            เฉยๆ — วางไว้ก่อนเลเยอร์ ring/ข้อความ (ต่ำกว่า z-10) ให้กระจกทับอยู่ด้านบนเสมอ */}
+        <div
+          className="absolute pointer-events-none"
+          style={{ top: 0, bottom: 0, left: 0, width: 280, background: 'radial-gradient(ellipse 90% 80% at 20% 45%, rgba(255,170,60,.24), transparent 75%)' }}
           aria-hidden="true"
         />
 
