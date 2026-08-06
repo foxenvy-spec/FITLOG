@@ -10,6 +10,7 @@ import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import VolumeTargetsSettings from './VolumeTargetsSettings'
+import PremiumCard from './ui/PremiumCard'
 
 // ลำดับแสดงผล — จัดให้ตรงกับ Graphic Muscle Heatmap (อก, หลัง, ไหล่, แขน, แกนกลางลำตัว, ขา, น่อง)
 // แยกจาก VOLUME_MUSCLES ตัวหลัก (ซึ่งใช้ลำดับอื่นและถูกอ้างจากหลายที่ในแอป) เพื่อไม่กระทบจุดอื่น
@@ -88,7 +89,7 @@ export default function WeeklyVolume() {
   const balanceColor = BALANCE_TIER_COLOR[balanceTier]
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+    <PremiumCard className="overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Weekly Volume</p>
@@ -120,9 +121,11 @@ export default function WeeklyVolume() {
             const pct = target > 0 ? Math.round((sets / target) * 100) : 0
             const diff = sets - target
             const color = STATUS_COLOR[status]
-            // แถวย่อ ๆ บรรทัดเดียว: จุดสี + ชื่อ + จำนวนเซ็ต/เป้าหมาย + เส้นคั่นบาง ๆ + ป้ายสถานะ
-            // (met -> +diff, onTrack -> เปอร์เซ็นต์, behind -> -diff) — แถบ progress และคำอธิบาย
-            // จะโผล่มาเฉพาะตอนกด "ดูรายละเอียดทั้งหมด" เท่านั้น
+            // แถวย่อ ๆ: จุดสี + ชื่อ + จำนวนเซ็ต/เป้าหมาย + เส้นคั่นบาง ๆ + ป้ายสถานะ (met -> +diff,
+            // onTrack -> เปอร์เซ็นต์, behind -> -diff) ต่อด้วยแถบ progress ที่ยาวตาม % จริง — เดิมแถบนี้
+            // ซ่อนอยู่หลัง "ดูรายละเอียดทั้งหมด" อ่านเป็น list ตัวเลขล้วนๆ ก่อน ตอนนี้ยาวตาม % ให้เห็นเลย
+            // ทุกแถว (ฟีดแบ็ก "แท่งสีควรยาวตาม % จะอ่านง่ายกว่า") ส่วนคำอธิบายท้ายแถว ("อีก X เซ็ตถึง
+            // เป้าหมาย") ยังคงซ่อนอยู่หลัง toggle เหมือนเดิม (เป็นรายละเอียดเสริม ไม่ใช่ตัวข้อมูลหลัก)
             // ไฮไลต์พื้นหลังเขียวจาง ๆ เฉพาะแถวที่ทำถึง/เกินเป้าหมายแล้ว (status === 'met') ให้เด่น
             // ส่วนแถวอื่นไม่มีพื้นหลัง (ตามการ์ดต้นแบบ) เพื่อไม่ให้แน่นเกินไป
             return (
@@ -131,7 +134,7 @@ export default function WeeklyVolume() {
                 className={status === 'met' ? 'rounded-md' : 'rounded-md bg-surface2'}
                 style={status === 'met' ? { backgroundColor: `${color}1A` } : undefined}
               >
-                <div className="flex items-center gap-2 px-2.5 py-2">
+                <div className="flex items-center gap-2 px-2.5 pt-2">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
                   <span className="text-xs text-ink flex-1 min-w-0">{mg}</span>
                   <span className="text-[11px] font-mono text-muted shrink-0">
@@ -143,16 +146,18 @@ export default function WeeklyVolume() {
                     {status === 'behind' ? `${diff} เซ็ต` : status === 'met' && diff > 0 ? `+${diff} เซ็ต` : `${pct}%`}
                   </span>
                 </div>
+                <div className="px-2.5 pt-1.5 pb-2">
+                  <span className="relative block h-1.5 rounded-full bg-bg/60 overflow-hidden">
+                    <AnimatedBarFill pct={barPct} color={color} />
+                    <div
+                      className="absolute top-0 h-full w-px bg-ink/40"
+                      style={{ left: `${targetPct}%` }}
+                      title={`เป้าหมาย ${target} เซ็ต/สัปดาห์`}
+                    />
+                  </span>
+                </div>
                 {detailsOpen && (
-                  <div className="px-2.5 pb-2 space-y-1">
-                    <span className="relative block h-1.5 rounded-full bg-bg/60 overflow-hidden">
-                      <AnimatedBarFill pct={barPct} color={color} />
-                      <div
-                        className="absolute top-0 h-full w-px bg-ink/40"
-                        style={{ left: `${targetPct}%` }}
-                        title={`เป้าหมาย ${target} เซ็ต/สัปดาห์`}
-                      />
-                    </span>
+                  <div className="px-2.5 pb-2 -mt-1">
                     <p className="text-[11px]" style={{ color }}>
                       {status === 'met'
                         ? diff > 0
@@ -170,7 +175,7 @@ export default function WeeklyVolume() {
 
       {!loading && (
         <div className="px-4 pb-3.5">
-          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-line/60">
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
             <div className="text-center">
               <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
               <p className="font-mono text-sm text-ink mt-0.5">
@@ -219,6 +224,6 @@ export default function WeeklyVolume() {
           }}
         />
       )}
-    </div>
+    </PremiumCard>
   )
 }

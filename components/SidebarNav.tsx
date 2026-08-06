@@ -117,7 +117,16 @@ export default function SidebarNav() {
       />
 
       <div className="relative px-4 py-4">
-        <Link href="/dashboard" className="font-display tracked-lg uppercase text-base text-ink">
+        {/* v48: ฟีดแบ็ก "Sidebar ยังมืดไป Logo FITLOG ควรมี Glow เบาๆ" — เดิม text-ink เรียบๆ ไม่มีแสง
+            เลย เพิ่ม text-shadow อำพันจางๆ (สีเดียวกับ active state ของเมนูด้านล่าง) ไม่ใช้
+            AMBER_GLOW_SHADOW ตรงๆ (สเปกนั้น blur ไกลสุด 60px ออกแบบมาสำหรับปุ่ม/badge ขนาดใหญ่กว่านี้
+            มาก ที่ตัวหนังสือ 16px จะกลายเป็น glow ฟุ้งเกิน "เบาๆ" ที่ขอ) — ค่าที่นี่จำกัด blur ไว้แค่
+            8px เป็นแสงกระชับรอบตัวอักษร ไม่ใช่แสงฟุ้งกว้าง */}
+        <Link
+          href="/dashboard"
+          className="font-display tracked-lg uppercase text-base text-ink"
+          style={{ textShadow: '0 0 2px rgba(255,180,70,.5), 0 0 8px rgba(255,150,30,.25)' }}
+        >
           FITLOG
         </Link>
       </div>
