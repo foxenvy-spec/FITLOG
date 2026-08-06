@@ -571,6 +571,18 @@ export default function DashboardPage() {
     <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start">
       {/* greeting + settings */}
       <div className="relative z-20 lg:col-span-12 lg:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
+        {/* Hero Background — แสงอำพันจางมากๆ (~3% peak) หลัง Header ตรงจุดที่ชื่อ (BANK ฯลฯ) อยู่ ให้
+            ตัวหนังสือรู้สึกมีแหล่งกำเนิดแสงอยู่ข้างหลังจริง แทนที่จะลอยอยู่บนพื้นหลังเรียบเฉยๆ — ยึดตำแหน่ง
+            ชิดซ้าย (คอลัมน์ชื่อ ไม่ใช่กลางแถวซึ่งจะไปชนฝั่ง Fitness Score/Recovery pill ทางขวา) จางเร็ว
+            (transparent ที่ 70% ของรัศมี) กันไม่ให้ลามไปเป็น glow ทั่วทั้งแถว — z-index ต่ำกว่าเนื้อหา
+            (ไม่มี z-index ระบุ = 0 ตามค่า default ของ stacking context นี้ วางก่อน children อื่นใน DOM) */}
+        <div
+          className="absolute -inset-x-4 -top-8 h-40 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(ellipse 60% 100% at 15% 30%, rgba(255,150,30,.03), transparent 70%)',
+          }}
+          aria-hidden="true"
+        />
         <div>
           <p className="text-xs text-muted">👋 {greetingText}</p>
           <p
