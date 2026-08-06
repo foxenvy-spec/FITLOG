@@ -172,7 +172,8 @@ export default function WeeklyMuscleHeatmap() {
   }
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+    // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
+    <div className="rounded-card bg-surface border border-line shadow-elevated overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-center justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>

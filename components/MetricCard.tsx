@@ -97,7 +97,7 @@ export default function MetricCard({
 }: MetricCardProps) {
   // Mobile Dashboard v2.2: compact (มือถือ) ใช้ border-radius 24px ตาม Design Token ล่าสุด (เดิม
   // 18px) — เดสก์ท็อป (compact=false) ยังได้ 20px เหมือนเดิมทุกประการ ไม่กระทบ
-  const radiusClass = radius === 'xl20' ? (compact ? 'rounded-[24px]' : 'rounded-[20px]') : 'rounded-lg'
+  const radiusClass = radius === 'xl20' ? (compact ? 'rounded-card' : 'rounded-[20px]') : 'rounded-lg'
   // ความเข้ม glow ต่อการ์ด (compact เท่านั้น) — ดีฟอลต์ 20 = พฤติกรรมเดิมก่อนมีฟิลด์ theme.glow
   // (เทียบเท่า alpha hex "33" เดิมที่ hardcode คงที่ทุกใบ)
   const glowAlpha = glowAlphaHex(theme.glow ?? 20)

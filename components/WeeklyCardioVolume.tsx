@@ -118,7 +118,8 @@ export default function WeeklyCardioVolume() {
   const vo2maxCategory = vo2max !== null ? classifyVO2Max(vo2max) : null
 
   return (
-    <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
+    // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
+    <div className="rounded-card bg-surface border border-line shadow-elevated overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Weekly Cardio Volume</p>

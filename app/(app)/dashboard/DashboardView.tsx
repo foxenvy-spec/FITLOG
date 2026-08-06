@@ -55,7 +55,7 @@ import BodyMetricsRow from '@/components/BodyMetricsRow'
 import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
-import { CARD_GRADIENT_CSS, lighten } from '@/lib/theme'
+import { CARD_GRADIENT_CSS, lighten, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 
@@ -63,13 +63,13 @@ import { computeFitnessScore } from '@/lib/fitnessScore'
 // Each fetches its own data independently, so there's no reason to block
 // first paint of the hero card on their JS or their network round-trip.
 const WeeklyMuscleHeatmap = dynamic(() => import('@/components/WeeklyMuscleHeatmap'), {
-  loading: () => <Skeleton className="h-80 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-80 w-full rounded-card" />,
 })
 const WeeklyVolume = dynamic(() => import('@/components/WeeklyVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-56 w-full rounded-card" />,
 })
 const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-56 w-full rounded-card" />,
 })
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
@@ -630,10 +630,10 @@ export default function DashboardPage() {
                   </span>
                   <p className="text-sm">
                     <span className="font-display uppercase tracked text-ink">Body Fat</span>{' '}
-                    <span className="font-mono font-semibold" style={{ color: '#8CB264' }}>
+                    <span className="font-mono font-semibold" style={{ color: COLORS.deltaGood }}>
                       ↓{Math.abs(bf.delta).toFixed(1)}%
                     </span>
-                    <span className="ml-2" style={{ color: '#8CB264' }}>
+                    <span className="ml-2" style={{ color: COLORS.deltaGood }}>
                       ยอดเยี่ยม! 🎉
                     </span>
                   </p>
@@ -649,7 +649,7 @@ export default function DashboardPage() {
                   <p className="text-sm">
                     <span className="font-display uppercase tracked text-ink">Workout Streak</span>
                     <span className="text-muted mx-1.5">•</span>
-                    <span className="font-mono font-semibold" style={{ color: '#8CB264' }}>
+                    <span className="font-mono font-semibold" style={{ color: COLORS.deltaGood }}>
                       {data.streak} วัน
                     </span>
                   </p>
@@ -709,16 +709,16 @@ export default function DashboardPage() {
                 className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
                 style={{
                   border: '1.5px solid transparent',
-                  backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, #22D3EE14, #22D3EE40, #22D3EE14)`,
+                  backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${withAlpha(COLORS.cyan, '14')}, ${withAlpha(COLORS.cyan, '40')}, ${withAlpha(COLORS.cyan, '14')})`,
                   backgroundOrigin: 'border-box',
                   backgroundClip: 'padding-box, border-box',
-                  boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 8px #22D3EE1F',
+                  boxShadow: `0 4px 14px rgba(0,0,0,.35), 0 0 8px ${withAlpha(COLORS.cyan, '1F')}`,
                 }}
               >
                 <span aria-hidden="true">💤</span>
                 <div className="leading-tight">
                   <p className="text-[9px] tracked uppercase text-muted">Recovery</p>
-                  <p className="text-xs font-display tracked uppercase" style={{ color: '#22D3EE' }}>
+                  <p className="text-xs font-display tracked uppercase" style={{ color: COLORS.cyan }}>
                     {fitnessScoreRecoveryPct >= 76 ? 'Excellent' : fitnessScoreRecoveryPct >= 41 ? 'Good' : 'Needs Rest'}
                   </p>
                 </div>
@@ -734,10 +734,10 @@ export default function DashboardPage() {
             className="hidden sm:inline-flex items-center gap-1.5 rounded-full text-[11px] text-ink px-3 py-1.5"
             style={{
               border: '1.5px solid transparent',
-              backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, #E8A33D14, #E8A33D40, #E8A33D14)`,
+              backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${withAlpha(COLORS.amber, '14')}, ${withAlpha(COLORS.amber, '40')}, ${withAlpha(COLORS.amber, '14')})`,
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
-              boxShadow: '0 4px 14px rgba(0,0,0,.35), 0 0 8px #E8A33D1F',
+              boxShadow: `0 4px 14px rgba(0,0,0,.35), 0 0 8px ${withAlpha(COLORS.amber, '1F')}`,
             }}
           >
             📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -781,13 +781,16 @@ export default function DashboardPage() {
           intentionally quieter (no shadow-hero, smaller type) so the eye has exactly one
           obvious place to land first. */}
       <div
-        className={`relative rounded-lg border border-amber/30 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
+        // v49: ฟีดแบ็ก "แต่ละ Card ใช้ Radius คนละแบบ" — เดิม rounded-lg (8px) ต่างจาก PremiumCard/
+        // AICoachCompactCard/WeeklyVolume ที่ 24px มาก เปลี่ยนเป็น rounded-card (token เดียวกัน) ให้
+        // มุมโค้งตรงกันทั้งแอป — border/shadow-hero ยังคงไว้เหมือนเดิม (จุดเด่นเฉพาะ Hero การ์ดเดียว)
+        className={`relative rounded-card border border-amber/30 shadow-hero overflow-hidden lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
         style={{
           // v41: "Version 3 (Minimal Dark Titanium)" — glow เดิม 14px/40 alpha เข้มไป ลดลงให้ Hero
           // ยังเด่นอยู่ (การ์ดเดียวที่ควรมี glow ตามกฎ "Hero มีแค่ใบเดียว") แต่ไม่จัดจ้านเท่าเดิม
-          boxShadow: '0 0 8px #E8A33D26, 0 0 1px #E8A33D66',
+          boxShadow: `0 0 8px ${withAlpha(COLORS.amber, '26')}, 0 0 1px ${withAlpha(COLORS.amber, '66')}`,
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
         onMouseMove={handleHeroMouseMove}
@@ -867,12 +870,12 @@ export default function DashboardPage() {
             glow เดิม (AMBER) คงไว้ผ่าน filter drop-shadow เดียวกับวงอื่นๆ ในหน้า ให้เข้าธีม
             v48: ฟีดแบ็ก "Ring ยังเด่นไปนิด สายตาไปที่ Ring ก่อนแทนที่จะไป DAY 3 / LEGS อยากลดประมาณ
             10-15%" — 100 -> 87 (-13%) strokeWidth ลดตามสัดส่วนเดียวกัน 8 -> 7 */}
-        <div className="absolute bottom-4 right-4 z-10" style={{ filter: 'drop-shadow(0 0 6px #E8A33D40)' }}>
+        <div className="absolute bottom-4 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
             size={87}
             strokeWidth={7}
-            color="#E8A33D"
+            color={COLORS.amber}
             label="ความพร้อม"
             ariaLabel="ความพร้อมของวันนี้"
             glow
@@ -1012,7 +1015,8 @@ export default function DashboardPage() {
           // v41: "Version 3 (Minimal Dark Titanium)" — เดิมมี border+boxShadow สีฟ้าเรืองแสงถาวรทั้งใบ
           // (Recovery เป็นการ์ดรอง ไม่ใช่ Hero) ตัด glow ระดับการ์ดออก เหลือแค่ border-line กลางเหมือน
           // การ์ดรองอื่นๆ ในแอป — สีฟ้ายังอยู่ที่วงแหวนด้านในเท่านั้น (ดู drop-shadow ของ GoalRing ด้านล่าง)
-          className="rounded-lg bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1"
+          // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
+          className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1"
           style={{ animationDelay: '240ms' }}
         >
           <Link href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
@@ -1036,14 +1040,14 @@ export default function DashboardPage() {
                       // เปลี่ยนป้ายให้ใช้สีฟ้าไซแอนเดียวกับวงแหวนแทน ให้ทั้งการ์ดเป็นโทนเดียวกัน (เฉพาะ
                       // 2 จุดนี้ — จุดสีเขียว/เหลือง/แดงในลิสต์รายกลุ่มกล้ามเนื้อด้านล่างยังคงไว้ เพราะเป็น
                       // สัญญาณข้อมูลจริงว่ากลุ่มไหนพร้อม/ไม่พร้อม ไม่ใช่แค่สีตกแต่ง)
-                      const recColor = '#22D3EE'
+                      const recColor = COLORS.cyan
                       // 90 mirrors FULLY_RECOVERED_PCT in lib/dashboardStats.ts (not exported,
                       // so re-checked here purely for the badge — doesn't change any computed pct)
                       const isFullyReady = recommendation.pct >= 90
                       return (
                         <div
                           className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 mb-3"
-                          style={{ backgroundColor: recColor + '1A' }}
+                          style={{ backgroundColor: withAlpha(recColor, '1A') }}
                         >
                           <span className="flex items-center gap-2 min-w-0">
                             <span className="text-sm shrink-0" aria-hidden="true">💪</span>
@@ -1058,7 +1062,7 @@ export default function DashboardPage() {
                           {isFullyReady && (
                             <span
                               className="shrink-0 text-[10px] font-display tracked uppercase rounded-full px-2.5 py-1"
-                              style={{ backgroundColor: recColor, color: '#14161A' }}
+                              style={{ backgroundColor: recColor, color: NEUTRAL.onAmberText }}
                             >
                               พร้อมลุย
                             </span>
@@ -1079,12 +1083,12 @@ export default function DashboardPage() {
                             (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ
                             v47: ฟีดแบ็ก "การ์ดนี้ข้อมูลเยอะแต่ Ring ยังเล็ก ขยายประมาณ 15% จะบาลานซ์กว่า" —
                             84 -> 97 (+15%), strokeWidth ขยายตามสัดส่วนเดียวกัน (8 -> 9) */}
-                        <div style={{ filter: 'drop-shadow(0 0 4px #22D3EE40)' }}>
+                        <div style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.cyan, '40')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
                             size={97}
                             strokeWidth={9}
-                            color="#22D3EE"
+                            color={COLORS.cyan}
                             label="พื้นตัวรวม"
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
                             glow
@@ -1155,7 +1159,8 @@ export default function DashboardPage() {
           and a flat percent-bar in another. */}
       <div
         // v41: เหตุผลเดียวกับการ์ด Recovery ด้านบน — ตัด glow ระดับการ์ดออก เหลือ border-line กลาง
-        className="rounded-lg bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
+        // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
+        className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
         style={{ animationDelay: '300ms' }}
       >
         <div className="px-4 py-4">
@@ -1170,13 +1175,13 @@ export default function DashboardPage() {
                 (ripple 2 ครั้งแล้วหยุด ใช้กับการ์ด PR celebration อยู่แล้ว) มาใช้ซ้ำแทนสร้าง keyframe ใหม่ */}
             <div
               className={data.weeklyGoalPct >= 100 ? 'rounded-full animate-pr-glow' : undefined}
-              style={{ filter: 'drop-shadow(0 0 4px #E8A33D40)', ...({ '--pr-glow': 'rgba(232,163,61,.5)' } as React.CSSProperties) }}
+              style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.amber, '40')})`, ...({ '--pr-glow': 'rgba(232,163,61,.5)' } as React.CSSProperties) }}
             >
               <GoalRing
                 pct={data.weeklyGoalPct}
                 size={72}
                 strokeWidth={7}
-                color="#E8A33D"
+                color={COLORS.amber}
                 label="Goal"
                 ariaLabel="Weekly Goal"
                 glow
@@ -1213,8 +1218,8 @@ export default function DashboardPage() {
                   className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0"
                   style={
                     tick.trained
-                      ? { backgroundColor: '#7A9B57', color: '#14161A' }
-                      : { backgroundColor: '#2E333A', color: '#9498A0' }
+                      ? { backgroundColor: COLORS.moss, color: NEUTRAL.onAmberText }
+                      : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }
                   }
                   aria-hidden="true"
                 >
@@ -1309,7 +1314,8 @@ export default function DashboardPage() {
           "what happened this week" before "what's coming up next". PR history lives
           on the Statistics page alongside the rest of the analytics. */}
       {next && (
-        <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden lg:col-span-12 lg:order-20">
+        // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
+        <div className="rounded-card bg-surface border border-line shadow-elevated overflow-hidden lg:col-span-12 lg:order-20">
           <div className="px-4 py-3 flex items-center justify-between">
             <p className="text-[11px] text-muted">
               Next up: <span className="text-ink">{next.day.title}</span>
@@ -1349,13 +1355,11 @@ export default function DashboardPage() {
   )
 }
 
-const QUICK_ACTION_ACCENTS = {
-  amber: '#E8A33D',
-  steel: '#6C8CA8',
-  moss: '#7A9B57',
-  violet: '#9C7CC4',
-  rust: '#C1503A',
-} as const
+// v49: ฟีดแบ็ก "แต่ละ Card ใช้สีคนละแบบ...ควรมี Design System อิง Token เดียว" — เดิมไฟล์นี้มี object นี้
+// ประกาศ hex ซ้ำกับ COLORS ใน lib/theme.ts เป๊ะทั้ง 5 ค่า (amber/steel/moss/violet/rust) แยกเป็นชุด
+// ของตัวเอง ถ้าใครเปลี่ยนสีใน lib/theme.ts จะไม่มีผลกับปุ่ม Quick Action เลย — เก็บแค่ type ที่จำกัด 5
+// คีย์ไว้ (QuickAction ตั้งใจให้เลือกได้แค่ 5 สีนี้ ไม่ใช่ทุกสีใน COLORS) แต่ดึงค่าจริงจาก COLORS แทน
+type QuickActionAccent = 'amber' | 'steel' | 'moss' | 'violet' | 'rust'
 
 function QuickAction({
   href,
@@ -1366,9 +1370,9 @@ function QuickAction({
   href: string
   label: string
   icon: string
-  accent?: keyof typeof QUICK_ACTION_ACCENTS
+  accent?: QuickActionAccent
 }) {
-  const hex = QUICK_ACTION_ACCENTS[accent]
+  const hex = COLORS[accent]
   return (
     <>
       {/* v45: ฟีดแบ็ก "Quick Action ยังเรียบไป อยากได้ Glass Button + Glow ตอน Hover" — เดิมพื้นทึบ

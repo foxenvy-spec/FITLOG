@@ -48,7 +48,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
   return (
     <>
       <Comp
-        className={`premium-card relative overflow-hidden rounded-[24px] ${className}`}
+        className={`premium-card relative overflow-hidden rounded-card ${className}`}
         onPointerDown={handlePointerDown}
         // v2: เดิม `style={{...}} {...rest}` — ถ้า rest มี style ของตัวเอง (เช่น TodaysFocusCard/
         // TodaysWorkoutCompactCard ที่ส่ง padding/minHeight/clipPath มา) จะ "แทนที่" ทั้งก้อนแทนที่จะ
