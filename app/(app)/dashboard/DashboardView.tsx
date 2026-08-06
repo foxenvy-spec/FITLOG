@@ -609,14 +609,17 @@ export default function DashboardPage() {
           >
             {data.profileDisplayName || emailDisplayName(data.email)}
           </p>
-          {/* เส้น gradient สั้นๆ ใต้ชื่อ (60-80px) คั่นระหว่าง hero name กับบรรทัด insight ด้านล่าง */}
+          {/* เส้น gradient สั้นๆ ใต้ชื่อ (60-80px) คั่นระหว่าง hero name กับบรรทัด insight ด้านล่าง
+              v60: ฟีดแบ็ก "เพิ่มระยะห่างระหว่าง BANK กับ BODY FAT... ประมาณ 6-8px จะหายใจขึ้น" —
+              marginBottom (ช่องว่างระหว่างเส้นคั่นกับบรรทัด insight ด้านล่าง) 10 -> 18 (+8px) ไม่แตะ
+              marginTop (ช่องว่างระหว่างชื่อกับเส้นคั่น) เพราะฟีดแบ็กพูดถึงช่องว่างรวมก่อนถึงบรรทัด Body Fat */}
           <div
             aria-hidden="true"
             style={{
               width: 70,
               height: 3,
               marginTop: 8,
-              marginBottom: 10,
+              marginBottom: 18,
               borderRadius: 2,
               background: 'linear-gradient(90deg, rgba(255,255,255,.5), transparent)',
             }}
@@ -837,7 +840,11 @@ export default function DashboardPage() {
             (บางลงเกินครึ่ง) glow อำพันเดิม (radial 88% 28%) เพิ่ม alpha .16 -> .28 (~75%) ให้ความรู้สึก
             "แสงพลังงาน" เด่นขึ้นแทนที่จะจมอยู่ใต้ความมืด — เพิ่มเลเยอร์ "rim light" ใหม่ (เส้นไล่สีอำพันแนวตั้ง
             บางๆ ตรงรอยต่อระหว่างรูปกับ gradient fade ซ้าย, mixBlendMode: screen ให้เรืองแสงจริงไม่ใช่ทาสีทับ)
-            จำลองขอบแสงกระทบดัมเบล ให้มีมิติมากกว่าแค่ภาพแบน */}
+            จำลองขอบแสงกระทบดัมเบล ให้มีมิติมากกว่าแค่ภาพแบน
+            v59: ฟีดแบ็ก "รูปดัมเบลยังนิ่ง อยากเพิ่มฝุ่นลอย/particle/แสงสะท้อน/flare นิดเดียว ไม่ถึงกับ Gaming
+            แต่เหมือนถ่ายในสตูดิโอ" — เพิ่มเลเยอร์ specular flare (เส้นทแยงบางๆ ไล่ขาว/ครีมอ่อนๆ mixBlendMode:
+            overlay จำลองแสงสะท้อนผิวโลหะแบบสตูดิโอ ไม่ใช่แสง flare แบบเกม) วางทับรูปแต่ใต้ overlay มืด/glow
+            เดิม */}
         <div className="absolute inset-0 bg-surface overflow-hidden">
           <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box overflow-hidden">
             <div className="absolute inset-0" style={{ transform: 'scale(0.92)', transformOrigin: '60% 42%' }}>
@@ -858,6 +865,15 @@ export default function DashboardPage() {
               style={{
                 background: `linear-gradient(90deg, ${withAlpha(COLORS.amber, '00')} 0%, ${withAlpha(COLORS.amber, '55')} 8%, transparent 22%)`,
                 mixBlendMode: 'screen',
+              }}
+              aria-hidden="true"
+            />
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(115deg, transparent 38%, rgba(255,255,255,.10) 47%, rgba(255,244,224,.16) 50%, rgba(255,255,255,.08) 53%, transparent 62%)',
+                mixBlendMode: 'overlay',
               }}
               aria-hidden="true"
             />
@@ -891,14 +907,18 @@ export default function DashboardPage() {
               เพิ่มอีก 2 จุด (bokeh วงใหญ่เบลอจาง + ฝุ่นทองเล็ก) รวมเป็น 5 ทั้งหมด แต่ทุกจุดใหม่กระจุกอยู่
               โซนบนของดัมเบล (top ~10-22%) ตามที่ขอเจาะจง ไม่ใช่กระจายทั่วการ์ดเหมือนเซ็ตเดิม
               v56: ฟีดแบ็ก "particle/dust/orange glow เพิ่มความรู้สึก 'วันนี้คือวันลุย'" — เพิ่มอีก 2 จุด
-              (bokeh กลางเฟรม + spark ฝั่งขวาล่าง) รวมเป็น 7 จุด ให้ภาพดูมีพลัง/เคลื่อนไหวมากขึ้น */}
+              (bokeh กลางเฟรม + spark ฝั่งขวาล่าง) รวมเป็น 7 จุด ให้ภาพดูมีพลัง/เคลื่อนไหวมากขึ้น
+              v59: ฟีดแบ็ก "รูปดัมเบลยังนิ่ง อยากเพิ่มฝุ่นลอย นิดเดียว" — เพิ่ม animation ลอยเบาๆ (translate
+              ไม่กี่ px, 6-8.5s/รอบ) ให้ 3 จุดที่เบลอนุ่มอยู่แล้ว (ไม่ใส่กับจุด spark คมๆ กันดูรบกวนเกินไป)
+              — เพิ่ม 2 จุดฝุ่นจางมากๆ (opacity .22-.28) ที่ฝั่งซ้ายของการ์ด (นอกกรอบรูปเดิม เข้าไปในโซน
+              ข้อความ) ให้ทั้งการ์ดรู้สึกเป็นฉากเดียวกัน ไม่ใช่รูปกับข้อความคนละที่ (ดู "การ์ดกับรูปแยกกัน" ด้านล่าง) */}
           <div
-            className="absolute rounded-full pointer-events-none"
+            className="absolute rounded-full pointer-events-none hero-dust-float-a"
             style={{ left: '58%', top: '16%', width: 22, height: 22, background: 'radial-gradient(circle, rgba(255,200,120,.22), transparent 70%)', filter: 'blur(3px)' }}
             aria-hidden="true"
           />
           <div
-            className="absolute rounded-full pointer-events-none"
+            className="absolute rounded-full pointer-events-none hero-dust-float-b"
             style={{ left: '68%', top: '10%', width: 10, height: 10, background: 'radial-gradient(circle, rgba(255,244,224,.35), transparent 70%)', filter: 'blur(1.5px)' }}
             aria-hidden="true"
           />
@@ -908,7 +928,7 @@ export default function DashboardPage() {
             aria-hidden="true"
           />
           <div
-            className="absolute rounded-full pointer-events-none"
+            className="absolute rounded-full pointer-events-none hero-dust-float-c"
             style={{ left: '50%', top: '45%', width: 12, height: 12, background: 'radial-gradient(circle, rgba(255,184,74,.18), transparent 70%)', filter: 'blur(2px)' }}
             aria-hidden="true"
           />
@@ -927,7 +947,29 @@ export default function DashboardPage() {
             style={{ left: '92%', top: '38%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.55, boxShadow: '0 0 4px 1px rgba(255,184,74,.5)' }}
             aria-hidden="true"
           />
+          <span
+            className="absolute rounded-full pointer-events-none hero-dust-float-d"
+            style={{ left: '4%', top: '30%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.28, boxShadow: '0 0 4px 1px rgba(255,184,74,.3)' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: '-2%', top: '68%', width: 1.5, height: 1.5, background: '#FFF4E0', opacity: 0.22, boxShadow: '0 0 3px 1px rgba(255,184,74,.25)' }}
+            aria-hidden="true"
+          />
         </div>
+
+        {/* v59: ฟีดแบ็ก "Card กับรูปยังแยกกัน เหมือนเอา Card มาวางทับรูป ไม่ได้เชื่อมกัน อยากได้ vignette ให้
+            Card รู้สึกลอยอยู่ในฉากเดียวกัน" — เพิ่ม vignette ครอบทั้งการ์ด (ไม่ใช่แค่ครึ่งรูป) มืดขอบ 4 มุม
+            เบาๆ เท่ากันทั้งใบ ให้ฝั่งข้อความ (ซ้าย) กับฝั่งรูป (ขวา) ถูกมืดขอบแบบเดียวกัน อ่านเป็นภาพถ่ายเดียว
+            ที่มีการ์ด (กระจก) ลอยอยู่ข้างใน แทนที่จะเป็น 2 พื้นผิวแยกกันชัดเจน — วางไว้เหนือทุกเลเยอร์ของภาพ/
+            gradient เดิมแต่ใต้ ring/ข้อความ (pointer-events-none, ไม่มี z ระบุ = อยู่ในลำดับ DOM ปกติ ก่อน
+            ring/ข้อความที่มี z-10 อยู่แล้ว) */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 130% 130% at 50% 45%, transparent 55%, rgba(0,0,0,.30) 100%)' }}
+          aria-hidden="true"
+        />
 
         {/* v46: "Titanium Reflection" — จุดสว่างจางๆ ตามตำแหน่งเมาส์ (เขียน background ตรงผ่าน ref ใน
             handleHeroMouseMove ด้านบน ไม่ผ่าน React state) วางไว้เหนือชั้นวัสดุพื้นแต่ใต้เนื้อหา (z-10) */}
@@ -986,7 +1028,9 @@ export default function DashboardPage() {
             style={{ left: '50%', top: -1, width: 4, height: 4, transform: 'translateX(-50%)', background: '#FFF4E0', boxShadow: '0 0 6px 2px rgba(255,184,74,.8)' }}
           />
         </div>
-        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '40')})` }}>
+        {/* v60: ฟีดแบ็ก "วงแหวนตอนนี้ดูดีแล้ว แต่ถ้า Glow เบาลงอีก 10% จะดูแพงขึ้น (Apple ชอบทำ Glow บางมาก)"
+            — drop-shadow alpha '40' (25.1%) ลด ~10% เชิงสัมพัทธ์ -> '3A' (22.7%) */}
+        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '3A')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
             size={64}
@@ -1262,7 +1306,13 @@ export default function DashboardPage() {
                         // dashboardStats.ts — ต่ำกว่านี้คือ Recovering/Rest แปลว่ายังไม่พร้อมจริง) จาก
                         // ทั้งหมด RECOVERY_MUSCLES.length (7) ให้ตัวเลขสอดคล้องกับสีของแท่ง/badge รายกลุ่ม
                         // ด้านขวาเป๊ะ ไม่ใช่เกณฑ์แยกต่างหาก
-                        <div className="shrink-0 ml-3" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '2D')})` }}>
+                        //
+                        // v60: ฟีดแบ็ก "ตอนนี้เหลือเยอะไปนิด (3 บรรทัด) ข้อมูลด้านขวาก็บอกอยู่แล้วว่า 7
+                        // กล้ามเนื้อเหลืออะไร ไม่ต้องบอกซ้ำ" — ตัดบรรทัดที่ 3 ("Recovered X/7" จาก v57) ออก
+                        // กลับไปเหลือ 2 บรรทัดเหมือน v56 ("Recovery" + สถานะ) — glow ก็เบาลง ~10% ตามฟีดแบ็ก
+                        // "วงแหวนดูดีแล้ว แต่ถ้า Glow เบาลงอีก 10% จะดูแพงขึ้น แบบ Apple" alpha '2D' (17.6%)
+                        // -> '28' (15.7%)
+                        <div className="shrink-0 ml-3" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '28')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
                             size={106}
@@ -1273,10 +1323,6 @@ export default function DashboardPage() {
                                 <span className="text-muted">Recovery</span>
                                 <span style={{ color: recoveryStatusColor(overallRecoveryPct) }}>
                                   {recoveryTier(overallRecoveryPct).labelEn}
-                                </span>
-                                <span className="text-[7px] text-muted/70 mt-0.5">
-                                  Recovered {RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] >= 65).length}/
-                                  {RECOVERY_MUSCLES.length}
                                 </span>
                               </span>
                             }

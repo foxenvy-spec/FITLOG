@@ -372,7 +372,11 @@
   .animate-bell-swing,
   .animate-fade-scale-in,
   .hud-outer-ring,
-  .hud-bead-orbit {
+  .hud-bead-orbit,
+  .hero-dust-float-a,
+  .hero-dust-float-b,
+  .hero-dust-float-c,
+  .hero-dust-float-d {
     animation: none !important;
   }
   .cta-sweep::after {
@@ -456,4 +460,32 @@
   100% {
     left: 130%;
   }
+}
+
+/* v59: ฟีดแบ็ก "รูปดัมเบลยังนิ่ง อยากเพิ่มฝุ่นลอย นิดเดียว" — ลอยเบาๆ (ไม่กี่ px, ช้ามาก 6-8.5s/รอบ) ให้
+   จุดฝุ่นเบลอนุ่ม 3 จุดใน Hero card (DashboardView.tsx .hero-dust-float-a/b/c) จุด spark คมๆ ไม่ใส่ลอย
+   กันดูรบกวนเกินไป — จุดที่ 4 (.hero-dust-float-d) อยู่ฝั่งข้อความซ้าย ลอยแยกจังหวะกันเอง */
+@keyframes hero-dust-float-a {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-2px, -4px); }
+}
+.hero-dust-float-a {
+  animation: hero-dust-float-a 6s ease-in-out infinite;
+}
+@keyframes hero-dust-float-b {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(3px, -3px); }
+}
+.hero-dust-float-b {
+  animation: hero-dust-float-b 7.5s ease-in-out infinite;
+}
+@keyframes hero-dust-float-c {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(2px, 3px); }
+}
+.hero-dust-float-c {
+  animation: hero-dust-float-c 8.5s ease-in-out infinite;
+}
+.hero-dust-float-d {
+  animation: hero-dust-float-c 7s ease-in-out infinite reverse;
 }
