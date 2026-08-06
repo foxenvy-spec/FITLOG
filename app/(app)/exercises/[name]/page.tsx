@@ -136,7 +136,7 @@ export default function ExerciseDetailPage() {
 
       {known && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="relative w-full aspect-square rounded-xl bg-panel overflow-hidden">
+          <div className="relative w-full aspect-square rounded-xl bg-surface2 overflow-hidden">
             {known.imageUrl ? (
               <Image
                 src={known.imageUrl}
@@ -160,7 +160,7 @@ export default function ExerciseDetailPage() {
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
           {known.highlighterMuscles.length > 0 && (
-            <div className="rounded-xl bg-panel flex items-center justify-center py-2">
+            <div className="rounded-xl bg-surface2 flex items-center justify-center py-2">
               <MuscleDiagram exerciseName={known.name} highlighterMuscles={known.highlighterMuscles} />
             </div>
           )}

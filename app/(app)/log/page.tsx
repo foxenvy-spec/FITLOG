@@ -582,7 +582,7 @@ function LogPageInner() {
               {(selectedExercise?.imageUrl || highlighterMuscles.length > 0) && (
                 <div className="mt-2 flex items-start gap-2">
                   {selectedExercise?.imageUrl && (
-                    <div className="relative flex-1 min-w-0 aspect-square rounded-xl bg-panel overflow-hidden">
+                    <div className="relative flex-1 min-w-0 aspect-square rounded-xl bg-surface2 overflow-hidden">
                       <Image
                         src={selectedExercise.imageUrl}
                         alt={selectedExercise.name}
@@ -594,7 +594,7 @@ function LogPageInner() {
                     </div>
                   )}
                   {highlighterMuscles.length > 0 && (
-                    <div className="flex-1 min-w-0 rounded-xl bg-panel flex items-center justify-center py-2 self-stretch">
+                    <div className="flex-1 min-w-0 rounded-xl bg-surface2 flex items-center justify-center py-2 self-stretch">
                       <MuscleDiagram exerciseName={exerciseName} highlighterMuscles={highlighterMuscles} />
                     </div>
                   )}
