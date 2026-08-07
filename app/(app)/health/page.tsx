@@ -2273,7 +2273,10 @@ function OverviewHealthScoreHeader({
           (ไม่ใช่ elemente ลอย) แล้วใส่ justify-between ที่ container ให้ 4 บล็อกกระจายเต็มความกว้างการ์ดเอง
           โดยไม่ต้องเพิ่มข้อมูลใหม่ */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4 shrink-0">
+        {/* ฟีดแบ็ก "ขยับกลุ่ม Health Score เข้าหาวงอีกนิด — ตอนนี้วง -> ช่องว่างเยอะ -> HEALTH SCORE ทำให้
+            90% กับดีมาก ดูแยกกัน อยากให้วงกับข้อความรู้สึกเป็นโมดูลเดียวกัน" — ลด gap จาก gap-4 (16px) เหลือ
+            gap-2 (8px) แค่ระยะห่างเท่านั้น ไม่แตะขนาด/สีอะไรอื่น */}
+        <div className="flex items-center gap-2 shrink-0">
           <div style={{ filter: 'drop-shadow(0 0 12px rgba(232,163,61,.35))' }}>
             <GoalRing pct={pct} size={130} strokeWidth={11} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
           </div>
@@ -2334,7 +2337,12 @@ function OverviewHealthScoreHeader({
         </div>
       </div>
 
-      {summary && <p className="text-[11px] text-muted mt-2">{summary}</p>}
+      {/* ฟีดแบ็ก "ลดไขมัน พร้อมรักษามวลกล้ามเนื้อ อยู่ชิดล่างซ้ายมากและค่อนข้างเล็ก — ทำเป็น Insight line ที่
+          ชัดขึ้นอีกนิด สีเทาอ่อนกว่า background ประมาณหนึ่งระดับ ไม่ต้องเขียว เพราะเป็นคำอธิบาย ไม่ใช่สถานะ" —
+          ขยายจาก text-[11px] เป็น text-xs (12px) และเปลี่ยนสีจาก text-muted (#9498A0) เป็น text-ink/65 (ขาว
+          นวลลดทึบ) อ่อนกว่าตัวข้อมูลหลัก (text-ink เต็ม) แต่เด่นกว่า muted เดิม ไม่ใช้สีเขียวเพราะไม่ใช่สถานะ
+          บวก/ลบเหมือนการเปลี่ยนแปลง */}
+      {summary && <p className="text-xs text-ink/65 mt-2">{summary}</p>}
 
       {showBreakdown && categoryRows.length > 0 && (
         <div className="mt-3 pt-3 border-t border-line space-y-1.5">
