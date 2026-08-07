@@ -886,8 +886,26 @@ export default function HealthPage() {
   // ฟีดแบ็ก "Card ยัง Information ไม่มี Insight" — ข้อความสั้นๆ ใต้เดลต้าของการ์ดน้ำหนัก/ไขมันในร่างกาย
   // (สองการ์ดที่ฟีดแบ็กยกตัวอย่างมาตรงๆ) คำนวณจากขนาดของเดลต้าจริง ไม่ใช่ copy สำเร็จรูปที่ขึ้นเสมอ
   const weightDeltaForCard = fieldDelta('weight_kg', toDisplay)
-  const weightInsight =
-    weightDeltaForCard === null
+
+  // ฟีดแบ็ก "↑ 0.9 kg ไม่ควรเป็นสีแดงเสมอ — ถ้าไขมันลดและกล้ามเนื้อเพิ่มพร้อมกัน น้ำหนักที่เพิ่มน่าจะมาจาก
+  // กล้ามเนื้อ ซึ่งเป็นเรื่องดี" — เดิม weightDirection มาจากเป้าหมายน้ำหนักเพียงอย่างเดียว (ไม่มีเป้าหมาย =
+  // ตั้งต้นเป็น "ยิ่งลดยิ่งดี" เสมอ ทำให้น้ำหนักขึ้นโดนตัดสินเป็นสีแดงทันทีไม่ว่าจะมาจากไขมันหรือกล้ามเนื้อ) —
+  // เช็คสัญญาณองค์ประกอบร่างกายจริงก่อน (ไขมันไม่เพิ่ม + กล้ามเนื้อเพิ่ม ขณะน้ำหนักเพิ่ม) ถ้าเข้าเงื่อนไข
+  // ให้ใช้สีกลาง (neutral/titanium แทนแดง) และเปลี่ยนข้อความ insight เป็นคำอธิบายที่มาแทนคำแนะนำทั่วไป
+  const muscleDeltaForWeightCheck = fieldDelta('muscle_kg', toDisplay)
+  const bodyFatDeltaForWeightCheck = fieldDelta('body_fat_pct')
+  const weightGainLooksLikeMuscle =
+    weightDeltaForCard !== null &&
+    weightDeltaForCard > 0 &&
+    bodyFatDeltaForWeightCheck !== null &&
+    bodyFatDeltaForWeightCheck <= 0 &&
+    muscleDeltaForWeightCheck !== null &&
+    muscleDeltaForWeightCheck > 0
+  const weightCardDirection: Direction = weightGainLooksLikeMuscle ? 'neutral' : weightDirection
+
+  const weightInsight = weightGainLooksLikeMuscle
+    ? 'ส่วนใหญ่จากมวลกล้ามเนื้อ'
+    : weightDeltaForCard === null
       ? null
       : Math.abs(weightDeltaForCard) < 0.5
         ? 'อยู่ในช่วงผันผวนปกติ'
@@ -993,7 +1011,6 @@ export default function HealthPage() {
             score={healthScore}
             items={healthScoreItems}
             monthDeltaPct={healthScoreMonthDeltaPct}
-            selfPercentile={healthScorePercentile}
             bodyFatDeltaPct={fieldDelta('body_fat_pct')}
             muscleMassDelta={fieldDelta('muscle_kg', toDisplay)}
             targetBodyFatPct={goals.find((g) => g.goal_type === 'body_fat' && g.status === 'active')?.target_value ?? null}
@@ -1018,7 +1035,7 @@ export default function HealthPage() {
               unit={unit}
               delta={weightDeltaForCard}
               deltaUnit={unit}
-              direction={weightDirection}
+              direction={weightCardDirection}
               series={weightTrend30}
               trendLabel="30 DAY TREND"
               lastMeasuredLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
@@ -2077,7 +2094,6 @@ function OverviewHealthScoreHeader({
   score,
   items,
   monthDeltaPct,
-  selfPercentile,
   bodyFatDeltaPct,
   muscleMassDelta,
   targetBodyFatPct,
@@ -2087,7 +2103,6 @@ function OverviewHealthScoreHeader({
   score: { good: number; standard: number; needsWork: number; total: number; score: number }
   items: { label: string; status: 'good' | 'standard' | 'needsWork' }[]
   monthDeltaPct?: number | null
-  selfPercentile?: number | null
   bodyFatDeltaPct: number | null
   muscleMassDelta: number | null
   targetBodyFatPct: number | null
@@ -2175,21 +2190,13 @@ function OverviewHealthScoreHeader({
           </>
         )}
 
+        {/* ฟีดแบ็ก "Top X% ไม่ค่อยมี value เทียบกับใครไม่ชัด — ชอบใช้ข้อมูลของผู้ใช้เองมากกว่า" — ตัดบล็อก
+            Rank/percentile ออก เหลือ Score/Trend/Target/Updated ซึ่งล้วนเป็นข้อมูลของผู้ใช้เองทั้งหมด */}
         <div className="w-px self-stretch bg-line hidden sm:block" />
         <div className="shrink-0">
           <p className="text-[10px] tracked uppercase text-muted">Updated</p>
           <p className="font-mono text-sm text-ink">{updatedLabel ?? '—'}</p>
         </div>
-
-        {selfPercentile !== null && selfPercentile !== undefined && (
-          <>
-            <div className="w-px self-stretch bg-line hidden sm:block" />
-            <div className="shrink-0">
-              <p className="text-[10px] tracked uppercase text-muted">Rank</p>
-              <p className="font-mono text-sm text-ink">Top {selfPercentile}%</p>
-            </div>
-          </>
-        )}
       </div>
 
       {showBreakdown && categoryRows.length > 0 && (
@@ -2746,6 +2753,13 @@ function IconStatCard({
         ? { text: note, color: noteGood ? 'text-moss' : 'text-rusttext' }
         : null
 
+  // ฟีดแบ็ก "อย่าให้ทุก Metric มีคำว่า 'ปกติ' — ถ้าทุก Card มี status เหมือนกัน หน้าเริ่มดูเป็นเครื่องชั่ง
+  // วิเคราะห์ร่างกาย ไม่ใช่ FITLOG — status ควรใช้เฉพาะตอนมี insight" — "ปกติ" (zone Standard) คือสถานะที่ไม่มี
+  // นัยอะไรเป็นพิเศษ (แค่ "อยู่ในช่วงคาดหวัง") ถ้าการ์ดมีเดลต้าที่บอกการเปลี่ยนแปลงจริงอยู่แล้ว เดลต้านั้น
+  // ให้ข้อมูลมากกว่าป้าย "ปกติ" ซ้ำๆ กันหลายใบ — ซ่อนป้ายเฉพาะกรณีนี้ ส่วนโซน Low/High (ค่าที่หลุดช่วง จริงๆ
+  // เป็นสัญญาณที่มีความหมาย ไม่ว่าจะดีหรือไม่ดี) ยังโชว์เสมอเหมือนเดิม
+  const showZonePill = zone !== null && !(zone === 'Standard' && secondary !== null)
+
   return (
     <PremiumCard
       className={`h-full flex flex-col metric-card-hover ${
@@ -2766,7 +2780,7 @@ function IconStatCard({
           <p className={`text-ink font-medium leading-snug ${primary ? 'text-sm' : 'text-xs'}`}>{label}</p>
           <p className={`tracked uppercase text-muted leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</p>
         </div>
-        {zoneLabel && (
+        {showZonePill && zoneLabel && (
           <span
             className={`ml-auto shrink-0 font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${zonePillClass} ${primary ? 'text-[11px]' : 'text-[9px]'}`}
           >
