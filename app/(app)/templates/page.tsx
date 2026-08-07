@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { WorkoutTemplate, WorkoutTemplateExercise, ProgramDay } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
 import { WEEKDAYS, WEEKDAYS_SHORT, todayStr } from '@/lib/weekdays'
-import { parseRangeToNumber, rirToRpe } from '@/lib/importWorkoutExcel'
+import { parseRangeToNumber, rirToRpe, parseWorkoutExcel } from '@/lib/importWorkoutExcel'
+import { getExerciseLibrary } from '@/lib/exerciseLibrary'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
@@ -192,73 +193,166 @@ export default function TemplatesPage() {
     downloadBlob(JSON.stringify(payload, null, 2), `fitlog-template-${slugify(t.title)}.json`, 'application/json')
   }
 
+  // ฟีดแบ็ก "หน้าเทมเพลต import excel ไม่ได้" — เดิม input รับแค่ application/json (ไฟล์ export ของ FITLOG
+  // เอง) ไฟล์ .xlsx ที่โค้ช/AI สร้างให้เลือกไม่ได้เลยด้วยซ้ำ (accept กรอง) — แยกเป็นสองฟังก์ชันตามนามสกุลไฟล์
+  // แทน .json ยังเข้าทาง handleImportJson เดิมทุกประการ ส่วน .xlsx เข้าทาง handleImportExcel ใหม่ (ใช้ตัว
+  // parseWorkoutExcel เดียวกับหน้า /import แต่บันทึกลง workout_templates แทน program_days — 1 วัน/บล็อกในไฟล์
+  // = 1 เทมเพลต ให้ตรงกับสิ่งที่ผู้ใช้เห็นในหน้านี้)
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
 
+    const isExcel = /\.xlsx?$/i.test(file.name)
     setImporting(true)
     setError(null)
     setImportMessage(null)
     try {
-      const text = await file.text()
-      const parsed = JSON.parse(text) as Partial<TemplateExport>
-      if (parsed?.type !== 'fitlog-template' || typeof parsed.title !== 'string' || !Array.isArray(parsed.exercises)) {
-        setError('ไฟล์นี้ไม่ใช่เทมเพลตที่รองรับ')
-        return
+      if (isExcel) {
+        await handleImportExcel(file)
+      } else {
+        await handleImportJson(file)
       }
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        setError('กรุณาเข้าสู่ระบบใหม่')
-        return
-      }
-
-      const { data: newTemplate, error: tErr } = await supabase
-        .from('workout_templates')
-        .insert({ user_id: user.id, title: parsed.title })
-        .select('*')
-        .single()
-      if (tErr || !newTemplate) {
-        setError(`นำเข้าเทมเพลตไม่สำเร็จ: ${tErr?.message ?? 'unknown error'}`)
-        return
-      }
-      const created = newTemplate as WorkoutTemplate
-
-      if (parsed.exercises.length > 0) {
-        const payload = parsed.exercises.map((ex, i) => ({
-          template_id: created.id,
-          user_id: user.id,
-          position: i,
-          exercise_name: ex.exercise_name,
-          muscle_group: ex.muscle_group ?? null,
-          secondary_muscles: ex.secondary_muscles ?? [],
-          exercise_library_id: ex.exercise_library_id ?? null,
-          sets: ex.sets ?? null,
-          target_reps: ex.target_reps ?? null,
-          target_rir: ex.target_rir ?? null,
-          rest: ex.rest ?? null,
-          default_weight_kg: ex.default_weight_kg ?? null,
-          notes: ex.notes ?? null,
-        }))
-        const { data: exRows, error: exErr } = await supabase.from('workout_template_exercises').insert(payload).select('*')
-        if (exErr) {
-          setError(`นำเข้าท่าไม่สำเร็จ: ${exErr.message}`)
-        } else {
-          setExercisesByTemplate((prev) => ({ ...prev, [created.id]: exRows as WorkoutTemplateExercise[] }))
-        }
-      }
-
-      setTemplates((prev) => [created, ...prev])
-      setExpandedId(created.id)
-      setImportMessage(`นำเข้า "${created.title}" (${parsed.exercises.length} ท่า) แล้ว`)
     } catch (err) {
       setError(`นำเข้าไฟล์ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setImporting(false)
     }
+  }
+
+  async function handleImportJson(file: File) {
+    const text = await file.text()
+    const parsed = JSON.parse(text) as Partial<TemplateExport>
+    if (parsed?.type !== 'fitlog-template' || typeof parsed.title !== 'string' || !Array.isArray(parsed.exercises)) {
+      setError('ไฟล์นี้ไม่ใช่เทมเพลตที่รองรับ')
+      return
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      setError('กรุณาเข้าสู่ระบบใหม่')
+      return
+    }
+
+    const { data: newTemplate, error: tErr } = await supabase
+      .from('workout_templates')
+      .insert({ user_id: user.id, title: parsed.title })
+      .select('*')
+      .single()
+    if (tErr || !newTemplate) {
+      setError(`นำเข้าเทมเพลตไม่สำเร็จ: ${tErr?.message ?? 'unknown error'}`)
+      return
+    }
+    const created = newTemplate as WorkoutTemplate
+
+    if (parsed.exercises.length > 0) {
+      const payload = parsed.exercises.map((ex, i) => ({
+        template_id: created.id,
+        user_id: user.id,
+        position: i,
+        exercise_name: ex.exercise_name,
+        muscle_group: ex.muscle_group ?? null,
+        secondary_muscles: ex.secondary_muscles ?? [],
+        exercise_library_id: ex.exercise_library_id ?? null,
+        sets: ex.sets ?? null,
+        target_reps: ex.target_reps ?? null,
+        target_rir: ex.target_rir ?? null,
+        rest: ex.rest ?? null,
+        default_weight_kg: ex.default_weight_kg ?? null,
+        notes: ex.notes ?? null,
+      }))
+      const { data: exRows, error: exErr } = await supabase.from('workout_template_exercises').insert(payload).select('*')
+      if (exErr) {
+        setError(`นำเข้าท่าไม่สำเร็จ: ${exErr.message}`)
+      } else {
+        setExercisesByTemplate((prev) => ({ ...prev, [created.id]: exRows as WorkoutTemplateExercise[] }))
+      }
+    }
+
+    setTemplates((prev) => [created, ...prev])
+    setExpandedId(created.id)
+    setImportMessage(`นำเข้า "${created.title}" (${parsed.exercises.length} ท่า) แล้ว`)
+  }
+
+  async function handleImportExcel(file: File) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      setError('กรุณาเข้าสู่ระบบใหม่')
+      return
+    }
+
+    // โหลด Exercise Library ก่อน parse เพื่อจับคู่ชื่อท่ากับกลุ่มกล้ามเนื้อ/ID ในคลังให้แม่นยำ — โหลดไม่สำเร็จ
+    // ยัง parse ต่อได้ แค่ fallback ไปเดากลุ่มกล้ามเนื้อจากชื่อวันแทนทุกท่า (เหมือนหน้า /import)
+    let exerciseLibrary: ExerciseDef[] = []
+    try {
+      exerciseLibrary = await getExerciseLibrary()
+    } catch (libErr) {
+      console.error('โหลด Exercise Library ไม่สำเร็จ ระหว่าง import เทมเพลตจาก Excel', libErr)
+    }
+
+    const buffer = await file.arrayBuffer()
+    const parsedResult = parseWorkoutExcel(buffer, exerciseLibrary)
+    if (parsedResult.days.length === 0) {
+      setError('ไม่พบตารางท่าออกกำลังกายที่รูปแบบตรงกับที่รองรับในไฟล์นี้ (ต้องมีคอลัมน์ชื่อท่า และ Sets/Reps/RIR)')
+      return
+    }
+
+    const createdTemplates: WorkoutTemplate[] = []
+    const createdExercisesByTemplate: Record<string, WorkoutTemplateExercise[]> = {}
+    let totalExercises = 0
+
+    for (const day of parsedResult.days) {
+      if (day.exercises.length === 0) continue
+
+      const { data: newTemplate, error: tErr } = await supabase
+        .from('workout_templates')
+        .insert({ user_id: user.id, title: day.title })
+        .select('*')
+        .single()
+      if (tErr || !newTemplate) {
+        setError(`สร้างเทมเพลต "${day.title}" ไม่สำเร็จ: ${tErr?.message ?? 'unknown error'}`)
+        return
+      }
+      const created = newTemplate as WorkoutTemplate
+
+      const payload = day.exercises.map((ex, i) => ({
+        template_id: created.id,
+        user_id: user.id,
+        position: i,
+        exercise_name: ex.name,
+        muscle_group: ex.muscleGroup,
+        secondary_muscles: ex.secondaryMuscles,
+        exercise_library_id: ex.matchedExerciseId,
+        sets: ex.sets,
+        target_reps: ex.targetRepsRaw ?? (ex.reps !== null ? String(ex.reps) : null),
+        target_rir: ex.targetRirRaw ?? (ex.rir !== null ? String(ex.rir) : null),
+        rest: ex.restRaw,
+        default_weight_kg: ex.weight_kg,
+        notes: ex.notes,
+      }))
+      const { data: exRows, error: exErr } = await supabase.from('workout_template_exercises').insert(payload).select('*')
+      if (exErr) {
+        setError(`บันทึกท่าของเทมเพลต "${day.title}" ไม่สำเร็จ: ${exErr.message}`)
+        return
+      }
+
+      createdTemplates.push(created)
+      createdExercisesByTemplate[created.id] = exRows as WorkoutTemplateExercise[]
+      totalExercises += day.exercises.length
+    }
+
+    setTemplates((prev) => [...createdTemplates, ...prev])
+    setExercisesByTemplate((prev) => ({ ...prev, ...createdExercisesByTemplate }))
+    if (createdTemplates.length === 1) setExpandedId(createdTemplates[0].id)
+
+    // รวม warning จาก parser (fuzzy match/ไม่พบท่าในคลัง/แปลงหน่วยปอนด์) ต่อท้ายสรุปผล ให้ผู้ใช้รู้ว่าท่าไหน
+    // ควรตรวจสอบเพิ่ม แทนที่จะดูเหมือนนำเข้าสำเร็จสมบูรณ์ 100% เงียบๆ
+    const summary = `นำเข้า ${createdTemplates.length} เทมเพลต (${totalExercises} ท่า) จาก "${file.name}" แล้ว`
+    setImportMessage(parsedResult.warnings.length > 0 ? `${summary} — ${parsedResult.warnings.join(' ')}` : summary)
   }
 
   async function handleAddExercise(
@@ -778,9 +872,9 @@ export default function TemplatesPage() {
             style={{ borderColor: withAlpha(COLORS.steel, '66'), color: COLORS.steel }}
           >
             <span className="block font-display text-sm tracked uppercase">{importing ? '...' : '⬆ Import'}</span>
-            <span className="block text-[10px] text-muted mt-1 normal-case">นำเข้าเทมเพลตจากไฟล์</span>
+            <span className="block text-[10px] text-muted mt-1 normal-case">นำเข้าเทมเพลตจาก .json หรือ .xlsx</span>
           </button>
-          <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="application/json,.json,.xlsx,.xls" onChange={handleImportFile} className="hidden" />
         </div>
       )}
 

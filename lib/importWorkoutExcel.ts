@@ -122,14 +122,40 @@ function excelDateToIso(raw: unknown): string | null {
   return null
 }
 
-function findHeaderRow(rows: unknown[][]): number {
+// ฟีดแบ็ก "import ไม่ได้" — ไฟล์ที่ไม่ได้มาจาก FITLOG เอง (เช่น แผนที่โค้ช/AI สร้างให้เป็นภาษาไทยล้วน)
+// มักไม่มีคอลัมน์ "#" และหัวคอลัมน์ชื่อท่าเป็น "ท่าออกกำลังกาย" ไม่ใช่ "Exercise" — เดิมเช็คแค่สองคำนี้
+// เป๊ะๆ (hasHash && hasExercise) เลยหาหัวตารางไม่เจอเลย ทั้งที่ไฟล์มีตารางท่าจริงอยู่ — เพิ่มคำไทยที่พบบ่อย
+// และเลิกบังคับคอลัมน์ "#" (ไม่ใช่ทุกไฟล์จะมีเลขลำดับกำกับ) ใช้ "มีคอลัมน์ชื่อท่า + คอลัมน์ sets/reps/rir
+// อย่างน้อยหนึ่งอย่างในแถวเดียวกัน" แทน เข้มงวดพอกันไม่ให้ข้อความอธิบายยาวๆ ที่บังเอิญมีคำว่า "ท่า" ปนอยู่
+// (เช่นชีตคำแนะนำ) ถูกนับเป็นหัวตารางผิดๆ
+function isExerciseNameHeaderCell(c: string): boolean {
+  return c.includes('exercise') || c.includes('ท่าออกกำลังกาย') || c.includes('ชื่อท่า') || c === 'ท่า'
+}
+
+function isSetsRepsRirHeaderCell(c: string): boolean {
+  return (
+    c.includes('set') ||
+    c.includes('เซ็ต') ||
+    c.includes('เซท') ||
+    c.includes('rep') ||
+    c.includes('เรพ') ||
+    c.includes('rir')
+  )
+}
+
+// คืนทุกแถวที่ดูเหมือนหัวตาราง ไม่ใช่แค่แถวแรก — ไฟล์บางไฟล์ (โปรแกรม 3 วัน/สัปดาห์ที่โค้ช/AI สร้างให้)
+// เอาหลายวันซ้อนในชีตเดียวกัน คนละบล็อกตาราง คนละหัวตาราง แทนที่จะแยกคนละแท็บแบบไฟล์ที่ FITLOG เอง export
+function findHeaderRows(rows: unknown[][]): number[] {
+  const result: number[] = []
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].map(norm)
-    const hasHash = cells.some((c) => c === '#')
-    const hasExercise = cells.some((c) => c.includes('exercise'))
-    if (hasHash && hasExercise) return i
+    if (cells.some(isExerciseNameHeaderCell) && cells.some(isSetsRepsRirHeaderCell)) result.push(i)
   }
-  return -1
+  return result
+}
+
+function findHeaderRow(rows: unknown[][]): number {
+  return findHeaderRows(rows)[0] ?? -1
 }
 
 function findBodyLogHeaderRow(rows: unknown[][]): number {
@@ -147,127 +173,163 @@ function isRowEmpty(row: unknown[] | undefined): boolean {
   return row.every((c) => c === null || c === undefined || String(c).trim() === '')
 }
 
-function parseDaySheet(sheetName: string, rows: unknown[][], warnings: string[], exerciseLibrary: ExerciseDef[]): ParsedDay | null {
-  const headerRowIdx = findHeaderRow(rows)
-  if (headerRowIdx === -1) return null
+// ฟีดแบ็ก "import ไม่ได้" (ต่อ) — นอกจากหัวคอลัมน์ภาษาไทยแล้ว ไฟล์ที่โค้ช/AI สร้างให้มักเอาหลายวันซ้อนไว้
+// ในชีตเดียวกัน (เช่น จันทร์/อังคาร/พฤหัสบดี คนละบล็อกตาราง คนละหัวตาราง) ต่างจากไฟล์ที่ FITLOG เอง export
+// ซึ่งแยกคนละแท็บเสมอ — เดิมฟังก์ชันนี้หาแค่ "หัวตารางแถวแรกที่เจอ" แล้วอ่านยาวไปจนจบชีต ทำให้วันถัดไปที่
+// ซ้อนต่อท้าย (พร้อมหัวตารางซ้ำ) ถูกกลืนเป็นแถวขยะปนกับวันแรก — เปลี่ยนมาหาหัวตาราง "ทุกแถว" แล้วตัดเป็น
+// หลายบล็อก คืนเป็น ParsedDay[] แทนที่จะเป็นวันเดียว (ชีตที่มีตารางเดียวยังคืนแค่ 1 รายการเหมือนเดิม)
+function parseDaySheets(sheetName: string, rows: unknown[][], warnings: string[], exerciseLibrary: ExerciseDef[]): ParsedDay[] {
+  const headerRowIndices = findHeaderRows(rows)
+  if (headerRowIndices.length === 0) return []
 
-  const headerRow = rows[headerRowIdx] ?? []
-  const col: Record<string, number> = {}
-  const weekKgCols: number[] = []
+  const results: ParsedDay[] = []
 
-  headerRow.forEach((cell, i) => {
-    const h = norm(cell)
-    if (!h) return
-    if (h === '#') col.num = i
-    else if (h.includes('exercise')) col.exercise = i
-    else if (h.includes('rir')) col.rir = i
-    else if (h.includes('set')) col.sets = i
-    else if (h.includes('rep')) col.reps = i
-    else if (h.includes('rest')) col.rest = i
-    else if (h.includes('rational') || h.includes('เหตุผล') || h.includes('หลักสูตร')) col.rationale = i
-    else if (h.includes('note')) col.notes = i
-    else if (h.startsWith('week')) weekKgCols.push(i)
-  })
+  headerRowIndices.forEach((headerRowIdx, blockIdx) => {
+    const headerRow = rows[headerRowIdx] ?? []
+    const col: Record<string, number> = {}
+    const weekKgCols: number[] = []
 
-  if (col.exercise === undefined) return null
+    headerRow.forEach((cell, i) => {
+      const h = norm(cell)
+      if (!h) return
+      if (h === '#') col.num = i
+      else if (isExerciseNameHeaderCell(h)) col.exercise = i
+      else if (h.includes('rir')) col.rir = i
+      else if (h.includes('set') || h.includes('เซ็ต') || h.includes('เซท')) col.sets = i
+      else if (h.includes('rep') || h.includes('เรพ')) col.reps = i
+      else if (h.includes('rest') || h.includes('พัก')) col.rest = i
+      else if (h.includes('rational') || h.includes('เหตุผล') || h.includes('หลักสูตร')) col.rationale = i
+      else if (h.includes('note')) col.notes = i
+      else if (h.startsWith('week')) weekKgCols.push(i)
+    })
 
-  // ชื่อวัน: ใช้แถวแรกสุดของชีตถ้ามีข้อความ ไม่งั้น fallback เป็นชื่อชีต
-  const titleCell = rows.find((r) => !isRowEmpty(r))?.find((c) => norm(c).length > 0)
-  const title = titleCell ? String(titleCell) : sheetName.replace(/_/g, ' ')
-  const dayMuscleGuess = guessMuscleGroup(`${sheetName} ${title}`)
+    if (col.exercise === undefined) return // กันเคส false positive จาก findHeaderRows (ไม่ควรเกิดจริง)
 
-  const exercises: ParsedExerciseRow[] = []
-  let convertedLbCount = 0
-  let fuzzyMatchCount = 0
-  let noMatchCount = 0
+    const isMultiBlock = headerRowIndices.length > 1
 
-  for (let r = headerRowIdx + 2; r < rows.length; r++) {
-    const row = rows[r] ?? []
-    if (isRowEmpty(row)) break
-    const nameRaw = col.exercise !== undefined ? row[col.exercise] : null
-    if (nameRaw === null || nameRaw === undefined || String(nameRaw).trim() === '') continue
+    // ชื่อวัน: ชีตที่มีตารางเดียว (พฤติกรรมเดิมเป๊ะ) ใช้แถวแรกสุดของทั้งชีตที่มีข้อความ — ชีตที่ซ้อนหลายวัน
+    // ใช้แถวที่อยู่ติดกันก่อนหัวตารางนี้ทันที (เช่น "จันทร์ - Lower Body") แม่นกว่าเพราะแถวแรกสุดของชีตมักเป็น
+    // หัวเรื่องรวมของทั้งไฟล์ ไม่ใช่ชื่อวันนี้โดยเฉพาะ
+    const titleCell = isMultiBlock
+      ? rows[headerRowIdx - 1]?.find((c) => norm(c).length > 0)
+      : rows.find((r) => !isRowEmpty(r))?.find((c) => norm(c).length > 0)
+    const title = titleCell ? String(titleCell) : isMultiBlock ? `${sheetName} #${blockIdx + 1}` : sheetName.replace(/_/g, ' ')
+    const dayMuscleGuess = guessMuscleGroup(`${sheetName} ${title}`)
 
-    const setsVal = col.sets !== undefined ? parseRangeToNumber(row[col.sets]) : null
-    const targetReps = col.reps !== undefined ? parseRangeToNumber(row[col.reps]) : null
-    const targetRir = col.rir !== undefined ? parseRangeToNumber(row[col.rir]) : null
-    const rest = col.rest !== undefined ? row[col.rest] : null
-    const rationale = col.rationale !== undefined ? row[col.rationale] : null
-    const extraNotes = col.notes !== undefined ? row[col.notes] : null
+    const exercises: ParsedExerciseRow[] = []
+    let convertedLbCount = 0
+    let fuzzyMatchCount = 0
+    let noMatchCount = 0
 
-    // หาน้ำหนัก/เรพจริงจากคอลัมน์สัปดาห์แรกที่มีข้อมูลกรอกไว้ (คอลัมน์ถัดไปคือเรพ)
-    let weightRaw: unknown = null
-    let repsAchievedRaw: unknown = null
-    for (const kgColIdx of weekKgCols) {
-      const val = row[kgColIdx]
-      if (val !== null && val !== undefined && String(val).trim() !== '') {
-        weightRaw = val
-        repsAchievedRaw = row[kgColIdx + 1]
-        break
+    // ขอบเขตบล็อกนี้: ชีตตารางเดียว (เดิม) หยุดที่แถวว่างเปล่าล้วนแถวแรกหลังหัวตาราง เหมือนพฤติกรรมเดิม —
+    // ชีตหลายบล็อกซ้อนกัน หยุดก่อนหัวตารางถัดไป 1 แถว (เผื่อแถวชื่อวันของบล็อกถัดไปที่อยู่ติดหัวตารางนั้น
+    // เช่น "อังคาร - Upper Body" — ไม่งั้นแถวนี้จะถูกนับเป็นท่าออกกำลังกายปลอมของบล็อกปัจจุบันไปด้วย)
+    const nextHeaderIdx = headerRowIndices[blockIdx + 1]
+    let blockEnd = nextHeaderIdx !== undefined ? nextHeaderIdx - 1 : rows.length
+    if (!isMultiBlock) {
+      for (let r = headerRowIdx + 1; r < blockEnd; r++) {
+        if (isRowEmpty(rows[r])) {
+          blockEnd = r
+          break
+        }
       }
     }
+    // ชีตตารางเดียวเว้น 1 แถวหลังหัวตารางก่อนเริ่มอ่านข้อมูล (พฤติกรรมเดิม) — ชีตหลายบล็อกเริ่มอ่านทันทีแถว
+    // ถัดจากหัวตาราง เพราะไฟล์แบบนี้ไม่มีแถวคั่นระหว่างหัวตารางกับท่าแรก
+    const dataStartRow = headerRowIdx + (isMultiBlock ? 1 : 2)
 
-    const { value: weightKg, convertedFromLb } = parseWeightToKg(weightRaw)
-    if (convertedFromLb) convertedLbCount++
+    for (let r = dataStartRow; r < blockEnd; r++) {
+      const row = rows[r] ?? []
+      const nameRaw = col.exercise !== undefined ? row[col.exercise] : null
+      if (nameRaw === null || nameRaw === undefined || String(nameRaw).trim() === '') continue
 
-    const reps = parseRangeToNumber(repsAchievedRaw) ?? targetReps
-    const rpe = rirToRpe(targetRir)
+      const setsVal = col.sets !== undefined ? parseRangeToNumber(row[col.sets]) : null
+      const targetReps = col.reps !== undefined ? parseRangeToNumber(row[col.reps]) : null
+      const targetRir = col.rir !== undefined ? parseRangeToNumber(row[col.rir]) : null
+      const rest = col.rest !== undefined ? row[col.rest] : null
+      const rationale = col.rationale !== undefined ? row[col.rationale] : null
+      const extraNotes = col.notes !== undefined ? row[col.notes] : null
 
-    const noteParts: string[] = []
-    if (rationale) noteParts.push(String(rationale))
-    if (rest) noteParts.push(`พัก ${rest}`)
-    if (extraNotes) noteParts.push(String(extraNotes))
+      // หาน้ำหนัก/เรพจริงจากคอลัมน์สัปดาห์แรกที่มีข้อมูลกรอกไว้ (คอลัมน์ถัดไปคือเรพ)
+      let weightRaw: unknown = null
+      let repsAchievedRaw: unknown = null
+      for (const kgColIdx of weekKgCols) {
+        const val = row[kgColIdx]
+        if (val !== null && val !== undefined && String(val).trim() !== '') {
+          weightRaw = val
+          repsAchievedRaw = row[kgColIdx + 1]
+          break
+        }
+      }
 
-    // จับคู่ชื่อท่ากับ Exercise Library ก่อน (exact → loose → fuzzy) — ได้กลุ่มกล้ามเนื้อที่แม่นยำกว่า
-    // การเดาจากชื่อวัน/ชื่อชีต ถ้าไม่เจอเลยค่อย fallback ไปใช้ dayMuscleGuess เหมือนเดิม
-    const exerciseName = String(nameRaw).trim()
-    const libMatch = matchExercise(exerciseLibrary, exerciseName)
-    if (libMatch?.matchType === 'fuzzy') fuzzyMatchCount++
-    if (!libMatch) noMatchCount++
+      const { value: weightKg, convertedFromLb } = parseWeightToKg(weightRaw)
+      if (convertedFromLb) convertedLbCount++
 
-    const muscleGroup = libMatch?.exercise.muscleGroup ?? dayMuscleGuess
-    // ใช้กล้ามเนื้อรองจาก Exercise Library ก่อนถ้ามีคนกรอกไว้ — ถ้าไม่มี (หรือจับคู่ไม่เจอเลย)
-    // ให้เดาจากชื่อท่า/กลุ่มกล้ามเนื้อหลักแทน จะได้ไม่ว่างเปล่าไปเฉยๆ
-    const secondaryMuscles =
-      libMatch?.exercise.secondaryMuscles && libMatch.exercise.secondaryMuscles.length > 0
-        ? libMatch.exercise.secondaryMuscles
-        : guessSecondaryMuscles(exerciseName, muscleGroup)
+      const reps = parseRangeToNumber(repsAchievedRaw) ?? targetReps
+      const rpe = rirToRpe(targetRir)
 
-    exercises.push({
-      id: `${sheetName}-${r}`,
-      name: exerciseName,
-      sets: setsVal !== null ? Math.round(setsVal) : null,
-      reps: reps !== null ? Math.round(reps) : null,
-      rir: targetRir,
-      rpe,
-      weight_kg: weightKg,
-      notes: noteParts.length > 0 ? noteParts.join(' · ') : null,
-      muscleGroup,
-      include: true,
-      targetRepsRaw: targetReps !== null && col.reps !== undefined && row[col.reps] != null ? String(row[col.reps]).trim() : null,
-      targetRirRaw: col.rir !== undefined && row[col.rir] != null ? String(row[col.rir]).trim() : null,
-      restRaw: rest ? String(rest).trim() : null,
-      rationale: rationale ? String(rationale).trim() : null,
-      matchedExerciseId: libMatch?.exercise.id ?? null,
-      matchConfidence: libMatch?.matchType ?? null,
-      secondaryMuscles,
-    })
-  }
+      const noteParts: string[] = []
+      if (rationale) noteParts.push(String(rationale))
+      if (rest) noteParts.push(`พัก ${rest}`)
+      if (extraNotes) noteParts.push(String(extraNotes))
 
-  if (convertedLbCount > 0) {
-    warnings.push(`"${title}": แปลงน้ำหนัก ${convertedLbCount} รายการจากปอนด์เป็นกิโลกรัมอัตโนมัติ กรุณาตรวจสอบความถูกต้อง`)
-  }
+      // จับคู่ชื่อท่ากับ Exercise Library ก่อน (exact → loose → fuzzy) — ได้กลุ่มกล้ามเนื้อที่แม่นยำกว่า
+      // การเดาจากชื่อวัน/ชื่อชีต ถ้าไม่เจอเลยค่อย fallback ไปใช้ dayMuscleGuess เหมือนเดิม
+      const exerciseName = String(nameRaw).trim()
+      const libMatch = matchExercise(exerciseLibrary, exerciseName)
+      if (libMatch?.matchType === 'fuzzy') fuzzyMatchCount++
+      if (!libMatch) noMatchCount++
 
-  if (fuzzyMatchCount > 0) {
-    warnings.push(`"${title}": ${fuzzyMatchCount} ท่าจับคู่กับ Exercise Library แบบไม่ตรงเป๊ะ (fuzzy) กรุณาตรวจสอบชื่อและกลุ่มกล้ามเนื้ออีกครั้ง`)
-  }
+      const muscleGroup = libMatch?.exercise.muscleGroup ?? dayMuscleGuess
+      // ใช้กล้ามเนื้อรองจาก Exercise Library ก่อนถ้ามีคนกรอกไว้ — ถ้าไม่มี (หรือจับคู่ไม่เจอเลย)
+      // ให้เดาจากชื่อท่า/กลุ่มกล้ามเนื้อหลักแทน จะได้ไม่ว่างเปล่าไปเฉยๆ
+      const secondaryMuscles =
+        libMatch?.exercise.secondaryMuscles && libMatch.exercise.secondaryMuscles.length > 0
+          ? libMatch.exercise.secondaryMuscles
+          : guessSecondaryMuscles(exerciseName, muscleGroup)
 
-  if (noMatchCount > 0) {
-    warnings.push(`"${title}": ${noMatchCount} ท่าไม่พบใน Exercise Library — เดากลุ่มกล้ามเนื้อจากชื่อวันแทน กรุณาตรวจสอบ`)
-  }
+      exercises.push({
+        id: `${sheetName}-${r}`,
+        name: exerciseName,
+        sets: setsVal !== null ? Math.round(setsVal) : null,
+        reps: reps !== null ? Math.round(reps) : null,
+        rir: targetRir,
+        rpe,
+        weight_kg: weightKg,
+        notes: noteParts.length > 0 ? noteParts.join(' · ') : null,
+        muscleGroup,
+        include: true,
+        targetRepsRaw: targetReps !== null && col.reps !== undefined && row[col.reps] != null ? String(row[col.reps]).trim() : null,
+        targetRirRaw: col.rir !== undefined && row[col.rir] != null ? String(row[col.rir]).trim() : null,
+        restRaw: rest ? String(rest).trim() : null,
+        rationale: rationale ? String(rationale).trim() : null,
+        matchedExerciseId: libMatch?.exercise.id ?? null,
+        matchConfidence: libMatch?.matchType ?? null,
+        secondaryMuscles,
+      })
+    }
 
-  if (exercises.length === 0) return null
+    if (convertedLbCount > 0) {
+      warnings.push(`"${title}": แปลงน้ำหนัก ${convertedLbCount} รายการจากปอนด์เป็นกิโลกรัมอัตโนมัติ กรุณาตรวจสอบความถูกต้อง`)
+    }
 
-  return { sheetName, title, exercises }
+    if (fuzzyMatchCount > 0) {
+      warnings.push(`"${title}": ${fuzzyMatchCount} ท่าจับคู่กับ Exercise Library แบบไม่ตรงเป๊ะ (fuzzy) กรุณาตรวจสอบชื่อและกลุ่มกล้ามเนื้ออีกครั้ง`)
+    }
+
+    if (noMatchCount > 0) {
+      warnings.push(`"${title}": ${noMatchCount} ท่าไม่พบใน Exercise Library — เดากลุ่มกล้ามเนื้อจากชื่อวันแทน กรุณาตรวจสอบ`)
+    }
+
+    if (exercises.length === 0) return
+
+    // sheetName ต้อง unique ต่อบล็อก (ใช้เป็น key ของแต่ละ "วัน" ในหน้า import/เทมเพลต) — ชีตที่มีตารางเดียว
+    // ยังใช้ชื่อชีตตรงๆ เหมือนเดิมทุกประการ ไม่กระทบพฤติกรรมเดิม
+    const blockKey = isMultiBlock ? `${sheetName}__${blockIdx + 1}` : sheetName
+    results.push({ sheetName: blockKey, title, exercises })
+  })
+
+  return results
 }
 
 function parseBodyLogSheet(rows: unknown[][]): ParsedBodyLogRow[] {
@@ -330,8 +392,7 @@ export function parseWorkoutExcel(buffer: ArrayBuffer, exercises: ExerciseDef[] 
       continue
     }
 
-    const day = parseDaySheet(sheetName, rows, warnings, exercises)
-    if (day) days.push(day)
+    days.push(...parseDaySheets(sheetName, rows, warnings, exercises))
   }
 
   if (days.length === 0) {
