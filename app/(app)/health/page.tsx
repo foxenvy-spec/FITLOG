@@ -1079,7 +1079,8 @@ export default function HealthPage() {
               deltaUnit={unit}
               direction={weightCardDirection}
               series={weightTrend30}
-              trendLabel={weightGainLooksLikeMuscle ? '30 DAY TREND · MUSCLE-DRIVEN' : '30 DAY TREND'}
+              trendLabel="30 DAY TREND"
+              trendTag={weightGainLooksLikeMuscle ? 'Muscle-driven ↑' : null}
               trendColor="#9498A0"
               trendEndpointColor="#8CB264"
               lastMeasuredLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
@@ -2734,6 +2735,7 @@ function IconStatCard({
   insight,
   tier = 1,
   trendLabel,
+  trendTag,
   lastMeasuredLabel,
   periodCaption,
   trendColor,
@@ -2780,6 +2782,11 @@ function IconStatCard({
   // — เฉพาะ primary เท่านั้นที่ใช้สองพร็อพนี้ (การ์ดปกติพื้นที่พอดีอยู่แล้ว ไม่ต้อง) ป้ายกำกับกราฟเทรนด์
   // ("30 DAY TREND") + วันที่วัดล่าสุด ปักไว้ท้ายการ์ด ให้พื้นที่ว่างเดิมกลายเป็นเนื้อหาที่มีประโยชน์จริง
   trendLabel?: string | null
+  // v9: ฟีดแบ็ก "30 DAY TREND · MUSCLE-DRIVEN รวมเป็นสตริงเดียวหมด CAPS ทั้งบรรทัด อยากให้แยกเป็น ป้ายเทรนด์
+  // ปกติ + Muscle-driven ↑ เป็นแท็กเล็กแยกสไตล์ต่างหาก (ไม่ต้องทำกราฟ 2 เส้นซ้อนกัน ซับซ้อนเกินไป)" — เดิม
+  // trendLabel เป็นตัวเดียวรวมทุกอย่าง ตอนนี้แยก trendTag ออกมาอีกพร็อพ วางคนละสไตล์ (สีเขียว ไม่ตัวพิมพ์ใหญ่)
+  // อยู่ฝั่งขวาของแถวเดียวกับ trendLabel
+  trendTag?: string | null
   lastMeasuredLabel?: string | null
   // v5: ฟีดแบ็ก "Weight Card ยังว่างอีก ถ้ากราฟ 30 วันมีข้อมูลไม่พอ (< 2 จุด — เช่น log ไม่ถี่) การ์ดจะโล่ง
   // เหมือนเดิม" — บรรทัด "จาก X ก่อน" (periodLabelOf จาก lib/bodyMetricsSummary — ใช้เอนทรีก่อนหน้าล่าสุด
@@ -2872,7 +2879,10 @@ function IconStatCard({
       <div className={`flex items-start gap-2 ${primary ? 'mb-2.5' : 'mb-2'}`}>
         <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : 32} />
         <div className="min-w-0">
-          <p className={`text-ink font-medium leading-snug flex items-center gap-1 ${primary ? 'text-sm' : 'text-xs'}`}>
+          {/* ฟีดแบ็ก "ชื่อไทยบาง Card ขึ้น 2-3 บรรทัด (โปรตีนในร่างกาย, ดัชนีมวลกาย) พื้นที่การ์ดแคบไป —
+              ควรลด font size แทนปล่อยให้ตัดคำรก" — ลดจาก text-xs (12px) เหลือ 11px เฉพาะการ์ดไม่ใช่ primary
+              (primary กว้างพอ ชื่อสั้น "น้ำหนัก" ไม่มีปัญหานี้อยู่แล้ว ไม่ต้องแตะ) */}
+          <p className={`text-ink font-medium leading-tight flex items-center gap-1 ${primary ? 'text-sm' : 'text-[11px]'}`}>
             {label}
             {infoText && (
               <button
@@ -2924,13 +2934,21 @@ function IconStatCard({
             <div className="flex-1 flex flex-col justify-end mt-2.5">
               {series && series.length >= 2 ? (
                 <>
-                  {trendLabel && <p className="text-[10px] tracked uppercase text-muted mb-1.5">{trendLabel}</p>}
+                  {(trendLabel || trendTag) && (
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      {trendLabel && <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>}
+                      {trendTag && <span className="text-[11px] text-moss shrink-0">{trendTag}</span>}
+                    </div>
+                  )}
                   <Sparkline series={series} color={trendColor ?? color} endpointColor={trendEndpointColor} height={48} width={400} stretch />
                 </>
               ) : trendLabel ? (
                 <>
                   <div className="h-px bg-line mb-2" />
-                  <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>
+                    {trendTag && <span className="text-[11px] text-moss shrink-0">{trendTag}</span>}
+                  </div>
                 </>
               ) : null}
               {lastMeasuredLabel && <p className="text-[10px] text-muted mt-2">ล่าสุด {lastMeasuredLabel}</p>}
