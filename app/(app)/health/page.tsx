@@ -957,13 +957,16 @@ export default function HealthPage() {
   const bodyFatZone: Zone | null = latest?.body_fat_pct != null ? zoneOf(latest.body_fat_pct, bodyFatRangeForZone.low, bodyFatRangeForZone.high) : null
 
   const bodyFatDeltaForCard = fieldDelta('body_fat_pct')
+  // ฟีดแบ็ก "Metric Cards ควรอ่านได้ใน 1 วินาที — ไขมันลดลงต่อเนื่อง ทำได้ดี ตัดเหลือ ไขมันลดลงต่อเนื่อง
+  // เพียง 3 ระดับพอ (ค่า/เดลต้า/insight) ไม่จำเป็นต้องทำทุกอย่างให้เด่น" — ตัดคำชื่นชมท้ายประโยค ("ทำได้ดี")
+  // ออก เหลือแค่ข้อเท็จจริงสั้นๆ
   const bodyFatInsight =
     bodyFatDeltaForCard === null
       ? null
       : Math.abs(bodyFatDeltaForCard) < 0.3
         ? 'อยู่ในช่วงผันผวนปกติ'
         : bodyFatDeltaForCard < 0
-          ? 'ไขมันลดลงต่อเนื่อง ทำได้ดี'
+          ? 'ไขมันลดลงต่อเนื่อง'
           : 'ไขมันเพิ่มขึ้น ลองเพิ่มคาร์ดิโอ'
 
   // ฟีดแบ็ก "Health Score 90% ต้องสัมพันธ์กับข้อมูลด้านล่าง — อยากให้กด Score แล้วเห็น Breakdown เป็นหมวด
@@ -3034,7 +3037,11 @@ function IconStatCard({
               </button>
             )}
           </p>
-          <p className={`tracked uppercase text-muted leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</p>
+          {/* ฟีดแบ็ก "หัวข้อไทย+English แน่นเกินไป ให้ English เล็กลงและจางกว่าอย่างชัดเจน ไม่ควรให้สองภาษา
+              แข่งขันกัน" — เดิม subLabel (English) ใช้ text-muted เดียวกับหลายจุด "รายละเอียด" อื่นในหน้านี้
+              อยู่แล้ว แต่ยังไม่ชัดพอว่าเป็นระดับรองของ label ไทยด้านบน — ลด opacity ลงอีกขั้น (text-muted/70)
+              ให้เห็นชัดว่าเป็นแค่ label กำกับภาษาอังกฤษ ไม่ใช่ข้อมูลคู่ขนานที่ต้องอ่านเท่าๆ กัน */}
+          <p className={`tracked uppercase text-muted/70 leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</p>
         </div>
         {showZonePill && zoneLabel && (
           <span
@@ -3046,20 +3053,27 @@ function IconStatCard({
       </div>
       {primary ? (
         <>
-          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-4xl">
+          {/* ฟีดแบ็ก "66.3 kg / ↑ 0.9 kg · 3 สัปดาห์ / น้ำหนักเพิ่มจากมวลกล้ามเนื้อ... สามบรรทัดนี้น้ำหนัก
+              ตัวอักษรใกล้กันเกินไป ให้สายตาเจอ 66.3 ก่อนทันที — เพิ่ม contrast ตัวหนังสือ ไม่ใช่ลดขนาดตัวรอง"
+              — ขยายเลขค่าหลักจาก text-4xl (36px) เป็น text-5xl (48px) ให้ชัดเจนว่าเป็นสิ่งสำคัญที่สุดบนการ์ด
+              ก่อนเห็นเดลต้า/insight ซึ่งยังคงขนาดเดิม (มีความเข้มกว่า/จางกว่ากันอยู่แล้วจาก deltaColor/
+              text-muted) */}
+          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-5xl">
             {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
             {unit && <span className="text-muted ml-1 text-sm">{unit}</span>}
           </p>
           {/* ฟีดแบ็ก "↑ 0.9 kg / จาก 3 สัปดาห์ก่อน / น้ำหนักเพิ่ม... สามบรรทัดเยอะไป อยากได้ ↑ 0.9 kg ·
               3 สัปดาห์ รวมบรรทัดเดียว แล้ว insight ค่อยอยู่บรรทัดถัดไป" — periodCaption (compact, ไม่มี
-              "จาก...ก่อน" ห่อ) ต่อท้าย secondary ด้วย "·" แทนที่จะแยกบรรทัด */}
+              "จาก...ก่อน" ห่อ) ต่อท้าย secondary ด้วย "·" แทนที่จะแยกบรรทัด
+              v20: ฟีดแบ็ก "เพิ่มระยะห่างระหว่างแต่ละข้อมูล" — เดิมไม่มี margin-top จากค่าหลักเลย (แค่ block
+              ต่อกัน) เพิ่ม mt-1 ให้หายใจง่ายขึ้นหลังขยายเลขค่าหลัก */}
           {secondary && (
-            <p className={`font-mono whitespace-nowrap text-sm ${secondary.color}`}>
+            <p className={`font-mono whitespace-nowrap text-sm mt-1 ${secondary.color}`}>
               {secondary.text}
               {periodCaption && <span className="text-muted"> · {periodCaption}</span>}
             </p>
           )}
-          {insight && <p className="text-muted truncate text-xs mt-0.5">{insight}</p>}
+          {insight && <p className="text-muted truncate text-xs mt-1">{insight}</p>}
           {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันเนื้อหาลงไปกิน
               พื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ justify-between เดิมพอแล้ว
               สำหรับความสูงปกติ ดูสาขา else ด้านล่าง) — v5: เดิมถ้า series มีข้อมูลไม่พอ (< 2 จุด, เช่น
@@ -3098,8 +3112,11 @@ function IconStatCard({
             {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
             {unit && <span className="text-muted ml-1 text-xs">{unit}</span>}
           </p>
-          {secondary && <p className={`font-mono whitespace-nowrap text-[11px] ${secondary.color}`}>{secondary.text}</p>}
-          {insight && <p className="text-muted truncate text-[10px] mt-0.5">{insight}</p>}
+          {/* ฟีดแบ็ก "Metric Cards ควรอ่านได้ใน 1 วินาที...ข้อความรองค่อนข้างจางและแน่น — เพิ่มระยะห่างระหว่าง
+              แต่ละข้อมูล" — เดิม secondary ไม่มี margin-top เลย (ชิดค่าหลักทันที) เพิ่ม mt-0.5 คั่น แล้วเพิ่ม
+              insight จาก mt-0.5 เป็น mt-1 ให้แยกจาก secondary ชัดขึ้นอีกขั้น */}
+          {secondary && <p className={`font-mono whitespace-nowrap text-[11px] mt-0.5 ${secondary.color}`}>{secondary.text}</p>}
+          {insight && <p className="text-muted truncate text-[10px] mt-1">{insight}</p>}
           {series && series.length >= 2 && (
             <div className="mt-1.5">
               <Sparkline series={series} color={sparklineColor} height={18} width={200} stretch />
