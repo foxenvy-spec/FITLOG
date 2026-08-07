@@ -25,6 +25,7 @@ import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, t
 import PremiumCard from '@/components/ui/PremiumCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
 import Sparkline from '@/components/dashboard/Sparkline'
+import { periodLabelOf } from '@/lib/bodyMetricsSummary'
 
 function todayStr() {
   const d = new Date()
@@ -894,6 +895,12 @@ export default function HealthPage() {
           ? 'แนวโน้มดี ทำต่อไป'
           : 'ลองติดตามใกล้ชิดขึ้น'
 
+  // ฟีดแบ็ก "Weight Card ยังมีพื้นที่ว่างอยู่ ถ้าข้อมูลในช่วง 30 วันมีไม่พอวาดกราฟ (< 2 จุด) การ์ดจะโล่งอีก
+  // ทั้งที่มีข้อมูลเก่ากว่านั้นให้เทียบได้" — periodLabelOf ใช้ "เอนทรีก่อนหน้าล่าสุดไม่ว่าจะห่างกี่วัน" (ไม่ผูก
+  // กรอบ 30 วัน) จึงให้ผลลัพธ์ที่มีความหมายแม้ผู้ใช้ log ไม่ถี่ — ใช้เติมบรรทัด "จาก X ก่อน" ใต้เดลต้าเสมอ
+  // (เหมือน BodyMetricsRow บน Dashboard) ไม่ว่ากราฟจะมีข้อมูลพอวาดหรือไม่ก็ตาม
+  const weightPeriodCaption = periodLabelOf(latest, metrics[1] ?? null)
+
   // ฟีดแบ็ก "Body Fat Card ยังไม่บอกว่าดีหรือยัง อยากเห็น Badge (Good/Normal)" — ใช้เกณฑ์ % ไขมันตามเพศ
   // เดียวกับที่คะแนนสุขภาพรวมใช้อยู่แล้ว (bodyFatPctRange) ไม่ได้คิดเกณฑ์ใหม่แยกต่างหาก
   const bodyFatRangeForZone = bodyFatPctRange(profile?.sex ?? null)
@@ -1015,6 +1022,7 @@ export default function HealthPage() {
               series={weightTrend30}
               trendLabel="30 DAY TREND"
               lastMeasuredLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
+              periodCaption={weightPeriodCaption}
               insight={weightInsight}
               primary
             />
@@ -2654,6 +2662,7 @@ function IconStatCard({
   tier = 1,
   trendLabel,
   lastMeasuredLabel,
+  periodCaption,
 }: {
   label: string
   subLabel: string
@@ -2695,6 +2704,10 @@ function IconStatCard({
   // ("30 DAY TREND") + วันที่วัดล่าสุด ปักไว้ท้ายการ์ด ให้พื้นที่ว่างเดิมกลายเป็นเนื้อหาที่มีประโยชน์จริง
   trendLabel?: string | null
   lastMeasuredLabel?: string | null
+  // v5: ฟีดแบ็ก "Weight Card ยังว่างอีก ถ้ากราฟ 30 วันมีข้อมูลไม่พอ (< 2 จุด — เช่น log ไม่ถี่) การ์ดจะโล่ง
+  // เหมือนเดิม" — บรรทัด "จาก X ก่อน" (periodLabelOf จาก lib/bodyMetricsSummary — ใช้เอนทรีก่อนหน้าล่าสุด
+  // ไม่ผูกกรอบ 30 วัน) ไว้ใต้เดลต้าเสมอไม่ว่ากราฟจะมีข้อมูลพอวาดหรือไม่ก็ตาม กันไม่ให้การ์ดว่างเมื่อข้อมูลบาง
+  periodCaption?: string | null
 }) {
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
@@ -2768,18 +2781,27 @@ function IconStatCard({
             {unit && <span className="text-muted ml-1 text-sm">{unit}</span>}
           </p>
           {secondary && <p className={`font-mono whitespace-nowrap text-sm ${secondary.color}`}>{secondary.text}</p>}
+          {periodCaption && <p className="text-muted text-xs -mt-0.5">{periodCaption}</p>}
           {insight && <p className="text-muted truncate text-xs mt-0.5">{insight}</p>}
-          {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันกราฟเทรนด์ +
-              วันที่วัดล่าสุดลงไปกินพื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ
-              justify-between เดิมพอแล้วสำหรับความสูงปกติ ดูสาขา else ด้านล่าง) */}
+          {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันเนื้อหาลงไปกิน
+              พื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ justify-between เดิมพอแล้ว
+              สำหรับความสูงปกติ ดูสาขา else ด้านล่าง) — v5: เดิมถ้า series มีข้อมูลไม่พอ (< 2 จุด, เช่น
+              ผู้ใช้ log ไม่ถี่พอในกรอบ 30 วัน) div นี้จะเหลือแค่ lastMeasuredLabel บรรทัดเดียวปักท้ายการ์ด
+              ตรงกลางยังโล่งอยู่ดี — เพิ่มทางเลือก "Minimal Luxury" (เส้นคั่น + ป้าย "TREND" เฉยๆ ไม่มีกราฟ)
+              เป็นของตกแต่งชั้นสุดท้ายกันพื้นที่ว่างเมื่อกราฟวาดไม่ได้จริงๆ */}
           {(series || lastMeasuredLabel) && (
             <div className="flex-1 flex flex-col justify-end mt-3">
-              {series && series.length >= 2 && (
+              {series && series.length >= 2 ? (
                 <>
                   {trendLabel && <p className="text-[10px] tracked uppercase text-muted mb-1.5">{trendLabel}</p>}
                   <Sparkline series={series} color={color} height={56} width={400} stretch />
                 </>
-              )}
+              ) : trendLabel ? (
+                <>
+                  <div className="h-px bg-line mb-2" />
+                  <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>
+                </>
+              ) : null}
               {lastMeasuredLabel && <p className="text-[10px] text-muted mt-2">ล่าสุด {lastMeasuredLabel}</p>}
             </div>
           )}
