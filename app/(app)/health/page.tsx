@@ -53,6 +53,17 @@ function compactPeriodLabel(latest: BodyMetric | null, previous: BodyMetric | nu
   return `${Math.round(days / 30)} เดือน`
 }
 
+// ฟีดแบ็ก "Health Score Banner อยากได้บล็อก 'ล่าสุด' เป็นวันที่ + เวลา (เช่น 4 ส.ค. 2569 / 09:15 น.)" —
+// ใช้ created_at (timestamptz จริง ตอนบันทึกแถว) ไม่ใช่ measured_at (แค่วันที่ผู้ใช้เลือกเอง อาจย้อนหลังได้
+// ไม่มีเวลา) — th-TH locale ให้ปี พ.ศ. + รูปแบบวันที่ไทยให้อัตโนมัติ
+function formatDateTimeTH(iso: string): { date: string; time: string } {
+  const d = new Date(iso)
+  return {
+    date: d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+    time: `${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`,
+  }
+}
+
 // ปัดเป็นหน่วยหยาบพอ (นาที/ชม./วัน) ไม่ต้อง re-render ทุกวินาที — รูปแบบเดียวกับ relativeUpdatedLabel ใน
 // AICoachCompactCard.tsx (คนละไฟล์ คนละโดเมนข้อมูล เลยไม่ import ข้ามมา แต่ตั้งใจให้เขียนข้อความออกมาเหมือนกัน
 // ให้ทั้งแอปพูดเรื่อง "อัปเดตล่าสุด" ด้วยภาษาเดียวกัน)
@@ -992,6 +1003,34 @@ export default function HealthPage() {
           ? 'มวลกล้ามเนื้อเพิ่มขึ้นต่อเนื่อง'
           : null
 
+  // ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — แทนที่จะเขียนแค่ 65.0 kg / น้ำหนักเป้าหมาย อยากได้
+  // 65.0 kg / เป้าหมาย · เหลือ 1.3 kg ผู้ใช้เห็นแล้วรู้ทันทีว่าต้องไปทางไหน" — เป้าหมายน้ำหนัก (weightGoal มี
+  // อยู่แล้ว ใช้คำนวณ weightDirection ด้านบน) เป็นตัวหลัก เพราะเป็นเป้าหมายที่ตรงกับ Weight Card ซึ่งเป็น
+  // primary metric ของหน้านี้ — ถ้าไม่มีเป้าหมายน้ำหนัก fallback ไปใช้เป้าหมาย Body Fat แทน (ของเดิม)
+  const bodyFatGoalForBanner = goals.find((g) => g.goal_type === 'body_fat' && g.status === 'active')
+  const goalBlock: { valueText: string; subText: string | null } | null =
+    weightGoal?.target_value != null
+      ? {
+          valueText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`,
+          subText:
+            latest?.weight_kg != null
+              ? `เหลือ ${Math.abs(toDisplay(latest.weight_kg) - toDisplay(weightGoal.target_value)).toFixed(1)} ${unit}`
+              : null,
+        }
+      : bodyFatGoalForBanner?.target_value != null
+        ? {
+            valueText: `${bodyFatGoalForBanner.target_value.toFixed(1)} %`,
+            subText:
+              latest?.body_fat_pct != null
+                ? `เหลือ ${Math.abs(latest.body_fat_pct - bodyFatGoalForBanner.target_value).toFixed(1)}%`
+                : null,
+          }
+        : null
+
+  // ฟีดแบ็ก "ล่าสุด อยากได้วันที่ + เวลา (4 ส.ค. 2569 / 09:15 น.) ไม่ใช่แค่วันที่เฉยๆ" — created_at คือเวลา
+  // จริงตอนบันทึกแถว (ต่างจาก measured_at ซึ่งเป็นแค่วันที่ผู้ใช้เลือกเอง ไม่มีเวลา อาจย้อนหลังได้)
+  const latestDateTime = latest?.created_at ? formatDateTimeTH(latest.created_at) : null
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
@@ -1052,8 +1091,10 @@ export default function HealthPage() {
             monthDeltaPct={healthScoreMonthDeltaPct}
             bodyFatDeltaPct={fieldDelta('body_fat_pct')}
             muscleMassDelta={fieldDelta('muscle_kg', toDisplay)}
-            targetBodyFatPct={goals.find((g) => g.goal_type === 'body_fat' && g.status === 'active')?.target_value ?? null}
-            updatedLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
+            goalValueText={goalBlock?.valueText ?? null}
+            goalSubText={goalBlock?.subText ?? null}
+            updatedDateLabel={latestDateTime?.date ?? null}
+            updatedTimeLabel={latestDateTime?.time ?? null}
             trendScorePct={trendScorePct}
             unit={unit}
             summary={bodyCompositionSummary}
@@ -2148,8 +2189,10 @@ function OverviewHealthScoreHeader({
   monthDeltaPct,
   bodyFatDeltaPct,
   muscleMassDelta,
-  targetBodyFatPct,
-  updatedLabel,
+  goalValueText,
+  goalSubText,
+  updatedDateLabel,
+  updatedTimeLabel,
   trendScorePct,
   unit,
   summary,
@@ -2159,8 +2202,14 @@ function OverviewHealthScoreHeader({
   monthDeltaPct?: number | null
   bodyFatDeltaPct: number | null
   muscleMassDelta: number | null
-  targetBodyFatPct: number | null
-  updatedLabel: string | null
+  // ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — 65.0 kg / เป้าหมาย · เหลือ 1.3 kg แทนแค่ 65.0 kg เฉยๆ" —
+  // คำนวณ valueText/subText ที่จุดเรียกใช้แล้ว (มี weightGoal/bodyFatGoal/latest ครบอยู่แล้วตรงนั้น)
+  goalValueText: string | null
+  goalSubText: string | null
+  // ฟีดแบ็ก "ล่าสุด อยากได้วันที่ + เวลา" — แยกสองบรรทัด (วันที่เด่นกว่า, เวลาจางกว่า) แทน updatedLabel เดิม
+  // ที่มีแค่วันที่บรรทัดเดียว
+  updatedDateLabel: string | null
+  updatedTimeLabel: string | null
   trendScorePct: number | null
   unit: string
   // v8: ฟีดแบ็ก "พื้นที่ด้านขวาของ Health Score ยังว่างค่อนข้างเยอะ — อยากได้สรุปประโยคเดียวแทน metric อีกตัว
@@ -2199,10 +2248,23 @@ function OverviewHealthScoreHeader({
   }
 
   return (
-    <PremiumCard className="px-4 py-3">
-      {/* v3: ฟีดแบ็ก "Banner โล่งเกินไป เหลือพื้นที่ว่าง ~60%" — แบ่งเป็น 4 บล็อกคั่นเส้น (คะแนน/แนวโน้ม/
-          เป้าหมาย/อัปเดตล่าสุด) แทนวง+ระดับแถวเดียวโดดๆ เดิม ใช้ข้อมูลที่คำนวณอยู่แล้วทั้งหมด (ไม่มีตัวไหน
-          คำนวณใหม่) — targetBodyFatPct/updatedLabel มาจาก props ใหม่ที่จุดเรียกใช้ */}
+    <PremiumCard
+      className="px-4 py-3"
+      // ฟีดแบ็ก "Glow ควรเป็น Titanium + Green ไม่ใช่ Orange ทั้งหมด — ข้อมูลตอนนี้คือ Progress ที่ดี (ไขมันลด/
+      // กล้ามเพิ่ม) ขอบควรเป็น titanium/silver, ตัว Health Score/Progress เป็นเขียว, ไฮไลต์ทองอ่อนเล็กน้อย
+      // เท่านั้น" — override boxShadow เฉพาะการ์ดนี้ใบเดียว (ไม่แตะ PremiumCard กลาง ซึ่งการ์ดอื่นทั้งแอปยังใช้
+      // ขอบอำพันเดิม) ให้ contact-shadow วงแหวนเป็นสีเขียวมอสจาง (#7A9B57) แทนอำพัน — พื้นผิว titanium เดิม
+      // (CARD_GRADIENT_CSS) ที่ PremiumCard วาดให้อยู่แล้วยังคงเป็นฐาน ไม่ต้องแตะ
+      style={{
+        boxShadow:
+          '0 2px 4px rgba(0,0,0,.3), 0 16px 40px -8px rgba(0,0,0,.55), 0 0 0 1px rgba(122,155,87,.22), 0 0 28px rgba(122,155,87,.10), inset 0 1px rgba(255,255,255,.04)',
+      }}
+    >
+      {/* v3: ฟีดแบ็ก "Banner โล่งเกินไป เหลือพื้นที่ว่าง ~60%" — แบ่งเป็นบล็อกคั่นเส้น แทนวง+ระดับแถวเดียวโดดๆ
+          เดิม ใช้ข้อมูลที่คำนวณอยู่แล้วทั้งหมด
+          v10: ฟีดแบ็ก "อยากได้ลำดับคอลัมน์ ล่าสุด(วันที่+เวลา) -> การเปลี่ยนแปลง -> เป้าหมาย พร้อมหัวข้อกำกับ
+          แต่ละบล็อกชัดเจน (เหมือนภาพอ้างอิงที่ส่งมา) แทนบล็อก Target/Updated เดิมที่ไม่มีหัวข้อ 'การเปลี่ยนแปลง'
+          กำกับไว้เลย" — เรียงใหม่ตามนั้น */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-3 shrink-0">
           <GoalRing pct={pct} size={56} strokeWidth={6} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
@@ -2221,44 +2283,54 @@ function OverviewHealthScoreHeader({
           </div>
         </div>
 
-        {signals.length > 0 && (
-          <>
-            <div className="w-px self-stretch bg-line hidden sm:block" />
-            <div className="flex flex-col gap-1 shrink-0">
-              {signals.map((s) => (
-                <span
-                  key={s.label}
-                  className={`inline-flex items-center gap-1 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${
-                    s.good ? 'bg-mossdim text-moss' : 'bg-rustdim text-rusttext'
-                  }`}
-                >
-                  {s.dir === 'up' ? '↑' : '↓'} {s.label} {s.valueText}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
-
-        {targetBodyFatPct !== null && (
+        {updatedDateLabel && (
           <>
             <div className="w-px self-stretch bg-line hidden sm:block" />
             <div className="shrink-0">
-              <p className="text-[10px] tracked uppercase text-muted">Target</p>
-              <p className="font-mono text-sm text-ink">
-                {targetBodyFatPct.toFixed(1)}
-                <span className="text-[10px] text-muted"> % Body Fat</span>
-              </p>
+              <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
+              <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
+              {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
             </div>
           </>
         )}
 
-        {/* ฟีดแบ็ก "Top X% ไม่ค่อยมี value เทียบกับใครไม่ชัด — ชอบใช้ข้อมูลของผู้ใช้เองมากกว่า" — ตัดบล็อก
-            Rank/percentile ออก เหลือ Score/Trend/Target/Updated ซึ่งล้วนเป็นข้อมูลของผู้ใช้เองทั้งหมด */}
-        <div className="w-px self-stretch bg-line hidden sm:block" />
-        <div className="shrink-0">
-          <p className="text-[10px] tracked uppercase text-muted">Updated</p>
-          <p className="font-mono text-sm text-ink">{updatedLabel ?? '—'}</p>
-        </div>
+        {signals.length > 0 && (
+          <>
+            <div className="w-px self-stretch bg-line hidden sm:block" />
+            <div className="shrink-0">
+              <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
+              <div className="flex flex-col gap-1">
+                {signals.map((s) => (
+                  <span
+                    key={s.label}
+                    className={`inline-flex items-center gap-1 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${
+                      s.good ? 'bg-mossdim text-moss' : 'bg-rustdim text-rusttext'
+                    }`}
+                  >
+                    {s.dir === 'up' ? '↑' : '↓'} {s.label} {s.valueText}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — 65.0 kg / เป้าหมาย · เหลือ 1.3 kg แทนแค่ 65.0 kg
+            เฉยๆ" — goalValueText/goalSubText คำนวณที่จุดเรียกใช้แล้ว (เป้าหมายน้ำหนักเป็นหลัก, fallback ไป
+            Body Fat ถ้าไม่มีเป้าหมายน้ำหนัก) — เดิมบล็อกนี้ชื่อ "Target" แสดงแค่ % Body Fat แทนเป้าหมายที่คู่
+            กับ Weight Card ซึ่งเป็น primary metric ของหน้านี้
+            ฟีดแบ็ก "Top X% ไม่ค่อยมี value เทียบกับใครไม่ชัด — ชอบใช้ข้อมูลของผู้ใช้เองมากกว่า" — ตัดบล็อก
+            Rank/percentile ออกไปแล้วตั้งแต่รอบก่อน ไม่ต้องเพิ่มกลับมา */}
+        {goalValueText && (
+          <>
+            <div className="w-px self-stretch bg-line hidden sm:block" />
+            <div className="shrink-0">
+              <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
+              <p className="font-mono text-sm text-ink">{goalValueText}</p>
+              {goalSubText && <p className="text-[10px] text-muted">{goalSubText}</p>}
+            </div>
+          </>
+        )}
       </div>
 
       {summary && <p className="text-[11px] text-muted mt-2">{summary}</p>}
