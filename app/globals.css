@@ -259,34 +259,26 @@
   animation: ring-spark-flash 12s linear infinite;
 }
 
-/* ปุ่ม Start Workout (BottomNav) — เดิม box-shadow นิ่ง (drop shadow + AMBER_GLOW_SHADOW + inset
-   highlight, ประกาศ inline ใน BottomNav.tsx) เพิ่มการ "หายใจ" เบาๆ ให้ glow วงนอกสุด (60px, .12 alpha)
-   ขยาย/จางขึ้นแล้วหดกลับต่อเนื่อง — bake ทั้ง shadow stack ไว้ในทุก keyframe (เหมือน hero-glow-pulse
-   ด้านบน) กันไม่ให้ชั้นอื่นๆ (drop shadow เงาใต้ปุ่ม, inset highlight ขอบบน) หายไปตอนแอนิเมชันทำงาน —
-   ตัวเลข rgba ต้องตรงกับ AMBER_GLOW_SHADOW ใน lib/theme.ts เป๊ะ (คนละภาษา คนละไฟล์ เหมือน
-   --fitness-gradient ด้านบนสุดของไฟล์นี้) */
+/* ปุ่ม Start Workout (BottomNav) — เดิม animate box-shadow ตรงๆ (bake shadow stack 6 เลเยอร์ไว้ในทุก
+   keyframe กันชั้นอื่นหายตอนแอนิเมชันทำงาน) แต่ box-shadow ไม่ใช่ property ที่ GPU compositor เร่งได้ —
+   ทุกเฟรมของทุกรอบ (วนตลอดไป, infinite) browser ต้อง repaint จริงทั้งก้อน blur ใหญ่สุดถึง 78px — เปลี่ยน
+   มาแยก glow เป็นเลเยอร์ต่างหาก (กำหนด box-shadow แบบ AMBER_GLOW_SHADOW คงที่ วาดครั้งเดียวไม่ animate)
+   แล้ว animate แค่ opacity/scale ของเลเยอร์นั้นแทน (ดู BottomNav.tsx ที่แยก span glow ออกจาก span
+   ring/drop-shadow) — opacity/transform compositable ด้วย GPU ภาพที่เห็น (glow ขยาย/จางเข้า-ออก) เหมือน
+   เดิม แค่ CPU cost ต่ำกว่ามาก */
 @keyframes start-workout-pulse {
   0%, 100% {
-    box-shadow:
-      0 6px 18px rgba(0, 0, 0, 0.45),
-      0 0 2px rgba(255, 255, 255, 0.6),
-      0 0 8px rgba(255, 210, 120, 0.6),
-      0 0 22px rgba(255, 150, 20, 0.35),
-      0 0 60px rgba(255, 130, 0, 0.12),
-      inset 0 1px rgba(255, 255, 255, 0.35);
+    opacity: 0.55;
+    transform: scale(0.94);
   }
   50% {
-    box-shadow:
-      0 6px 18px rgba(0, 0, 0, 0.45),
-      0 0 2px rgba(255, 255, 255, 0.6),
-      0 0 8px rgba(255, 210, 120, 0.6),
-      0 0 22px rgba(255, 150, 20, 0.35),
-      0 0 78px rgba(255, 130, 0, 0.2),
-      inset 0 1px rgba(255, 255, 255, 0.35);
+    opacity: 1;
+    transform: scale(1.08);
   }
 }
 .animate-start-workout-pulse {
   animation: start-workout-pulse 3s ease-in-out infinite;
+  will-change: opacity, transform;
 }
 
 /* กระดิ่งแจ้งเตือน — แกว่งเบาๆ (rotate สลับซ้าย/ขวาไม่กี่องศา) เมื่อมีรายการแจ้งเตือนใหม่เท่านั้น
