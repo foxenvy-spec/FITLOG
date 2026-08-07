@@ -2250,30 +2250,29 @@ function OverviewHealthScoreHeader({
   return (
     <div
       className="relative overflow-hidden rounded-card px-5 py-4"
-      // ฟีดแบ็ก "ไม่ควรเอา Glass Card เดิมมาปรับนิดๆ แต่ควรเปลี่ยนโครงสร้างของ Health Score Card ใหม่ —
-      // พื้นหลังเกือบดำสนิท #080A0C ไม่ใช่เทาแบบ Card ปัจจุบัน...ไม่ควรใส่ลายเส้นเฉียงเยอะใน Health Score
-      // Panel...ให้พื้นหลังเรียบกว่า: ดำ -> ดำอมเทา -> Glow เพราะจะทำให้สายตาไปที่ 90% ทันที" — การ์ดนี้จงใจ
-      // ไม่ใช้ PremiumCard (ซึ่งมีลายไทเทเนียมเฉียง/grain/reflection หลายชั้นเป็นค่าเริ่มต้นเสมอ ปิดผ่าน prop
-      // ไม่ได้) เพราะ Hero Panel นี้ต้องการพื้นเรียบกว่าการ์ดเมตริกทั่วไปด้านล่างโดยตั้งใจ ไม่ใช่การ์ดปกติอีกใบ
-      // — ขอบ: Titanium (เงาดำ) + Warm Gold glow บางๆ (ไม่ใช่เขียวหรืออำพันเข้มแบบรอบก่อน)
+      // ฟีดแบ็ก "Background ไม่ต้องดำสนิท -> ใช้ charcoal gradient...Orange glow เฉพาะรอบวง Score และขอบ
+      // ด้านบนเล็กน้อย" — รอบก่อนพื้นเป็นดำเกือบสนิท (#0A0B0D) + amber wash กระจายทั่วทั้งการ์ด (radial ที่
+      // 6% 30% รัศมี 55% ครอบคลุมเกือบทั้งใบ) — รอบนี้เปลี่ยนเป็น charcoal ล้วน (เทาเข้มอมฟ้า ไม่ใช่ดำ) และ
+      // ตัด glow กระจายทั่วออก เหลือแค่ highlight บางๆ ที่ขอบบนเท่านั้น (inset) ส่วน glow รอบวง Score ย้ายไป
+      // ทำเป็น drop-shadow เฉพาะจุดที่ตัว GoalRing แทน (ดูด้านล่าง) — สีส้มจึงเป็น "accent เฉพาะจุด" ไม่ใช่
+      // สีที่แผ่ครอบคลุมพื้นหลังทั้งการ์ดอีกต่อไป
       style={{
-        background:
-          'radial-gradient(120% 140% at 6% 30%, rgba(232,163,61,.10), transparent 55%), linear-gradient(180deg, #101214 0%, #0A0B0D 100%)',
+        background: 'linear-gradient(160deg, #1B1D21 0%, #131417 55%, #0F1013 100%)',
         boxShadow:
-          '0 2px 4px rgba(0,0,0,.4), 0 20px 44px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(232,163,61,.20), 0 0 26px rgba(232,163,61,.09), inset 0 1px rgba(255,255,255,.04)',
+          '0 2px 4px rgba(0,0,0,.4), 0 16px 36px -10px rgba(0,0,0,.55), 0 0 0 1px rgba(232,163,61,.18), inset 0 1px rgba(232,163,61,.10)',
       }}
     >
-      {/* ฟีดแบ็ก "วง 90% ยังควรใหญ่ขึ้นอีกนิด ~115-120px เพราะตัวอย่างจุดเด่นที่สุดคือวง Score" — รอบก่อน
-          ขยายจาก 56 เป็น 96px แล้ว รอบนี้ขยายต่อเป็น 118px (strokeWidth ปรับตามสัดส่วนเดิม ~8.3% ของเส้นผ่าน
-          ศูนย์กลาง) + สีทอง/อำพันคงที่ (ไม่ผูกกับ tier — "Gold/Amber = Health Score Hero" เป็นอัตลักษณ์กลาง
-          ของวงนี้เสมอ) ส่วนสีของ "ดีมาก/ควรปรับปรุง" (ringColor จาก healthScoreTier) ยังใช้กับตัวหนังสือ
-          ระดับได้ตามเดิม เพื่อให้ยังสื่อสถานะจริงอยู่ แค่ไม่บังคับกับสีวงอีกต่อไป
-          ฟีดแบ็ก "ลด Divider ลงมาก ใช้พื้นที่ว่างเป็นตัวแบ่งแทน" — ตัดเส้น w-px ทั้งหมดออก เหลือแค่ gap
-          ฟีดแบ็ก "อย่าใส่ Glow สีส้มเยอะขึ้นอีก — Gold ring + ขอบ Gold บางๆ กำลังดีแล้ว" — boxShadow/background
-          ของ container (ดูด้านบน) ไม่แตะเลยรอบนี้ ขยายแค่ตัววงกับ typography เท่านั้น */}
-      <div className="flex items-center gap-6 flex-wrap">
+      {/* ฟีดแบ็ก "วงยังใหญ่เกินไปนิดหนึ่ง (ตอนนี้ ~175px) แนะนำ 145-155px แล้วเพิ่มความโดดเด่นด้วย glow บางๆ
+          แทนขนาด" — ลดจาก 118 กลับมาที่ 150px + strokeWidth ตามสัดส่วนเดิม แล้วห่อ GoalRing ด้วย drop-shadow
+          สีทองเฉพาะรอบวง (ไม่ใช่ glow กระจายทั่วการ์ดแบบ boxShadow เดิม) ชดเชยความโดดเด่นที่ลดขนาดไป
+          ฟีดแบ็ก "ด้านขวาว่างมากเกินไป...จัดเป็น SCORE | LATEST | CHANGE | TARGET โดยมี vertical divider บางๆ
+          เหมือนตัวอย่าง" — กลับมาใส่เส้นแบ่งบางมาก (bg-line/40, ไม่สว่าง) คั่นแต่ละบล็อก แทนที่ gap เปล่าๆ
+          รอบก่อน ตัด ml-auto ออกจากบล็อกเป้าหมาย ให้เรียงเป็นคอลัมน์เท่ากันทั้งแถว */}
+      <div className="flex items-center gap-5 flex-wrap">
         <div className="flex items-center gap-4 shrink-0">
-          <GoalRing pct={pct} size={118} strokeWidth={10} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
+          <div style={{ filter: 'drop-shadow(0 0 12px rgba(232,163,61,.35))' }}>
+            <GoalRing pct={pct} size={150} strokeWidth={12} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
+          </div>
           <div className="min-w-0">
             <button
               type="button"
@@ -2283,50 +2282,50 @@ function OverviewHealthScoreHeader({
               Health Score
               <InfoIcon />
             </button>
-            {/* ฟีดแบ็ก "HEALTH SCORE กับ ดีมาก อยู่ใกล้กันเกินไป — ให้ ดีมาก ใหญ่ขึ้น ~22-24px และเขียว ทำให้
-                hierarchy ชัด: 90% -> HEALTH SCORE -> ดีมาก" — เพิ่ม mt-1 เว้นจาก caption ด้านบน + ขยาย
-                font-size จาก text-base (16px) เป็น 22px ตรงๆ (สีเขียวมาจาก ringColor เดิมอยู่แล้วที่คะแนน
-                90% ระดับ "ดีมาก" ไม่ต้อง hardcode สีใหม่ ยังคงสื่อสถานะจริงตาม tier เหมือนเดิม) */}
-            <span className="font-display block mt-1 tracked uppercase" style={{ color: ringColor, fontSize: 22 }}>
+            {/* ฟีดแบ็ก "ดีมาก ควรใหญ่ขึ้นอีกนิด ~24-26px และ weight หนักขึ้น เพราะมันคือคำอธิบายคะแนน ไม่ใช่
+                subtitle" — จาก 22px เป็น 25px + font-semibold (เดิม font-display เฉยๆ ไม่ได้บังคับ weight) */}
+            <span className="font-display font-semibold block mt-1 tracked uppercase" style={{ color: ringColor, fontSize: 25 }}>
               {label}
             </span>
           </div>
         </div>
 
         {updatedDateLabel && (
-          <div className="shrink-0">
-            <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
-            <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
-            {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
-          </div>
-        )}
-
-        {/* ฟีดแบ็ก "การเปลี่ยนแปลง ดีแล้ว แต่ให้ตัวเลขเป็นตัวที่เด่นที่สุด" — ขยาย span ตัวเลข/ลูกศรจาก
-            text-xs (12px) เป็น text-sm (14px) แยกจาก label ซึ่งยังเล็ก/เทาเหมือนเดิม (text-[11px]) ให้ตัวเลข
-            เด่นกว่า label ชัดเจนขึ้น ไม่ใช่ขนาดเท่ากันในบรรทัดเดียวแบบเดิม */}
-        {signals.length > 0 && (
-          <div className="shrink-0">
-            <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
-            <div className="flex flex-col gap-0.5">
-              {signals.map((s) => (
-                <p key={s.label} className="whitespace-nowrap">
-                  <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
-                    {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
-                  </span>{' '}
-                  <span className="text-[11px] text-muted">{s.label}</span>
-                </p>
-              ))}
+          <>
+            <div className="w-px self-stretch bg-line/40" />
+            <div className="shrink-0">
+              <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
+              <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
+              {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
             </div>
-          </div>
+          </>
         )}
 
-        {/* ฟีดแบ็ก "ด้านขวาโล่งเกินไป — ถ้าไม่มี Goal จริง ไม่ควรเติมข้อมูลมั่วๆ แต่ควรทำให้เป็น CTA ที่มี
-            น้ำหนักมากขึ้น เช่น + ตั้งเป้าหมาย" — เปลี่ยนจากลิงก์ข้อความเปล่าเป็นปุ่มเล็กมีขอบทอง (opacity ต่ำ
-            ตามที่ขอ "อย่าใส่ Glow เพิ่ม" — นี่คือเส้นขอบบาง ไม่ใช่ glow ใหม่) ให้มี visual weight โดยไม่ต้อง
-            เพิ่มข้อมูลปลอม — ml-auto ดันไปชิดขวาสุดของแถวเดียวกับวง/ล่าสุด/การเปลี่ยนแปลง (ไม่ใช่แถวแยกด้านล่าง
-            ตามภาพร่าง — เก็บพื้นที่แนวตั้งไว้ ไม่ให้ Panel สูงเกิน 110-130px ตามที่ขอ ในขณะที่ยังได้ตำแหน่ง
-            "ทางขวา" ตามภาพเหมือนกัน) */}
-        <div className="shrink-0 ml-auto text-right">
+        {signals.length > 0 && (
+          <>
+            <div className="w-px self-stretch bg-line/40" />
+            <div className="shrink-0">
+              <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
+              <div className="flex flex-col gap-0.5">
+                {signals.map((s) => (
+                  <p key={s.label} className="whitespace-nowrap">
+                    <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
+                      {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
+                    </span>{' '}
+                    <span className="text-[11px] text-muted">{s.label}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ฟีดแบ็ก "เป้าหมายด้านขวายังดูเหมือนปุ่มที่ลอยอยู่...เปลี่ยนเป็น Goal Status จะรู้สึกว่าเป็นข้อมูล
+            ชุดเดียวกับ Health Summary มากกว่า" — ตัดขอบ pill/border ออก เหลือแค่ตัวหนังสือสถานะเรียบๆ (มี
+            "ยังไม่ได้ตั้ง" เป็นบรรทัดสถานะก่อน แล้วค่อยมีลิงก์ "+ ตั้งเป้าหมาย" เล็กๆ ต่อท้าย) ให้หน้าตาเหมือน
+            คอลัมน์อื่นๆ ในแถวเดียวกัน ไม่ใช่ปุ่มลอยเด่นแยกออกมา */}
+        <div className="w-px self-stretch bg-line/40" />
+        <div className="shrink-0">
           <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
           {goalValueText ? (
             <>
@@ -2334,12 +2333,12 @@ function OverviewHealthScoreHeader({
               {goalSubText && <p className="text-[10px] text-muted">{goalSubText}</p>}
             </>
           ) : (
-            <a
-              href="/calendar"
-              className="inline-flex items-center gap-1 mt-1 text-[11px] font-display tracked uppercase text-amber border border-amber/25 rounded-full px-2.5 py-1 transition hover:bg-amber/10"
-            >
-              + ตั้งเป้าหมาย
-            </a>
+            <>
+              <p className="font-mono text-sm text-muted">ยังไม่ได้ตั้ง</p>
+              <a href="/calendar" className="text-[11px] text-amber transition hover:text-ink">
+                + ตั้งเป้าหมาย
+              </a>
+            </>
           )}
         </div>
       </div>
