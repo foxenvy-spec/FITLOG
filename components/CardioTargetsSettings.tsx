@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { saveWeeklyCardioTargets, type WeeklyCardioTargets } from '@/lib/weeklyCardioTargets'
 
@@ -54,7 +55,10 @@ export default function CardioTargetsSettings({
     }
   }
 
-  return (
+  // portal ไป document.body — เหตุผลเดียวกับ VolumeTargetsSettings.tsx (component นี้ render ซ้อนอยู่ใต้
+  // การ์ดที่มี animate-rise/animate-fade-scale-in ซึ่งค้าง transform ไว้ถาวร ทำให้กลายเป็น containing
+  // block ของ position:fixed แทน viewport ตามสเปก CSS — sheet เลยหลุดจอ)
+  return createPortal(
     <div className="fixed inset-0 z-30 flex items-end justify-center">
       <div className="absolute inset-0 bg-bg/70" onClick={onClose} aria-hidden="true" />
       <div
@@ -113,6 +117,7 @@ export default function CardioTargetsSettings({
           {saving ? 'กำลังบันทึก...' : 'บันทึกเป้าหมาย'}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

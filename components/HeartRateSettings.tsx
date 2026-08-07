@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { saveMaxHeartRate, saveRestingHeartRate } from '@/lib/profile'
 import { DEFAULT_MAX_HEART_RATE } from '@/lib/heartRate'
@@ -58,7 +59,10 @@ export default function HeartRateSettings({
     }
   }
 
-  return (
+  // portal ไป document.body — เหตุผลเดียวกับ VolumeTargetsSettings.tsx/CardioTargetsSettings.tsx
+  // (render ซ้อนอยู่ใต้การ์ดที่มี animate-rise/animate-fade-scale-in ซึ่งค้าง transform ไว้ถาวร
+  // ทำให้กลายเป็น containing block ของ position:fixed แทน viewport ตามสเปก CSS — sheet เลยหลุดจอ)
+  return createPortal(
     <div className="fixed inset-0 z-30 flex items-end justify-center">
       <div className="absolute inset-0 bg-bg/70" onClick={onClose} aria-hidden="true" />
       <div
@@ -137,6 +141,7 @@ export default function HeartRateSettings({
           {saving ? 'กำลังบันทึก...' : 'บันทึก'}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

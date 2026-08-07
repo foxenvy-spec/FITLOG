@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { saveWeeklyVolumeTargets, type WeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
@@ -83,7 +84,11 @@ export default function VolumeTargetsSettings({
     }
   }
 
-  return (
+  // portal ไป document.body ตรงๆ — component นี้มักถูก render ซ้อนอยู่ใต้การ์ดที่มี animate-rise/
+  // animate-fade-scale-in (ซึ่งค้าง transform ไว้ถาวรหลัง animation จบ ผ่าน animation-fill-mode: both)
+  // ตัว ancestor ที่มี transform จะกลายเป็น containing block ของ position:fixed แทนที่ viewport ตามสเปก
+  // CSS ทำให้ sheet นี้ไปโผล่ผิดตำแหน่ง (มักหลุดจอ ไม่ error แต่มองไม่เห็น) แทนที่จะลอยเทียบ viewport จริง
+  return createPortal(
     <div className="fixed inset-0 z-30 flex items-end justify-center">
       <div className="absolute inset-0 bg-bg/70" onClick={onClose} aria-hidden="true" />
       <div
@@ -147,6 +152,7 @@ export default function VolumeTargetsSettings({
           {saving ? 'กำลังบันทึก...' : 'บันทึกเป้าหมาย'}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
