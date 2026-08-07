@@ -991,11 +991,13 @@ export default function HealthPage() {
   // ฟีดแบ็ก "พื้นที่ด้านขวาของ Health Score ยังว่างค่อนข้างเยอะ — อยากได้สรุปประโยคเดียวแทนที่จะเพิ่ม metric
   // อีกตัว จะทำให้ Health Score กลายเป็น Insight ไม่ใช่แค่คะแนน" — ใช้ delta ไขมัน/กล้ามเนื้อที่มีอยู่แล้ว
   // (เดียวกับที่การ์ดน้ำหนักใช้เช็ค "น้ำหนักเพิ่มจากกล้ามเนื้อ") ไม่ได้คำนวณอะไรใหม่ — ถ้าเป้าหมายเป็นลดน้ำหนัก/
-  // ไขมันด้วย ให้ประโยคพูดถึงเป้าหมายตรงๆ (เหมือนตัวอย่างที่ขอ "กำลังลดไขมัน พร้อมรักษามวลกล้ามเนื้อ")
+  // ไขมันด้วย ให้ประโยคพูดถึงเป้าหมายตรงๆ
+  // v15: ฟีดแบ็ก "ตัดคำว่า 'กำลัง' ออก — ลดไขมัน พร้อมรักษามวลกล้ามเนื้อ สั้นและพรีเมียมกว่า อยู่ใต้ Health
+  // Score แล้วไม่ต้องอธิบายเยอะ" — เอา 'กำลัง' นำหน้าออก เหลือกริยาสั้นตรงประเด็น
   const bodyCompositionSummary: string | null =
     bodyFatDeltaForCard !== null && bodyFatDeltaForCard < 0 && muscleDeltaForWeightCheck !== null && muscleDeltaForWeightCheck > 0
       ? weightDirection === 'lowerBetter'
-        ? 'กำลังลดไขมัน พร้อมรักษามวลกล้ามเนื้อ'
+        ? 'ลดไขมัน พร้อมรักษามวลกล้ามเนื้อ'
         : 'องค์ประกอบร่างกายดีขึ้นอย่างต่อเนื่อง'
       : bodyFatDeltaForCard !== null && bodyFatDeltaForCard < 0
         ? 'ไขมันในร่างกายลดลงต่อเนื่อง'
@@ -2249,7 +2251,7 @@ function OverviewHealthScoreHeader({
 
   return (
     <div
-      className="relative overflow-hidden rounded-card px-5 py-4"
+      className="relative overflow-hidden rounded-card px-5 py-3"
       // ฟีดแบ็ก "Background ไม่ต้องดำสนิท -> ใช้ charcoal gradient...Orange glow เฉพาะรอบวง Score และขอบ
       // ด้านบนเล็กน้อย" — รอบก่อนพื้นเป็นดำเกือบสนิท (#0A0B0D) + amber wash กระจายทั่วทั้งการ์ด (radial ที่
       // 6% 30% รัศมี 55% ครอบคลุมเกือบทั้งใบ) — รอบนี้เปลี่ยนเป็น charcoal ล้วน (เทาเข้มอมฟ้า ไม่ใช่ดำ) และ
@@ -2262,16 +2264,18 @@ function OverviewHealthScoreHeader({
           '0 2px 4px rgba(0,0,0,.4), 0 16px 36px -10px rgba(0,0,0,.55), 0 0 0 1px rgba(232,163,61,.18), inset 0 1px rgba(232,163,61,.10)',
       }}
     >
-      {/* ฟีดแบ็ก "วงยังใหญ่เกินไปนิดหนึ่ง (ตอนนี้ ~175px) แนะนำ 145-155px แล้วเพิ่มความโดดเด่นด้วย glow บางๆ
-          แทนขนาด" — ลดจาก 118 กลับมาที่ 150px + strokeWidth ตามสัดส่วนเดิม แล้วห่อ GoalRing ด้วย drop-shadow
-          สีทองเฉพาะรอบวง (ไม่ใช่ glow กระจายทั่วการ์ดแบบ boxShadow เดิม) ชดเชยความโดดเด่นที่ลดขนาดไป
-          ฟีดแบ็ก "ด้านขวาว่างมากเกินไป...จัดเป็น SCORE | LATEST | CHANGE | TARGET โดยมี vertical divider บางๆ
-          เหมือนตัวอย่าง" — กลับมาใส่เส้นแบ่งบางมาก (bg-line/40, ไม่สว่าง) คั่นแต่ละบล็อก แทนที่ gap เปล่าๆ
-          รอบก่อน ตัด ml-auto ออกจากบล็อกเป้าหมาย ให้เรียงเป็นคอลัมน์เท่ากันทั้งแถว */}
-      <div className="flex items-center gap-5 flex-wrap">
+      {/* ฟีดแบ็ก "วงยังใหญ่กว่าที่จำเป็นนิดหนึ่ง (ตอนนี้ ~200px) ลดลงประมาณ 10-15% แล้วใช้ soft orange glow
+          แทนการเพิ่มขนาด" — ลดจาก 150 เหลือ 130px (strokeWidth ตามสัดส่วนเดิม) drop-shadow รอบวงยังอยู่ตามเดิม
+          ชดเชยความโดดเด่นที่ลดขนาดไป ให้ HEALTH SCORE มีพื้นที่หายใจมากขึ้นตามที่ขอ
+          ฟีดแบ็ก "ช่องว่างด้านขวายังเยอะเกินไป — ไม่อยากเพิ่มข้อมูลมั่วๆ แต่ให้ขยาย 4 sections ให้สมดุลกับ
+          Card โดยแต่ละ column มี width ใกล้เคียงกันมากขึ้น" — เดิมเส้นแบ่งเป็น flex item แยก (w-px) ทำให้
+          justify-between กระจายช่องว่างรอบเส้นแบ่งแปลกๆ ได้ — ย้ายเส้นแบ่งไปเป็น border-l ติดกับบล็อกถัดไปแทน
+          (ไม่ใช่ elemente ลอย) แล้วใส่ justify-between ที่ container ให้ 4 บล็อกกระจายเต็มความกว้างการ์ดเอง
+          โดยไม่ต้องเพิ่มข้อมูลใหม่ */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4 shrink-0">
           <div style={{ filter: 'drop-shadow(0 0 12px rgba(232,163,61,.35))' }}>
-            <GoalRing pct={pct} size={150} strokeWidth={12} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
+            <GoalRing pct={pct} size={130} strokeWidth={11} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
           </div>
           <div className="min-w-0">
             <button
@@ -2282,8 +2286,6 @@ function OverviewHealthScoreHeader({
               Health Score
               <InfoIcon />
             </button>
-            {/* ฟีดแบ็ก "ดีมาก ควรใหญ่ขึ้นอีกนิด ~24-26px และ weight หนักขึ้น เพราะมันคือคำอธิบายคะแนน ไม่ใช่
-                subtitle" — จาก 22px เป็น 25px + font-semibold (เดิม font-display เฉยๆ ไม่ได้บังคับ weight) */}
             <span className="font-display font-semibold block mt-1 tracked uppercase" style={{ color: ringColor, fontSize: 25 }}>
               {label}
             </span>
@@ -2291,41 +2293,30 @@ function OverviewHealthScoreHeader({
         </div>
 
         {updatedDateLabel && (
-          <>
-            <div className="w-px self-stretch bg-line/40" />
-            <div className="shrink-0">
-              <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
-              <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
-              {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
-            </div>
-          </>
+          <div className="shrink-0 border-l border-line/40 pl-5">
+            <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
+            <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
+            {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
+          </div>
         )}
 
         {signals.length > 0 && (
-          <>
-            <div className="w-px self-stretch bg-line/40" />
-            <div className="shrink-0">
-              <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
-              <div className="flex flex-col gap-0.5">
-                {signals.map((s) => (
-                  <p key={s.label} className="whitespace-nowrap">
-                    <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
-                      {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
-                    </span>{' '}
-                    <span className="text-[11px] text-muted">{s.label}</span>
-                  </p>
-                ))}
-              </div>
+          <div className="shrink-0 border-l border-line/40 pl-5">
+            <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
+            <div className="flex flex-col gap-0.5">
+              {signals.map((s) => (
+                <p key={s.label} className="whitespace-nowrap">
+                  <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
+                    {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
+                  </span>{' '}
+                  <span className="text-[11px] text-muted">{s.label}</span>
+                </p>
+              ))}
             </div>
-          </>
+          </div>
         )}
 
-        {/* ฟีดแบ็ก "เป้าหมายด้านขวายังดูเหมือนปุ่มที่ลอยอยู่...เปลี่ยนเป็น Goal Status จะรู้สึกว่าเป็นข้อมูล
-            ชุดเดียวกับ Health Summary มากกว่า" — ตัดขอบ pill/border ออก เหลือแค่ตัวหนังสือสถานะเรียบๆ (มี
-            "ยังไม่ได้ตั้ง" เป็นบรรทัดสถานะก่อน แล้วค่อยมีลิงก์ "+ ตั้งเป้าหมาย" เล็กๆ ต่อท้าย) ให้หน้าตาเหมือน
-            คอลัมน์อื่นๆ ในแถวเดียวกัน ไม่ใช่ปุ่มลอยเด่นแยกออกมา */}
-        <div className="w-px self-stretch bg-line/40" />
-        <div className="shrink-0">
+        <div className="shrink-0 border-l border-line/40 pl-5">
           <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
           {goalValueText ? (
             <>
@@ -2343,7 +2334,7 @@ function OverviewHealthScoreHeader({
         </div>
       </div>
 
-      {summary && <p className="text-[11px] text-muted mt-2.5">{summary}</p>}
+      {summary && <p className="text-[11px] text-muted mt-2">{summary}</p>}
 
       {showBreakdown && categoryRows.length > 0 && (
         <div className="mt-3 pt-3 border-t border-line space-y-1.5">
