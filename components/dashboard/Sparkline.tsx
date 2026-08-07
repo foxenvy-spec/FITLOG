@@ -10,12 +10,15 @@ interface SparklineProps {
   /** true = เต็มความกว้าง container (การ์ดมือถือ, กราฟเป็นแถบเดี่ยวเต็มการ์ด) — false (ดีฟอลต์) =
    *  ความกว้างคงที่ตาม width px (เดสก์ท็อป, กราฟเล็กอยู่ข้างตัวเลข) */
   stretch?: boolean
+  /** ฟีดแบ็ก "เส้นน้ำหนัก = Titanium, จุดล่าสุด = เขียว" — จุดกลมเน้นตำแหน่งล่าสุดของกราฟ แยกสีจากเส้นได้
+   *  (เช่น เส้นเทาไทเทเนียม + จุดเขียว) ไม่ระบุ = ไม่วาดจุด (ดีฟอลต์เดิม ไม่กระทบการ์ดอื่นที่ใช้อยู่แล้ว) */
+  endpointColor?: string
 }
 
 // กราฟเส้นจิ๋วท้ายการ์ดเมตริก — เส้น SVG ธรรมดา ไม่มีพื้นที่ใต้กราฟ ไม่มี glow filter (ตามสเปคที่ขอ
 // "No fill" ให้เบา/เรียบแบบ Apple Health) เดิมเคยมี area-fill + glow 2 ชั้นซ้อนกัน (ดู git history
 // MetricCard.tsx) ตัดออกให้เหลือแค่เส้น stroke เดียว — โค้งมนแบบ Catmull-Rom เหมือนเดิม
-export default function Sparkline({ series, color, height = 26, width = 200, stretch = false }: SparklineProps) {
+export default function Sparkline({ series, color, height = 26, width = 200, stretch = false, endpointColor }: SparklineProps) {
   if (series.length < 2) return null
   const w = width
   const h = height
@@ -51,6 +54,7 @@ export default function Sparkline({ series, color, height = 26, width = 200, str
       aria-hidden="true"
     >
       <path d={path} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      {endpointColor && <circle cx={points[n - 1][0]} cy={points[n - 1][1]} r={3} fill={endpointColor} />}
     </svg>
   )
 }
