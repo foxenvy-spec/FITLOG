@@ -2263,14 +2263,17 @@ function OverviewHealthScoreHeader({
           '0 2px 4px rgba(0,0,0,.4), 0 20px 44px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(232,163,61,.20), 0 0 26px rgba(232,163,61,.09), inset 0 1px rgba(255,255,255,.04)',
       }}
     >
-      {/* ฟีดแบ็ก "วง 90% เล็กเกินไป — ตัวอย่างวงแหวนคือพระเอกของ Panel, ของคุณเป็นแค่ไอคอนประกอบ ควรใหญ่ขึ้น
-          ~100-110px" — จาก 56px เป็น 96px + สีทอง/อำพันคงที่ (ไม่ผูกกับ tier อีกต่อไป — "Gold/Amber = Health
-          Score Hero" เป็นอัตลักษณ์กลางของวงนี้เสมอ) ส่วนสีของ "ดีมาก/ควรปรับปรุง" (ringColor จาก healthScoreTier)
-          ยังใช้กับตัวหนังสือระดับได้ตามเดิม เพื่อให้ยังสื่อสถานะจริงอยู่ แค่ไม่บังคับกับสีวงอีกต่อไป
-          ฟีดแบ็ก "ลด Divider ลงมาก ใช้พื้นที่ว่างเป็นตัวแบ่งแทน" — ตัดเส้น w-px ทั้งหมดออก เหลือแค่ gap */}
+      {/* ฟีดแบ็ก "วง 90% ยังควรใหญ่ขึ้นอีกนิด ~115-120px เพราะตัวอย่างจุดเด่นที่สุดคือวง Score" — รอบก่อน
+          ขยายจาก 56 เป็น 96px แล้ว รอบนี้ขยายต่อเป็น 118px (strokeWidth ปรับตามสัดส่วนเดิม ~8.3% ของเส้นผ่าน
+          ศูนย์กลาง) + สีทอง/อำพันคงที่ (ไม่ผูกกับ tier — "Gold/Amber = Health Score Hero" เป็นอัตลักษณ์กลาง
+          ของวงนี้เสมอ) ส่วนสีของ "ดีมาก/ควรปรับปรุง" (ringColor จาก healthScoreTier) ยังใช้กับตัวหนังสือ
+          ระดับได้ตามเดิม เพื่อให้ยังสื่อสถานะจริงอยู่ แค่ไม่บังคับกับสีวงอีกต่อไป
+          ฟีดแบ็ก "ลด Divider ลงมาก ใช้พื้นที่ว่างเป็นตัวแบ่งแทน" — ตัดเส้น w-px ทั้งหมดออก เหลือแค่ gap
+          ฟีดแบ็ก "อย่าใส่ Glow สีส้มเยอะขึ้นอีก — Gold ring + ขอบ Gold บางๆ กำลังดีแล้ว" — boxShadow/background
+          ของ container (ดูด้านบน) ไม่แตะเลยรอบนี้ ขยายแค่ตัววงกับ typography เท่านั้น */}
       <div className="flex items-center gap-6 flex-wrap">
-        <div className="flex items-center gap-3 shrink-0">
-          <GoalRing pct={pct} size={96} strokeWidth={8} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
+        <div className="flex items-center gap-4 shrink-0">
+          <GoalRing pct={pct} size={118} strokeWidth={10} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
           <div className="min-w-0">
             <button
               type="button"
@@ -2280,7 +2283,11 @@ function OverviewHealthScoreHeader({
               Health Score
               <InfoIcon />
             </button>
-            <span className="font-display text-base tracked uppercase" style={{ color: ringColor }}>
+            {/* ฟีดแบ็ก "HEALTH SCORE กับ ดีมาก อยู่ใกล้กันเกินไป — ให้ ดีมาก ใหญ่ขึ้น ~22-24px และเขียว ทำให้
+                hierarchy ชัด: 90% -> HEALTH SCORE -> ดีมาก" — เพิ่ม mt-1 เว้นจาก caption ด้านบน + ขยาย
+                font-size จาก text-base (16px) เป็น 22px ตรงๆ (สีเขียวมาจาก ringColor เดิมอยู่แล้วที่คะแนน
+                90% ระดับ "ดีมาก" ไม่ต้อง hardcode สีใหม่ ยังคงสื่อสถานะจริงตาม tier เหมือนเดิม) */}
+            <span className="font-display block mt-1 tracked uppercase" style={{ color: ringColor, fontSize: 22 }}>
               {label}
             </span>
           </div>
@@ -2294,28 +2301,29 @@ function OverviewHealthScoreHeader({
           </div>
         )}
 
-        {/* ฟีดแบ็ก "การเปลี่ยนแปลง ไม่ควรเป็นป้ายเขียว ให้เป็นตัวเลขธรรมดา ↓ 2.3% ไขมัน โดยใช้สีเขียวเฉพาะ
-            ตัวเลข/ลูกศร จะดูแพงขึ้นมาก" — ตัด pill (bg-mossdim/rustdim rounded-full) ออก เหลือแค่ตัวเลข+ลูกศร
-            สีเขียว/แดง ตามด้วย label สีเทาเฉยๆ ไม่มีพื้นหลัง และสลับลำดับเป็นตัวเลขนำหน้า (↓ 2.3% ไขมัน)
-            ตามที่ขอ แทนที่ label นำหน้าแบบเดิม */}
+        {/* ฟีดแบ็ก "การเปลี่ยนแปลง ดีแล้ว แต่ให้ตัวเลขเป็นตัวที่เด่นที่สุด" — ขยาย span ตัวเลข/ลูกศรจาก
+            text-xs (12px) เป็น text-sm (14px) แยกจาก label ซึ่งยังเล็ก/เทาเหมือนเดิม (text-[11px]) ให้ตัวเลข
+            เด่นกว่า label ชัดเจนขึ้น ไม่ใช่ขนาดเท่ากันในบรรทัดเดียวแบบเดิม */}
         {signals.length > 0 && (
           <div className="shrink-0">
             <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
             <div className="flex flex-col gap-0.5">
               {signals.map((s) => (
-                <p key={s.label} className="text-xs whitespace-nowrap">
-                  <span className="font-mono font-semibold" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
+                <p key={s.label} className="whitespace-nowrap">
+                  <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
                     {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
                   </span>{' '}
-                  <span className="text-muted">{s.label}</span>
+                  <span className="text-[11px] text-muted">{s.label}</span>
                 </p>
               ))}
             </div>
           </div>
         )}
 
-        {/* ฟีดแบ็ก "เป้าหมาย ยังไม่ได้ตั้ง › (ลูกศรชวนกด แทนลิงก์ขีดเส้นใต้ธรรมดา)...จะทำให้พื้นที่ด้านขวาไม่
-            โล่งเกินไป" — ml-auto ดันไปชิดขวาสุดของแถวเดียวกับวง/ล่าสุด/การเปลี่ยนแปลง (ไม่ใช่แถวแยกด้านล่าง
+        {/* ฟีดแบ็ก "ด้านขวาโล่งเกินไป — ถ้าไม่มี Goal จริง ไม่ควรเติมข้อมูลมั่วๆ แต่ควรทำให้เป็น CTA ที่มี
+            น้ำหนักมากขึ้น เช่น + ตั้งเป้าหมาย" — เปลี่ยนจากลิงก์ข้อความเปล่าเป็นปุ่มเล็กมีขอบทอง (opacity ต่ำ
+            ตามที่ขอ "อย่าใส่ Glow เพิ่ม" — นี่คือเส้นขอบบาง ไม่ใช่ glow ใหม่) ให้มี visual weight โดยไม่ต้อง
+            เพิ่มข้อมูลปลอม — ml-auto ดันไปชิดขวาสุดของแถวเดียวกับวง/ล่าสุด/การเปลี่ยนแปลง (ไม่ใช่แถวแยกด้านล่าง
             ตามภาพร่าง — เก็บพื้นที่แนวตั้งไว้ ไม่ให้ Panel สูงเกิน 110-130px ตามที่ขอ ในขณะที่ยังได้ตำแหน่ง
             "ทางขวา" ตามภาพเหมือนกัน) */}
         <div className="shrink-0 ml-auto text-right">
@@ -2326,8 +2334,11 @@ function OverviewHealthScoreHeader({
               {goalSubText && <p className="text-[10px] text-muted">{goalSubText}</p>}
             </>
           ) : (
-            <a href="/calendar" className="text-[11px] text-muted transition hover:text-ink">
-              ยังไม่ได้ตั้ง ›
+            <a
+              href="/calendar"
+              className="inline-flex items-center gap-1 mt-1 text-[11px] font-display tracked uppercase text-amber border border-amber/25 rounded-full px-2.5 py-1 transition hover:bg-amber/10"
+            >
+              + ตั้งเป้าหมาย
             </a>
           )}
         </div>
