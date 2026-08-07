@@ -881,6 +881,15 @@ export default function HealthPage() {
 
       {tab === 'overview' && (
         <div className="space-y-6">
+          <OverviewHealthScoreHeader
+            score={healthScore}
+            latestMeasuredAt={latest?.measured_at ?? null}
+            bodyFatDeltaPct={fieldDelta('body_fat_pct')}
+            muscleMassDelta={fieldDelta('muscle_kg', toDisplay)}
+            weightGoalTargetKg={weightGoal?.target_value ?? null}
+            toDisplay={toDisplay}
+            unit={unit}
+          />
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
@@ -1891,6 +1900,89 @@ function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toD
 }
 
 // วงแหวนสรุป + สัดส่วน ดีมาก/มาตรฐาน/ควรปรับปรุง จากตัวชี้วัดล่าสุดที่มีช่วงอ้างอิงให้เทียบ
+// ระดับคะแนนสุขภาพรวม → label + สี ring — แยกเป็นฟังก์ชันกลางให้ HealthScoreCard (แท็บ "แนวโน้ม") และ
+// OverviewHealthScoreHeader (แท็บ "ภาพรวม") ใช้สูตรเดียวกันเป๊ะ (ไล่ตามคะแนนจริง: แดง/ส้ม/เขียว) แทนสีคงที่
+// ตายตัวสีเดียว — กันไม่ให้สองแท็บพูดภาษาสีคนละชุดกัน และกันชนกับความหมายสีที่จองไว้แล้วที่อื่นในแอป (เช่น
+// cyan = Recovery ring บน Dashboard)
+function healthScoreTier(pct: number): { label: string; color: string } {
+  if (pct >= 85) return { label: 'ดีมาก', color: '#7A9B57' }
+  if (pct >= 65) return { label: 'ดี', color: '#7A9B57' }
+  if (pct >= 40) return { label: 'มาตรฐาน', color: '#E8A33D' }
+  return { label: 'ควรปรับปรุง', color: '#C1503A' }
+}
+
+// สรุปคะแนนสุขภาพแบบย่อ บนสุดของแท็บ "ภาพรวม" — ต่างจาก HealthScoreCard เต็มรูปแบบด้านล่าง (แถบไล่สี +
+// percentile เทียบประวัติตัวเอง ซึ่งอยู่ในแท็บ "แนวโน้ม") ตัวนี้เน้น "สรุปเร็ว" 3 อย่างที่มักอยากรู้ทันทีที่
+// เปิดหน้า: วันที่วัดล่าสุด, การเปลี่ยนแปลงของตัวชี้วัดหลัก 2 ตัว (ไขมัน/มวลกล้ามเนื้อ), เป้าหมายน้ำหนักที่ตั้งไว้
+function OverviewHealthScoreHeader({
+  score,
+  latestMeasuredAt,
+  bodyFatDeltaPct,
+  muscleMassDelta,
+  weightGoalTargetKg,
+  toDisplay,
+  unit,
+}: {
+  score: { good: number; standard: number; needsWork: number; total: number; score: number }
+  latestMeasuredAt: string | null
+  bodyFatDeltaPct: number | null
+  muscleMassDelta: number | null
+  weightGoalTargetKg: number | null
+  toDisplay: (v: number) => number
+  unit: string
+}) {
+  if (score.total === 0) return null
+  const pct = (score.score / score.total) * 100
+  const { label, color: ringColor } = healthScoreTier(pct)
+
+  return (
+    <PremiumCard className="p-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-3 shrink-0">
+          <GoalRing pct={pct} size={72} strokeWidth={7} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
+          <div>
+            <p className="text-[10px] tracked uppercase text-muted">Health Score</p>
+            <p className="font-display text-lg tracked uppercase" style={{ color: ringColor }}>
+              {label}
+            </p>
+          </div>
+        </div>
+        <div className="flex-1 min-w-[220px] grid grid-cols-3 gap-3 border-l border-line pl-4">
+          <div>
+            <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
+            <p className="text-xs text-ink mt-1">{latestMeasuredAt ? shortLabel(latestMeasuredAt) : '—'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] tracked uppercase text-muted">การเปลี่ยนแปลง</p>
+            {bodyFatDeltaPct !== null || muscleMassDelta !== null ? (
+              <div className="mt-1 space-y-0.5">
+                {bodyFatDeltaPct !== null && (
+                  <p className={`text-[11px] font-mono ${bodyFatDeltaPct <= 0 ? 'text-moss' : 'text-rusttext'}`}>
+                    {bodyFatDeltaPct > 0 ? '↑' : bodyFatDeltaPct < 0 ? '↓' : '·'} {Math.abs(bodyFatDeltaPct).toFixed(1)}% ไขมัน
+                  </p>
+                )}
+                {muscleMassDelta !== null && (
+                  <p className={`text-[11px] font-mono ${muscleMassDelta >= 0 ? 'text-moss' : 'text-rusttext'}`}>
+                    {muscleMassDelta > 0 ? '↑' : muscleMassDelta < 0 ? '↓' : '·'} {Math.abs(muscleMassDelta).toFixed(1)} {unit} กล้ามเนื้อ
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted mt-1">—</p>
+            )}
+          </div>
+          <div>
+            <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
+            <p className="text-xs text-ink mt-1">
+              {weightGoalTargetKg !== null ? `${toDisplay(weightGoalTargetKg).toFixed(1)} ${unit}` : 'ยังไม่ได้ตั้ง'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </PremiumCard>
+  )
+}
+
 function HealthScoreCard({
   score,
   monthDeltaPct,
@@ -1901,8 +1993,7 @@ function HealthScoreCard({
   selfPercentile?: number | null
 }) {
   const pct = score.total > 0 ? (score.score / score.total) * 100 : 0
-  const label = pct >= 85 ? 'ดีมาก' : pct >= 65 ? 'ดี' : pct >= 40 ? 'มาตรฐาน' : 'ควรปรับปรุง'
-  const ringColor = pct >= 85 ? '#7A9B57' : pct >= 65 ? '#7A9B57' : pct >= 40 ? '#E8A33D' : '#C1503A'
+  const { label, color: ringColor } = healthScoreTier(pct)
   return (
     <PremiumCard className="p-4">
       <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คะแนนสุขภาพรวม</h2>
