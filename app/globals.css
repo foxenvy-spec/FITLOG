@@ -95,6 +95,28 @@
   background-image: linear-gradient(155deg, var(--glow-color-soft, rgba(255, 255, 255, 0.035)), rgba(255, 255, 255, 0) 55%);
 }
 
+/* Card ยังไม่มี Hover State — ฟีดแบ็ก "Premium App จะมี Glow/Shadow/Border/Raise เวลาชี้เมาส์ ตอนนี้นิ่ง
+   ทั้งหมด" — ใช้กับการ์ดตัวชี้วัดในหน้า Health เท่านั้น (ไม่แตะ .premium-card เอง เพราะใช้ทั่วทั้งแอปหลายสิบจุด
+   เปลี่ยน default ตรงนั้นจะกระทบกว้างเกินขอบเขตที่ขอ) — ใช้ filter (ไม่ใช่ box-shadow/border ตรงๆ) เพราะ
+   PremiumCard.tsx เซ็ต boxShadow ผ่าน inline style อยู่แล้ว (specificity ของ inline ชนะ CSS class เสมอ
+   ไม่ว่าจะมี :hover หรือเปล่าก็ตาม ถ้าใช้ box-shadow ตรงๆ จะโดนค่า inline ทับเงียบๆ ไม่มีผลอะไรเลย) —
+   filter ไม่ชนกับ inline style จุดไหนเลย ใช้ drop-shadow ซ้อน 3 ชั้นแทน Border (blur 0 ไล่ตามรูปทรง
+   clip-path จริง ไม่ใช่กรอบสี่เหลี่ยมทึบที่จะโดนตัดมุม CNC) + Glow (สีอำพัน) + Shadow (เงาเข้ม) ในค่าเดียว */
+.metric-card-hover {
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.metric-card-hover:hover {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 0 0.5px rgba(255, 255, 255, 0.25)) drop-shadow(0 0 14px rgba(232, 163, 61, 0.28))
+    drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+}
+@media (hover: none) {
+  .metric-card-hover:hover {
+    transform: none;
+    filter: none;
+  }
+}
+
 .input {
   @apply w-full rounded-lg bg-surface border border-line px-4 py-3 text-ink placeholder:text-muted/50 focus:border-amber outline-none transition;
 }

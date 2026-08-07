@@ -37,6 +37,20 @@ function shortLabel(iso: string) {
   return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
 }
 
+// ปัดเป็นหน่วยหยาบพอ (นาที/ชม./วัน) ไม่ต้อง re-render ทุกวินาที — รูปแบบเดียวกับ relativeUpdatedLabel ใน
+// AICoachCompactCard.tsx (คนละไฟล์ คนละโดเมนข้อมูล เลยไม่ import ข้ามมา แต่ตั้งใจให้เขียนข้อความออกมาเหมือนกัน
+// ให้ทั้งแอปพูดเรื่อง "อัปเดตล่าสุด" ด้วยภาษาเดียวกัน)
+function relativeUpdatedLabel(lastUpdatedAt: number): string {
+  const diffMs = Date.now() - lastUpdatedAt
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'เมื่อสักครู่'
+  if (mins < 60) return `${mins} นาทีที่แล้ว`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} ชม.ที่แล้ว`
+  const days = Math.floor(hours / 24)
+  return `${days} วันที่แล้ว`
+}
+
 function bmiOf(weightKg: number | null, heightCm: number | null) {
   if (!weightKg || !heightCm) return null
   const h = heightCm / 100
@@ -121,6 +135,11 @@ export default function HealthPage() {
   const [trendPeriodDays, setTrendPeriodDays] = useState<7 | 30 | 90>(90)
   const [showAllMetrics, setShowAllMetrics] = useState(false)
   const [goals, setGoals] = useState<Goal[]>([])
+  // เวลาที่โหลดข้อมูลหน้านี้สำเร็จจริงล่าสุด (ไม่ใช่วันที่ "วัดร่างกาย" ซึ่งเป็นคนละความหมาย — measured_at
+  // เป็นวันที่ไม่มีเวลา ส่วนอันนี้คือเวลาจริงที่ดึงข้อมูลจาก Supabase สำเร็จ) ใช้โชว์ "อัปเดตล่าสุด Xนาทีที่แล้ว"
+  // แบบมีข้อมูลจริงรองรับ (เหมือน lastUpdatedAt ใน AICoachCompactCard.tsx) แทนการใส่ "Connected [ชื่อเครื่อง]"
+  // หรือเวลา sync แบบเป๊ะนาทีที่แอปไม่มีข้อมูลจริงรองรับ (ไม่มีระบบเชื่อมต่ออุปกรณ์ Bluetooth ในแอปนี้)
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -161,6 +180,7 @@ export default function HealthPage() {
       setPhotos([])
     }
     setLoading(false)
+    setLastSyncedAt(Date.now())
   }, [supabase])
 
   useEffect(() => {
@@ -837,7 +857,10 @@ export default function HealthPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl tracked uppercase">สุขภาพร่างกาย</h1>
-          <p className="text-xs text-muted mt-0.5">ติดตามและวิเคราะห์แนวโน้มสุขภาพของคุณ</p>
+          <p className="text-xs text-muted mt-0.5">
+            ติดตามและวิเคราะห์แนวโน้มสุขภาพของคุณ
+            {lastSyncedAt && <span className="text-muted/70"> · อัปเดตล่าสุด {relativeUpdatedLabel(lastSyncedAt)}</span>}
+          </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -883,17 +906,15 @@ export default function HealthPage() {
         <div className="space-y-6">
           <OverviewHealthScoreHeader
             score={healthScore}
-            latestMeasuredAt={latest?.measured_at ?? null}
+            monthDeltaPct={healthScoreMonthDeltaPct}
+            selfPercentile={healthScorePercentile}
             bodyFatDeltaPct={fieldDelta('body_fat_pct')}
             muscleMassDelta={fieldDelta('muscle_kg', toDisplay)}
-            weightGoalTargetKg={weightGoal?.target_value ?? null}
-            toDisplay={toDisplay}
-            unit={unit}
           />
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3 items-stretch">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 md:grid-flow-row-dense gap-3 items-stretch">
             <IconStatCard
               label="น้ำหนัก"
               subLabel="WEIGHT"
@@ -905,6 +926,7 @@ export default function HealthPage() {
               delta={fieldDelta('weight_kg', toDisplay)}
               deltaUnit={unit}
               direction={weightDirection}
+              primary
             />
             <IconStatCard
               label="ดัชนีมวลกาย"
@@ -1454,7 +1476,16 @@ function DropletsIcon() {
   )
 }
 
-const ZONE_LABEL_TH: Record<'Low' | 'Standard' | 'High', string> = { Low: 'ต่ำ', Standard: 'มาตรฐาน', High: 'สูง' }
+// v: ฟีดแบ็ก "ป้าย 'สูง' คำเดียวยังดูเหมือน Progress Bar ธรรมดา อยากได้ 'Above Standard' แบบมีทิศทางบอก
+// ชัดกว่า" — เปลี่ยนจากคำเดี่ยว (ต่ำ/มาตรฐาน/สูง) เป็นวลีเทียบเกณฑ์ที่สื่อความหมายมากกว่า
+const ZONE_LABEL_TH: Record<'Low' | 'Standard' | 'High', string> = {
+  Low: 'ต่ำกว่าเกณฑ์',
+  Standard: 'ปกติ',
+  High: 'สูงกว่าเกณฑ์',
+}
+// ลูกศรบอกทิศทางตำแหน่งจริง (ไม่ใช่สีดี/แย่ ซึ่ง ZoneBadge คำนวณแยกจาก classifyMetric อยู่แล้ว) — Standard
+// ไม่มีลูกศรเพราะอยู่ตรงกลางเกณฑ์พอดี ไม่มีทิศทางให้ชี้
+const ZONE_ARROW: Record<'Low' | 'Standard' | 'High', string> = { Low: '↓', Standard: '', High: '↑' }
 
 // v: สีป้ายเดิมตายตัวตามโซน (Low=ฟ้า, Standard=เขียว, High=แดง) ไม่สนทิศทางที่ "ดี" ของตัวชี้วัดนั้นเลย —
 // ทำให้กล้ามเนื้อโครงร่าง "สูง" (ซึ่งเป็นเรื่องดี เพราะยิ่งเยอะยิ่งดี) ขึ้นสีแดงเหมือนน้ำหนัก/ไขมัน/BMI "สูง"
@@ -1466,6 +1497,7 @@ function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' |
   const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : 'bg-mossdim text-moss'
   return (
     <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
+      {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
       {ZONE_LABEL_TH[zone]}
     </span>
   )
@@ -1911,72 +1943,70 @@ function healthScoreTier(pct: number): { label: string; color: string } {
   return { label: 'ควรปรับปรุง', color: '#C1503A' }
 }
 
-// สรุปคะแนนสุขภาพแบบย่อ บนสุดของแท็บ "ภาพรวม" — ต่างจาก HealthScoreCard เต็มรูปแบบด้านล่าง (แถบไล่สี +
-// percentile เทียบประวัติตัวเอง ซึ่งอยู่ในแท็บ "แนวโน้ม") ตัวนี้เน้น "สรุปเร็ว" 3 อย่างที่มักอยากรู้ทันทีที่
-// เปิดหน้า: วันที่วัดล่าสุด, การเปลี่ยนแปลงของตัวชี้วัดหลัก 2 ตัว (ไขมัน/มวลกล้ามเนื้อ), เป้าหมายน้ำหนักที่ตั้งไว้
+// สรุปคะแนนสุขภาพแบบย่อ บนสุดของแท็บ "ภาพรวม" — v2: ฟีดแบ็ก "เหมือนเอา Text มาเรียง ไม่มี Visual Focus,
+// สูงไป (130-140px อยากได้ ~100px), อยากได้สไตล์ Apple Health/Whoop" — ตัดกล่องข้อมูลสามช่องเท่ากันหมด
+// (ล่าสุด/การเปลี่ยนแปลง/เป้าหมาย) ที่แย่งความสนใจจากตัวเลขคะแนนออก เหลือแค่วง+ระดับเป็นจุดโฟกัสเดียว
+// แถวเดียว แล้วเสริม "percentile เทียบประวัติตัวเอง" (คำนวณอยู่แล้ว ใช้ร่วมกับ HealthScoreCard ในแท็บ
+// "แนวโน้ม") + ป้าย signal สั้นๆ (ดีขึ้น/ไขมันลด/กล้ามเพิ่ม ฯลฯ) แทนตัวเลข delta ดิบ — ทุกป้ายคำนวณจากข้อมูล
+// จริง ไม่ใช่ข้อความสำเร็จรูปที่ขึ้นเสมอ (ถ้าไขมันเพิ่มขึ้นจริงจะขึ้น "ไขมันเพิ่ม" สีแดง ไม่ใช่ทำเนียนเป็นข่าวดี)
+// วันที่วัดล่าสุด/เป้าหมายน้ำหนัก ยังดูได้ตามปกติจากป้ายวันที่ที่ header บนสุดของหน้า และการ์ด "เป้าหมายของคุณ"
+// ในแท็บ "แนวโน้ม" อยู่แล้ว ไม่ต้องพูดซ้ำสองที่
 function OverviewHealthScoreHeader({
   score,
-  latestMeasuredAt,
+  monthDeltaPct,
+  selfPercentile,
   bodyFatDeltaPct,
   muscleMassDelta,
-  weightGoalTargetKg,
-  toDisplay,
-  unit,
 }: {
   score: { good: number; standard: number; needsWork: number; total: number; score: number }
-  latestMeasuredAt: string | null
+  monthDeltaPct?: number | null
+  selfPercentile?: number | null
   bodyFatDeltaPct: number | null
   muscleMassDelta: number | null
-  weightGoalTargetKg: number | null
-  toDisplay: (v: number) => number
-  unit: string
 }) {
   if (score.total === 0) return null
   const pct = (score.score / score.total) * 100
   const { label, color: ringColor } = healthScoreTier(pct)
 
+  const signals: { text: string; good: boolean }[] = []
+  if (monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0) {
+    signals.push({ text: monthDeltaPct > 0 ? 'ดีขึ้นจากเดือนก่อน' : 'แย่ลงจากเดือนก่อน', good: monthDeltaPct > 0 })
+  }
+  if (bodyFatDeltaPct !== null && bodyFatDeltaPct !== 0) {
+    signals.push({ text: bodyFatDeltaPct < 0 ? 'ไขมันลด' : 'ไขมันเพิ่ม', good: bodyFatDeltaPct < 0 })
+  }
+  if (muscleMassDelta !== null && muscleMassDelta !== 0) {
+    signals.push({ text: muscleMassDelta > 0 ? 'กล้ามเพิ่ม' : 'กล้ามลด', good: muscleMassDelta > 0 })
+  }
+
   return (
-    <PremiumCard className="p-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-3 shrink-0">
-          <GoalRing pct={pct} size={72} strokeWidth={7} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
-          <div>
-            <p className="text-[10px] tracked uppercase text-muted">Health Score</p>
-            <p className="font-display text-lg tracked uppercase" style={{ color: ringColor }}>
+    <PremiumCard className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <GoalRing pct={pct} size={56} strokeWidth={6} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-[10px] tracked uppercase text-muted">Health Score</span>
+            <span className="font-display text-sm tracked uppercase" style={{ color: ringColor }}>
               {label}
-            </p>
-          </div>
-        </div>
-        <div className="flex-1 min-w-[220px] grid grid-cols-3 gap-3 border-l border-line pl-4">
-          <div>
-            <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
-            <p className="text-xs text-ink mt-1">{latestMeasuredAt ? shortLabel(latestMeasuredAt) : '—'}</p>
-          </div>
-          <div>
-            <p className="text-[10px] tracked uppercase text-muted">การเปลี่ยนแปลง</p>
-            {bodyFatDeltaPct !== null || muscleMassDelta !== null ? (
-              <div className="mt-1 space-y-0.5">
-                {bodyFatDeltaPct !== null && (
-                  <p className={`text-[11px] font-mono ${bodyFatDeltaPct <= 0 ? 'text-moss' : 'text-rusttext'}`}>
-                    {bodyFatDeltaPct > 0 ? '↑' : bodyFatDeltaPct < 0 ? '↓' : '·'} {Math.abs(bodyFatDeltaPct).toFixed(1)}% ไขมัน
-                  </p>
-                )}
-                {muscleMassDelta !== null && (
-                  <p className={`text-[11px] font-mono ${muscleMassDelta >= 0 ? 'text-moss' : 'text-rusttext'}`}>
-                    {muscleMassDelta > 0 ? '↑' : muscleMassDelta < 0 ? '↓' : '·'} {Math.abs(muscleMassDelta).toFixed(1)} {unit} กล้ามเนื้อ
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-muted mt-1">—</p>
+            </span>
+            {selfPercentile !== null && selfPercentile !== undefined && (
+              <span className="text-[11px] text-muted">· Top {selfPercentile}%</span>
             )}
           </div>
-          <div>
-            <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
-            <p className="text-xs text-ink mt-1">
-              {weightGoalTargetKg !== null ? `${toDisplay(weightGoalTargetKg).toFixed(1)} ${unit}` : 'ยังไม่ได้ตั้ง'}
-            </p>
-          </div>
+          {signals.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {signals.map((s) => (
+                <span
+                  key={s.text}
+                  className={`inline-flex items-center gap-1 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full ${
+                    s.good ? 'bg-mossdim text-moss' : 'bg-rustdim text-rusttext'
+                  }`}
+                >
+                  {s.good ? '✓' : '↑'} {s.text}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </PremiumCard>
@@ -2431,6 +2461,7 @@ function IconStatCard({
   noteGood = true,
   zone,
   zoneScheme = 'symmetric',
+  primary = false,
 }: {
   label: string
   subLabel: string
@@ -2452,12 +2483,17 @@ function IconStatCard({
   // higherOk   = สูงกว่ามาตรฐานยังโอเค/ดีกว่า เฉพาะต่ำกว่าที่ไม่ดี (เช่น น้ำในร่างกาย, โปรตีน)
   // lowerOk    = ต่ำกว่ามาตรฐานยังโอเค/ดีกว่า เฉพาะสูงกว่าที่ไม่ดี
   zoneScheme?: 'symmetric' | 'higherOk' | 'lowerOk'
+  // ฟีดแบ็ก "ทุก Card ใหญ่เท่ากันหมด สมองคนอ่านไม่รู้ว่าจะดูอะไร อยากให้มี Primary การ์ดเดียว" — น้ำหนัก
+  // เป็นตัวชี้วัดที่ถูกตั้งเป็น primary ในหน้านี้ (ดูจุดเรียกใช้) การ์ดนี้จะกินพื้นที่ 2x2 ช่อง (md ขึ้นไป)
+  // ตัวเลข/ไอคอนใหญ่กว่าการ์ดอื่น และใช้ .shadow-hero (โทเคนที่มีอยู่แล้ว คอมเมนต์ในตัวมันเองบอกไว้ตรงๆ ว่า
+  // "การ์ดหนึ่งใบต่อหน้าจอที่ควรเด่นสุด") แทน .shadow-elevated ปกติ
+  primary?: boolean
 }) {
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
   const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
 
-  const zoneLabel = zone ? ZONE_LABEL_TH[zone] : null
+  const zoneLabel = zone ? `${ZONE_ARROW[zone] ? `${ZONE_ARROW[zone]} ` : ''}${ZONE_LABEL_TH[zone]}` : null
   const zoneColor =
     zone === 'Standard'
       ? 'text-moss'
@@ -2472,25 +2508,43 @@ function IconStatCard({
           : ''
 
   return (
-    <PremiumCard className="h-full px-4 py-3.5 flex flex-col justify-between">
-      <div className="flex items-start gap-2 mb-2">
-        <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={32} />
+    <PremiumCard
+      className={`h-full flex flex-col justify-between metric-card-hover ${
+        primary ? 'md:col-span-2 md:row-span-2 px-5 py-4' : 'px-4 py-3.5'
+      }`}
+      // primary ใช้ boxShadow override คงที่ (ไม่ใช่ผ่าน CSS class) เพราะ PremiumCard เซ็ต boxShadow ผ่าน
+      // inline style ของตัวเองอยู่แล้ว — prop `style` ที่ส่งเข้ามาจะถูก spread ทับท้ายสุดใน PremiumCard.tsx
+      // (`...style` วางหลัง boxShadow ดีฟอลต์) จึงชนะได้จริง ต่างจากการพยายามใช้ class ธรรมดามาชน inline
+      style={
+        primary
+          ? { boxShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 40px -8px rgba(0,0,0,.55), 0 0 0 1px rgba(232,163,61,.14)' }
+          : undefined
+      }
+    >
+      <div className={`flex items-start gap-2 ${primary ? 'mb-3' : 'mb-2'}`}>
+        <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : 32} />
         <div className="min-w-0">
-          <p className="text-xs text-ink font-medium leading-snug">{label}</p>
-          <p className="text-[9px] tracked uppercase text-muted leading-snug">{subLabel}</p>
+          <p className={`text-ink font-medium leading-snug ${primary ? 'text-sm' : 'text-xs'}`}>{label}</p>
+          <p className={`tracked uppercase text-muted leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</p>
         </div>
       </div>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <p className="font-mono text-xl tabular text-ink shrink-0 whitespace-nowrap">
+        <p className={`font-mono tabular text-ink shrink-0 whitespace-nowrap ${primary ? 'text-4xl' : 'text-xl'}`}>
           {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
-          {unit && <span className="text-xs text-muted ml-1">{unit}</span>}
+          {unit && <span className={`text-muted ml-1 ${primary ? 'text-sm' : 'text-xs'}`}>{unit}</span>}
         </p>
         {zoneLabel ? (
-          <span className={`text-[11px] font-medium whitespace-nowrap shrink-0 ml-auto ${zoneColor}`}>{zoneLabel}</span>
+          <span className={`font-medium whitespace-nowrap shrink-0 ml-auto ${zoneColor} ${primary ? 'text-sm' : 'text-[11px]'}`}>
+            {zoneLabel}
+          </span>
         ) : note ? (
-          <span className={`text-[11px] whitespace-nowrap shrink-0 ml-auto ${noteGood ? 'text-moss' : 'text-rusttext'}`}>{note}</span>
+          <span
+            className={`whitespace-nowrap shrink-0 ml-auto ${noteGood ? 'text-moss' : 'text-rusttext'} ${primary ? 'text-sm' : 'text-[11px]'}`}
+          >
+            {note}
+          </span>
         ) : delta !== null ? (
-          <span className={`text-[11px] font-mono whitespace-nowrap shrink-0 ml-auto ${deltaColor}`}>
+          <span className={`font-mono whitespace-nowrap shrink-0 ml-auto ${deltaColor} ${primary ? 'text-sm' : 'text-[11px]'}`}>
             {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)}
             {deltaUnit ? ` ${deltaUnit}` : ''}
           </span>
