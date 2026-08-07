@@ -2318,6 +2318,11 @@ function OverviewHealthScoreHeader({
             <span className="font-display font-semibold block mt-1 tracked uppercase" style={{ color: ringColor, fontSize: 25 }}>
               {label}
             </span>
+            {/* ฟีดแบ็ก "Health Score Card ยังมีพื้นที่ว่างตรงกลางค่อนข้างมาก...ให้เพิ่มสถานะสั้นๆ ที่เป็น
+                กำลังใจใต้ 'ดีมาก' — ย้าย 'ลดไขมัน พร้อมรักษามวลกล้ามเนื้อ' จากด้านล่างสุดของการ์ดมาไว้ตรงนี้
+                เลย จะทำให้กลุ่ม Health Score เป็นก้อนเดียว" — เดิม summary อยู่แยกบรรทัดล่างสุดนอก flex row
+                (กว้างเต็มการ์ด ไม่ติดกับ 90%/ดีมาก) ย้ายมาอยู่ใต้ tier label ในคอลัมน์เดียวกันแทน */}
+            {summary && <p className="text-xs text-ink/65 mt-1 max-w-[180px]">{summary}</p>}
           </div>
         </div>
 
@@ -2363,9 +2368,18 @@ function OverviewHealthScoreHeader({
               {goalRows.map((g) => (
                 <div key={g.label}>
                   <p className="font-mono font-semibold text-sm text-ink leading-none">{g.valueText}</p>
-                  <p className="text-[11px] whitespace-nowrap mt-0.5" style={{ color: '#9DA0A8' }}>
-                    {g.label}
-                    {g.subText ? ` · ${g.subText}` : ''}
+                  {/* ฟีดแบ็ก "ให้ 6.3 kg กับ 1.9% เป็นสีเขียวอ่อน/ทองอ่อนตามสถานะ ผู้ใช้จะรู้สึกว่า 'กำลัง
+                      เข้าใกล้เป้าหมาย' มากกว่า 'ยังขาดอีกเยอะ'" — เดิม label กับ subText (เหลือ/ลดอีก X) สี
+                      เดียวกันหมด แยกสีเฉพาะส่วน subText เป็นเขียวอ่อน (#8CB264 เดียวกับเดลต้าที่ดีในบล็อก
+                      "การเปลี่ยนแปลง" ข้างๆ) ให้สื่อว่าตัวเลขที่เหลือคือ progress ไม่ใช่แค่ระยะทางที่ต้องไป */}
+                  <p className="text-[11px] whitespace-nowrap mt-0.5">
+                    <span style={{ color: '#9DA0A8' }}>{g.label}</span>
+                    {g.subText && (
+                      <>
+                        <span style={{ color: '#9DA0A8' }}> · </span>
+                        <span style={{ color: '#8CB264' }}>{g.subText}</span>
+                      </>
+                    )}
                   </p>
                   {/* ฟีดแบ็ก "เพิ่ม Progress เล็กๆ ใต้เป้าหมาย — เส้นบางๆ 2-3px ผู้ใช้จะเห็นทันทีว่ากำลังเข้าใกล้
                       เป้าหมาย แทนที่จะต้องคำนวณเองจากตัวเลข ไม่ต้องทำใหญ่" — ใช้ progressPct ที่คำนวณมาจาก
@@ -2389,13 +2403,6 @@ function OverviewHealthScoreHeader({
           )}
         </div>
       </div>
-
-      {/* ฟีดแบ็ก "ลดไขมัน พร้อมรักษามวลกล้ามเนื้อ อยู่ชิดล่างซ้ายมากและค่อนข้างเล็ก — ทำเป็น Insight line ที่
-          ชัดขึ้นอีกนิด สีเทาอ่อนกว่า background ประมาณหนึ่งระดับ ไม่ต้องเขียว เพราะเป็นคำอธิบาย ไม่ใช่สถานะ" —
-          ขยายจาก text-[11px] เป็น text-xs (12px) และเปลี่ยนสีจาก text-muted (#9498A0) เป็น text-ink/65 (ขาว
-          นวลลดทึบ) อ่อนกว่าตัวข้อมูลหลัก (text-ink เต็ม) แต่เด่นกว่า muted เดิม ไม่ใช้สีเขียวเพราะไม่ใช่สถานะ
-          บวก/ลบเหมือนการเปลี่ยนแปลง */}
-      {summary && <p className="text-xs text-ink/65 mt-2">{summary}</p>}
 
       {showBreakdown && categoryRows.length > 0 && (
         <div className="mt-3 pt-3 border-t border-line space-y-1.5">
@@ -3020,8 +3027,11 @@ function IconStatCard({
         <div className="min-w-0">
           {/* ฟีดแบ็ก "ชื่อไทยบาง Card ขึ้น 2-3 บรรทัด (โปรตีนในร่างกาย, ดัชนีมวลกาย) พื้นที่การ์ดแคบไป —
               ควรลด font size แทนปล่อยให้ตัดคำรก" — ลดจาก text-xs (12px) เหลือ 11px เฉพาะการ์ดไม่ใช่ primary
-              (primary กว้างพอ ชื่อสั้น "น้ำหนัก" ไม่มีปัญหานี้อยู่แล้ว ไม่ต้องแตะ) */}
-          <p className={`text-ink font-medium leading-tight flex items-center gap-1 ${primary ? 'text-sm' : 'text-[11px]'}`}>
+              (primary กว้างพอ ชื่อสั้น "น้ำหนัก" ไม่มีปัญหานี้อยู่แล้ว ไม่ต้องแตะ)
+              v21: ฟีดแบ็ก "ตัวหนังสือ Metric Cards ยังเล็กและจางไปนิด (ไขมันในร่างกาย/มวลกล้ามเนื้อ/ดัชนี
+              มวลกาย/น้ำในร่างกาย)...ไม่ต้องเพิ่มขนาดมาก" — ขยับกลับขึ้นเล็กน้อยจาก 11px เป็น text-xs (12px)
+              ยังพอสมดุลกับความกว้างการ์ด ไม่ตัดคำรกแบบที่ฟีดแบ็กรอบก่อนกังวล */}
+          <p className={`text-ink font-medium leading-tight flex items-center gap-1 ${primary ? 'text-sm' : 'text-xs'}`}>
             {label}
             {infoText && (
               <button
@@ -3058,7 +3068,10 @@ function IconStatCard({
               — ขยายเลขค่าหลักจาก text-4xl (36px) เป็น text-5xl (48px) ให้ชัดเจนว่าเป็นสิ่งสำคัญที่สุดบนการ์ด
               ก่อนเห็นเดลต้า/insight ซึ่งยังคงขนาดเดิม (มีความเข้มกว่า/จางกว่ากันอยู่แล้วจาก deltaColor/
               text-muted) */}
-          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-5xl">
+          {/* v21: ฟีดแบ็ก "ตัวเลขหลักของ Cards เล็กเกินไปเมื่อเทียบกับ Weight...แนะนำ Weight (Hero Metric)
+              ใช้ประมาณ 50-56px" — ขยายต่อจาก text-5xl (48px) เป็น 52px ตรงๆ (ไม่มี Tailwind step ระหว่าง
+              5xl/6xl ที่ตรงช่วงนี้พอดี) */}
+          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap" style={{ fontSize: 52 }}>
             {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
             {unit && <span className="text-muted ml-1 text-sm">{unit}</span>}
           </p>
@@ -3073,7 +3086,10 @@ function IconStatCard({
               {periodCaption && <span className="text-muted"> · {periodCaption}</span>}
             </p>
           )}
-          {insight && <p className="text-muted truncate text-xs mt-1">{insight}</p>}
+          {/* v21: ฟีดแบ็ก "ตัวหนังสือ...และคำอธิบายด้านล่าง ยังเล็กและจางไปนิด...เพิ่มความสว่างของตัวอักษร
+              ประมาณ 10-15% โดยไม่ต้องเพิ่มขนาดมาก" — insight เดิมใช้ text-muted (#9498A0) เปลี่ยนเป็นสีที่
+              สว่างกว่าประมาณ 12% (#A8ACB4) เฉพาะบรรทัดคำอธิบายนี้ ขนาดยังคงเดิม */}
+          {insight && <p className="truncate text-xs mt-1" style={{ color: '#A8ACB4' }}>{insight}</p>}
           {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันเนื้อหาลงไปกิน
               พื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ justify-between เดิมพอแล้ว
               สำหรับความสูงปกติ ดูสาขา else ด้านล่าง) — v5: เดิมถ้า series มีข้อมูลไม่พอ (< 2 จุด, เช่น
@@ -3087,7 +3103,10 @@ function IconStatCard({
                   {(trendLabel || trendTag) && (
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       {trendLabel && <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>}
-                      {trendTag && <span className="text-[11px] text-moss shrink-0">{trendTag}</span>}
+                      {/* ฟีดแบ็ก "30 DAY TREND ดีไซน์สวย แต่ Muscle-driven ↑ สีเขียวค่อนข้างเด่น แย่งสายตา
+                          จากกราฟ — กราฟควรเป็นพระเอก ไม่ใช่ label" — ลด opacity จาก text-moss เต็มเป็น
+                          text-moss/70 */}
+                      {trendTag && <span className="text-[11px] text-moss/70 shrink-0">{trendTag}</span>}
                     </div>
                   )}
                   <Sparkline series={series} color={trendColor ?? color} endpointColor={trendEndpointColor} height={48} width={400} stretch />
@@ -3108,7 +3127,10 @@ function IconStatCard({
         </>
       ) : (
         <div>
-          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-xl">
+          {/* v21: ฟีดแบ็ก "ตัวเลขหลักของ Cards เล็กเกินไปเมื่อเทียบกับ Weight...แนะนำ Cards เล็กใช้ตัวเลข
+              ประมาณ 30-34px อย่างสม่ำเสมอ...จะทำให้ผู้ใช้เข้าใจทันทีว่า Weight = ข้อมูลหลัก, Metrics อื่น =
+              ข้อมูลสนับสนุน" — จาก text-xl (20px) เป็น text-3xl (30px) */}
+          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-3xl">
             {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
             {unit && <span className="text-muted ml-1 text-xs">{unit}</span>}
           </p>
@@ -3116,7 +3138,9 @@ function IconStatCard({
               แต่ละข้อมูล" — เดิม secondary ไม่มี margin-top เลย (ชิดค่าหลักทันที) เพิ่ม mt-0.5 คั่น แล้วเพิ่ม
               insight จาก mt-0.5 เป็น mt-1 ให้แยกจาก secondary ชัดขึ้นอีกขั้น */}
           {secondary && <p className={`font-mono whitespace-nowrap text-[11px] mt-0.5 ${secondary.color}`}>{secondary.text}</p>}
-          {insight && <p className="text-muted truncate text-[10px] mt-1">{insight}</p>}
+          {/* v21: ฟีดแบ็ก "คำอธิบายด้านล่าง...เพิ่มความสว่างของตัวอักษรประมาณ 10-15%" — เหมือนบรรทัด insight
+              ของ primary card ด้านบน เปลี่ยนจาก text-muted เป็น #A8ACB4 (สว่างกว่า ~12%) */}
+          {insight && <p className="truncate text-[10px] mt-1" style={{ color: '#A8ACB4' }}>{insight}</p>}
           {series && series.length >= 2 && (
             <div className="mt-1.5">
               <Sparkline series={series} color={sparklineColor} height={18} width={200} stretch />
