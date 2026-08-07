@@ -2326,20 +2326,27 @@ function OverviewHealthScoreHeader({
           </div>
         )}
 
-        {/* ฟีดแบ็ก "แสดง 2 เป้าหมาย (น้ำหนัก + Body Fat) พร้อมกัน จะดูเป็น Body Composition Dashboard มากกว่า
-            เว็บลดน้ำหนักทั่วไป" — เดิมแสดงแค่ตัวเดียว (weight เป็นหลัก, fallback ไป body fat) เปลี่ยนเป็น
-            map ทั้งสองแถวถ้ามี ใช้ pattern เดียวกับคอลัมน์ "การเปลี่ยนแปลง" ข้างๆ (ตัวเลข+label สั้น) เพื่อให้
-            หน้าตาสอดคล้องกัน */}
+        {/* ฟีดแบ็ก "เป้าหมาย -> เป้าหมายร่างกาย เพราะนี่ไม่ใช่ Goal ธรรมดา แต่เป็นเป้าหมาย Body Composition" —
+            เปลี่ยนหัวข้อคอลัมน์ให้สื่อความหมายตรงขึ้น
+            ฟีดแบ็ก "เหลือ 6.3 kg กับ ลดอีก 1.9% ยังไม่เท่ากันทางสายตา — ทำตัวเลขเป้าหมายให้เด่นที่สุด แล้วข้อความ
+            รองเล็กลง: 60.0 kg (บรรทัดเดี่ยว) ตามด้วย น้ำหนักเป้าหมาย · เหลือ 6.3 kg" — เดิมค่า+label อยู่
+            บรรทัดเดียวกัน แล้ว subText แยกบรรทัดล่างเดี่ยวๆ — ย้ายค่ามาเป็นบรรทัดเด่นบรรทัดแรก แล้วรวม
+            label+subText เป็นบรรทัดรองบรรทัดเดียวด้วย " · " แทน ให้เห็นชัดว่าอะไรคือตัวเลขหลัก
+            ฟีดแบ็ก "พื้นที่ว่างด้านขวาเยอะ — ไม่อยากเพิ่มข้อมูลมั่วๆ ให้ขยาย Target block กว้างขึ้นเล็กน้อย
+            แทน" — บรรทัดรอง label · subText ยาวขึ้นกว่าเดิมตามธรรมชาติ ทำให้บล็อกกว้างขึ้นเองโดยไม่ต้องเติม
+            ข้อมูลใหม่ */}
         <div className="shrink-0 border-l border-line/40 pl-5">
-          <p className="text-[10px] tracked uppercase text-muted mb-1">เป้าหมาย</p>
+          <p className="text-[10px] tracked uppercase text-muted mb-1">เป้าหมายร่างกาย</p>
           {goalRows.length > 0 ? (
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               {goalRows.map((g) => (
-                <p key={g.label} className="whitespace-nowrap">
-                  <span className="font-mono font-semibold text-sm text-ink">{g.valueText}</span>{' '}
-                  <span className="text-[11px] text-muted">{g.label}</span>
-                  {g.subText && <span className="block text-[10px] text-muted">{g.subText}</span>}
-                </p>
+                <div key={g.label}>
+                  <p className="font-mono font-semibold text-sm text-ink leading-none">{g.valueText}</p>
+                  <p className="text-[11px] text-muted whitespace-nowrap">
+                    {g.label}
+                    {g.subText ? ` · ${g.subText}` : ''}
+                  </p>
+                </div>
               ))}
             </div>
           ) : (
