@@ -2809,6 +2809,11 @@ function IconStatCard({
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
   const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
+  // ฟีดแบ็ก "Body Fat ↓/Fat Mass ↓ เป็นเรื่องดี แต่กราฟยังเป็นสีแดง (สีธีมหมวด 'ไขมัน' เดิม) ขัดกับความหมาย
+  // ผู้ใช้จะตีความว่าสีแดง = แย่" — เส้นเทรนด์การ์ดที่ไม่ใช่ primary ควรตามสถานะดี/แย่ของเดลต้าจริง (เดียวกับ
+  // สีตัวหนังสือเดลต้าด้านบน) ไม่ใช่สีธีมหมวดคงที่ต่อการ์ด — ใช้เฉพาะตอนมีเดลต้าที่ตัดสินได้จริง (ไม่ใช่ neutral)
+  // เท่านั้น การ์ดที่ direction เป็น neutral (เช่น น้ำในร่างกาย) ยังคงใช้สีธีมหมวดของตัวเองเหมือนเดิม
+  const sparklineColor = deltaGood ? '#8CB264' : deltaBad ? '#C1503A' : color
 
   // ฟีดแบ็ก "Protein สูงกว่าเกณฑ์แล้วเป็นสีเขียว ผู้ใช้จะเข้าใจว่าเป็นเรื่องดี ซึ่งอาจไม่ใช่เสมอไป — ควรเปลี่ยน
   // เป็นข้อความที่ชัดกว่า" — ZONE_LABEL_TH เดิมใช้คำเดียวกัน ("สูงกว่าเกณฑ์"/"ต่ำกว่าเกณฑ์") ไม่ว่าด้านนั้น
@@ -2966,7 +2971,7 @@ function IconStatCard({
           {insight && <p className="text-muted truncate text-[10px] mt-0.5">{insight}</p>}
           {series && series.length >= 2 && (
             <div className="mt-1.5">
-              <Sparkline series={series} color={color} height={18} width={200} stretch />
+              <Sparkline series={series} color={sparklineColor} height={18} width={200} stretch />
             </div>
           )}
           {showInfo && infoText && <p className="text-[10px] text-muted mt-1.5 pt-1.5 border-t border-line">{infoText}</p>}
