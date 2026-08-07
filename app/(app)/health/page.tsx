@@ -1006,28 +1006,37 @@ export default function HealthPage() {
           : null
 
   // ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — แทนที่จะเขียนแค่ 65.0 kg / น้ำหนักเป้าหมาย อยากได้
-  // 65.0 kg / เป้าหมาย · เหลือ 1.3 kg ผู้ใช้เห็นแล้วรู้ทันทีว่าต้องไปทางไหน" — เป้าหมายน้ำหนัก (weightGoal มี
-  // อยู่แล้ว ใช้คำนวณ weightDirection ด้านบน) เป็นตัวหลัก เพราะเป็นเป้าหมายที่ตรงกับ Weight Card ซึ่งเป็น
-  // primary metric ของหน้านี้ — ถ้าไม่มีเป้าหมายน้ำหนัก fallback ไปใช้เป้าหมาย Body Fat แทน (ของเดิม)
+  // 65.0 kg / เป้าหมาย · เหลือ 1.3 kg ผู้ใช้เห็นแล้วรู้ทันทีว่าต้องไปทางไหน"
+  // v17: ฟีดแบ็ก "แสดง 2 เป้าหมายพร้อมกัน (น้ำหนัก + Body Fat) ไม่ใช่แค่ตัวเดียวแบบ fallback — ข้อมูลใน
+  // FITLOG มีทั้งน้ำหนัก/Body Fat/Muscle Mass เป้าหมายจึงควรสะท้อนองค์ประกอบร่างกาย ไม่ใช่แค่น้ำหนักอย่างเดียว
+  // ผู้ใช้จะได้เข้าใจทันทีว่ากำลังลดไขมันโดยพยายามรักษากล้ามเนื้อ ไม่ใช่แค่ 'น้ำหนักต้องลง X kg'" — เดิม
+  // weight เป็นตัวหลัก, body fat เป็นแค่ fallback ตอนไม่มีเป้าหมายน้ำหนัก — เปลี่ยนเป็น array แสดงทั้งคู่พร้อม
+  // กันถ้ามีทั้งสองเป้าหมายที่ active อยู่ (ยังคงเรียงน้ำหนักก่อน เพราะเป็น primary metric ของหน้านี้)
   const bodyFatGoalForBanner = goals.find((g) => g.goal_type === 'body_fat' && g.status === 'active')
-  const goalBlock: { valueText: string; subText: string | null } | null =
-    weightGoal?.target_value != null
-      ? {
-          valueText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`,
-          subText:
-            latest?.weight_kg != null
-              ? `เหลือ ${Math.abs(toDisplay(latest.weight_kg) - toDisplay(weightGoal.target_value)).toFixed(1)} ${unit}`
-              : null,
-        }
-      : bodyFatGoalForBanner?.target_value != null
-        ? {
-            valueText: `${bodyFatGoalForBanner.target_value.toFixed(1)} %`,
-            subText:
-              latest?.body_fat_pct != null
-                ? `เหลือ ${Math.abs(latest.body_fat_pct - bodyFatGoalForBanner.target_value).toFixed(1)}%`
-                : null,
-          }
-        : null
+  const goalRows: { valueText: string; label: string; subText: string | null }[] = []
+  if (weightGoal?.target_value != null) {
+    goalRows.push({
+      valueText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`,
+      label: 'น้ำหนักเป้าหมาย',
+      subText:
+        latest?.weight_kg != null
+          ? `เหลือ ${Math.abs(toDisplay(latest.weight_kg) - toDisplay(weightGoal.target_value)).toFixed(1)} ${unit}`
+          : null,
+    })
+  }
+  if (bodyFatGoalForBanner?.target_value != null) {
+    const bodyFatDiff = latest?.body_fat_pct != null ? latest.body_fat_pct - bodyFatGoalForBanner.target_value : null
+    goalRows.push({
+      valueText: `${bodyFatGoalForBanner.target_value.toFixed(1)}%`,
+      label: 'Body Fat เป้าหมาย',
+      subText:
+        bodyFatDiff === null || bodyFatDiff === 0
+          ? null
+          : bodyFatDiff > 0
+            ? `ลดอีก ${bodyFatDiff.toFixed(1)}%`
+            : `เพิ่มอีก ${Math.abs(bodyFatDiff).toFixed(1)}%`,
+    })
+  }
 
   // ฟีดแบ็ก "ล่าสุด อยากได้วันที่ + เวลา (4 ส.ค. 2569 / 09:15 น.) ไม่ใช่แค่วันที่เฉยๆ" — created_at คือเวลา
   // จริงตอนบันทึกแถว (ต่างจาก measured_at ซึ่งเป็นแค่วันที่ผู้ใช้เลือกเอง ไม่มีเวลา อาจย้อนหลังได้)
@@ -1093,8 +1102,7 @@ export default function HealthPage() {
             monthDeltaPct={healthScoreMonthDeltaPct}
             bodyFatDeltaPct={fieldDelta('body_fat_pct')}
             muscleMassDelta={fieldDelta('muscle_kg', toDisplay)}
-            goalValueText={goalBlock?.valueText ?? null}
-            goalSubText={goalBlock?.subText ?? null}
+            goalRows={goalRows}
             updatedDateLabel={latestDateTime?.date ?? null}
             updatedTimeLabel={latestDateTime?.time ?? null}
             trendScorePct={trendScorePct}
@@ -2191,8 +2199,7 @@ function OverviewHealthScoreHeader({
   monthDeltaPct,
   bodyFatDeltaPct,
   muscleMassDelta,
-  goalValueText,
-  goalSubText,
+  goalRows,
   updatedDateLabel,
   updatedTimeLabel,
   trendScorePct,
@@ -2204,10 +2211,10 @@ function OverviewHealthScoreHeader({
   monthDeltaPct?: number | null
   bodyFatDeltaPct: number | null
   muscleMassDelta: number | null
-  // ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — 65.0 kg / เป้าหมาย · เหลือ 1.3 kg แทนแค่ 65.0 kg เฉยๆ" —
-  // คำนวณ valueText/subText ที่จุดเรียกใช้แล้ว (มี weightGoal/bodyFatGoal/latest ครบอยู่แล้วตรงนั้น)
-  goalValueText: string | null
-  goalSubText: string | null
+  // ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — 65.0 kg / เป้าหมาย · เหลือ 1.3 kg แทนแค่ 65.0 kg เฉยๆ...
+  // แสดง 2 เป้าหมาย (น้ำหนัก + Body Fat) พร้อมกัน ไม่ใช่แค่ตัวเดียว" — คำนวณ array ที่จุดเรียกใช้แล้ว (มี
+  // weightGoal/bodyFatGoal/latest ครบอยู่แล้วตรงนั้น) แต่ละแถวคือเป้าหมายหนึ่งตัว (น้ำหนักมาก่อนถ้ามีทั้งคู่)
+  goalRows: { valueText: string; label: string; subText: string | null }[]
   // ฟีดแบ็ก "ล่าสุด อยากได้วันที่ + เวลา" — แยกสองบรรทัด (วันที่เด่นกว่า, เวลาจางกว่า) แทน updatedLabel เดิม
   // ที่มีแค่วันที่บรรทัดเดียว
   updatedDateLabel: string | null
@@ -2319,13 +2326,22 @@ function OverviewHealthScoreHeader({
           </div>
         )}
 
+        {/* ฟีดแบ็ก "แสดง 2 เป้าหมาย (น้ำหนัก + Body Fat) พร้อมกัน จะดูเป็น Body Composition Dashboard มากกว่า
+            เว็บลดน้ำหนักทั่วไป" — เดิมแสดงแค่ตัวเดียว (weight เป็นหลัก, fallback ไป body fat) เปลี่ยนเป็น
+            map ทั้งสองแถวถ้ามี ใช้ pattern เดียวกับคอลัมน์ "การเปลี่ยนแปลง" ข้างๆ (ตัวเลข+label สั้น) เพื่อให้
+            หน้าตาสอดคล้องกัน */}
         <div className="shrink-0 border-l border-line/40 pl-5">
-          <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
-          {goalValueText ? (
-            <>
-              <p className="font-mono text-sm text-ink">{goalValueText}</p>
-              {goalSubText && <p className="text-[10px] text-muted">{goalSubText}</p>}
-            </>
+          <p className="text-[10px] tracked uppercase text-muted mb-1">เป้าหมาย</p>
+          {goalRows.length > 0 ? (
+            <div className="flex flex-col gap-0.5">
+              {goalRows.map((g) => (
+                <p key={g.label} className="whitespace-nowrap">
+                  <span className="font-mono font-semibold text-sm text-ink">{g.valueText}</span>{' '}
+                  <span className="text-[11px] text-muted">{g.label}</span>
+                  {g.subText && <span className="block text-[10px] text-muted">{g.subText}</span>}
+                </p>
+              ))}
+            </div>
           ) : (
             <>
               <p className="font-mono text-sm text-muted">ยังไม่ได้ตั้ง</p>
