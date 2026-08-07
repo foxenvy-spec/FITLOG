@@ -902,6 +902,10 @@ export default function HealthPage() {
     muscleDeltaForWeightCheck !== null &&
     muscleDeltaForWeightCheck > 0
   const weightCardDirection: Direction = weightGainLooksLikeMuscle ? 'neutral' : weightDirection
+  // ฟีดแบ็ก "BMI ↑0.3 เป็นจุดเดียวที่ดูผิดทิศ — BMI 23.5 ยังอยู่ในช่วงปกติ ถ้าไขมันลด/กล้ามเพิ่มพร้อมกัน
+  // การขึ้นของ BMI ไม่ควรตัดสินเป็นสีแดง" — BMI ขยับตามน้ำหนักโดยตรง จึงใช้เงื่อนไขเดียวกับการ์ดน้ำหนักได้เลย
+  // ไม่ต้องคำนวณแยก
+  const bmiCardDirection: Direction = weightGainLooksLikeMuscle ? 'neutral' : weightDirection
 
   const weightInsight = weightGainLooksLikeMuscle
     ? 'ส่วนใหญ่จากมวลกล้ามเนื้อ'
@@ -1006,7 +1010,10 @@ export default function HealthPage() {
       </div>
 
       {tab === 'overview' && (
-        <div className="space-y-6">
+        // ฟีดแบ็ก "OBESITY ANALYSIS / MUSCLE & FAT ANALYSIS ถูกดันลงจนแทบไม่เห็นในจอ 1892x1002 — อยากให้
+        // Summary + จุดเริ่มของ Analysis อยู่ใน viewport เดียว" — ลด space-y-6 (24px) เหลือ space-y-5 (20px)
+        // ทั้งแท็บ ร่วมกับลด padding/gap ของการ์ดใน grid ด้านล่าง (ดูคอมเมนต์ตรงนั้น) แทนการตัดเนื้อหาออก
+        <div className="space-y-5">
           <OverviewHealthScoreHeader
             score={healthScore}
             items={healthScoreItems}
@@ -1016,15 +1023,17 @@ export default function HealthPage() {
             targetBodyFatPct={goals.find((g) => g.goal_type === 'body_fat' && g.status === 'active')?.target_value ?? null}
             updatedLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
             trendScorePct={trendScorePct}
+            unit={unit}
           />
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
-          {/* v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ" — เรียงลำดับใหม่ตามความสำคัญจริง (tier 1: น้ำหนัก/
-              ไขมันในร่างกาย/กล้ามเนื้อ/BMI, tier 2: น้ำ/โปรตีน/ไขมันช่องท้อง/มวลไขมัน/กล้ามเนื้อโครงร่าง
-              — คู่กับตัวชี้วัด tier 1 ที่ใกล้เคียงกัน, tier 3: มวลกระดูก/อายุร่างกาย/BMR) แทนลำดับเดิมที่
-              เรียงตามลำดับกรอกฟอร์มล้วนๆ ไม่มีนัยความสำคัญ */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 md:grid-flow-row-dense gap-3 items-stretch">
+          {/* v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ" — เรียงลำดับตามความสำคัญจริง
+              v6: ฟีดแบ็ก "ผมจะให้ความสำคัญของข้อมูลแบบนี้ — ระดับ 1 (ต้องรู้ทันที): น้ำหนัก/ไขมันในร่างกาย/
+              กล้ามเนื้อ, ระดับ 2 (ติดตาม): BMI/น้ำในร่างกาย/มวลไขมัน/กล้ามเนื้อโครงร่าง, ระดับ 3 (ประกอบ):
+              โปรตีน/ไขมันช่องท้อง/อายุร่างกาย/BMR/มวลกระดูก" — ปรับ tier ให้ตรงตามนี้ (BMI ย้ายจาก tier 1
+              ไป 2, โปรตีน/ไขมันช่องท้อง ย้ายจาก tier 2 ไป 3) แทนเดิมที่กลุ่ม 2 กับ 3 ไม่ตรงกับที่ขอรอบนี้ */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 md:grid-flow-row-dense gap-2.5 items-stretch">
             <IconStatCard
               label="น้ำหนัก"
               subLabel="WEIGHT"
@@ -1037,7 +1046,9 @@ export default function HealthPage() {
               deltaUnit={unit}
               direction={weightCardDirection}
               series={weightTrend30}
-              trendLabel="30 DAY TREND"
+              trendLabel={weightGainLooksLikeMuscle ? '30 DAY TREND · MUSCLE-DRIVEN' : '30 DAY TREND'}
+              trendColor="#9498A0"
+              trendEndpointColor="#8CB264"
               lastMeasuredLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
               periodCaption={weightPeriodCaption}
               insight={weightInsight}
@@ -1082,9 +1093,10 @@ export default function HealthPage() {
               decimals={1}
               delta={previousBmi !== null && bmi !== null ? bmi - previousBmi : null}
               deltaUnit=""
-              direction={weightDirection}
+              direction={bmiCardDirection}
               zone={bmi !== null ? zoneOf(bmi, 18.5, 25) : null}
               zoneScheme="symmetric"
+              tier={2}
             />
             <IconStatCard
               label="น้ำในร่างกาย"
@@ -1122,7 +1134,7 @@ export default function HealthPage() {
                   : null
               }
               zoneScheme="higherOk"
-              tier={2}
+              tier={3}
             />
             <IconStatCard
               label="ไขมันช่องท้อง"
@@ -1138,7 +1150,7 @@ export default function HealthPage() {
               direction="lowerBetter"
               zone={latest?.visceral_fat_grade != null ? (latest.visceral_fat_grade <= 9 ? 'Standard' : 'High') : null}
               zoneScheme="symmetric"
-              tier={2}
+              tier={3}
             />
             <IconStatCard
               label="มวลไขมัน"
@@ -2099,6 +2111,7 @@ function OverviewHealthScoreHeader({
   targetBodyFatPct,
   updatedLabel,
   trendScorePct,
+  unit,
 }: {
   score: { good: number; standard: number; needsWork: number; total: number; score: number }
   items: { label: string; status: 'good' | 'standard' | 'needsWork' }[]
@@ -2108,6 +2121,7 @@ function OverviewHealthScoreHeader({
   targetBodyFatPct: number | null
   updatedLabel: string | null
   trendScorePct: number | null
+  unit: string
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false)
   if (score.total === 0) return null
@@ -2116,15 +2130,18 @@ function OverviewHealthScoreHeader({
 
   // ป้าย signal ต่อการ์ด — v3: ฟีดแบ็ก "อยากได้ Chip แบบ Apple (✔ Fat ↓)" เปลี่ยนจากวลีสำเร็จรูปที่ผูก
   // ทิศทางไว้ในข้อความ (เช่น "ไขมันลด") มาเป็น label สั้น + ลูกศรทิศทางแยกท้ายสุด ให้สแกนอ่านเร็วขึ้น
-  const signals: { label: string; dir: 'up' | 'down'; good: boolean }[] = []
+  // v6: ฟีดแบ็ก "✓ ดูเหมือน checklist ธรรมดาไปนิดสำหรับ UI Titanium — อยากได้ ↓ ไขมัน 2.3% แบบไม่มี ✓"
+  // ตัดสัญลักษณ์ ✓/! ออก ให้ลูกศรทิศทางขึ้นนำหน้าแทน ใส่ตัวเลขเดลต้าจริง (valueText) ต่อท้าย label แทนที่จะ
+  // มีแค่ label เฉยๆ — อ่านได้ข้อมูลมากขึ้นในพื้นที่เท่าเดิม เหมือน Fitness Analytics มากกว่า checklist
+  const signals: { label: string; dir: 'up' | 'down'; good: boolean; valueText: string }[] = []
   if (monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0) {
-    signals.push({ label: 'คะแนนสุขภาพ', dir: monthDeltaPct > 0 ? 'up' : 'down', good: monthDeltaPct > 0 })
+    signals.push({ label: 'คะแนนสุขภาพ', dir: monthDeltaPct > 0 ? 'up' : 'down', good: monthDeltaPct > 0, valueText: `${Math.abs(monthDeltaPct)} คะแนน` })
   }
   if (bodyFatDeltaPct !== null && bodyFatDeltaPct !== 0) {
-    signals.push({ label: 'ไขมัน', dir: bodyFatDeltaPct < 0 ? 'down' : 'up', good: bodyFatDeltaPct < 0 })
+    signals.push({ label: 'ไขมัน', dir: bodyFatDeltaPct < 0 ? 'down' : 'up', good: bodyFatDeltaPct < 0, valueText: `${Math.abs(bodyFatDeltaPct).toFixed(1)}%` })
   }
   if (muscleMassDelta !== null && muscleMassDelta !== 0) {
-    signals.push({ label: 'กล้ามเนื้อ', dir: muscleMassDelta > 0 ? 'up' : 'down', good: muscleMassDelta > 0 })
+    signals.push({ label: 'กล้ามเนื้อ', dir: muscleMassDelta > 0 ? 'up' : 'down', good: muscleMassDelta > 0, valueText: `${Math.abs(muscleMassDelta).toFixed(1)} ${unit}` })
   }
 
   const categoryRows = HEALTH_SCORE_CATEGORIES.map((c) => {
@@ -2170,7 +2187,7 @@ function OverviewHealthScoreHeader({
                     s.good ? 'bg-mossdim text-moss' : 'bg-rustdim text-rusttext'
                   }`}
                 >
-                  {s.good ? '✓' : '!'} {s.label} {s.dir === 'up' ? '↑' : '↓'}
+                  {s.dir === 'up' ? '↑' : '↓'} {s.label} {s.valueText}
                 </span>
               ))}
             </div>
@@ -2670,6 +2687,8 @@ function IconStatCard({
   trendLabel,
   lastMeasuredLabel,
   periodCaption,
+  trendColor,
+  trendEndpointColor,
 }: {
   label: string
   subLabel: string
@@ -2715,6 +2734,10 @@ function IconStatCard({
   // เหมือนเดิม" — บรรทัด "จาก X ก่อน" (periodLabelOf จาก lib/bodyMetricsSummary — ใช้เอนทรีก่อนหน้าล่าสุด
   // ไม่ผูกกรอบ 30 วัน) ไว้ใต้เดลต้าเสมอไม่ว่ากราฟจะมีข้อมูลพอวาดหรือไม่ก็ตาม กันไม่ให้การ์ดว่างเมื่อข้อมูลบาง
   periodCaption?: string | null
+  // v6: ฟีดแบ็ก "เส้นเทรนด์น้ำหนัก = Titanium (เทาสุขุม แทนสีอำพันเดิม), จุดล่าสุด = เขียว" — override สี
+  // เฉพาะกราฟเทรนด์ของ primary card แยกจาก `color` (ยังใช้กับไอคอน/glow ตามเดิม) ไม่ระบุ = ใช้ `color` เดิม
+  trendColor?: string
+  trendEndpointColor?: string
 }) {
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
@@ -2762,9 +2785,13 @@ function IconStatCard({
 
   return (
     <PremiumCard
+      // ฟีดแบ็ก "Weight Card สูง ~405px อยากได้ ~360-370px เพื่อดึง Analysis ขึ้นมาในจอเดียว" — ลด padding
+      // การ์ดทั้งสองขนาด (primary py-4→py-3.5, ปกติ py-3.5→py-3) เพราะการ์ด primary สูงเท่ากับ 2 แถวของ
+      // การ์ดเล็กที่มันคร่อมอยู่ (md:row-span-2) ไม่ได้ตั้ง height ตายตัว — ลด padding การ์ดเล็กจึงลดความสูง
+      // ทั้งแถวและลาม primary ไปด้วยอัตโนมัติ ไม่ต้องคำนวณความสูง primary แยก
       className={`h-full flex flex-col metric-card-hover ${
-        primary ? 'md:col-span-2 md:row-span-2 px-5 py-4' : 'justify-between px-4 py-3.5'
-      } ${tier === 3 ? 'opacity-80' : ''}`}
+        primary ? 'md:col-span-2 md:row-span-2 px-5 py-3.5' : 'justify-between px-4 py-3'
+      } ${tier === 3 ? 'opacity-80' : tier === 2 ? 'opacity-95' : ''}`}
       // primary ใช้ boxShadow override คงที่ (ไม่ใช่ผ่าน CSS class) เพราะ PremiumCard เซ็ต boxShadow ผ่าน
       // inline style ของตัวเองอยู่แล้ว — prop `style` ที่ส่งเข้ามาจะถูก spread ทับท้ายสุดใน PremiumCard.tsx
       // (`...style` วางหลัง boxShadow ดีฟอลต์) จึงชนะได้จริง ต่างจากการพยายามใช้ class ธรรมดามาชน inline
@@ -2774,7 +2801,7 @@ function IconStatCard({
           : undefined
       }
     >
-      <div className={`flex items-start gap-2 ${primary ? 'mb-3' : 'mb-2'}`}>
+      <div className={`flex items-start gap-2 ${primary ? 'mb-2.5' : 'mb-2'}`}>
         <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : 32} />
         <div className="min-w-0">
           <p className={`text-ink font-medium leading-snug ${primary ? 'text-sm' : 'text-xs'}`}>{label}</p>
@@ -2804,11 +2831,11 @@ function IconStatCard({
               ตรงกลางยังโล่งอยู่ดี — เพิ่มทางเลือก "Minimal Luxury" (เส้นคั่น + ป้าย "TREND" เฉยๆ ไม่มีกราฟ)
               เป็นของตกแต่งชั้นสุดท้ายกันพื้นที่ว่างเมื่อกราฟวาดไม่ได้จริงๆ */}
           {(series || lastMeasuredLabel) && (
-            <div className="flex-1 flex flex-col justify-end mt-3">
+            <div className="flex-1 flex flex-col justify-end mt-2.5">
               {series && series.length >= 2 ? (
                 <>
                   {trendLabel && <p className="text-[10px] tracked uppercase text-muted mb-1.5">{trendLabel}</p>}
-                  <Sparkline series={series} color={color} height={56} width={400} stretch />
+                  <Sparkline series={series} color={trendColor ?? color} endpointColor={trendEndpointColor} height={48} width={400} stretch />
                 </>
               ) : trendLabel ? (
                 <>
