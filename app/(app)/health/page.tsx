@@ -24,6 +24,8 @@ import { saveAge } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
 import PremiumCard from '@/components/ui/PremiumCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
+import Sparkline from '@/components/dashboard/Sparkline'
+import { periodLabelOf } from '@/lib/bodyMetricsSummary'
 
 function todayStr() {
   const d = new Date()
@@ -251,6 +253,35 @@ export default function HealthPage() {
       .reverse()
       .map((m) => ({ label: shortLabel(m.measured_at), value: toDisplay(m.muscle_kg as number) }))
   }, [periodMetrics, toDisplay])
+
+  // ฟีดแบ็ก "Weight Card ใหญ่แต่ไม่มีข้อมูลพอ อยากได้ 30-day Mini Trend" — เฉพาะการ์ด Weight/Body Fat/
+  // Muscle/Fat Mass (tier 1 ตัวชี้วัดหลัก 4 ตัว) เท่านั้นที่ยังโชว์เส้นเทรนด์ในแท็บภาพรวม ใช้หน้าต่าง 30 วัน
+  // คงที่ (ไม่ผูกกับ trendPeriodDays ของแท็บ "แนวโน้ม" ซึ่งผู้ใช้ปรับเป็น 7/30/90 ได้ — อันนั้นคือคนละบริบท)
+  // ให้ label "30 DAY TREND" ตรงกับข้อมูลจริงเสมอ ไม่ว่าผู้ใช้จะสลับช่วงเวลาในแท็บแนวโน้มไว้ที่เท่าไหร่
+  const overview30dMetrics = useMemo(() => {
+    const since = new Date()
+    since.setDate(since.getDate() - 30)
+    const offset = since.getTimezoneOffset()
+    const sinceStr = new Date(since.getTime() - offset * 60000).toISOString().slice(0, 10)
+    return metrics.filter((m) => m.measured_at >= sinceStr)
+  }, [metrics])
+
+  const weightTrend30 = useMemo(
+    () => [...overview30dMetrics].filter((m) => m.weight_kg !== null).reverse().map((m) => toDisplay(m.weight_kg as number)),
+    [overview30dMetrics, toDisplay]
+  )
+  const bodyFatTrend30 = useMemo(
+    () => [...overview30dMetrics].filter((m) => m.body_fat_pct !== null).reverse().map((m) => m.body_fat_pct as number),
+    [overview30dMetrics]
+  )
+  const muscleTrend30 = useMemo(
+    () => [...overview30dMetrics].filter((m) => m.muscle_kg !== null).reverse().map((m) => toDisplay(m.muscle_kg as number)),
+    [overview30dMetrics, toDisplay]
+  )
+  const bodyFatKgTrend30 = useMemo(
+    () => [...overview30dMetrics].filter((m) => m.body_fat_kg !== null).reverse().map((m) => toDisplay(m.body_fat_kg as number)),
+    [overview30dMetrics, toDisplay]
+  )
 
   const waistTrend = useMemo(() => {
     return [...periodMetrics]
@@ -852,14 +883,86 @@ export default function HealthPage() {
     }
   }
 
+  // ฟีดแบ็ก "Card ยัง Information ไม่มี Insight" — ข้อความสั้นๆ ใต้เดลต้าของการ์ดน้ำหนัก/ไขมันในร่างกาย
+  // (สองการ์ดที่ฟีดแบ็กยกตัวอย่างมาตรงๆ) คำนวณจากขนาดของเดลต้าจริง ไม่ใช่ copy สำเร็จรูปที่ขึ้นเสมอ
+  const weightDeltaForCard = fieldDelta('weight_kg', toDisplay)
+
+  // ฟีดแบ็ก "↑ 0.9 kg ไม่ควรเป็นสีแดงเสมอ — ถ้าไขมันลดและกล้ามเนื้อเพิ่มพร้อมกัน น้ำหนักที่เพิ่มน่าจะมาจาก
+  // กล้ามเนื้อ ซึ่งเป็นเรื่องดี" — เดิม weightDirection มาจากเป้าหมายน้ำหนักเพียงอย่างเดียว (ไม่มีเป้าหมาย =
+  // ตั้งต้นเป็น "ยิ่งลดยิ่งดี" เสมอ ทำให้น้ำหนักขึ้นโดนตัดสินเป็นสีแดงทันทีไม่ว่าจะมาจากไขมันหรือกล้ามเนื้อ) —
+  // เช็คสัญญาณองค์ประกอบร่างกายจริงก่อน (ไขมันไม่เพิ่ม + กล้ามเนื้อเพิ่ม ขณะน้ำหนักเพิ่ม) ถ้าเข้าเงื่อนไข
+  // ให้ใช้สีกลาง (neutral/titanium แทนแดง) และเปลี่ยนข้อความ insight เป็นคำอธิบายที่มาแทนคำแนะนำทั่วไป
+  const muscleDeltaForWeightCheck = fieldDelta('muscle_kg', toDisplay)
+  const bodyFatDeltaForWeightCheck = fieldDelta('body_fat_pct')
+  const weightGainLooksLikeMuscle =
+    weightDeltaForCard !== null &&
+    weightDeltaForCard > 0 &&
+    bodyFatDeltaForWeightCheck !== null &&
+    bodyFatDeltaForWeightCheck <= 0 &&
+    muscleDeltaForWeightCheck !== null &&
+    muscleDeltaForWeightCheck > 0
+  const weightCardDirection: Direction = weightGainLooksLikeMuscle ? 'neutral' : weightDirection
+
+  const weightInsight = weightGainLooksLikeMuscle
+    ? 'ส่วนใหญ่จากมวลกล้ามเนื้อ'
+    : weightDeltaForCard === null
+      ? null
+      : Math.abs(weightDeltaForCard) < 0.5
+        ? 'อยู่ในช่วงผันผวนปกติ'
+        : (weightDirection === 'lowerBetter' ? weightDeltaForCard < 0 : weightDeltaForCard > 0)
+          ? 'แนวโน้มดี ทำต่อไป'
+          : 'ลองติดตามใกล้ชิดขึ้น'
+
+  // ฟีดแบ็ก "Weight Card ยังมีพื้นที่ว่างอยู่ ถ้าข้อมูลในช่วง 30 วันมีไม่พอวาดกราฟ (< 2 จุด) การ์ดจะโล่งอีก
+  // ทั้งที่มีข้อมูลเก่ากว่านั้นให้เทียบได้" — periodLabelOf ใช้ "เอนทรีก่อนหน้าล่าสุดไม่ว่าจะห่างกี่วัน" (ไม่ผูก
+  // กรอบ 30 วัน) จึงให้ผลลัพธ์ที่มีความหมายแม้ผู้ใช้ log ไม่ถี่ — ใช้เติมบรรทัด "จาก X ก่อน" ใต้เดลต้าเสมอ
+  // (เหมือน BodyMetricsRow บน Dashboard) ไม่ว่ากราฟจะมีข้อมูลพอวาดหรือไม่ก็ตาม
+  const weightPeriodCaption = periodLabelOf(latest, metrics[1] ?? null)
+
+  // ฟีดแบ็ก "Body Fat Card ยังไม่บอกว่าดีหรือยัง อยากเห็น Badge (Good/Normal)" — ใช้เกณฑ์ % ไขมันตามเพศ
+  // เดียวกับที่คะแนนสุขภาพรวมใช้อยู่แล้ว (bodyFatPctRange) ไม่ได้คิดเกณฑ์ใหม่แยกต่างหาก
+  const bodyFatRangeForZone = bodyFatPctRange(profile?.sex ?? null)
+  const bodyFatZone: Zone | null = latest?.body_fat_pct != null ? zoneOf(latest.body_fat_pct, bodyFatRangeForZone.low, bodyFatRangeForZone.high) : null
+
+  const bodyFatDeltaForCard = fieldDelta('body_fat_pct')
+  const bodyFatInsight =
+    bodyFatDeltaForCard === null
+      ? null
+      : Math.abs(bodyFatDeltaForCard) < 0.3
+        ? 'อยู่ในช่วงผันผวนปกติ'
+        : bodyFatDeltaForCard < 0
+          ? 'ไขมันลดลงต่อเนื่อง ทำได้ดี'
+          : 'ไขมันเพิ่มขึ้น ลองเพิ่มคาร์ดิโอ'
+
+  // ฟีดแบ็ก "Health Score 90% ต้องสัมพันธ์กับข้อมูลด้านล่าง — อยากให้กด Score แล้วเห็น Breakdown เป็นหมวด
+  // (Body Composition/Metabolic Health/Muscle/Hydration/Trend) พร้อมคะแนนย่อย" — 4 หมวดแรกรวมจาก
+  // healthScoreItems ที่มีอยู่แล้ว (จัดหมวดตาม label ใน OverviewHealthScoreHeader) ส่วน "Trend" คำนวณแยก
+  // ที่นี่ เพราะเป็นคนละมิติ (ทิศทางการเปลี่ยนแปลงล่าสุด ไม่ใช่ตำแหน่งเทียบช่วงมาตรฐาน ณ ปัจจุบัน) — สัดส่วน
+  // ตัวชี้วัดที่ "ขยับไปทางที่ดี" เทียบกับค่าก่อนหน้า จากตัวชี้วัดหลักที่มีทิศทางชัดเจน (ไม่รวม neutral)
+  const trendScoreDefs: { field: keyof BodyMetric; direction: Direction; toDisplayFn?: (v: number) => number }[] = [
+    { field: 'weight_kg', direction: weightDirection, toDisplayFn: toDisplay },
+    { field: 'body_fat_pct', direction: 'lowerBetter' },
+    { field: 'muscle_kg', direction: 'higherBetter', toDisplayFn: toDisplay },
+    { field: 'body_fat_kg', direction: 'lowerBetter', toDisplayFn: toDisplay },
+    { field: 'skeletal_muscle_kg', direction: 'higherBetter', toDisplayFn: toDisplay },
+    { field: 'body_age_years', direction: 'lowerBetter' },
+    { field: 'visceral_fat_grade', direction: 'lowerBetter' },
+  ]
+  const trackedTrends = trendScoreDefs
+    .map((d) => ({ delta: fieldDelta(d.field, d.toDisplayFn), direction: d.direction }))
+    .filter((d): d is { delta: number; direction: Direction } => d.delta !== null && d.direction !== 'neutral')
+  const trendScorePct =
+    trackedTrends.length === 0
+      ? null
+      : Math.round((trackedTrends.filter((d) => (d.direction === 'higherBetter' ? d.delta > 0 : d.delta < 0)).length / trackedTrends.length) * 100)
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl tracked uppercase">สุขภาพร่างกาย</h1>
           <p className="text-xs text-muted mt-0.5">
-            ติดตามและวิเคราะห์แนวโน้มสุขภาพของคุณ
-            {lastSyncedAt && <span className="text-muted/70"> · อัปเดตล่าสุด {relativeUpdatedLabel(lastSyncedAt)}</span>}
+            {lastSyncedAt ? `อัปเดตล่าสุด ${relativeUpdatedLabel(lastSyncedAt)}` : 'ติดตามและวิเคราะห์การเปลี่ยนแปลงของร่างกายคุณ'}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -906,14 +1009,21 @@ export default function HealthPage() {
         <div className="space-y-6">
           <OverviewHealthScoreHeader
             score={healthScore}
+            items={healthScoreItems}
             monthDeltaPct={healthScoreMonthDeltaPct}
-            selfPercentile={healthScorePercentile}
             bodyFatDeltaPct={fieldDelta('body_fat_pct')}
             muscleMassDelta={fieldDelta('muscle_kg', toDisplay)}
+            targetBodyFatPct={goals.find((g) => g.goal_type === 'body_fat' && g.status === 'active')?.target_value ?? null}
+            updatedLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
+            trendScorePct={trendScorePct}
           />
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
+          {/* v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ" — เรียงลำดับใหม่ตามความสำคัญจริง (tier 1: น้ำหนัก/
+              ไขมันในร่างกาย/กล้ามเนื้อ/BMI, tier 2: น้ำ/โปรตีน/ไขมันช่องท้อง/มวลไขมัน/กล้ามเนื้อโครงร่าง
+              — คู่กับตัวชี้วัด tier 1 ที่ใกล้เคียงกัน, tier 3: มวลกระดูก/อายุร่างกาย/BMR) แทนลำดับเดิมที่
+              เรียงตามลำดับกรอกฟอร์มล้วนๆ ไม่มีนัยความสำคัญ */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 md:grid-flow-row-dense gap-3 items-stretch">
             <IconStatCard
               label="น้ำหนัก"
@@ -923,10 +1033,44 @@ export default function HealthPage() {
               color="#E8A33D"
               value={latest?.weight_kg != null ? toDisplay(latest.weight_kg) : null}
               unit={unit}
-              delta={fieldDelta('weight_kg', toDisplay)}
+              delta={weightDeltaForCard}
               deltaUnit={unit}
-              direction={weightDirection}
+              direction={weightCardDirection}
+              series={weightTrend30}
+              trendLabel="30 DAY TREND"
+              lastMeasuredLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
+              periodCaption={weightPeriodCaption}
+              insight={weightInsight}
               primary
+            />
+            <IconStatCard
+              label="ไขมันในร่างกาย"
+              subLabel="BODY FAT"
+              icon="fat"
+              imageKey="bodyFat"
+              color="#C1503A"
+              value={latest?.body_fat_pct ?? null}
+              unit="%"
+              delta={bodyFatDeltaForCard}
+              deltaUnit="%"
+              direction="lowerBetter"
+              zone={bodyFatZone}
+              zoneScheme="lowerOk"
+              series={bodyFatTrend30}
+              insight={bodyFatInsight}
+            />
+            <IconStatCard
+              label="มวลกล้ามเนื้อ"
+              subLabel="MUSCLE MASS"
+              icon="muscle"
+              imageKey="muscleMass"
+              color="#5FA88C"
+              value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null}
+              unit={unit}
+              delta={fieldDelta('muscle_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="higherBetter"
+              series={muscleTrend30}
             />
             <IconStatCard
               label="ดัชนีมวลกาย"
@@ -940,57 +1084,6 @@ export default function HealthPage() {
               deltaUnit=""
               direction={weightDirection}
               zone={bmi !== null ? zoneOf(bmi, 18.5, 25) : null}
-              zoneScheme="symmetric"
-            />
-            <IconStatCard
-              label="ไขมันในร่างกาย"
-              subLabel="BODY FAT"
-              icon="fat"
-              imageKey="bodyFat"
-              color="#C1503A"
-              value={latest?.body_fat_pct ?? null}
-              unit="%"
-              delta={fieldDelta('body_fat_pct')}
-              deltaUnit="%"
-              direction="lowerBetter"
-            />
-            <IconStatCard
-              label="มวลกล้ามเนื้อ"
-              subLabel="MUSCLE MASS"
-              icon="muscle"
-              imageKey="muscleMass"
-              color="#5FA88C"
-              value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null}
-              unit={unit}
-              delta={fieldDelta('muscle_kg', toDisplay)}
-              deltaUnit={unit}
-              direction="higherBetter"
-            />
-            <IconStatCard
-              label="มวลไขมัน"
-              subLabel="FAT MASS"
-              icon="fat"
-              imageKey="fatMass"
-              color="#C1503A"
-              value={latest?.body_fat_kg != null ? toDisplay(latest.body_fat_kg) : null}
-              unit={unit}
-              delta={fieldDelta('body_fat_kg', toDisplay)}
-              deltaUnit={unit}
-              direction="lowerBetter"
-            />
-            <IconStatCard
-              label="ไขมันช่องท้อง"
-              subLabel="VISCERAL FAT"
-              icon="fat"
-              imageKey="visceralFat"
-              color="#CF9A3D"
-              value={latest?.visceral_fat_grade ?? null}
-              unit="ระดับ"
-              decimals={0}
-              delta={fieldDelta('visceral_fat_grade')}
-              deltaUnit="ระดับ"
-              direction="lowerBetter"
-              zone={latest?.visceral_fat_grade != null ? (latest.visceral_fat_grade <= 9 ? 'Standard' : 'High') : null}
               zoneScheme="symmetric"
             />
             <IconStatCard
@@ -1010,6 +1103,7 @@ export default function HealthPage() {
                   : null
               }
               zoneScheme="higherOk"
+              tier={2}
             />
             <IconStatCard
               label="โปรตีน"
@@ -1028,6 +1122,37 @@ export default function HealthPage() {
                   : null
               }
               zoneScheme="higherOk"
+              tier={2}
+            />
+            <IconStatCard
+              label="ไขมันช่องท้อง"
+              subLabel="VISCERAL FAT"
+              icon="fat"
+              imageKey="visceralFat"
+              color="#CF9A3D"
+              value={latest?.visceral_fat_grade ?? null}
+              unit="ระดับ"
+              decimals={0}
+              delta={fieldDelta('visceral_fat_grade')}
+              deltaUnit="ระดับ"
+              direction="lowerBetter"
+              zone={latest?.visceral_fat_grade != null ? (latest.visceral_fat_grade <= 9 ? 'Standard' : 'High') : null}
+              zoneScheme="symmetric"
+              tier={2}
+            />
+            <IconStatCard
+              label="มวลไขมัน"
+              subLabel="FAT MASS"
+              icon="fat"
+              imageKey="fatMass"
+              color="#C1503A"
+              value={latest?.body_fat_kg != null ? toDisplay(latest.body_fat_kg) : null}
+              unit={unit}
+              delta={fieldDelta('body_fat_kg', toDisplay)}
+              deltaUnit={unit}
+              direction="lowerBetter"
+              series={bodyFatKgTrend30}
+              tier={2}
             />
             <IconStatCard
               label="กล้ามเนื้อโครงร่าง"
@@ -1040,6 +1165,7 @@ export default function HealthPage() {
               delta={fieldDelta('skeletal_muscle_kg', toDisplay)}
               deltaUnit={unit}
               direction="higherBetter"
+              tier={2}
             />
             <IconStatCard
               label="มวลกระดูก"
@@ -1052,6 +1178,7 @@ export default function HealthPage() {
               delta={fieldDelta('bone_mass_kg', toDisplay)}
               deltaUnit={unit}
               direction="neutral"
+              tier={3}
             />
             <IconStatCard
               label="อายุร่างกาย"
@@ -1065,6 +1192,7 @@ export default function HealthPage() {
               delta={fieldDelta('body_age_years')}
               deltaUnit="ปี"
               direction="lowerBetter"
+              tier={3}
             />
             <IconStatCard
               label="อัตราการเผาผลาญ"
@@ -1077,6 +1205,7 @@ export default function HealthPage() {
               decimals={0}
               delta={null}
               direction="neutral"
+              tier={3}
             />
           </div>
 
@@ -1951,64 +2080,137 @@ function healthScoreTier(pct: number): { label: string; color: string } {
 // จริง ไม่ใช่ข้อความสำเร็จรูปที่ขึ้นเสมอ (ถ้าไขมันเพิ่มขึ้นจริงจะขึ้น "ไขมันเพิ่ม" สีแดง ไม่ใช่ทำเนียนเป็นข่าวดี)
 // วันที่วัดล่าสุด/เป้าหมายน้ำหนัก ยังดูได้ตามปกติจากป้ายวันที่ที่ header บนสุดของหน้า และการ์ด "เป้าหมายของคุณ"
 // ในแท็บ "แนวโน้ม" อยู่แล้ว ไม่ต้องพูดซ้ำสองที่
+// ฟีดแบ็ก "Health Score 90% ต้องสัมพันธ์กับข้อมูลด้านล่าง — อยากให้กด Score แล้วเห็น Breakdown เป็นหมวด
+// (Body Composition/Metabolic Health/Muscle/Hydration) พร้อมคะแนนย่อย" — จัดกลุ่ม healthScoreItems (มีอยู่
+// แล้ว จาก computeScoreItems) ตาม label เข้า 4 หมวดนี้ ไม่ต้องคำนวณคะแนนย่อยใหม่ทั้งหมด แค่รวมยอดต่อหมวด
+const HEALTH_SCORE_CATEGORIES: { title: string; labels: string[] }[] = [
+  { title: 'BODY COMPOSITION', labels: ['น้ำหนัก', 'BMI', 'ไขมันในร่างกาย', 'มวลไขมัน'] },
+  { title: 'METABOLIC HEALTH', labels: ['ไขมันช่องท้อง', 'อายุร่างกาย'] },
+  { title: 'MUSCLE', labels: ['กล้ามเนื้อโครงร่าง', 'มวลกล้ามเนื้อ', 'โปรตีน', 'มวลกระดูก'] },
+  { title: 'HYDRATION', labels: ['น้ำในร่างกาย', 'เกลือแร่'] },
+]
+
 function OverviewHealthScoreHeader({
   score,
+  items,
   monthDeltaPct,
-  selfPercentile,
   bodyFatDeltaPct,
   muscleMassDelta,
+  targetBodyFatPct,
+  updatedLabel,
+  trendScorePct,
 }: {
   score: { good: number; standard: number; needsWork: number; total: number; score: number }
+  items: { label: string; status: 'good' | 'standard' | 'needsWork' }[]
   monthDeltaPct?: number | null
-  selfPercentile?: number | null
   bodyFatDeltaPct: number | null
   muscleMassDelta: number | null
+  targetBodyFatPct: number | null
+  updatedLabel: string | null
+  trendScorePct: number | null
 }) {
+  const [showBreakdown, setShowBreakdown] = useState(false)
   if (score.total === 0) return null
   const pct = (score.score / score.total) * 100
   const { label, color: ringColor } = healthScoreTier(pct)
 
-  const signals: { text: string; good: boolean }[] = []
+  // ป้าย signal ต่อการ์ด — v3: ฟีดแบ็ก "อยากได้ Chip แบบ Apple (✔ Fat ↓)" เปลี่ยนจากวลีสำเร็จรูปที่ผูก
+  // ทิศทางไว้ในข้อความ (เช่น "ไขมันลด") มาเป็น label สั้น + ลูกศรทิศทางแยกท้ายสุด ให้สแกนอ่านเร็วขึ้น
+  const signals: { label: string; dir: 'up' | 'down'; good: boolean }[] = []
   if (monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0) {
-    signals.push({ text: monthDeltaPct > 0 ? 'ดีขึ้นจากเดือนก่อน' : 'แย่ลงจากเดือนก่อน', good: monthDeltaPct > 0 })
+    signals.push({ label: 'คะแนนสุขภาพ', dir: monthDeltaPct > 0 ? 'up' : 'down', good: monthDeltaPct > 0 })
   }
   if (bodyFatDeltaPct !== null && bodyFatDeltaPct !== 0) {
-    signals.push({ text: bodyFatDeltaPct < 0 ? 'ไขมันลด' : 'ไขมันเพิ่ม', good: bodyFatDeltaPct < 0 })
+    signals.push({ label: 'ไขมัน', dir: bodyFatDeltaPct < 0 ? 'down' : 'up', good: bodyFatDeltaPct < 0 })
   }
   if (muscleMassDelta !== null && muscleMassDelta !== 0) {
-    signals.push({ text: muscleMassDelta > 0 ? 'กล้ามเพิ่ม' : 'กล้ามลด', good: muscleMassDelta > 0 })
+    signals.push({ label: 'กล้ามเนื้อ', dir: muscleMassDelta > 0 ? 'up' : 'down', good: muscleMassDelta > 0 })
+  }
+
+  const categoryRows = HEALTH_SCORE_CATEGORIES.map((c) => {
+    const catItems = items.filter((i) => c.labels.includes(i.label))
+    if (catItems.length === 0) return null
+    return { title: c.title, pct: Math.round((catItems.filter((i) => i.status !== 'needsWork').length / catItems.length) * 100) }
+  }).filter((r): r is { title: string; pct: number } => r !== null)
+  if (trendScorePct !== null && trendScorePct !== undefined) {
+    categoryRows.push({ title: 'TREND', pct: trendScorePct })
   }
 
   return (
     <PremiumCard className="px-4 py-3">
-      <div className="flex items-center gap-3">
-        <GoalRing pct={pct} size={56} strokeWidth={6} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-[10px] tracked uppercase text-muted">Health Score</span>
+      {/* v3: ฟีดแบ็ก "Banner โล่งเกินไป เหลือพื้นที่ว่าง ~60%" — แบ่งเป็น 4 บล็อกคั่นเส้น (คะแนน/แนวโน้ม/
+          เป้าหมาย/อัปเดตล่าสุด) แทนวง+ระดับแถวเดียวโดดๆ เดิม ใช้ข้อมูลที่คำนวณอยู่แล้วทั้งหมด (ไม่มีตัวไหน
+          คำนวณใหม่) — targetBodyFatPct/updatedLabel มาจาก props ใหม่ที่จุดเรียกใช้ */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-3 shrink-0">
+          <GoalRing pct={pct} size={56} strokeWidth={6} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
+          <div className="min-w-0">
+            <button
+              type="button"
+              onClick={() => setShowBreakdown((v) => !v)}
+              className="flex items-center gap-1 text-[10px] tracked uppercase text-muted transition hover:text-ink"
+            >
+              Health Score
+              <InfoIcon />
+            </button>
             <span className="font-display text-sm tracked uppercase" style={{ color: ringColor }}>
               {label}
             </span>
-            {selfPercentile !== null && selfPercentile !== undefined && (
-              <span className="text-[11px] text-muted">· Top {selfPercentile}%</span>
-            )}
           </div>
-          {signals.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
+        </div>
+
+        {signals.length > 0 && (
+          <>
+            <div className="w-px self-stretch bg-line hidden sm:block" />
+            <div className="flex flex-col gap-1 shrink-0">
               {signals.map((s) => (
                 <span
-                  key={s.text}
-                  className={`inline-flex items-center gap-1 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full ${
+                  key={s.label}
+                  className={`inline-flex items-center gap-1 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${
                     s.good ? 'bg-mossdim text-moss' : 'bg-rustdim text-rusttext'
                   }`}
                 >
-                  {s.good ? '✓' : '↑'} {s.text}
+                  {s.good ? '✓' : '!'} {s.label} {s.dir === 'up' ? '↑' : '↓'}
                 </span>
               ))}
             </div>
-          )}
+          </>
+        )}
+
+        {targetBodyFatPct !== null && (
+          <>
+            <div className="w-px self-stretch bg-line hidden sm:block" />
+            <div className="shrink-0">
+              <p className="text-[10px] tracked uppercase text-muted">Target</p>
+              <p className="font-mono text-sm text-ink">
+                {targetBodyFatPct.toFixed(1)}
+                <span className="text-[10px] text-muted"> % Body Fat</span>
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* ฟีดแบ็ก "Top X% ไม่ค่อยมี value เทียบกับใครไม่ชัด — ชอบใช้ข้อมูลของผู้ใช้เองมากกว่า" — ตัดบล็อก
+            Rank/percentile ออก เหลือ Score/Trend/Target/Updated ซึ่งล้วนเป็นข้อมูลของผู้ใช้เองทั้งหมด */}
+        <div className="w-px self-stretch bg-line hidden sm:block" />
+        <div className="shrink-0">
+          <p className="text-[10px] tracked uppercase text-muted">Updated</p>
+          <p className="font-mono text-sm text-ink">{updatedLabel ?? '—'}</p>
         </div>
       </div>
+
+      {showBreakdown && categoryRows.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-line space-y-1.5">
+          {categoryRows.map((row) => (
+            <div key={row.title} className="flex items-center justify-between gap-3 text-[11px]">
+              <span className="tracked uppercase text-muted">{row.title}</span>
+              <span className="font-mono font-medium" style={{ color: healthScoreTier(row.pct).color }}>
+                {row.pct}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </PremiumCard>
   )
 }
@@ -2462,6 +2664,12 @@ function IconStatCard({
   zone,
   zoneScheme = 'symmetric',
   primary = false,
+  series,
+  insight,
+  tier = 1,
+  trendLabel,
+  lastMeasuredLabel,
+  periodCaption,
 }: {
   label: string
   subLabel: string
@@ -2488,30 +2696,75 @@ function IconStatCard({
   // ตัวเลข/ไอคอนใหญ่กว่าการ์ดอื่น และใช้ .shadow-hero (โทเคนที่มีอยู่แล้ว คอมเมนต์ในตัวมันเองบอกไว้ตรงๆ ว่า
   // "การ์ดหนึ่งใบต่อหน้าจอที่ควรเด่นสุด") แทน .shadow-elevated ปกติ
   primary?: boolean
+  // v3: ฟีดแบ็ก "อยากได้ Mini Trend ทุกใบ" — เส้นจิ๋วท้ายการ์ด ใช้ Sparkline เดียวกับ Dashboard
+  // (components/dashboard/Sparkline.tsx) ไม่ต้องสร้างใหม่ — ไม่ระบุ/น้อยกว่า 2 จุด = ไม่แสดง (Sparkline
+  // เองมี guard นี้อยู่แล้ว)
+  series?: number[]
+  // v3: ฟีดแบ็ก "การ์ดยังเป็น Information ไม่มี Insight" — ข้อความสั้นๆ ใต้เดลต้า (เช่น "อยู่ในช่วงผันผวนปกติ")
+  // คำนวณจากข้อมูลจริงที่จุดเรียกใช้ ไม่ใช่ copy สำเร็จรูปที่ขึ้นเสมอ
+  insight?: string | null
+  // v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ อยากให้ไล่ตามความสำคัญ (⭐⭐⭐⭐⭐/⭐⭐⭐/⭐⭐)" — tier 3 (ต่ำสุด)
+  // ลดความจัดจ้านลงเล็กน้อย (opacity) ให้สายตาไหลไปที่ tier 1/2 ก่อน ไม่ได้ซ่อนข้อมูล แค่ลดน้ำหนักภาพ
+  tier?: 1 | 2 | 3
+  // v4: ฟีดแบ็ก "Weight Card ใหญ่ แต่ไม่มีข้อมูลพอ พื้นที่ 2-3 เท่าของ Card ปกติ แต่มีข้อมูลจริงแค่เลขเดียว"
+  // — เฉพาะ primary เท่านั้นที่ใช้สองพร็อพนี้ (การ์ดปกติพื้นที่พอดีอยู่แล้ว ไม่ต้อง) ป้ายกำกับกราฟเทรนด์
+  // ("30 DAY TREND") + วันที่วัดล่าสุด ปักไว้ท้ายการ์ด ให้พื้นที่ว่างเดิมกลายเป็นเนื้อหาที่มีประโยชน์จริง
+  trendLabel?: string | null
+  lastMeasuredLabel?: string | null
+  // v5: ฟีดแบ็ก "Weight Card ยังว่างอีก ถ้ากราฟ 30 วันมีข้อมูลไม่พอ (< 2 จุด — เช่น log ไม่ถี่) การ์ดจะโล่ง
+  // เหมือนเดิม" — บรรทัด "จาก X ก่อน" (periodLabelOf จาก lib/bodyMetricsSummary — ใช้เอนทรีก่อนหน้าล่าสุด
+  // ไม่ผูกกรอบ 30 วัน) ไว้ใต้เดลต้าเสมอไม่ว่ากราฟจะมีข้อมูลพอวาดหรือไม่ก็ตาม กันไม่ให้การ์ดว่างเมื่อข้อมูลบาง
+  periodCaption?: string | null
 }) {
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
   const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
 
-  const zoneLabel = zone ? `${ZONE_ARROW[zone] ? `${ZONE_ARROW[zone]} ` : ''}${ZONE_LABEL_TH[zone]}` : null
-  const zoneColor =
+  // ฟีดแบ็ก "Protein สูงกว่าเกณฑ์แล้วเป็นสีเขียว ผู้ใช้จะเข้าใจว่าเป็นเรื่องดี ซึ่งอาจไม่ใช่เสมอไป — ควรเปลี่ยน
+  // เป็นข้อความที่ชัดกว่า" — ZONE_LABEL_TH เดิมใช้คำเดียวกัน ("สูงกว่าเกณฑ์"/"ต่ำกว่าเกณฑ์") ไม่ว่าด้านนั้น
+  // จะเป็นเรื่องดีหรือไม่ดีก็ตาม ทำให้ป้ายสีเขียว+ข้อความ "สูงกว่าเกณฑ์" (ฟังดูเหมือนเตือน) ขัดกันเอง —
+  // ใช้ zoneScheme (ซึ่งรู้อยู่แล้วว่าด้านไหนของการ์ดนี้คือ "ดี") เลือกคำที่สื่อความหมายตรงกับสีจริง
+  const zoneIsFavorable = zone === 'High' ? zoneScheme === 'higherOk' : zone === 'Low' ? zoneScheme === 'lowerOk' : false
+  const zoneLabel = zone
+    ? zone === 'Standard'
+      ? ZONE_LABEL_TH.Standard
+      : `${ZONE_ARROW[zone]} ${zoneIsFavorable ? (zone === 'High' ? 'เพียงพอ' : 'อยู่ในเกณฑ์ดี') : ZONE_LABEL_TH[zone]}`
+    : null
+  const zonePillClass =
     zone === 'Standard'
-      ? 'text-moss'
+      ? 'bg-mossdim text-moss'
       : zone === 'High'
         ? zoneScheme === 'higherOk'
-          ? 'text-emerald-500'
-          : 'text-rusttext'
+          ? 'bg-emerald-500/15 text-emerald-500'
+          : 'bg-rustdim text-rusttext'
         : zone === 'Low'
           ? zoneScheme === 'lowerOk'
-            ? 'text-emerald-500'
-            : 'text-rusttext'
+            ? 'bg-emerald-500/15 text-emerald-500'
+            : 'bg-rustdim text-rusttext'
           : ''
+
+  // แถวที่สอง (ใต้ตัวเลขหลัก): เดลต้ามีความสำคัญกว่า note เสมอถ้ามีทั้งคู่ (note ไว้ใช้แทนตอนไม่มีเดลต้า
+  // จริงๆ เท่านั้น) — ต่างจากเดิมที่ zone แย่ง slot เดียวกับเดลต้า ตอนนี้ zone ย้ายไปเป็น pill แยกบนแถวค่า
+  // แล้ว เดลต้า/note จึงโชว์ได้พร้อมกันกับ zone เสมอ (ฟีดแบ็ก "Body Fat Card อยากเห็นทั้ง Badge และ Delta")
+  const secondary =
+    delta !== null
+      ? { text: `${delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} ${Math.abs(delta).toFixed(decimals)}${deltaUnit ? ` ${deltaUnit}` : ''}`, color: deltaColor }
+      : note
+        ? { text: note, color: noteGood ? 'text-moss' : 'text-rusttext' }
+        : null
+
+  // ฟีดแบ็ก "อย่าให้ทุก Metric มีคำว่า 'ปกติ' — ถ้าทุก Card มี status เหมือนกัน หน้าเริ่มดูเป็นเครื่องชั่ง
+  // วิเคราะห์ร่างกาย ไม่ใช่ FITLOG — status ควรใช้เฉพาะตอนมี insight" — "ปกติ" (zone Standard) คือสถานะที่ไม่มี
+  // นัยอะไรเป็นพิเศษ (แค่ "อยู่ในช่วงคาดหวัง") ถ้าการ์ดมีเดลต้าที่บอกการเปลี่ยนแปลงจริงอยู่แล้ว เดลต้านั้น
+  // ให้ข้อมูลมากกว่าป้าย "ปกติ" ซ้ำๆ กันหลายใบ — ซ่อนป้ายเฉพาะกรณีนี้ ส่วนโซน Low/High (ค่าที่หลุดช่วง จริงๆ
+  // เป็นสัญญาณที่มีความหมาย ไม่ว่าจะดีหรือไม่ดี) ยังโชว์เสมอเหมือนเดิม
+  const showZonePill = zone !== null && !(zone === 'Standard' && secondary !== null)
 
   return (
     <PremiumCard
-      className={`h-full flex flex-col justify-between metric-card-hover ${
-        primary ? 'md:col-span-2 md:row-span-2 px-5 py-4' : 'px-4 py-3.5'
-      }`}
+      className={`h-full flex flex-col metric-card-hover ${
+        primary ? 'md:col-span-2 md:row-span-2 px-5 py-4' : 'justify-between px-4 py-3.5'
+      } ${tier === 3 ? 'opacity-80' : ''}`}
       // primary ใช้ boxShadow override คงที่ (ไม่ใช่ผ่าน CSS class) เพราะ PremiumCard เซ็ต boxShadow ผ่าน
       // inline style ของตัวเองอยู่แล้ว — prop `style` ที่ส่งเข้ามาจะถูก spread ทับท้ายสุดใน PremiumCard.tsx
       // (`...style` วางหลัง boxShadow ดีฟอลต์) จึงชนะได้จริง ต่างจากการพยายามใช้ class ธรรมดามาชน inline
@@ -2527,29 +2780,61 @@ function IconStatCard({
           <p className={`text-ink font-medium leading-snug ${primary ? 'text-sm' : 'text-xs'}`}>{label}</p>
           <p className={`tracked uppercase text-muted leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</p>
         </div>
-      </div>
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <p className={`font-mono tabular text-ink shrink-0 whitespace-nowrap ${primary ? 'text-4xl' : 'text-xl'}`}>
-          {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
-          {unit && <span className={`text-muted ml-1 ${primary ? 'text-sm' : 'text-xs'}`}>{unit}</span>}
-        </p>
-        {zoneLabel ? (
-          <span className={`font-medium whitespace-nowrap shrink-0 ml-auto ${zoneColor} ${primary ? 'text-sm' : 'text-[11px]'}`}>
+        {showZonePill && zoneLabel && (
+          <span
+            className={`ml-auto shrink-0 font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${zonePillClass} ${primary ? 'text-[11px]' : 'text-[9px]'}`}
+          >
             {zoneLabel}
           </span>
-        ) : note ? (
-          <span
-            className={`whitespace-nowrap shrink-0 ml-auto ${noteGood ? 'text-moss' : 'text-rusttext'} ${primary ? 'text-sm' : 'text-[11px]'}`}
-          >
-            {note}
-          </span>
-        ) : delta !== null ? (
-          <span className={`font-mono whitespace-nowrap shrink-0 ml-auto ${deltaColor} ${primary ? 'text-sm' : 'text-[11px]'}`}>
-            {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)}
-            {deltaUnit ? ` ${deltaUnit}` : ''}
-          </span>
-        ) : null}
+        )}
       </div>
+      {primary ? (
+        <>
+          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-4xl">
+            {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
+            {unit && <span className="text-muted ml-1 text-sm">{unit}</span>}
+          </p>
+          {secondary && <p className={`font-mono whitespace-nowrap text-sm ${secondary.color}`}>{secondary.text}</p>}
+          {periodCaption && <p className="text-muted text-xs -mt-0.5">{periodCaption}</p>}
+          {insight && <p className="text-muted truncate text-xs mt-0.5">{insight}</p>}
+          {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันเนื้อหาลงไปกิน
+              พื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ justify-between เดิมพอแล้ว
+              สำหรับความสูงปกติ ดูสาขา else ด้านล่าง) — v5: เดิมถ้า series มีข้อมูลไม่พอ (< 2 จุด, เช่น
+              ผู้ใช้ log ไม่ถี่พอในกรอบ 30 วัน) div นี้จะเหลือแค่ lastMeasuredLabel บรรทัดเดียวปักท้ายการ์ด
+              ตรงกลางยังโล่งอยู่ดี — เพิ่มทางเลือก "Minimal Luxury" (เส้นคั่น + ป้าย "TREND" เฉยๆ ไม่มีกราฟ)
+              เป็นของตกแต่งชั้นสุดท้ายกันพื้นที่ว่างเมื่อกราฟวาดไม่ได้จริงๆ */}
+          {(series || lastMeasuredLabel) && (
+            <div className="flex-1 flex flex-col justify-end mt-3">
+              {series && series.length >= 2 ? (
+                <>
+                  {trendLabel && <p className="text-[10px] tracked uppercase text-muted mb-1.5">{trendLabel}</p>}
+                  <Sparkline series={series} color={color} height={56} width={400} stretch />
+                </>
+              ) : trendLabel ? (
+                <>
+                  <div className="h-px bg-line mb-2" />
+                  <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>
+                </>
+              ) : null}
+              {lastMeasuredLabel && <p className="text-[10px] text-muted mt-2">ล่าสุด {lastMeasuredLabel}</p>}
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-xl">
+            {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
+            {unit && <span className="text-muted ml-1 text-xs">{unit}</span>}
+          </p>
+          {secondary && <p className={`font-mono whitespace-nowrap text-[11px] ${secondary.color}`}>{secondary.text}</p>}
+          {insight && <p className="text-muted truncate text-[10px] mt-0.5">{insight}</p>}
+          {series && series.length >= 2 && (
+            <div className="mt-1.5">
+              <Sparkline series={series} color={color} height={18} width={200} stretch />
+            </div>
+          )}
+        </div>
+      )}
     </PremiumCard>
   )
 }
