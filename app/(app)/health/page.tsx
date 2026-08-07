@@ -3080,8 +3080,11 @@ function IconStatCard({
               "จาก...ก่อน" ห่อ) ต่อท้าย secondary ด้วย "·" แทนที่จะแยกบรรทัด
               v20: ฟีดแบ็ก "เพิ่มระยะห่างระหว่างแต่ละข้อมูล" — เดิมไม่มี margin-top จากค่าหลักเลย (แค่ block
               ต่อกัน) เพิ่ม mt-1 ให้หายใจง่ายขึ้นหลังขยายเลขค่าหลัก */}
+          {/* v22: ฟีดแบ็ก "↑ 0.9 kg · 3 สัปดาห์ เด่นไปนิด อยากให้ 66.3 kg เห็นก่อน — ลด opacity บรรทัดที่ 2
+              ลงเล็กน้อย จะดูแพงขึ้น" — opacity-85 บน wrapper เท่านั้น ไม่แตะสี deltaColor เดิม (เขียว/แดง/เทา
+              ยังสื่อสถานะจริงเหมือนเดิม แค่จางลงอีกขั้นเมื่อเทียบกับเลขค่าหลัก 52px ด้านบน) */}
           {secondary && (
-            <p className={`font-mono whitespace-nowrap text-sm mt-1 ${secondary.color}`}>
+            <p className={`font-mono whitespace-nowrap text-sm mt-1 opacity-85 ${secondary.color}`}>
               {secondary.text}
               {periodCaption && <span className="text-muted"> · {periodCaption}</span>}
             </p>
