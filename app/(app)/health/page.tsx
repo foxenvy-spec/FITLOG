@@ -1013,7 +1013,10 @@ export default function HealthPage() {
   // weight เป็นตัวหลัก, body fat เป็นแค่ fallback ตอนไม่มีเป้าหมายน้ำหนัก — เปลี่ยนเป็น array แสดงทั้งคู่พร้อม
   // กันถ้ามีทั้งสองเป้าหมายที่ active อยู่ (ยังคงเรียงน้ำหนักก่อน เพราะเป็น primary metric ของหน้านี้)
   const bodyFatGoalForBanner = goals.find((g) => g.goal_type === 'body_fat' && g.status === 'active')
-  const goalRows: { valueText: string; label: string; subText: string | null }[] = []
+  // v19: ฟีดแบ็ก "เพิ่ม Progress เล็กๆ ใต้เป้าหมาย — เส้นบางๆ 2-3px ผู้ใช้จะเห็นทันทีว่ากำลังเข้าใกล้เป้าหมาย
+  // แทนที่จะต้องคำนวณเองจากตัวเลข" — ใช้ goalProgressPct() ที่มีอยู่แล้ว (การ์ด "เป้าหมายของคุณ" ด้านล่างใช้
+  // ตัวเดียวกันอยู่แล้ว ไม่ได้คำนวณซ้ำแบบใหม่) ไม่ต้องเพิ่ม field/ที่มาข้อมูลใหม่
+  const goalRows: { valueText: string; label: string; subText: string | null; progressPct: number | null }[] = []
   if (weightGoal?.target_value != null) {
     goalRows.push({
       valueText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`,
@@ -1022,6 +1025,7 @@ export default function HealthPage() {
         latest?.weight_kg != null
           ? `เหลือ ${Math.abs(toDisplay(latest.weight_kg) - toDisplay(weightGoal.target_value)).toFixed(1)} ${unit}`
           : null,
+      progressPct: goalProgressPct(weightGoal),
     })
   }
   if (bodyFatGoalForBanner?.target_value != null) {
@@ -1035,6 +1039,7 @@ export default function HealthPage() {
           : bodyFatDiff > 0
             ? `ลดอีก ${bodyFatDiff.toFixed(1)}%`
             : `เพิ่มอีก ${Math.abs(bodyFatDiff).toFixed(1)}%`,
+      progressPct: goalProgressPct(bodyFatGoalForBanner),
     })
   }
 
@@ -1184,6 +1189,10 @@ export default function HealthPage() {
               tier={2}
               forceZonePill
             />
+            {/* ฟีดแบ็ก "จัด Priority การ์ด: ⭐ Weight/Body Fat/Muscle Mass, ◉ BMI/Fat Mass/Skeletal Muscle/
+                Visceral Fat, ○ Body Water/Protein/Bone Mass/Body Age/BMR (ข้อมูลประกอบ)" — เดิม Body Water
+                อยู่ tier 2 (◉ สำคัญรอง) ย้ายไป tier 3 (○ ข้อมูลประกอบ) ตามลำดับใหม่ ตัวอื่นใน tier 2/3 ตรงกับ
+                ที่ขอไว้แล้วจากรอบก่อนๆ ไม่ต้องแก้ */}
             <IconStatCard
               label="น้ำในร่างกาย"
               subLabel="BODY WATER"
@@ -1201,7 +1210,7 @@ export default function HealthPage() {
                   : null
               }
               zoneScheme="higherOk"
-              tier={2}
+              tier={3}
               forceZonePill
             />
             <IconStatCard
@@ -2214,7 +2223,7 @@ function OverviewHealthScoreHeader({
   // ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — 65.0 kg / เป้าหมาย · เหลือ 1.3 kg แทนแค่ 65.0 kg เฉยๆ...
   // แสดง 2 เป้าหมาย (น้ำหนัก + Body Fat) พร้อมกัน ไม่ใช่แค่ตัวเดียว" — คำนวณ array ที่จุดเรียกใช้แล้ว (มี
   // weightGoal/bodyFatGoal/latest ครบอยู่แล้วตรงนั้น) แต่ละแถวคือเป้าหมายหนึ่งตัว (น้ำหนักมาก่อนถ้ามีทั้งคู่)
-  goalRows: { valueText: string; label: string; subText: string | null }[]
+  goalRows: { valueText: string; label: string; subText: string | null; progressPct: number | null }[]
   // ฟีดแบ็ก "ล่าสุด อยากได้วันที่ + เวลา" — แยกสองบรรทัด (วันที่เด่นกว่า, เวลาจางกว่า) แทน updatedLabel เดิม
   // ที่มีแค่วันที่บรรทัดเดียว
   updatedDateLabel: string | null
@@ -2283,6 +2292,12 @@ function OverviewHealthScoreHeader({
         {/* ฟีดแบ็ก "ขยับกลุ่ม Health Score เข้าหาวงอีกนิด — ตอนนี้วง -> ช่องว่างเยอะ -> HEALTH SCORE ทำให้
             90% กับดีมาก ดูแยกกัน อยากให้วงกับข้อความรู้สึกเป็นโมดูลเดียวกัน" — ลด gap จาก gap-4 (16px) เหลือ
             gap-2 (8px) แค่ระยะห่างเท่านั้น ไม่แตะขนาด/สีอะไรอื่น */}
+        {/* ฟีดแบ็ก "แก้เรื่องตัวหนังสือโดยใช้ Hierarchy ไม่ใช่เพิ่มทุกอย่างให้ใหญ่ — Level 2 (HEALTH SCORE/
+            ล่าสุด/การเปลี่ยนแปลง/เป้าหมายร่างกาย) ควรเป็นเทาอ่อน, Level 3 (09:20 น./น้ำหนักเป้าหมาย/Body Fat
+            เป้าหมาย) เป็นเทากลาง — ตอนนี้บางส่วน Level 3-4 จางเกินไป" — เดิมทั้ง header คอลัมน์และ detail
+            text ใช้ text-muted (#9498A0) เหมือนกันหมด ไม่มีการแยกระดับ — กำหนด 2 โทนใหม่เฉพาะใน panel นี้:
+            LEVEL2_COLOR (#B8BBC2, header คอลัมน์) สว่างกว่า LEVEL3_COLOR (#9DA0A8, รายละเอียดย่อย) ซึ่งเองก็
+            สว่างกว่า text-muted เดิมเล็กน้อยตามที่ขอ */}
         <div className="flex items-center gap-2 shrink-0">
           <div style={{ filter: 'drop-shadow(0 0 12px rgba(232,163,61,.35))' }}>
             <GoalRing pct={pct} size={130} strokeWidth={11} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
@@ -2291,7 +2306,8 @@ function OverviewHealthScoreHeader({
             <button
               type="button"
               onClick={() => setShowBreakdown((v) => !v)}
-              className="flex items-center gap-1 text-[10px] tracked uppercase text-muted transition hover:text-ink"
+              className="flex items-center gap-1 text-[10px] tracked uppercase transition hover:text-ink"
+              style={{ color: '#B8BBC2' }}
             >
               Health Score
               <InfoIcon />
@@ -2304,22 +2320,24 @@ function OverviewHealthScoreHeader({
 
         {updatedDateLabel && (
           <div className="shrink-0 border-l border-line/40 pl-5">
-            <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
+            <p className="text-[10px] tracked uppercase" style={{ color: '#B8BBC2' }}>ล่าสุด</p>
             <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
-            {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
+            {updatedTimeLabel && (
+              <p className="text-[10px]" style={{ color: '#9DA0A8' }}>{updatedTimeLabel}</p>
+            )}
           </div>
         )}
 
         {signals.length > 0 && (
           <div className="shrink-0 border-l border-line/40 pl-5">
-            <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
+            <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>การเปลี่ยนแปลง</p>
             <div className="flex flex-col gap-0.5">
               {signals.map((s) => (
                 <p key={s.label} className="whitespace-nowrap">
                   <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
                     {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
                   </span>{' '}
-                  <span className="text-[11px] text-muted">{s.label}</span>
+                  <span className="text-[11px]" style={{ color: '#9DA0A8' }}>{s.label}</span>
                 </p>
               ))}
             </div>
@@ -2336,22 +2354,31 @@ function OverviewHealthScoreHeader({
             แทน" — บรรทัดรอง label · subText ยาวขึ้นกว่าเดิมตามธรรมชาติ ทำให้บล็อกกว้างขึ้นเองโดยไม่ต้องเติม
             ข้อมูลใหม่ */}
         <div className="shrink-0 border-l border-line/40 pl-5">
-          <p className="text-[10px] tracked uppercase text-muted mb-1">เป้าหมายร่างกาย</p>
+          <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>เป้าหมายร่างกาย</p>
           {goalRows.length > 0 ? (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               {goalRows.map((g) => (
                 <div key={g.label}>
                   <p className="font-mono font-semibold text-sm text-ink leading-none">{g.valueText}</p>
-                  <p className="text-[11px] text-muted whitespace-nowrap">
+                  <p className="text-[11px] whitespace-nowrap mt-0.5" style={{ color: '#9DA0A8' }}>
                     {g.label}
                     {g.subText ? ` · ${g.subText}` : ''}
                   </p>
+                  {/* ฟีดแบ็ก "เพิ่ม Progress เล็กๆ ใต้เป้าหมาย — เส้นบางๆ 2-3px ผู้ใช้จะเห็นทันทีว่ากำลังเข้าใกล้
+                      เป้าหมาย แทนที่จะต้องคำนวณเองจากตัวเลข ไม่ต้องทำใหญ่" — ใช้ progressPct ที่คำนวณมาจาก
+                      goalProgressPct() แล้ว (จุดเรียกใช้ด้านบน) สีทอง/อำพันตามความหมายสี "Orange/Gold =
+                      Goal/Achievement" ที่ขอไว้ */}
+                  {g.progressPct !== null && (
+                    <div className="h-[3px] w-24 rounded-full bg-white/10 overflow-hidden mt-1">
+                      <div className="h-full rounded-full bg-amber" style={{ width: `${g.progressPct}%` }} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
             <>
-              <p className="font-mono text-sm text-muted">ยังไม่ได้ตั้ง</p>
+              <p className="font-mono text-sm" style={{ color: '#9DA0A8' }}>ยังไม่ได้ตั้ง</p>
               <a href="/calendar" className="text-[11px] text-amber transition hover:text-ink">
                 + ตั้งเป้าหมาย
               </a>
