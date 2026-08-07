@@ -25,7 +25,6 @@ import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, t
 import PremiumCard from '@/components/ui/PremiumCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
 import Sparkline from '@/components/dashboard/Sparkline'
-import { periodLabelOf } from '@/lib/bodyMetricsSummary'
 
 function todayStr() {
   const d = new Date()
@@ -37,6 +36,21 @@ function todayStr() {
 function shortLabel(iso: string) {
   const d = new Date(iso + 'T00:00:00')
   return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+}
+
+// ฟีดแบ็ก "↑ 0.9 kg / จาก 3 สัปดาห์ก่อน / น้ำหนักเพิ่ม... — สามบรรทัดเยอะไปนิด อยากได้ ↑ 0.9 kg · 3 สัปดาห์
+// รวมบรรทัดเดียว" — รูปแบบสั้นกว่า periodLabelOf (lib/bodyMetricsSummary — คืนวลีเต็ม "จาก X ก่อน" ไว้ใช้
+// เป็นประโยคเดี่ยว) ตัดคำ "จาก"/"ก่อน"/"ที่แล้ว" ออก เหลือแค่ระยะเวลาล้วนๆ สำหรับต่อท้ายเดลต้าด้วย "·"
+function compactPeriodLabel(latest: BodyMetric | null, previous: BodyMetric | null): string | null {
+  if (!latest || !previous) return null
+  const days = Math.round((new Date(latest.measured_at).getTime() - new Date(previous.measured_at).getTime()) / 86400000)
+  if (days <= 0) return null
+  if (days === 1) return 'เมื่อวาน'
+  if (days <= 6) return `${days} วัน`
+  if (days <= 13) return '1 สัปดาห์'
+  if (days <= 24) return `${Math.round(days / 7)} สัปดาห์`
+  if (days <= 45) return '1 เดือน'
+  return `${Math.round(days / 30)} เดือน`
 }
 
 // ปัดเป็นหน่วยหยาบพอ (นาที/ชม./วัน) ไม่ต้อง re-render ทุกวินาที — รูปแบบเดียวกับ relativeUpdatedLabel ใน
@@ -919,10 +933,12 @@ export default function HealthPage() {
           : 'ลองติดตามใกล้ชิดขึ้น'
 
   // ฟีดแบ็ก "Weight Card ยังมีพื้นที่ว่างอยู่ ถ้าข้อมูลในช่วง 30 วันมีไม่พอวาดกราฟ (< 2 จุด) การ์ดจะโล่งอีก
-  // ทั้งที่มีข้อมูลเก่ากว่านั้นให้เทียบได้" — periodLabelOf ใช้ "เอนทรีก่อนหน้าล่าสุดไม่ว่าจะห่างกี่วัน" (ไม่ผูก
-  // กรอบ 30 วัน) จึงให้ผลลัพธ์ที่มีความหมายแม้ผู้ใช้ log ไม่ถี่ — ใช้เติมบรรทัด "จาก X ก่อน" ใต้เดลต้าเสมอ
-  // (เหมือน BodyMetricsRow บน Dashboard) ไม่ว่ากราฟจะมีข้อมูลพอวาดหรือไม่ก็ตาม
-  const weightPeriodCaption = periodLabelOf(latest, metrics[1] ?? null)
+  // ทั้งที่มีข้อมูลเก่ากว่านั้นให้เทียบได้" — compactPeriodLabel ใช้ "เอนทรีก่อนหน้าล่าสุดไม่ว่าจะห่างกี่วัน"
+  // (ไม่ผูกกรอบ 30 วัน) จึงให้ผลลัพธ์ที่มีความหมายแม้ผู้ใช้ log ไม่ถี่ — ต่อท้ายเดลต้าด้วย "·" บรรทัดเดียวกัน
+  // v8: ฟีดแบ็ก "↑ 0.9 kg / จาก 3 สัปดาห์ก่อน คนละบรรทัดเยอะไป อยากได้ ↑ 0.9 kg · 3 สัปดาห์ รวมบรรทัดเดียว"
+  // — เปลี่ยนจาก periodLabelOf (คืนประโยคเต็ม "จาก X ก่อน" ไว้ใช้เดี่ยวๆ) เป็น compactPeriodLabel (คืนแค่
+  // ระยะเวลาล้วนๆ ไว้ต่อท้ายเดลต้าด้วย "·")
+  const weightPeriodCaption = compactPeriodLabel(latest, metrics[1] ?? null)
 
   // ฟีดแบ็ก "Body Fat Card ยังไม่บอกว่าดีหรือยัง อยากเห็น Badge (Good/Normal)" — ใช้เกณฑ์ % ไขมันตามเพศ
   // เดียวกับที่คะแนนสุขภาพรวมใช้อยู่แล้ว (bodyFatPctRange) ไม่ได้คิดเกณฑ์ใหม่แยกต่างหาก
@@ -960,6 +976,21 @@ export default function HealthPage() {
     trackedTrends.length === 0
       ? null
       : Math.round((trackedTrends.filter((d) => (d.direction === 'higherBetter' ? d.delta > 0 : d.delta < 0)).length / trackedTrends.length) * 100)
+
+  // ฟีดแบ็ก "พื้นที่ด้านขวาของ Health Score ยังว่างค่อนข้างเยอะ — อยากได้สรุปประโยคเดียวแทนที่จะเพิ่ม metric
+  // อีกตัว จะทำให้ Health Score กลายเป็น Insight ไม่ใช่แค่คะแนน" — ใช้ delta ไขมัน/กล้ามเนื้อที่มีอยู่แล้ว
+  // (เดียวกับที่การ์ดน้ำหนักใช้เช็ค "น้ำหนักเพิ่มจากกล้ามเนื้อ") ไม่ได้คำนวณอะไรใหม่ — ถ้าเป้าหมายเป็นลดน้ำหนัก/
+  // ไขมันด้วย ให้ประโยคพูดถึงเป้าหมายตรงๆ (เหมือนตัวอย่างที่ขอ "กำลังลดไขมัน พร้อมรักษามวลกล้ามเนื้อ")
+  const bodyCompositionSummary: string | null =
+    bodyFatDeltaForCard !== null && bodyFatDeltaForCard < 0 && muscleDeltaForWeightCheck !== null && muscleDeltaForWeightCheck > 0
+      ? weightDirection === 'lowerBetter'
+        ? 'กำลังลดไขมัน พร้อมรักษามวลกล้ามเนื้อ'
+        : 'องค์ประกอบร่างกายดีขึ้นอย่างต่อเนื่อง'
+      : bodyFatDeltaForCard !== null && bodyFatDeltaForCard < 0
+        ? 'ไขมันในร่างกายลดลงต่อเนื่อง'
+        : muscleDeltaForWeightCheck !== null && muscleDeltaForWeightCheck > 0
+          ? 'มวลกล้ามเนื้อเพิ่มขึ้นต่อเนื่อง'
+          : null
 
   return (
     <div className="space-y-6">
@@ -1025,6 +1056,7 @@ export default function HealthPage() {
             updatedLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
             trendScorePct={trendScorePct}
             unit={unit}
+            summary={bodyCompositionSummary}
           />
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
@@ -1098,6 +1130,7 @@ export default function HealthPage() {
               zone={bmi !== null ? zoneOf(bmi, 18.5, 25) : null}
               zoneScheme="symmetric"
               tier={2}
+              forceZonePill
             />
             <IconStatCard
               label="น้ำในร่างกาย"
@@ -1117,6 +1150,7 @@ export default function HealthPage() {
               }
               zoneScheme="higherOk"
               tier={2}
+              forceZonePill
             />
             <IconStatCard
               // ฟีดแบ็ก "Protein 10.3 kg อาจทำให้เข้าใจผิดว่าเป็นปริมาณโปรตีนที่กินวันนี้ — ควรระบุให้ชัดว่า
@@ -2117,6 +2151,7 @@ function OverviewHealthScoreHeader({
   updatedLabel,
   trendScorePct,
   unit,
+  summary,
 }: {
   score: { good: number; standard: number; needsWork: number; total: number; score: number }
   items: { label: string; status: 'good' | 'standard' | 'needsWork' }[]
@@ -2127,6 +2162,10 @@ function OverviewHealthScoreHeader({
   updatedLabel: string | null
   trendScorePct: number | null
   unit: string
+  // v8: ฟีดแบ็ก "พื้นที่ด้านขวาของ Health Score ยังว่างค่อนข้างเยอะ — อยากได้สรุปประโยคเดียวแทน metric อีกตัว
+  // จะทำให้ Health Score กลายเป็น Insight ไม่ใช่แค่คะแนน" — คำนวณที่จุดเรียกใช้ (มีข้อมูล delta/เป้าหมาย
+  // ครบอยู่แล้ว) ส่งมาเป็นประโยคสำเร็จรูป ไม่ต้องคำนวณซ้ำในนี้
+  summary: string | null
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false)
   if (score.total === 0) return null
@@ -2220,6 +2259,8 @@ function OverviewHealthScoreHeader({
           <p className="font-mono text-sm text-ink">{updatedLabel ?? '—'}</p>
         </div>
       </div>
+
+      {summary && <p className="text-[11px] text-muted mt-2">{summary}</p>}
 
       {showBreakdown && categoryRows.length > 0 && (
         <div className="mt-3 pt-3 border-t border-line space-y-1.5">
@@ -2698,6 +2739,7 @@ function IconStatCard({
   trendColor,
   trendEndpointColor,
   infoText,
+  forceZonePill = false,
 }: {
   label: string
   subLabel: string
@@ -2751,6 +2793,10 @@ function IconStatCard({
   // label กดแล้ว toggle ข้อความอธิบายสั้นๆ ใต้การ์ด (state ในตัวการ์ดเอง ไม่ต้องยกไปไว้ที่ parent) ไม่ระบุ =
   // ไม่มีปุ่ม ⓘ เลย (พฤติกรรมเดิมของการ์ดอื่นทั้งหมด)
   infoText?: string
+  // v8: ฟีดแบ็ก "BMI/Body Water ธรรมดาไปนิด ไม่มี insight เหมือน Body Fat/Muscle — เพิ่ม status กลับมาให้"
+  // — ข้ามกฎ "ซ่อนป้าย ปกติ ตอนมีเดลต้า" (ดู showZonePill ด้านล่าง) เฉพาะการ์ดที่ระบุ prop นี้ ดีฟอลต์ false
+  // = พฤติกรรมเดิมทุกการ์ดอื่น
+  forceZonePill?: boolean
 }) {
   const [showInfo, setShowInfo] = useState(false)
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
@@ -2762,10 +2808,15 @@ function IconStatCard({
   // จะเป็นเรื่องดีหรือไม่ดีก็ตาม ทำให้ป้ายสีเขียว+ข้อความ "สูงกว่าเกณฑ์" (ฟังดูเหมือนเตือน) ขัดกันเอง —
   // ใช้ zoneScheme (ซึ่งรู้อยู่แล้วว่าด้านไหนของการ์ดนี้คือ "ดี") เลือกคำที่สื่อความหมายตรงกับสีจริง
   const zoneIsFavorable = zone === 'High' ? zoneScheme === 'higherOk' : zone === 'Low' ? zoneScheme === 'lowerOk' : false
+  // ฟีดแบ็ก "↑ เพียงพอ — ลูกศรตรงนี้ไม่ได้บอกว่าดีขึ้นหรือแย่ลง แต่บอกตำแหน่งเทียบเกณฑ์ ซึ่งอาจสับสนกับลูกศร
+  // เดลต้าที่มีอยู่แล้วในบรรทัดแยก" — โซนที่ "ดี" (favorable) ใช้เครื่องหมาย ✓ ต่อท้ายแทนลูกศรนำหน้า (เพียงพอ ✓)
+  // ส่วนโซนที่ยังเป็นคำเตือนจริงๆ (ไม่ favorable) ยังคงลูกศรนำหน้าไว้เหมือนเดิม เพราะช่วยบอกทิศทางที่หลุดเกณฑ์จริง
   const zoneLabel = zone
     ? zone === 'Standard'
       ? ZONE_LABEL_TH.Standard
-      : `${ZONE_ARROW[zone]} ${zoneIsFavorable ? (zone === 'High' ? 'เพียงพอ' : 'อยู่ในเกณฑ์ดี') : ZONE_LABEL_TH[zone]}`
+      : zoneIsFavorable
+        ? `${zone === 'High' ? 'เพียงพอ' : 'อยู่ในเกณฑ์ดี'} ✓`
+        : `${ZONE_ARROW[zone]} ${ZONE_LABEL_TH[zone]}`
     : null
   const zonePillClass =
     zone === 'Standard'
@@ -2795,7 +2846,10 @@ function IconStatCard({
   // นัยอะไรเป็นพิเศษ (แค่ "อยู่ในช่วงคาดหวัง") ถ้าการ์ดมีเดลต้าที่บอกการเปลี่ยนแปลงจริงอยู่แล้ว เดลต้านั้น
   // ให้ข้อมูลมากกว่าป้าย "ปกติ" ซ้ำๆ กันหลายใบ — ซ่อนป้ายเฉพาะกรณีนี้ ส่วนโซน Low/High (ค่าที่หลุดช่วง จริงๆ
   // เป็นสัญญาณที่มีความหมาย ไม่ว่าจะดีหรือไม่ดี) ยังโชว์เสมอเหมือนเดิม
-  const showZonePill = zone !== null && !(zone === 'Standard' && secondary !== null)
+  // v8: ฟีดแบ็ก "BMI กับ Body Water ยังธรรมดาไปนิด ไม่มี insight/graph เหมือน Body Fat/Muscle — เพิ่ม status
+  // เล็กๆ กลับมาช่วยให้รู้ทันทีว่าตัวเลขนี้ดีหรือไม่ดี" — forceZonePill ให้จุดเรียกใช้เฉพาะ 2 การ์ดนี้ข้าม
+  // กฎซ่อน "ปกติ" ข้างบนได้ (การ์ดอื่นที่ไม่ส่ง prop นี้มายังทำงานเหมือนเดิมทุกประการ)
+  const showZonePill = zone !== null && (forceZonePill || !(zone === 'Standard' && secondary !== null))
 
   return (
     <PremiumCard
@@ -2850,8 +2904,15 @@ function IconStatCard({
             {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
             {unit && <span className="text-muted ml-1 text-sm">{unit}</span>}
           </p>
-          {secondary && <p className={`font-mono whitespace-nowrap text-sm ${secondary.color}`}>{secondary.text}</p>}
-          {periodCaption && <p className="text-muted text-xs -mt-0.5">{periodCaption}</p>}
+          {/* ฟีดแบ็ก "↑ 0.9 kg / จาก 3 สัปดาห์ก่อน / น้ำหนักเพิ่ม... สามบรรทัดเยอะไป อยากได้ ↑ 0.9 kg ·
+              3 สัปดาห์ รวมบรรทัดเดียว แล้ว insight ค่อยอยู่บรรทัดถัดไป" — periodCaption (compact, ไม่มี
+              "จาก...ก่อน" ห่อ) ต่อท้าย secondary ด้วย "·" แทนที่จะแยกบรรทัด */}
+          {secondary && (
+            <p className={`font-mono whitespace-nowrap text-sm ${secondary.color}`}>
+              {secondary.text}
+              {periodCaption && <span className="text-muted"> · {periodCaption}</span>}
+            </p>
+          )}
           {insight && <p className="text-muted truncate text-xs mt-0.5">{insight}</p>}
           {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันเนื้อหาลงไปกิน
               พื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ justify-between เดิมพอแล้ว
