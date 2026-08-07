@@ -2221,6 +2221,10 @@ function OverviewHealthScoreHeader({
   if (score.total === 0) return null
   const pct = (score.score / score.total) * 100
   const { label, color: ringColor } = healthScoreTier(pct)
+  // ฟีดแบ็ก "ยังไม่เหมือนรูป — ขาดแถวดาว (Excellent ★★★★★) ใต้ระดับคะแนน" — แปลงเปอร์เซ็นต์เป็นดาว 1-5 ดวง
+  // (100% หาร 5 = ดวงละ 20 แต้ม) ใช้สีทองเป็นจุดไฮไลต์เดียวในการ์ดนี้ (ตามที่ขอ "ไฮไลต์ทองอ่อนเล็กน้อย" —
+  // ส่วนที่เหลือของการ์ดเป็นไทเทเนียม/เขียวล้วนแล้ว ดาวจึงเป็นจุดทองจุดเดียวที่เจตนา)
+  const starCount = Math.max(1, Math.min(5, Math.round(pct / 20)))
 
   // ป้าย signal ต่อการ์ด — v3: ฟีดแบ็ก "อยากได้ Chip แบบ Apple (✔ Fat ↓)" เปลี่ยนจากวลีสำเร็จรูปที่ผูก
   // ทิศทางไว้ในข้อความ (เช่น "ไขมันลด") มาเป็น label สั้น + ลูกศรทิศทางแยกท้ายสุด ให้สแกนอ่านเร็วขึ้น
@@ -2280,6 +2284,13 @@ function OverviewHealthScoreHeader({
             <span className="font-display text-sm tracked uppercase" style={{ color: ringColor }}>
               {label}
             </span>
+            <p className="leading-none mt-0.5" style={{ letterSpacing: 1 }} aria-hidden="true">
+              {Array.from({ length: 5 }, (_, i) => (
+                <span key={i} className="text-xs" style={{ color: i < starCount ? '#E8A33D' : 'rgba(255,255,255,.15)' }}>
+                  ★
+                </span>
+              ))}
+            </p>
           </div>
         </div>
 
@@ -2320,17 +2331,24 @@ function OverviewHealthScoreHeader({
             Body Fat ถ้าไม่มีเป้าหมายน้ำหนัก) — เดิมบล็อกนี้ชื่อ "Target" แสดงแค่ % Body Fat แทนเป้าหมายที่คู่
             กับ Weight Card ซึ่งเป็น primary metric ของหน้านี้
             ฟีดแบ็ก "Top X% ไม่ค่อยมี value เทียบกับใครไม่ชัด — ชอบใช้ข้อมูลของผู้ใช้เองมากกว่า" — ตัดบล็อก
-            Rank/percentile ออกไปแล้วตั้งแต่รอบก่อน ไม่ต้องเพิ่มกลับมา */}
-        {goalValueText && (
-          <>
-            <div className="w-px self-stretch bg-line hidden sm:block" />
-            <div className="shrink-0">
-              <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
+            Rank/percentile ออกไปแล้วตั้งแต่รอบก่อน ไม่ต้องเพิ่มกลับมา
+            v11: ฟีดแบ็ก "ยังไม่เหมือนรูป" — เดิมทั้งบล็อกนี้หายไปเงียบๆ เมื่อไม่มีเป้าหมายที่ตั้งไว้เลย (ทั้ง
+            น้ำหนักและ Body Fat) ทำให้ banner เหลือ 3 คอลัมน์ ไม่ตรงกับ layout 4 คอลัมน์ที่ล็อกไว้ — ใส่
+            placeholder ชวนตั้งเป้าหมายแทน ให้คอลัมน์นี้อยู่เสมอ */}
+        <div className="w-px self-stretch bg-line hidden sm:block" />
+        <div className="shrink-0">
+          <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
+          {goalValueText ? (
+            <>
               <p className="font-mono text-sm text-ink">{goalValueText}</p>
               {goalSubText && <p className="text-[10px] text-muted">{goalSubText}</p>}
-            </div>
-          </>
-        )}
+            </>
+          ) : (
+            <a href="/calendar" className="text-[11px] text-amber underline">
+              ตั้งเป้าหมาย
+            </a>
+          )}
+        </div>
       </div>
 
       {summary && <p className="text-[11px] text-muted mt-2">{summary}</p>}
