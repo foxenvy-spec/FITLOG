@@ -907,8 +907,9 @@ export default function HealthPage() {
   // ไม่ต้องคำนวณแยก
   const bmiCardDirection: Direction = weightGainLooksLikeMuscle ? 'neutral' : weightDirection
 
+  // ฟีดแบ็ก "ข้อความอธิบายดีมากแล้ว แต่ปรับให้ Premium ขึ้นอีกนิด" — เปลี่ยนจากวลีสั้นห้วนๆ เป็นประโยคสมบูรณ์
   const weightInsight = weightGainLooksLikeMuscle
-    ? 'ส่วนใหญ่จากมวลกล้ามเนื้อ'
+    ? 'น้ำหนักเพิ่มจากมวลกล้ามเนื้อเป็นหลัก'
     : weightDeltaForCard === null
       ? null
       : Math.abs(weightDeltaForCard) < 0.5
@@ -1118,8 +1119,11 @@ export default function HealthPage() {
               tier={2}
             />
             <IconStatCard
-              label="โปรตีน"
-              subLabel="PROTEIN"
+              // ฟีดแบ็ก "Protein 10.3 kg อาจทำให้เข้าใจผิดว่าเป็นปริมาณโปรตีนที่กินวันนี้ — ควรระบุให้ชัดว่า
+              // เป็นมวลโปรตีนในร่างกาย" — เปลี่ยนทั้ง label ไทย/subLabel อังกฤษให้ชัดเจนขึ้น ไม่กระทบ field
+              // ข้อมูลเดิม (protein_kg) หรือ logic การคำนวณ zone ใดๆ
+              label="โปรตีนในร่างกาย"
+              subLabel="BODY PROTEIN"
               icon="protein"
               imageKey="protein"
               color="#5FA8A0"
@@ -1150,7 +1154,7 @@ export default function HealthPage() {
               direction="lowerBetter"
               zone={latest?.visceral_fat_grade != null ? (latest.visceral_fat_grade <= 9 ? 'Standard' : 'High') : null}
               zoneScheme="symmetric"
-              tier={3}
+              tier={2}
             />
             <IconStatCard
               label="มวลไขมัน"
@@ -1205,6 +1209,7 @@ export default function HealthPage() {
               deltaUnit="ปี"
               direction="lowerBetter"
               tier={3}
+              infoText="ค่าเปรียบเทียบองค์ประกอบร่างกายกับค่าเฉลี่ยตามอายุ ไม่ใช่อายุจริงของร่างกาย"
             />
             <IconStatCard
               label="อัตราการเผาผลาญ"
@@ -2218,6 +2223,9 @@ function OverviewHealthScoreHeader({
 
       {showBreakdown && categoryRows.length > 0 && (
         <div className="mt-3 pt-3 border-t border-line space-y-1.5">
+          {/* ฟีดแบ็ก "HEALTH SCORE ยังไม่บอกว่า 90% มาจากอะไร — เพิ่ม ⓘ แล้วกดดูรายละเอียดได้ พร้อมคำอธิบาย
+              สั้นๆ ว่าคะแนนประเมินจากอะไรบ้าง" — ใส่ไว้บรรทัดแรกสุดของ breakdown ก่อนแจกแจงเป็นหมวด */}
+          <p className="text-[11px] text-muted">คะแนนนี้ประเมินจากแนวโน้มไขมัน มวลกล้ามเนื้อ BMI และองค์ประกอบร่างกายโดยรวม</p>
           {categoryRows.map((row) => (
             <div key={row.title} className="flex items-center justify-between gap-3 text-[11px]">
               <span className="tracked uppercase text-muted">{row.title}</span>
@@ -2689,6 +2697,7 @@ function IconStatCard({
   periodCaption,
   trendColor,
   trendEndpointColor,
+  infoText,
 }: {
   label: string
   subLabel: string
@@ -2738,7 +2747,12 @@ function IconStatCard({
   // เฉพาะกราฟเทรนด์ของ primary card แยกจาก `color` (ยังใช้กับไอคอน/glow ตามเดิม) ไม่ระบุ = ใช้ `color` เดิม
   trendColor?: string
   trendEndpointColor?: string
+  // v7: ฟีดแบ็ก "Body Age เป็น metric ที่ตีความผิดง่าย ควรมี ⓘ อธิบายว่าไม่ใช่อายุจริง" — ปุ่ม ⓘ เล็กๆ ข้าง
+  // label กดแล้ว toggle ข้อความอธิบายสั้นๆ ใต้การ์ด (state ในตัวการ์ดเอง ไม่ต้องยกไปไว้ที่ parent) ไม่ระบุ =
+  // ไม่มีปุ่ม ⓘ เลย (พฤติกรรมเดิมของการ์ดอื่นทั้งหมด)
+  infoText?: string
 }) {
+  const [showInfo, setShowInfo] = useState(false)
   const deltaGood = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
   const deltaBad = delta !== null && direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
   const deltaColor = deltaGood ? 'text-moss' : deltaBad ? 'text-rusttext' : 'text-muted'
@@ -2804,7 +2818,22 @@ function IconStatCard({
       <div className={`flex items-start gap-2 ${primary ? 'mb-2.5' : 'mb-2'}`}>
         <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : 32} />
         <div className="min-w-0">
-          <p className={`text-ink font-medium leading-snug ${primary ? 'text-sm' : 'text-xs'}`}>{label}</p>
+          <p className={`text-ink font-medium leading-snug flex items-center gap-1 ${primary ? 'text-sm' : 'text-xs'}`}>
+            {label}
+            {infoText && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowInfo((v) => !v)
+                }}
+                className="text-muted shrink-0 transition hover:text-ink"
+                aria-label={`ข้อมูลเพิ่มเติมเกี่ยวกับ ${label}`}
+              >
+                <InfoIcon />
+              </button>
+            )}
+          </p>
           <p className={`tracked uppercase text-muted leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</p>
         </div>
         {showZonePill && zoneLabel && (
@@ -2846,6 +2875,7 @@ function IconStatCard({
               {lastMeasuredLabel && <p className="text-[10px] text-muted mt-2">ล่าสุด {lastMeasuredLabel}</p>}
             </div>
           )}
+          {showInfo && infoText && <p className="text-xs text-muted mt-2 pt-2 border-t border-line">{infoText}</p>}
         </>
       ) : (
         <div>
@@ -2860,6 +2890,7 @@ function IconStatCard({
               <Sparkline series={series} color={color} height={18} width={200} stretch />
             </div>
           )}
+          {showInfo && infoText && <p className="text-[10px] text-muted mt-1.5 pt-1.5 border-t border-line">{infoText}</p>}
         </div>
       )}
     </PremiumCard>
