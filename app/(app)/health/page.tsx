@@ -2221,10 +2221,6 @@ function OverviewHealthScoreHeader({
   if (score.total === 0) return null
   const pct = (score.score / score.total) * 100
   const { label, color: ringColor } = healthScoreTier(pct)
-  // ฟีดแบ็ก "ยังไม่เหมือนรูป — ขาดแถวดาว (Excellent ★★★★★) ใต้ระดับคะแนน" — แปลงเปอร์เซ็นต์เป็นดาว 1-5 ดวง
-  // (100% หาร 5 = ดวงละ 20 แต้ม) ใช้สีทองเป็นจุดไฮไลต์เดียวในการ์ดนี้ (ตามที่ขอ "ไฮไลต์ทองอ่อนเล็กน้อย" —
-  // ส่วนที่เหลือของการ์ดเป็นไทเทเนียม/เขียวล้วนแล้ว ดาวจึงเป็นจุดทองจุดเดียวที่เจตนา)
-  const starCount = Math.max(1, Math.min(5, Math.round(pct / 20)))
 
   // ป้าย signal ต่อการ์ด — v3: ฟีดแบ็ก "อยากได้ Chip แบบ Apple (✔ Fat ↓)" เปลี่ยนจากวลีสำเร็จรูปที่ผูก
   // ทิศทางไว้ในข้อความ (เช่น "ไขมันลด") มาเป็น label สั้น + ลูกศรทิศทางแยกท้ายสุด ให้สแกนอ่านเร็วขึ้น
@@ -2252,26 +2248,29 @@ function OverviewHealthScoreHeader({
   }
 
   return (
-    <PremiumCard
-      className="px-4 py-3"
-      // ฟีดแบ็ก "Glow ควรเป็น Titanium + Green ไม่ใช่ Orange ทั้งหมด — ข้อมูลตอนนี้คือ Progress ที่ดี (ไขมันลด/
-      // กล้ามเพิ่ม) ขอบควรเป็น titanium/silver, ตัว Health Score/Progress เป็นเขียว, ไฮไลต์ทองอ่อนเล็กน้อย
-      // เท่านั้น" — override boxShadow เฉพาะการ์ดนี้ใบเดียว (ไม่แตะ PremiumCard กลาง ซึ่งการ์ดอื่นทั้งแอปยังใช้
-      // ขอบอำพันเดิม) ให้ contact-shadow วงแหวนเป็นสีเขียวมอสจาง (#7A9B57) แทนอำพัน — พื้นผิว titanium เดิม
-      // (CARD_GRADIENT_CSS) ที่ PremiumCard วาดให้อยู่แล้วยังคงเป็นฐาน ไม่ต้องแตะ
+    <div
+      className="relative overflow-hidden rounded-card px-5 py-4"
+      // ฟีดแบ็ก "ไม่ควรเอา Glass Card เดิมมาปรับนิดๆ แต่ควรเปลี่ยนโครงสร้างของ Health Score Card ใหม่ —
+      // พื้นหลังเกือบดำสนิท #080A0C ไม่ใช่เทาแบบ Card ปัจจุบัน...ไม่ควรใส่ลายเส้นเฉียงเยอะใน Health Score
+      // Panel...ให้พื้นหลังเรียบกว่า: ดำ -> ดำอมเทา -> Glow เพราะจะทำให้สายตาไปที่ 90% ทันที" — การ์ดนี้จงใจ
+      // ไม่ใช้ PremiumCard (ซึ่งมีลายไทเทเนียมเฉียง/grain/reflection หลายชั้นเป็นค่าเริ่มต้นเสมอ ปิดผ่าน prop
+      // ไม่ได้) เพราะ Hero Panel นี้ต้องการพื้นเรียบกว่าการ์ดเมตริกทั่วไปด้านล่างโดยตั้งใจ ไม่ใช่การ์ดปกติอีกใบ
+      // — ขอบ: Titanium (เงาดำ) + Warm Gold glow บางๆ (ไม่ใช่เขียวหรืออำพันเข้มแบบรอบก่อน)
       style={{
+        background:
+          'radial-gradient(120% 140% at 6% 30%, rgba(232,163,61,.10), transparent 55%), linear-gradient(180deg, #101214 0%, #0A0B0D 100%)',
         boxShadow:
-          '0 2px 4px rgba(0,0,0,.3), 0 16px 40px -8px rgba(0,0,0,.55), 0 0 0 1px rgba(122,155,87,.22), 0 0 28px rgba(122,155,87,.10), inset 0 1px rgba(255,255,255,.04)',
+          '0 2px 4px rgba(0,0,0,.4), 0 20px 44px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(232,163,61,.20), 0 0 26px rgba(232,163,61,.09), inset 0 1px rgba(255,255,255,.04)',
       }}
     >
-      {/* v3: ฟีดแบ็ก "Banner โล่งเกินไป เหลือพื้นที่ว่าง ~60%" — แบ่งเป็นบล็อกคั่นเส้น แทนวง+ระดับแถวเดียวโดดๆ
-          เดิม ใช้ข้อมูลที่คำนวณอยู่แล้วทั้งหมด
-          v10: ฟีดแบ็ก "อยากได้ลำดับคอลัมน์ ล่าสุด(วันที่+เวลา) -> การเปลี่ยนแปลง -> เป้าหมาย พร้อมหัวข้อกำกับ
-          แต่ละบล็อกชัดเจน (เหมือนภาพอ้างอิงที่ส่งมา) แทนบล็อก Target/Updated เดิมที่ไม่มีหัวข้อ 'การเปลี่ยนแปลง'
-          กำกับไว้เลย" — เรียงใหม่ตามนั้น */}
-      <div className="flex items-center gap-4 flex-wrap">
+      {/* ฟีดแบ็ก "วง 90% เล็กเกินไป — ตัวอย่างวงแหวนคือพระเอกของ Panel, ของคุณเป็นแค่ไอคอนประกอบ ควรใหญ่ขึ้น
+          ~100-110px" — จาก 56px เป็น 96px + สีทอง/อำพันคงที่ (ไม่ผูกกับ tier อีกต่อไป — "Gold/Amber = Health
+          Score Hero" เป็นอัตลักษณ์กลางของวงนี้เสมอ) ส่วนสีของ "ดีมาก/ควรปรับปรุง" (ringColor จาก healthScoreTier)
+          ยังใช้กับตัวหนังสือระดับได้ตามเดิม เพื่อให้ยังสื่อสถานะจริงอยู่ แค่ไม่บังคับกับสีวงอีกต่อไป
+          ฟีดแบ็ก "ลด Divider ลงมาก ใช้พื้นที่ว่างเป็นตัวแบ่งแทน" — ตัดเส้น w-px ทั้งหมดออก เหลือแค่ gap */}
+      <div className="flex items-center gap-6 flex-wrap">
         <div className="flex items-center gap-3 shrink-0">
-          <GoalRing pct={pct} size={56} strokeWidth={6} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
+          <GoalRing pct={pct} size={96} strokeWidth={8} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
           <div className="min-w-0">
             <button
               type="button"
@@ -2281,62 +2280,45 @@ function OverviewHealthScoreHeader({
               Health Score
               <InfoIcon />
             </button>
-            <span className="font-display text-sm tracked uppercase" style={{ color: ringColor }}>
+            <span className="font-display text-base tracked uppercase" style={{ color: ringColor }}>
               {label}
             </span>
-            <p className="leading-none mt-0.5" style={{ letterSpacing: 1 }} aria-hidden="true">
-              {Array.from({ length: 5 }, (_, i) => (
-                <span key={i} className="text-xs" style={{ color: i < starCount ? '#E8A33D' : 'rgba(255,255,255,.15)' }}>
-                  ★
-                </span>
-              ))}
-            </p>
           </div>
         </div>
 
         {updatedDateLabel && (
-          <>
-            <div className="w-px self-stretch bg-line hidden sm:block" />
-            <div className="shrink-0">
-              <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
-              <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
-              {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
-            </div>
-          </>
+          <div className="shrink-0">
+            <p className="text-[10px] tracked uppercase text-muted">ล่าสุด</p>
+            <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
+            {updatedTimeLabel && <p className="text-[10px] text-muted">{updatedTimeLabel}</p>}
+          </div>
         )}
 
+        {/* ฟีดแบ็ก "การเปลี่ยนแปลง ไม่ควรเป็นป้ายเขียว ให้เป็นตัวเลขธรรมดา ↓ 2.3% ไขมัน โดยใช้สีเขียวเฉพาะ
+            ตัวเลข/ลูกศร จะดูแพงขึ้นมาก" — ตัด pill (bg-mossdim/rustdim rounded-full) ออก เหลือแค่ตัวเลข+ลูกศร
+            สีเขียว/แดง ตามด้วย label สีเทาเฉยๆ ไม่มีพื้นหลัง และสลับลำดับเป็นตัวเลขนำหน้า (↓ 2.3% ไขมัน)
+            ตามที่ขอ แทนที่ label นำหน้าแบบเดิม */}
         {signals.length > 0 && (
-          <>
-            <div className="w-px self-stretch bg-line hidden sm:block" />
-            <div className="shrink-0">
-              <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
-              <div className="flex flex-col gap-1">
-                {signals.map((s) => (
-                  <span
-                    key={s.label}
-                    className={`inline-flex items-center gap-1 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${
-                      s.good ? 'bg-mossdim text-moss' : 'bg-rustdim text-rusttext'
-                    }`}
-                  >
-                    {s.dir === 'up' ? '↑' : '↓'} {s.label} {s.valueText}
-                  </span>
-                ))}
-              </div>
+          <div className="shrink-0">
+            <p className="text-[10px] tracked uppercase text-muted mb-1">การเปลี่ยนแปลง</p>
+            <div className="flex flex-col gap-0.5">
+              {signals.map((s) => (
+                <p key={s.label} className="text-xs whitespace-nowrap">
+                  <span className="font-mono font-semibold" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
+                    {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
+                  </span>{' '}
+                  <span className="text-muted">{s.label}</span>
+                </p>
+              ))}
             </div>
-          </>
+          </div>
         )}
 
-        {/* ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — 65.0 kg / เป้าหมาย · เหลือ 1.3 kg แทนแค่ 65.0 kg
-            เฉยๆ" — goalValueText/goalSubText คำนวณที่จุดเรียกใช้แล้ว (เป้าหมายน้ำหนักเป็นหลัก, fallback ไป
-            Body Fat ถ้าไม่มีเป้าหมายน้ำหนัก) — เดิมบล็อกนี้ชื่อ "Target" แสดงแค่ % Body Fat แทนเป้าหมายที่คู่
-            กับ Weight Card ซึ่งเป็น primary metric ของหน้านี้
-            ฟีดแบ็ก "Top X% ไม่ค่อยมี value เทียบกับใครไม่ชัด — ชอบใช้ข้อมูลของผู้ใช้เองมากกว่า" — ตัดบล็อก
-            Rank/percentile ออกไปแล้วตั้งแต่รอบก่อน ไม่ต้องเพิ่มกลับมา
-            v11: ฟีดแบ็ก "ยังไม่เหมือนรูป" — เดิมทั้งบล็อกนี้หายไปเงียบๆ เมื่อไม่มีเป้าหมายที่ตั้งไว้เลย (ทั้ง
-            น้ำหนักและ Body Fat) ทำให้ banner เหลือ 3 คอลัมน์ ไม่ตรงกับ layout 4 คอลัมน์ที่ล็อกไว้ — ใส่
-            placeholder ชวนตั้งเป้าหมายแทน ให้คอลัมน์นี้อยู่เสมอ */}
-        <div className="w-px self-stretch bg-line hidden sm:block" />
-        <div className="shrink-0">
+        {/* ฟีดแบ็ก "เป้าหมาย ยังไม่ได้ตั้ง › (ลูกศรชวนกด แทนลิงก์ขีดเส้นใต้ธรรมดา)...จะทำให้พื้นที่ด้านขวาไม่
+            โล่งเกินไป" — ml-auto ดันไปชิดขวาสุดของแถวเดียวกับวง/ล่าสุด/การเปลี่ยนแปลง (ไม่ใช่แถวแยกด้านล่าง
+            ตามภาพร่าง — เก็บพื้นที่แนวตั้งไว้ ไม่ให้ Panel สูงเกิน 110-130px ตามที่ขอ ในขณะที่ยังได้ตำแหน่ง
+            "ทางขวา" ตามภาพเหมือนกัน) */}
+        <div className="shrink-0 ml-auto text-right">
           <p className="text-[10px] tracked uppercase text-muted">เป้าหมาย</p>
           {goalValueText ? (
             <>
@@ -2344,14 +2326,14 @@ function OverviewHealthScoreHeader({
               {goalSubText && <p className="text-[10px] text-muted">{goalSubText}</p>}
             </>
           ) : (
-            <a href="/calendar" className="text-[11px] text-amber underline">
-              ตั้งเป้าหมาย
+            <a href="/calendar" className="text-[11px] text-muted transition hover:text-ink">
+              ยังไม่ได้ตั้ง ›
             </a>
           )}
         </div>
       </div>
 
-      {summary && <p className="text-[11px] text-muted mt-2">{summary}</p>}
+      {summary && <p className="text-[11px] text-muted mt-2.5">{summary}</p>}
 
       {showBreakdown && categoryRows.length > 0 && (
         <div className="mt-3 pt-3 border-t border-line space-y-1.5">
@@ -2368,7 +2350,7 @@ function OverviewHealthScoreHeader({
           ))}
         </div>
       )}
-    </PremiumCard>
+    </div>
   )
 }
 
