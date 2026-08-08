@@ -130,9 +130,13 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
         >
           {score.tierLabel}
         </p>
+        {/* v9: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ Light Training Recommendation — เพิ่ม
+            contrast ก่อน ไม่ต้องขยายขนาดเยอะ" — บรรทัดคำแนะนำนี้ยังเป็น text-muted (#9498A0) เดิม ไม่เคย
+            ถูกแตะเลยตลอดหลายรอบก่อน (แม้ตัวเลข/tier label ข้างบนถูกปรับไปหลายรอบแล้ว) ขยับเป็น #CFD4DE
+            ตามระดับเดียวกับ caption อื่นที่ปรับไปแล้วในรอบนี้ ไม่แตะขนาด (9px คงเดิม) */}
         <p
-          className="text-muted leading-tight mt-0.5"
-          style={{ fontSize: 9, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          className="leading-tight mt-0.5"
+          style={{ fontSize: 9, color: '#CFD4DE', maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
         >
           {score.recommendation}
         </p>

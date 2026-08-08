@@ -127,15 +127,18 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
               หน้าสุขภาพไปแล้วรอบก่อนๆ — ไม่แตะ text-muted ที่อื่นในแอป (แก้เฉพาะมือถือ/การ์ดที่ระบุ)
               v14: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Hamstring • Glute"
               (ตรงกับ `detail` ด้านล่างพอดี ซึ่งเป็นบรรทัดที่แสดงข้อความในวงเล็บ เช่น "Hamstring • Glute")
-              — #A8ACB4 -> #BCC1CA ทั้งสองจุดในไฟล์นี้ */}
-          <p className="text-[10px] tracked uppercase" style={{ color: '#BCC1CA' }}>Today&apos;s Focus</p>
+              — #A8ACB4 -> #BCC1CA ทั้งสองจุดในไฟล์นี้
+              v16: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ Hamstring • Glute — เพิ่ม contrast
+              ก่อน ไม่ต้องขยายขนาดเยอะ" (ยังไม่พอแม้บวกไปแล้วรอบก่อน) — บวกอีกขั้น #BCC1CA -> #CFD4DE
+              (ไม่แตะขนาด/font-weight ตามที่ขอ) */}
+          <p className="text-[10px] tracked uppercase" style={{ color: '#CFD4DE' }}>Today&apos;s Focus</p>
           {/* v30: ชื่อโปรแกรมวันนี้ — เดิม text-amber (สีส้ม) เปลี่ยนเป็น text-ink (ขาว/ไทเทเนียม) ตามกฎ
               "Orange = Action/Energy เท่านั้น" — ป้ายนี้เป็นแค่ข้อมูล ไม่ใช่ปุ่ม/คำแนะนำ */}
           <p className="font-display tracked uppercase text-ink truncate" style={{ fontSize: 14 }}>
             {main}
           </p>
           {detail && (
-            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#BCC1CA' }}>
+            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#CFD4DE' }}>
               {detail}
             </p>
           )}

@@ -44,9 +44,12 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
             const isToday = tick.iso === today
             return (
               <div key={tick.iso} className="flex flex-col items-center gap-0.5 shrink-0">
+                {/* v1: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ Streak day labels — เพิ่ม
+                    contrast ก่อน" — #6B6B6E เดิมมืดกว่า caption อื่นในแอปมาก (ใกล้เคียง TEXT.caption
+                    ซึ่งตั้งใจให้จางสุดในระบบ) ขยับขึ้นมาระดับเดียวกับ caption ทั่วไปที่ปรับไปแล้วรอบนี้ */}
                 <span
                   className="text-[7px] leading-none tracked uppercase"
-                  style={{ color: isToday ? COLORS.amber : '#6B6B6E' }}
+                  style={{ color: isToday ? COLORS.amber : '#A8ACB4' }}
                   aria-hidden="true"
                 >
                   {WEEKDAY_LABELS[i]}
