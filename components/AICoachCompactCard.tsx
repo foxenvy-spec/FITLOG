@@ -212,8 +212,11 @@ export default function AICoachCompactCard({
           {muscleRecommendation ? (
             <>
               {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium" — text-muted (#9498A0) เดิม จางไป
-                  หน่อยในที่แสงน้อย (ยิม) ขยับเป็น #A8ACB4 (สว่างกว่า ~12%) เฉพาะ caption ในการ์ดนี้ */}
-              <p className="text-[10px] tracked uppercase mt-1" style={{ color: '#A8ACB4' }}>วันนี้เหมาะกับ</p>
+                  หน่อยในที่แสงน้อย (ยิม) ขยับเป็น #A8ACB4 (สว่างกว่า ~12%) เฉพาะ caption ในการ์ดนี้
+                  v14: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Hamstring • Glute/
+                  Lower Body/Recovery" (ตัวอย่างที่ยกมาตรงกับ relatedGroups/Recovery ในการ์ดนี้พอดี) —
+                  #A8ACB4 -> #BCC1CA (สว่างขึ้นอีก ~12%) ไม่ต้องขยายขนาดตามที่ขอ */}
+              <p className="text-[10px] tracked uppercase mt-1" style={{ color: '#BCC1CA' }}>วันนี้เหมาะกับ</p>
               {/* v30: ฟีดแบ็ก "Typography Hierarchy — UPPER BODY ควรเป็น Level 1 (ใหญ่ที่สุด) ในการ์ดนี้"
                   — เดิม 17px เท่าๆ กับหัวข้ออื่นในการ์ด ขยับขึ้นเป็น 21px/font-semibold ให้เป็นจุดที่สายตา
                   ไปก่อนจริงๆ (ยังคงสีอำพันไว้ — นี่คือ "คำแนะนำสำคัญ" ตามกฎ Orange = Action/Energy/
@@ -221,10 +224,10 @@ export default function AICoachCompactCard({
               <p className="font-display font-semibold tracked uppercase text-amber truncate" style={{ fontSize: 21, lineHeight: 1.15 }}>
                 {region}
               </p>
-              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#A8ACB4' }}>{relatedGroups.join(' • ')}</p>
+              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#BCC1CA' }}>{relatedGroups.join(' • ')}</p>
 
               <div className="flex items-center gap-2 mt-1.5">
-                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#A8ACB4' }}>Recovery</p>
+                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#BCC1CA' }}>Recovery</p>
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
                   <AnimatedBarFill pct={muscleRecommendation.pct} color={barColor} />
                 </div>
