@@ -220,7 +220,8 @@ export default function MetricCard({
           // .78 -> .68 (-13%) เฉพาะ compact (มือถือ) เดสก์ท็อปไม่กระทบ — glow มุม (theme.main/second ผ่าน
           // glowAlpha) ไม่แตะตรงนี้ตรงๆ แต่ค่า theme.glow ต่อการ์ดใน BodyMetricsRow.tsx ลดแล้วแยกต่างหาก
           // (glowAlpha คำนวณจากค่านั้น จึงลดตามไปเองโดยไม่ต้องแก้สูตรตรงนี้)
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.105)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.68), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}, 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)` : ''}`,
+          // v50: ฟีดแบ็ก "ลดความเข้มของ Glow นิดหนึ่ง" (รอบถัดมา) — ลดต่ออีกขั้นเบาๆ .105 -> .095, .68 -> .60
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.095)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.60), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}, 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)` : ''}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard)
@@ -444,8 +445,9 @@ export default function MetricCard({
                 <div className="mt-1 w-full">
                   {/* v49: ฟีดแบ็ก "ลดความหนาเส้นกราฟลง 10-15%" (Body Overview การ์ดมือถือโดยเฉพาะ) —
                       2px -> 1.7px (-15%) เฉพาะจุดนี้ (compact/มือถือ) เดสก์ท็อปและหน้าสุขภาพยังใช้ค่า
-                      ดีฟอลต์ 2px เดิมทุกประการ */}
-                  <Sparkline series={series} color={theme.main} height={dashboardSpec.metricCard.sparklineHeight} width={200} stretch strokeWidth={1.7} />
+                      ดีฟอลต์ 2px เดิมทุกประการ
+                      v50: ฟีดแบ็ก "ลดเส้นกราฟนิดหนึ่ง" (รอบถัดมา) — บางลงอีกขั้น 1.7px -> 1.5px */}
+                  <Sparkline series={series} color={theme.main} height={dashboardSpec.metricCard.sparklineHeight} width={200} stretch strokeWidth={1.5} />
                 </div>
               )}
             </>

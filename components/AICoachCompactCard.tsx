@@ -10,7 +10,6 @@ import { parseRangeToNumber, rirToRpe } from '@/lib/importWorkoutExcel'
 import type { WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
 import {
   COLORS,
-  NEUTRAL,
   TEXT,
   withAlpha,
   CARD_GRADIENT_CSS,
@@ -243,21 +242,13 @@ export default function AICoachCompactCard({
         </div>
       </Link>
 
-      {/* v30: ฟีดแบ็ก "Ready/Energy/Sleep ให้เป็น secondary information" — แถวนี้เคยเท่าน้ำหนักกับข้อมูล
-          ด้านบน (region+recovery bar) ตามภาพ — ลด opacity ลงเล็กน้อยทั้งแถว (ไม่ใช่ตัวหนังสือแต่ละจุด)
-          ให้สายตาอ่าน "UPPER BODY" ก่อนแล้วค่อยไล่ลงมาที่แถวนี้ทีหลัง โดยไม่ต้องแตะสี/ขนาดของ StatChip/
-          LockedChip เดิมเลย (ยังอ่านออกชัดเจนที่ opacity 85%)
-          v52: ฟีดแบ็ก "AI Coach + Start Workout ควรเป็นจุดสำคัญที่สุด ส่วนความพร้อม/พลังงาน/การนอนควรลด
-          visual weight" — ลด opacity ต่ออีกขั้น (85% -> 70%) + แนวตั้งของแต่ละ chip แคบลง (padding
-          py-2 -> py-1.5 ใน StatChip/LockedChip) ให้แถวนี้เห็นชัดว่าเป็นข้อมูลรอง ไม่ใช่แข่งกับ region/
-          recovery bar ด้านบน */}
-      {muscleRecommendation && (
-        <div className="grid grid-cols-3 gap-1.5" style={{ opacity: 0.7 }}>
-          <StatChip icon="💪" label="ความพร้อม" value={readinessLabel(muscleRecommendation.pct)} pct={muscleRecommendation.pct} color={barColor} />
-          <LockedChip icon="⚡" label="พลังงาน" />
-          <LockedChip icon="🌙" label="การนอน" />
-        </div>
-      )}
+      {/* v53: ฟีดแบ็ก "ตัดข้อมูลที่ไม่จำเป็นออก เช่น พลังงาน🔒/การนอน🔒 — ถ้ายังไม่เปิดใช้งานจริง ไม่ควร
+          กินพื้นที่มาก ทำให้ AI Coach เตี้ยลง 10-15%" — เดิมที่นี่มี StatChip "ความพร้อม" + LockedChip
+          "พลังงาน"/"การนอน" 3 ช่อง (2 ใน 3 เป็นแค่ไอคอนกุญแจ ไม่มีข้อมูลจริงให้ดู เพราะยังไม่เชื่อมต่อ
+          Health App) — ตัดทั้งแถวออกตามที่ขอ ("ความพร้อม" ยังอ่านได้ครบจาก Recovery bar + %/EXCELLENT
+          ด้านบนอยู่แล้ว ไม่เสียข้อมูลจริง) เหลือแค่ region/recovery/CTA ตามที่ขอให้เป็น "จุดสำคัญที่สุด" —
+          StatChip/LockedChip/readinessLabel (ไทย, ใช้แค่ใน StatChip) ไม่มีจุดเรียกใช้แล้ว ลบทิ้งทั้งหมด
+          (ดูท้ายไฟล์) */}
 
       {errorMessage && <p className="text-[11px] text-rusttext">{errorMessage}</p>}
 
@@ -301,59 +292,10 @@ export default function AICoachCompactCard({
   )
 }
 
-// v49: เดิม hardcode เกณฑ์ของตัวเอง (0-40/41-75/76-100) แยกจาก recoveryStatusColor ผูกกันแค่ด้วย
-// คอมเมนต์ — ดึงจาก recoveryTier() (lib/dashboardStats.ts) ตัวเดียวกับที่คุมสี ให้เกณฑ์ตรงกันจริง
-// ไม่มีทางหลุดซิงค์กันอีก (ดูเหตุผลเต็มที่ recoveryTier)
-function readinessLabel(pct: number): string {
-  return recoveryTier(pct).labelTh
-}
-
-// เวอร์ชันอังกฤษตัวพิมพ์ใหญ่ — ใช้กับบรรทัด Recovery โดยตรง (แยกจาก readinessLabel ภาษาไทยที่ใช้ใน
-// chip "ความพร้อม" อยู่แล้ว) ให้เข้าชุดกับ label ภาษาอังกฤษตัวพิมพ์ใหญ่อื่นในการ์ดนี้ (AI COACH, RECOVERY)
+// เวอร์ชันอังกฤษตัวพิมพ์ใหญ่ — ใช้กับบรรทัด Recovery โดยตรง ให้เข้าชุดกับ label ภาษาอังกฤษตัวพิมพ์ใหญ่
+// อื่นในการ์ดนี้ (AI COACH, RECOVERY)
 function readinessLabelEn(pct: number): string {
   return recoveryTier(pct).labelEn
-}
-
-// chip "ความพร้อม" ต้องเด่นกว่า 2 chip ที่เหลือ — พื้น/ขอบใช้สีของค่าจริง (barColor) แทนสีเทากลางเดิม +
-// เพิ่ม mini bar ใต้ค่า (pct จริงตัวเดียวกับ Recovery bar ด้านบน ไม่ใช่แถบตกแต่งลอยๆ)
-function StatChip({ icon, label, value, pct, color }: { icon: string; label: string; value: string; pct: number; color: string }) {
-  return (
-    <div
-      className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 px-1"
-      style={{ background: withAlpha(color, '14'), border: `1px solid ${withAlpha(color, '40')}` }}
-    >
-      <span className="text-xs" aria-hidden="true">
-        {icon}
-      </span>
-      <span className="text-[7.5px] tracked uppercase text-muted text-center leading-tight">{label}</span>
-      <span className="text-[9.5px] font-display tracked" style={{ color }}>
-        {value}
-      </span>
-      <div className="w-full h-[3px] rounded-full overflow-hidden mt-0.5" style={{ background: 'rgba(255,255,255,.1)' }}>
-        <AnimatedBarFill pct={pct} color={color} />
-      </div>
-    </div>
-  )
-}
-
-// chip "เร็วๆ นี้" — พลังงาน/การนอน ต้องเชื่อมต่อ Health App ก่อนถึงจะมีข้อมูลจริง (เหตุผล
-// เดียวกับ TodayHealthStatsRow) โชว์ไอคอนกุญแจแทนตัวเลข ไม่ใช้ค่า hardcode ที่ไม่มีอะไรรองรับจริง
-function LockedChip({ icon, label }: { icon: string; label: string }) {
-  return (
-    <div
-      className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 px-1"
-      style={{ background: 'rgba(255,255,255,.008)', border: '1px solid rgba(255,255,255,.03)' }}
-    >
-      <span className="text-xs opacity-30" aria-hidden="true">
-        {icon}
-      </span>
-      <span className="text-[7.5px] tracked uppercase text-muted text-center leading-tight opacity-40">{label}</span>
-      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden="true" opacity={0.7}>
-        <rect x="5" y="11" width="14" height="9" rx="2" stroke={NEUTRAL.mutedIcon} strokeWidth="2" />
-        <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke={NEUTRAL.mutedIcon} strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    </div>
-  )
 }
 
 // Avatar วงแหวน — ใช้ภาษา "donut ring" เดียวกับ FitnessRing/GoalRing ที่ใช้ทั่วแอป (ไม่ใช่กรอบสี่เหลี่ยม
