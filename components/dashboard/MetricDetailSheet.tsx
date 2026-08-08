@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import PremiumCard from '@/components/ui/PremiumCard'
 import { COLORS, TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
@@ -11,9 +11,7 @@ interface GoalDetail {
   progressPct: number | null
 }
 
-interface MetricDetailSheetProps {
-  open: boolean
-  onClose: () => void
+export interface MetricDetailCard {
   icon: MetricIconImageKey
   label: string
   valueText: string
@@ -24,25 +22,47 @@ interface MetricDetailSheetProps {
   goal: GoalDetail | null
 }
 
+interface MetricDetailSheetProps {
+  open: boolean
+  onClose: () => void
+  // ข้อมูลการ์ดที่กำลังเปิดอยู่ — null ตอนปิดสนิท (ผู้เรียกส่ง null มาได้ทันทีที่ onClose ทำงาน
+  // เพราะ component นี้จำค่าล่าสุดไว้เองผ่าน displayCard ด้านล่าง ไม่ต้องรอผู้เรียก)
+  card: MetricDetailCard | null
+}
+
 // ฟีดแบ็ก "ไม่ควรเอา Goal Progress bar ไปใส่ทุก Card ตั้งแต่หน้า Dashboard — ให้แสดงใน Metric Detail
 // จะสะอาดกว่า" (Section B ข้อ 6-7) — แผ่น bottom sheet เปิดจากการแตะการ์ด Body Metrics บนมือถือ
 // (BodyMetricsRow.tsx compact เท่านั้น) โชว์ค่า+เดลต้าเหมือนบนการ์ด แล้วเสริม Goal (ถ้ามีเป้าหมาย active
 // อยู่ในตาราง goals — ใช้ข้อมูลชุดเดียวกับที่หน้า /health ใช้อยู่แล้ว ไม่ใช่ schema ใหม่) — ไม่มีเป้าหมาย
 // ก็โชว์ CTA ไปตั้งที่หน้าสุขภาพแทนที่จะซ่อนเงียบๆ
-export default function MetricDetailSheet({
-  open,
-  onClose,
-  icon,
-  label,
-  valueText,
-  deltaText,
-  deltaColor,
-  deltaDir,
-  theme,
-  goal,
-}: MetricDetailSheetProps) {
+//
+// v2: บั๊ก — เดิมผู้เรียก (BodyMetricsRow.tsx) เงื่อนไข `{compact && openCard && <MetricDetailSheet .../>}`
+// unmount component นี้ทันทีที่ปิด (openCard กลายเป็น null พร้อมกับ onClose) ทำให้แผ่นหาย "วับ" เดียว
+// ทั้งที่ตอนเปิดมี slide-up + fade-in animation ชัดเจน — ไม่สมมาตรกัน (เปิดนุ่ม ปิดกระตุก) ขัดกับหลัก
+// "ความนิ่ง/ความประณีต" ที่ผู้ใช้เน้นย้ำทั้งรอบ — เปลี่ยนมาให้ component นี้คุม mount/unmount ของตัวเอง:
+// จำ displayCard ล่าสุดไว้ (เผื่อ card prop กลายเป็น null ระหว่างเล่น exit animation) แล้ว unmount จริง
+// หลังจากเล่น animation ปิดจบ (setTimeout ตรงกับ duration ของ metric-sheet-panel-out ด้านล่าง)
+export default function MetricDetailSheet({ open, onClose, card }: MetricDetailSheetProps) {
+  const [mounted, setMounted] = useState(open)
+  const [displayCard, setDisplayCard] = useState(card)
+
   useEffect(() => {
-    if (!open) return
+    if (open && card) {
+      setDisplayCard(card)
+      setMounted(true)
+      return
+    }
+    if (!open && mounted) {
+      // prefers-reduced-motion: ไม่มี exit animation ให้รอ (ดู @media ด้านล่าง) — unmount ทันทีแทนที่จะ
+      // ค้างจอเปล่าๆ 200ms โดยไม่มีอะไรเกิดขึ้นให้เห็น
+      const reduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const timer = setTimeout(() => setMounted(false), reduceMotion ? 0 : 200)
+      return () => clearTimeout(timer)
+    }
+  }, [open, card, mounted])
+
+  useEffect(() => {
+    if (!mounted) return
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
@@ -52,18 +72,24 @@ export default function MetricDetailSheet({
       document.removeEventListener('keydown', handleKey)
       document.body.style.overflow = ''
     }
-  }, [open, onClose])
+  }, [mounted, onClose])
 
-  if (!open) return null
+  if (!mounted || !displayCard) return null
+  const { icon, label, valueText, deltaText, deltaColor, deltaDir, theme, goal } = displayCard
+  const closing = !open
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center">
-      <div className="metric-sheet-backdrop absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
+      <div
+        className={`metric-sheet-backdrop ${closing ? 'is-closing' : ''} absolute inset-0 bg-black/60`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="metric-sheet-panel relative w-full max-w-md"
+        className={`metric-sheet-panel ${closing ? 'is-closing' : ''} relative w-full max-w-md`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <PremiumCard className="rounded-b-none px-5 pt-4" style={{ clipPath: 'none' }}>
@@ -167,8 +193,14 @@ export default function MetricDetailSheet({
         .metric-sheet-backdrop {
           animation: metric-sheet-backdrop-in 180ms ease forwards;
         }
+        .metric-sheet-backdrop.is-closing {
+          animation: metric-sheet-backdrop-out 200ms ease forwards;
+        }
         .metric-sheet-panel {
           animation: metric-sheet-panel-in 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .metric-sheet-panel.is-closing {
+          animation: metric-sheet-panel-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
         }
         @keyframes metric-sheet-backdrop-in {
           from {
@@ -178,12 +210,28 @@ export default function MetricDetailSheet({
             opacity: 1;
           }
         }
+        @keyframes metric-sheet-backdrop-out {
+          from {
+            opacity: 1;
+          }
+          to {
+            opacity: 0;
+          }
+        }
         @keyframes metric-sheet-panel-in {
           from {
             transform: translateY(100%);
           }
           to {
             transform: translateY(0);
+          }
+        }
+        @keyframes metric-sheet-panel-out {
+          from {
+            transform: translateY(0);
+          }
+          to {
+            transform: translateY(100%);
           }
         }
         @media (prefers-reduced-motion: reduce) {

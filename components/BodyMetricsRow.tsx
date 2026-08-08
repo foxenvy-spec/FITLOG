@@ -295,18 +295,22 @@ export default function BodyMetricsRow({
         })}
       </div>
 
-      {compact && openCard && (
+      {compact && (
         <MetricDetailSheet
-          open
+          open={openCard != null}
           onClose={() => setOpenKey(null)}
-          icon={openCard.icon}
-          label={openCard.label}
-          valueText={openCard.valueText}
-          deltaText={openCard.deltaText}
-          deltaColor={openCard.deltaColor}
-          deltaDir={openCard.deltaDir}
-          theme={METRIC_THEME[openCard.icon]}
-          goal={openCard.goal}
+          card={
+            openCard && {
+              icon: openCard.icon,
+              label: openCard.label,
+              valueText: openCard.valueText,
+              deltaText: openCard.deltaText,
+              deltaColor: openCard.deltaColor,
+              deltaDir: openCard.deltaDir,
+              theme: METRIC_THEME[openCard.icon],
+              goal: openCard.goal,
+            }
+          }
         />
       )}
     </>
