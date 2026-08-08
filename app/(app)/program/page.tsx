@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { ProgramDay, ProgramExercise } from '@/lib/types'
+import type { ProgramDay, ProgramExercise, WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exercises'
@@ -28,6 +28,14 @@ export default function ProgramPage() {
   const [logging, setLogging] = useState(false)
   const [logMessage, setLogMessage] = useState<string | null>(null)
   const [addingExercise, setAddingExercise] = useState(false)
+  // เลือกจากเทมเพลต — โหลดแบบ lazy (แค่ตอนกดเปิด picker ครั้งแรก) กันไม่ต้อง query ตารางเทมเพลตทุกครั้ง
+  // ที่เข้าหน้านี้ทั้งที่ผู้ใช้ส่วนใหญ่อาจไม่ได้ใช้ปุ่มนี้เลย
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false)
+  const [templates, setTemplates] = useState<WorkoutTemplate[] | null>(null)
+  const [templateExercises, setTemplateExercises] = useState<Record<string, WorkoutTemplateExercise[]>>({})
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [templatesError, setTemplatesError] = useState<string | null>(null)
+  const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
@@ -193,7 +201,7 @@ export default function ProgramPage() {
     }
   }
 
-  async function ensureDayExists(dow: number): Promise<ProgramDay | null> {
+  async function ensureDayExists(dow: number, title?: string): Promise<ProgramDay | null> {
     const existing = days.find((d) => d.day_of_week === dow)
     if (existing) return existing
 
@@ -204,7 +212,7 @@ export default function ProgramPage() {
 
     const { data, error: err } = await supabase
       .from('program_days')
-      .upsert({ user_id: user.id, day_of_week: dow, title: `วัน${WEEKDAYS[dow]}` }, { onConflict: 'user_id,day_of_week' })
+      .upsert({ user_id: user.id, day_of_week: dow, title: title || `วัน${WEEKDAYS[dow]}` }, { onConflict: 'user_id,day_of_week' })
       .select('*')
       .single()
 
@@ -215,6 +223,116 @@ export default function ProgramPage() {
 
     setDays((prev) => [...prev, data as ProgramDay].sort((a, b) => a.day_of_week - b.day_of_week))
     return data as ProgramDay
+  }
+
+  // ฟีดแบ็ก "หน้านี้ควรเลือกโปรแกรมจากเทมเพลตมาได้ไหม" — เดิมมีแค่ลิงก์ "📋 เทมเพลต" ที่หัวหน้า (พาไปหน้า
+  // /templates แยกต่างหาก ต้องเข้าไปดูเอง) กับปุ่ม "นำเข้าจาก Excel"/"+ เพิ่มท่าเอง" ใน empty state — เพิ่ม
+  // ทางลัดที่ 3 ให้เลือกเทมเพลตที่มีอยู่แล้วมาใส่ในวันที่กำลังดูได้ทันทีจากหน้านี้เลย ไม่ต้องสลับหน้า
+  async function loadTemplatesIfNeeded() {
+    if (templates !== null) return // โหลดไปแล้วรอบก่อน ใช้ cache ใน state ต่อ
+    setTemplatesLoading(true)
+    setTemplatesError(null)
+
+    const { data: tRows, error: tErr } = await supabase
+      .from('workout_templates')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (tErr) {
+      setTemplatesError(tErr.message)
+      setTemplatesLoading(false)
+      return
+    }
+
+    const typedTemplates = (tRows as WorkoutTemplate[]) ?? []
+
+    if (typedTemplates.length > 0) {
+      const { data: exRows, error: exErr } = await supabase
+        .from('workout_template_exercises')
+        .select('*')
+        .in(
+          'template_id',
+          typedTemplates.map((t) => t.id)
+        )
+        .order('position')
+
+      if (exErr) {
+        setTemplatesError(exErr.message)
+        setTemplatesLoading(false)
+        return
+      }
+
+      const grouped: Record<string, WorkoutTemplateExercise[]> = {}
+      ;(exRows as WorkoutTemplateExercise[]).forEach((ex) => {
+        grouped[ex.template_id] = grouped[ex.template_id] ?? []
+        grouped[ex.template_id].push(ex)
+      })
+      setTemplateExercises(grouped)
+    }
+
+    setTemplates(typedTemplates)
+    setTemplatesLoading(false)
+  }
+
+  function openTemplatePicker() {
+    setShowTemplatePicker(true)
+    loadTemplatesIfNeeded()
+  }
+
+  // ก็อปท่าจาก workout_template_exercises ไปเป็น program_exercises ของวันที่กำลังดูอยู่ — สคีมาสองตาราง
+  // นี้ตรงกันเกือบทุกฟิลด์อยู่แล้ว (ตั้งใจออกแบบให้ตรงกัน ดู lib/types.ts) ต่างแค่ ProgramExercise มี
+  // `rationale` เพิ่มมา (เทมเพลตไม่มีแนวคิดนี้ ปล่อย null) — ตั้งชื่อวันตามชื่อเทมเพลตให้เลย (วันนี้ยังไม่มี
+  // โปรแกรมอยู่แล้ว ปุ่มนี้โชว์เฉพาะตอน empty state จึงไม่มีชื่อเดิมของผู้ใช้ที่จะเขียนทับ)
+  async function handleApplyTemplate(template: WorkoutTemplate) {
+    setApplyingTemplateId(template.id)
+    setError(null)
+
+    const day = await ensureDayExists(selectedDow, template.title)
+    if (!day) {
+      setApplyingTemplateId(null)
+      return
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      setApplyingTemplateId(null)
+      return
+    }
+
+    const sourceExercises = templateExercises[template.id] ?? []
+    const payload = sourceExercises.map((ex) => ({
+      program_day_id: day.id,
+      user_id: user.id,
+      position: ex.position,
+      exercise_name: ex.exercise_name,
+      muscle_group: ex.muscle_group,
+      secondary_muscles: ex.secondary_muscles,
+      exercise_library_id: ex.exercise_library_id,
+      sets: ex.sets,
+      target_reps: ex.target_reps,
+      target_rir: ex.target_rir,
+      rest: ex.rest,
+      default_weight_kg: ex.default_weight_kg,
+      notes: ex.notes,
+    }))
+
+    if (payload.length > 0) {
+      const { data, error: err } = await supabase.from('program_exercises').insert(payload).select('*')
+      if (err) {
+        setError(`นำเข้าจากเทมเพลตไม่สำเร็จ: ${err.message}`)
+        setApplyingTemplateId(null)
+        return
+      }
+      setExercisesByDay((prev) => ({
+        ...prev,
+        [day.id]: [...(prev[day.id] ?? []), ...((data as ProgramExercise[]) ?? [])],
+      }))
+    }
+
+    setApplyingTemplateId(null)
+    setShowTemplatePicker(false)
   }
 
   async function handleAddExercise(fields: {
@@ -409,7 +527,13 @@ export default function ProgramPage() {
           style={{ border: `1px dashed ${CARD_BORDER_CSS}` }}
         >
           <p className="text-sm text-muted">ยังไม่ได้ตั้งค่าโปรแกรมสำหรับวัน{WEEKDAYS[selectedDow]}</p>
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center flex-wrap">
+            <button
+              onClick={openTemplatePicker}
+              className="text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2"
+            >
+              📋 เลือกจากเทมเพลต
+            </button>
             <a
               href="/import"
               className="text-xs font-display tracked uppercase text-bg bg-steel rounded-lg px-4 py-2 inline-block"
@@ -424,6 +548,18 @@ export default function ProgramPage() {
             </button>
           </div>
         </PremiumCard>
+      )}
+
+      {showTemplatePicker && (
+        <TemplatePickerPanel
+          templates={templates}
+          templateExercises={templateExercises}
+          loading={templatesLoading}
+          error={templatesError}
+          applyingTemplateId={applyingTemplateId}
+          onSelect={handleApplyTemplate}
+          onCancel={() => setShowTemplatePicker(false)}
+        />
       )}
 
       {currentDay && (
@@ -668,6 +804,71 @@ function MiniField({ label, value, onBlur }: { label: string; value: string; onB
         className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
       />
     </label>
+  )
+}
+
+function TemplatePickerPanel({
+  templates,
+  templateExercises,
+  loading,
+  error,
+  applyingTemplateId,
+  onSelect,
+  onCancel,
+}: {
+  templates: WorkoutTemplate[] | null
+  templateExercises: Record<string, WorkoutTemplateExercise[]>
+  loading: boolean
+  error: string | null
+  applyingTemplateId: string | null
+  onSelect: (template: WorkoutTemplate) => void
+  onCancel: () => void
+}) {
+  return (
+    <PremiumCard className="px-4 py-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-ink font-display tracked uppercase">เลือกจากเทมเพลต</p>
+        <button onClick={onCancel} className="text-[11px] text-muted hover:text-ink shrink-0">
+          ยกเลิก
+        </button>
+      </div>
+
+      {loading && <p className="text-xs text-muted">กำลังโหลดเทมเพลต...</p>}
+      {error && <p className="text-xs text-rusttext">{error}</p>}
+
+      {!loading && !error && templates && templates.length === 0 && (
+        <p className="text-xs text-muted">
+          ยังไม่มีเทมเพลตเลย —{' '}
+          <a href="/templates" className="text-amber hover:underline">
+            สร้างเทมเพลตแรกที่นี่
+          </a>
+        </p>
+      )}
+
+      {!loading && !error && templates && templates.length > 0 && (
+        <ul className="space-y-1.5 max-h-72 overflow-y-auto">
+          {templates.map((t) => {
+            const exCount = (templateExercises[t.id] ?? []).length
+            const applying = applyingTemplateId === t.id
+            return (
+              <li key={t.id}>
+                <button
+                  onClick={() => onSelect(t)}
+                  disabled={applyingTemplateId !== null}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-line bg-surface2 px-3 py-2.5 text-left transition hover:border-amber/40 disabled:opacity-50"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm text-ink truncate">{t.title}</span>
+                    <span className="block text-[11px] text-muted">{exCount} ท่า</span>
+                  </span>
+                  <span className="text-[11px] text-amber shrink-0">{applying ? 'กำลังใส่...' : 'ใช้เทมเพลตนี้ →'}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </PremiumCard>
   )
 }
 
