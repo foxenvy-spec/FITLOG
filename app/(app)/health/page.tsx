@@ -926,7 +926,13 @@ export default function HealthPage() {
     bodyFatDeltaForWeightCheck <= 0 &&
     muscleDeltaForWeightCheck !== null &&
     muscleDeltaForWeightCheck > 0
-  const weightCardDirection: Direction = weightGainLooksLikeMuscle ? 'neutral' : weightDirection
+  // v23: ฟีดแบ็ก semantic color — "อย่าใช้สีเขียวกับทุกการเปลี่ยนแปลง...น้ำหนักเพิ่ม/ลด ควรเป็น Neutral เสมอ
+  // ต่างจากไขมันลด/กล้ามเนื้อเพิ่มที่มีทิศทาง 'ดี/ไม่ดี' ชัดเจนในตัวเอง — ตัวเลขน้ำหนักอย่างเดียวไม่ควรถูก
+  // ตัดสินว่าดี/แย่ (ต้องดูองค์ประกอบร่างกายประกอบ ซึ่ง weightInsight ด้านล่างเป็นคนอธิบายบริบทแทน)" — เดิม
+  // บังคับ neutral เฉพาะกรณี muscle-driven เท่านั้น กรณีอื่นยังเขียว/แดงตาม weightDirection ปกติ — ตอนนี้
+  // บังคับ neutral เสมอไม่ว่ากรณีไหน (ไม่ได้ลบ weightGainLooksLikeMuscle ทิ้ง ยังใช้กับ bmiCardDirection/
+  // weightInsight/trendTag ต่อไปตามเดิม)
+  const weightCardDirection: Direction = 'neutral'
   // ฟีดแบ็ก "BMI ↑0.3 เป็นจุดเดียวที่ดูผิดทิศ — BMI 23.5 ยังอยู่ในช่วงปกติ ถ้าไขมันลด/กล้ามเพิ่มพร้อมกัน
   // การขึ้นของ BMI ไม่ควรตัดสินเป็นสีแดง" — BMI ขยับตามน้ำหนักโดยตรง จึงใช้เงื่อนไขเดียวกับการ์ดน้ำหนักได้เลย
   // ไม่ต้องคำนวณแยก
@@ -1036,12 +1042,11 @@ export default function HealthPage() {
     goalRows.push({
       valueText: `${bodyFatGoalForBanner.target_value.toFixed(1)}%`,
       label: 'Body Fat เป้าหมาย',
-      subText:
-        bodyFatDiff === null || bodyFatDiff === 0
-          ? null
-          : bodyFatDiff > 0
-            ? `ลดอีก ${bodyFatDiff.toFixed(1)}%`
-            : `เพิ่มอีก ${Math.abs(bodyFatDiff).toFixed(1)}%`,
+      // ฟีดแบ็ก "เป้าหมายควรให้ความรู้สึกเป็น Progress ไม่ใช่รายงานข้อมูล — เหลือ 6.3 kg / เหลืออีก 1.9%
+      // Body Fat อ่านง่ายกว่า" — เดิม "ลดอีก X% / เพิ่มอีก X%" แยกคำตามทิศทาง ตอนนี้รวมเป็น "เหลืออีก X%"
+      // เดียวกันทั้งสองทิศทาง (ระยะห่างจากเป้าหมายยังสื่อความหมายเดิม ไม่ว่าจะต้องลดหรือเพิ่ม) ต่อท้ายด้วย
+      // "Body Fat" ให้อ่านคู่กับ "เหลือ X kg" ของน้ำหนักได้โดยไม่ต้องมี label แยกบรรทัดข้างบนอีกต่อไป
+      subText: bodyFatDiff === null || bodyFatDiff === 0 ? null : `เหลืออีก ${Math.abs(bodyFatDiff).toFixed(1)}% Body Fat`,
       progressPct: goalProgressPct(bodyFatGoalForBanner),
     })
   }
@@ -1145,6 +1150,7 @@ export default function HealthPage() {
               lastMeasuredLabel={latest?.measured_at ? shortLabel(latest.measured_at) : null}
               periodCaption={weightPeriodCaption}
               insight={weightInsight}
+              insightTone={weightGainLooksLikeMuscle ? 'good' : undefined}
               primary
             />
             <IconStatCard
@@ -2306,46 +2312,52 @@ function OverviewHealthScoreHeader({
             <GoalRing pct={pct} size={130} strokeWidth={11} color="#E8A33D" ariaLabel="คะแนนสุขภาพรวม" />
           </div>
           <div className="min-w-0">
+            {/* v23: ฟีดแบ็ก "HEALTH SCORE กับ ดีมาก อยู่ใกล้กันเกินไปในสายตา อยากให้ Score ดูเหมือนผลลัพธ์
+                สำคัญ ไม่ใช่แค่ข้อมูลอีกช่องหนึ่ง — HEALTH SCORE 14-15px, ดีมาก 28-32px/semibold, คำอธิบาย
+                14px" — เดิม 3 บรรทัดนี้คือ text-[10px]/fontSize 25/text-xs (12px) ใกล้เคียงกันเกินไปให้รู้สึก
+                เป็นกลุ่มเดียวแบนๆ — ขยับทั้ง 3 ระดับขึ้นตามตัวเลขที่ขอเป๊ะ พร้อมเพิ่ม margin-top เล็กน้อยตาม
+                สัดส่วน ให้แต่ละระดับแยกจากกันชัดขึ้นไม่ใช่แค่ตัวใหญ่ขึ้นเฉยๆ */}
             <button
               type="button"
               onClick={() => setShowBreakdown((v) => !v)}
-              className="flex items-center gap-1 text-[10px] tracked uppercase transition hover:text-ink"
+              className="flex items-center gap-1 text-sm tracked uppercase transition hover:text-ink"
               style={{ color: '#B8BBC2' }}
             >
               Health Score
               <InfoIcon />
             </button>
-            <span className="font-display font-semibold block mt-1 tracked uppercase" style={{ color: ringColor, fontSize: 25 }}>
+            <span className="font-display font-semibold block mt-1.5 tracked uppercase" style={{ color: ringColor, fontSize: 30 }}>
               {label}
             </span>
-            {/* ฟีดแบ็ก "Health Score Card ยังมีพื้นที่ว่างตรงกลางค่อนข้างมาก...ให้เพิ่มสถานะสั้นๆ ที่เป็น
-                กำลังใจใต้ 'ดีมาก' — ย้าย 'ลดไขมัน พร้อมรักษามวลกล้ามเนื้อ' จากด้านล่างสุดของการ์ดมาไว้ตรงนี้
-                เลย จะทำให้กลุ่ม Health Score เป็นก้อนเดียว" — เดิม summary อยู่แยกบรรทัดล่างสุดนอก flex row
-                (กว้างเต็มการ์ด ไม่ติดกับ 90%/ดีมาก) ย้ายมาอยู่ใต้ tier label ในคอลัมน์เดียวกันแทน */}
-            {summary && <p className="text-xs text-ink/65 mt-1 max-w-[180px]">{summary}</p>}
+            {summary && <p className="text-sm text-ink/65 mt-1.5 max-w-[190px]">{summary}</p>}
           </div>
         </div>
 
+        {/* v23: ฟีดแบ็ก "บางส่วนของ Secondary/Tertiary ใกล้กันเกินไป" — updatedTimeLabel เดิมชิด
+            updatedDateLabel ทันทีไม่มี margin เลย เพิ่ม mt-0.5 คั่น พร้อมขยับจาก text-[10px] เป็น text-[11px]
+            เล็กน้อยให้ยังอ่านง่ายในระดับ Tertiary */}
         {updatedDateLabel && (
           <div className="shrink-0 border-l border-line/40 pl-5">
             <p className="text-[10px] tracked uppercase" style={{ color: '#B8BBC2' }}>ล่าสุด</p>
             <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
             {updatedTimeLabel && (
-              <p className="text-[10px]" style={{ color: '#9DA0A8' }}>{updatedTimeLabel}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: '#9DA0A8' }}>{updatedTimeLabel}</p>
             )}
           </div>
         )}
 
+        {/* v23: แถวสัญญาณ (Secondary) เดิม gap-0.5 ชิดกันเกินไปเมื่อมี 2-3 แถว — เพิ่มเป็น gap-1.5 พร้อมขยับ
+            label ท้ายแถว (Tertiary) จาก text-[11px] เป็น text-xs ให้จับคู่กับระดับ Tertiary อื่นๆ ในการ์ดนี้ */}
         {signals.length > 0 && (
           <div className="shrink-0 border-l border-line/40 pl-5">
             <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>การเปลี่ยนแปลง</p>
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1.5">
               {signals.map((s) => (
                 <p key={s.label} className="whitespace-nowrap">
                   <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
                     {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
                   </span>{' '}
-                  <span className="text-[11px]" style={{ color: '#9DA0A8' }}>{s.label}</span>
+                  <span className="text-xs" style={{ color: '#9DA0A8' }}>{s.label}</span>
                 </p>
               ))}
             </div>
@@ -2361,26 +2373,23 @@ function OverviewHealthScoreHeader({
             ฟีดแบ็ก "พื้นที่ว่างด้านขวาเยอะ — ไม่อยากเพิ่มข้อมูลมั่วๆ ให้ขยาย Target block กว้างขึ้นเล็กน้อย
             แทน" — บรรทัดรอง label · subText ยาวขึ้นกว่าเดิมตามธรรมชาติ ทำให้บล็อกกว้างขึ้นเองโดยไม่ต้องเติม
             ข้อมูลใหม่ */}
+        {/* v23: ฟีดแบ็ก "เปลี่ยนความรู้สึกจากรายงานข้อมูล -> ความก้าวหน้า เช่น 60.0 kg / เหลือ 6.3 kg แทน
+            60.0 kg / น้ำหนักเป้าหมาย · เหลือ 6.3 kg — อ่านง่ายกว่า สมองประมวลผลเร็วกว่า" — เดิมทุกแถวมี label
+            (น้ำหนักเป้าหมาย/Body Fat เป้าหมาย) นำหน้า subText ด้วย " · " ซ้ำซ้อนกับหัวข้อคอลัมน์
+            "เป้าหมายร่างกาย" ที่ครอบทั้งบล็อกอยู่แล้ว — ตัด label ออกจากสิ่งที่แสดงผล (ยังเก็บไว้ใน data
+            เป็น key เท่านั้น) เหลือแค่ valueText เด่น + subText (สีเขียว, ระยะที่เหลือ) บรรทัดเดียว */}
         <div className="shrink-0 border-l border-line/40 pl-5">
           <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>เป้าหมายร่างกาย</p>
           {goalRows.length > 0 ? (
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               {goalRows.map((g) => (
                 <div key={g.label}>
                   <p className="font-mono font-semibold text-sm text-ink leading-none">{g.valueText}</p>
-                  {/* ฟีดแบ็ก "ให้ 6.3 kg กับ 1.9% เป็นสีเขียวอ่อน/ทองอ่อนตามสถานะ ผู้ใช้จะรู้สึกว่า 'กำลัง
-                      เข้าใกล้เป้าหมาย' มากกว่า 'ยังขาดอีกเยอะ'" — เดิม label กับ subText (เหลือ/ลดอีก X) สี
-                      เดียวกันหมด แยกสีเฉพาะส่วน subText เป็นเขียวอ่อน (#8CB264 เดียวกับเดลต้าที่ดีในบล็อก
-                      "การเปลี่ยนแปลง" ข้างๆ) ให้สื่อว่าตัวเลขที่เหลือคือ progress ไม่ใช่แค่ระยะทางที่ต้องไป */}
-                  <p className="text-[11px] whitespace-nowrap mt-0.5">
-                    <span style={{ color: '#9DA0A8' }}>{g.label}</span>
-                    {g.subText && (
-                      <>
-                        <span style={{ color: '#9DA0A8' }}> · </span>
-                        <span style={{ color: '#8CB264' }}>{g.subText}</span>
-                      </>
-                    )}
-                  </p>
+                  {g.subText && (
+                    <p className="text-xs whitespace-nowrap mt-1" style={{ color: '#8CB264' }}>
+                      {g.subText}
+                    </p>
+                  )}
                   {/* ฟีดแบ็ก "เพิ่ม Progress เล็กๆ ใต้เป้าหมาย — เส้นบางๆ 2-3px ผู้ใช้จะเห็นทันทีว่ากำลังเข้าใกล้
                       เป้าหมาย แทนที่จะต้องคำนวณเองจากตัวเลข ไม่ต้องทำใหญ่" — ใช้ progressPct ที่คำนวณมาจาก
                       goalProgressPct() แล้ว (จุดเรียกใช้ด้านบน) สีทอง/อำพันตามความหมายสี "Orange/Gold =
@@ -2874,6 +2883,7 @@ function IconStatCard({
   primary = false,
   series,
   insight,
+  insightTone,
   tier = 1,
   trendLabel,
   trendTag,
@@ -2916,6 +2926,11 @@ function IconStatCard({
   // v3: ฟีดแบ็ก "การ์ดยังเป็น Information ไม่มี Insight" — ข้อความสั้นๆ ใต้เดลต้า (เช่น "อยู่ในช่วงผันผวนปกติ")
   // คำนวณจากข้อมูลจริงที่จุดเรียกใช้ ไม่ใช่ copy สำเร็จรูปที่ขึ้นเสมอ
   insight?: string | null
+  // v23: ฟีดแบ็ก "↑ 0.9 kg ควรเป็นสีเทาอ่อน (semantic color: น้ำหนักเพิ่ม/ลด = Neutral เสมอ) แล้วข้อความ
+  // insight ที่อธิบายที่มา (เช่น 'น้ำหนักเพิ่มจากมวลกล้ามเนื้อเป็นหลัก') ค่อยใช้เขียวบางส่วนแทน" — เดิม insight
+  // ใช้สีเทาคงที่ (#A8ACB4) เสมอไม่ว่าเนื้อหาจะเป็นเรื่องดีหรือไม่ — เพิ่ม prop นี้ให้จุดเรียกใช้ (เฉพาะการ์ด
+  // น้ำหนัก) ระบุได้ว่าประโยคนี้คือเรื่องดี (muscle-driven) ให้ทั้งบรรทัดเป็นโทนเขียวอ่อนแทน ไม่ระบุ = สีเทาเดิม
+  insightTone?: 'good'
   // v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ อยากให้ไล่ตามความสำคัญ (⭐⭐⭐⭐⭐/⭐⭐⭐/⭐⭐)" — tier 3 (ต่ำสุด)
   // ลดความจัดจ้านลงเล็กน้อย (opacity) ให้สายตาไหลไปที่ tier 1/2 ก่อน ไม่ได้ซ่อนข้อมูล แค่ลดน้ำหนักภาพ
   tier?: 1 | 2 | 3
@@ -3080,16 +3095,23 @@ function IconStatCard({
               "จาก...ก่อน" ห่อ) ต่อท้าย secondary ด้วย "·" แทนที่จะแยกบรรทัด
               v20: ฟีดแบ็ก "เพิ่มระยะห่างระหว่างแต่ละข้อมูล" — เดิมไม่มี margin-top จากค่าหลักเลย (แค่ block
               ต่อกัน) เพิ่ม mt-1 ให้หายใจง่ายขึ้นหลังขยายเลขค่าหลัก */}
+          {/* v22: ฟีดแบ็ก "↑ 0.9 kg · 3 สัปดาห์ เด่นไปนิด อยากให้ 66.3 kg เห็นก่อน — ลด opacity บรรทัดที่ 2
+              ลงเล็กน้อย จะดูแพงขึ้น" — opacity-85 บน wrapper เท่านั้น ไม่แตะสี deltaColor เดิม (เขียว/แดง/เทา
+              ยังสื่อสถานะจริงเหมือนเดิม แค่จางลงอีกขั้นเมื่อเทียบกับเลขค่าหลัก 52px ด้านบน) */}
           {secondary && (
-            <p className={`font-mono whitespace-nowrap text-sm mt-1 ${secondary.color}`}>
+            <p className={`font-mono whitespace-nowrap text-sm mt-1 opacity-85 ${secondary.color}`}>
               {secondary.text}
               {periodCaption && <span className="text-muted"> · {periodCaption}</span>}
             </p>
           )}
-          {/* v21: ฟีดแบ็ก "ตัวหนังสือ...และคำอธิบายด้านล่าง ยังเล็กและจางไปนิด...เพิ่มความสว่างของตัวอักษร
-              ประมาณ 10-15% โดยไม่ต้องเพิ่มขนาดมาก" — insight เดิมใช้ text-muted (#9498A0) เปลี่ยนเป็นสีที่
-              สว่างกว่าประมาณ 12% (#A8ACB4) เฉพาะบรรทัดคำอธิบายนี้ ขนาดยังคงเดิม */}
-          {insight && <p className="truncate text-xs mt-1" style={{ color: '#A8ACB4' }}>{insight}</p>}
+          {/* v23: ฟีดแบ็ก "↑ 0.9 kg ควรเทาเสมอ (semantic color) แล้วประโยคอธิบายที่มาค่อยใช้เขียวบางส่วน" —
+              insightTone === 'good' (เฉพาะกรณี muscle-driven ที่ weightInsight อธิบายว่าน้ำหนักขึ้นเพราะ
+              กล้ามเนื้อ) ใช้โทนเขียวอ่อนแทน #A8ACB4 เดิม ไม่ระบุ = สีเทาเดิมทุกกรณีอื่น */}
+          {insight && (
+            <p className="truncate text-xs mt-1" style={{ color: insightTone === 'good' ? '#9DBB7E' : '#A8ACB4' }}>
+              {insight}
+            </p>
+          )}
           {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันเนื้อหาลงไปกิน
               พื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ justify-between เดิมพอแล้ว
               สำหรับความสูงปกติ ดูสาขา else ด้านล่าง) — v5: เดิมถ้า series มีข้อมูลไม่พอ (< 2 จุด, เช่น
@@ -3100,6 +3122,11 @@ function IconStatCard({
             <div className="flex-1 flex flex-col justify-end mt-2.5">
               {series && series.length >= 2 ? (
                 <>
+                  {/* v23: ฟีดแบ็ก "ให้ข้อมูลด้านบน (ค่า/เดลต้า/insight) เด่นกว่า Trend — ผู้ใช้ควรรู้ก่อนว่า
+                      'น้ำหนักเพิ่ม แต่เป็นการเพิ่มที่ดี' แล้วค่อยดูกราฟ" — เดิมกราฟกับ label ต่อจากบรรทัด
+                      insight ทันทีไม่มีเส้นแบ่ง เพิ่มเส้นคั่นบางๆ (เหมือนที่สาขา fallback ด้านล่างมีอยู่แล้ว)
+                      ให้บล็อกบนกับ trend แยกจากกันเป็นสองช่วงชัดเจน ไม่ใช่อ่านรวดเดียวจากบนลงล่าง */}
+                  <div className="h-px bg-line mb-2" />
                   {(trendLabel || trendTag) && (
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       {trendLabel && <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>}

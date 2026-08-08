@@ -217,7 +217,11 @@ export const HAIRLINE_REFLECTION_CSS =
 // R เล็กน้อยทุกสต็อป) ตามค่าที่ขอ เพื่อให้ผิวการ์ดเป็น "โลหะเย็น" ไม่ใช่เทาดิบเฉยๆ — สว่างกว่าเดิมตรงกลาง
 // บนแล้วค่อยจางลงล่าง ให้ผิวการ์ดดูมีมิติแบบแผ่นโลหะจริง ใช้คู่กับ CARD_INSET_SHADOW/CARD_REFLECTION_CSS
 // เสมอ (highlight ขอบบน + เงาจมขอบล่าง + แถบสะท้อนแสงด้านบน)
-export const CARD_GRADIENT_CSS = 'linear-gradient(180deg, #26282C 0%, #1B1D20 35%, #141518 70%, #0D0E10 100%)'
+// v49: ฟีดแบ็ก "การ์ดมืดเกินไป — ดำ+เทาเข้ม+เส้นทแยง+border+shadow+glow พร้อมกันหมด ดูเป็น Dashboard สำหรับดู
+// ข้อมูลมากกว่า Fitness app ที่อยากดูความก้าวหน้าตัวเอง อยากเพิ่มความสว่างพื้นการ์ด 5-10% โดยไม่เปลี่ยนธีม" —
+// ยกทุกสต็อปขึ้น ~6% (ผสมขาว 6%, ใช้ฟังก์ชัน lighten() ในไฟล์นี้) ยังคงสัดส่วนไล่เฉด/เปอร์เซ็นต์เดิมทั้งหมด
+// ไม่แตะโครงสร้าง 4 สต็อป แค่ให้ตัวหนังสือบนพื้นการ์ดอ่านง่ายขึ้นโดยไม่ต้องเพิ่มสี/ขนาดตัวอักษรเพิ่ม
+export const CARD_GRADIENT_CSS = 'linear-gradient(180deg, #333539 0%, #292B2D 35%, #222326 70%, #1C1C1E 100%)'
 // v2: highlight ขอบบนเดิม (inset 0 1px 0, กว้างเต็มขอบบนทั้งเส้น) รวมกับ border สีเทา ทำให้ขอบบนดูสว่าง
 // "ทั้งเส้น" แทนที่จะสว่างเฉพาะมุมแบบวัสดุโลหะจริง — เปลี่ยนเป็น inset แนวทแยง (offset ทั้ง x และ y พร้อม
 // กัน) ให้ความสว่างกระจุกอยู่แถวมุมบนซ้ายเป็นหลัก (จางหายไปทางขวา/ล่าง) แทนเส้นสว่างสม่ำเสมอเต็มความกว้าง
@@ -269,10 +273,12 @@ export const CARD_BEVEL_CSS = 'linear-gradient(135deg, rgba(255,255,255,.18) 0%,
 // เดิมเป็นแถบสะท้อนแสงต่อเนื่องเส้นเดียว (จำลองพื้นผิวโค้งเดียว) โทเคนนี้คือ 3 เส้นทแยงสั้นๆ ยาวไม่เท่ากัน
 // ตำแหน่ง/มุมเดียวกับ DIAGONAL_TITANIUM_CSS (115deg) แยกจากกัน จำลองรอยขัดเงาหลายจุดที่แสงกระทบไม่พร้อมกัน
 // ต่างจากรอยขัดเดียวยาวต่อเนื่อง — ใช้ร่วมกับการ์ดทุกใบผ่าน PremiumCard และ MetricCard (compact)
+// v49: ฟีดแบ็ก "ลดความเข้มของ diagonal pattern ลง" — ลด alpha ทั้ง 3 เส้นลงประมาณ 1/3 (.03/.025/.02 ->
+// .02/.018/.014) ยังเห็นรอยขัดเงาอยู่ (ไม่ตัดออกทั้งหมด) แค่เบาลงให้ตัวหนังสือบนการ์ดเด่นกว่าลายพื้นผิว
 export const CARD_MULTI_REFLECTION_CSS = [
-  'linear-gradient(115deg, transparent 12%, rgba(255,255,255,.03) 18%, transparent 26%)',
-  'linear-gradient(115deg, transparent 42%, rgba(255,255,255,.025) 47%, transparent 53%)',
-  'linear-gradient(115deg, transparent 66%, rgba(255,255,255,.02) 70%, transparent 76%)',
+  'linear-gradient(115deg, transparent 12%, rgba(255,255,255,.02) 18%, transparent 26%)',
+  'linear-gradient(115deg, transparent 42%, rgba(255,255,255,.018) 47%, transparent 53%)',
+  'linear-gradient(115deg, transparent 66%, rgba(255,255,255,.014) 70%, transparent 76%)',
 ].join(', ')
 
 // v21: ฟีดแบ็ก "Card ยังเป็น Dark + Glow อยากได้ Titanium -> Reflection -> Micro Bevel -> Ambient
@@ -354,8 +360,10 @@ export const CNC_CORNER_CLIP_PATH_DEFAULT = cncCornerClipPath('tl', CNC_CORNER_P
 // ทิศทางเดียว) มากกว่า" — ตัดชั้น 25deg (ไขว้) ออก เหลือแค่ชั้น 115deg เดียว (ทิศทางเดียวกับ
 // DIAGONAL_TITANIUM_CSS ที่ใช้ทั่วแอปอยู่แล้ว) เปลี่ยนจากลายตาข่ายไขว้ (อ่านเป็นลายคาร์บอนไฟเบอร์ทอกัน)
 // เป็นเส้นขนานทิศทางเดียว (อ่านเป็นรอยขัดโลหะจริง/Brushed Titanium) — alpha/ระยะห่างเดิมไม่แตะ
+// v49: ลด alpha ลายเส้นขนานลงเล็กน้อยพร้อมกับ CARD_MULTI_REFLECTION_CSS ข้างบน (เหตุผลเดียวกัน — "ลดความ
+// เข้มของ diagonal pattern") จาก .02 เหลือ .014
 export const TITANIUM_MESH_CSS =
-  'repeating-linear-gradient(115deg, rgba(255,255,255,.02) 0px, rgba(255,255,255,.02) 1px, transparent 1px, transparent 12px)'
+  'repeating-linear-gradient(115deg, rgba(255,255,255,.014) 0px, rgba(255,255,255,.014) 1px, transparent 1px, transparent 12px)'
 
 // ===================================================================================
 // v27: "Hero Card Product Shot" — ฟีดแบ็ก "Workout Card 9.5/10 อยากได้ดัมเบล Rim Light/Dust/Spark/
