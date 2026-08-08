@@ -67,10 +67,16 @@
      อยู่กลางช่วงที่ขอ)
      v2: ฟีดแบ็ก "Priority 1 — Bottom Navigation ยังบัง Body Metrics อยู่ ต้องแก้" (ฟีดแบ็กซ้ำแม้เพิ่มรอบ
      ก่อนแล้ว) — เพิ่มบัฟเฟอร์อีกขั้น 36px -> 56px ให้เผื่อพื้นที่มากขึ้นชัดเจน โดยเฉพาะจอที่ safe-area-
-     inset-bottom เป็น 0 (ไม่มี home indicator) ซึ่งบัฟเฟอร์เดิมอาจยังไม่พอ */
+     inset-bottom เป็น 0 (ไม่มี home indicator) ซึ่งบัฟเฟอร์เดิมอาจยังไม่พอ
+     v3: ฟีดแบ็กซ้ำเป็นรอบที่ 3 แม้เพิ่ม buffer ไปแล้ว 2 รอบก่อนหน้า — ตั้งข้อสงสัยว่าค่าคงที่ 68px
+     (dashboardSpec.bottomNav.height) อาจต่ำกว่าความสูงจริงของแผ่น nav (BottomNav.tsx ใช้ minHeight:68
+     ไม่ใช่ height ตายตัว — ปุ่มแต่ละอันมี py-2.5 (20px) + ไอคอน + label ซ้อนกัน อาจดันความสูงจริงเกิน
+     68px ได้) แทนที่จะพยายามคำนวณให้แม่นตาม breakdown เดิม เปลี่ยนแนวทางเป็นตั้งบัฟเฟอร์ฐานให้กว้างพอ
+     เกินความสูงจริงของ nav แน่ๆ ไปเลย (96px, เท่ากับ pb-24 เดิมก่อนเริ่มแก้เรื่องนี้ทั้งหมด) แล้วค่อยบวก
+     safe-area-inset-bottom ของเครื่องทับอีกที (ต่างจาก pb-24 เดิมที่ไม่เคยรวม safe-area เลย) */
   @media (max-width: 1023.98px) {
     .pb-safe-bottom-nav {
-      padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 56px);
+      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     }
   }
   .no-scrollbar {

@@ -133,10 +133,14 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
         {/* v9: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ Light Training Recommendation — เพิ่ม
             contrast ก่อน ไม่ต้องขยายขนาดเยอะ" — บรรทัดคำแนะนำนี้ยังเป็น text-muted (#9498A0) เดิม ไม่เคย
             ถูกแตะเลยตลอดหลายรอบก่อน (แม้ตัวเลข/tier label ข้างบนถูกปรับไปหลายรอบแล้ว) ขยับเป็น #CFD4DE
-            ตามระดับเดียวกับ caption อื่นที่ปรับไปแล้วในรอบนี้ ไม่แตะขนาด (9px คงเดิม) */}
+            ตามระดับเดียวกับ caption อื่นที่ปรับไปแล้วในรอบนี้ ไม่แตะขนาด (9px คงเดิม)
+            v10: ฟีดแบ็ก "แก้ Light Training Recommen... — อย่าให้ข้อความสำคัญโดนตัด" — nowrap+ellipsis
+            เดิมตัดข้อความยาว (เช่น "Light Training Recommended", "Your body needs recovery") จนอ่านไม่รู้
+            เรื่อง ตัดทั้งคู่ออก ปล่อยให้ตกบรรทัดได้ 2 บรรทัดแทนภายใน maxWidth เดิม (120px) — คอลัมน์วงจะสูง
+            ขึ้นบ้างเมื่อข้อความยาวตกบรรทัด แต่สำคัญกว่าการตัดข้อความทิ้งครึ่งหนึ่ง */}
         <p
           className="leading-tight mt-0.5"
-          style={{ fontSize: 9, color: '#CFD4DE', maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          style={{ fontSize: 9, color: '#CFD4DE', maxWidth: 120 }}
         >
           {score.recommendation}
         </p>
