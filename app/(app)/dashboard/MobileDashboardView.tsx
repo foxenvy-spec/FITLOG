@@ -314,7 +314,11 @@ export default function MobileDashboardView() {
         />
 
         {/* body composition snapshot */}
-        <div className="animate-rise" style={{ animationDelay: '15ms' }}>
+        {/* v13: ฟีดแบ็ก "Body Overview Header ชิดกับ Today's Workout เกินไปนิด — เพิ่มระยะห่าง 8-12px"
+            — sectionGap กลาง (16px) ที่คุมทุกคู่การ์ดเท่ากันหมดยังไม่พอเฉพาะคู่นี้ เพิ่ม marginTop เสริม
+            10px เฉพาะจุดนี้ (ไม่แตะ sectionGap กลาง กันกระทบระยะห่างคู่อื่นทั้งหมด) รวมเป็น ~26px ระหว่าง
+            Today's Workout กับหัวข้อ "ภาพรวมร่างกาย" */}
+        <div className="animate-rise" style={{ animationDelay: '15ms', marginTop: 10 }}>
           {/* หัวข้อ section 18px ตาม Typography token ล่าสุด (เคยลองขยับไป 30px รอบก่อน แต่ภาพอ้างอิงจริง
               (Image A) แสดงหัวข้อเล็กกว่านั้นมาก แก้กลับมาที่ 18px ตามสเปค) — ระยะห่างหัวข้อ→กริด 20px */}
           <div className="flex items-center justify-between px-1" style={{ marginBottom: 20 }}>

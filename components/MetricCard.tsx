@@ -221,7 +221,9 @@ export default function MetricCard({
           // glowAlpha) ไม่แตะตรงนี้ตรงๆ แต่ค่า theme.glow ต่อการ์ดใน BodyMetricsRow.tsx ลดแล้วแยกต่างหาก
           // (glowAlpha คำนวณจากค่านั้น จึงลดตามไปเองโดยไม่ต้องแก้สูตรตรงนี้)
           // v50: ฟีดแบ็ก "ลดความเข้มของ Glow นิดหนึ่ง" (รอบถัดมา) — ลดต่ออีกขั้นเบาๆ .105 -> .095, .68 -> .60
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.095)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.60), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}, 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)` : ''}`,
+          // v51: ฟีดแบ็ก "ลด Glow/Shadow ของ Metric Cards ประมาณ 5-10%" (รอบ polish สุดท้าย) — ลดอีกขั้น
+          // เบาๆ .095 -> .088, .60 -> .55
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.088)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.55), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}, 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)` : ''}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard)
