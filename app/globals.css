@@ -61,10 +61,13 @@
      indicator) รวมกันแล้วอาจเกิน 96px จริง ทำให้เนื้อหาสุดท้ายก่อนเลื่อนจบโดนแผ่น nav บังเล็กน้อย —
      คำนวณ padding-bottom ตรงๆ จาก 3 ค่านั้น (68px ต้องตรงกับ dashboardSpec.bottomNav.height เสมอ
      ถ้าแก้ค่านั้นต้องแก้ที่นี่ด้วย — CSS import ค่าจาก .ts ไม่ได้) เฉพาะ < lg (ที่มี BottomNav จริง —
-     >= lg ใช้ SidebarNav แทน ไม่มี BottomNav ให้ชนเลย ใช้ lg:pb-10 เดิมต่อไป) */
+     >= lg ใช้ SidebarNav แทน ไม่มี BottomNav ให้ชนเลย ใช้ lg:pb-10 เดิมต่อไป)
+     v1: ฟีดแบ็ก "การ์ดล่างสุด (ภาพรวมร่างกาย/Body Overview เมื่อเลื่อนถึงจุดนั้น) ยังชิด Bottom Nav
+     ไป ควรมี breathing room เพิ่มอีก 16-24px" — บัฟเฟอร์ท้าย 16px เดิมยังไม่พอ เพิ่มเป็น 36px (+20px
+     อยู่กลางช่วงที่ขอ) */
   @media (max-width: 1023.98px) {
     .pb-safe-bottom-nav {
-      padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 16px);
+      padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 36px);
     }
   }
   .no-scrollbar {

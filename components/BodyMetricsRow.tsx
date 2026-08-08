@@ -32,12 +32,14 @@ import { dashboardSpec } from '@/lib/dashboardSpec'
 // (14/11/9/8/9 -> 12/10/8/7/8) คงสัดส่วนไล่ลำดับเดิมไว้ (น้ำหนักเข้มสุด ไล่ลงตามลำดับในกริด)
 // v45: ฟีดแบ็ก "Body Overview ดีแล้ว อย่าขยายเพิ่ม แต่ลดความเข้มของ Glow และเส้นกราฟนิดหนึ่ง ไม่ให้แย่ง
 // ความสนใจกับ Today's Workout" — ลดต่ออีกขั้นเบาๆ ~10% (12/10/8/7/8 -> 11/9/7/6/7)
+// v46: ฟีดแบ็ก "ลด Glow/Shadow ของ Metric Cards ประมาณ 5-10%" (รอบ polish สุดท้าย) — ลดอีกขั้นเบาๆ
+// ~10% (11/9/7/6/7 -> 10/8/6/5/6)
 const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
-  weight: { main: '#F59E0B', second: '#D97706', glow: 11 },
-  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 9 },
-  muscle: { main: '#3B82F6', second: '#2563EB', glow: 7 },
-  fatMass: { main: '#22C55E', second: '#16A34A', glow: 6 },
-  bmi: { main: '#1b8cff', second: '#3f6cff', glow: 7 },
+  weight: { main: '#F59E0B', second: '#D97706', glow: 10 },
+  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 8 },
+  muscle: { main: '#3B82F6', second: '#2563EB', glow: 6 },
+  fatMass: { main: '#22C55E', second: '#16A34A', glow: 5 },
+  bmi: { main: '#1b8cff', second: '#3f6cff', glow: 6 },
 }
 
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query

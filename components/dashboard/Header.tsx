@@ -107,9 +107,12 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // v21: ฟีดแบ็ก "ลดอีกนิด ~15-20% ไม่ต้องถึงกับเล็ก เพราะเป็น Branding แต่ให้ Today's Focus
             // เป็นพระเอกมากกว่า" — ลดต่ออีกขั้น 36-42px -> 30-35px (~17%) letterSpacing ตามสัดส่วน
             // (1.5px -> 1.2px) ยังคงอ่านออกชัดเจนในฐานะ wordmark ไม่ใช่ hero
-            fontSize: 'clamp(30px, 10vw, 35px)',
+            // v22: ฟีดแบ็ก "หลังเห็น Layout ใหม่ BANK ใหญ่ได้ครับ เป็น Branding/Hero Header — ถ้าจะ
+            // polish ลดแค่ 5-10% พอ อย่าลด 20-30% แบบก่อนหน้าแล้ว" — ลดเบาๆ อีกขั้นสุดท้าย ~8%
+            // (30-35px -> 28-32px) letterSpacing ตามสัดส่วน (1.2px -> 1.1px)
+            fontSize: 'clamp(28px, 9vw, 32px)',
             fontWeight: 900,
-            letterSpacing: '1.2px',
+            letterSpacing: '1.1px',
             lineHeight: 1,
             // v4: สต็อปเดิมยังอ่านเป็น "ตัวหนังสือสีขาว" มากกว่าโลหะ (โซนบนสุด/ล่างสุดสว่างเกินไป ไม่มี
             // จุดมืดจริงจังพอ) — เปลี่ยนตามค่าที่ขอเป๊ะ: บนสุด #DADADA (ไม่ใช่ขาวจ้า) → มืดสุด #6F6F72
