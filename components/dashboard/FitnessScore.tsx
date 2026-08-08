@@ -33,6 +33,13 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
       className="flex flex-col items-center gap-1.5"
       aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh} — ${score.recommendation}`}
     >
+      {/* v11: ฟีดแบ็ก "ทำให้ Fitness Score เข้าใจได้ใน 1 วินาที — ผู้ใช้ใหม่อาจถามว่า 48 ของอะไร"
+          — ป้าย "Fitness Score" ถูกตัดออกไปตั้งแต่รอบลดความสูง Header ก่อนหน้านี้มาก (เหตุผลตอนนั้นคือ
+          บริบทรอบตัวเลขชัดพอแล้ว) — กลับมาใส่อีกครั้งตามที่ขอ แต่คุมให้เล็ก/แน่นที่สุด (8px, margin
+          บางๆ) ไม่ให้กลับไปดันความสูง Header เหมือนเดิม */}
+      <p className="text-[8px] tracked uppercase leading-none" style={{ color: '#8A8E96', marginBottom: 3 }}>
+        Fitness Score
+      </p>
       {/* animate-pop-in (scale 0.6→1.1→1, keyframe ที่มีอยู่แล้วใน globals.css ใช้กับ badge/pill อื่นๆ
           ในแอป) — เดิมวงมาปุ๊บนิ่งเลยตอนโหลดหน้า ไม่มี entrance animation ของตัวเองต่างจากตัวเลข/เส้น
           progress ที่นับขึ้น/ไล่ยาวอยู่แล้ว เพิ่มให้วงทั้งก้อน "ป๊อป" เข้ามาตอน mount ครั้งแรก */}
@@ -137,12 +144,18 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
             v10: ฟีดแบ็ก "แก้ Light Training Recommen... — อย่าให้ข้อความสำคัญโดนตัด" — nowrap+ellipsis
             เดิมตัดข้อความยาว (เช่น "Light Training Recommended", "Your body needs recovery") จนอ่านไม่รู้
             เรื่อง ตัดทั้งคู่ออก ปล่อยให้ตกบรรทัดได้ 2 บรรทัดแทนภายใน maxWidth เดิม (120px) — คอลัมน์วงจะสูง
-            ขึ้นบ้างเมื่อข้อความยาวตกบรรทัด แต่สำคัญกว่าการตัดข้อความทิ้งครึ่งหนึ่ง */}
+            ขึ้นบ้างเมื่อข้อความยาวตกบรรทัด แต่สำคัญกว่าการตัดข้อความทิ้งครึ่งหนึ่ง
+            v11: ฟีดแบ็ก "ชอบ Light Training มากกว่า Light Training Recommended — เข้ากับ English UI ของ
+            Score" — สลับมาใช้ score.aiCoachStatus (คำสั้น 2 คำ: Heavy/Normal/Moderate/Light Training,
+            Recovery Workout, Rest & Sleep — คนละฟิลด์กับ score.recommendation ที่เป็นประโยคเต็ม ออกแบบไว้
+            ให้สั้นสำหรับจุดนี้อยู่แล้วตั้งแต่ lib/fitnessScore.ts แต่ไม่เคยถูกใช้จริงที่ไหนมาก่อน) — สั้นพอ
+            ที่จะไม่ต้องตกบรรทัดแล้วในทางปฏิบัติ แต่ยังไม่ลบความสามารถตกบรรทัดออก เผื่อจอแคบผิดปกติ —
+            aria-label ด้านบนยังใช้ score.recommendation (ประโยคเต็ม) เพื่อ accessibility เหมือนเดิม */}
         <p
           className="leading-tight mt-0.5"
           style={{ fontSize: 9, color: '#CFD4DE', maxWidth: 120 }}
         >
-          {score.recommendation}
+          {score.aiCoachStatus}
         </p>
       </div>
     </Link>

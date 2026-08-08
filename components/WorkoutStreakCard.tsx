@@ -54,6 +54,9 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
                 >
                   {WEEKDAY_LABELS[i]}
                 </span>
+                {/* v2: ฟีดแบ็ก "Workout Streak ควรบอก 'วันนี้' ชัดขึ้น — ขอบหนาขึ้น + glow บางๆ" — เดิมมี
+                    แค่ boxShadow ring 2px สีอำพัน (ไม่มี glow) ให้ทั้ง 2px ring หนาขึ้นเป็น 2.5px และเพิ่ม
+                    glow บางๆ ซ้อนอีกชั้น (blur 4px, alpha ~35%) ไม่ใช้ animation ตามที่ระบุว่าไม่จำเป็น */}
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] shrink-0"
                   role="img"
@@ -62,7 +65,7 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
                     ...(tick.trained
                       ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
                       : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }),
-                    ...(isToday ? { boxShadow: `0 0 0 2px ${COLORS.amber}` } : {}),
+                    ...(isToday ? { boxShadow: `0 0 0 2.5px ${COLORS.amber}, 0 0 4px 1px ${withAlpha(COLORS.amber, '59')}` } : {}),
                   }}
                 >
                   {tick.trained ? '✓' : ''}
