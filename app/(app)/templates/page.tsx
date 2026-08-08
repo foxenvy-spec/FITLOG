@@ -193,21 +193,30 @@ export default function TemplatesPage() {
     downloadBlob(JSON.stringify(payload, null, 2), `fitlog-template-${slugify(t.title)}.json`, 'application/json')
   }
 
-  // ฟีดแบ็ก "หน้าเทมเพลต import excel ไม่ได้" — เดิม input รับแค่ application/json (ไฟล์ export ของ FITLOG
-  // เอง) ไฟล์ .xlsx ที่โค้ช/AI สร้างให้เลือกไม่ได้เลยด้วยซ้ำ (accept กรอง) — แยกเป็นสองฟังก์ชันตามนามสกุลไฟล์
-  // แทน .json ยังเข้าทาง handleImportJson เดิมทุกประการ ส่วน .xlsx เข้าทาง handleImportExcel ใหม่ (ใช้ตัว
-  // parseWorkoutExcel เดียวกับหน้า /import แต่บันทึกลง workout_templates แทน program_days — 1 วัน/บล็อกในไฟล์
-  // = 1 เทมเพลต ให้ตรงกับสิ่งที่ผู้ใช้เห็นในหน้านี้)
+  // ฟีดแบ็ก "ยังพัง Unexpected token 'P' ... is not valid JSON" หลัง deploy fix แรกไปแล้ว — เดิมตัดสินใจ
+  // .xlsx vs .json จากนามสกุลไฟล์ (file.name) ล้วนๆ ซึ่งพึ่งพาว่าเบราว์เซอร์/ระบบผู้ใช้รายงานชื่อไฟล์แบบมี
+  // นามสกุลตรงเป๊ะเสมอ — error "PK...is not valid JSON" คือลายเซ็นไฟล์ ZIP (.xlsx คือไฟล์ ZIP ภายใน) โดน
+  // ส่งเข้า JSON.parse ตรงๆ แปลว่าเคสนี้หลุดเงื่อนไข isExcel ไปลงทาง handleImportJson แทน — เปลี่ยนมาตรวจจาก
+  // "เนื้อไฟล์จริง" (magic bytes) แทนนามสกุล ให้ผลลัพธ์แม่นยำ 100% ไม่ว่าชื่อไฟล์จะเป็นอะไร
+  async function sniffIsSpreadsheet(file: File): Promise<boolean> {
+    const head = new Uint8Array(await file.slice(0, 8).arrayBuffer())
+    // .xlsx/.xlsm (Office Open XML) คือไฟล์ ZIP เสมอ ขึ้นต้นด้วย 'PK' (0x50 0x4B)
+    const isZip = head[0] === 0x50 && head[1] === 0x4b
+    // .xls แบบเก่า (Binary/OLE2) ขึ้นต้นด้วย signature นี้เสมอ
+    const isOle2 = head[0] === 0xd0 && head[1] === 0xcf && head[2] === 0x11 && head[3] === 0xe0
+    return isZip || isOle2
+  }
+
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
 
-    const isExcel = /\.xlsx?$/i.test(file.name)
     setImporting(true)
     setError(null)
     setImportMessage(null)
     try {
+      const isExcel = await sniffIsSpreadsheet(file)
       if (isExcel) {
         await handleImportExcel(file)
       } else {
