@@ -56,6 +56,36 @@ function splitTitle(title: string): [string, string] | null {
   return [title.slice(0, idx).trim(), title.slice(idx + 1).trim()]
 }
 
+// ฟีดแบ็ก "ควรเรียงวันแรกอยู่บนสุดไหม" — เดิม query เรียง created_at ใหม่สุดก่อนเสมอ (ascending: false)
+// ทำให้เทมเพลตที่นำเข้าทีหลัง (เช่น พฤหัสบดี ที่ import วนตามลำดับวันในไฟล์แล้วสร้างทีหลังสุด, หรือ "DAY 5")
+// ขึ้นบนสุด สลับกับลำดับที่ผู้ใช้วางแผนสัปดาห์จริง — เช็คว่าชื่อเทมเพลตขึ้นต้นด้วยชื่อวันไทย (จันทร์…อาทิตย์)
+// หรือ "DAY N" ไหม ถ้าเจอแบบใดแบบหนึ่งให้ค่าลำดับที่ใช้เรียงได้ ไม่เจอคืน null (เทมเพลตชื่อเองแบบอิสระ ไม่มี
+// รูปแบบวัน/เลขวันนำหน้า — ยังคงพฤติกรรมเดิมคือใหม่สุดขึ้นก่อน)
+function extractDayOrderKey(title: string): number | null {
+  const t = title.trim()
+  const dayNumberMatch = t.match(/^day\s*(\d+)/i)
+  if (dayNumberMatch) return Number(dayNumberMatch[1])
+  // WEEKDAYS[0] = อาทิตย์ … WEEKDAYS[6] = เสาร์ (ตรงกับ Date.getDay()) — แปลงให้จันทร์เป็นวันแรกของสัปดาห์
+  // แทน (จันทร์=0 … อาทิตย์=6) ให้ตรงกับที่คนไทยวางแผนตารางฝึกกันจริงๆ
+  const weekdayIdx = WEEKDAYS.findIndex((w) => t.startsWith(w))
+  if (weekdayIdx !== -1) return (weekdayIdx + 6) % 7
+  return null
+}
+
+// เรียงเทมเพลตที่จับคู่ได้ (ชื่อวัน/DAY N) ตามลำดับวันจริงไว้ก่อน ส่วนที่จับคู่ไม่ได้คงลำดับเดิมที่ส่งเข้ามา
+// (created_at ใหม่สุดก่อน) ไว้ต่อท้าย — Array.sort เสถียร (stable) ตาม spec ES2019+ จึงคืนค่า 0 ระหว่างสอง
+// รายการที่ไม่มี key ได้อย่างปลอดภัย ไม่ทำให้ลำดับเดิมของกลุ่มนั้นสลับกันเอง
+function sortTemplates(list: WorkoutTemplate[]): WorkoutTemplate[] {
+  return [...list].sort((a, b) => {
+    const ka = extractDayOrderKey(a.title)
+    const kb = extractDayOrderKey(b.title)
+    if (ka !== null && kb !== null) return ka - kb
+    if (ka !== null) return -1
+    if (kb !== null) return 1
+    return 0
+  })
+}
+
 function downloadBlob(content: BlobPart, filename: string, type: string) {
   const blob = new Blob([content], { type })
   const url = URL.createObjectURL(blob)
@@ -124,7 +154,7 @@ export default function TemplatesPage() {
       return
     }
 
-    const typedTemplates = (tRows as WorkoutTemplate[]) ?? []
+    const typedTemplates = sortTemplates((tRows as WorkoutTemplate[]) ?? [])
     setTemplates(typedTemplates)
 
     if (typedTemplates.length > 0) {
@@ -170,7 +200,7 @@ export default function TemplatesPage() {
       return
     }
     const created = data as WorkoutTemplate
-    setTemplates((prev) => [created, ...prev])
+    setTemplates((prev) => sortTemplates([created, ...prev]))
     setCreating(false)
     setExpandedId(created.id)
   }
@@ -294,7 +324,7 @@ export default function TemplatesPage() {
       }
     }
 
-    setTemplates((prev) => [created, ...prev])
+    setTemplates((prev) => sortTemplates([created, ...prev]))
     setExpandedId(created.id)
     setImportMessage(`นำเข้า "${created.title}" (${parsed.exercises.length} ท่า) แล้ว`)
   }
@@ -368,7 +398,7 @@ export default function TemplatesPage() {
       totalExercises += day.exercises.length
     }
 
-    setTemplates((prev) => [...createdTemplates, ...prev])
+    setTemplates((prev) => sortTemplates([...createdTemplates, ...prev]))
     setExercisesByTemplate((prev) => ({ ...prev, ...createdExercisesByTemplate }))
     if (createdTemplates.length === 1) setExpandedId(createdTemplates[0].id)
 
