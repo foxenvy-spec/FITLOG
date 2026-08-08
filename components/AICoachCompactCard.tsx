@@ -192,7 +192,10 @@ export default function AICoachCompactCard({
           aria-hidden="true"
         />
       ))}
-      <span className="absolute top-3 right-3 flex items-center gap-1 text-[8px] tracked uppercase text-muted" aria-hidden="true">
+      {/* v16: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ AI Coach description" — ป้าย timestamp
+          นี้ (meta text เล็กสุดในการ์ด) ยังเป็น text-muted (#9498A0) เดิม ไม่เคยถูกแตะเลยตลอดหลายรอบก่อน
+          ขยับเป็น #CFD4DE ตามระดับเดียวกับ caption อื่นในการ์ดนี้ */}
+      <span className="absolute top-3 right-3 flex items-center gap-1 text-[8px] tracked uppercase" style={{ color: '#CFD4DE' }} aria-hidden="true">
         <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
         {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
       </span>
@@ -216,7 +219,7 @@ export default function AICoachCompactCard({
                   v14: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Hamstring • Glute/
                   Lower Body/Recovery" (ตัวอย่างที่ยกมาตรงกับ relatedGroups/Recovery ในการ์ดนี้พอดี) —
                   #A8ACB4 -> #BCC1CA (สว่างขึ้นอีก ~12%) ไม่ต้องขยายขนาดตามที่ขอ */}
-              <p className="text-[10px] tracked uppercase mt-1" style={{ color: '#BCC1CA' }}>วันนี้เหมาะกับ</p>
+              <p className="text-[10px] tracked uppercase mt-1" style={{ color: '#CFD4DE' }}>วันนี้เหมาะกับ</p>
               {/* v30: ฟีดแบ็ก "Typography Hierarchy — UPPER BODY ควรเป็น Level 1 (ใหญ่ที่สุด) ในการ์ดนี้"
                   — เดิม 17px เท่าๆ กับหัวข้ออื่นในการ์ด ขยับขึ้นเป็น 21px/font-semibold ให้เป็นจุดที่สายตา
                   ไปก่อนจริงๆ (ยังคงสีอำพันไว้ — นี่คือ "คำแนะนำสำคัญ" ตามกฎ Orange = Action/Energy/
@@ -224,10 +227,10 @@ export default function AICoachCompactCard({
               <p className="font-display font-semibold tracked uppercase text-amber truncate" style={{ fontSize: 21, lineHeight: 1.15 }}>
                 {region}
               </p>
-              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#BCC1CA' }}>{relatedGroups.join(' • ')}</p>
+              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>{relatedGroups.join(' • ')}</p>
 
               <div className="flex items-center gap-2 mt-1.5">
-                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#BCC1CA' }}>Recovery</p>
+                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }}>Recovery</p>
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
                   <AnimatedBarFill pct={muscleRecommendation.pct} color={barColor} />
                 </div>

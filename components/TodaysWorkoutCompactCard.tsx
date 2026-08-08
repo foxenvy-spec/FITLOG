@@ -144,8 +144,11 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.6 }} />
         {/* v28: "Brushed Titanium" เพิ่มเติม — TITANIUM_MESH_CSS โทเคนเดียวกับที่การ์ดอื่นทั่วแอปใช้ (ไขว้
             2 ทิศ 12px) ซ้อนกับลายเฉียงทิศทางเดียวเดิมด้านบน ให้ Workout Card มีลายตารางไทเทเนียมชุดเดียว
-            กับการ์ดอื่นด้วย (เดิมมีแค่ลายเฉียงทิศทางเดียว ไม่มีลายตาข่าย) */}
-        <div className="absolute inset-0" style={{ backgroundImage: TITANIUM_MESH_CSS }} />
+            กับการ์ดอื่นด้วย (เดิมมีแค่ลายเฉียงทิศทางเดียว ไม่มีลายตาข่าย)
+            v33: ฟีดแบ็ก "ลด texture/glow บางจุดอีก ~10% เฉพาะจุดที่อยู่หลัง text" — ชั้นนี้อยู่หลังคอลัมน์
+            ข้อความเหมือนกับลายเฉียงด้านบน เพิ่ม opacity 0.9 (-10%) เฉพาะจุดนี้ (โทเคนกลางไม่แตะ กันกระทบ
+            การ์ดอื่นที่ใช้ TITANIUM_MESH_CSS เหมือนกัน) */}
+        <div className="absolute inset-0" style={{ backgroundImage: TITANIUM_MESH_CSS, opacity: 0.9 }} />
         {/* v28/v29: ฟีดแบ็ก "Orange Fog ตอนนี้เยอะไป ลดเหลือ 10% แล้วใช้ Brushed Titanium แทน" — ลด
             alpha ลงเหลือเกือบครึ่งหนึ่งของเดิม (.1 -> .04) ให้เป็นแค่ "ไอความอุ่นบางๆ" ไม่ใช่หมอกเห็นชัด
             ผิวโลหะ (ลายเฉียง+ตาข่าย ด้านบน) รับหน้าที่เพิ่มมิติแทนตามที่ขอ */}
@@ -308,9 +311,11 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium เล็กน้อย" — text-muted เดิม (#9498A0)
               จางไปในที่แสงน้อย ขยับเป็น #A8ACB4 เหมือนจุดอื่นในรอบนี้
               v22: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Lower Body" (บรรทัดนี้
-              คือ muscleLine ซึ่งตอนนี้แสดง "LOWER BODY" ตามที่ยกตัวอย่างพอดี) — #A8ACB4 -> #BCC1CA */}
+              คือ muscleLine ซึ่งตอนนี้แสดง "LOWER BODY" ตามที่ยกตัวอย่างพอดี) — #A8ACB4 -> #BCC1CA
+              v23: ฟีดแบ็ก "ยังบางอยู่ เพิ่ม contrast ก่อน ไม่ต้องขยายขนาดเยอะ" — บวกอีกขั้น
+              #BCC1CA -> #CFD4DE */}
           {muscleLine && (
-            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#BCC1CA' }}>
+            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#CFD4DE' }}>
               {muscleLine}
             </p>
           )}

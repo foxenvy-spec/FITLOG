@@ -64,10 +64,13 @@
      >= lg ใช้ SidebarNav แทน ไม่มี BottomNav ให้ชนเลย ใช้ lg:pb-10 เดิมต่อไป)
      v1: ฟีดแบ็ก "การ์ดล่างสุด (ภาพรวมร่างกาย/Body Overview เมื่อเลื่อนถึงจุดนั้น) ยังชิด Bottom Nav
      ไป ควรมี breathing room เพิ่มอีก 16-24px" — บัฟเฟอร์ท้าย 16px เดิมยังไม่พอ เพิ่มเป็น 36px (+20px
-     อยู่กลางช่วงที่ขอ) */
+     อยู่กลางช่วงที่ขอ)
+     v2: ฟีดแบ็ก "Priority 1 — Bottom Navigation ยังบัง Body Metrics อยู่ ต้องแก้" (ฟีดแบ็กซ้ำแม้เพิ่มรอบ
+     ก่อนแล้ว) — เพิ่มบัฟเฟอร์อีกขั้น 36px -> 56px ให้เผื่อพื้นที่มากขึ้นชัดเจน โดยเฉพาะจอที่ safe-area-
+     inset-bottom เป็น 0 (ไม่มี home indicator) ซึ่งบัฟเฟอร์เดิมอาจยังไม่พอ */
   @media (max-width: 1023.98px) {
     .pb-safe-bottom-nav {
-      padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 36px);
+      padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 56px);
     }
   }
   .no-scrollbar {

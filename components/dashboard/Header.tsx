@@ -110,9 +110,11 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // v22: ฟีดแบ็ก "หลังเห็น Layout ใหม่ BANK ใหญ่ได้ครับ เป็น Branding/Hero Header — ถ้าจะ
             // polish ลดแค่ 5-10% พอ อย่าลด 20-30% แบบก่อนหน้าแล้ว" — ลดเบาๆ อีกขั้นสุดท้าย ~8%
             // (30-35px -> 28-32px) letterSpacing ตามสัดส่วน (1.2px -> 1.1px)
-            fontSize: 'clamp(28px, 9vw, 32px)',
+            // v23: ฟีดแบ็ก "Priority 3 — BANK ใหญ่เกินไปนิด ลดประมาณ 10-15%" — ลดต่ออีกขั้น ~12%
+            // (28-32px -> 25-28px) letterSpacing ตามสัดส่วน (1.1px -> 1px)
+            fontSize: 'clamp(25px, 8vw, 28px)',
             fontWeight: 900,
-            letterSpacing: '1.1px',
+            letterSpacing: '1px',
             lineHeight: 1,
             // v4: สต็อปเดิมยังอ่านเป็น "ตัวหนังสือสีขาว" มากกว่าโลหะ (โซนบนสุด/ล่างสุดสว่างเกินไป ไม่มี
             // จุดมืดจริงจังพอ) — เปลี่ยนตามค่าที่ขอเป๊ะ: บนสุด #DADADA (ไม่ใช่ขาวจ้า) → มืดสุด #6F6F72

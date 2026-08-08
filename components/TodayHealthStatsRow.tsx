@@ -93,8 +93,10 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
             {/* v31: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium" — text-muted (#9498A0) เดิมจางไป
                 บนพื้นกระจก (glass) ของแบนเนอร์นี้ ขยับเป็น #A8ACB4 ตามแพทเทิร์นเดียวกับการ์ดอื่นๆ ในรอบนี้
                 v15: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ ติดตามสุขภาพ..." (ยกมา
-                ตรงบรรทัดนี้เป๊ะ) — #A8ACB4 -> #BCC1CA */}
-            <p className="text-[9.5px] truncate" style={{ color: '#BCC1CA' }}>ติดตามสุขภาพได้ครบในที่เดียว</p>
+                ตรงบรรทัดนี้เป๊ะ) — #A8ACB4 -> #BCC1CA
+                v17: ฟีดแบ็ก "ยังบางอยู่ เพิ่ม contrast ก่อน ไม่ต้องขยายขนาดเยอะ" — บวกอีกขั้น
+                #BCC1CA -> #CFD4DE */}
+            <p className="text-[9.5px] truncate" style={{ color: '#CFD4DE' }}>ติดตามสุขภาพได้ครบในที่เดียว</p>
           </div>
         </div>
         <span
