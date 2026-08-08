@@ -223,7 +223,14 @@ export default function MetricCard({
           // v50: ฟีดแบ็ก "ลดความเข้มของ Glow นิดหนึ่ง" (รอบถัดมา) — ลดต่ออีกขั้นเบาๆ .105 -> .095, .68 -> .60
           // v51: ฟีดแบ็ก "ลด Glow/Shadow ของ Metric Cards ประมาณ 5-10%" (รอบ polish สุดท้าย) — ลดอีกขั้น
           // เบาๆ .095 -> .088, .60 -> .55
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.088)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.55), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}, 0 -0.5px 0 0 rgba(255,255,255,.06), 0 0 10px rgba(255,150,60,.035)` : ''}`,
+          // v52: ฟีดแบ็ก "Less decoration, more hierarchy — บางจุดมี border+glow+gradient+shadow+accent
+          // พร้อมกัน เลือกแค่ 2-3 อย่างต่อการ์ดพอ" — การ์ด compact นี้มี box-shadow ซ้อนกันถึง 8 เลเยอร์
+          // (ambient/float/inset highlight/inset shadow/glow มุม x2/hairline/ambient orange accent)
+          // ตัด 2 เลเยอร์ท้ายสุดที่เบาบาง/ซ้ำซ้อนที่สุดออก (hairline ขาว .06 alpha 0.5px กับ ambient
+          // orange accent .035 alpha ซึ่งเป็น "accent" ชั้นที่ 8 ที่ไม่มีใครสังเกตเห็นจริงอยู่แล้ว) เหลือ
+          // 6 เลเยอร์ (ambient/float/inset highlight/inset shadow/glow มุม x2) — ยังคงวัสดุไทเทเนียมไว้
+          // ครบ ไม่ใช่ตัดทิ้งทั้งระบบ แค่ตัดชั้นส่วนเกินที่ไม่มีผลต่อการรับรู้จริง
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.088)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.55), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}` : ''}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard)

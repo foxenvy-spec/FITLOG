@@ -138,7 +138,10 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
         {/* v29: ฟีดแบ็ก "Titanium 70% / Matte Black 20% / Orange 10% — ใช้ Brushed Titanium แทน Orange
             Fog ที่ตัดออก" — ขยับความเข้มขึ้นเล็กน้อย (.7 -> .85) ให้ผิวโลหะเด่นขึ้นมาแทนที่ปริมาณสีส้มที่
             ลดลง */}
-        <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.85 }} />
+        {/* v32: ฟีดแบ็ก "ลด texture หลังตัวหนังสือ ~20-30% เพื่อให้ text อ่านง่ายขึ้น" — ลายเฉียงชั้นนี้
+            อยู่ใต้คอลัมน์ข้อความ (Today's Workout/0-6 Exercises/Lower Body) โดยตรง แม้มี scrim มืดทับอยู่
+            แล้วก็ยังโผล่เป็น noise รบกวนการอ่านอยู่บ้าง ลด .85 -> 0.6 (-29%) */}
+        <div className="absolute inset-0" style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.6 }} />
         {/* v28: "Brushed Titanium" เพิ่มเติม — TITANIUM_MESH_CSS โทเคนเดียวกับที่การ์ดอื่นทั่วแอปใช้ (ไขว้
             2 ทิศ 12px) ซ้อนกับลายเฉียงทิศทางเดียวเดิมด้านบน ให้ Workout Card มีลายตารางไทเทเนียมชุดเดียว
             กับการ์ดอื่นด้วย (เดิมมีแค่ลายเฉียงทิศทางเดียว ไม่มีลายตาข่าย) */}
@@ -303,9 +306,11 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           </div>
 
           {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium เล็กน้อย" — text-muted เดิม (#9498A0)
-              จางไปในที่แสงน้อย ขยับเป็น #A8ACB4 เหมือนจุดอื่นในรอบนี้ */}
+              จางไปในที่แสงน้อย ขยับเป็น #A8ACB4 เหมือนจุดอื่นในรอบนี้
+              v22: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Lower Body" (บรรทัดนี้
+              คือ muscleLine ซึ่งตอนนี้แสดง "LOWER BODY" ตามที่ยกตัวอย่างพอดี) — #A8ACB4 -> #BCC1CA */}
           {muscleLine && (
-            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#A8ACB4' }}>
+            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#BCC1CA' }}>
               {muscleLine}
             </p>
           )}

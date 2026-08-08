@@ -124,15 +124,18 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         <div className="min-w-0">
           {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium เล็กน้อย" — text-muted (#9498A0) เดิม
               จางไปหน่อยเมื่ออ่านในยิม/แสงน้อย ขยับเฉพาะจุดนี้เป็น #A8ACB4 (สว่างกว่า ~12%) เหมือนที่ทำกับ
-              หน้าสุขภาพไปแล้วรอบก่อนๆ — ไม่แตะ text-muted ที่อื่นในแอป (แก้เฉพาะมือถือ/การ์ดที่ระบุ) */}
-          <p className="text-[10px] tracked uppercase" style={{ color: '#A8ACB4' }}>Today&apos;s Focus</p>
+              หน้าสุขภาพไปแล้วรอบก่อนๆ — ไม่แตะ text-muted ที่อื่นในแอป (แก้เฉพาะมือถือ/การ์ดที่ระบุ)
+              v14: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Hamstring • Glute"
+              (ตรงกับ `detail` ด้านล่างพอดี ซึ่งเป็นบรรทัดที่แสดงข้อความในวงเล็บ เช่น "Hamstring • Glute")
+              — #A8ACB4 -> #BCC1CA ทั้งสองจุดในไฟล์นี้ */}
+          <p className="text-[10px] tracked uppercase" style={{ color: '#BCC1CA' }}>Today&apos;s Focus</p>
           {/* v30: ชื่อโปรแกรมวันนี้ — เดิม text-amber (สีส้ม) เปลี่ยนเป็น text-ink (ขาว/ไทเทเนียม) ตามกฎ
               "Orange = Action/Energy เท่านั้น" — ป้ายนี้เป็นแค่ข้อมูล ไม่ใช่ปุ่ม/คำแนะนำ */}
           <p className="font-display tracked uppercase text-ink truncate" style={{ fontSize: 14 }}>
             {main}
           </p>
           {detail && (
-            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#A8ACB4' }}>
+            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#BCC1CA' }}>
               {detail}
             </p>
           )}
