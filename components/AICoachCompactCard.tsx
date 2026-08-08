@@ -11,6 +11,7 @@ import type { WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
 import {
   COLORS,
   NEUTRAL,
+  TEXT,
   withAlpha,
   CARD_GRADIENT_CSS,
   TITANIUM_MESH_CSS,
@@ -194,7 +195,10 @@ export default function AICoachCompactCard({
       <Link href={href} className="flex items-center gap-3 active:opacity-80 transition">
         <AiRingAvatar src={avatarSrc} />
         <div className="min-w-0 flex-1">
-          <p className="font-display text-[10px] tracked uppercase text-amber flex items-center gap-1">
+          {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
+              คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body
+              (เทาสว่าง) เก็บ sparkle emoji ไว้เป็นตัวบ่งชี้ AI เพียงพอโดยไม่ต้องย้อมสีข้อความทั้งบรรทัด */}
+          <p className="font-display text-[10px] tracked uppercase flex items-center gap-1" style={{ color: TEXT.body }}>
             <span aria-hidden="true">✨</span> AI Coach
           </p>
           {muscleRecommendation ? (
@@ -357,11 +361,13 @@ function AiRingAvatar({ src }: { src?: string }) {
   const size = 145
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
+      {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — กรอบ+glow รอบ avatar เดิมสีอำพัน เป็นแค่กรอบ
+          ตกแต่ง ไม่ใช่ action เปลี่ยนเป็นสีขาวกลาง (Titanium) แทน */}
       <div
         className="absolute inset-0"
         style={{
-          border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
-          boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '25')}`,
+          border: '1.5px solid rgba(255,255,255,.28)',
+          boxShadow: '0 0 10px rgba(255,255,255,.12)',
           clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       />

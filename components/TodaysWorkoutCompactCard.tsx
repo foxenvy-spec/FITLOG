@@ -270,7 +270,13 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
               ทำให้ตัดบรรทัดเป็น 2 บรรทัด ("TODAY'S" / "WORKOUT") ดันเนื้อหาอื่นเลื่อนลง — วัดหาค่าสูงสุดที่
               ยังอยู่บรรทัดเดียวจริงได้ 0.14em (ทดสอบทีละ step ด้วย getBoundingClientRect ในเบราว์เซอร์จริง)
               ใกล้เคียงที่ขอที่สุดโดยไม่ทำให้ layout พัง + เพิ่ม nowrap กันเผื่อกรณีฟอนต์โหลดช้า/fallback */}
-          <p className="text-[11px] uppercase text-muted whitespace-nowrap" style={{ letterSpacing: '0.14em' }}>
+          {/* v30: ฟีดแบ็ก "Typography Hierarchy — Today's Workout ควรเป็น Level 2 (จับคู่กับ Recovery/
+              Body Fat) ไม่ใช่จางเท่า Level 3 (Personalized Fitness/timestamp)" — เดิม text-muted (#9498A0)
+              เท่ากับ caption ทั่วไปในการ์ดอื่น เปลี่ยนเป็น TEXT.body (#BDBDBD สว่างกว่า) + font-medium ให้
+              มีน้ำหนักมากกว่า Level 3 จริง — ไม่แตะขนาด (11px คงเดิม) เพราะคอลัมน์นี้แคบ (~131px จาก maxWidth
+              68%) เคยวัดมาแล้วว่าขยับ tracking ขึ้นถึง 0.17em ก็ตัดขึ้น 2 บรรทัด (ดู comment เดิมด้านบน) —
+              เพิ่มขนาดจะเสี่ยงบั๊กเดิมซ้ำ ใช้สี/น้ำหนักตัวอักษรสร้าง hierarchy แทน */}
+          <p className="text-[11px] uppercase whitespace-nowrap" style={{ letterSpacing: '0.14em', color: TEXT.body, fontWeight: 500 }}>
             Today&apos;s Workout
           </p>
 
@@ -287,8 +293,10 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             </span>
           </div>
 
+          {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium เล็กน้อย" — text-muted เดิม (#9498A0)
+              จางไปในที่แสงน้อย ขยับเป็น #A8ACB4 เหมือนจุดอื่นในรอบนี้ */}
           {muscleLine && (
-            <p className="text-muted truncate" style={{ fontSize: 10, marginTop: 1 }}>
+            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#A8ACB4' }}>
               {muscleLine}
             </p>
           )}
