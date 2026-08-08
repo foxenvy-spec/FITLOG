@@ -31,6 +31,20 @@ const ICON_PALETTE = [
   '/images/templates/chest.png',
 ] as const
 
+// ฟีดแบ็ก "อัปโหลด Core-Abs.png ให้แล้ว ช่วยเอาไปใช้กับการ์ด Core/Abs ให้หน่อย" — ICON_PALETTE ข้างบนวนรูป
+// ตามตำแหน่ง (index ของเทมเพลตในลิสต์) ล้วนๆ ไม่ได้ผูกกับชื่อเทมเพลตจริง จึงชี้รูปเฉพาะเจาะจงให้เทมเพลตที่
+// ระบุชื่อมาไม่ได้ตรงๆ (ลำดับเปลี่ยนได้เสมอเมื่อมีเทมเพลตอื่นเพิ่ม/ลบก่อนหน้า) — จับคู่จากคำในชื่อเทมเพลตก่อน
+// เจอคำที่รู้จักแล้วใช้รูปเฉพาะนั้นเลย ไม่เจอค่อย fallback ไปวนตาม ICON_PALETTE เหมือนเดิมทุกประการ
+const TITLE_ICON_OVERRIDES: { keywords: string[]; icon: string }[] = [
+  { keywords: ['core', 'abs', 'แกนกลาง'], icon: '/images/templates/Core-Abs.png' },
+]
+
+function iconForTemplate(title: string, index: number): string {
+  const t = title.toLowerCase()
+  const override = TITLE_ICON_OVERRIDES.find((o) => o.keywords.some((k) => t.includes(k)))
+  return override ? override.icon : ICON_PALETTE[index % ICON_PALETTE.length]
+}
+
 // NOISE_BG (เท็กซ์เจอร์ผิวโลหะ) ย้ายไปเป็นตัวแปรกลางที่ lib/theme.ts แล้ว ใช้ร่วมกับหน้า dashboard
 
 // แยกหัวข้อเป็น "คำนำ" (เช่น "DAY 5") กับ "ส่วนที่เหลือ" ถ้าชื่อเทมเพลตมีเครื่องหมาย — คั่นอยู่ (ให้น้ำหนัก
@@ -651,7 +665,7 @@ export default function TemplatesPage() {
           const exercises = exercisesByTemplate[t.id] ?? []
           const expanded = expandedId === t.id
           const accent = ACCENT_PALETTE[i % ACCENT_PALETTE.length]
-          const icon = ICON_PALETTE[i % ICON_PALETTE.length]
+          const icon = iconForTemplate(t.title, i)
           return (
             <div
               key={t.id}
