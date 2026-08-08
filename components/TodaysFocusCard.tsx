@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { COLORS, withAlpha, cncCornerClipPath } from '@/lib/theme'
+import { cncCornerClipPath } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import PremiumCard from './ui/PremiumCard'
 
@@ -49,9 +49,11 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
         // ดีฟอลต์ใหม่เป๊ะอยู่แล้ว จึงตัด override ตรงนี้ทิ้งได้เลย ไม่ต้องประกาศซ้ำ
       }}
     >
-      {/* v23/v27: ลายตาข่ายไทเทเนียม (mesh) ย้ายไปเป็นดีฟอลต์กลางของ PremiumCard แล้วเช่นกัน (ทุกการ์ด
-          ได้ลายเดียวกัน ละเอียดขึ้นกว่าเดิม 22px -> 12px) — เหลือไว้เฉพาะจุดที่ยังเป็นเอกลักษณ์เฉพาะการ์ด
-          นี้จริงๆ คือเส้นไฮไลต์สีอำพันพาดตามแนวมุมตัด ด้านล่าง */}
+      {/* v30: ฟีดแบ็ก "สีส้มควรหายากขึ้น — Orange = Action/Energy เท่านั้น (Start/Progress/Active/
+          คำแนะนำสำคัญ) ส่วนที่ไม่ต้องการ action ให้กลับไปใช้ Titanium/Gray/White" — การ์ดนี้เป็นแค่ป้าย
+          บอกชื่อโปรแกรมวันนี้ ไม่ใช่ปุ่ม action ไม่ใช่คำแนะนำ — เส้นไฮไลต์มุมตัด (เดิมสีอำพัน rgba(255,
+          180,90,.55)) เปลี่ยนเป็นสีขาวกลาง (Titanium) แทน ให้เหลือแต่ Today's Workout/ปุ่ม Start เท่านั้น
+          ที่ยังเป็นสีส้ม */}
       <div
         className="absolute pointer-events-none"
         style={{
@@ -60,7 +62,7 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
           top: 9,
           left: 9,
           transform: 'translate(-50%, -50%) rotate(45deg)',
-          background: 'linear-gradient(90deg, transparent, rgba(255,180,90,.55), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent)',
         }}
         aria-hidden="true"
       />
@@ -103,9 +105,11 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
             พื้นโปร่งใส) ทำให้ดูเหมือนกรอบดำทับอยู่บนวงพื้นหลังสีอำพัน ใช้ mixBlendMode: screen (เทคนิค
             เดียวกับ glow ทุกจุดใน Header.tsx/HeroEnergyWave.tsx) ให้พื้นดำเกือบสนิทของรูปนี้ "หายไป"
             กลืนกับพื้นหลังมืดของวง เหลือแค่ไอคอนเรืองแสงจริงๆ */}
+        {/* v30: ไอคอนพื้นวงกลม เดิมอำพัน (withAlpha(COLORS.amber,'22')) — เปลี่ยนเป็นเทากลาง (Titanium)
+            เหตุผลเดียวกับเส้นมุมตัดด้านบน (การ์ดนี้ไม่ใช่ action) */}
         <span
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-          style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
+          style={{ backgroundColor: 'rgba(255,255,255,.08)' }}
           aria-hidden="true"
         >
           <Image
@@ -118,12 +122,17 @@ export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
           />
         </span>
         <div className="min-w-0">
-          <p className="text-[10px] tracked uppercase text-muted">Today&apos;s Focus</p>
-          <p className="font-display tracked uppercase text-amber truncate" style={{ fontSize: 14 }}>
+          {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium เล็กน้อย" — text-muted (#9498A0) เดิม
+              จางไปหน่อยเมื่ออ่านในยิม/แสงน้อย ขยับเฉพาะจุดนี้เป็น #A8ACB4 (สว่างกว่า ~12%) เหมือนที่ทำกับ
+              หน้าสุขภาพไปแล้วรอบก่อนๆ — ไม่แตะ text-muted ที่อื่นในแอป (แก้เฉพาะมือถือ/การ์ดที่ระบุ) */}
+          <p className="text-[10px] tracked uppercase" style={{ color: '#A8ACB4' }}>Today&apos;s Focus</p>
+          {/* v30: ชื่อโปรแกรมวันนี้ — เดิม text-amber (สีส้ม) เปลี่ยนเป็น text-ink (ขาว/ไทเทเนียม) ตามกฎ
+              "Orange = Action/Energy เท่านั้น" — ป้ายนี้เป็นแค่ข้อมูล ไม่ใช่ปุ่ม/คำแนะนำ */}
+          <p className="font-display tracked uppercase text-ink truncate" style={{ fontSize: 14 }}>
             {main}
           </p>
           {detail && (
-            <p className="text-muted truncate" style={{ fontSize: 10, marginTop: 1 }}>
+            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#A8ACB4' }}>
               {detail}
             </p>
           )}

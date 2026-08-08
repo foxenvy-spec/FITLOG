@@ -39,6 +39,7 @@ import {
   RADIAL_SHADOW_CSS,
   PAGE_REFLECTION_CSS,
   HAIRLINE_SCRATCH_BG,
+  TEXT,
 } from '@/lib/theme'
 import GoalRing from '@/components/GoalRing'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
@@ -231,7 +232,9 @@ export default function MobileDashboardView() {
   // เดสก์ท็อป (v41) — การ์ดนี้เป็นการ์ดรอง (ซ่อนหลัง "ดูสถิติเพิ่มเติม") ไม่ควร glow ถาวรทั้งใบ
   const recoveryDetailCard = prefs.showRecovery ? (
     <Link href="/recovery" className="block rounded-lg bg-surface2/40 border border-line overflow-hidden px-5 py-4 active:bg-surface2 transition">
-          <p className="text-[10px] tracked uppercase text-muted mb-3">Recovery</p>
+          {/* v31: ฟีดแบ็ก "Typography Hierarchy — ป้ายชื่อการ์ดควรเป็น Level 2" — เหมือนที่ทำกับ
+              Today's Workout/Workout Streak/AI Coach ด้านบน text-muted เดิมจางเท่า caption ทั่วไป */}
+          <p className="text-[10px] tracked uppercase mb-3" style={{ color: TEXT.body }}>Recovery</p>
           {muscleRecommendation &&
             (() => {
               const recColor = recoveryStatusColor(muscleRecommendation.pct)

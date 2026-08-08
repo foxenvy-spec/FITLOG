@@ -1,7 +1,7 @@
 'use client'
 
 import { WEEKDAY_LABELS } from '@/app/(app)/dashboard/DashboardView'
-import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
+import { COLORS, NEUTRAL, TEXT, withAlpha } from '@/lib/theme'
 import PremiumCard from './ui/PremiumCard'
 
 interface WorkoutStreakCardProps {
@@ -26,7 +26,11 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
             🔥
           </span>
           <div>
-            <p className="text-[9px] tracked uppercase text-muted leading-none">Workout Streak</p>
+            {/* v30: ฟีดแบ็ก "Typography Hierarchy — Workout Streak ควรเป็น Level 2 เหมือน Today's
+                Workout/Recovery" — text-muted (#9498A0) เดิมเท่ากับ caption ทั่วไป เปลี่ยนเป็น TEXT.body
+                (#BDBDBD) ให้อ่านเป็นชื่อการ์ดจริงๆ ไม่ใช่แค่รายละเอียดจาง — ตัวเลขวัน (streak) ยังเป็นสีส้ม
+                ไว้เหมือนเดิม เพราะเป็น "Progress" ตามกฎ Orange = Action/Energy/Progress ที่ตั้งไว้ */}
+            <p className="text-[9px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Workout Streak</p>
             <p className="font-mono text-amber leading-none mt-1" style={{ fontSize: 13 }}>{streak} วัน</p>
           </div>
         </div>

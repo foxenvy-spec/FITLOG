@@ -90,7 +90,9 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
           </div>
           <div className="min-w-0">
             <p className="font-display text-[11px] tracked uppercase text-ink truncate">เชื่อมต่อ Health App</p>
-            <p className="text-[9.5px] text-muted truncate">ติดตามสุขภาพได้ครบในที่เดียว</p>
+            {/* v31: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium" — text-muted (#9498A0) เดิมจางไป
+                บนพื้นกระจก (glass) ของแบนเนอร์นี้ ขยับเป็น #A8ACB4 ตามแพทเทิร์นเดียวกับการ์ดอื่นๆ ในรอบนี้ */}
+            <p className="text-[9.5px] truncate" style={{ color: '#A8ACB4' }}>ติดตามสุขภาพได้ครบในที่เดียว</p>
           </div>
         </div>
         <span

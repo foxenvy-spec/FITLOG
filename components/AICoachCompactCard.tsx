@@ -11,6 +11,7 @@ import type { WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
 import {
   COLORS,
   NEUTRAL,
+  TEXT,
   withAlpha,
   CARD_GRADIENT_CSS,
   TITANIUM_MESH_CSS,
@@ -166,7 +167,10 @@ export default function AICoachCompactCard({
   }
 
   return (
-    <PremiumCard className="flex flex-col gap-3 px-4 py-4">
+    // v30: ฟีดแบ็ก "AI Coach Card ใหญ่ไปนิด...เกือบกลายเป็น Dashboard ใน Dashboard ผมจะลดประมาณ 15-20%" —
+    // padding เดิม px-4 py-4 (16px) ลดเหลือ px-3.5 py-3.5 (14px, -12.5%) ร่วมกับ avatar ที่เล็กลงและ
+    // gap ที่แคบลงด้านล่าง รวมกันแล้วการ์ดทั้งใบเตี้ย/แคบลงตามสัดส่วนที่ขอ โดยไม่ตัดข้อมูลออก
+    <PremiumCard className="flex flex-col gap-2.5 px-3.5 py-3.5">
       {/* v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — เพิ่ม Background Particle" — จุดกระพริบเล็กๆ กระจายห่างๆ
           (เทคนิคเดียวกับที่การ์ด Hero Workout ใช้อยู่แล้วรอบก่อน) วางเฉพาะโซนขวา/ล่างของการ์ด หลีกเลี่ยง
           โซน avatar+ข้อความฝั่งซ้ายที่ยังต้องอ่านออกชัดเจน */}
@@ -191,19 +195,28 @@ export default function AICoachCompactCard({
       <Link href={href} className="flex items-center gap-3 active:opacity-80 transition">
         <AiRingAvatar src={avatarSrc} />
         <div className="min-w-0 flex-1">
-          <p className="font-display text-[10px] tracked uppercase text-amber flex items-center gap-1">
+          {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
+              คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body
+              (เทาสว่าง) เก็บ sparkle emoji ไว้เป็นตัวบ่งชี้ AI เพียงพอโดยไม่ต้องย้อมสีข้อความทั้งบรรทัด */}
+          <p className="font-display text-[10px] tracked uppercase flex items-center gap-1" style={{ color: TEXT.body }}>
             <span aria-hidden="true">✨</span> AI Coach
           </p>
           {muscleRecommendation ? (
             <>
-              <p className="text-[10px] tracked uppercase text-muted mt-1">วันนี้เหมาะกับ</p>
-              <p className="font-display tracked uppercase text-amber truncate" style={{ fontSize: 17, lineHeight: 1.15 }}>
+              {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium" — text-muted (#9498A0) เดิม จางไป
+                  หน่อยในที่แสงน้อย (ยิม) ขยับเป็น #A8ACB4 (สว่างกว่า ~12%) เฉพาะ caption ในการ์ดนี้ */}
+              <p className="text-[10px] tracked uppercase mt-1" style={{ color: '#A8ACB4' }}>วันนี้เหมาะกับ</p>
+              {/* v30: ฟีดแบ็ก "Typography Hierarchy — UPPER BODY ควรเป็น Level 1 (ใหญ่ที่สุด) ในการ์ดนี้"
+                  — เดิม 17px เท่าๆ กับหัวข้ออื่นในการ์ด ขยับขึ้นเป็น 21px/font-semibold ให้เป็นจุดที่สายตา
+                  ไปก่อนจริงๆ (ยังคงสีอำพันไว้ — นี่คือ "คำแนะนำสำคัญ" ตามกฎ Orange = Action/Energy/
+                  Important recommendation ที่ตั้งไว้ ไม่ใช่แค่ป้ายข้อมูลเฉยๆ) */}
+              <p className="font-display font-semibold tracked uppercase text-amber truncate" style={{ fontSize: 21, lineHeight: 1.15 }}>
                 {region}
               </p>
-              <p className="text-[10px] text-muted truncate mt-0.5">{relatedGroups.join(' • ')}</p>
+              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#A8ACB4' }}>{relatedGroups.join(' • ')}</p>
 
               <div className="flex items-center gap-2 mt-2.5">
-                <p className="text-[9px] tracked uppercase text-muted shrink-0">Recovery</p>
+                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#A8ACB4' }}>Recovery</p>
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
                   <AnimatedBarFill pct={muscleRecommendation.pct} color={barColor} />
                 </div>
@@ -221,8 +234,12 @@ export default function AICoachCompactCard({
         </div>
       </Link>
 
+      {/* v30: ฟีดแบ็ก "Ready/Energy/Sleep ให้เป็น secondary information" — แถวนี้เคยเท่าน้ำหนักกับข้อมูล
+          ด้านบน (region+recovery bar) ตามภาพ — ลด opacity ลงเล็กน้อยทั้งแถว (ไม่ใช่ตัวหนังสือแต่ละจุด)
+          ให้สายตาอ่าน "UPPER BODY" ก่อนแล้วค่อยไล่ลงมาที่แถวนี้ทีหลัง โดยไม่ต้องแตะสี/ขนาดของ StatChip/
+          LockedChip เดิมเลย (ยังอ่านออกชัดเจนที่ opacity 85%) */}
       {muscleRecommendation && (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-1.5" style={{ opacity: 0.85 }}>
           <StatChip icon="💪" label="ความพร้อม" value={readinessLabel(muscleRecommendation.pct)} pct={muscleRecommendation.pct} color={barColor} />
           <LockedChip icon="⚡" label="พลังงาน" />
           <LockedChip icon="🌙" label="การนอน" />
@@ -338,14 +355,19 @@ function AiRingAvatar({ src }: { src?: string }) {
   // v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — Robot ใหญ่ขึ้นอีก 20%, Crop แบบ Cinematic" — 146 -> 175
   // (146*1.2 ปัดเศษ) scale 1.72 -> 1.85 (ครอปเข้าไปอีกนิด ให้เป็น close-up มากกว่า "เห็นทั้งหัว+ไหล่"
   // แบบเดิม สมชื่อ cinematic) — inset:5 ไม่ต้องแก้ตาม ขยายตาม size โดยอัตโนมัติเพียงพอเหมือนรอบก่อนๆ
-  const size = 175
+  // v30: ฟีดแบ็ก "AI Coach Card ใหญ่ไปนิด...เกือบกลายเป็น Dashboard ใน Dashboard ผมจะลดประมาณ 15-20%" —
+  // ย้อนทิศทาง 5 รอบก่อนหน้า (88→110→127→146→175 ไล่ใหญ่ขึ้นทุกรอบ) เป็นครั้งแรก ลดลง ~17% (175→145)
+  // scale/inset ไม่ต้องแก้ตาม (สัมพัทธ์กับ size โดยอัตโนมัติเหมือนทุกรอบที่ผ่านมา)
+  const size = 145
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
+      {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — กรอบ+glow รอบ avatar เดิมสีอำพัน เป็นแค่กรอบ
+          ตกแต่ง ไม่ใช่ action เปลี่ยนเป็นสีขาวกลาง (Titanium) แทน */}
       <div
         className="absolute inset-0"
         style={{
-          border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
-          boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '25')}`,
+          border: '1.5px solid rgba(255,255,255,.28)',
+          boxShadow: '0 0 10px rgba(255,255,255,.12)',
           clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       />
