@@ -112,9 +112,11 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // (30-35px -> 28-32px) letterSpacing ตามสัดส่วน (1.2px -> 1.1px)
             // v23: ฟีดแบ็ก "Priority 3 — BANK ใหญ่เกินไปนิด ลดประมาณ 10-15%" — ลดต่ออีกขั้น ~12%
             // (28-32px -> 25-28px) letterSpacing ตามสัดส่วน (1.1px -> 1px)
-            fontSize: 'clamp(25px, 8vw, 28px)',
+            // v24: ฟีดแบ็ก "③ ลด BANK ประมาณ 10% ให้ Today's Workout มี priority สูงกว่า" — ลดต่ออีกขั้น
+            // ~10% (25-28px -> 23-25px) letterSpacing ตามสัดส่วน (1px -> 0.9px)
+            fontSize: 'clamp(23px, 7vw, 25px)',
             fontWeight: 900,
-            letterSpacing: '1px',
+            letterSpacing: '0.9px',
             lineHeight: 1,
             // v4: สต็อปเดิมยังอ่านเป็น "ตัวหนังสือสีขาว" มากกว่าโลหะ (โซนบนสุด/ล่างสุดสว่างเกินไป ไม่มี
             // จุดมืดจริงจังพอ) — เปลี่ยนตามค่าที่ขอเป๊ะ: บนสุด #DADADA (ไม่ใช่ขาวจ้า) → มืดสุด #6F6F72
@@ -187,7 +189,10 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
           {displayName}
         </p>
 
-        <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 7, fontSize: 11 }}>
+        {/* v25: ฟีดแบ็ก "⑤ เพิ่ม readability ของข้อความเล็ก — เพิ่ม contrast ก่อนเพิ่ม font size" —
+            บรรทัดนี้ยังเป็น text-muted (#9498A0) เดิม ไม่เคยถูกแตะเลยตลอดหลายรอบก่อนหน้า ขยับเป็น
+            #CFD4DE ตามระดับเดียวกับ caption อื่นที่ปรับไปแล้ว ไม่แตะขนาด (11px คงเดิม) */}
+        <p className="tracked whitespace-nowrap" style={{ marginTop: 7, fontSize: 11, color: '#CFD4DE' }}>
           Personalized Fitness
         </p>
         {/* v20: ฟีดแบ็ก "ลดช่องว่างระหว่าง Personalized Fitness → คำแนะนำ ลงประมาณ 10-15px" — SubtitleAccent

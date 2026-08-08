@@ -1,12 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { BodyMetric, Profile } from '@/lib/types'
+import type { BodyMetric, Goal, Profile } from '@/lib/types'
 import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor, bmiOf } from '@/lib/bodyMetricsSummary'
+import { goalProgressPct } from '@/lib/goalProgress'
 import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
 import MetricCard, { type MetricIconImageKey, type MetricCardTheme } from './MetricCard'
+import MetricDetailSheet from './dashboard/MetricDetailSheet'
 import { COLORS, NEUTRAL } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 
@@ -47,14 +50,18 @@ const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
 export const BODY_METRICS_QUERY_KEY = ['body-metrics-summary']
 
 export async function fetchBodyMetricsData(supabase: ReturnType<typeof createClient>) {
-  const [{ data: metricsRows }, { data: profileRow }] = await Promise.all([
+  const [{ data: metricsRows }, { data: profileRow }, { data: goalRows }] = await Promise.all([
     // ดึงย้อนหลังพอสำหรับใช้เอนทรีก่อนหน้าล่าสุดมาเทียบ delta เสมอ ไม่ว่าจะชั่งถี่หรือห่างแค่ไหน
     supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(30),
     supabase.from('profiles').select('height_cm').maybeSingle(),
+    // ตารางเดียวกับที่หน้า /health ใช้อยู่แล้ว (goal_type weight/body_fat) — เอาไว้แสดง Goal Progress
+    // ใน MetricDetailSheet ตอนแตะการ์ด ไม่ต้องเพิ่ม field/schema ใหม่ (ดู lib/goalProgress.ts)
+    supabase.from('goals').select('*').in('goal_type', ['weight', 'body_fat']).eq('status', 'active'),
   ])
   return {
     metrics: (metricsRows as BodyMetric[]) ?? [],
     heightCm: (profileRow as Pick<Profile, 'height_cm'> | null)?.height_cm ?? null,
+    goals: (goalRows as Goal[]) ?? [],
   }
 }
 
@@ -67,6 +74,9 @@ interface CardDef {
   deltaColor: string
   deltaDir: 'up' | 'down' | null
   series: number[]
+  // เฉพาะ weight/bodyFat (ตาราง goals รองรับแค่ goal_type สองแบบนี้) — ใช้โชว์ Goal Progress ใน
+  // MetricDetailSheet ตอนแตะการ์ด (compact/มือถือเท่านั้น) null = ยังไม่ได้ตั้งเป้าหมาย
+  goal: { targetText: string; progressPct: number | null } | null
 }
 
 function fmtSigned(n: number, decimals: number, suffix: string): string {
@@ -93,6 +103,9 @@ export default function BodyMetricsRow({
     staleTime: 60_000,
   })
 
+  // key ของการ์ดที่กำลังเปิด MetricDetailSheet อยู่ (compact/มือถือเท่านั้น) — null = ปิดอยู่
+  const [openKey, setOpenKey] = useState<string | null>(null)
+
   if (isLoading || !data) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -107,7 +120,7 @@ export default function BodyMetricsRow({
     )
   }
 
-  const { metrics, heightCm } = data
+  const { metrics, heightCm, goals } = data
 
   if (metrics.length === 0) {
     return (
@@ -158,6 +171,18 @@ export default function BodyMetricsRow({
   })
   const bmiSeries = seriesFor((m) => bmiOf(m.weight_kg, heightCm))
 
+  // เป้าหมาย active ล่าสุดต่อประเภท (ตาราง goals รองรับแค่ weight/body_fat — เหมือนหน้า /health)
+  const weightGoal = goals.find((g) => g.goal_type === 'weight')
+  const bodyFatGoal = goals.find((g) => g.goal_type === 'body_fat')
+  const weightGoalDetail =
+    weightGoal?.target_value != null
+      ? { targetText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`, progressPct: goalProgressPct(weightGoal, summary.weight.value) }
+      : null
+  const bodyFatGoalDetail =
+    bodyFatGoal?.target_value != null
+      ? { targetText: `${bodyFatGoal.target_value.toFixed(1)} %`, progressPct: goalProgressPct(bodyFatGoal, summary.bodyFatPct.value) }
+      : null
+
   const cards: CardDef[] = [
     {
       key: 'weight',
@@ -169,6 +194,7 @@ export default function BodyMetricsRow({
       deltaColor: summary.weight.isGood == null ? NEUTRAL.mutedIcon : summary.weight.isGood ? COLORS.deltaGood : COLORS.rust,
       deltaDir: summary.weight.delta == null ? null : summary.weight.delta > 0 ? 'up' : summary.weight.delta < 0 ? 'down' : null,
       series: weightSeries,
+      goal: weightGoalDetail,
     },
     {
       key: 'bodyFat',
@@ -181,6 +207,7 @@ export default function BodyMetricsRow({
       deltaColor: summary.bodyFatPct.isGood == null ? NEUTRAL.mutedIcon : summary.bodyFatPct.isGood ? COLORS.deltaGood : COLORS.rust,
       deltaDir: summary.bodyFatPct.delta == null ? null : summary.bodyFatPct.delta > 0 ? 'up' : summary.bodyFatPct.delta < 0 ? 'down' : null,
       series: bodyFatSeries,
+      goal: bodyFatGoalDetail,
     },
     {
       key: 'muscle',
@@ -197,6 +224,7 @@ export default function BodyMetricsRow({
       deltaDir:
         summary.skeletalMuscleKg.delta == null ? null : summary.skeletalMuscleKg.delta > 0 ? 'up' : summary.skeletalMuscleKg.delta < 0 ? 'down' : null,
       series: muscleSeries,
+      goal: null,
     },
     {
       key: 'fatMass',
@@ -208,6 +236,7 @@ export default function BodyMetricsRow({
       deltaColor: summary.fatMassKg.isGood == null ? NEUTRAL.mutedIcon : summary.fatMassKg.isGood ? COLORS.deltaGood : COLORS.rust,
       deltaDir: summary.fatMassKg.delta == null ? null : summary.fatMassKg.delta > 0 ? 'up' : summary.fatMassKg.delta < 0 ? 'down' : null,
       series: fatMassSeries,
+      goal: null,
     },
     {
       key: 'bmi',
@@ -218,33 +247,68 @@ export default function BodyMetricsRow({
       deltaColor: summary.bmi != null ? bmiCategoryColor(summary.bmi) : NEUTRAL.mutedIcon,
       deltaDir: null,
       series: bmiSeries,
+      goal: null,
     },
   ]
+
+  const openCard = cards.find((c) => c.key === openKey) ?? null
 
   // compact (มือถือ): cardGap จาก dashboardSpec.metricCard.gridGap (12px) แหล่งความจริงเดียว —
   // ใช้ style แทน Tailwind class เพราะ JIT อ่านค่าจากตัวแปรไม่ได้ (เหมือนจุดอื่นในไฟล์ที่ใช้ token)
   return (
-    <div
-      className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? '' : 'gap-3'}`}
-      style={compact ? { gap: dashboardSpec.metricCard.gridGap } : undefined}
-    >
-      {cards.slice(0, maxCards ?? cards.length).map((c) => (
-        <MetricCard
-          key={c.key}
-          icon={c.icon}
-          label={c.label}
-          valueText={c.valueText}
-          deltaText={c.deltaText}
-          deltaColor={c.deltaColor}
-          deltaDir={c.deltaDir}
-          series={c.series}
-          theme={METRIC_THEME[c.icon]}
-          lastMeasuredText={lastMeasuredText}
-          tall={showLastMeasuredDate}
-          radius="xl20"
-          compact={compact}
+    <>
+      <div
+        className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? '' : 'gap-3'}`}
+        style={compact ? { gap: dashboardSpec.metricCard.gridGap } : undefined}
+      >
+        {cards.slice(0, maxCards ?? cards.length).map((c) => {
+          const card = (
+            <MetricCard
+              icon={c.icon}
+              label={c.label}
+              valueText={c.valueText}
+              deltaText={c.deltaText}
+              deltaColor={c.deltaColor}
+              deltaDir={c.deltaDir}
+              series={c.series}
+              theme={METRIC_THEME[c.icon]}
+              lastMeasuredText={lastMeasuredText}
+              tall={showLastMeasuredDate}
+              radius="xl20"
+              compact={compact}
+            />
+          )
+          // แตะเปิด MetricDetailSheet ได้เฉพาะ compact (มือถือ) — เดสก์ท็อปมี Goal Progress ของตัวเอง
+          // อยู่แล้วที่หน้า /health (Health Score banner) ไม่ต้องซ้ำจุดนี้
+          if (!compact) return <div key={c.key}>{card}</div>
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setOpenKey(c.key)}
+              className="w-full text-left"
+              aria-haspopup="dialog"
+            >
+              {card}
+            </button>
+          )
+        })}
+      </div>
+
+      {compact && openCard && (
+        <MetricDetailSheet
+          open
+          onClose={() => setOpenKey(null)}
+          icon={openCard.icon}
+          label={openCard.label}
+          valueText={openCard.valueText}
+          deltaText={openCard.deltaText}
+          deltaColor={openCard.deltaColor}
+          deltaDir={openCard.deltaDir}
+          theme={METRIC_THEME[openCard.icon]}
+          goal={openCard.goal}
         />
-      ))}
-    </div>
+      )}
+    </>
   )
 }
