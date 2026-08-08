@@ -452,22 +452,14 @@ export default function MetricCard({
                     <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
                   )}
                 </p>
-                {/* v48: ฟีดแบ็ก "ค่าทั้งหมดอยู่ชิดซ้าย ลองเพิ่ม Mini Trend ด้านขวา (ตัวเลข/ลูกศร/ช่วงเวลา)
-                    จะรู้สึก Apple Health มากขึ้น" — เดิมมีแค่ Sparkline ฝั่งขวา (กราฟเส้น ไม่มีทิศทาง/
-                    ช่วงเวลาเป็นตัวหนังสือกำกับ) เพิ่มลูกศร+ช่วงเวลาสั้นๆ ใต้ Sparkline ในคอลัมน์ขวาเดียวกัน
-                    ใช้ deltaDir/deltaText เดิมที่มีอยู่แล้ว (splitDeltaCaption เดิมใช้แค่โหมด compact มา
-                    ก่อน ดึงมาใช้ร่วมที่นี่ด้วย) ไม่ต้องคำนวณใหม่ — บรรทัดเดลต้าเต็ม (ค่า+คำอธิบาย) ด้านล่าง
-                    การ์ดยังอยู่เหมือนเดิม อันนี้แค่เสริมจุดสรุปเร็วๆ ฝั่งขวา ไม่ใช่แทนที่ */}
-                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                {/* v48: เคยเพิ่มลูกศร+ช่วงเวลาสั้นๆ ("Mini Trend") ใต้ Sparkline ตรงนี้ โดยตั้งใจให้เป็นแค่
+                    จุดสรุปเร็วๆ เสริมจากบรรทัดเดลต้าเต็มด้านล่าง ไม่ใช่แทนที่ — แต่บนการ์ดแคบ (5 ใบต่อแถว บน
+                    จอเล็ก) สองบรรทัดนี้อยู่ใกล้กันจนอ่านเหมือนตัวหนังสือซ้อน/ทับกัน (ฟีดแบ็ก "ตัวเลขบางช่อง
+                    มันทับ") ทั้งที่เป็นข้อมูลเดียวกันเป๊ะ (ลูกศร+ช่วงเวลา ซ้ำกับบรรทัดเดลต้าเต็มด้านล่างที่มี
+                    ทั้งค่า+ช่วงเวลาอยู่แล้ว) — ตัดออก เหลือแค่ Sparkline เดี่ยวๆ ฝั่งขวา บรรทัดเดลต้าเต็ม
+                    ด้านล่างการ์ดยังอยู่เหมือนเดิมทุกประการ ไม่กระทบ */}
+                <div className="shrink-0">
                   <Sparkline series={series} color={theme.main} height={30} width={64} />
-                  {deltaDir && (
-                    <span className="flex items-center gap-1 text-[9px] leading-none" style={{ color: deltaColor }}>
-                      <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>
-                      {splitDeltaCaption(deltaText ?? '').caption && (
-                        <span className="text-muted">{splitDeltaCaption(deltaText ?? '').caption}</span>
-                      )}
-                    </span>
-                  )}
                 </div>
               </div>
               {deltaText && (
