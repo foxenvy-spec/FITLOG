@@ -8,13 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
-import {
-  computeTodayTotals,
-  computeRecoveryPct,
-  recoveryStatusColor,
-  findNextProgramDay,
-  recoveryRecommendationLabel,
-} from '@/lib/dashboardStats'
+import { computeTodayTotals, computeRecoveryPct } from '@/lib/dashboardStats'
 import { saveDisplayName } from '@/lib/profile'
 import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
@@ -39,35 +33,19 @@ import {
   RADIAL_SHADOW_CSS,
   PAGE_REFLECTION_CSS,
   HAIRLINE_SCRATCH_BG,
-  TEXT,
 } from '@/lib/theme'
-import GoalRing from '@/components/GoalRing'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
-import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
-import ConsistencyStrip from '@/components/ConsistencyStrip'
 import Header from '@/components/dashboard/Header'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
-import WeeklyGoalMuscleCard from '@/components/WeeklyGoalMuscleCard'
-import WeeklyVolumeRecoveryCard from '@/components/WeeklyVolumeRecoveryCard'
 import TodaysFocusCard from '@/components/TodaysFocusCard'
 import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
 import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
 import { useHealthSnapshot } from '@/lib/healthIntegration'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
 
-// การ์ดหนักๆ ที่ไม่จำเป็นต้องเห็นทันทีตอนเปิดหน้า — โหลดแยก bundle เหมือนฝั่งเดสก์ท็อป
-const WeeklyMuscleHeatmap = dynamic(() => import('@/components/WeeklyMuscleHeatmap'), {
-  loading: () => <Skeleton className="h-80 w-full rounded-lg" />,
-})
-const WeeklyVolume = dynamic(() => import('@/components/WeeklyVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-lg" />,
-})
-const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-lg" />,
-})
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
 // ตัด "สถิติ" (/stats), "ถาม AI" (/coach) และ "บันทึกสถิติ" (/log) ออกจากแถวนี้ — ซ้ำซ้อนกับที่มีอยู่แล้ว
@@ -101,7 +79,6 @@ export default function MobileDashboardView() {
   const searchParams = useSearchParams()
   const [greetingText, setGreetingText] = useState('สวัสดี')
   const [bannerDismissed, setBannerDismissed] = useState(true)
-  const [showMore, setShowMore] = useState(false)
 
   useEffect(() => {
     setPrefs(loadDashboardPrefs())
@@ -147,7 +124,6 @@ export default function MobileDashboardView() {
     () => data?.programDays.find((d) => d.day_of_week === dow) ?? null,
     [data?.programDays, dow]
   )
-  const next = useMemo(() => (data ? findNextProgramDay(data.programDays, dow) : null), [data, dow])
   const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
   // กลุ่มกล้ามเนื้อของโปรแกรมวันนี้ (จาก ProgramExercise.muscle_group จริง ไม่ใช่พาร์สจากชื่อโปรแกรม
   // ที่ผู้ใช้พิมพ์เอง) — ใช้กับบรรทัด "Chest • Triceps" ใน TodaysWorkoutCompactCard
@@ -159,13 +135,6 @@ export default function MobileDashboardView() {
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
   const progressPct =
     data && data.todayExercises.length > 0 ? Math.round((data.completedCount / data.todayExercises.length) * 100) : null
-  const progressPctForLabel =
-    data && data.todayExercises.length > 0
-      ? Math.round((data.completedCount / data.todayExercises.length) * 100)
-      : (data?.todayWorkouts.length ?? 0) > 0
-        ? 100
-        : null
-  const recoveryLabelPct = progressPctForLabel
 
   const recoveryPctMap = useMemo(() => {
     const map: Record<string, number> = {}
@@ -190,12 +159,7 @@ export default function MobileDashboardView() {
     return <ErrorState title="โหลด Dashboard ไม่สำเร็จ" message="ไม่สามารถโหลด Dashboard ได้ ตรวจสอบการเชื่อมต่อแล้วลองใหม่" onRetry={retry} />
   }
 
-  const overallRecoveryPct = Math.round(
-    RECOVERY_MUSCLES.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / RECOVERY_MUSCLES.length
-  )
-
-  // ปัจจัย Recovery ของ Fitness Score เท่านั้น (ไม่ใช่ overallRecoveryPct ด้านบน ซึ่งการ์ด "ฟื้นตัวรวม"
-  // (GoalRing) กับตารางรายละเอียดยังใช้ตามปกติ ไม่แตะ) — เอาเฉพาะกลุ่มกล้ามเนื้อที่มีประวัติฝึกจริง
+  // ปัจจัย Recovery ของ Fitness Score เท่านั้น — เอาเฉพาะกลุ่มกล้ามเนื้อที่มีประวัติฝึกจริง
   // (recoveryDates[mg] ไม่ null) มาเฉลี่ย ไม่นับกลุ่มที่ยังไม่เคยฝึกเลยว่า "ฟื้นตัวเต็มที่" (100%) แบบที่
   // computeRecoveryPct คืนค่าไว้ เพราะนั่นจะ reward คนไม่ออกกำลังกายเลยด้วยแต้ม Recovery เต็ม — ถ้ายังไม่
   // เคยฝึกกลุ่มไหนเลยสักกลุ่ม ปัจจัยนี้เป็น null (ไม่มีข้อมูลให้วัด) ให้ computeFitnessScore ตัดออกแล้ว
@@ -222,65 +186,6 @@ export default function MobileDashboardView() {
     { key: 'weeklyGoal', value: data.weeklyGoalPct, weight: 10 },
     { key: 'activityToday', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
   ])
-
-  // การ์ด Recovery แบบละเอียด (ต่อกล้ามเนื้อ) — ย้ายไปไว้ในส่วน "ดูสถิติเพิ่มเติม" ด้านล่างแทน
-  // เพราะมีวงแหวน Recovery แบบย่อ (ภาพรวมเฉลี่ย) อยู่ใน WeeklyVolumeRecoveryCard ด้านบนแล้ว
-  // อันนี้คือ "รายละเอียดเต็ม" สำหรับคนที่อยากดูเจาะจงเป็นกล้ามเนื้อ ไม่ต้องโชว์ตลอดเวลา
-  // (เดิมเคยอยู่ในแถบปัด (carousel) คู่กับ AI Coach — แต่ AI Coach มี AICoachCompactCard
-  // แสดงอยู่แล้วด้านบน โชว์ซ้ำสองที่จึงตัดออกจากแถบปัดไปเลย ไม่ย้ายไปไว้ที่ไหนอีก)
-  // v43: "Minimal Dark Titanium" — เหตุผลเดียวกับที่ตัด glow ระดับการ์ดออกจาก Recovery/Weekly Goal
-  // เดสก์ท็อป (v41) — การ์ดนี้เป็นการ์ดรอง (ซ่อนหลัง "ดูสถิติเพิ่มเติม") ไม่ควร glow ถาวรทั้งใบ
-  const recoveryDetailCard = prefs.showRecovery ? (
-    <Link href="/recovery" className="block rounded-lg bg-surface2/40 border border-line overflow-hidden px-5 py-4 active:bg-surface2 transition">
-          {/* v31: ฟีดแบ็ก "Typography Hierarchy — ป้ายชื่อการ์ดควรเป็น Level 2" — เหมือนที่ทำกับ
-              Today's Workout/Workout Streak/AI Coach ด้านบน text-muted เดิมจางเท่า caption ทั่วไป */}
-          <p className="text-[10px] tracked uppercase mb-3" style={{ color: TEXT.body }}>Recovery</p>
-          {muscleRecommendation &&
-            (() => {
-              const recColor = recoveryStatusColor(muscleRecommendation.pct)
-              const isFullyReady = muscleRecommendation.pct >= 90
-              return (
-                <div className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 mb-3" style={{ backgroundColor: recColor + '1A' }}>
-                  <span className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm shrink-0" aria-hidden="true">💪</span>
-                    <p className="text-xs text-ink whitespace-pre-line">
-                      {recoveryRecommendationLabel(recoveryLabelPct)}{' '}
-                      <span className="font-display tracked uppercase" style={{ color: recColor }}>
-                        {muscleRecommendation.muscleGroup}
-                      </span>{' '}
-                      <span className="text-muted">— ฟื้นตัวแล้ว {muscleRecommendation.pct}%</span>
-                    </p>
-                  </span>
-                  {isFullyReady && (
-                    <span className="shrink-0 text-[10px] font-display tracked uppercase rounded-full px-2.5 py-1" style={{ backgroundColor: recColor, color: '#14161A' }}>
-                      พร้อมลุย
-                    </span>
-                  )}
-                </div>
-              )
-            })()}
-          <div className="flex items-center gap-4">
-            <div style={{ filter: 'drop-shadow(0 0 4px #22D3EE40)' }}>
-              <GoalRing pct={overallRecoveryPct} size={72} strokeWidth={7} color="#22D3EE" label="ฟื้นตัวรวม" ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ" />
-            </div>
-            <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
-              {RECOVERY_MUSCLES.map((mg) => {
-                const pct = recoveryPctMap[mg]
-                const color = recoveryStatusColor(pct)
-                return (
-                  <div key={mg} className="flex items-center justify-between gap-2 rounded-md bg-surface2 px-2 py-1.5">
-                    <span className="flex items-center gap-1.5 text-[11px] text-ink truncate">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                      {mg}
-                    </span>
-                    <span className="font-mono text-[11px] shrink-0" style={{ color }}>{pct}%</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </Link>
-  ) : null
 
   return (
     <>
@@ -396,6 +301,18 @@ export default function MobileDashboardView() {
 
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 
+        {/* v12: ฟีดแบ็ก "Today's Workout ควรเด่นกว่า Body Metrics — Hierarchy ควรเป็น Today's Focus →
+            Today's Workout → Body Overview ไม่ใช่ Today's Focus → Body Overview → Today's Workout
+            เพราะผู้ใช้เปิดแอปฟิตเนสอยากรู้ 'วันนี้ต้องเล่นอะไร' มากกว่าดูน้ำหนักก่อน" — สลับลำดับ Today's
+            Workout ขึ้นมาก่อน Body Overview (เดิมอยู่หลัง) ไม่ได้แก้เนื้อหา/ดีไซน์ของการ์ดใดเลย แค่ย้าย
+            ตำแหน่งในลำดับแนวตั้ง */}
+        <TodaysWorkoutCompactCard
+          completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
+          total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
+          href={scheduledDay ? '/session' : '/log'}
+          muscleGroups={todayMuscleGroups}
+        />
+
         {/* body composition snapshot */}
         <div className="animate-rise" style={{ animationDelay: '15ms' }}>
           {/* หัวข้อ section 18px ตาม Typography token ล่าสุด (เคยลองขยับไป 30px รอบก่อน แต่ภาพอ้างอิงจริง
@@ -410,16 +327,6 @@ export default function MobileDashboardView() {
               เดสก์ท็อปก็ใช้ชุดเดียวกันนี้ตั้งแต่ v41 ไม่ต้องส่ง prop แยกอีกต่อไป */}
           <BodyMetricsRow maxCards={4} compact />
         </div>
-
-        {/* Today's Workout (แบบย่อ) + สถิติย่อวันนี้ — ใช้ข้อมูลจริงที่คำนวณได้ (เซ็ต/นาที/recovery)
-            แทนที่ kcal/ก้าว/นอนหลับ ในมอคอัพต้นแบบ ซึ่ง FITLOG ไม่มีข้อมูลจริงรองรับ (ไม่ได้เชื่อมต่อ
-            Apple Health/Google Fit เลย) */}
-        <TodaysWorkoutCompactCard
-          completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
-          total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
-          href={scheduledDay ? '/session' : '/log'}
-          muscleGroups={todayMuscleGroups}
-        />
 
         <TodayHealthStatsRow health={health} />
 
@@ -444,48 +351,14 @@ export default function MobileDashboardView() {
             </Link>
           ))}
         </div>
+        {/* v12: ฟีดแบ็ก "ช่วงท้ายหน้ามี 5 Section ต่อกัน (Health App/Streak/AI Coach/Quick Actions/
+            ดูสถิติเพิ่มเติม) ทั้งหมดเป็น Secondary Content — เอา ดูสถิติเพิ่มเติม ออกไปเลย เพราะมี
+            Statistics อยู่ใน Bottom Navigation แล้ว" — ตัดปุ่ม toggle + ส่วนที่ซ่อนอยู่หลังมัน
+            (WeeklyGoalMuscleCard/WeeklyVolumeRecoveryCard/recoveryDetailCard/WeeklyMuscleHeatmap/
+            WeeklyVolume/ConsistencyStrip/"Next up"/WeeklyCardioVolume) ออกทั้งหมด — ข้อมูลเหล่านี้ยัง
+            เข้าถึงได้ที่แท็บ "สถิติ" ใน Bottom Nav ตามที่ผู้ใช้ระบุ ไม่ได้ลบข้อมูลออกจากแอป แค่ไม่ซ้ำซ้อน
+            ในหน้า Home อีกต่อไป */}
 
-        {/* สถิติเชิงลึก — พับซ่อนไว้เป็นค่าเริ่มต้น เพราะข้อมูลซ้ำซ้อนกับการ์ดสรุปด้านบน
-            (Weekly Goal/Volume/Recovery) อยู่แล้วในระดับ "ภาพรวม" ส่วนนี้คือ "รายละเอียดเต็ม"
-            สำหรับคนที่อยากเจาะลึกจริงๆ เท่านั้น — กดดูทีหลังได้ ไม่ต้องเลื่อนผ่านทุกครั้งที่เปิดแอป */}
-        <button
-          type="button"
-          onClick={() => setShowMore((v) => !v)}
-          className="flex items-center justify-center gap-1.5 text-xs text-muted border border-line rounded-lg py-2.5 active:bg-surface2 transition"
-        >
-          {showMore ? 'ซ่อนสถิติเพิ่มเติม' : 'ดูสถิติเพิ่มเติม'}
-          <span aria-hidden="true" style={{ transform: showMore ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 150ms' }}>
-            ⌄
-          </span>
-        </button>
-
-        {showMore && (
-          <div className="space-y-4">
-            {/* Mobile Dashboard v2: ย้าย Weekly Goal + Weekly Volume/Recovery Score มาไว้ในนี้
-                (เดิมอยู่เป็น grid แสดงตลอดในหน้าแรก) ให้หน้าแรกสั้นลงตามสเปค */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <WeeklyGoalMuscleCard />
-              <WeeklyVolumeRecoveryCard recoveryPct={overallRecoveryPct} />
-            </div>
-            {recoveryDetailCard}
-            <WeeklyMuscleHeatmap />
-            <WeeklyVolume />
-            <ConsistencyStrip />
-
-            {next && (
-              <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
-                <div className="px-4 py-3 flex items-center justify-between">
-                  <p className="text-[11px] text-muted">
-                    Next up: <span className="text-ink">{next.day.title}</span>
-                  </p>
-                  <span className="text-[11px] font-mono text-muted">{next.daysAway === 1 ? 'พรุ่งนี้' : `อีก ${next.daysAway} วัน`}</span>
-                </div>
-              </div>
-            )}
-
-            <WeeklyCardioVolume />
-          </div>
-        )}
         </div>
       </div>
 

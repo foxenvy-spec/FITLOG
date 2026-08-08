@@ -35,24 +35,36 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        {/* v31: ฟีดแบ็ก "อยากให้ Progression ดูเป็น Calendar มากกว่า (M T W T F S S เหนือจุด)" — เดิมมีแค่
+            แถวจุดกลม ไม่มีตัวอักษรวันกำกับที่มองเห็น (ตัดออกไปตั้งแต่รอบก่อนเพื่อลดความสูง ดู comment เดิม
+            ด้านบนไฟล์ "ไม่มีตัวย่อวันกำกับใต้จุดแล้ว") ตอนนี้ขอกลับมาแสดง (WEEKDAY_LABELS ตัวเดียวกับที่ใช้
+            ทำ aria-label อยู่แล้ว ไม่ต้องเพิ่มข้อมูลใหม่) ให้อ่านเป็นปฏิทินสัปดาห์จริงๆ แทนเส้นจุดเฉยๆ */}
+        <div className="flex items-end gap-1">
           {weekDayTicks.map((tick, i) => {
             const isToday = tick.iso === today
             return (
-              <span
-                key={tick.iso}
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] shrink-0"
-                role="img"
-                aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${tick.trained ? 'ฝึกแล้ว' : tick.isFuture ? 'ยังไม่ถึงวัน' : 'ยังไม่ได้ฝึก'}`}
-                style={{
-                  ...(tick.trained
-                    ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
-                    : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }),
-                  ...(isToday ? { boxShadow: `0 0 0 2px ${COLORS.amber}` } : {}),
-                }}
-              >
-                {tick.trained ? '✓' : ''}
-              </span>
+              <div key={tick.iso} className="flex flex-col items-center gap-0.5 shrink-0">
+                <span
+                  className="text-[7px] leading-none tracked uppercase"
+                  style={{ color: isToday ? COLORS.amber : '#6B6B6E' }}
+                  aria-hidden="true"
+                >
+                  {WEEKDAY_LABELS[i]}
+                </span>
+                <span
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] shrink-0"
+                  role="img"
+                  aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${tick.trained ? 'ฝึกแล้ว' : tick.isFuture ? 'ยังไม่ถึงวัน' : 'ยังไม่ได้ฝึก'}`}
+                  style={{
+                    ...(tick.trained
+                      ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
+                      : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }),
+                    ...(isToday ? { boxShadow: `0 0 0 2px ${COLORS.amber}` } : {}),
+                  }}
+                >
+                  {tick.trained ? '✓' : ''}
+                </span>
+              </div>
             )
           })}
         </div>

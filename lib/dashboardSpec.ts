@@ -55,7 +55,12 @@ export const dashboardSpec = {
     ringSize: 76,
   },
   healthBanner: {
-    height: 66, // -11% จาก 74
+    // v8: ฟีดแบ็ก "Health App Card ไม่ใช่ Core Action ของ FITLOG ไม่ควรเด่น ลดความสูงลง 15-20%" —
+    // 66 -> 54 (-18%) ใช้กับสถานะ "ยังไม่เชื่อมต่อ" (health.connected เป็น false เสมอตอนนี้ — ดู
+    // lib/healthIntegration.ts — เป็นสถานะเดียวที่ผู้ใช้เห็นจริงในโปรดักชันปัจจุบัน) สถานะ "เชื่อมต่อแล้ว"
+    // (3-คอลัมน์ kcal/ก้าว/นอน ใน TodayHealthStatsRow.tsx) ยังไม่มีทาง reachable จริงในตอนนี้ — ถ้าเปิด
+    // ใช้ฟีเจอร์นั้นในอนาคตต้องเช็ค/re-tune ระยะภายในให้พอดีกับความสูงใหม่นี้ด้วย
+    height: 54,
   },
   floatingButton: {
     size: 62, // -9% จาก 68

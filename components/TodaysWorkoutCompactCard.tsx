@@ -16,6 +16,7 @@ import {
   DUST_PARTICLES_BG,
 } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { MUSCLE_GROUP_BODY_REGION, type MuscleGroup } from '@/lib/muscle-groups'
 import AnimatedBarFill from './AnimatedBarFill'
 import PremiumCard from './ui/PremiumCard'
 import FitnessRing from './dashboard/FitnessRing'
@@ -53,7 +54,15 @@ interface TodaysWorkoutCompactCardProps {
 // should NOT overlap image" ของ v5 โดยตั้งใจ ยืนยันจากผู้ใช้แล้ว)
 export default function TodaysWorkoutCompactCard({ completed, total, href, muscleGroups = [] }: TodaysWorkoutCompactCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
-  const muscleLine = muscleGroups.slice(0, 2).join(' • ')
+  // v21: ฟีดแบ็ก "ขา ซ้ำกับ DAY 5 — LOWER ที่อยู่ด้านบนแล้ว (Today's Focus card) ดูเหมือนข้อมูลซ้ำกัน" —
+  // เดิม join ชื่อกลุ่มกล้ามเนื้อไทยดิบๆ (เช่น "ขา") ซึ่งเป็นคนละคำกับ "LOWER" บน Today's Focus (มาจาก
+  // ชื่อโปรแกรมที่ผู้ใช้พิมพ์เอง) — แปลงเป็นหมวดร่างกายภาษาอังกฤษตัวพิมพ์ใหญ่แทน (ตารางเดียวกับที่
+  // AICoachCompactCard ใช้อยู่แล้ว ไม่สร้างชุดใหม่) ให้เข้าชุดกับคำว่า LOWER/UPPER ด้านบนจริงๆ แทนที่จะ
+  // เป็นแค่คำแปลตรงตัวคนละภาษา
+  const muscleRegions = Array.from(
+    new Set(muscleGroups.map((m) => MUSCLE_GROUP_BODY_REGION[m as MuscleGroup]).filter((r): r is string => !!r))
+  )
+  const muscleLine = muscleRegions.slice(0, 2).join(' • ').toUpperCase()
 
   return (
     <PremiumCard

@@ -43,13 +43,16 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
             v18: ฟีดแบ็ก "Orange Glow ยังเป็น Layer เดียว อยากให้รู้สึกว่ามันเรืองจริง" — แยกจาก 1 ชั้นเป็น
             5 ชั้นตามลำดับที่ขอ (Core/Bloom/Fog อยู่หลังวง, Particle/Specular อยู่หน้าวงแต่นอกรัศมีตัวเลข
             กลาง ไม่บังเนื้อหา) ทั้งหมด static ตามที่ยืนยัน ไม่มี animation/gyroscope */}
+        {/* v20: ฟีดแบ็ก "Glow + Ring + Orange + Background รวมกันเด่นไปหน่อย ลดลงเล็กน้อย" — 3 ชั้น Fog/
+            Bloom/Core ด้านล่างลดอัลฟาลง ~15% ทั้งชุด (14/26/40 -> 11/20/36 hex) ยังคงลำดับความเข้มเดิม
+            (Fog จางสุด -> Core เข้มสุด) แค่ลดความเข้มรวมลง ไม่ตัดชั้นไหนออก */}
         {/* Fog — วงนอกสุด กว้างที่สุด จางที่สุด จำลองหมอกแสงฟุ้งไกลรอบนอก */}
         <div
           className="absolute rounded-full pointer-events-none"
           style={{
             width: size * 2.6,
             height: size * 2.6,
-            background: `radial-gradient(circle, ${score.color}14, transparent 60%)`,
+            background: `radial-gradient(circle, ${score.color}11, transparent 60%)`,
           }}
           aria-hidden="true"
         />
@@ -61,7 +64,7 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           style={{
             width: size * 1.7,
             height: size * 1.7,
-            background: `radial-gradient(circle, ${score.color}26, transparent 65%)`,
+            background: `radial-gradient(circle, ${score.color}20, transparent 65%)`,
           }}
           aria-hidden="true"
         />
@@ -71,7 +74,7 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           style={{
             width: size * 1.05,
             height: size * 1.05,
-            background: `radial-gradient(circle, ${score.color}40, transparent 55%)`,
+            background: `radial-gradient(circle, ${score.color}36, transparent 55%)`,
           }}
           aria-hidden="true"
         />
