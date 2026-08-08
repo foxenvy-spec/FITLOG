@@ -658,8 +658,21 @@ export default function ProgramPage() {
             ))}
           </ul>
 
+          {/* ฟีดแบ็ก "ทำไมไม่ได้ครับ" — ปุ่ม "เลือกจากเทมเพลต" เดิมโผล่แค่ตอน !currentDay (ยังไม่มีแถว
+              program_days เลย) แต่กรณีนี้ (สร้างวันไว้แล้วแต่ไม่มีท่าเลย เช่น เคยกด "+ เพิ่มท่าเอง" ไว้
+              ก่อนแล้วไม่ได้ใส่ท่าจริง) currentDay จะไม่ null แต่ currentExercises ว่างเปล่า ทำให้เข้า
+              branch นี้แทน (ul ว่างๆ + "+ เพิ่มท่า" เฉยๆ ไม่มีทางเลือกเทมเพลตเลย) — เพิ่มปุ่มเดียวกันตรงนี้
+              ด้วยเมื่อวันนี้ยังไม่มีท่าเลย ให้ครอบคลุมทั้ง 2 สถานะ "ว่างเปล่า" จริงๆ */}
           {!selectMode && (
-            <div className="px-4 py-3 border-t border-white/5">
+            <div className="px-4 py-3 border-t border-white/5 flex items-center gap-3 flex-wrap">
+              {currentExercises.length === 0 && (
+                <button
+                  onClick={openTemplatePicker}
+                  className="text-xs font-display tracked uppercase text-amber hover:underline"
+                >
+                  📋 เลือกจากเทมเพลต
+                </button>
+              )}
               <button
                 onClick={() => setAddingExercise(true)}
                 className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
