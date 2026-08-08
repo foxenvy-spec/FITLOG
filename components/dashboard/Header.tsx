@@ -101,9 +101,12 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             // ชื่อ 54px (เทียบเท่า text-6xl ลด 10%, เดิม 60px) — ออกแบบเจาะจงสำหรับ iPhone 15/16 Pro
             // (393px) เท่านั้น ไม่ต้อง responsive-scale ตามจอใหญ่ เผื่อ clamp ขั้นต่ำไว้นิดเดียวกันจอแคบ
             // ผิดปกติ (< 360px) เท่านั้น
-            fontSize: 'clamp(46px, 15vw, 54px)',
+            // v20: ฟีดแบ็ก "BANK ใหญ่จนกลายเป็น Visual Anchor ใหญ่ที่สุดของหน้า แต่ไม่มี action —
+            // ลดประมาณ 20-30%" — 46-54px ลดลงเหลือ 36-42px (~22%) letterSpacing ลดตามสัดส่วน (2px -> 1.5px)
+            // ให้ Readiness Ring/Today's Focus เป็นจุดเด่นแทนตามที่ขอ ไม่แตะ font-weight/สไตล์โลหะอื่นเลย
+            fontSize: 'clamp(36px, 12vw, 42px)',
             fontWeight: 900,
-            letterSpacing: '2px',
+            letterSpacing: '1.5px',
             lineHeight: 1,
             // v4: สต็อปเดิมยังอ่านเป็น "ตัวหนังสือสีขาว" มากกว่าโลหะ (โซนบนสุด/ล่างสุดสว่างเกินไป ไม่มี
             // จุดมืดจริงจังพอ) — เปลี่ยนตามค่าที่ขอเป๊ะ: บนสุด #DADADA (ไม่ใช่ขาวจ้า) → มืดสุด #6F6F72

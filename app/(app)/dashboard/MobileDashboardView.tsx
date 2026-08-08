@@ -448,10 +448,16 @@ export default function MobileDashboardView() {
         {/* สถิติเชิงลึก — พับซ่อนไว้เป็นค่าเริ่มต้น เพราะข้อมูลซ้ำซ้อนกับการ์ดสรุปด้านบน
             (Weekly Goal/Volume/Recovery) อยู่แล้วในระดับ "ภาพรวม" ส่วนนี้คือ "รายละเอียดเต็ม"
             สำหรับคนที่อยากเจาะลึกจริงๆ เท่านั้น — กดดูทีหลังได้ ไม่ต้องเลื่อนผ่านทุกครั้งที่เปิดแอป */}
+        {/* v11: ฟีดแบ็ก "ดูสถิติเพิ่มเติม ไม่ควรเป็นปุ่มใหญ่เกือบเท่า Primary Action — ผู้ใช้มาหน้านี้เพื่อ
+            Workout ไม่ใช่ Analytics ลำดับควรเป็น Start Workout > View Program > Body Analysis >
+            Statistics" — เดิมมีเส้นขอบเต็ม (border-line) + padding เท่ากับปุ่ม Quick Action ด้านบน อ่านเป็น
+            "ปุ่มเท่ากัน" กับปุ่มจริง — ตัดเส้นขอบ/พื้นหลังออกทั้งหมด เหลือแค่ข้อความ + ลูกศร (text link
+            style) ตัวเล็กลง (text-xs -> text-[11px]) padding แนวตั้งลดลง ให้เห็นชัดว่าเป็นตัวเลือกรอง
+            ไม่ใช่ action หลักของหน้า */}
         <button
           type="button"
           onClick={() => setShowMore((v) => !v)}
-          className="flex items-center justify-center gap-1.5 text-xs text-muted border border-line rounded-lg py-2.5 active:bg-surface2 transition"
+          className="flex items-center justify-center gap-1 text-[11px] text-muted py-1.5 active:opacity-70 transition"
         >
           {showMore ? 'ซ่อนสถิติเพิ่มเติม' : 'ดูสถิติเพิ่มเติม'}
           <span aria-hidden="true" style={{ transform: showMore ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 150ms' }}>

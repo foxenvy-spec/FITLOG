@@ -174,7 +174,9 @@ export default function AICoachCompactCard({
     // v51: ฟีดแบ็ก "ยังใหญ่ไปอีก ~10-15% โดยเฉพาะช่องว่างระหว่าง Robot กับข้อมูลด้านขวา" — ไม่ตัด Robot
     // ออกตามที่ขอ (เป็น Brand Identity ไปแล้ว) แต่ลด padding อีกขั้น (14px -> 12px) + gap ระหว่างแถว
     // (10px -> 8px) รวมกับ avatar ที่เล็กลง (ดู AiRingAvatar) ให้ความสูงรวมลดลงจริงตามเป้า
-    <PremiumCard className="flex flex-col gap-2 px-3 py-3">
+    // v52: ฟีดแบ็ก "AI Coach คือพระเอก แต่ยังใหญ่ไปนิดหนึ่ง ลดอีก 10-15%" (รอบถัดมาหลัง v51) — padding
+    // แนวตั้งลดอีกขั้น (12px -> 10px) gap ลดอีกขั้น (8px -> 6px) ต่อจาก avatar ที่เล็กลงอีก (ดู AiRingAvatar)
+    <PremiumCard className="flex flex-col gap-1.5 px-3 py-2.5">
       {/* v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — เพิ่ม Background Particle" — จุดกระพริบเล็กๆ กระจายห่างๆ
           (เทคนิคเดียวกับที่การ์ด Hero Workout ใช้อยู่แล้วรอบก่อน) วางเฉพาะโซนขวา/ล่างของการ์ด หลีกเลี่ยง
           โซน avatar+ข้อความฝั่งซ้ายที่ยังต้องอ่านออกชัดเจน */}
@@ -197,8 +199,9 @@ export default function AICoachCompactCard({
       </span>
 
       {/* v51: gap ระหว่าง Robot กับข้อมูลด้านขวา 12px -> 10px ตามฟีดแบ็ก "ลดช่องว่างระหว่าง Robot กับ
-          ข้อมูลด้านขวา" — เล็กน้อยพอไม่ให้ดูอึดอัด แต่ช่วยเก็บพื้นที่แนวนอนกลับมาให้คอลัมน์ข้อความ */}
-      <Link href={href} className="flex items-center gap-2.5 active:opacity-80 transition">
+          ข้อมูลด้านขวา" — เล็กน้อยพอไม่ให้ดูอึดอัด แต่ช่วยเก็บพื้นที่แนวนอนกลับมาให้คอลัมน์ข้อความ
+          v52: ลดอีกขั้น 10px -> 8px ตามรอบต่อมา */}
+      <Link href={href} className="flex items-center gap-2 active:opacity-80 transition">
         <AiRingAvatar src={avatarSrc} />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
@@ -221,7 +224,7 @@ export default function AICoachCompactCard({
               </p>
               <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#A8ACB4' }}>{relatedGroups.join(' • ')}</p>
 
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-1.5">
                 <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#A8ACB4' }}>Recovery</p>
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
                   <AnimatedBarFill pct={muscleRecommendation.pct} color={barColor} />
@@ -243,9 +246,13 @@ export default function AICoachCompactCard({
       {/* v30: ฟีดแบ็ก "Ready/Energy/Sleep ให้เป็น secondary information" — แถวนี้เคยเท่าน้ำหนักกับข้อมูล
           ด้านบน (region+recovery bar) ตามภาพ — ลด opacity ลงเล็กน้อยทั้งแถว (ไม่ใช่ตัวหนังสือแต่ละจุด)
           ให้สายตาอ่าน "UPPER BODY" ก่อนแล้วค่อยไล่ลงมาที่แถวนี้ทีหลัง โดยไม่ต้องแตะสี/ขนาดของ StatChip/
-          LockedChip เดิมเลย (ยังอ่านออกชัดเจนที่ opacity 85%) */}
+          LockedChip เดิมเลย (ยังอ่านออกชัดเจนที่ opacity 85%)
+          v52: ฟีดแบ็ก "AI Coach + Start Workout ควรเป็นจุดสำคัญที่สุด ส่วนความพร้อม/พลังงาน/การนอนควรลด
+          visual weight" — ลด opacity ต่ออีกขั้น (85% -> 70%) + แนวตั้งของแต่ละ chip แคบลง (padding
+          py-2 -> py-1.5 ใน StatChip/LockedChip) ให้แถวนี้เห็นชัดว่าเป็นข้อมูลรอง ไม่ใช่แข่งกับ region/
+          recovery bar ด้านบน */}
       {muscleRecommendation && (
-        <div className="grid grid-cols-3 gap-1.5" style={{ opacity: 0.85 }}>
+        <div className="grid grid-cols-3 gap-1.5" style={{ opacity: 0.7 }}>
           <StatChip icon="💪" label="ความพร้อม" value={readinessLabel(muscleRecommendation.pct)} pct={muscleRecommendation.pct} color={barColor} />
           <LockedChip icon="⚡" label="พลังงาน" />
           <LockedChip icon="🌙" label="การนอน" />
@@ -312,7 +319,7 @@ function readinessLabelEn(pct: number): string {
 function StatChip({ icon, label, value, pct, color }: { icon: string; label: string; value: string; pct: number; color: string }) {
   return (
     <div
-      className="flex flex-col items-center gap-0.5 rounded-xl py-2 px-1"
+      className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 px-1"
       style={{ background: withAlpha(color, '14'), border: `1px solid ${withAlpha(color, '40')}` }}
     >
       <span className="text-xs" aria-hidden="true">
@@ -334,7 +341,7 @@ function StatChip({ icon, label, value, pct, color }: { icon: string; label: str
 function LockedChip({ icon, label }: { icon: string; label: string }) {
   return (
     <div
-      className="flex flex-col items-center gap-0.5 rounded-xl py-2 px-1"
+      className="flex flex-col items-center gap-0.5 rounded-xl py-1.5 px-1"
       style={{ background: 'rgba(255,255,255,.008)', border: '1px solid rgba(255,255,255,.03)' }}
     >
       <span className="text-xs opacity-30" aria-hidden="true">
@@ -373,7 +380,9 @@ function AiRingAvatar({ src }: { src?: string }) {
   // v51: ฟีดแบ็ก "ลดความสูง Card อีก 10-15%" — avatar (145px) เป็นตัวกำหนดความสูงแถวบนของการ์ดอยู่แล้ว
   // (สูงกว่าคอลัมน์ข้อความข้างๆ) ลดต่ออีกขั้น 145 -> 128 (-12%) ยังคง Robot ไว้เต็มรูปแบบตามที่ขอ (ไม่ตัด
   // ออก) แค่เล็กลงพอให้การ์ดโดยรวมเตี้ยลงจริงตามเป้า — scale/inset ไม่ต้องแก้ตามเหตุผลเดิม
-  const size = 128
+  // v52: ฟีดแบ็ก "AI Coach คือพระเอก แต่ยังใหญ่ไปนิดหนึ่ง (Robot/3 กล่อง/ปุ่ม Start รวมกันอยู่ในการ์ด
+  // เดียว) ลดความสูงอีก 10-15%" — 128 -> 112 (-12.5%) ยังไม่ตัด Robot ออกตามที่ยืนยันซ้ำอีกครั้ง
+  const size = 112
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — กรอบ+glow รอบ avatar เดิมสีอำพัน เป็นแค่กรอบ

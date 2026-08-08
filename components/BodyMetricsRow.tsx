@@ -26,12 +26,16 @@ import { dashboardSpec } from '@/lib/dashboardSpec'
 // ที่ใช้กับ colorScheme="vibrant") — ตั้งแต่ v41 ("Minimal Dark Titanium") เดสก์ท็อปสลับมาใช้ "vibrant"
 // เหมือนมือถือแล้ว ไม่มีจุดไหนเรียก "default" อีกเลย เอา METRIC_THEME (ชุดนีออน) กับ prop colorScheme
 // ออกทั้งคู่ ให้เหลือชุดสีเดียวที่ทั้งแอปใช้จริง ไม่ใช่โค้ดตายที่ต้องดูแลคู่ขนานไปเรื่อยๆ
+// v44: ฟีดแบ็ก "ลด Glow ของ Card ภาพรวมร่างกายลง 10-15% ให้ดู Premium มากกว่า Gaming" — ค่า glow
+// (theme.glow, MetricCard.tsx อ่านค่านี้ผ่าน glowAlpha/coreAlpha เฉพาะ branch compact=มือถือเท่านั้น
+// ดู comment "v41/v48" ในไฟล์นั้น — เดสก์ท็อปไม่อ่านค่านี้เลย จึงไม่กระทบ) ลดลงทั้งชุด ~12%
+// (14/11/9/8/9 -> 12/10/8/7/8) คงสัดส่วนไล่ลำดับเดิมไว้ (น้ำหนักเข้มสุด ไล่ลงตามลำดับในกริด)
 const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
-  weight: { main: '#F59E0B', second: '#D97706', glow: 14 },
-  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 11 },
-  muscle: { main: '#3B82F6', second: '#2563EB', glow: 9 },
-  fatMass: { main: '#22C55E', second: '#16A34A', glow: 8 },
-  bmi: { main: '#1b8cff', second: '#3f6cff', glow: 9 },
+  weight: { main: '#F59E0B', second: '#D97706', glow: 12 },
+  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 10 },
+  muscle: { main: '#3B82F6', second: '#2563EB', glow: 8 },
+  fatMass: { main: '#22C55E', second: '#16A34A', glow: 7 },
+  bmi: { main: '#1b8cff', second: '#3f6cff', glow: 8 },
 }
 
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
