@@ -17,7 +17,7 @@ interface TodaysFocusCardProps {
 // (HAMSTRING/GLUT...") ถ้าเจอวงเล็บ แยกเป็น 2 บรรทัดแทน: บรรทัดหลัก (ก่อนวงเล็บ) + บรรทัดรายละเอียด
 // (ในวงเล็บ, "/" แทนด้วย " • ") — ถ้าไม่มีวงเล็บเลย (label สั้น/ไม่มีรายละเอียดเพิ่ม) แสดงบรรทัดเดียว
 // เหมือนเดิมทุกประการ ไม่กระทบ
-function splitTitleDetail(text: string): { main: string; detail: string | null } {
+export function splitTitleDetail(text: string): { main: string; detail: string | null } {
   const openIdx = text.indexOf('(')
   if (openIdx === -1) return { main: text, detail: null }
   const closeIdx = text.lastIndexOf(')')

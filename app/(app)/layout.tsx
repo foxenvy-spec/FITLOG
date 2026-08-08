@@ -29,7 +29,7 @@ export default async function AppLayout({
             {/* safe-top ย้ายมาไว้ที่ main แทน (เดิมอยู่ที่ header ที่เพิ่งตัดออก) กัน status
                 bar/notch บนมือถือทับเนื้อหาบนสุด — env(safe-area-inset-top) เป็น 0 บนเดสก์ท็อป
                 ทั่วไปอยู่แล้ว จึงไม่กระทบเดสก์ท็อป */}
-            <main className="flex-1 w-full max-w-sm md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-24 lg:pb-10 safe-top">
+            <main className="flex-1 w-full max-w-sm md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-safe-bottom-nav lg:pb-10 safe-top">
               <QueryProvider>{children}</QueryProvider>
             </main>
 

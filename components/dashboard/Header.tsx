@@ -179,9 +179,15 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
         <p className="tracked text-muted whitespace-nowrap" style={{ marginTop: 7, fontSize: 11 }}>
           Personalized Fitness
         </p>
-        <SubtitleAccent />
+        {/* v20: ฟีดแบ็ก "ลดช่องว่างระหว่าง Personalized Fitness → คำแนะนำ ลงประมาณ 10-15px" — SubtitleAccent
+            เป็น svg สูง 20px ตายตัว (ต้องเผื่อพื้นที่ blur ของ filter) แต่เส้น flare เองบางมาก ทำให้เหลือ
+            พื้นที่ว่างด้านบน/ล่างเส้นมาก อ่านเป็น "ช่องว่างเปล่า" ในสายตาผู้ใช้ — ดึงเข้าด้วย margin ลบ
+            (ไม่แก้ viewBox/coordinate ภายใน svg เอง กันพัง filter blur ที่คำนวณจาก -100%/300% ของกรอบเดิม) */}
+        <div style={{ marginTop: -6, marginBottom: -6 }}>
+          <SubtitleAccent />
+        </div>
 
-        <p className="text-ink" style={{ marginTop: 7, fontSize: 13 }}>
+        <p className="text-ink" style={{ marginTop: 3, fontSize: 13 }}>
           วันนี้พร้อมสำหรับการออกกำลังกาย 💪
         </p>
       </div>

@@ -21,6 +21,7 @@ import {
 } from '@/lib/theme'
 import { recoveryStatusColor, recoveryTier } from '@/lib/dashboardStats'
 import { MUSCLE_GROUP_BODY_REGION, DEFAULT_SECONDARY_BY_PRIMARY, type MuscleGroup } from '@/lib/muscle-groups'
+import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
 import AnimatedBarFill from './AnimatedBarFill'
@@ -170,7 +171,10 @@ export default function AICoachCompactCard({
     // v30: ฟีดแบ็ก "AI Coach Card ใหญ่ไปนิด...เกือบกลายเป็น Dashboard ใน Dashboard ผมจะลดประมาณ 15-20%" —
     // padding เดิม px-4 py-4 (16px) ลดเหลือ px-3.5 py-3.5 (14px, -12.5%) ร่วมกับ avatar ที่เล็กลงและ
     // gap ที่แคบลงด้านล่าง รวมกันแล้วการ์ดทั้งใบเตี้ย/แคบลงตามสัดส่วนที่ขอ โดยไม่ตัดข้อมูลออก
-    <PremiumCard className="flex flex-col gap-2.5 px-3.5 py-3.5">
+    // v51: ฟีดแบ็ก "ยังใหญ่ไปอีก ~10-15% โดยเฉพาะช่องว่างระหว่าง Robot กับข้อมูลด้านขวา" — ไม่ตัด Robot
+    // ออกตามที่ขอ (เป็น Brand Identity ไปแล้ว) แต่ลด padding อีกขั้น (14px -> 12px) + gap ระหว่างแถว
+    // (10px -> 8px) รวมกับ avatar ที่เล็กลง (ดู AiRingAvatar) ให้ความสูงรวมลดลงจริงตามเป้า
+    <PremiumCard className="flex flex-col gap-2 px-3 py-3">
       {/* v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — เพิ่ม Background Particle" — จุดกระพริบเล็กๆ กระจายห่างๆ
           (เทคนิคเดียวกับที่การ์ด Hero Workout ใช้อยู่แล้วรอบก่อน) วางเฉพาะโซนขวา/ล่างของการ์ด หลีกเลี่ยง
           โซน avatar+ข้อความฝั่งซ้ายที่ยังต้องอ่านออกชัดเจน */}
@@ -192,7 +196,9 @@ export default function AICoachCompactCard({
         {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
       </span>
 
-      <Link href={href} className="flex items-center gap-3 active:opacity-80 transition">
+      {/* v51: gap ระหว่าง Robot กับข้อมูลด้านขวา 12px -> 10px ตามฟีดแบ็ก "ลดช่องว่างระหว่าง Robot กับ
+          ข้อมูลด้านขวา" — เล็กน้อยพอไม่ให้ดูอึดอัด แต่ช่วยเก็บพื้นที่แนวนอนกลับมาให้คอลัมน์ข้อความ */}
+      <Link href={href} className="flex items-center gap-2.5 active:opacity-80 transition">
         <AiRingAvatar src={avatarSrc} />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
@@ -215,7 +221,7 @@ export default function AICoachCompactCard({
               </p>
               <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#A8ACB4' }}>{relatedGroups.join(' • ')}</p>
 
-              <div className="flex items-center gap-2 mt-2.5">
+              <div className="flex items-center gap-2 mt-2">
                 <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#A8ACB4' }}>Recovery</p>
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
                   <AnimatedBarFill pct={muscleRecommendation.pct} color={barColor} />
@@ -267,9 +273,15 @@ export default function AICoachCompactCard({
           {templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />
           ) : chosen && chosenExercises.length > 0 ? (
+            // v50: ฟีดแบ็ก "CTA ยาวเกินไป — เริ่ม DAY 5 — LOWER (HAMSTRING/GL... ถูกตัด บนมือถือ" —
+            // ชื่อเทมเพลตเต็ม (chosen.title) มักมีรายละเอียดกล้ามเนื้อในวงเล็บต่อท้าย (เช่น
+            // "Day 5 — Lower (Hamstring/Glute)") ซึ่งซ้ำกับข้อมูลที่ relatedGroups ด้านบนแสดงอยู่แล้ว
+            // (บรรทัด "วันนี้เหมาะกับ") — ปุ่มโชว์แค่ main (ก่อนวงเล็บ) พอ ใช้ splitTitleDetail ตัวเดียว
+            // กับที่ TodaysFocusCard ใช้อยู่แล้ว (แยกออกมาเป็น export แทนเขียนซ้ำ) ไม่ต้องยัดรายละเอียด
+            // กลับเข้าไปในปุ่มอีก ตามที่ขอ "อย่าพยายามยัดข้อมูลทั้งหมดลง Button"
             <Button type="button" onClick={handleStart} disabled={starting} className="flex-1 min-w-0">
-              <span className="truncate">{starting ? '...' : `เริ่ม ${chosen.title}`}</span>
-              {!starting && <span aria-hidden="true">▶</span>}
+              <span className="truncate">{starting ? '...' : `เริ่ม ${splitTitleDetail(chosen.title).main}`}</span>
+              {!starting && <span aria-hidden="true">→</span>}
             </Button>
           ) : (
             <Button as={Link} href="/templates" className="flex-1 min-w-0">
@@ -358,7 +370,10 @@ function AiRingAvatar({ src }: { src?: string }) {
   // v30: ฟีดแบ็ก "AI Coach Card ใหญ่ไปนิด...เกือบกลายเป็น Dashboard ใน Dashboard ผมจะลดประมาณ 15-20%" —
   // ย้อนทิศทาง 5 รอบก่อนหน้า (88→110→127→146→175 ไล่ใหญ่ขึ้นทุกรอบ) เป็นครั้งแรก ลดลง ~17% (175→145)
   // scale/inset ไม่ต้องแก้ตาม (สัมพัทธ์กับ size โดยอัตโนมัติเหมือนทุกรอบที่ผ่านมา)
-  const size = 145
+  // v51: ฟีดแบ็ก "ลดความสูง Card อีก 10-15%" — avatar (145px) เป็นตัวกำหนดความสูงแถวบนของการ์ดอยู่แล้ว
+  // (สูงกว่าคอลัมน์ข้อความข้างๆ) ลดต่ออีกขั้น 145 -> 128 (-12%) ยังคง Robot ไว้เต็มรูปแบบตามที่ขอ (ไม่ตัด
+  // ออก) แค่เล็กลงพอให้การ์ดโดยรวมเตี้ยลงจริงตามเป้า — scale/inset ไม่ต้องแก้ตามเหตุผลเดิม
+  const size = 128
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — กรอบ+glow รอบ avatar เดิมสีอำพัน เป็นแค่กรอบ
