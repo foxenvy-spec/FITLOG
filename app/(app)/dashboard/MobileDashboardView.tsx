@@ -42,6 +42,7 @@ import Header from '@/components/dashboard/Header'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import TodaysFocusCard from '@/components/TodaysFocusCard'
 import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
+import TodaysWorkoutEmptyCard from '@/components/TodaysWorkoutEmptyCard'
 import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
 import { useHealthSnapshot } from '@/lib/healthIntegration'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
@@ -187,6 +188,16 @@ export default function MobileDashboardView() {
     { key: 'activityToday', label: 'Activity Today', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
   ])
 
+  // ฟีดแบ็ก "Today's Workout ไม่ควรโชว์ 0/0 ตอนไม่มีอะไรให้ฝึก — ควรแยก Rest Day / No Program ออกเป็น
+  // state ของตัวเอง" (Section 10) — ลำดับความสำคัญ: มีท่าตั้งไว้จริงวันนี้ (todayExercises) มาก่อนเสมอ,
+  // ถ้าไม่มีแต่บันทึกอิสระไว้แล้ว (todayWorkouts) ให้นับว่า "เสร็จแล้ว" (ไม่มีเป้าให้ยังทำไม่ครบ), ถ้าไม่มี
+  // ทั้งคู่แต่มีโปรแกรมอยู่ (programDays.length > 0) = วันนี้แค่ไม่มีคิว ไม่ใช่ยังไม่เคยตั้งโปรแกรมเลย
+  const hasTodayPlan = data.todayExercises.length > 0
+  const hasLoggedToday = data.todayWorkouts.length > 0
+  const hasAnyProgram = data.programDays.length > 0
+  const workoutCardVariant: 'active' | 'restDay' | 'noProgram' =
+    hasTodayPlan || hasLoggedToday ? 'active' : hasAnyProgram ? 'restDay' : 'noProgram'
+
   return (
     <>
       {/* พื้นหลังหน้า — v3: ตัดจุดแสงสีอุ่นฟุ้งใหญ่ (amber/rust/moss blur blob) ที่เคยกระจายเกือบเต็ม
@@ -307,12 +318,16 @@ export default function MobileDashboardView() {
             เพราะผู้ใช้เปิดแอปฟิตเนสอยากรู้ 'วันนี้ต้องเล่นอะไร' มากกว่าดูน้ำหนักก่อน" — สลับลำดับ Today's
             Workout ขึ้นมาก่อน Body Overview (เดิมอยู่หลัง) ไม่ได้แก้เนื้อหา/ดีไซน์ของการ์ดใดเลย แค่ย้าย
             ตำแหน่งในลำดับแนวตั้ง */}
-        <TodaysWorkoutCompactCard
-          completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
-          total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
-          href={scheduledDay ? '/session' : '/log'}
-          muscleGroups={todayMuscleGroups}
-        />
+        {workoutCardVariant === 'active' ? (
+          <TodaysWorkoutCompactCard
+            completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
+            total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
+            href={scheduledDay ? '/session' : '/log'}
+            muscleGroups={todayMuscleGroups}
+          />
+        ) : (
+          <TodaysWorkoutEmptyCard variant={workoutCardVariant} />
+        )}
 
         {/* body composition snapshot */}
         {/* v13: ฟีดแบ็ก "Body Overview Header ชิดกับ Today's Workout เกินไปนิด — เพิ่มระยะห่าง 8-12px"
