@@ -14,6 +14,11 @@ interface TodaysFocusCardProps {
    * ใช้ describeMuscleFocus() ตัวเดียวกันแปลงเป็น region+relatedGroups ให้สองการ์ดพูดตรงกันเป๊ะ แทนที่จะ
    * โชว์แค่ muscleGroup ดิบๆ ("อก") ในขณะที่ AI Coach ด้านล่างโชว์ "UPPER BODY / อก • ไหล่ • แขน" */
   muscleRecommendation: { muscleGroup: string } | null
+  /** true เมื่อวันนี้เป็น Rest Day จริง (มีโปรแกรมอยู่แล้วแต่ไม่มีคิววันนี้ — workoutCardVariant==='restDay'
+   * ใน MobileDashboardView.tsx ค่าเดียวกับที่ TodaysWorkoutEmptyCard ใช้ตัดสินใจ) — ตัด workoutTitle/
+   * muscleRecommendation ทิ้งไปเลยตอนนี้จริง แทนที่จะโชว์ "UPPER BODY" ต่อไปเหมือนไม่มีอะไรเกิดขึ้น
+   * (ฟีดแบ็ก "REST DAY กับ UPPER BODY ไม่ควรเกิดพร้อมกัน — Today's Focus ต้องเปลี่ยนตาม Rest State") */
+  isRestDay?: boolean
   href: string
 }
 
@@ -37,16 +42,22 @@ export function splitTitleDetail(text: string): { main: string; detail: string |
 // ที่แนะนำวันนี้ (muscleRecommendation) ผ่าน describeMuscleFocus() เดียวกับที่ AICoachCompactCard ใช้ —
 // เดิม fallback แสดงแค่ muscleGroup ดิบๆ ("อก") ทำให้ดูไม่ตรงกับ AI Coach ด้านล่างที่โชว์ "UPPER BODY /
 // อก • ไหล่ • แขน" จากข้อมูลชุดเดียวกันเป๊ะ — ฟีดแบ็ก "Today's Focus คือ อก หรือ Upper Body?"
-export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, href }: TodaysFocusCardProps) {
+//
+// v2: isRestDay มาก่อนทุกอย่าง — เดิม muscleRecommendation คำนวณจาก recovery % ล้วนๆ ไม่รู้จัก concept
+// "วันนี้พัก" เลย ทำให้ Today's Focus ยังโชว์ "UPPER BODY" ต่อไปแม้ Today's Workout จะบอก "REST DAY" แล้ว
+// (ฟีดแบ็ก "REST DAY กับ UPPER BODY ไม่ควรเกิดพร้อมกัน")
+export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, isRestDay = false, href }: TodaysFocusCardProps) {
   const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
-  const { main, detail } = workoutTitle
-    ? splitTitleDetail(workoutTitle)
-    : mg
-      ? (() => {
-          const focus = describeMuscleFocus(mg)
-          return { main: focus.region, detail: focus.relatedGroups.join(' • ') }
-        })()
-      : { main: 'ยังไม่ได้ตั้งโปรแกรม', detail: null }
+  const { main, detail } = isRestDay
+    ? { main: 'Recovery Day', detail: 'Rest • Mobility' }
+    : workoutTitle
+      ? splitTitleDetail(workoutTitle)
+      : mg
+        ? (() => {
+            const focus = describeMuscleFocus(mg)
+            return { main: focus.region, detail: focus.relatedGroups.join(' • ') }
+          })()
+        : { main: 'ยังไม่ได้ตั้งโปรแกรม', detail: null }
   return (
     <PremiumCard
       as={Link}
