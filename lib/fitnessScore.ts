@@ -8,6 +8,9 @@
 
 export interface FitnessScoreFactor {
   key: string
+  // ชื่อปัจจัยที่อ่านออกได้ (เช่น "Workout Completion") — ใช้แสดงใน breakdown ของผลลัพธ์เท่านั้น
+  // ไม่มีผลต่อการคำนวณคะแนน
+  label: string
   // 0-100, หรือ null ถ้าไม่มีข้อมูลสำหรับปัจจัยนี้ (เช่น Sleep)
   value: number | null
   // น้ำหนักตั้งต้น (หน่วยเดียวกับเปอร์เซ็นต์ เช่น 30 = 30%) รวมกันทุกปัจจัยควรเป็น 100
@@ -34,6 +37,10 @@ export interface FitnessScoreResult {
   aiCoachStatus: string
   /** ประโยคแนะนำเต็ม โชว์เป็นบรรทัดที่ 3 ใต้วง (ต่อจากตัวเลขและ tier label) */
   recommendation: string
+  /** ปัจจัยที่ใช้คำนวณคะแนน (ค่าเดียวกับ input เป๊ะ รวมปัจจัยที่ value เป็น null ด้วย เช่น Sleep) —
+   * ใช้ตอบคำถาม "ทำไมฉันได้คะแนนนี้" ในหน้า/แผ่น detail แทนที่จะโชว์แค่ตัวเลขรวมเฉยๆ ไม่ recompute
+   * ซ้ำ ใช้ input ชุดเดียวกับที่คำนวณคะแนนจริง กันไม่ให้ breakdown กับคะแนนที่โชว์ไม่ตรงกัน */
+  breakdown: FitnessScoreFactor[]
 }
 
 // 6 tier ตามที่กำหนด — สี Ring/Wave/Glow ผูกกับ tier โดยตรง (เปลี่ยนจากเดิมที่ตั้งใจให้เป็นธีมไฟคงที่
@@ -153,5 +160,6 @@ export function computeFitnessScore(factors: FitnessScoreFactor[]): FitnessScore
     gradientStops: tier.gradientStops,
     aiCoachStatus: tier.aiCoachStatus,
     recommendation: tier.recommendation,
+    breakdown: factors,
   }
 }

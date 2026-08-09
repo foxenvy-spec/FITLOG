@@ -136,6 +136,16 @@ export const DEFAULT_SECONDARY_BY_PRIMARY: Record<MuscleGroup, MuscleGroup[]> = 
   'อื่นๆ': [],
 }
 
+// อนุมาน "หมวดร่างกาย" + "กลุ่มกล้ามเนื้อที่เกี่ยวข้อง" จากกล้ามเนื้อหลักที่แนะนำวันนี้ (มาจาก
+// suggestMuscleToTrain ใน dashboardStats.ts) — ใช้ร่วมกันโดย AICoachCompactCard และ TodaysFocusCard
+// (fallback path ตอนไม่มี ProgramDay ตั้งไว้จริงสำหรับวันนี้) เดิมสอง component คำนวณเองแยกกันคนละจุด —
+// TodaysFocusCard โชว์แค่ mg ดิบๆ ("อก") ในขณะที่ AI Coach โชว์ region+relatedGroups ที่ derive จาก mg
+// เดียวกัน ("UPPER BODY" / "อก • ไหล่ • แขน") ทำให้สองการ์ดดูเหมือนพูดถึงคนละอย่างทั้งที่จริงเป็นข้อมูล
+// ชุดเดียวกัน — ย้ายมาไว้ที่นี่ที่เดียวกันไม่ให้ diverge อีก
+export function describeMuscleFocus(mg: MuscleGroup): { region: string; relatedGroups: MuscleGroup[] } {
+  return { region: MUSCLE_GROUP_BODY_REGION[mg], relatedGroups: [mg, ...DEFAULT_SECONDARY_BY_PRIMARY[mg]] }
+}
+
 export function guessSecondaryMuscles(exerciseName: string, primaryMuscle: MuscleGroup): MuscleGroup[] {
   const name = exerciseName.toLowerCase()
   const rule = SECONDARY_MUSCLE_RULES.find((r) => r.keywords.test(name))

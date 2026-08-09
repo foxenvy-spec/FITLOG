@@ -549,12 +549,12 @@ export default function DashboardPage() {
   const fitnessScore = useMemo(() => {
     if (!data) return null
     return computeFitnessScore([
-      { key: 'workout', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
-      { key: 'streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
-      { key: 'sleep', value: null, weight: 20 },
-      { key: 'recovery', value: fitnessScoreRecoveryPct, weight: 15 },
-      { key: 'weeklyGoal', value: data.weeklyGoalPct, weight: 10 },
-      { key: 'activityToday', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
+      { key: 'workout', label: 'Workout Completion', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
+      { key: 'streak', label: 'Streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
+      { key: 'sleep', label: 'Sleep', value: null, weight: 20 },
+      { key: 'recovery', label: 'Recovery', value: fitnessScoreRecoveryPct, weight: 15 },
+      { key: 'weeklyGoal', label: 'Weekly Goal', value: data.weeklyGoalPct, weight: 10 },
+      { key: 'activityToday', label: 'Activity Today', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
     ])
   }, [data, fitnessScoreRecoveryPct, progressPct, totals.entryCount])
 

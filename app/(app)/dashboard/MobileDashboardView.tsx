@@ -42,6 +42,7 @@ import Header from '@/components/dashboard/Header'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import TodaysFocusCard from '@/components/TodaysFocusCard'
 import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
+import TodaysWorkoutEmptyCard from '@/components/TodaysWorkoutEmptyCard'
 import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
 import { useHealthSnapshot } from '@/lib/healthIntegration'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
@@ -179,13 +180,23 @@ export default function MobileDashboardView() {
   // - Streak: จำกัดเพดานที่ 14 วัน = เต็ม 100% (ยาวกว่านั้นก็ยังนับเต็ม)
   // - Activity วันนี้: ใช้ตัวเดียวกับ ring ในการ์ด Today's Workout (progressPct)
   const fitnessScore = computeFitnessScore([
-    { key: 'workout', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
-    { key: 'streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
-    { key: 'sleep', value: null, weight: 20 },
-    { key: 'recovery', value: fitnessScoreRecoveryPct, weight: 15 },
-    { key: 'weeklyGoal', value: data.weeklyGoalPct, weight: 10 },
-    { key: 'activityToday', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
+    { key: 'workout', label: 'Workout Completion', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
+    { key: 'streak', label: 'Streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
+    { key: 'sleep', label: 'Sleep', value: null, weight: 20 },
+    { key: 'recovery', label: 'Recovery', value: fitnessScoreRecoveryPct, weight: 15 },
+    { key: 'weeklyGoal', label: 'Weekly Goal', value: data.weeklyGoalPct, weight: 10 },
+    { key: 'activityToday', label: 'Activity Today', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
   ])
+
+  // ฟีดแบ็ก "Today's Workout ไม่ควรโชว์ 0/0 ตอนไม่มีอะไรให้ฝึก — ควรแยก Rest Day / No Program ออกเป็น
+  // state ของตัวเอง" (Section 10) — ลำดับความสำคัญ: มีท่าตั้งไว้จริงวันนี้ (todayExercises) มาก่อนเสมอ,
+  // ถ้าไม่มีแต่บันทึกอิสระไว้แล้ว (todayWorkouts) ให้นับว่า "เสร็จแล้ว" (ไม่มีเป้าให้ยังทำไม่ครบ), ถ้าไม่มี
+  // ทั้งคู่แต่มีโปรแกรมอยู่ (programDays.length > 0) = วันนี้แค่ไม่มีคิว ไม่ใช่ยังไม่เคยตั้งโปรแกรมเลย
+  const hasTodayPlan = data.todayExercises.length > 0
+  const hasLoggedToday = data.todayWorkouts.length > 0
+  const hasAnyProgram = data.programDays.length > 0
+  const workoutCardVariant: 'active' | 'restDay' | 'noProgram' =
+    hasTodayPlan || hasLoggedToday ? 'active' : hasAnyProgram ? 'restDay' : 'noProgram'
 
   return (
     <>
@@ -295,7 +306,8 @@ export default function MobileDashboardView() {
 
         <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap }}>
         <TodaysFocusCard
-          label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
+          workoutTitle={workoutTitle}
+          muscleRecommendation={muscleRecommendation}
           href={scheduledDay ? '/session' : '/log'}
         />
 
@@ -306,12 +318,16 @@ export default function MobileDashboardView() {
             เพราะผู้ใช้เปิดแอปฟิตเนสอยากรู้ 'วันนี้ต้องเล่นอะไร' มากกว่าดูน้ำหนักก่อน" — สลับลำดับ Today's
             Workout ขึ้นมาก่อน Body Overview (เดิมอยู่หลัง) ไม่ได้แก้เนื้อหา/ดีไซน์ของการ์ดใดเลย แค่ย้าย
             ตำแหน่งในลำดับแนวตั้ง */}
-        <TodaysWorkoutCompactCard
-          completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
-          total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
-          href={scheduledDay ? '/session' : '/log'}
-          muscleGroups={todayMuscleGroups}
-        />
+        {workoutCardVariant === 'active' ? (
+          <TodaysWorkoutCompactCard
+            completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
+            total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
+            href={scheduledDay ? '/session' : '/log'}
+            muscleGroups={todayMuscleGroups}
+          />
+        ) : (
+          <TodaysWorkoutEmptyCard variant={workoutCardVariant} />
+        )}
 
         {/* body composition snapshot */}
         {/* v13: ฟีดแบ็ก "Body Overview Header ชิดกับ Today's Workout เกินไปนิด — เพิ่มระยะห่าง 8-12px"

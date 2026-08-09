@@ -4,10 +4,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { cncCornerClipPath } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
 import PremiumCard from './ui/PremiumCard'
 
 interface TodaysFocusCardProps {
-  label: string | null
+  /** ชื่อโปรแกรมจริงของวันนี้ (scheduledDay.title) ถ้ามี — มาก่อนเสมอ */
+  workoutTitle: string | null
+  /** fallback ตอนไม่มีโปรแกรมตั้งไว้จริง — ชุดเดียวกับที่ AICoachCompactCard ใช้ (data.muscleRecommendation)
+   * ใช้ describeMuscleFocus() ตัวเดียวกันแปลงเป็น region+relatedGroups ให้สองการ์ดพูดตรงกันเป๊ะ แทนที่จะ
+   * โชว์แค่ muscleGroup ดิบๆ ("อก") ในขณะที่ AI Coach ด้านล่างโชว์ "UPPER BODY / อก • ไหล่ • แขน" */
+  muscleRecommendation: { muscleGroup: string } | null
   href: string
 }
 
@@ -27,10 +33,20 @@ export function splitTitleDetail(text: string): { main: string; detail: string |
   return { main, detail: detail || null }
 }
 
-// "Today's Focus" ตามมอคอัพ — ใช้ workoutTitle (โปรแกรมที่ตั้งไว้วันนี้) ถ้ามี ไม่งั้น fallback
-// ไปกล้ามเนื้อที่แนะนำวันนี้ (data.muscleRecommendation) ซึ่ง MobileDashboardView เป็นคนเลือกส่งมาให้แล้ว
-export default function TodaysFocusCard({ label, href }: TodaysFocusCardProps) {
-  const { main, detail } = label ? splitTitleDetail(label) : { main: 'ยังไม่ได้ตั้งโปรแกรม', detail: null }
+// "Today's Focus" ตามมอคอัพ — ใช้ workoutTitle (โปรแกรมที่ตั้งไว้วันนี้) ถ้ามี ไม่งั้น fallback ไปกล้ามเนื้อ
+// ที่แนะนำวันนี้ (muscleRecommendation) ผ่าน describeMuscleFocus() เดียวกับที่ AICoachCompactCard ใช้ —
+// เดิม fallback แสดงแค่ muscleGroup ดิบๆ ("อก") ทำให้ดูไม่ตรงกับ AI Coach ด้านล่างที่โชว์ "UPPER BODY /
+// อก • ไหล่ • แขน" จากข้อมูลชุดเดียวกันเป๊ะ — ฟีดแบ็ก "Today's Focus คือ อก หรือ Upper Body?"
+export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, href }: TodaysFocusCardProps) {
+  const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
+  const { main, detail } = workoutTitle
+    ? splitTitleDetail(workoutTitle)
+    : mg
+      ? (() => {
+          const focus = describeMuscleFocus(mg)
+          return { main: focus.region, detail: focus.relatedGroups.join(' • ') }
+        })()
+      : { main: 'ยังไม่ได้ตั้งโปรแกรม', detail: null }
   return (
     <PremiumCard
       as={Link}

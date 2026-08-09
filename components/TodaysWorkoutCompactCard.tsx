@@ -63,6 +63,13 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
     new Set(muscleGroups.map((m) => MUSCLE_GROUP_BODY_REGION[m as MuscleGroup]).filter((r): r is string => !!r))
   )
   const muscleLine = muscleRegions.slice(0, 2).join(' • ').toUpperCase()
+  // v53: ฟีดแบ็ก "Card ควรมี state ต่างกันชัดเจน — เสร็จแล้วควรบอกว่า COMPLETED ไม่ใช่แค่โชว์ N/N เฉยๆ,
+  // '0/1 Exercise' เอกพจน์ไม่ใช่พหูพจน์" — ใช้ช่องป้ายเดิม ("Exercises") สลับข้อความแทนที่จะเพิ่มบรรทัดใหม่
+  // (การ์ดนี้ถูกจำกัดความสูงมาหลายสิบรอบแล้ว ไม่อยากเพิ่มความสูงเพื่อ state คำเดียว) — isCompleted ใช้สี
+  // moss (ความหมาย "ดี/สำเร็จ" ตามตารางสีกลาง lib/theme.ts) แทน #CFD4DE เดิม ให้ต่างจาก state อื่นด้วยสี
+  // ไม่ใช่แค่ตัวอักษร
+  const isCompleted = total > 0 && completed >= total
+  const exerciseWord = total === 1 ? 'Exercise' : 'Exercises'
 
   return (
     <PremiumCard
@@ -306,8 +313,8 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             <span className="leading-none" style={{ fontSize: 14, color: '#CFD4DE' }}>
               /{total}
             </span>
-            <span className="leading-none uppercase tracked" style={{ fontSize: 9, color: '#CFD4DE' }}>
-              Exercises
+            <span className="leading-none uppercase tracked" style={{ fontSize: 9, color: isCompleted ? COLORS.moss : '#CFD4DE' }}>
+              {isCompleted ? 'Completed ✓' : exerciseWord}
             </span>
           </div>
 
