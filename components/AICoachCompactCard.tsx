@@ -18,7 +18,7 @@ import {
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
-import { recoveryStatusColor, recoveryTier } from '@/lib/dashboardStats'
+import { recoveryStatusColor } from '@/lib/dashboardStats'
 import { MUSCLE_GROUP_BODY_REGION, DEFAULT_SECONDARY_BY_PRIMARY, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
@@ -214,17 +214,12 @@ export default function AICoachCompactCard({
           </p>
           {muscleRecommendation ? (
             <>
-              {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium" — text-muted (#9498A0) เดิม จางไป
-                  หน่อยในที่แสงน้อย (ยิม) ขยับเป็น #A8ACB4 (สว่างกว่า ~12%) เฉพาะ caption ในการ์ดนี้
-                  v14: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Hamstring • Glute/
-                  Lower Body/Recovery" (ตัวอย่างที่ยกมาตรงกับ relatedGroups/Recovery ในการ์ดนี้พอดี) —
-                  #A8ACB4 -> #BCC1CA (สว่างขึ้นอีก ~12%) ไม่ต้องขยายขนาดตามที่ขอ */}
-              <p className="text-[10px] tracked uppercase mt-1" style={{ color: '#CFD4DE' }}>วันนี้เหมาะกับ</p>
-              {/* v30: ฟีดแบ็ก "Typography Hierarchy — UPPER BODY ควรเป็น Level 1 (ใหญ่ที่สุด) ในการ์ดนี้"
-                  — เดิม 17px เท่าๆ กับหัวข้ออื่นในการ์ด ขยับขึ้นเป็น 21px/font-semibold ให้เป็นจุดที่สายตา
-                  ไปก่อนจริงๆ (ยังคงสีอำพันไว้ — นี่คือ "คำแนะนำสำคัญ" ตามกฎ Orange = Action/Energy/
-                  Important recommendation ที่ตั้งไว้ ไม่ใช่แค่ป้ายข้อมูลเฉยๆ) */}
-              <p className="font-display font-semibold tracked uppercase text-amber truncate" style={{ fontSize: 21, lineHeight: 1.15 }}>
+              {/* v25: ฟีดแบ็ก "④ ลดความแน่นของ AI Coach — ตัดข้อความรองบางส่วน" — ตัด "วันนี้เหมาะกับ"
+                  ออก (บรรทัดนำเฉยๆ ไม่มีข้อมูลใหม่ — ป้าย "AI Coach" ด้านบน + ตัว region เองบอกความหมาย
+                  ได้ครบอยู่แล้ว) และตัดบรรทัด readinessLabelEn (EXCELLENT ฯลฯ) ด้านล่าง Recovery bar ออก
+                  ด้วย (ซ้ำความหมายกับตัวเลข % ที่อยู่ติดกันอยู่แล้ว สีเดียวกันด้วย) เหลือแค่ region +
+                  relatedGroups + Recovery bar/% ตามที่ขอ */}
+              <p className="font-display font-semibold tracked uppercase text-amber truncate mt-1" style={{ fontSize: 21, lineHeight: 1.15 }}>
                 {region}
               </p>
               <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>{relatedGroups.join(' • ')}</p>
@@ -238,9 +233,6 @@ export default function AICoachCompactCard({
                   {muscleRecommendation.pct}%
                 </p>
               </div>
-              <p className="text-[10px] font-display tracked uppercase mt-0.5" style={{ color: barColor }}>
-                {readinessLabelEn(muscleRecommendation.pct)}
-              </p>
             </>
           ) : (
             <p className="text-xs text-ink mt-1 truncate">{message}</p>
@@ -296,12 +288,6 @@ export default function AICoachCompactCard({
       )}
     </PremiumCard>
   )
-}
-
-// เวอร์ชันอังกฤษตัวพิมพ์ใหญ่ — ใช้กับบรรทัด Recovery โดยตรง ให้เข้าชุดกับ label ภาษาอังกฤษตัวพิมพ์ใหญ่
-// อื่นในการ์ดนี้ (AI COACH, RECOVERY)
-function readinessLabelEn(pct: number): string {
-  return recoveryTier(pct).labelEn
 }
 
 // Avatar วงแหวน — ใช้ภาษา "donut ring" เดียวกับ FitnessRing/GoalRing ที่ใช้ทั่วแอป (ไม่ใช่กรอบสี่เหลี่ยม

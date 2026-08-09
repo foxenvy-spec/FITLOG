@@ -296,14 +296,17 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           </p>
 
           {/* เศษส่วนตัวใหญ่ + "Exercises" ต่อท้ายบรรทัดเดียวกัน (ไม่กินพื้นที่แนวตั้งเพิ่ม) */}
+          {/* v26: ฟีดแบ็ก "⑤ เพิ่ม readability ของข้อความเล็ก — เพิ่ม contrast ก่อนเพิ่ม font size" —
+              "/total" กับ "Exercises" ยังเป็น text-muted (#9498A0) เดิม ไม่เคยถูกแตะเลย ขยับเป็น
+              #CFD4DE ตามระดับเดียวกับจุดอื่น ไม่แตะขนาด (14px/9px คงเดิม) */}
           <div className="flex items-baseline gap-1">
             <span className="font-mono font-bold leading-none" style={{ fontSize: 24, color: TEXT.title }}>
               {completed}
             </span>
-            <span className="text-muted leading-none" style={{ fontSize: 14 }}>
+            <span className="leading-none" style={{ fontSize: 14, color: '#CFD4DE' }}>
               /{total}
             </span>
-            <span className="text-muted leading-none uppercase tracked" style={{ fontSize: 9 }}>
+            <span className="leading-none uppercase tracked" style={{ fontSize: 9, color: '#CFD4DE' }}>
               Exercises
             </span>
           </div>
