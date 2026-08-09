@@ -197,12 +197,16 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   ])
 
   const todayList = (todayRows as Workout[]) ?? []
+  const typedDays = (dayRows as ProgramDay[]) ?? []
+
+  // ฟีดแบ็ก "ดูจากตารางล่วงหน้าที่ลงไว้ วันไหนไม่มีลงคือวันพัก — Scheduled Rest Day ไม่ควรตัด Streak"
+  // — weekday ที่มี ProgramDay ตั้งไว้จริง (ไม่ว่าง = วันฝึกตามตาราง) ส่งเข้า compute*Streak เพื่อข้าม
+  // วันพักตามแผนตอนนับสายโซ่ (ดู comment เต็มที่ computeCurrentStreak ใน lib/dashboardStats.ts)
+  const workoutWeekdays = new Set(typedDays.map((d) => d.day_of_week))
 
   const distinctDates = Array.from(new Set(((allDates as { performed_at: string }[]) ?? []).map((r) => r.performed_at)))
-  const streak = computeCurrentStreak(distinctDates)
-  const bestStreak = computeLongestStreak(distinctDates)
-
-  const typedDays = (dayRows as ProgramDay[]) ?? []
+  const streak = computeCurrentStreak(distinctDates, workoutWeekdays)
+  const bestStreak = computeLongestStreak(distinctDates, workoutWeekdays)
 
   const strengthRows =
     (recentStrength as {

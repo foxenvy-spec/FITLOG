@@ -3,41 +3,76 @@ import { todayStr } from './weekdays'
 import type { ExerciseDef } from './exerciseLibrary'
 import { COLORS, FIRE_ACCENT } from './theme'
 
-export function computeCurrentStreak(performedDates: string[]): number {
-  const days = Array.from(new Set(performedDates)).sort()
-  if (days.length === 0) return 0
+// STREAK_LOOKBACK_DAYS เดียวกับที่ DashboardView.tsx ใช้จำกัด query performedDates (400 วัน) — ใช้
+// เป็นเพดานลูปกันเผื่อกรณีขอบ (เช่น ตั้งโปรแกรมแบบไม่มี weekday ไหนเป็นวันฝึกเลย) ไม่ให้วนไม่มีที่สิ้นสุด
+const STREAK_WALK_MAX_DAYS = 400
 
-  const lastDate = new Date(days[days.length - 1] + 'T00:00:00')
-  const today = new Date(todayStr() + 'T00:00:00')
-  const diffFromToday = Math.round((today.getTime() - lastDate.getTime()) / 86400000)
-  if (diffFromToday > 1) return 0
+// วันที่ในรูป "YYYY-MM-DD" บวก/ลบจำนวนวัน — ยึด UTC เที่ยงคืนเสมอ (เหมือน todayDayOfWeek() ใน
+// lib/weekdays.ts) ไม่ใช่ local time ของเครื่องที่รันโค้ด กัน bug เดิมที่เจอมาแล้ว (server รันเป็น UTC
+// ส่วน browser ผู้ใช้เป็นเวลาไทย ถ้าคำนวณ day-of-week จาก local Date จะได้คนละวันกันช่วง 00:00-07:00
+// เวลาไทย) — ใช้กับทั้งการเลื่อนวันที่และการหา day-of-week ของวันที่ในอดีต
+function addIsoDays(iso: string, delta: number): string {
+  const d = new Date(`${iso}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + delta)
+  return d.toISOString().slice(0, 10)
+}
 
-  let streak = 1
-  for (let i = days.length - 1; i > 0; i--) {
-    const cur = new Date(days[i] + 'T00:00:00')
-    const prev = new Date(days[i - 1] + 'T00:00:00')
-    const diff = Math.round((cur.getTime() - prev.getTime()) / 86400000)
-    if (diff === 1) streak++
-    else break
+function isoDayOfWeek(iso: string): number {
+  return new Date(`${iso}T00:00:00Z`).getUTCDay()
+}
+
+// ฟีดแบ็ก "ถ้า Product ต้องการนับความต่อเนื่องของ Program ผมแนะนำให้ Rest Day ไม่ตัด Streak — Scheduled
+// Rest Day = ไม่ตัด Streak, Missed Workout = ตัด Streak" ตามด้วยคำชี้แจง "ดูจากตารางล่วงหน้าที่ลงไว้
+// วันไหนไม่มีลงคือวันพัก" — workoutWeekdays (0=อาทิตย์..6=เสาร์ ตรงกับ ProgramDay.day_of_week/
+// Date.getUTCDay() เป๊ะ) คือเซตของ weekday ที่มี ProgramDay ตั้งไว้จริง (ไม่ว่าง = วันฝึกตามตาราง) —
+// weekday ที่ไม่อยู่ในเซตนี้ถือเป็น "วันพักตามแผน" ไม่ตัด Streak แม้ไม่ได้ฝึกวันนั้น — ไม่ส่ง/ส่งเซตว่าง
+// (ไม่มีโปรแกรมเลย) = ไม่มี "ตาราง" ให้อ้างอิง กลับไปใช้พฤติกรรมเดิมเป๊ะ (ขาดวันไหนก็ตัด Streak หมด)
+// ข้อจำกัด: ใช้ตารางโปรแกรม "ปัจจุบัน" ย้อนไปกับวันที่ในอดีตทั้งหมด (ไม่มีข้อมูลว่าตารางเคยเปลี่ยนมาก่อน)
+export function computeCurrentStreak(performedDates: string[], workoutWeekdays?: ReadonlySet<number> | null): number {
+  const trained = new Set(performedDates)
+  if (trained.size === 0) return 0
+  const hasSchedule = !!workoutWeekdays && workoutWeekdays.size > 0
+
+  let streak = 0
+  let cursor = todayStr()
+  for (let i = 0; i < STREAK_WALK_MAX_DAYS; i++) {
+    if (trained.has(cursor)) {
+      streak++
+    } else {
+      const isScheduledRest = hasSchedule && !workoutWeekdays!.has(isoDayOfWeek(cursor))
+      // วันนี้ (i===0) ยังไม่ได้ฝึกไม่ตัด Streak ทันที (วันยังไม่จบ อาจฝึกทีหลังได้) เหมือนพฤติกรรมเดิม —
+      // วันอื่นที่ไม่ใช่วันนี้และไม่ใช่วันพักตามแผน = พลาดวันฝึกจริง ตัด Streak ที่ตรงนี้
+      if (!isScheduledRest && i !== 0) break
+    }
+    cursor = addIsoDays(cursor, -1)
   }
   return streak
 }
 
 // ฟีดแบ็ก "แยก Current กับ Best Streak — เช่นใน Detail" (ไม่ต้องเอา Best ขึ้น Dashboard การ์ดหลัก) —
 // สายโซ่ต่อเนื่องยาวที่สุดในประวัติทั้งหมด (ไม่ใช่แค่สายที่ต่อถึงวันนี้/เมื่อวานแบบ computeCurrentStreak)
-// ใช้ performedDates ชุดเดียวกัน ไม่ต้อง query เพิ่ม
-export function computeLongestStreak(performedDates: string[]): number {
-  const days = Array.from(new Set(performedDates)).sort()
-  if (days.length === 0) return 0
+// ใช้ performedDates ชุดเดียวกัน ไม่ต้อง query เพิ่ม — workoutWeekdays เหตุผลเดียวกับ computeCurrentStreak
+// (ไม่ใช้ตรรกะเดียวกัน Current กับ Best จะขัดแย้งกันเอง — Current นับต่อได้แต่ Best กลับตัดที่วันพักเดียวกัน)
+export function computeLongestStreak(performedDates: string[], workoutWeekdays?: ReadonlySet<number> | null): number {
+  const trained = new Set(performedDates)
+  if (trained.size === 0) return 0
+  const hasSchedule = !!workoutWeekdays && workoutWeekdays.size > 0
 
-  let longest = 1
-  let current = 1
-  for (let i = 1; i < days.length; i++) {
-    const cur = new Date(days[i] + 'T00:00:00')
-    const prev = new Date(days[i - 1] + 'T00:00:00')
-    const diff = Math.round((cur.getTime() - prev.getTime()) / 86400000)
-    current = diff === 1 ? current + 1 : 1
-    longest = Math.max(longest, current)
+  const sortedDates = Array.from(trained).sort()
+  const today = todayStr()
+  let longest = 0
+  let current = 0
+  let cursor = sortedDates[0]
+  for (let i = 0; cursor <= today && i < STREAK_WALK_MAX_DAYS; i++) {
+    if (trained.has(cursor)) {
+      current++
+      longest = Math.max(longest, current)
+    } else {
+      const isScheduledRest = hasSchedule && !workoutWeekdays!.has(isoDayOfWeek(cursor))
+      // วันพักตามแผน: current ไม่รีเซ็ต (สายโซ่ยังต่อได้ข้ามวันพัก) — พลาดวันฝึกจริง: รีเซ็ตเป็น 0
+      if (!isScheduledRest) current = 0
+    }
+    cursor = addIsoDays(cursor, 1)
   }
   return longest
 }
