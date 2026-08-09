@@ -1,9 +1,10 @@
 'use client'
 
-import Link from 'next/link'
+import { useState } from 'react'
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import { useCountUp } from '@/lib/useCountUp'
 import FitnessRing from './FitnessRing'
+import FitnessScoreDetailSheet from './FitnessScoreDetailSheet'
 
 interface FitnessScoreProps {
   score: FitnessScoreResult
@@ -26,11 +27,23 @@ interface FitnessScoreProps {
 // recommendation) ต่อท้าย tier label ให้ผู้ใช้เข้าใจ "ควรทำอะไรต่อ" ไม่ใช่แค่เห็นตัวเลข/ชื่อ tier เฉยๆ
 export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
   const animatedScore = Math.round(useCountUp(score.score, 900))
+  // ฟีดแบ็ก "Fitness Score ควรมีเหตุผลที่เชื่อมกับ Score — กดแล้วเจอ breakdown ว่าทำไมได้คะแนนนี้" —
+  // เดิมลิงก์ไป /stats (คอมเมนต์เดิมของไฟล์นี้ก็ยอมรับว่าเป็นแค่ทางออกชั่วคราวเพราะยังไม่มีหน้ารายละเอียด
+  // คะแนนนี้จริงๆ) เปลี่ยนเป็นเปิด FitnessScoreDetailSheet แทน (ปุ่มเดียวกับ pattern MetricDetailSheet
+  // ที่ Body Metrics ใช้อยู่แล้ว) ไม่ต้องนำทางออกจาก Dashboard เลย
+  const [open, setOpen] = useState(false)
 
   return (
-    <Link
-      href="/stats"
+    // v2: FitnessScoreDetailSheet เดิมเคยวางเป็น children ตัวสุดท้ายในนี้ ก่อนปิด </button> — บั๊ก: sheet
+    // มีปุ่มปิด/backdrop ของตัวเอง ซ้อน <button> ใน <button> ไม่ได้ตามหลัก HTML (browser จะ hoist ปุ่มใน
+    // ออกมานอก DOM tree ที่ parse จริงเงียบๆ + click ที่ backdrop/ปุ่มปิดจะ bubble ไปโดน onClick ของปุ่ม
+    // นอกด้วย เปิดใหม่ทันทีที่เพิ่งปิด) — ย้าย sheet ออกมาเป็น sibling ของปุ่ม ห่อทั้งคู่ด้วย Fragment แทน
+    <>
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
       className="flex flex-col items-center gap-1.5"
+      aria-haspopup="dialog"
       aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh} — ${score.recommendation}`}
     >
       {/* v11: ฟีดแบ็ก "ทำให้ Fitness Score เข้าใจได้ใน 1 วินาที — ผู้ใช้ใหม่อาจถามว่า 48 ของอะไร"
@@ -158,6 +171,8 @@ export default function FitnessScore({ score, size = 110 }: FitnessScoreProps) {
           {score.aiCoachStatus}
         </p>
       </div>
-    </Link>
+    </button>
+    <FitnessScoreDetailSheet open={open} onClose={() => setOpen(false)} score={score} />
+    </>
   )
 }
