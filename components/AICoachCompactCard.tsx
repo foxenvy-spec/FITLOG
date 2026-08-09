@@ -233,7 +233,7 @@ export default function AICoachCompactCard({
                 {isRestDay ? 'Recovery Day' : region}
               </p>
               <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>
-                {isRestDay ? 'ร่างกายพร้อมสำหรับการฟื้นตัว' : relatedGroups.join(' • ')}
+                {isRestDay ? 'วันนี้เหมาะกับการพักและฟื้นตัว' : relatedGroups.join(' • ')}
               </p>
 
               <div className="flex items-center gap-2 mt-1.5">
