@@ -12,8 +12,9 @@ interface FitnessScoreProps {
   size?: number
   /** true เมื่อวันนี้เป็น Rest Day จริง — ฟีดแบ็ก "Fitness Score ไม่ควรเปลี่ยนคะแนน/tier ตาม Rest Day
    * (เป็นภาพรวมสถานะ Fitness ไม่ใช่สถานะ workout วันนี้) แต่ข้อความแนะนำด้านล่าง ('Light Training')
-   * ควรเปลี่ยนเป็น 'Recovery Focus' ให้เข้ากับวันพัก" — override เฉพาะข้อความบรรทัดสุดท้าย ไม่แตะ
-   * score/tier/color ใดๆ เลยตามที่ขอ */
+   * ควรเปลี่ยนเป็น 'Recovery Recommended' ให้เข้ากับวันพัก (v2: เดิม 'Recovery Focus' — ฟีดแบ็กรอบถัดมา
+   * บอกว่า 'Recovery Recommended' สอดคล้องกับรูปแบบ tier อื่นๆ ของ Fitness Score มากกว่า เช่น 'Light
+   * Training Recommended')" — override เฉพาะข้อความบรรทัดสุดท้าย ไม่แตะ score/tier/color ใดๆ เลยตามที่ขอ */
   isRestDay?: boolean
 }
 
@@ -170,14 +171,15 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
             ที่จะไม่ต้องตกบรรทัดแล้วในทางปฏิบัติ แต่ยังไม่ลบความสามารถตกบรรทัดออก เผื่อจอแคบผิดปกติ —
             aria-label ด้านบนยังใช้ score.recommendation (ประโยคเต็ม) เพื่อ accessibility เหมือนเดิม
             v55: ฟีดแบ็ก "Fitness Score ไม่ควรเปลี่ยนคะแนน/tier ตาม Rest Day แต่ข้อความแนะนำ ('Light
-            Training') ควรเปลี่ยนเป็น 'Recovery Focus' ให้เข้ากับวันพัก" — override เฉพาะบรรทัดนี้ตอน
-            isRestDay ส่วน score/tierLabel/color ด้านบนไม่แตะเลย (คนละ concept — Fitness Score คือภาพรวม
-            สถานะ Fitness ไม่ใช่สถานะ workout วันนี้) */}
+            Training') ควรเปลี่ยนให้เข้ากับวันพัก" — override เฉพาะบรรทัดนี้ตอน isRestDay ส่วน score/
+            tierLabel/color ด้านบนไม่แตะเลย (คนละ concept — Fitness Score คือภาพรวมสถานะ Fitness ไม่ใช่
+            สถานะ workout วันนี้) v56: 'Recovery Focus' -> 'Recovery Recommended' ตามฟีดแบ็กรอบถัดมา
+            ให้สอดคล้องกับรูปแบบ tier อื่นของ Fitness Score (เช่น "Light Training Recommended") */}
         <p
           className="leading-tight mt-0.5"
           style={{ fontSize: 9, color: '#CFD4DE', maxWidth: 120 }}
         >
-          {isRestDay ? 'Recovery Focus' : score.aiCoachStatus}
+          {isRestDay ? 'Recovery Recommended' : score.aiCoachStatus}
         </p>
       </div>
     </button>
