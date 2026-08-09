@@ -23,6 +23,10 @@ interface HeaderProps {
   topMuscleThisWeek: TopMuscle | null
   displayName: string
   fitnessScore: FitnessScoreResult
+  /** true เมื่อวันนี้เป็น Rest Day จริง (workoutCardVariant==='restDay' ใน MobileDashboardView.tsx) —
+   * ฟีดแบ็ก "หัวข้อบนบอกว่า 'พร้อมออกกำลังกาย' แต่ Today's Workout ด้านล่างบอก REST DAY — สองข้อความ
+   * ขัดกัน" บรรทัด subtitle เดิมเป็น hardcode ข้อความเดียวตลอด ไม่เคยรู้จัก concept วันพักเลย */
+  isRestDay?: boolean
 }
 
 // Header ของหน้า Dashboard (มือถือ) — v19: แก้บั๊กกระดิ่งทับวง Fitness Score — รอบก่อน (v18) แยก
@@ -30,7 +34,7 @@ interface HeaderProps {
 // ยังอยู่ในโฟลว์) ทำให้วง (เริ่มที่ y=8) ทับซ้อนกับกระดิ่ง (y=0-44) จริง — แก้เป็น marginTop 52
 // (=ความสูงกระดิ่ง 44px + ช่องไฟ 8px) ให้วงเริ่มหลังกระดิ่งจริงๆ ไม่ทับกันอีก — font ชื่อ/ระยะห่าง
 // บรรทัดฝั่งซ้ายคงค่าจาก v18 ไว้ทั้งหมด (ผู้ใช้ระบุว่ารอบนี้ไม่ลด font เพิ่ม เน้นความสูง/padding/gap)
-export default function Header({ greetingText, latestPR, topMuscleThisWeek, displayName, fitnessScore }: HeaderProps) {
+export default function Header({ greetingText, latestPR, topMuscleThisWeek, displayName, fitnessScore, isRestDay = false }: HeaderProps) {
   return (
     <div className="relative flex items-start justify-between gap-3 animate-rise">
       {/* Ambient light เฉพาะโซน Header — เดิมพื้นหลังทั้งหน้าตัดแสงส้มออกหมดแล้ว (เทาเย็นล้วน) แต่
@@ -203,8 +207,12 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
           <SubtitleAccent />
         </div>
 
+        {/* v20: ฟีดแบ็ก "หัวข้อบนบอก 'พร้อมออกกำลังกาย' แต่ Today's Workout ด้านล่างบอก REST DAY —
+            ขัดกันเอง" — เดิมข้อความนี้ hardcode ค่าเดียวตลอดไม่เคยเปลี่ยนตาม state เลย สลับเป็นข้อความ
+            ฟื้นตัวตอน isRestDay ให้อ่านต่อเนื่องกับ "RECOVERY DAY" ที่ Today's Focus/Today's Workout/
+            AI Coach ด้านล่างพูดตรงกันอยู่แล้ว */}
         <p className="text-ink" style={{ marginTop: 3, fontSize: 13 }}>
-          วันนี้พร้อมสำหรับการออกกำลังกาย 💪
+          {isRestDay ? 'วันนี้เหมาะสำหรับการฟื้นตัว 🌙' : 'วันนี้พร้อมสำหรับการออกกำลังกาย 💪'}
         </p>
       </div>
 
@@ -216,7 +224,7 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
       <div className="flex flex-col items-end shrink-0" style={{ marginTop: 52 }}>
         {/* วง Fitness Score — ขนาดมาจาก dashboardSpec.header.scoreRingSize (90px) แหล่งความจริงเดียว
             แทนตัวเลขลอยในไฟล์นี้ — FitnessRing/FitnessScore สเกล stroke/font ภายในตาม size prop เอง */}
-        <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} />
+        <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} isRestDay={isRestDay} />
       </div>
     </div>
   )

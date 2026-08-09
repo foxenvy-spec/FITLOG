@@ -301,6 +301,7 @@ export default function MobileDashboardView() {
             topMuscleThisWeek={data.topMuscleThisWeek}
             displayName={data.profileDisplayName || emailDisplayName(data.email)}
             fitnessScore={fitnessScore}
+            isRestDay={workoutCardVariant === 'restDay'}
           />
         </div>
 
