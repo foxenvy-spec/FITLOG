@@ -23,6 +23,25 @@ export function computeCurrentStreak(performedDates: string[]): number {
   return streak
 }
 
+// ฟีดแบ็ก "แยก Current กับ Best Streak — เช่นใน Detail" (ไม่ต้องเอา Best ขึ้น Dashboard การ์ดหลัก) —
+// สายโซ่ต่อเนื่องยาวที่สุดในประวัติทั้งหมด (ไม่ใช่แค่สายที่ต่อถึงวันนี้/เมื่อวานแบบ computeCurrentStreak)
+// ใช้ performedDates ชุดเดียวกัน ไม่ต้อง query เพิ่ม
+export function computeLongestStreak(performedDates: string[]): number {
+  const days = Array.from(new Set(performedDates)).sort()
+  if (days.length === 0) return 0
+
+  let longest = 1
+  let current = 1
+  for (let i = 1; i < days.length; i++) {
+    const cur = new Date(days[i] + 'T00:00:00')
+    const prev = new Date(days[i - 1] + 'T00:00:00')
+    const diff = Math.round((cur.getTime() - prev.getTime()) / 86400000)
+    current = diff === 1 ? current + 1 : 1
+    longest = Math.max(longest, current)
+  }
+  return longest
+}
+
 // แปลง % ความพร้อมของวันนี้ (GoalRing บน hero card) เป็นข้อความที่ตีความแทนผู้ใช้ทันที
 // แทนที่จะโชว์แค่ตัวเลข % เฉยๆ แล้วให้ผู้ใช้ไปนั่งตีความเองว่า 43% แปลว่าอะไร
 export function readinessStatusLabel(pct: number): string {

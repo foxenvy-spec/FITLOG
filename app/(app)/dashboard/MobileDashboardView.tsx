@@ -353,7 +353,7 @@ export default function MobileDashboardView() {
 
         {/* streak + weekly goal — สองการ์ดแยกเดี่ยว (ไม่รวมกับแถบปัด Recovery/AI Coach ด้านล่าง)
             เพราะเป็นข้อมูลที่อยากให้เห็นทันทีโดยไม่ต้องปัด ตามดีไซน์ที่เลือก */}
-        <WorkoutStreakCard streak={data.streak} weekDayTicks={data.weekDayTicks} today={today} />
+        <WorkoutStreakCard streak={data.streak} bestStreak={data.bestStreak} weekDayTicks={data.weekDayTicks} today={today} />
 
         <AICoachCompactCard
           message={data.aiDailySummary}

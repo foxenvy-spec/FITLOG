@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { Workout, ProgramDay } from './types'
 import {
   computeCurrentStreak,
+  computeLongestStreak,
   computeTodayTotals,
   computeRecoveryPct,
   recoveryStatusColor,
@@ -89,6 +90,28 @@ describe('computeCurrentStreak', () => {
 
   it('de-duplicates repeated dates', () => {
     expect(computeCurrentStreak(['2026-07-18', '2026-07-18', '2026-07-17'])).toBe(2)
+  })
+})
+
+describe('computeLongestStreak', () => {
+  it('returns 0 for no history', () => {
+    expect(computeLongestStreak([])).toBe(0)
+  })
+
+  it('returns 1 for a single date', () => {
+    expect(computeLongestStreak(['2026-06-01'])).toBe(1)
+  })
+
+  it('finds the longest run even if it is not the most recent one', () => {
+    // 5-day run in June, then a broken 2-day run in July (today's streak is 0/dead here,
+    // but the longest historical run should still be 5)
+    expect(
+      computeLongestStreak(['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04', '2026-06-05', '2026-07-01', '2026-07-02'])
+    ).toBe(5)
+  })
+
+  it('de-duplicates repeated dates', () => {
+    expect(computeLongestStreak(['2026-06-01', '2026-06-01', '2026-06-02'])).toBe(2)
   })
 })
 
