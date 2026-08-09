@@ -30,7 +30,12 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
                 Workout/Recovery" — text-muted (#9498A0) เดิมเท่ากับ caption ทั่วไป เปลี่ยนเป็น TEXT.body
                 (#BDBDBD) ให้อ่านเป็นชื่อการ์ดจริงๆ ไม่ใช่แค่รายละเอียดจาง — ตัวเลขวัน (streak) ยังเป็นสีส้ม
                 ไว้เหมือนเดิม เพราะเป็น "Progress" ตามกฎ Orange = Action/Energy/Progress ที่ตั้งไว้ */}
-            <p className="text-[9px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Workout Streak</p>
+            {/* v3: ฟีดแบ็ก "'0 วัน' แต่ทางขวามีวงกลม workout หลายวัน — ดูเหมือนขัดแย้งกัน" — computeCurrentStreak
+                (lib/dashboardStats.ts) ถูกต้องอยู่แล้ว (0 = สายโซ่ต่อเนื่องถึงวันนี้/เมื่อวานขาดจริง แม้จะมี
+                ประวัติฝึกในสัปดาห์) นี่เป็นปัญหาคำ ไม่ใช่บั๊กคำนวณ — เปลี่ยนป้ายจาก "Workout Streak" เป็น
+                "Current Streak" ให้ชัดว่านับเฉพาะสายโซ่ปัจจุบัน ไม่ใช่จำนวนวันที่ฝึกทั้งหมดในสัปดาห์ (ดูได้
+                จากจุดวงกลมทางขวาต่างหาก) — ไม่แตะความยาวบรรทัดตัวเลข กันการ์ดล้นในเบอร์ streak สองหลัก */}
+            <p className="text-[9px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Current Streak</p>
             <p className="font-mono text-amber leading-none mt-1" style={{ fontSize: 13 }}>{streak} วัน</p>
           </div>
         </div>

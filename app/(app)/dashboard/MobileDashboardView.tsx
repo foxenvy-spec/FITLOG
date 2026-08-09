@@ -295,7 +295,8 @@ export default function MobileDashboardView() {
 
         <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap }}>
         <TodaysFocusCard
-          label={workoutTitle ?? data.muscleRecommendation?.muscleGroup ?? null}
+          workoutTitle={workoutTitle}
+          muscleRecommendation={muscleRecommendation}
           href={scheduledDay ? '/session' : '/log'}
         />
 

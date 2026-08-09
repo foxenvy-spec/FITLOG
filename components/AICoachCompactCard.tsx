@@ -19,7 +19,7 @@ import {
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import { recoveryStatusColor } from '@/lib/dashboardStats'
-import { MUSCLE_GROUP_BODY_REGION, DEFAULT_SECONDARY_BY_PRIMARY, type MuscleGroup } from '@/lib/muscle-groups'
+import { describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
@@ -115,8 +115,9 @@ export default function AICoachCompactCard({
 
   const barColor = muscleRecommendation ? recoveryStatusColor(muscleRecommendation.pct) : COLORS.amber
   const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
-  const region = mg ? MUSCLE_GROUP_BODY_REGION[mg] : null
-  const relatedGroups = mg ? [mg, ...(DEFAULT_SECONDARY_BY_PRIMARY[mg] ?? [])] : []
+  const focus = mg ? describeMuscleFocus(mg) : null
+  const region = focus?.region ?? null
+  const relatedGroups = focus?.relatedGroups ?? []
 
   // จับคู่เทมเพลตที่มีท่าตรงกับกล้ามเนื้อที่แนะนำวันนี้ (ถ้ามี) ไม่งั้นใช้เทมเพลตล่าสุด — ตรรกะเดียวกับ
   // RecommendedProgramCard เดิมเป๊ะๆ
