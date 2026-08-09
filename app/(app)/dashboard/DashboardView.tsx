@@ -13,6 +13,7 @@ import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/typ
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import {
   computeCurrentStreak,
+  computeLongestStreak,
   computeTodayTotals,
   computeRecoveryPct,
   recoveryStatusColor,
@@ -99,6 +100,10 @@ export interface DashboardData {
   profileDisplayName: string | null
   todayWorkouts: Workout[]
   streak: number
+  // สายโซ่ต่อเนื่องยาวที่สุดในประวัติ (ไม่ใช่แค่สายที่ต่อถึงวันนี้แบบ `streak`) — ใช้ใน
+  // WorkoutStreakDetailSheet เท่านั้น ไม่โชว์บนการ์ดหลักของ Dashboard (ฟีดแบ็ก "ไม่ต้องเอา Best
+  // มาไว้ Dashboard")
+  bestStreak: number
   programDays: ProgramDay[]
   todayExercises: ProgramExercise[]
   completedCount: number
@@ -195,6 +200,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
 
   const distinctDates = Array.from(new Set(((allDates as { performed_at: string }[]) ?? []).map((r) => r.performed_at)))
   const streak = computeCurrentStreak(distinctDates)
+  const bestStreak = computeLongestStreak(distinctDates)
 
   const typedDays = (dayRows as ProgramDay[]) ?? []
 
@@ -324,6 +330,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     profileDisplayName: (profileRow as { display_name: string | null } | null)?.display_name ?? null,
     todayWorkouts: todayList,
     streak,
+    bestStreak,
     programDays: typedDays,
     todayExercises,
     completedCount,

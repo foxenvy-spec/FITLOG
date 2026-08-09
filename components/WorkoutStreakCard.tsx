@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { WEEKDAY_LABELS } from '@/app/(app)/dashboard/DashboardView'
 import { COLORS, NEUTRAL, TEXT, withAlpha } from '@/lib/theme'
 import PremiumCard from './ui/PremiumCard'
+import WorkoutStreakDetailSheet from './dashboard/WorkoutStreakDetailSheet'
 
 interface WorkoutStreakCardProps {
   streak: number
+  bestStreak: number
   weekDayTicks: { iso: string; trained: boolean; isFuture: boolean }[]
   today: string
 }
@@ -13,9 +16,13 @@ interface WorkoutStreakCardProps {
 // การ์ด "Workout Streak" แบบย่อ (เดิมสูง ~180px ลดเหลือ ~90-100px ตามที่ขอ) — รวมทุกอย่างลง
 // แถวเดียว: ไอคอนไฟ+จำนวนวัน ซ้าย, จุดวงกลม 7 วันเล็กๆ (ไม่มีตัวย่อวันกำกับใต้จุดแล้ว — ข้อมูล
 // วันยังอยู่ครบใน aria-label ให้ screen reader อ่านได้ปกติ) ขวา ตัดคำบรรยายใต้หัวข้อออกไปเลย
-export default function WorkoutStreakCard({ streak, weekDayTicks, today }: WorkoutStreakCardProps) {
+// v4: ฟีดแบ็ก "แยก Current กับ Best Streak — เช่นใน Detail" — การ์ดนี้แตะได้แล้วเปิด
+// WorkoutStreakDetailSheet โชว์ Current เทียบ Best (ไม่เพิ่ม Best ขึ้นการ์ดหลักตามที่ขอ)
+export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, today }: WorkoutStreakCardProps) {
+  const [open, setOpen] = useState(false)
   return (
-    <PremiumCard className="animate-rise px-4 py-3">
+    <>
+    <PremiumCard as="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="animate-rise px-4 py-3 w-full text-left">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 shrink-0">
           <span
@@ -81,5 +88,7 @@ export default function WorkoutStreakCard({ streak, weekDayTicks, today }: Worko
         </div>
       </div>
     </PremiumCard>
+    <WorkoutStreakDetailSheet open={open} onClose={() => setOpen(false)} streak={streak} bestStreak={bestStreak} />
+    </>
   )
 }

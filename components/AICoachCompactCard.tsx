@@ -187,7 +187,9 @@ export default function AICoachCompactCard({
       {/* v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — เพิ่ม Background Particle" — จุดกระพริบเล็กๆ กระจายห่างๆ
           (เทคนิคเดียวกับที่การ์ด Hero Workout ใช้อยู่แล้วรอบก่อน) วางเฉพาะโซนขวา/ล่างของการ์ด หลีกเลี่ยง
           โซน avatar+ข้อความฝั่งซ้ายที่ยังต้องอ่านออกชัดเจน */}
-      {[
+      {/* v54: ฟีดแบ็ก "AI Coach ยังใหญ่ไปนิดใน Rest Day — เบาลงหน่อย" — particle ตกแต่งล้วนๆ (ไม่มีข้อมูล)
+          ตัดออกตอน isRestDay ให้การ์ดดูนิ่ง/เบาขึ้นสมกับเป็นวันพัก ไม่ตัดตอนวันฝึกปกติ */}
+      {!isRestDay && [
         { left: '78%', top: '8%', size: 2, opacity: 0.5 },
         { left: '92%', top: '28%', size: 1.5, opacity: 0.4 },
         { left: '85%', top: '55%', size: 1.5, opacity: 0.35 },
@@ -212,7 +214,7 @@ export default function AICoachCompactCard({
           ข้อมูลด้านขวา" — เล็กน้อยพอไม่ให้ดูอึดอัด แต่ช่วยเก็บพื้นที่แนวนอนกลับมาให้คอลัมน์ข้อความ
           v52: ลดอีกขั้น 10px -> 8px ตามรอบต่อมา */}
       <Link href={href} className="flex items-center gap-2 active:opacity-80 transition">
-        <AiRingAvatar src={avatarSrc} />
+        <AiRingAvatar src={avatarSrc} size={isRestDay ? 96 : 112} />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
               คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body
@@ -311,7 +313,7 @@ export default function AICoachCompactCard({
 // Avatar วงแหวน — ใช้ภาษา "donut ring" เดียวกับ FitnessRing/GoalRing ที่ใช้ทั่วแอป (ไม่ใช่กรอบสี่เหลี่ยม
 // แยกวัสดุ) ให้ AI Coach avatar อยู่ในตระกูลเดียวกับวง progress อื่นๆ — นิ่งสนิท ไม่มี pulse/rotate ตามกฎ
 // "Hero มีแค่ใบเดียว" — รับ src ไว้เผื่อไม่มีรูป (fallback ไอคอนเรขาคณิต)
-function AiRingAvatar({ src }: { src?: string }) {
+function AiRingAvatar({ src, size = 112 }: { src?: string; size?: number }) {
   // v45: ฟีดแบ็ก "Robot ยังเล็ก อยากให้ใหญ่ขึ้นอีกประมาณ 25%" (ราว 88 -> 110px) — รอบก่อนหน้าทำแค่ scale
   // รูปข้างในให้เต็มวงเดิม (88px คงที่) ตามที่ขอตอนนั้น "ไม่ต้องเพิ่มขนาดวงแหวน" — รอบนี้ขอเพิ่มสัดส่วน
   // Robot ต่อการ์ดจริง (40/60) ซึ่งต้องขยายวงเองด้วย ไม่ใช่แค่ scale รูปในวงเดิม — scale(1.55) ของรูปข้างใน
@@ -334,7 +336,9 @@ function AiRingAvatar({ src }: { src?: string }) {
   // ออก) แค่เล็กลงพอให้การ์ดโดยรวมเตี้ยลงจริงตามเป้า — scale/inset ไม่ต้องแก้ตามเหตุผลเดิม
   // v52: ฟีดแบ็ก "AI Coach คือพระเอก แต่ยังใหญ่ไปนิดหนึ่ง (Robot/3 กล่อง/ปุ่ม Start รวมกันอยู่ในการ์ด
   // เดียว) ลดความสูงอีก 10-15%" — 128 -> 112 (-12.5%) ยังไม่ตัด Robot ออกตามที่ยืนยันซ้ำอีกครั้ง
-  const size = 112
+  // v54: ฟีดแบ็ก "AI Coach ยังใหญ่ไปนิดใน Rest Day — Card ควรเบาลง ~15-20%" — size กลายเป็น prop (ดีฟอลต์
+  // 112 เดิม ไม่กระทบวันฝึกปกติ) — ผู้เรียก (ด้านล่าง) ส่ง 96 ตอน isRestDay (-14%, ใกล้เคียงที่ขอ) แทนที่
+  // จะแก้ค่าคงที่ตรงนี้ตรงๆ ซึ่งจะกระทบวันฝึกปกติไปด้วย
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — กรอบ+glow รอบ avatar เดิมสีอำพัน เป็นแค่กรอบ
