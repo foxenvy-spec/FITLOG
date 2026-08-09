@@ -31,6 +31,12 @@ interface AICoachCompactCardProps {
    * data.muscleRecommendation) — มีแล้วโชว์ headline + recovery bar + stat chip + จับคู่เทมเพลตให้เริ่ม
    * ได้เลย ไม่มี (ยังไม่เคยฝึกกลุ่มไหนเลย) fallback กลับไปโชว์ message เฉยๆ แบบเดิม */
   muscleRecommendation: { muscleGroup: string; pct: number } | null
+  /** true เมื่อวันนี้เป็น Rest Day จริง (workoutCardVariant==='restDay' ใน MobileDashboardView.tsx —
+   * ค่าเดียวกับที่ TodaysWorkoutEmptyCard/TodaysFocusCard ใช้) — muscleRecommendation คำนวณจาก recovery %
+   * ล้วนๆ ไม่รู้จัก concept "วันนี้พัก" เลย เดิมการ์ดนี้เลยยังโชว์ "UPPER BODY" + ปุ่ม "เริ่ม DAY 4" ต่อไป
+   * แม้ Today's Workout จะบอก REST DAY แล้ว (ฟีดแบ็ก "REST DAY กับ UPPER BODY + ปุ่มเริ่ม ไม่ควรเกิด
+   * พร้อมกัน") — true แล้วสลับ headline เป็น "Recovery Day" และตัดปุ่มเริ่มเวิร์กเอาต์ออก */
+  isRestDay?: boolean
   href?: string
   /** รูป AI Coach จริง (public/icons/ai-coach-avatar.png ที่ผู้ใช้ให้มา — 1024x1024 โปร่งใสอยู่แล้ว
    * ไม่ต้อง crop/แก้พื้นหลังเพิ่ม) ดีฟอลต์เป็นไฟล์นี้เสมอ — ส่ง avatarSrc={undefined} เพื่อกลับไปใช้
@@ -97,6 +103,7 @@ async function fetchTemplatesWithExercises(supabase: ReturnType<typeof createCli
 export default function AICoachCompactCard({
   message,
   muscleRecommendation,
+  isRestDay = false,
   href = '/coach',
   avatarSrc = '/icons/ai-coach-avatar.png',
   lastUpdatedAt,
@@ -221,9 +228,11 @@ export default function AICoachCompactCard({
                   ด้วย (ซ้ำความหมายกับตัวเลข % ที่อยู่ติดกันอยู่แล้ว สีเดียวกันด้วย) เหลือแค่ region +
                   relatedGroups + Recovery bar/% ตามที่ขอ */}
               <p className="font-display font-semibold tracked uppercase text-amber truncate mt-1" style={{ fontSize: 21, lineHeight: 1.15 }}>
-                {region}
+                {isRestDay ? 'Recovery Day' : region}
               </p>
-              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>{relatedGroups.join(' • ')}</p>
+              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>
+                {isRestDay ? 'ร่างกายพร้อมสำหรับการฟื้นตัว' : relatedGroups.join(' • ')}
+              </p>
 
               <div className="flex items-center gap-2 mt-1.5">
                 <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }}>Recovery</p>
@@ -267,7 +276,15 @@ export default function AICoachCompactCard({
             </svg>
           </Button>
 
-          {templatesLoading ? (
+          {isRestDay ? (
+            // ฟีดแบ็ก "REST DAY ไม่ควรมีปุ่มเริ่ม DAY 4 — UPPER" — ตัดปุ่ม "เริ่ม [เทมเพลต]" ออกทั้งชุด
+            // (chosen/handleStart ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ isRestDay สลับเป็น false ระหว่าง
+            // เซสชัน แต่จะไม่ถูกเสนอเป็น action หลักตอนวันนี้เป็นวันพัก) เปลี่ยนเป็นลิงก์เบาๆ ไปดู
+            // Recovery/AI Coach แทน ไม่ใช่ CTA เด่นแบบ "เริ่ม" เพราะ Rest Day ไม่ควรมี action ที่เด่นกว่า "พัก"
+            <Button as={Link} href={href} className="flex-1 min-w-0">
+              ดู Recovery →
+            </Button>
+          ) : templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />
           ) : chosen && chosenExercises.length > 0 ? (
             // v50: ฟีดแบ็ก "CTA ยาวเกินไป — เริ่ม DAY 5 — LOWER (HAMSTRING/GL... ถูกตัด บนมือถือ" —

@@ -308,6 +308,7 @@ export default function MobileDashboardView() {
         <TodaysFocusCard
           workoutTitle={workoutTitle}
           muscleRecommendation={muscleRecommendation}
+          isRestDay={workoutCardVariant === 'restDay'}
           href={scheduledDay ? '/session' : '/log'}
         />
 
@@ -354,7 +355,12 @@ export default function MobileDashboardView() {
             เพราะเป็นข้อมูลที่อยากให้เห็นทันทีโดยไม่ต้องปัด ตามดีไซน์ที่เลือก */}
         <WorkoutStreakCard streak={data.streak} weekDayTicks={data.weekDayTicks} today={today} />
 
-        <AICoachCompactCard message={data.aiDailySummary} muscleRecommendation={muscleRecommendation} lastUpdatedAt={dataUpdatedAt} />
+        <AICoachCompactCard
+          message={data.aiDailySummary}
+          muscleRecommendation={muscleRecommendation}
+          isRestDay={workoutCardVariant === 'restDay'}
+          lastUpdatedAt={dataUpdatedAt}
+        />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม */}
         <div className="flex gap-2 overflow-x-auto animate-rise" style={{ animationDelay: '160ms', scrollbarWidth: 'none' }}>
