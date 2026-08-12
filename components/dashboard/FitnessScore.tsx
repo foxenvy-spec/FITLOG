@@ -50,14 +50,18 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
       onClick={() => setOpen(true)}
       className="flex flex-col items-center gap-1.5"
       aria-haspopup="dialog"
-      aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh} — ${isRestDay ? 'วันนี้เป็นวันพัก เน้น Recovery' : score.recommendation}`}
+      aria-label={`Training Readiness ${score.score} จาก 100 — ${score.tierLabelTh} — ${isRestDay ? 'วันนี้เป็นวันพัก เน้น Recovery' : score.recommendation}`}
     >
       {/* v11: ฟีดแบ็ก "ทำให้ Fitness Score เข้าใจได้ใน 1 วินาที — ผู้ใช้ใหม่อาจถามว่า 48 ของอะไร"
           — ป้าย "Fitness Score" ถูกตัดออกไปตั้งแต่รอบลดความสูง Header ก่อนหน้านี้มาก (เหตุผลตอนนั้นคือ
           บริบทรอบตัวเลขชัดพอแล้ว) — กลับมาใส่อีกครั้งตามที่ขอ แต่คุมให้เล็ก/แน่นที่สุด (8px, margin
-          บางๆ) ไม่ให้กลับไปดันความสูง Header เหมือนเดิม */}
+          บางๆ) ไม่ให้กลับไปดันความสูง Header เหมือนเดิม
+          v57: ฟีดแบ็ก "'Fitness Score' ตีความว่าคะแนนสุขภาพ/ฟิตเนสโดยรวม แต่ตัวเลขนี้จริงๆ วัดว่า
+          'วันนี้ร่างกายพร้อมฝึกแค่ไหน' — ใช้ 'Training Readiness' จะตรงกว่า" — เปลี่ยนป้ายที่แสดงผลเท่านั้น
+          (ชื่อฟังก์ชัน/ตัวแปร computeFitnessScore ฯลฯ ใน lib/fitnessScore.ts ไม่แตะ เพื่อไม่ให้กระทบ
+          จุดอื่นที่ import อยู่) */}
       <p className="text-[8px] tracked uppercase leading-none" style={{ color: '#8A8E96', marginBottom: 3 }}>
-        Fitness Score
+        Training Readiness
       </p>
       {/* animate-pop-in (scale 0.6→1.1→1, keyframe ที่มีอยู่แล้วใน globals.css ใช้กับ badge/pill อื่นๆ
           ในแอป) — เดิมวงมาปุ๊บนิ่งเลยตอนโหลดหน้า ไม่มี entrance animation ของตัวเองต่างจากตัวเลข/เส้น
