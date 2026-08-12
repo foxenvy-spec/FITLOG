@@ -84,7 +84,23 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                         : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }
                   }
                 >
-                  {tick.trained ? '✓' : isPastMissed ? '–' : ''}
+                  {/* v57: ฟีดแบ็ก "Today เป็นวงแหวนส้มเฉยๆ ดูคล้าย 'กำลังทำอยู่' มากกว่า 'วันนี้' — อย่าใช้
+                      ✓ เพราะยังไม่ complete แนะนำวงแหวนส้ม + จุดเล็กตรงกลาง" — วงกลวงเปล่า (ring ไม่มีอะไร
+                      ข้างใน) อ่านกำกวมได้ว่าเป็น spinner/loading state เพิ่มจุดกลมเล็กสีอำพันตรงกลางให้อ่าน
+                      เป็น "จุดหมายวันนี้บนปฏิทิน" ชัดเจนแทน — เฉพาะกรณีวันนี้ + ยังไม่ฝึก เท่านั้น (ฝึกแล้ว
+                      ยังโชว์ ✓ ตามเดิม เพราะกรณีนั้น "สำเร็จแล้วจริง" ไม่ใช่ "กำลังจะถึง") */}
+                  {tick.trained ? (
+                    '✓'
+                  ) : isToday ? (
+                    <span
+                      aria-hidden="true"
+                      style={{ width: 4, height: 4, borderRadius: 9999, backgroundColor: COLORS.amber }}
+                    />
+                  ) : isPastMissed ? (
+                    '–'
+                  ) : (
+                    ''
+                  )}
                 </span>
               </div>
             )

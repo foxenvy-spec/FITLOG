@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query'
 import {
   COLORS,
   NEUTRAL,
-  AMBER_GLOW_SHADOW,
   CARD_GRADIENT_CSS,
   CARD_REFLECTION_CSS,
   CARD_MULTI_REFLECTION_CSS,
@@ -20,6 +19,14 @@ import { todayStr } from '@/lib/weekdays'
 import { createClient } from '@/lib/supabase/client'
 import { fetchDashboardData } from '@/app/(app)/dashboard/DashboardView'
 import FitnessRing from '@/components/dashboard/FitnessRing'
+
+// v57: ฟีดแบ็ก "ปุ่มกลาง Bottom Nav มี Glow ใหญ่กว่าแท็บอื่นชัดเจน (Home/Program/Statistics/Profile
+// ไม่มี glow เลย) ถ้าอยากให้ Bottom Nav เป็น Navigation จริงๆ ลด Glow ~10-15% (ไม่ต้องลดขนาดปุ่ม)" —
+// AMBER_GLOW_SHADOW (lib/theme.ts) เป็น token ใช้ร่วมหลายจุด (ปุ่ม CTA ใน Button.tsx, SidebarNav ฯลฯ)
+// แก้ตรงนั้นจะกระทบทุกจุดที่ไม่ได้ถูกร้องขอ — ลด alpha ของทุกชั้น glow ลง ~12% เฉพาะที่นี่แทน (ไม่แตะ
+// blur radius/ขนาด span ที่ครอบปุ่ม — ปุ่มเองยังใหญ่เท่าเดิมตามที่ขอ)
+const BOTTOM_NAV_GLOW_SHADOW =
+  '0 0 2px rgba(255,255,255,.53), 0 0 8px rgba(255,210,120,.53), 0 0 22px rgba(255,150,20,.31), 0 0 60px rgba(255,130,0,.105)'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -151,7 +158,7 @@ export default function BottomNav() {
                     top: -Math.round(btnSize * 0.42),
                     width: btnSize,
                     height: btnSize,
-                    boxShadow: AMBER_GLOW_SHADOW,
+                    boxShadow: BOTTOM_NAV_GLOW_SHADOW,
                   }}
                 />
                 <span
