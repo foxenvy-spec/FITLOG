@@ -330,7 +330,14 @@ export default function MobileDashboardView() {
         {workoutCardVariant === 'active' ? (
           <TodaysWorkoutCompactCard
             completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
-            total={data.todayExercises.length > 0 ? data.todayExercises.length : Math.max(totals.entryCount, 1)}
+            // ฟีดแบ็ก "เพิ่มท่า/เพิ่ม Set ระหว่างเซสชัน แต่พอจบ หน้านี้ไม่แสดงตามความจริง" — เดิม total
+            // เป็น data.todayExercises.length ตรงๆ (จำนวนแผนล้วนๆ) ตราบใดที่มีแผนตั้งไว้ ไม่เคยรวมท่า
+            // ad-hoc ที่เพิ่มเข้าไประหว่างเซสชัน (เจอบั๊กเดียวกันนี้ก่อนแล้วในการ์ด Hero ฝั่งเดสก์ท็อป —
+            // DashboardView.tsx — แก้ด้วยวิธีเดียวกัน) Math.max(แผน, totals.entryCount) ให้ตัวเลขขยับตาม
+            // จริงเมื่อทำเกินแผน แต่ยังไม่ลดฮวบกลางเซสชันถ้ายังทำได้ไม่ครบแผน — completed ไม่แตะ (ยังอิง
+            // data.completedCount ซึ่งนับเฉพาะท่าตามแผนที่ "จบท่า" จริง ไม่มีสัญญาณ "จบท่า" ของท่า ad-hoc
+            // ให้ใช้ได้อย่างปลอดภัย การเดาจะเสี่ยงโชว์ผิดยิ่งกว่าเดิม เช่น 7/7 ทั้งที่ท่าที่ 7 ทำไปครึ่งเดียว)
+            total={Math.max(data.todayExercises.length, totals.entryCount, 1)}
             href={scheduledDay ? '/session' : '/log'}
             muscleGroups={todayMuscleGroups}
           />

@@ -1145,13 +1145,23 @@ export default function DashboardPage() {
                 <p className="text-xs text-amber mt-1.5 truncate">{plannedMuscleLabel}</p>
               )}
 
+              {/* ฟีดแบ็ก "เพิ่มท่า/เพิ่ม Set ระหว่างเซสชัน แต่พอจบ หน้านี้ไม่แสดงตามความจริง" — เดิม Exercises
+                  ใช้ data.todayExercises.length (จำนวนแผนล้วนๆ) ตรงๆ ตราบใดที่มีแผนตั้งไว้ (>0 ก็ truthy
+                  แล้ว) ไม่เคยเช็ค totals.entryCount (จำนวนที่ log จริงวันนี้) เลย — Sets ก็เช่นกัน
+                  plannedTotalSets มาจากผลรวม target sets ของแผนล้วนๆ ไม่บวกรวมเซ็ต/ท่า ad-hoc ที่เพิ่ม
+                  เข้าไประหว่างเซสชัน (ดู makeAdhocExercise ใน session/page.tsx) ผลคือ "6 Exercises/20 Sets"
+                  ค้างอยู่แบบเดิมแม้ผู้ใช้เพิ่มท่าที่ 7 + เซ็ตรวม 24 จริงไปแล้ว — เปลี่ยนเป็น Math.max(แผน,
+                  จริง) แทน: ถ้ายังไม่เริ่ม/ทำได้ไม่ครบแผน ยังโชว์ตัวเลขแผนเหมือนเดิม (ไม่ลดฮวบกลางเซสชัน) แต่
+                  ถ้าทำเกินแผน (เพิ่มท่า/เซ็ตเอง) ตัวเลขจะขยับตามจริงทันที ไม่ค้างที่แผนเดิมอีกต่อไป —
+                  totals.entryCount/totals.sets มาจาก computeTodayTotals(data.todayWorkouts) ซึ่งนับจาก
+                  ข้อมูล log จริงอยู่แล้ว (ใช้ค่าเดียวกับที่ "นาที"/"kcal" สองช่องถัดไปใช้ ไม่ต้องคำนวณซ้ำ) */}
               <div className="flex items-center gap-4 mt-3 flex-wrap">
                 <div>
-                  <p className="font-mono text-lg text-ink leading-none">{data.todayExercises.length || totals.entryCount}</p>
+                  <p className="font-mono text-lg text-ink leading-none">{Math.max(data.todayExercises.length, totals.entryCount)}</p>
                   <p className="text-[10px] text-muted mt-0.5">Exercises</p>
                 </div>
                 <div>
-                  <p className="font-mono text-lg text-ink leading-none">{plannedTotalSets}</p>
+                  <p className="font-mono text-lg text-ink leading-none">{Math.max(plannedTotalSets, totals.sets)}</p>
                   <p className="text-[10px] text-muted mt-0.5">Sets</p>
                 </div>
                 <div>
