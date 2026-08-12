@@ -51,33 +51,29 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
             แถวจุดกลม ไม่มีตัวอักษรวันกำกับที่มองเห็น (ตัดออกไปตั้งแต่รอบก่อนเพื่อลดความสูง ดู comment เดิม
             ด้านบนไฟล์ "ไม่มีตัวย่อวันกำกับใต้จุดแล้ว") ตอนนี้ขอกลับมาแสดง (WEEKDAY_LABELS ตัวเดียวกับที่ใช้
             ทำ aria-label อยู่แล้ว ไม่ต้องเพิ่มข้อมูลใหม่) ให้อ่านเป็นปฏิทินสัปดาห์จริงๆ แทนเส้นจุดเฉยๆ */}
-        <div className="flex items-end gap-1">
+        {/* v56: ฟีดแบ็ก "P2 — วงกลมยังค่อนข้างเล็ก ตัวอักษรวันนี้เกือบกลืนกับ background" (ยืนยัน
+            "ไม่ต้องเพิ่มขนาด Card") — ขยายวงจาก 20px (w-5 h-5) เป็น 22px เฉพาะเส้นผ่านศูนย์กลาง (ไม่ใช่
+            padding/ความสูงการ์ด) ลด gap แถว 4px->2px ชดเชยความกว้างที่เพิ่มขึ้น ให้แถว 7 วงยังพอดีความกว้าง
+            เดิมของการ์ด ไม่ล้น — ตัวอักษรวันสีเดิม #A8ACB4 (contrast ~2.7:1 บนพื้นเข้ม) ขยับเป็น #D2D5DC
+            (contrast ~6:1) อ่านง่ายขึ้นชัดเจนโดยไม่แตะโทนสีธีมหลัก (ยังเป็นเทากลาง ไม่ใช่สีใหม่) */}
+        <div className="flex items-end gap-0.5">
           {weekDayTicks.map((tick, i) => {
             const isToday = tick.iso === today
+            // อดีตที่พลาด (ไม่ใช่วันนี้/อนาคต/ฝึกแล้ว) โชว์ขีดเล็กๆ แยกจาก "อนาคต" (ว่างเปล่า) ตามที่ขอ
+            // "Past missed ... อาจแยกด้วยจุด/เส้นเล็กๆ ก็ได้" — ทั้งคู่ยังเป็นพื้นเทาเข้มเดียวกัน (ไม่ต้อง
+            // เปลี่ยนสี) แค่ต่างที่มีขีดหรือไม่มี
+            const isPastMissed = !tick.trained && !isToday && !tick.isFuture
             return (
               <div key={tick.iso} className="flex flex-col items-center gap-0.5 shrink-0">
-                {/* v1: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ Streak day labels — เพิ่ม
-                    contrast ก่อน" — #6B6B6E เดิมมืดกว่า caption อื่นในแอปมาก (ใกล้เคียง TEXT.caption
-                    ซึ่งตั้งใจให้จางสุดในระบบ) ขยับขึ้นมาระดับเดียวกับ caption ทั่วไปที่ปรับไปแล้วรอบนี้ */}
                 <span
-                  className="text-[7px] leading-none tracked uppercase"
-                  style={{ color: isToday ? COLORS.amber : '#A8ACB4' }}
+                  className="text-[8px] leading-none tracked uppercase"
+                  style={{ color: isToday ? COLORS.amber : '#D2D5DC' }}
                   aria-hidden="true"
                 >
                   {WEEKDAY_LABELS[i]}
                 </span>
-                {/* v2: ฟีดแบ็ก "Workout Streak ควรบอก 'วันนี้' ชัดขึ้น — ขอบหนาขึ้น + glow บางๆ" — เดิมมี
-                    แค่ boxShadow ring 2px สีอำพัน (ไม่มี glow) ให้ทั้ง 2px ring หนาขึ้นเป็น 2.5px และเพิ่ม
-                    glow บางๆ ซ้อนอีกชั้น (blur 4px, alpha ~35%) ไม่ใช้ animation ตามที่ระบุว่าไม่จำเป็น
-                    v3: ฟีดแบ็ก "วงแหวนวันนี้ยังดูคล้ายวันที่ฝึกสำเร็จ — ไม่ต้องใช้วงแหวนสีส้มกับวันนี้ถ้า
-                    มันทำให้เข้าใจว่า complete — ✓ = สำเร็จ, ○ = วันนี้, จาง = ยังไม่ถึง/พลาด" — เดิม isToday
-                    เพิ่ม ring+glow ทับบนสีพื้นเดิมเสมอ (ทั้งกรณีฝึกแล้ว/ยังไม่ฝึก) ทำให้ "วันนี้ที่ฝึกแล้ว"
-                    ดูมีชั้นเรืองแสงเกินจำเป็น (เช็คถูก+พื้นอำพันสื่อ "สำเร็จ" ชัดอยู่แล้ว ไม่ต้องการ ring ซ้อน)
-                    ตัด ring+glow ออกทั้งคู่ เปลี่ยนไปแค่กรณี "วันนี้ + ยังไม่ฝึก" ให้เป็นวงกลมกลวงขอบอำพัน
-                    (ไม่มีพื้นทึบ ไม่มี glow) แทนพื้น chipInactive เดิม อ่านเป็น "ช่องว่างของวันนี้" ชัดเจน
-                    แยกจากทั้ง "สำเร็จ" (พื้นอำพันทึบ+เช็ค) และ "พลาด/ยังไม่ถึง" (พื้น chipInactive เข้ม) */}
                 <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] shrink-0"
+                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] shrink-0"
                   role="img"
                   aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${tick.trained ? 'ฝึกแล้ว' : tick.isFuture ? 'ยังไม่ถึงวัน' : 'ยังไม่ได้ฝึก'}`}
                   style={
@@ -88,7 +84,7 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                         : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }
                   }
                 >
-                  {tick.trained ? '✓' : ''}
+                  {tick.trained ? '✓' : isPastMissed ? '–' : ''}
                 </span>
               </div>
             )

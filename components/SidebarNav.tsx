@@ -56,8 +56,9 @@ export default function SidebarNav() {
   const { setOpen } = useDashboardSettings()
 
   // ข้อมูลย่อไว้โชว์การ์ดผู้ใช้ท้าย sidebar (ชื่อ + ตัวอักษรย่อ) — ดึงแบบเบาๆ ครั้งเดียวตอน mount
-  // ด้วย useEffect ธรรมดา ไม่ใช้ react-query เพราะ SidebarNav อยู่นอก QueryProvider (ซึ่งครอบแค่
-  // <main> ในเลย์เอาต์) และข้อมูลนี้ไม่จำเป็นต้อง refetch บ่อยเท่าข้อมูล dashboard
+  // ด้วย useEffect ธรรมดา ไม่ใช้ react-query เพราะข้อมูลนี้ไม่จำเป็นต้อง refetch บ่อยเท่าข้อมูล
+  // dashboard (SidebarNav ตอนนี้อยู่ใน QueryProvider แล้วหลัง app/(app)/layout.tsx ย้าย provider ขึ้น
+  // มาครอบ SidebarNav/BottomNav ด้วย — ดูคอมเมนต์ในไฟล์นั้น — แต่ไม่มีเหตุผลต้องย้าย fetch นี้ตาม)
   const [profile, setProfile] = useState<{ email: string | null; displayName: string | null }>({
     email: null,
     displayName: null,

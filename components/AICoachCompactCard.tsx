@@ -214,7 +214,10 @@ export default function AICoachCompactCard({
           ข้อมูลด้านขวา" — เล็กน้อยพอไม่ให้ดูอึดอัด แต่ช่วยเก็บพื้นที่แนวนอนกลับมาให้คอลัมน์ข้อความ
           v52: ลดอีกขั้น 10px -> 8px ตามรอบต่อมา */}
       <Link href={href} className="flex items-center gap-2 active:opacity-80 transition">
-        <AiRingAvatar src={avatarSrc} size={isRestDay ? 96 : 112} />
+        {/* v56: ฟีดแบ็ก "P4 — Robot ยังหนักกว่าข้อความข้างๆ อีก 5-8% (ไม่เปลี่ยน Layout)" — ลดต่อจาก
+            112/96 (v54) อีก ~7% (112->104, 96->89) สัดส่วน isRestDay ต่อวันฝึกปกติเดิมยังคงไว้ (~0.857)
+            ไม่แตะ layout/gap รอบๆ (flex items-center gap-2 เดิม ปรับตัวตาม avatar อัตโนมัติอยู่แล้ว) */}
+        <AiRingAvatar src={avatarSrc} size={isRestDay ? 89 : 104} />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
               คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body

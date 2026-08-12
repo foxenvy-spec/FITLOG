@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import {
   COLORS,
   NEUTRAL,
@@ -15,6 +16,9 @@ import {
 } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
+import { todayStr } from '@/lib/weekdays'
+import { createClient } from '@/lib/supabase/client'
+import { fetchDashboardData } from '@/app/(app)/dashboard/DashboardView'
 import FitnessRing from '@/components/dashboard/FitnessRing'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
@@ -38,8 +42,33 @@ const TABS = [
 // cncCornerClipPath ทั้งหมด) — สองส่วนนี้เลย 'คนละวัสดุ' คนละโลกกัน — ดึงชุดโทเคนไทเทเนียมเดียวกับ
 // PremiumCard.tsx (ไล่สีแผ่นโลหะ + แถบสะท้อนแสงหลายชั้น + เกรนนอยส์ + mesh ไขว้ CNC) มาใช้กับตัวแผ่น
 // nav เอง แทนพื้นเรียบเดิม ให้เป็น "แผ่นไทเทเนียมชิ้นเดียวกัน" กับการ์ดด้านบนจริงๆ ไม่ใช่แค่สีเข้มคล้ายกัน
+// v55: ฟีดแบ็ก "P1 (สูงมาก) — ปุ่มกลาง Bottom Nav ยังเขียน START WORKOUT ตายตัว แม้วันนี้เป็น REST DAY
+// (Today's Workout/Focus/AI Coach ทั้งหมดสลับเป็น Recovery แล้วตาม isRestDay) ให้ความรู้สึกขัดกันเล็กน้อย
+// แม้ผู้ใช้จะไม่ได้กด" — BottomNav render อยู่ทุกหน้า (app/(app)/layout.tsx) ไม่ใช่แค่ /dashboard จึงไม่มี
+// isRestDay ส่งตรงมาให้แบบ prop ได้ — อ่านจาก React Query cache เดียวกับที่ MobileDashboardView.tsx ใช้อยู่
+// (queryKey ['dashboard', today] เป๊ะๆ) แทนการ prop-drill ผ่าน layout ที่ครอบทุก route หรือ fetch ซ้ำเอง —
+// enabled เฉพาะตอนอยู่หน้า /dashboard จริง (หน้าอื่นอ่าน cache เฉยๆ ไม่ trigger fetch ใหม่ กัน network
+// call ที่ไม่จำเป็นบนหน้า /program, /stats ฯลฯ) ถ้ายังไม่มี cache เลย (เพิ่งเปิดแอปหน้าอื่นก่อน /dashboard)
+// fallback isRestDay=false เหมือนพฤติกรรมเดิมทุกประการ — ไม่กระทบ UX เดิมตอนไม่มีข้อมูล
+function useIsRestDayToday(): boolean {
+  const pathname = usePathname()
+  const supabase = createClient()
+  const today = todayStr()
+  const { data } = useQuery({
+    queryKey: ['dashboard', today],
+    queryFn: () => fetchDashboardData(supabase),
+    enabled: pathname === '/dashboard',
+  })
+  if (!data) return false
+  const hasTodayPlan = data.todayExercises.length > 0
+  const hasLoggedToday = data.todayWorkouts.length > 0
+  const hasAnyProgram = data.programDays.length > 0
+  return !hasTodayPlan && !hasLoggedToday && hasAnyProgram
+}
+
 export default function BottomNav() {
   const pathname = usePathname()
+  const isRestDay = useIsRestDayToday()
   // มุมตัด CNC เดียวกับลายเซ็นทั้งแอป (บนซ้าย 18px) — เฉพาะ 2 มุมบน (มุมล่างชิดขอบจอจริง ไม่มีอะไรให้ตัด)
   // minorCut=0 ให้มุมบนขวา/ล่างทั้งสองเหลี่ยมคม ตัดจริงแค่มุมเดียวตรงตามสัญลักษณ์ CNC ของแอป
   const navClipPath = cncCornerClipPath('tl', 18, 0)
@@ -103,12 +132,16 @@ export default function BottomNav() {
           if (href === '/session') {
             const btnSize = dashboardSpec.floatingButton.size
             const coreSize = Math.round(btnSize * 0.52)
+            // v55: วันพัก (isRestDay) ไม่พาไป /session (เริ่มเวิร์กเอาต์) อีกต่อไป — พาไปดู /coach
+            // (Recovery) แทน ปุ่มเดียวกับที่ AI Coach ใช้ตอน isRestDay ("ดู Recovery →") ให้ปลายทางตรงกับ
+            // ป้ายที่เห็นจริง ไม่ใช่แค่เปลี่ยนคำแต่กดแล้วยังพาไปเริ่มเวิร์กเอาต์เหมือนเดิม
+            const sessionHref = isRestDay ? '/coach' : '/session'
             return (
               <Link
                 key={href}
-                href={href}
+                href={sessionHref}
                 className="relative flex items-start justify-center"
-                aria-label="เริ่ม/ไปต่อเวิร์กเอาต์"
+                aria-label={isRestDay ? 'ดู Recovery' : 'เริ่ม/ไปต่อเวิร์กเอาต์'}
                 onPointerDown={hapticSuccess}
               >
                 <span
@@ -148,15 +181,25 @@ export default function BottomNav() {
                           background: 'radial-gradient(circle at 35% 30%, #FFF4CC 0%, #FFB84A 40%, #FF9A16 68%, transparent 85%)',
                         }}
                       />
-                      <DumbbellIcon />
+                      {isRestDay ? <MoonIcon /> : <DumbbellIcon />}
                       <span
                         className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center relative"
                         style={{ color: '#FFF4E0' }}
                         aria-hidden="true"
                       >
-                        START
-                        <br />
-                        WORKOUT
+                        {isRestDay ? (
+                          <>
+                            VIEW
+                            <br />
+                            RECOVERY
+                          </>
+                        ) : (
+                          <>
+                            START
+                            <br />
+                            WORKOUT
+                          </>
+                        )}
                       </span>
                     </div>
                   </FitnessRing>
@@ -200,6 +243,22 @@ function DumbbellIcon() {
         d="M2 12h2M5 9v6M8 7v10M16 7v10M19 9v6M22 12h-2M8 12h8"
         stroke="#FFF4E0"
         strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+// v55: ไอคอนแทน DumbbellIcon เฉพาะตอน isRestDay — เสี้ยวจันทร์เดียวกับที่ TodaysWorkoutEmptyCard/Header
+// ใช้สื่อ "พัก/ฟื้นตัว" ทั่วแอปอยู่แล้ว (🌙) ให้ปุ่มลอยไม่ค้างสัญลักษณ์ดัมเบลตอนวันพัก
+function MoonIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
+      <path
+        d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"
+        stroke="#FFF4E0"
+        strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
