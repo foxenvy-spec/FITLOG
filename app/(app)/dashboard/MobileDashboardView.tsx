@@ -370,20 +370,31 @@ export default function MobileDashboardView() {
           lastUpdatedAt={dataUpdatedAt}
         />
 
-        {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม */}
-        <div className="flex gap-2 overflow-x-auto animate-rise" style={{ animationDelay: '160ms', scrollbarWidth: 'none' }}>
-          {QUICK_ACTIONS.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className="shrink-0 rounded-lg border border-line bg-surface flex items-center gap-2 px-3.5 py-2.5 transition active:scale-[0.99]"
-            >
-              <span className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: `${action.accent}22` }} aria-hidden="true">
-                {action.icon}
-              </span>
-              <span className="text-xs text-ink whitespace-nowrap">{action.label}</span>
-            </Link>
-          ))}
+        {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม
+            v57: ฟีดแบ็ก "AI Coach กับ Quick Actions ชิดกันนิดหนึ่ง หลัง 'ดู Recovery →' — เพิ่ม 8-12px"
+            — sectionGap กลาง (8px หลัง P3) ยังไม่พอเฉพาะคู่นี้ เพิ่ม marginTop เสริม 10px เฉพาะจุดนี้
+            (ไม่แตะ sectionGap กลาง ตามรูปแบบเดียวกับที่ใช้กับคู่ Today's Workout→Body Overview) รวมเป็น
+            8+10=18px */}
+        <div className="flex gap-2 overflow-x-auto animate-rise" style={{ animationDelay: '160ms', scrollbarWidth: 'none', marginTop: 10 }}>
+          {QUICK_ACTIONS.map((action) => {
+            // v57: ฟีดแบ็ก "'เลือกโปรแกรม' ใน Recovery Day ไม่ใช่สิ่งสำคัญที่สุด — เปลี่ยนเป็น
+            // 'ตารางการฝึก' แทน ส่วน 'วิเคราะห์ร่างกาย' เหมาะเดิม" — เฉพาะปุ่มแรก (/templates) เปลี่ยน
+            // ป้ายตอน workoutCardVariant==='restDay' เท่านั้น (ปุ่มที่สอง /health ไม่แตะ) href เดิมไม่แตะ
+            // (ยังพาไปหน้าเลือกโปรแกรม/เทมเพลตเหมือนเดิม แค่คำพูดเปลี่ยนให้ตรงบริบทวันพัก)
+            const label = action.href === '/templates' && workoutCardVariant === 'restDay' ? 'ตารางการฝึก' : action.label
+            return (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="shrink-0 rounded-lg border border-line bg-surface flex items-center gap-2 px-3.5 py-2.5 transition active:scale-[0.99]"
+              >
+                <span className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: `${action.accent}22` }} aria-hidden="true">
+                  {action.icon}
+                </span>
+                <span className="text-xs text-ink whitespace-nowrap">{label}</span>
+              </Link>
+            )
+          })}
         </div>
         {/* v12: ฟีดแบ็ก "ช่วงท้ายหน้ามี 5 Section ต่อกัน (Health App/Streak/AI Coach/Quick Actions/
             ดูสถิติเพิ่มเติม) ทั้งหมดเป็น Secondary Content — เอา ดูสถิติเพิ่มเติม ออกไปเลย เพราะมี
