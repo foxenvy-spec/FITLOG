@@ -15,7 +15,13 @@ export const dashboardSpec = {
   screen: {
     width: 393,
     horizontalPadding: 20,
-    sectionGap: 16,
+    // v56: ฟีดแบ็ก "P3 — ลดระยะห่างระหว่าง Section ~6-10px (ไม่ใช่ย่อการ์ด)" — 16 -> 8 (-8px, กลางช่วง
+    // ที่ขอ) กระทบทุกคู่ที่ใช้ token นี้ (Header→Focus, Focus→Workout, Workout→Body Overview,
+    // Health App→Streak→AI Coach ฯลฯ — ดูคอมเมนต์ "sectionGap เดียวกันทั้งหมด" ใน MobileDashboardView.tsx)
+    // marginTop:10 เสริมเฉพาะคู่ Today's Workout→Body Overview (v13, ไม่ได้แก้ที่นี่) รวมเป็น 8+10=18px
+    // (เดิม 16+10=26px) ยังคงมากกว่าคู่อื่นเล็กน้อยตามที่ฟีดแบ็กรอบนั้นขอไว้ — ไม่แตะ metricCard.gridGap
+    // (ระยะในการ์ด Body Overview เอง) ตามที่ระบุชัดว่า "ไม่ต้องเพิ่ม/ลดขนาด 4 การ์ดนั้น"
+    sectionGap: 8,
   },
   header: {
     height: 118, // -10% จาก 131 — ร่วมกับตัดบรรทัด "FITNESS SCORE" micro-label ออก (ดู FitnessScore.tsx)
