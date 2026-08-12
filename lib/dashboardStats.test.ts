@@ -91,6 +91,27 @@ describe('computeCurrentStreak', () => {
   it('de-duplicates repeated dates', () => {
     expect(computeCurrentStreak(['2026-07-18', '2026-07-18', '2026-07-17'])).toBe(2)
   })
+
+  // FIXED_TODAY = 2026-07-18 = Saturday (day 6). ฟีดแบ็ก "ดูจากตารางล่วงหน้าที่ลงไว้ วันไหนไม่มีลงคือ
+  // วันพัก — Scheduled Rest Day ไม่ควรตัด Streak, Missed Workout ตัด Streak" — workoutWeekdays คือ weekday
+  // ที่มี ProgramDay ตั้งไว้จริง
+  describe('with workoutWeekdays (schedule-aware)', () => {
+    it('a scheduled rest day (weekday not in the program) does not break the streak', () => {
+      // Mon/Wed/Fri/Sat = workout days, Sun/Tue/Thu = rest — Thu 07-16 is a scheduled rest day
+      const workoutWeekdays = new Set([1, 3, 5, 6])
+      expect(computeCurrentStreak(['2026-07-15', '2026-07-17', '2026-07-18'], workoutWeekdays)).toBe(3)
+    })
+
+    it('missing a scheduled workout day still breaks the streak', () => {
+      // Mon-Fri = workout days — Fri 07-17 was a scheduled workout day but wasn't trained
+      const workoutWeekdays = new Set([1, 2, 3, 4, 5])
+      expect(computeCurrentStreak(['2026-07-16'], workoutWeekdays)).toBe(0)
+    })
+
+    it('an empty schedule (no program at all) falls back to the strict/original behavior', () => {
+      expect(computeCurrentStreak(['2026-07-10', '2026-07-15', '2026-07-16'], new Set())).toBe(0)
+    })
+  })
 })
 
 describe('computeLongestStreak', () => {
@@ -112,6 +133,20 @@ describe('computeLongestStreak', () => {
 
   it('de-duplicates repeated dates', () => {
     expect(computeLongestStreak(['2026-06-01', '2026-06-01', '2026-06-02'])).toBe(2)
+  })
+
+  describe('with workoutWeekdays (schedule-aware)', () => {
+    it('scheduled rest days do not break the run (Workout-Rest-Workout counts as one run)', () => {
+      // Mon/Wed/Fri/Sat = workout days — Tue(07-14)/Thu(07-16) are scheduled rest, not gaps
+      const workoutWeekdays = new Set([1, 3, 5, 6])
+      expect(computeLongestStreak(['2026-07-13', '2026-07-15', '2026-07-17', '2026-07-18'], workoutWeekdays)).toBe(4)
+    })
+
+    it('missing a scheduled workout day still resets the run', () => {
+      // Mon-Fri = workout days — Wed 07-15 was scheduled but skipped, splitting the run
+      const workoutWeekdays = new Set([1, 2, 3, 4, 5])
+      expect(computeLongestStreak(['2026-07-13', '2026-07-14', '2026-07-16', '2026-07-17'], workoutWeekdays)).toBe(2)
+    })
   })
 })
 
