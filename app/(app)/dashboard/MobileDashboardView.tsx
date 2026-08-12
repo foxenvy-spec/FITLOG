@@ -293,8 +293,15 @@ export default function MobileDashboardView() {
         </div>
 
         {/* sectionGap เดียวกันทั้งหมด (dashboardSpec.screen.sectionGap = 20px) รวม Header→Focus ด้วย —
-            ตัด marginBottom:40 พิเศษของรอบก่อนออก ตามที่ขอ "reduce vertical whitespace" รอบนี้ */}
-        <div className="relative" style={{ marginBottom: dashboardSpec.screen.sectionGap }}>
+            ตัด marginBottom:40 พิเศษของรอบก่อนออก ตามที่ขอ "reduce vertical whitespace" รอบนี้
+            v2: ฟีดแบ็ก "Recovery Day เนื้อหา Header สั้นกว่า Workout Day แต่ระยะห่างเท่าเดิม ดูโล่งเกิน
+            ไปนิด — dynamic spacing" — ลดช่องว่างนี้ลงอีกขั้นเฉพาะ Rest Day (ลดเท่าที่ทำได้อย่างปลอดภัย —
+            ความสูงหลักของ Header มาจาก marginTop:52 ของคอลัมน์วง Fitness Score ที่ผูกกับตำแหน่งกระดิ่ง
+            แจ้งเตือนตายตัว ไม่ใช่ความยาวข้อความ จึงลดได้แค่ช่องว่างท้าย Header ตรงนี้ ไม่ใช่ตัว Header เอง) */}
+        <div
+          className="relative"
+          style={{ marginBottom: workoutCardVariant === 'restDay' ? 4 : dashboardSpec.screen.sectionGap }}
+        >
           <Header
             greetingText={greetingText}
             latestPR={data.latestPR}

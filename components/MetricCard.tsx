@@ -78,6 +78,16 @@ function splitDeltaCaption(text: string): { trend: string; caption: string | nul
   return { trend: text.slice(0, idx), caption: text.slice(idx + 1) }
 }
 
+// ฟีดแบ็ก "'lb' หลุดไปขึ้นบรรทัดใหม่ — ไม่เรียบร้อย" — สาเหตุจริงคือหน่วยซ้ำสองรอบในแถวเดียวกัน (ค่า
+// "179.7 lb" + เดลต้า "↓ -1.1 lb") กว้างเกินพื้นที่การ์ดแคบๆ (grid 2 คอลัมน์) พอดีตัดคำสุดท้าย ("lb")
+// ไปขึ้นบรรทัดใหม่ — ตัดหน่วยที่ซ้ำกับค่าออกจากเดลต้า (ค่าซ้ายมือบอกหน่วยชัดอยู่แล้ว ไม่ต้องพูดซ้ำ) แทน
+// การลดขนาดตัวอักษร/บังคับ nowrap ซึ่งจะทำให้ล้นการ์ดแทน — เฉพาะกรณีจบด้วย " {unit}" เป๊ะ (เช่น "-1.1 lb"
+// -> "-1.1") ไม่กระทบการ์ดที่หน่วยติดกับตัวเลขไม่มีช่องว่าง (เช่น "%" ของ Body Fat/BMI ซึ่งไม่เคยล้นอยู่แล้ว)
+function stripRedundantUnit(trend: string, unit: string): string {
+  const suffix = ` ${unit}`
+  return unit && trend.endsWith(suffix) ? trend.slice(0, -suffix.length) : trend
+}
+
 // การ์ดเมตริกเดี่ยว (น้ำหนัก/ไขมัน/กล้ามเนื้อ/มวลไขมัน/BMI ฯลฯ) — สกัดออกมาจาก BodyMetricsRow
 // เดิม ให้เป็น component แยกที่ reuse ได้ ต่อไปถ้าอยากมีการ์ดสไตล์เดียวกันในหน้าอื่น
 // (เช่น หน้า /health) แค่เปลี่ยน props ไม่ต้องเขียน JSX/gradient/glow ใหม่ทั้งหมด
@@ -446,7 +456,7 @@ export default function MetricCard({
                     style={{ color: deltaColor, fontSize: 12 }}
                   >
                     {deltaDir && <span aria-hidden="true">{deltaDir === 'up' ? '↑' : '↓'}</span>}
-                    {splitDeltaCaption(deltaText).trend}
+                    {stripRedundantUnit(splitDeltaCaption(deltaText).trend, splitValueUnit(valueText).unit)}
                   </p>
                 )}
               </div>

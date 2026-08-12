@@ -66,7 +66,7 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Fitness Score"
+        aria-label="Training Readiness"
         className={`metric-sheet-panel ${closing ? 'is-closing' : ''} relative w-full max-w-md`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
@@ -74,8 +74,10 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
           <div className="mx-auto mb-3 h-1 w-10 rounded-full" style={{ backgroundColor: NEUTRAL.chipInactiveAlt }} aria-hidden="true" />
 
           <div className="flex items-center justify-between">
+            {/* v2: "Fitness Score" -> "Training Readiness" — ฟีดแบ็ก "ตีความว่าคะแนนสุขภาพโดยรวม แต่
+                จริงๆ วัดความพร้อมฝึกวันนี้" (เหตุผลเดียวกับ FitnessScore.tsx) */}
             <p className="text-[11px] tracked uppercase" style={{ color: TEXT.body, fontWeight: 500 }}>
-              Fitness Score
+              Training Readiness
             </p>
             <button
               type="button"

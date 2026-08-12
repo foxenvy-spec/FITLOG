@@ -68,17 +68,25 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                 </span>
                 {/* v2: ฟีดแบ็ก "Workout Streak ควรบอก 'วันนี้' ชัดขึ้น — ขอบหนาขึ้น + glow บางๆ" — เดิมมี
                     แค่ boxShadow ring 2px สีอำพัน (ไม่มี glow) ให้ทั้ง 2px ring หนาขึ้นเป็น 2.5px และเพิ่ม
-                    glow บางๆ ซ้อนอีกชั้น (blur 4px, alpha ~35%) ไม่ใช้ animation ตามที่ระบุว่าไม่จำเป็น */}
+                    glow บางๆ ซ้อนอีกชั้น (blur 4px, alpha ~35%) ไม่ใช้ animation ตามที่ระบุว่าไม่จำเป็น
+                    v3: ฟีดแบ็ก "วงแหวนวันนี้ยังดูคล้ายวันที่ฝึกสำเร็จ — ไม่ต้องใช้วงแหวนสีส้มกับวันนี้ถ้า
+                    มันทำให้เข้าใจว่า complete — ✓ = สำเร็จ, ○ = วันนี้, จาง = ยังไม่ถึง/พลาด" — เดิม isToday
+                    เพิ่ม ring+glow ทับบนสีพื้นเดิมเสมอ (ทั้งกรณีฝึกแล้ว/ยังไม่ฝึก) ทำให้ "วันนี้ที่ฝึกแล้ว"
+                    ดูมีชั้นเรืองแสงเกินจำเป็น (เช็คถูก+พื้นอำพันสื่อ "สำเร็จ" ชัดอยู่แล้ว ไม่ต้องการ ring ซ้อน)
+                    ตัด ring+glow ออกทั้งคู่ เปลี่ยนไปแค่กรณี "วันนี้ + ยังไม่ฝึก" ให้เป็นวงกลมกลวงขอบอำพัน
+                    (ไม่มีพื้นทึบ ไม่มี glow) แทนพื้น chipInactive เดิม อ่านเป็น "ช่องว่างของวันนี้" ชัดเจน
+                    แยกจากทั้ง "สำเร็จ" (พื้นอำพันทึบ+เช็ค) และ "พลาด/ยังไม่ถึง" (พื้น chipInactive เข้ม) */}
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] shrink-0"
                   role="img"
                   aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${tick.trained ? 'ฝึกแล้ว' : tick.isFuture ? 'ยังไม่ถึงวัน' : 'ยังไม่ได้ฝึก'}`}
-                  style={{
-                    ...(tick.trained
+                  style={
+                    tick.trained
                       ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
-                      : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }),
-                    ...(isToday ? { boxShadow: `0 0 0 2.5px ${COLORS.amber}, 0 0 4px 1px ${withAlpha(COLORS.amber, '59')}` } : {}),
-                  }}
+                      : isToday
+                        ? { backgroundColor: 'transparent', color: COLORS.amber, border: `1.5px solid ${COLORS.amber}` }
+                        : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }
+                  }
                 >
                   {tick.trained ? '✓' : ''}
                 </span>
