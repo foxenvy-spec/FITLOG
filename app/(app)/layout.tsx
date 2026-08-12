@@ -21,6 +21,15 @@ export default async function AppLayout({
           >= 1024px: sidebar replaces the header + bottom bar entirely; content gets the
           remaining width to lay out as a multi-column dashboard. (ไม่กระทบส่วนนี้เลย — header
           เดิมเป็น lg:hidden อยู่แล้ว desktop ไม่เคยเห็น มีแต่ SidebarNav) */}
+        {/* QueryProvider ย้ายมาห่อทั้ง SidebarNav/BottomNav ด้วย (เดิมห่อแค่ {children} ใน <main>) —
+            BottomNav.tsx อ่าน isRestDay จาก useQuery(['dashboard', today]) ตอนนี้ (ดู BottomNav.tsx)
+            ถ้าไม่มี QueryClientProvider ครอบ จะพัง "No QueryClient set" ตอน static prerender ทุกหน้า
+            (BottomNav render อยู่ทุก route ใน layout นี้) — ย้ายขึ้นมาระดับนี้จุดเดียว ครอบทั้ง
+            SidebarNav/main/BottomNav ด้วย client ตัวเดียวกัน ไม่กระทบพฤติกรรมเดิมของ {children}
+            (ยังได้ client ตัวเดียวกันเป๊ะ แค่ scope กว้างขึ้น) — comment เดิมใน SidebarNav.tsx ที่บอกว่า
+            "อยู่นอก QueryProvider" ไม่จริงอีกต่อไปหลังจากนี้ แต่ตัว SidebarNav เองยังไม่ได้ย้ายไปใช้
+            react-query (ไม่ได้ขอ ไม่แตะ) */}
+        <QueryProvider>
         <div className="min-h-screen flex lg:flex-row">
           <DashboardSettingsProvider>
           <SidebarNav />
@@ -30,13 +39,14 @@ export default async function AppLayout({
                 bar/notch บนมือถือทับเนื้อหาบนสุด — env(safe-area-inset-top) เป็น 0 บนเดสก์ท็อป
                 ทั่วไปอยู่แล้ว จึงไม่กระทบเดสก์ท็อป */}
             <main className="flex-1 w-full max-w-sm md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-safe-bottom-nav lg:pb-10 safe-top">
-              <QueryProvider>{children}</QueryProvider>
+              {children}
             </main>
 
             <BottomNav />
           </div>
           </DashboardSettingsProvider>
         </div>
+        </QueryProvider>
       </ToastProvider>
     </WeightUnitProvider>
   )
