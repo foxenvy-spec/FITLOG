@@ -221,9 +221,12 @@ export default function AICoachCompactCard({
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
               คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body
-              (เทาสว่าง) เก็บ sparkle emoji ไว้เป็นตัวบ่งชี้ AI เพียงพอโดยไม่ต้องย้อมสีข้อความทั้งบรรทัด */}
+              (เทาสว่าง) เก็บ sparkle emoji ไว้เป็นตัวบ่งชี้ AI เพียงพอโดยไม่ต้องย้อมสีข้อความทั้งบรรทัด
+              v61: ฟีดแบ็ก "Today's Workout บอก LOWER BODY เสร็จแล้ว แต่ AI Coach บอก UPPER BODY — ผู้ใช้
+              อาจสงสัยว่าทำไมขัดกัน ทั้งที่จริงๆ AI Coach ตั้งใจแนะนำ 'ครั้งถัดไป' ควรสื่อให้ชัดกว่านี้" —
+              เพิ่ม '· Next' ต่อท้ายป้าย ให้รู้ทันทีว่าการ์ดนี้พูดถึงเซสชันถัดไป ไม่ใช่สรุปสิ่งที่ทำไปวันนี้ */}
           <p className="font-display text-[10px] tracked uppercase flex items-center gap-1" style={{ color: TEXT.body }}>
-            <span aria-hidden="true">✨</span> AI Coach
+            <span aria-hidden="true">✨</span> AI Coach · Next
           </p>
           {muscleRecommendation ? (
             <>
@@ -235,8 +238,11 @@ export default function AICoachCompactCard({
               <p className="font-display font-semibold tracked uppercase text-amber truncate mt-1" style={{ fontSize: 21, lineHeight: 1.15 }}>
                 {isRestDay ? 'Recovery Day' : region}
               </p>
+              {/* v61: ฟีดแบ็ก "'UPPER BODY' อ่านเดี่ยวๆ เหมือนสรุปวันนี้ ไม่ใช่คำแนะนำครั้งถัดไป" — เติม
+                  "Next session • " นำหน้า relatedGroups เฉพาะกรณีมีกลุ่มกล้ามเนื้อแนะนำจริง (ไม่ใช่ Rest
+                  Day ซึ่งมีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่ "ครั้งถัดไป" แบบมีกลุ่มกล้ามเนื้อ) */}
               <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>
-                {isRestDay ? 'วันนี้เหมาะกับการพักและฟื้นตัว' : relatedGroups.join(' • ')}
+                {isRestDay ? 'วันนี้เหมาะกับการพักและฟื้นตัว' : `Next session • ${relatedGroups.join(' • ')}`}
               </p>
 
               {/* v58: ฟีดแบ็ก "Training Readiness 48 vs Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้อง
