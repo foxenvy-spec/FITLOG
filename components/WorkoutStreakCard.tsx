@@ -76,14 +76,16 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                 >
                   {WEEKDAY_LABELS[i]}
                 </span>
-                {/* v58: ฟีดแบ็ก "Current Streak '1 วัน' ดูขัดกับวงกลม ✓ หลายวันในสัปดาห์นี้ — ผู้ใช้อาจ
-                    สงสัยว่าวงที่ Complete หลายวันนั้นหมายถึงอะไร" — เดิมวันที่ฝึกแล้วทุกวันในสัปดาห์ (ไม่ว่า
-                    จะอยู่ในสายโซ่ปัจจุบันหรือไม่) ใช้สีอำพันทึบ+✓ เหมือนกันหมด ไม่มีอะไรแยกให้เห็นว่า "อันไหน
-                    คือ streak ที่ตัวเลขข้างบนกำลังนับอยู่จริง" — ตอนนี้แยกด้วย tick.inStreak (มาจาก
-                    computeCurrentStreakDates เดินสายโซ่เดียวกับตัวเลข streak เป๊ะๆ — DashboardView.tsx):
-                    ฝึกแล้ว+อยู่ในสายโซ่ปัจจุบัน = อำพันทึบ+✓ เหมือนเดิม (สื่อ "Action/Progress ที่กำลังนับ
-                    อยู่" ตามกฎสีอำพันของแอป) ฝึกแล้วแต่สายโซ่ขาดไปแล้ว = โทน moss กลางๆ+✓ แทน (ยังบอกว่า
-                    "ฝึกจริง" ไม่ใช่พลาด แต่ไม่ใช่สีอำพันที่บอกว่า "นี่คือ Progress ที่กำลังต่ออยู่" เพราะมันไม่ใช่) */}
+                {/* v62: ฟีดแบ็ก "แนะนำ scheme ใหม่: วันนี้=วงส้ม, วันที่ทำสำเร็จ=เขียวทั้งหมด (ไม่ต้อง
+                    แยกอยู่ใน/นอก streak)" — v58 (รอบก่อน) เคยแก้ "1 วัน ดูขัดกับ ✓ หลายจุด" ด้วยการแยกสี 2
+                    เฉด (อำพัน=อยู่ใน streak ปัจจุบัน / moss=ฝึกแล้วแต่ streak ขาด) แต่ 2 เฉดใกล้กันในวงกลม
+                    22px จอมือถือจริงแยกยาก — เปลี่ยนมาใช้ scheme ง่ายกว่าตามคำแนะนำที่เลือก: ฝึกแล้ว = เขียว
+                    (moss) ทึบ+✓ สม่ำเสมอทุกวัน (ไม่แยกอีกต่อไป) ตรงกับ pattern เดียวกับที่ desktop's Weekly
+                    Goal ใช้อยู่แล้ว (DashboardView.tsx) — อำพันเหลือแค่ 2 จุดที่ "active" จริงๆ: ตัวเลข streak
+                    บนสุด กับวงวันนี้ตรงนี้ ตรงกับกฎ "Orange = Action/Progress เท่านั้น" ยิ่งกว่า scheme เดิม
+                    (เดิมใช้อำพันกับวันในอดีตที่ไม่ใช่ progress ที่กำลังเกิดขึ้นแล้วด้วย) — tick.inStreak ยังคง
+                    คำนวณอยู่ (DashboardView.tsx) แต่ตอนนี้ใช้แค่ใน aria-label ให้ screen reader ยังแยกได้ว่า
+                    วันไหนอยู่ใน streak ปัจจุบันจริง ไม่ได้ทิ้งข้อมูลนี้ไปเฉยๆ แค่ไม่ใช้ทำสีอีกต่อไป */}
                 <span
                   className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] shrink-0"
                   role="img"
@@ -98,9 +100,7 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                   }`}
                   style={
                     tick.trained
-                      ? tick.inStreak
-                        ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
-                        : { backgroundColor: withAlpha(COLORS.moss, '33'), color: COLORS.moss }
+                      ? { backgroundColor: COLORS.moss, color: NEUTRAL.onAmberText }
                       : isToday
                         ? { backgroundColor: 'transparent', color: COLORS.amber, border: `1.5px solid ${COLORS.amber}` }
                         : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }
