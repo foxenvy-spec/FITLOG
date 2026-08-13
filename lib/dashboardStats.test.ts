@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { Workout, ProgramDay } from './types'
 import {
   computeCurrentStreak,
+  computeCurrentStreakDates,
   computeLongestStreak,
   computeTodayTotals,
   computeRecoveryPct,
@@ -111,6 +112,43 @@ describe('computeCurrentStreak', () => {
     it('an empty schedule (no program at all) falls back to the strict/original behavior', () => {
       expect(computeCurrentStreak(['2026-07-10', '2026-07-15', '2026-07-16'], new Set())).toBe(0)
     })
+  })
+})
+
+// ฟีดแบ็ก "Current Streak '1 วัน' ดูขัดกับวงกลม Timeline ที่โชว์ ✓ หลายวัน" — computeCurrentStreakDates
+// ต้องคืนเฉพาะวันที่ที่อยู่ในสายโซ่ต่อเนื่อง "ปัจจุบัน" จริงๆ (ไม่ใช่ทุกวันที่เคยฝึกในสัปดาห์) และขนาดของ
+// เซตต้องตรงกับ computeCurrentStreak เป๊ะๆ เสมอ (เดินสายโซ่เดียวกัน กันเลขกับจุดที่ render เพี้ยนแยกจากกัน)
+describe('computeCurrentStreakDates', () => {
+  it('matches computeCurrentStreak in size for a simple consecutive run', () => {
+    const dates = ['2026-07-16', '2026-07-17', '2026-07-18']
+    const chain = computeCurrentStreakDates(dates)
+    expect(chain.size).toBe(computeCurrentStreak(dates))
+    expect(chain).toEqual(new Set(['2026-07-16', '2026-07-17', '2026-07-18']))
+  })
+
+  it('excludes a trained day that is before a real gap (streak already broken)', () => {
+    // trained 07-10 (isolated, gap after it) then a fresh run 07-16..07-18 — the isolated
+    // 07-10 must NOT be in the current chain even though it's "trained" in the raw dates list
+    const dates = ['2026-07-10', '2026-07-16', '2026-07-17', '2026-07-18']
+    const chain = computeCurrentStreakDates(dates)
+    expect(chain.size).toBe(3)
+    expect(chain.has('2026-07-10')).toBe(false)
+    expect(chain).toEqual(new Set(['2026-07-16', '2026-07-17', '2026-07-18']))
+  })
+
+  it('returns an empty set when the streak is dead', () => {
+    const dates = ['2026-07-10', '2026-07-15', '2026-07-16']
+    const chain = computeCurrentStreakDates(dates)
+    expect(chain.size).toBe(0)
+    expect(computeCurrentStreak(dates)).toBe(0)
+  })
+
+  it('a scheduled rest day is skipped over (not added, chain continues through it)', () => {
+    const workoutWeekdays = new Set([1, 3, 5, 6])
+    const dates = ['2026-07-15', '2026-07-17', '2026-07-18']
+    const chain = computeCurrentStreakDates(dates, workoutWeekdays)
+    expect(chain.size).toBe(3)
+    expect(chain).toEqual(new Set(dates))
   })
 })
 

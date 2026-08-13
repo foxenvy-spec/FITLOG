@@ -9,7 +9,7 @@ import WorkoutStreakDetailSheet from './dashboard/WorkoutStreakDetailSheet'
 interface WorkoutStreakCardProps {
   streak: number
   bestStreak: number
-  weekDayTicks: { iso: string; trained: boolean; isFuture: boolean }[]
+  weekDayTicks: { iso: string; trained: boolean; isFuture: boolean; inStreak: boolean }[]
   today: string
 }
 
@@ -72,13 +72,31 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                 >
                   {WEEKDAY_LABELS[i]}
                 </span>
+                {/* v58: ฟีดแบ็ก "Current Streak '1 วัน' ดูขัดกับวงกลม ✓ หลายวันในสัปดาห์นี้ — ผู้ใช้อาจ
+                    สงสัยว่าวงที่ Complete หลายวันนั้นหมายถึงอะไร" — เดิมวันที่ฝึกแล้วทุกวันในสัปดาห์ (ไม่ว่า
+                    จะอยู่ในสายโซ่ปัจจุบันหรือไม่) ใช้สีอำพันทึบ+✓ เหมือนกันหมด ไม่มีอะไรแยกให้เห็นว่า "อันไหน
+                    คือ streak ที่ตัวเลขข้างบนกำลังนับอยู่จริง" — ตอนนี้แยกด้วย tick.inStreak (มาจาก
+                    computeCurrentStreakDates เดินสายโซ่เดียวกับตัวเลข streak เป๊ะๆ — DashboardView.tsx):
+                    ฝึกแล้ว+อยู่ในสายโซ่ปัจจุบัน = อำพันทึบ+✓ เหมือนเดิม (สื่อ "Action/Progress ที่กำลังนับ
+                    อยู่" ตามกฎสีอำพันของแอป) ฝึกแล้วแต่สายโซ่ขาดไปแล้ว = โทน moss กลางๆ+✓ แทน (ยังบอกว่า
+                    "ฝึกจริง" ไม่ใช่พลาด แต่ไม่ใช่สีอำพันที่บอกว่า "นี่คือ Progress ที่กำลังต่ออยู่" เพราะมันไม่ใช่) */}
                 <span
                   className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] shrink-0"
                   role="img"
-                  aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${tick.trained ? 'ฝึกแล้ว' : tick.isFuture ? 'ยังไม่ถึงวัน' : 'ยังไม่ได้ฝึก'}`}
+                  aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${
+                    tick.trained
+                      ? tick.inStreak
+                        ? 'ฝึกแล้ว (อยู่ใน Streak ปัจจุบัน)'
+                        : 'ฝึกแล้ว (ก่อนหน้า Streak ปัจจุบันขาด)'
+                      : tick.isFuture
+                        ? 'ยังไม่ถึงวัน'
+                        : 'ยังไม่ได้ฝึก'
+                  }`}
                   style={
                     tick.trained
-                      ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
+                      ? tick.inStreak
+                        ? { backgroundColor: COLORS.amber, color: NEUTRAL.onAmberText }
+                        : { backgroundColor: withAlpha(COLORS.moss, '33'), color: COLORS.moss }
                       : isToday
                         ? { backgroundColor: 'transparent', color: COLORS.amber, border: `1.5px solid ${COLORS.amber}` }
                         : { backgroundColor: NEUTRAL.chipInactive, color: NEUTRAL.mutedIcon }

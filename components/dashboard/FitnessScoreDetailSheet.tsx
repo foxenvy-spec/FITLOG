@@ -120,9 +120,18 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
             ))}
           </div>
 
-          <p className="pb-5 -mt-1 text-[11px] leading-relaxed" style={{ color: TEXT.secondary }}>
-            คำนวณจากน้ำหนักตั้งต้น: Workout 30% · Streak 20% · Sleep 20% · Recovery 15% · Weekly Goal 10% · Activity 5%
-            — ปัจจัยที่ยังไม่มีข้อมูล (เช่น Sleep) จะถูกตัดออกแล้วกระจายน้ำหนักให้ปัจจัยอื่นแทน
+          {/* v58: ฟีดแบ็ก "Training Readiness 48 vs AI Coach Recovery 100% ดูขัดกัน" — เพิ่มประโยคสั้นๆ
+              แยก "Recovery (Avg)" ตรงนี้ (เฉลี่ยทุกกลุ่มกล้ามเนื้อที่เคยฝึก เป็นแค่ 1 ใน 5 ปัจจัยถ่วงน้ำหนัก)
+              ออกจาก "Muscle Recovery" ที่การ์ด AI Coach ใช้ (กลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว) —
+              ตัวเลขต่างกันได้ปกติ เพราะวัดคนละขอบเขต ไม่ใช่ปัจจัยเดียวกัน */}
+          <p className="pb-2 -mt-1 text-[11px] leading-relaxed" style={{ color: TEXT.secondary }}>
+            คำนวณจากน้ำหนักตั้งต้น: Workout 30% · Streak 20% · Sleep 20% · Recovery (Avg) 15% · Weekly Goal 10% ·
+            Activity 5% — ปัจจัยที่ยังไม่มีข้อมูล (เช่น Sleep) จะถูกตัดออกแล้วกระจายน้ำหนักให้ปัจจัยอื่นแทน
+          </p>
+          <p className="pb-5 text-[11px] leading-relaxed" style={{ color: TEXT.secondary }}>
+            &quot;Recovery (Avg)&quot; ตรงนี้เฉลี่ยจากทุกกลุ่มกล้ามเนื้อที่เคยฝึก — คนละตัวกับ &quot;Muscle
+            Recovery&quot; บนการ์ด AI Coach ที่วัดเฉพาะกลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว ตัวเลขสองจุดนี้
+            ต่างกันได้ตามปกติ
           </p>
         </PremiumCard>
       </div>

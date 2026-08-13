@@ -12,7 +12,7 @@ import Button from '@/components/ui/Button'
 import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import {
-  computeCurrentStreak,
+  computeCurrentStreakDates,
   computeLongestStreak,
   computeTodayTotals,
   computeRecoveryPct,
@@ -127,7 +127,7 @@ export interface DashboardData {
   thisWeekWorkoutDays: number
   weeklyWorkoutGoal: number
   // แถวติ๊กถูกรายวัน (จ-อา) ของสัปดาห์นี้ — ใช้โชว์ในการ์ด Weekly Goal
-  weekDayTicks: { iso: string; trained: boolean; isFuture: boolean }[]
+  weekDayTicks: { iso: string; trained: boolean; isFuture: boolean; inStreak: boolean }[]
   // สองตัวนี้ตอบคำถาม "PR ล่าสุด" และ "กล้ามเนื้อที่ฝึกมากที่สุดสัปดาห์นี้" — โชว์เป็น quick-glance
   // strip ใต้คำทักทาย ให้เห็นครบภายในไม่กี่วินาทีโดยไม่ต้องเลื่อนหรือกดเข้าไปดูหน้าอื่น
   latestPR: LatestPR | null
@@ -205,7 +205,12 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   const workoutWeekdays = new Set(typedDays.map((d) => d.day_of_week))
 
   const distinctDates = Array.from(new Set(((allDates as { performed_at: string }[]) ?? []).map((r) => r.performed_at)))
-  const streak = computeCurrentStreak(distinctDates, workoutWeekdays)
+  // เซตวันที่ที่อยู่ในสายโซ่ต่อเนื่อง "ปัจจุบัน" จริงๆ (เดินสายโซ่เดียวกับ computeCurrentStreak เป๊ะๆ —
+  // ใช้ผลลัพธ์ก่อนนับเป็นตัวเลข) ให้ weekDayTicks ด้านล่างแยกได้ว่าวันไหน "ฝึกแล้ว + อยู่ใน streak ที่
+  // ตัวเลขข้างบนกำลังนับอยู่จริง" กับวันไหน "ฝึกไปแล้วแต่ streak ขาดไปแล้ว" — กัน "1 วัน" ข้างบนดูขัดกับ
+  // จุด ✓ หลายจุดในแถวสัปดาห์ (ฟีดแบ็ก "Current Streak ดูขัดกับ Timeline")
+  const streakChainDates = computeCurrentStreakDates(distinctDates, workoutWeekdays)
+  const streak = streakChainDates.size
   const bestStreak = computeLongestStreak(distinctDates, workoutWeekdays)
 
   const strengthRows =
@@ -274,12 +279,15 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     return local.toISOString().slice(0, 10)
   }
   const monday = new Date(thisWeekStart + 'T00:00:00')
-  const weekDayTicks: { iso: string; trained: boolean; isFuture: boolean }[] = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    const iso = toIsoLocal(d)
-    return { iso, trained: trainedDateSet.has(iso), isFuture: iso > today }
-  })
+  const weekDayTicks: { iso: string; trained: boolean; isFuture: boolean; inStreak: boolean }[] = Array.from(
+    { length: 7 },
+    (_, i) => {
+      const d = new Date(monday)
+      d.setDate(monday.getDate() + i)
+      const iso = toIsoLocal(d)
+      return { iso, trained: trainedDateSet.has(iso), isFuture: iso > today, inStreak: streakChainDates.has(iso) }
+    }
+  )
 
   const currentDay = typedDays.find((d) => d.day_of_week === dow) ?? null
 

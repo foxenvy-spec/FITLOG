@@ -28,16 +28,26 @@ function isoDayOfWeek(iso: string): number {
 // weekday ที่ไม่อยู่ในเซตนี้ถือเป็น "วันพักตามแผน" ไม่ตัด Streak แม้ไม่ได้ฝึกวันนั้น — ไม่ส่ง/ส่งเซตว่าง
 // (ไม่มีโปรแกรมเลย) = ไม่มี "ตาราง" ให้อ้างอิง กลับไปใช้พฤติกรรมเดิมเป๊ะ (ขาดวันไหนก็ตัด Streak หมด)
 // ข้อจำกัด: ใช้ตารางโปรแกรม "ปัจจุบัน" ย้อนไปกับวันที่ในอดีตทั้งหมด (ไม่มีข้อมูลว่าตารางเคยเปลี่ยนมาก่อน)
-export function computeCurrentStreak(performedDates: string[], workoutWeekdays?: ReadonlySet<number> | null): number {
+// ฟีดแบ็ก "Current Streak '1 วัน' ดูขัดกับวงกลม Timeline ที่โชว์ ✓ หลายวันในสัปดาห์นี้ — ผู้ใช้อาจสงสัยว่า
+// วงที่ Complete หลายวันนั้นหมายถึงอะไร ถ้า Streak จริงๆ มีแค่ 1" — สาเหตุคือ weekDayTicks (แถวจุดวันจ-อา)
+// เดิมเป็นแค่ "ปฏิทินสัปดาห์นี้ฝึกวันไหนบ้าง" ล้วนๆ ไม่รู้จัก concept "สายโซ่ต่อเนื่องปัจจุบัน" เลย จุดที่ฝึก
+// แล้วแต่สายโซ่ขาดไปก่อนแล้ว (เช่น ฝึกวันจันทร์ แต่วันอังคารพลาดจริง ทำให้ streak ปัจจุบันนับได้แค่จากวันพุธ
+// เป็นต้นมา) ก็ยังโชว์เป็น ✓ สีอำพันเหมือนวันที่อยู่ในสายโซ่ปัจจุบันเป๊ะๆ ไม่มีอะไรแยกให้เห็นว่า "อันไหนคือ
+// streak ที่กำลังนับอยู่จริง" — แยกตรรกะเดินสายโซ่ออกมาเป็นฟังก์ชันนี้ (คืนเป็นเซตวันที่ ไม่ใช่แค่จำนวน)
+// ให้ computeCurrentStreak ด้านล่างเรียกใช้แทนที่จะมี logic ซ้ำ 2 ที่ (กันไม่ให้ตัวเลขกับเซตวันที่ที่ส่งไป
+// render เพี้ยนแยกจากกันได้ในอนาคต) — DashboardView.tsx ใช้เซตนี้ทำ weekDayTicks[].inStreak ต่อ ให้
+// WorkoutStreakCard.tsx แยกสี "ฝึกแล้ว+อยู่ใน streak ปัจจุบัน" (อำพัน) ออกจาก "ฝึกแล้วแต่ streak ขาดไปแล้ว"
+// (โทนกลาง) ได้ตรงกับตัวเลขบนการ์ดเป๊ะ ไม่ใช่แค่ "ฝึกแล้วหรือยัง" เฉยๆ เหมือนเดิม
+function computeStreakChainDates(performedDates: string[], workoutWeekdays?: ReadonlySet<number> | null): Set<string> {
   const trained = new Set(performedDates)
-  if (trained.size === 0) return 0
+  const chain = new Set<string>()
+  if (trained.size === 0) return chain
   const hasSchedule = !!workoutWeekdays && workoutWeekdays.size > 0
 
-  let streak = 0
   let cursor = todayStr()
   for (let i = 0; i < STREAK_WALK_MAX_DAYS; i++) {
     if (trained.has(cursor)) {
-      streak++
+      chain.add(cursor)
     } else {
       const isScheduledRest = hasSchedule && !workoutWeekdays!.has(isoDayOfWeek(cursor))
       // วันนี้ (i===0) ยังไม่ได้ฝึกไม่ตัด Streak ทันที (วันยังไม่จบ อาจฝึกทีหลังได้) เหมือนพฤติกรรมเดิม —
@@ -46,7 +56,21 @@ export function computeCurrentStreak(performedDates: string[], workoutWeekdays?:
     }
     cursor = addIsoDays(cursor, -1)
   }
-  return streak
+  return chain
+}
+
+export function computeCurrentStreak(performedDates: string[], workoutWeekdays?: ReadonlySet<number> | null): number {
+  return computeStreakChainDates(performedDates, workoutWeekdays).size
+}
+
+// เซตวันที่ (YYYY-MM-DD) ที่อยู่ใน "สายโซ่ต่อเนื่องปัจจุบัน" จริงๆ — ใช้แยกแต้ม weekDayTicks ว่าอันไหน
+// เป็นส่วนหนึ่งของ Current Streak ที่ตัวเลขบนการ์ดกำลังนับอยู่ อันไหนเป็นแค่ "ฝึกไปแล้วในอดีต" ที่ไม่ต่อกับ
+// streak ปัจจุบันแล้ว (ดู comment เต็มที่ computeStreakChainDates ด้านบน)
+export function computeCurrentStreakDates(
+  performedDates: string[],
+  workoutWeekdays?: ReadonlySet<number> | null
+): Set<string> {
+  return computeStreakChainDates(performedDates, workoutWeekdays)
 }
 
 // ฟีดแบ็ก "แยก Current กับ Best Streak — เช่นใน Detail" (ไม่ต้องเอา Best ขึ้น Dashboard การ์ดหลัก) —
