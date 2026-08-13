@@ -340,7 +340,9 @@ export default function MobileDashboardView() {
           {/* หัวข้อ section 18px ตาม Typography token ล่าสุด (เคยลองขยับไป 30px รอบก่อน แต่ภาพอ้างอิงจริง
               (Image A) แสดงหัวข้อเล็กกว่านั้นมาก แก้กลับมาที่ 18px ตามสเปค) — ระยะห่างหัวข้อ→กริด 20px */}
           <div className="flex items-center justify-between px-1" style={{ marginBottom: 20 }}>
-            <p className="font-display text-ink" style={{ fontSize: 18, fontWeight: 700 }}>ภาพรวมร่างกาย</p>
+            {/* v60: ฟีดแบ็ก "'ภาพรวมร่างกาย' font ใหญ่ไปนิดจนเกือบเท่า Today's Focus ลดแค่ ~5%" —
+                18 -> 17 (-5.6%) */}
+            <p className="font-display text-ink" style={{ fontSize: 17, fontWeight: 700 }}>ภาพรวมร่างกาย</p>
             <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
               ดูทั้งหมด →
             </Link>

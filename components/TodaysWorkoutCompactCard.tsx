@@ -99,7 +99,17 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
           กว่าเดิมพอสมควร แต่ยังไม่เท่า v9 (94% ซึ่งบังลายจนดูเหมือนรูปว่าง) — จุดต่างจาก v9 คือรูปใหม่มีลาย
           เยอะพอที่จะโผล่ผ่าน scrim เข้มได้โดยไม่ดูว่างเปล่าเหมือนรูปเก่า */}
       <div className="absolute inset-0" aria-hidden="true">
-        <Image src="/images/today-workout-bg-mobile.png" alt="" fill className="object-cover" style={{ objectPosition: '68% 55%' }} />
+        {/* v60: ฟีดแบ็ก "สายตาไปที่วงแหวน → ดัมเบล → 6/6 อยากให้ priority เป็น 6/6 → กลุ่มกล้ามเนื้อ →
+            progress → รูป แทน — ลด opacity/ความสว่างรูปดัมเบลลง 10-15% ไม่ต้องลดขนาด Card" — เพิ่ม
+            opacity: .87 (-13%, กลางช่วงที่ขอ) ให้ตัวรูปเองจางลงก่อนที่ scrim ชั้นถัดไปจะทับอีกที (ไม่แตะ
+            scrim/gradient อื่นเลย แค่ตัวรูปต้นทาง) */}
+        <Image
+          src="/images/today-workout-bg-mobile.png"
+          alt=""
+          fill
+          className="object-cover"
+          style={{ objectPosition: '68% 55%', opacity: 0.87 }}
+        />
         {/* v14: สี scrim เปลี่ยนจาก rgb(13,14,16) เป็น rgb(20,20,20) — #141414 ตามที่ขอ "Hero Card
             background #141414 vs Background #0B0B0D ต่างกันประมาณ 8%" — เดิมสี scrim (13,14,16) ใกล้เคียง
             กับสีมืดสุดของพื้นหลังหน้าเว็บ (DASHBOARD_BG_CSS จบที่ #090909) มากจนการ์ดกับพื้นหลังกลืนกัน

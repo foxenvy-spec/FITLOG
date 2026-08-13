@@ -221,7 +221,14 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
         <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
       </div>
 
-      <div className="flex flex-col items-end shrink-0" style={{ marginTop: 52 }}>
+      {/* v60: ฟีดแบ็ก "Header สูงไป 5-8% — ไม่ใช่เพราะ BANK ใหญ่ แต่เพราะช่องว่างตรงกลางระหว่าง BANK →
+          Today's Focus เยอะไป ลด vertical gap ไม่ลด font" — สาเหตุจริงคือคอลัมน์วงแหวนขวา (สูงกว่า
+          คอลัมน์ซ้ายมาก จาก marginTop:52 + ตัวคอลัมน์เอง) เป็นตัวกำหนดความสูงของ flex row ทั้งแถว (items-
+          start) ทำให้เหลือพื้นที่ว่างใต้ข้อความคอลัมน์ซ้ายที่สั้นกว่าก่อนถึง Today's Focus — ลดความสูง
+          คอลัมน์ขวาแทน (52 -> 48, ยังเหลือ buffer 4px เหนือกระดิ่ง 44px กันชนซ้ำ ดู comment เดิมด้านบน
+          v19) ผสมกับลด gap ภายใน FitnessScore.tsx อีกสองจุด (ดูไฟล์นั้น) รวมประหยัดได้ ~9px (~5-6% ของ
+          ความสูง Header รวม) โดยไม่แตะ font ใดๆ เลยตามที่ขอ */}
+      <div className="flex flex-col items-end shrink-0" style={{ marginTop: 48 }}>
         {/* วง Fitness Score — ขนาดมาจาก dashboardSpec.header.scoreRingSize (90px) แหล่งความจริงเดียว
             แทนตัวเลขลอยในไฟล์นี้ — FitnessRing/FitnessScore สเกล stroke/font ภายในตาม size prop เอง */}
         <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} isRestDay={isRestDay} />
