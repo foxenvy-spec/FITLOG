@@ -239,8 +239,14 @@ export default function AICoachCompactCard({
                 {isRestDay ? 'วันนี้เหมาะกับการพักและฟื้นตัว' : relatedGroups.join(' • ')}
               </p>
 
+              {/* v58: ฟีดแบ็ก "Training Readiness 48 vs Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้อง
+                  อธิบายให้ชัด" — ป้าย "Recovery" เดิมสั้นเกินจนอ่านเหมือนจะเป็นตัวเดียวกับ Training Readiness
+                  ที่อยู่บน Header (คนละการ์ด แต่ใช้คำเดียวกัน) — เปลี่ยนเป็น "Muscle Recovery" ให้ชัดว่าเป็น
+                  % ฟื้นตัวของกลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว (muscleRecommendation.pct) ไม่ใช่คะแนน
+                  รวมวันนี้ — จับคู่กับ "Recovery (Avg)" ที่เปลี่ยนชื่อคู่กันใน breakdown ของ Training
+                  Readiness (MobileDashboardView.tsx/FitnessScoreDetailSheet.tsx) */}
               <div className="flex items-center gap-2 mt-1.5">
-                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }}>Recovery</p>
+                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }}>Muscle Recovery</p>
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
                   <AnimatedBarFill pct={muscleRecommendation.pct} color={barColor} />
                 </div>

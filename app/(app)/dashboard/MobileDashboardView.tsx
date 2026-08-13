@@ -179,11 +179,18 @@ export default function MobileDashboardView() {
   // - Workout Completion: ฝึกกี่วันใน 7 วันล่าสุด (data.last7DaysTrainedCount) แปลงเป็น 0-100
   // - Streak: จำกัดเพดานที่ 14 วัน = เต็ม 100% (ยาวกว่านั้นก็ยังนับเต็ม)
   // - Activity วันนี้: ใช้ตัวเดียวกับ ring ในการ์ด Today's Workout (progressPct)
+  // ฟีดแบ็ก "Training Readiness 48 vs AI Coach Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้องอธิบายให้
+  // ชัด" — ตัวนี้ (fitnessScoreRecoveryPct) เฉลี่ยจากทุกกลุ่มกล้ามเนื้อที่เคยฝึก ส่วน AI Coach's "Recovery
+  // 100%" (AICoachCompactCard.tsx, muscleRecommendation.pct) คือ % ฟื้นตัวของกลุ่มกล้ามเนื้อที่แนะนำวันนี้
+  // กลุ่มเดียว — คนละขอบเขตกันจริง ไม่ใช่บั๊ก (ตัวนี้แค่ 1 ใน 5 ปัจจัยถ่วงน้ำหนักที่รวมกันเป็น Training
+  // Readiness ด้วย ไม่ใช่ตัวเดียวกับ Readiness) — เปลี่ยน label ตรงนี้เป็น "Recovery (Avg)" ให้ตรงข้ามกับ
+  // "Muscle Recovery" ที่ AI Coach ใช้ (เปลี่ยนคู่กัน) ผู้ใช้ที่กด Training Readiness ดู breakdown จะเห็นคำ
+  // ที่ต่างจาก AI Coach ชัดเจน ไม่ใช่คำว่า "Recovery" เฉยๆ ซ้ำกันทั้งสองที่โดยไม่มีอะไรบอกว่าคนละตัว
   const fitnessScore = computeFitnessScore([
     { key: 'workout', label: 'Workout Completion', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
     { key: 'streak', label: 'Streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
     { key: 'sleep', label: 'Sleep', value: null, weight: 20 },
-    { key: 'recovery', label: 'Recovery', value: fitnessScoreRecoveryPct, weight: 15 },
+    { key: 'recovery', label: 'Recovery (Avg)', value: fitnessScoreRecoveryPct, weight: 15 },
     { key: 'weeklyGoal', label: 'Weekly Goal', value: data.weeklyGoalPct, weight: 10 },
     { key: 'activityToday', label: 'Activity Today', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
   ])
