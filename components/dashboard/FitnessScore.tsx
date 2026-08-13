@@ -45,10 +45,13 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
     // ออกมานอก DOM tree ที่ parse จริงเงียบๆ + click ที่ backdrop/ปุ่มปิดจะ bubble ไปโดน onClick ของปุ่ม
     // นอกด้วย เปิดใหม่ทันทีที่เพิ่งปิด) — ย้าย sheet ออกมาเป็น sibling ของปุ่ม ห่อทั้งคู่ด้วย Fragment แทน
     <>
+    {/* v60: ฟีดแบ็ก "Header สูงไป 5-8% — ลด vertical gap ไม่ลด font" — gap-1.5 (6px) ระหว่างวง/tier block
+        ลดเหลือ gap-1 (4px) ส่วนหนึ่งของการลดความสูงคอลัมน์นี้รวมกับ marginTop ที่ Header.tsx (52->48) และ
+        margin อีก 2 จุดด้านล่าง — ทุกจุดเป็นแค่ margin/gap ไม่แตะ fontSize เลย */}
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="flex flex-col items-center gap-1.5"
+      className="flex flex-col items-center gap-1"
       aria-haspopup="dialog"
       aria-label={`Training Readiness ${score.score} จาก 100 — ${score.tierLabelTh} — ${isRestDay ? 'วันนี้เป็นวันพัก เน้น Recovery' : score.recommendation}`}
     >
@@ -60,7 +63,7 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
           'วันนี้ร่างกายพร้อมฝึกแค่ไหน' — ใช้ 'Training Readiness' จะตรงกว่า" — เปลี่ยนป้ายที่แสดงผลเท่านั้น
           (ชื่อฟังก์ชัน/ตัวแปร computeFitnessScore ฯลฯ ใน lib/fitnessScore.ts ไม่แตะ เพื่อไม่ให้กระทบ
           จุดอื่นที่ import อยู่) */}
-      <p className="text-[8px] tracked uppercase leading-none" style={{ color: '#8A8E96', marginBottom: 3 }}>
+      <p className="text-[8px] tracked uppercase leading-none" style={{ color: '#8A8E96', marginBottom: 2 }}>
         Training Readiness
       </p>
       {/* animate-pop-in (scale 0.6→1.1→1, keyframe ที่มีอยู่แล้วใน globals.css ใช้กับ badge/pill อื่นๆ
@@ -180,7 +183,7 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
             สถานะ workout วันนี้) v56: 'Recovery Focus' -> 'Recovery Recommended' ตามฟีดแบ็กรอบถัดมา
             ให้สอดคล้องกับรูปแบบ tier อื่นของ Fitness Score (เช่น "Light Training Recommended") */}
         <p
-          className="leading-tight mt-0.5"
+          className="leading-tight"
           style={{ fontSize: 9, color: '#CFD4DE', maxWidth: 120 }}
         >
           {isRestDay ? 'Recovery Recommended' : score.aiCoachStatus}

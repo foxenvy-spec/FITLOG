@@ -25,9 +25,13 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
     <PremiumCard as="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="animate-rise px-4 py-3 w-full text-left">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 shrink-0">
+          {/* v60: ฟีดแบ็ก "Hierarchy ช่วงล่างควรเป็น AI Coach > Workout > Body > Streak > Health > Quick
+              Actions ตอนนี้ใกล้เคียงกันหมด — ลด visual emphasis ของ Streak ลงเล็กน้อย" — ลด alpha พื้นหลัง
+              ไอคอนไฟจาก 22 (13%) เหลือ 18 (~9%) จุดเดียว (ไม่แตะสีตัวเลข streak — ยังเป็นอำพันเต็มตามกฎ
+              "Orange = Progress" เดิม, ไม่แตะจุดวงกลม/contrast ที่เพิ่งแก้ readability ไปรอบก่อน) */}
           <span
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
-            style={{ backgroundColor: withAlpha(COLORS.amber, '22') }}
+            style={{ backgroundColor: withAlpha(COLORS.amber, '18') }}
             aria-hidden="true"
           >
             🔥
