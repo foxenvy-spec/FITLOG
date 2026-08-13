@@ -211,7 +211,11 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
             ขัดกันเอง" — เดิมข้อความนี้ hardcode ค่าเดียวตลอดไม่เคยเปลี่ยนตาม state เลย สลับเป็นข้อความ
             ฟื้นตัวตอน isRestDay ให้อ่านต่อเนื่องกับ "RECOVERY DAY" ที่ Today's Focus/Today's Workout/
             AI Coach ด้านล่างพูดตรงกันอยู่แล้ว */}
-        <p className="text-ink" style={{ marginTop: 3, fontSize: 13 }}>
+        {/* v64: ฟีดแบ็ก "ข้อความนี้ชนกับ Ring — ขยายทางซ้ายไม่ได้แล้ว ให้ลด line-height แทนให้ข้อความ 2
+            บรรทัด compact ขึ้น" — เดิมไม่มี line-height กำหนดตรงๆ (fallback ตาม browser/base ~1.5) ทำให้
+            ตอนข้อความยาวตกเป็น 2 บรรทัดบนจอแคบ มีช่องไฟระหว่างบรรทัดเผื่อไว้เกินจำเป็น ใส่ lineHeight: 1.25
+            ให้แน่นขึ้นโดยไม่แตะ fontSize/ความกว้างคอลัมน์เลย */}
+        <p className="text-ink" style={{ marginTop: 3, fontSize: 13, lineHeight: 1.25 }}>
           {isRestDay ? 'วันนี้เหมาะสำหรับการฟื้นตัว 🌙' : 'วันนี้พร้อมสำหรับการออกกำลังกาย 💪'}
         </p>
       </div>

@@ -112,7 +112,11 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
           aria-hidden="true"
         />
         <FitnessRing value={animatedScore} size={size} gradientStops={score.gradientStops}>
-          <span className="font-mono text-ink leading-none" style={{ fontSize: Math.round(size * 0.28) }}>
+          {/* v64: ฟีดแบ็ก "48 คือข้อมูลสำคัญที่สุดของส่วนนี้ เพิ่มขนาดอีก 5-8% แต่ไม่ต้องขยาย Ring" —
+              เดิม fontSize ผูกกับ size (scoreRingSize) ตรงๆ ผ่าน multiplier 0.28 — ขยับ multiplier ขึ้น
+              เป็น 0.29 (ตัวเลขเดียว ไม่แตะ size เอง) ให้ตัวเลขโตขึ้น ~5.3% (19->20px ที่ size ปัจจุบัน 69)
+              โดย ring ไม่ขยับตามเลย ตรงตามที่ขอเป๊ะ */}
+          <span className="font-mono text-ink leading-none" style={{ fontSize: Math.round(size * 0.29) }}>
             {animatedScore}
           </span>
           <span className="text-muted leading-none mt-0.5" style={{ fontSize: Math.round(size * 0.12) }}>
