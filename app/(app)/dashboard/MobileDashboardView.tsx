@@ -329,11 +329,27 @@ export default function MobileDashboardView() {
 
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 
+        {/* body composition snapshot */}
         {/* v12: ฟีดแบ็ก "Today's Workout ควรเด่นกว่า Body Metrics — Hierarchy ควรเป็น Today's Focus →
-            Today's Workout → Body Overview ไม่ใช่ Today's Focus → Body Overview → Today's Workout
-            เพราะผู้ใช้เปิดแอปฟิตเนสอยากรู้ 'วันนี้ต้องเล่นอะไร' มากกว่าดูน้ำหนักก่อน" — สลับลำดับ Today's
-            Workout ขึ้นมาก่อน Body Overview (เดิมอยู่หลัง) ไม่ได้แก้เนื้อหา/ดีไซน์ของการ์ดใดเลย แค่ย้าย
-            ตำแหน่งในลำดับแนวตั้ง */}
+            Today's Workout → Body Overview" — สลับ Today's Workout ขึ้นก่อน Body Overview ตอนนั้น
+            v59: ฟีดแบ็ก "ปัญหาเปลี่ยนจาก Scale Problem เป็น Hierarchy Problem — เอา Today's Workout กลับไป
+            หลัง Body Summary เหมือนเวอร์ชันก่อน เพราะหน้า Home ควรให้ผู้ใช้ scan 'วันนี้ร่างกายเป็นอย่างไร'
+            ก่อน 'วันนี้ต้องทำอะไร'" — สลับกลับเป็น Focus → Body Overview → Today's Workout ตามที่ขอ
+            (ย้ายตำแหน่งเฉยๆ ไม่ได้แก้เนื้อหา/ดีไซน์การ์ดใดเลย เหมือนตอนสลับรอบก่อน) */}
+        <div className="animate-rise" style={{ animationDelay: '15ms', marginTop: 10 }}>
+          {/* หัวข้อ section 18px ตาม Typography token ล่าสุด (เคยลองขยับไป 30px รอบก่อน แต่ภาพอ้างอิงจริง
+              (Image A) แสดงหัวข้อเล็กกว่านั้นมาก แก้กลับมาที่ 18px ตามสเปค) — ระยะห่างหัวข้อ→กริด 20px */}
+          <div className="flex items-center justify-between px-1" style={{ marginBottom: 20 }}>
+            <p className="font-display text-ink" style={{ fontSize: 18, fontWeight: 700 }}>ภาพรวมร่างกาย</p>
+            <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
+              ดูทั้งหมด →
+            </Link>
+          </div>
+          {/* v43: prop colorScheme ตัดออกแล้ว (ดู BodyMetricsRow.tsx) — ดีฟอลต์เป็นชุดสีนี้อยู่แล้ว
+              เดสก์ท็อปก็ใช้ชุดเดียวกันนี้ตั้งแต่ v41 ไม่ต้องส่ง prop แยกอีกต่อไป */}
+          <BodyMetricsRow maxCards={4} compact />
+        </div>
+
         {workoutCardVariant === 'active' ? (
           <TodaysWorkoutCompactCard
             completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
@@ -351,25 +367,6 @@ export default function MobileDashboardView() {
         ) : (
           <TodaysWorkoutEmptyCard variant={workoutCardVariant} />
         )}
-
-        {/* body composition snapshot */}
-        {/* v13: ฟีดแบ็ก "Body Overview Header ชิดกับ Today's Workout เกินไปนิด — เพิ่มระยะห่าง 8-12px"
-            — sectionGap กลาง (16px) ที่คุมทุกคู่การ์ดเท่ากันหมดยังไม่พอเฉพาะคู่นี้ เพิ่ม marginTop เสริม
-            10px เฉพาะจุดนี้ (ไม่แตะ sectionGap กลาง กันกระทบระยะห่างคู่อื่นทั้งหมด) รวมเป็น ~26px ระหว่าง
-            Today's Workout กับหัวข้อ "ภาพรวมร่างกาย" */}
-        <div className="animate-rise" style={{ animationDelay: '15ms', marginTop: 10 }}>
-          {/* หัวข้อ section 18px ตาม Typography token ล่าสุด (เคยลองขยับไป 30px รอบก่อน แต่ภาพอ้างอิงจริง
-              (Image A) แสดงหัวข้อเล็กกว่านั้นมาก แก้กลับมาที่ 18px ตามสเปค) — ระยะห่างหัวข้อ→กริด 20px */}
-          <div className="flex items-center justify-between px-1" style={{ marginBottom: 20 }}>
-            <p className="font-display text-ink" style={{ fontSize: 18, fontWeight: 700 }}>ภาพรวมร่างกาย</p>
-            <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
-              ดูทั้งหมด →
-            </Link>
-          </div>
-          {/* v43: prop colorScheme ตัดออกแล้ว (ดู BodyMetricsRow.tsx) — ดีฟอลต์เป็นชุดสีนี้อยู่แล้ว
-              เดสก์ท็อปก็ใช้ชุดเดียวกันนี้ตั้งแต่ v41 ไม่ต้องส่ง prop แยกอีกต่อไป */}
-          <BodyMetricsRow maxCards={4} compact />
-        </div>
 
         <TodayHealthStatsRow health={health} />
 

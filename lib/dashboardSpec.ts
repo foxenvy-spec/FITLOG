@@ -25,7 +25,11 @@ export const dashboardSpec = {
   },
   header: {
     height: 118, // -10% จาก 131 — ร่วมกับตัดบรรทัด "FITNESS SCORE" micro-label ออก (ดู FitnessScore.tsx)
-    scoreRingSize: 66, // -17.5% จาก 80 (ตามฟีดแบ็ก "ลดขนาด Hero ~15-20%")
+    // v59: ฟีดแบ็ก "Header กับ Fitness Score ยังไม่เป็นคู่เดียวกัน — Score ถูกลดจนดูเป็น secondary
+    // information เพิ่ม Ring ขึ้นประมาณ 5% เท่านั้น ไม่ต้องใหญ่เหมือนเวอร์ชันแรก" — 66 -> 69 (+4.5%, ปัดเข้า
+    // ใกล้ 5% ที่ขอที่สุด) header.height ด้านบนไม่แตะ (คงที่ 118 — ฟีดแบ็กระบุ "Header 100% ไม่ลด" ชัดเจน
+    // แค่วงในโตขึ้นเอง ไม่ต้องขยายกล่อง Header ตาม)
+    scoreRingSize: 69,
   },
   focusCard: {
     height: 60, // -10% จาก 67
@@ -33,7 +37,9 @@ export const dashboardSpec = {
     padding: 8, // -11% จาก 9
   },
   metricCard: {
-    height: 86, // -8.5% จาก 94 — ใกล้ physical floor แล้วที่ font ปัจจุบัน (22/15px)
+    // v59: ฟีดแบ็ก "Body Cards ตอนนี้เล็กไปนิด ข้อมูลภายในเริ่มถูกบีบ เพิ่มความสูงกลับมาแค่ 5-8% ไม่ใช่
+    // กลับไปขนาดเดิม (94)" — 86 -> 91 (+5.8%, กลางช่วงที่ขอ) ยังต่ำกว่า 94 เดิมพอสมควร ไม่ใช่ revert เต็ม
+    height: 91,
     borderRadius: 24,
     padding: 8, // -11% จาก 9
     gridGap: 12, // -14% จาก 14
@@ -45,7 +51,9 @@ export const dashboardSpec = {
     // v7: กลับมาสูงขึ้น (92 -> 112) ตามคำขอ "ใช้ไฟล์นี้เลยทำออกมาให้เหมือนนี้" (มอคอัพมีบรรทัดกลุ่ม
     // กล้ามเนื้อ "Chest • Triceps" ที่เคยตัดออกไปตอน v6 เพราะพื้นที่ไม่พอ) — ยืนยันแล้วว่ายอมให้การ์ด
     // สูงขึ้นเพื่อใส่บรรทัดนี้กลับมา แทนที่จะพยายามยัดใส่ความสูงเดิม
-    height: 112,
+    // v59: ฟีดแบ็ก "ปัญหาเปลี่ยนจาก Scale Problem เป็น Hierarchy Problem — ย้าย Body Overview ขึ้นก่อน
+    // Today's Workout แล้ว ลด Workout ลงอีกนิด ~5% ให้สมดุลกับ Body Cards ที่โตขึ้น" — 112 -> 106 (-5.4%)
+    height: 106,
     borderRadius: 24,
     padding: 10,
     // badge วงกลม+arc progress รอบไอคอนดัมเบล (ใช้ FitnessRing) — แทนที่ไอคอนแบนเดิม ให้ตรงกับ mockup
