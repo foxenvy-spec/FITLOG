@@ -319,7 +319,16 @@ export default function MobileDashboardView() {
           />
         </div>
 
-        <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap }}>
+        {/* v67: ฟีดแบ็ก "ช่องว่างระหว่าง Header → Today's Focus ยังเยอะไปนิด (~40-50px) ลด vertical gap
+            ตรงกลางประมาณ 15-20% โดยไม่ลด BANK/Score/Focus" — ต้นเหตุจริงไม่ใช่ sectionGap (8px อยู่แล้ว)
+            แต่เป็นช่องว่างภายในกล่อง Header เอง: แถว items-start ของ Header มีคอลัมน์ขวา (วง Fitness
+            Score, marginTop:48 + ขนาดวง 69px = สูง ~117px) สูงกว่าคอลัมน์ซ้าย (ข้อความ greeting) มาก ทำให้
+            เหลือพื้นที่ว่างใต้ข้อความคอลัมน์ซ้ายก่อนถึงขอบล่างจริงของกล่อง Header — พื้นที่นี้ไม่มีอะไรวาง
+            อยู่เลย (ขอบล่างวงแหวนก็จบพอดีที่ขอบกล่อง) ดึง section ถัดไปขึ้นมาทับพื้นที่ว่างนี้ได้อย่าง
+            ปลอดภัยด้วย marginTop ติดลบ แทนที่จะลดขนาด/ตำแหน่งองค์ประกอบใดๆ ใน Header ที่ยืนยันแล้วว่าไม่
+            ต้องแตะ (marginTop:48 ของวงเองก็มี buffer กันชนกระดิ่งอยู่แล้ว ไม่ควรลดต่อ) — ลบ 8px ≈ 15-20%
+            ของช่องว่างที่สังเกตได้ (~40-50px) ตามสัดส่วนที่ขอ */}
+        <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap, marginTop: -8 }}>
         <TodaysFocusCard
           workoutTitle={workoutTitle}
           muscleRecommendation={muscleRecommendation}
