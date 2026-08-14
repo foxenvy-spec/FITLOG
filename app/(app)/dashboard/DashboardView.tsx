@@ -1661,6 +1661,7 @@ export default function DashboardPage() {
             muscleRecommendation={data.muscleRecommendation}
             href="/coach"
             lastUpdatedAt={dataUpdatedAt}
+            recoveryDates={data.recoveryDates}
           />
           {/* v48: ฟีดแบ็ก "Insight มี 2 ใบ วางซ้อนกันแนวตั้งกินพื้นที่ ทำเป็น Carousel จะดีกว่า" —
               เดิม map วาง InsightCard เรียงต่อกัน space-y-2 (สูงเท่าจำนวนใบรวมกัน) เปลี่ยนเป็น

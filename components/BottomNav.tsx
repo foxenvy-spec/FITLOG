@@ -57,7 +57,14 @@ const TABS = [
 // enabled เฉพาะตอนอยู่หน้า /dashboard จริง (หน้าอื่นอ่าน cache เฉยๆ ไม่ trigger fetch ใหม่ กัน network
 // call ที่ไม่จำเป็นบนหน้า /program, /stats ฯลฯ) ถ้ายังไม่มี cache เลย (เพิ่งเปิดแอปหน้าอื่นก่อน /dashboard)
 // fallback isRestDay=false เหมือนพฤติกรรมเดิมทุกประการ — ไม่กระทบ UX เดิมตอนไม่มีข้อมูล
-function useIsRestDayToday(): boolean {
+// v65: ฟีดแบ็ก "หลัง Workout Complete ปุ่มกลางยังเขียน START WORKOUT ทั้งที่การ์ด Today's Workout บอก
+// 8/8 COMPLETED แล้ว — ควรเป็น VIEW SUMMARY แทน" — เพิ่ม isCompleted ควบคู่กับ isRestDay เดิม ใช้สูตร
+// completed/total เดียวกับที่ TodaysWorkoutCompactCard.tsx ใช้คำนวณ "8/8 COMPLETED" เป๊ะๆ (completed =
+// นับท่าตามแผน+ad-hoc ที่จบแล้ว ถ้าไม่มีแผนใช้จำนวน log จริงแทน, total = Math.max(แผน, log จริง, 1)) กัน
+// ปุ่มกับการ์ดขัดกันเอง — กดตอน completed แล้วยัง href ไป /session เหมือนเดิม (ไม่เปลี่ยนปลายทาง) เพราะ
+// session/page.tsx (แก้ไปพร้อมกันใน P3 ของฟีดแบ็กรอบก่อน) ตรวจแล้วว่าวันนี้ทำครบ จะพาไปหน้าสรุปผลตรงๆ
+// ให้เองอยู่แล้ว ไม่ต้องเปลี่ยน route ที่นี่ซ้ำ
+function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean } {
   const pathname = usePathname()
   const supabase = createClient()
   const today = todayStr()
@@ -66,16 +73,23 @@ function useIsRestDayToday(): boolean {
     queryFn: () => fetchDashboardData(supabase),
     enabled: pathname === '/dashboard',
   })
-  if (!data) return false
+  if (!data) return { isRestDay: false, isCompleted: false }
   const hasTodayPlan = data.todayExercises.length > 0
   const hasLoggedToday = data.todayWorkouts.length > 0
   const hasAnyProgram = data.programDays.length > 0
-  return !hasTodayPlan && !hasLoggedToday && hasAnyProgram
+  const isRestDay = !hasTodayPlan && !hasLoggedToday && hasAnyProgram
+
+  const entryCount = data.todayWorkouts.length
+  const completed = hasTodayPlan ? data.completedCount + data.adhocCompletedCount : entryCount
+  const total = Math.max(data.todayExercises.length, entryCount, 1)
+  const isCompleted = !isRestDay && completed >= total && (hasTodayPlan || hasLoggedToday)
+
+  return { isRestDay, isCompleted }
 }
 
 export default function BottomNav() {
   const pathname = usePathname()
-  const isRestDay = useIsRestDayToday()
+  const { isRestDay, isCompleted } = useTodayWorkoutStatus()
   // มุมตัด CNC เดียวกับลายเซ็นทั้งแอป (บนซ้าย 18px) — เฉพาะ 2 มุมบน (มุมล่างชิดขอบจอจริง ไม่มีอะไรให้ตัด)
   // minorCut=0 ให้มุมบนขวา/ล่างทั้งสองเหลี่ยมคม ตัดจริงแค่มุมเดียวตรงตามสัญลักษณ์ CNC ของแอป
   const navClipPath = cncCornerClipPath('tl', 18, 0)
@@ -148,7 +162,7 @@ export default function BottomNav() {
                 key={href}
                 href={sessionHref}
                 className="relative flex items-start justify-center"
-                aria-label={isRestDay ? 'ดู Recovery' : 'เริ่ม/ไปต่อเวิร์กเอาต์'}
+                aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : 'เริ่ม/ไปต่อเวิร์กเอาต์'}
                 onPointerDown={hapticSuccess}
               >
                 <span
@@ -188,7 +202,7 @@ export default function BottomNav() {
                           background: 'radial-gradient(circle at 35% 30%, #FFF4CC 0%, #FFB84A 40%, #FF9A16 68%, transparent 85%)',
                         }}
                       />
-                      {isRestDay ? <MoonIcon /> : <DumbbellIcon />}
+                      {isRestDay ? <MoonIcon /> : isCompleted ? <CheckIcon /> : <DumbbellIcon />}
                       <span
                         className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center relative"
                         style={{ color: '#FFF4E0' }}
@@ -199,6 +213,12 @@ export default function BottomNav() {
                             VIEW
                             <br />
                             RECOVERY
+                          </>
+                        ) : isCompleted ? (
+                          <>
+                            VIEW
+                            <br />
+                            SUMMARY
                           </>
                         ) : (
                           <>
@@ -269,6 +289,16 @@ function MoonIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+// v65: ไอคอนแทน DumbbellIcon เฉพาะตอน isCompleted — เครื่องหมายถูก สื่อ "ทำครบแล้ว วันนี้เหลือแค่ดูสรุป"
+// แยกจาก DumbbellIcon (ยังไม่เริ่ม/กำลังทำ) เหมือนที่ MoonIcon แยกจาก Rest Day ด้านบน
+function CheckIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
+      <path d="M5 12.5 10 17.5 19 7" stroke="#FFF4E0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
