@@ -154,7 +154,10 @@ export interface ProgramExercise {
 export interface ProgramCompletion {
   id: string
   user_id: string
-  program_exercise_id: string
+  // ท่าตามแผน (program_exercises) กับท่า ad-hoc ("เพิ่มท่า" ระหว่างเซสชัน) มีค่าใดค่าหนึ่งเท่านั้น
+  // ไม่ใช่ทั้งคู่ ไม่ใช่ไม่มีเลย (บังคับด้วย check constraint ในฐานข้อมูล — ดู migration 042)
+  program_exercise_id: string | null
+  workout_id: string | null
   completed_at: string
   created_at: string
 }

@@ -354,7 +354,11 @@ export default function MobileDashboardView() {
 
         {workoutCardVariant === 'active' ? (
           <TodaysWorkoutCompactCard
-            completed={data.todayExercises.length > 0 ? data.completedCount : totals.entryCount}
+            // ฟีดแบ็ก "แสดง 7/8 ทั้งๆที่ประวัติบันทึกไป 8 ท่า" — data.completedCount นับได้เฉพาะท่าตาม
+            // แผนเท่านั้น (ดู comment เต็มที่จุดคำนวณ adhocCompletedCount ใน DashboardView.tsx) บวก
+            // adhocCompletedCount เพิ่มเข้ามาให้ท่า ad-hoc ที่กดจบแล้วนับรวมด้วย — สาขา else (ไม่มีแผน)
+            // ไม่ต้องบวกเพิ่ม เพราะ totals.entryCount นับจาก log จริงทั้งหมดอยู่แล้วไม่แยกแผน/ad-hoc
+            completed={data.todayExercises.length > 0 ? data.completedCount + data.adhocCompletedCount : totals.entryCount}
             // ฟีดแบ็ก "เพิ่มท่า/เพิ่ม Set ระหว่างเซสชัน แต่พอจบ หน้านี้ไม่แสดงตามความจริง" — เดิม total
             // เป็น data.todayExercises.length ตรงๆ (จำนวนแผนล้วนๆ) ตราบใดที่มีแผนตั้งไว้ ไม่เคยรวมท่า
             // ad-hoc ที่เพิ่มเข้าไประหว่างเซสชัน (เจอบั๊กเดียวกันนี้ก่อนแล้วในการ์ด Hero ฝั่งเดสก์ท็อป —

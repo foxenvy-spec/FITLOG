@@ -146,7 +146,8 @@ export interface ProgramExercise {
 export interface ProgramCompletion {
   id: string
   user_id: string
-  program_exercise_id: string
+  program_exercise_id: string | null
+  workout_id: string | null
   completed_at: string
   created_at: string
 }
