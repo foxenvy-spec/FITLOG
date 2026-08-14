@@ -327,8 +327,11 @@ export default function MobileDashboardView() {
             อยู่เลย (ขอบล่างวงแหวนก็จบพอดีที่ขอบกล่อง) ดึง section ถัดไปขึ้นมาทับพื้นที่ว่างนี้ได้อย่าง
             ปลอดภัยด้วย marginTop ติดลบ แทนที่จะลดขนาด/ตำแหน่งองค์ประกอบใดๆ ใน Header ที่ยืนยันแล้วว่าไม่
             ต้องแตะ (marginTop:48 ของวงเองก็มี buffer กันชนกระดิ่งอยู่แล้ว ไม่ควรลดต่อ) — ลบ 8px ≈ 15-20%
-            ของช่องว่างที่สังเกตได้ (~40-50px) ตามสัดส่วนที่ขอ */}
-        <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap, marginTop: -8 }}>
+            ของช่องว่างที่สังเกตได้ (~40-50px) ตามสัดส่วนที่ขอ
+            v68: ฟีดแบ็ก "ช่องว่างนี้ยังมากเกินไป ลดอีกประมาณ 25-30% (15-25px)" (รอบถัดมาหลัง v67) — เอกซ์ตร้า
+            จากรอบก่อน ยังอยู่ในโซนที่ปลอดภัยเดิม (dead space ใต้คอลัมน์ซ้าย ไม่มีอะไรวางอยู่ ไม่ชนวงแหวน
+            เพราะขอบล่างวงแหวนคือขอบกล่อง Header พอดี) -8 -> -28 (ลบเพิ่มอีก 20px กลางช่วงที่ขอ) */}
+        <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap, marginTop: -28 }}>
         <TodaysFocusCard
           workoutTitle={workoutTitle}
           muscleRecommendation={muscleRecommendation}
@@ -348,8 +351,10 @@ export default function MobileDashboardView() {
             (ย้ายตำแหน่งเฉยๆ ไม่ได้แก้เนื้อหา/ดีไซน์การ์ดใดเลย เหมือนตอนสลับรอบก่อน) */}
         <div className="animate-rise" style={{ animationDelay: '15ms', marginTop: 10 }}>
           {/* หัวข้อ section 18px ตาม Typography token ล่าสุด (เคยลองขยับไป 30px รอบก่อน แต่ภาพอ้างอิงจริง
-              (Image A) แสดงหัวข้อเล็กกว่านั้นมาก แก้กลับมาที่ 18px ตามสเปค) — ระยะห่างหัวข้อ→กริด 20px */}
-          <div className="flex items-center justify-between px-1" style={{ marginBottom: 20 }}>
+              (Image A) แสดงหัวข้อเล็กกว่านั้นมาก แก้กลับมาที่ 18px ตามสเปค) — ระยะห่างหัวข้อ→กริด 20px
+              v68: ฟีดแบ็ก "'ภาพรวมร่างกาย' กับ Card อยู่ห่างกันนิดหนึ่ง ควรรู้สึกเป็นกลุ่มเดียวกันมากกว่านี้
+              ลดลงประมาณ 5-8px" — 20 -> 13 (-7px, กลางช่วงที่ขอ) */}
+          <div className="flex items-center justify-between px-1" style={{ marginBottom: 13 }}>
             {/* v60: ฟีดแบ็ก "'ภาพรวมร่างกาย' font ใหญ่ไปนิดจนเกือบเท่า Today's Focus ลดแค่ ~5%" —
                 18 -> 17 (-5.6%) */}
             <p className="font-display text-ink" style={{ fontSize: 17, fontWeight: 700 }}>ภาพรวมร่างกาย</p>
