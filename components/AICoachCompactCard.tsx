@@ -18,7 +18,7 @@ import {
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
-import { recoveryStatusColor } from '@/lib/dashboardStats'
+import { recoveryStatusColor, computeRecoveryPct } from '@/lib/dashboardStats'
 import { describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
@@ -46,6 +46,12 @@ interface AICoachCompactCardProps {
    * ในหน้า Dashboard) — ใช้แสดง "อัปเดตล่าสุด Xนาทีที่แล้ว" แบบมีข้อมูลจริงรองรับ ไม่ใช่ป้ายลอยๆ ที่ไม่มี
    * ความหมาย ไม่ระบุ = ยังโชว์ป้าย "อัปเดตล่าสุด" เฉยๆ แบบเดิม (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
   lastUpdatedAt?: number
+  /** วันที่ฝึกล่าสุดของแต่ละกลุ่มกล้ามเนื้อ (data.recoveryDates จาก DashboardView.tsx — คำนวณ
+   * recoveryPctForSummary/muscleRecommendation.pct มาจากชุดนี้อยู่แล้วฝั่ง server) ส่งมาด้วยเพื่อให้การ์ด
+   * นี้คำนวณ % ฟื้นตัวของ "กลุ่มกล้ามเนื้อหลักของเทมเพลตที่จะเริ่มจริง" เองได้ (ดู comment ที่ displayMg
+   * ด้านล่าง — แก้ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ต้องเป็นเรื่องเดียวกัน") ไม่ระบุ = ใช้
+   * muscleRecommendation.pct เดิมตรงๆ เหมือนก่อนหน้า (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
+  recoveryDates?: Record<string, string | null>
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -107,6 +113,7 @@ export default function AICoachCompactCard({
   href = '/coach',
   avatarSrc = '/icons/ai-coach-avatar.png',
   lastUpdatedAt,
+  recoveryDates,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -120,11 +127,7 @@ export default function AICoachCompactCard({
     staleTime: 60_000,
   })
 
-  const barColor = muscleRecommendation ? recoveryStatusColor(muscleRecommendation.pct) : COLORS.amber
   const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
-  const focus = mg ? describeMuscleFocus(mg) : null
-  const region = focus?.region ?? null
-  const relatedGroups = focus?.relatedGroups ?? []
 
   // จับคู่เทมเพลตที่มีท่าตรงกับกล้ามเนื้อที่แนะนำวันนี้ — ตรรกะเดิม (RecommendedProgramCard เก่า) หา
   // เทมเพลต "ตัวแรก" ที่มีท่าใดท่าหนึ่งตรงกับ mg เท่านั้น ไม่สนสัดส่วน — ทำให้เทมเพลตที่โฟกัสกล้ามเนื้ออื่น
@@ -147,6 +150,32 @@ export default function AICoachCompactCard({
     }, undefined)
   const chosen = mg ? bestTemplateFor(mg) : templates[0]
   const chosenExercises = chosen ? exercisesByTemplate[chosen.id] ?? [] : []
+
+  // ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ยังขัดกัน" — การจับคู่เทมเพลตที่แม่นขึ้นด้านบน (bestTemplateFor)
+  // แก้แค่ "เลือกเทมเพลตผิด" แต่หัวข้อ/แท็กด้านบน (region/relatedGroups) ยังคำนวณจาก mg ตรงๆ อยู่ดี ซึ่ง
+  // เป็นกล้ามเนื้อ "เดี่ยว" ที่ recovery สูงสุด/ตารางกำหนด ไม่ใช่กล้ามเนื้อหลักของเทมเพลตที่ปุ่มจะเริ่มจริง —
+  // ถ้าเทมเพลตที่จับคู่ได้ (chosen) โฟกัสกล้ามเนื้อกลุ่มอื่นเป็นหลัก (เช่น เทมเพลต "Day 5 — Lower" ที่มีท่า
+  // ขา 5 ท่า + ท่า core ปนอยู่ 1 ท่าที่ทำให้จับคู่ได้) หัวข้อก็ยังจะขึ้น "CORE" ต่อไปทั้งที่ปุ่มพาไปเริ่ม
+  // เซสชันขา — แก้โดยหากล้ามเนื้อที่มีท่ามากที่สุดในเทมเพลตที่เลือกจริง (dominantMg) แล้วใช้ตัวนั้นแทน mg
+  // ในการคำนวณ headline/subtitle/recovery % ทั้งหมด รับประกันว่าสิ่งที่เห็นบนการ์ดตรงกับสิ่งที่ปุ่มจะทำเป๊ะ
+  // เสมอ — ไม่มีเทมเพลตที่เลือกได้ (Rest Day/ไม่มีเทมเพลตตรงเลย) ไม่มีปุ่มให้ต้องสอดคล้องด้วย จึงกลับไปใช้ mg
+  // เดิมตามปกติ (คำแนะนำล้วนๆ ไม่ผูกกับ action ไหน)
+  const dominantMg = chosenExercises.reduce<MuscleGroup | null>((best, ex) => {
+    const g = ex.muscle_group as MuscleGroup | null
+    if (!g) return best
+    const count = (target: MuscleGroup) => chosenExercises.filter((e) => e.muscle_group === target).length
+    return !best || count(g) > count(best) ? g : best
+  }, null)
+  const displayMg = dominantMg ?? mg
+  const focus = displayMg ? describeMuscleFocus(displayMg) : null
+  const region = focus?.region ?? null
+  const relatedGroups = focus?.relatedGroups ?? []
+  const displayPct = displayMg
+    ? recoveryDates
+      ? computeRecoveryPct(recoveryDates[displayMg] ?? null, displayMg)
+      : (displayMg === mg ? muscleRecommendation?.pct : undefined) ?? 0
+    : 0
+  const barColor = muscleRecommendation ? recoveryStatusColor(displayPct) : COLORS.amber
 
   async function handleStart() {
     if (!chosen || chosenExercises.length === 0) return
@@ -262,16 +291,19 @@ export default function AICoachCompactCard({
               {/* v58: ฟีดแบ็ก "Training Readiness 48 vs Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้อง
                   อธิบายให้ชัด" — ป้าย "Recovery" เดิมสั้นเกินจนอ่านเหมือนจะเป็นตัวเดียวกับ Training Readiness
                   ที่อยู่บน Header (คนละการ์ด แต่ใช้คำเดียวกัน) — เปลี่ยนเป็น "Muscle Recovery" ให้ชัดว่าเป็น
-                  % ฟื้นตัวของกลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว (muscleRecommendation.pct) ไม่ใช่คะแนน
-                  รวมวันนี้ — จับคู่กับ "Recovery (Avg)" ที่เปลี่ยนชื่อคู่กันใน breakdown ของ Training
-                  Readiness (MobileDashboardView.tsx/FitnessScoreDetailSheet.tsx) */}
+                  % ฟื้นตัวของกลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว ไม่ใช่คะแนนรวมวันนี้ — จับคู่กับ
+                  "Recovery (Avg)" ที่เปลี่ยนชื่อคู่กันใน breakdown ของ Training Readiness
+                  (MobileDashboardView.tsx/FitnessScoreDetailSheet.tsx)
+                  v65: ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ยังขัดกัน" — เปลี่ยนจาก muscleRecommendation.pct
+                  (กล้ามเนื้อเดี่ยวที่แนะนำ) เป็น displayPct (กล้ามเนื้อหลักของเทมเพลตที่ปุ่มจะเริ่มจริง —
+                  ดู comment ที่ displayMg ด้านบน) ให้ % นี้สอดคล้องกับ headline/subtitle ด้านบนเสมอ */}
               <div className="flex items-center gap-2 mt-1.5">
                 <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }}>Muscle Recovery</p>
                 <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
-                  <AnimatedBarFill pct={muscleRecommendation.pct} color={barColor} />
+                  <AnimatedBarFill pct={displayPct} color={barColor} />
                 </div>
                 <p className="text-[10px] font-mono shrink-0" style={{ color: barColor }}>
-                  {muscleRecommendation.pct}%
+                  {displayPct}%
                 </p>
               </div>
             </>
