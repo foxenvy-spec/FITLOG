@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { cncCornerClipPath } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
+import { describeMuscleFocus, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
 import PremiumCard from './ui/PremiumCard'
 
 interface TodaysFocusCardProps {
@@ -14,6 +14,12 @@ interface TodaysFocusCardProps {
    * ใช้ describeMuscleFocus() ตัวเดียวกันแปลงเป็น region+relatedGroups ให้สองการ์ดพูดตรงกันเป๊ะ แทนที่จะ
    * โชว์แค่ muscleGroup ดิบๆ ("อก") ในขณะที่ AI Coach ด้านล่างโชว์ "UPPER BODY / อก • ไหล่ • แขน" */
   muscleRecommendation: { muscleGroup: string } | null
+  /** ท่าตามแผนจริงของวันนี้ (data.todayExercises) — ใช้หากล้ามเนื้อที่มีท่ามากที่สุด (dominantMuscleGroup)
+   * เพื่อเติม "หมวดร่างกาย" นำหน้ารายละเอียดในวงเล็บของ workoutTitle เช่น "Day 4 — Upper (Volume)" เดิม
+   * โชว์บรรทัดรองแค่ "Volume" เฉยๆ (ฟีดแบ็ก "Volume ไม่ได้บอกว่าวันนี้เน้นอะไร ทั้งที่ตัวบรรทัดหลักบอกแล้วว่า
+   * Day 4 — Upper") — เติม region จริงจากท่าที่ตั้งไว้จริงนำหน้า ("Upper Body • Volume") ให้บรรทัดรองมี
+   * ความหมายในตัวเองโดยไม่ต้องเดา ไม่ระบุ = พฤติกรรมเดิมทุกประการ (เผื่อจุดอื่นเรียกใช้การ์ดนี้) */
+  todayExercises?: { muscle_group: string | null }[]
   /** true เมื่อวันนี้เป็น Rest Day จริง (มีโปรแกรมอยู่แล้วแต่ไม่มีคิววันนี้ — workoutCardVariant==='restDay'
    * ใน MobileDashboardView.tsx ค่าเดียวกับที่ TodaysWorkoutEmptyCard ใช้ตัดสินใจ) — ตัด workoutTitle/
    * muscleRecommendation ทิ้งไปเลยตอนนี้จริง แทนที่จะโชว์ "UPPER BODY" ต่อไปเหมือนไม่มีอะไรเกิดขึ้น
@@ -46,9 +52,9 @@ export function splitTitleDetail(text: string): { main: string; detail: string |
 // v2: isRestDay มาก่อนทุกอย่าง — เดิม muscleRecommendation คำนวณจาก recovery % ล้วนๆ ไม่รู้จัก concept
 // "วันนี้พัก" เลย ทำให้ Today's Focus ยังโชว์ "UPPER BODY" ต่อไปแม้ Today's Workout จะบอก "REST DAY" แล้ว
 // (ฟีดแบ็ก "REST DAY กับ UPPER BODY ไม่ควรเกิดพร้อมกัน")
-export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, isRestDay = false, href }: TodaysFocusCardProps) {
+export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, isRestDay = false, href, todayExercises = [] }: TodaysFocusCardProps) {
   const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
-  const { main, detail } = isRestDay
+  const { main, detail: rawDetail } = isRestDay
     ? { main: 'Recovery Day', detail: 'Rest • Mobility' }
     : workoutTitle
       ? splitTitleDetail(workoutTitle)
@@ -58,6 +64,12 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
             return { main: focus.region, detail: focus.relatedGroups.join(' • ') }
           })()
         : { main: 'ยังไม่ได้ตั้งโปรแกรม', detail: null }
+
+  // เติม "หมวดร่างกาย" นำหน้ารายละเอียดในวงเล็บของ workoutTitle เท่านั้น (rawDetail ที่มาจาก splitTitleDetail)
+  // ไม่แตะ path ของ Rest Day/muscleRecommendation fallback ด้านบน (มี region ของตัวเองอยู่แล้วในตัว)
+  const todayDominantMg = workoutTitle && !isRestDay ? dominantMuscleGroup(todayExercises) : null
+  const todayRegion = todayDominantMg ? describeMuscleFocus(todayDominantMg).region : null
+  const detail = rawDetail && todayRegion ? `${todayRegion} • ${rawDetail}` : rawDetail
   return (
     <PremiumCard
       as={Link}

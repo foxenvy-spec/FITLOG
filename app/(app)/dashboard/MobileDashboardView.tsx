@@ -325,6 +325,7 @@ export default function MobileDashboardView() {
           muscleRecommendation={muscleRecommendation}
           isRestDay={workoutCardVariant === 'restDay'}
           href={scheduledDay ? '/session' : '/log'}
+          todayExercises={data.todayExercises}
         />
 
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
