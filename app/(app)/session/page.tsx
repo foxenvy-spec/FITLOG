@@ -491,6 +491,27 @@ export default function SessionPage() {
     return { workoutId, setsError: setsError ? setsError.message : null }
   }
 
+  // ฟีดแบ็ก "Dashboard แสดง 7/8 ทั้งๆที่ประวัติบันทึกไป 8 ท่า" — root cause: program_completions เดิม
+  // ผูก FK กับ program_exercises เท่านั้น (not null) ท่า ad-hoc ("เพิ่มท่า" ระหว่างเซสชัน — ไม่มีแถว
+  // program_exercises ให้ผูก) เลยข้ามการบันทึก completion ไปตรงๆ ทุกครั้ง แม้จะทำเสร็จจริง — migration 042
+  // เพิ่ม workout_id ให้ผูกกับท่า ad-hoc แทนได้ (program_exercise_id เป็น null ในกรณีนั้น) ฟังก์ชันนี้เลือก
+  // คอลัมน์ที่ถูกต้องให้เอง กันไม่ให้ทั้ง 2 จุดที่เรียก (logCurrentExercise/swapCurrentExercise) ต้อง
+  // เขียนตรรกะแยกกัน 2 ที่เหมือนเดิม
+  async function recordProgramCompletion(userId: string, ex: ProgramExercise, workoutId: string) {
+    if (isAdhocExercise(ex)) {
+      await supabase
+        .from('program_completions')
+        .upsert({ user_id: userId, workout_id: workoutId, completed_at: todayStr() }, { onConflict: 'user_id,workout_id' })
+    } else {
+      await supabase
+        .from('program_completions')
+        .upsert(
+          { user_id: userId, program_exercise_id: ex.id, completed_at: todayStr() },
+          { onConflict: 'user_id,program_exercise_id,completed_at' }
+        )
+    }
+  }
+
   // กด "เซ็ตนี้เสร็จแล้ว" — จำ reps/น้ำหนักที่กรอกอยู่ ณ ตอนนี้เป็นเซ็ตจริงเซ็ตหนึ่ง (ไม่ใช่แค่นับจำนวน)
   // ทำให้ drop set หรือเซ็ตท้ายๆ ที่ reps ตกลง ถูกเก็บค่าจริงแยกทีละเซ็ต ไม่ถูกปัดเป็นค่าเดียวซ้ำทุกเซ็ต
   async function logSet() {
@@ -555,16 +576,7 @@ export default function SessionPage() {
           return
         }
 
-        // program_completions ผูก FK กับ program_exercises เท่านั้น — ท่าที่ผู้ใช้กด "เพิ่มท่า" เองระหว่าง
-        // เซสชัน (ไม่ได้อยู่ในแผน) จึงต้องข้ามขั้นตอนนี้ไป ไม่งั้น insert จะพังเพราะไม่มีแถวจริงให้ผูก
-        if (workoutId && !isAdhocExercise(current)) {
-          await supabase
-            .from('program_completions')
-            .upsert(
-              { user_id: user.id, program_exercise_id: current.id, completed_at: todayStr() },
-              { onConflict: 'user_id,program_exercise_id,completed_at' }
-            )
-        }
+        if (workoutId) await recordProgramCompletion(user.id, current, workoutId)
 
         markExerciseFinished(current.id)
 
@@ -626,14 +638,7 @@ export default function SessionPage() {
         if (result.setsError) {
           setSwapError('บันทึกท่าเดิมสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
         }
-        if (result.workoutId && !isAdhocExercise(current)) {
-          await supabase
-            .from('program_completions')
-            .upsert(
-              { user_id: user.id, program_exercise_id: current.id, completed_at: todayStr() },
-              { onConflict: 'user_id,program_exercise_id,completed_at' }
-            )
-        }
+        if (result.workoutId) await recordProgramCompletion(user.id, current, result.workoutId)
         markExerciseFinished(current.id)
 
         setStates((prev) => ({

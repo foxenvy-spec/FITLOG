@@ -107,6 +107,9 @@ export interface DashboardData {
   programDays: ProgramDay[]
   todayExercises: ProgramExercise[]
   completedCount: number
+  // จำนวนท่า ad-hoc ("เพิ่มท่า" ระหว่างเซสชัน) ที่กดจบแล้ววันนี้ — แยกจาก completedCount ตั้งใจ (ดู
+  // comment เต็มที่จุดคำนวณใน fetchDashboardData) การ์ด Hero เอาไปบวกกับ completedCount เองตอนแสดงผล
+  adhocCompletedCount: number
   completedExerciseIds: string[]
   recoveryDates: Record<string, string | null>
   insights: Insight[]
@@ -311,6 +314,20 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     completedCount = completedExerciseIds.length
   }
 
+  // ฟีดแบ็ก "Dashboard แสดง 7/8 ทั้งๆที่ประวัติบันทึกไป 8 ท่า" — completedCount ด้านบนนับได้เฉพาะท่าตาม
+  // แผน (program_exercise_id) เท่านั้น ท่า ad-hoc ("เพิ่มท่า" ระหว่างเซสชัน) เดิมไม่มีทางบันทึก completion
+  // ได้เลย (migration 042 เพิ่ม workout_id ให้ผูกแทนได้) — นับแยกต่างหากเป็น adhocCompletedCount ไม่รวม
+  // เข้ากับ completedCount ตัวบน เพราะ completedCount/progressPctForLabel ด้านล่างมีความหมายเจาะจงว่า
+  // "ทำครบตามแผนหรือยัง" (ใช้ตัดสิน AI แนะนำกลุ่มกล้ามเนื้อถัดไป) ซึ่งไม่ควรถูกกระทบจากงานพิเศษนอกแผน —
+  // การ์ด Hero (ทั้งเดสก์ท็อป/มือถือ) จะเอาสองค่านี้มาบวกกันเองตอน render แทน (ดู completedCount +
+  // adhocCompletedCount ด้านล่างไฟล์นี้/MobileDashboardView.tsx)
+  const { data: adhocCompletions } = await supabase
+    .from('program_completions')
+    .select('id')
+    .eq('completed_at', today)
+    .not('workout_id', 'is', null)
+  const adhocCompletedCount = (adhocCompletions ?? []).length
+
   // % ความคืบหน้าของแผนวันนี้ ใช้ทั้งโชว์ตัวเลขในข้อความแนะนำ และตัดสินว่า "ฝึกวันนี้ไปแล้ว" หรือยัง
   // ถ้าวันนี้ไม่มีแผนกำหนดไว้ (บันทึกอิสระ) ให้ถือว่า 100% ถ้ามี log อย่างน้อย 1 รายการ ไม่งั้นเป็น null (ยังไม่ได้ฝึกอะไรเลย)
   const progressPctForLabel =
@@ -346,6 +363,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     programDays: typedDays,
     todayExercises,
     completedCount,
+    adhocCompletedCount,
     completedExerciseIds,
     recoveryDates,
     insights,
