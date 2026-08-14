@@ -497,18 +497,24 @@ export default function SessionPage() {
   // เพิ่ม workout_id ให้ผูกกับท่า ad-hoc แทนได้ (program_exercise_id เป็น null ในกรณีนั้น) ฟังก์ชันนี้เลือก
   // คอลัมน์ที่ถูกต้องให้เอง กันไม่ให้ทั้ง 2 จุดที่เรียก (logCurrentExercise/swapCurrentExercise) ต้อง
   // เขียนตรรกะแยกกัน 2 ที่เหมือนเดิม
+  // v2: ฟีดแบ็ก "ยังแสดง 7/8" หลัง deploy migration 042 แล้ว — เจอว่า upsert onConflict:'user_id,workout_id'
+  // เดิมพังเงียบๆ ทุกครั้ง (unique index รอบแรกเป็น partial index ที่ ON CONFLICT เปล่าๆ จับคู่ไม่ได้ — ดู
+  // migration 043) เพราะฟังก์ชันนี้ไม่เคยเช็ค error จาก upsert เลย เพิ่มการเช็ค+โยน error ให้ผู้เรียกจับได้
+  // (เหมือน pattern persistSets ด้านบนที่ throw wErr ตอน insert/update workouts พลาด) กันความเงียบซ้ำอีก
   async function recordProgramCompletion(userId: string, ex: ProgramExercise, workoutId: string) {
     if (isAdhocExercise(ex)) {
-      await supabase
+      const { error } = await supabase
         .from('program_completions')
         .upsert({ user_id: userId, workout_id: workoutId, completed_at: todayStr() }, { onConflict: 'user_id,workout_id' })
+      if (error) throw error
     } else {
-      await supabase
+      const { error } = await supabase
         .from('program_completions')
         .upsert(
           { user_id: userId, program_exercise_id: ex.id, completed_at: todayStr() },
           { onConflict: 'user_id,program_exercise_id,completed_at' }
         )
+      if (error) throw error
     }
   }
 
