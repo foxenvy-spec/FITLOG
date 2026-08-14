@@ -58,14 +58,18 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
   // โทนน้ำเงินกรมท่า — ปรับโทนให้เป็นเทาไทเทเนียม/อำพัน ให้ยังอยู่ในธีม Dark Titanium เดียวกับทั้งแอป)
   if (!health.connected) {
     return (
+      // v67: ฟีดแบ็ก "AI Coach ควรเป็น visual weight สูงสุดของหน้าโดยตั้งใจ — ลดความเด่นของ Weekly
+      // Activity และ Health App แทนที่จะลด AI Coach" — การ์ดนี้ (สถานะยังไม่เชื่อมต่อ ซึ่งเป็นสถานะ default
+      // ของผู้ใช้เกือบทุกคน) มีจุดเรืองแสง 3 จุด + border/shadow ชัดเจน แข่งความสนใจกับ AI Coach ด้านล่าง
+      // โดยไม่ตั้งใจ — ลด alpha ของ glow/border/background ทุกชั้นลง ~20-30% (ไม่แตะขนาด/ตำแหน่ง/ข้อความ)
       <Link
         href="/profile"
         className="relative overflow-hidden rounded-[20px] flex items-center justify-between gap-3 px-4 backdrop-blur-md active:scale-[0.99] transition"
         style={{
           height: dashboardSpec.healthBanner.height,
-          background: 'linear-gradient(180deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.02) 40%, rgba(255,255,255,.015) 100%), rgba(22,23,26,.5)',
-          border: '1px solid rgba(255,255,255,.12)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,.14), 0 8px 20px rgba(0,0,0,.3)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.015) 40%, rgba(255,255,255,.01) 100%), rgba(22,23,26,.5)',
+          border: '1px solid rgba(255,255,255,.09)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,.10), 0 8px 20px rgba(0,0,0,.3)',
         }}
       >
         <div className="flex items-center gap-2.5 min-w-0">
@@ -77,9 +81,9 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
                   key={key}
                   className="w-7 h-7 rounded-full flex items-center justify-center text-[11px]"
                   style={{
-                    backgroundColor: withAlpha(meta.color, '26'),
-                    border: `1px solid ${withAlpha(meta.color, '55')}`,
-                    boxShadow: `0 0 8px ${withAlpha(meta.color, '33')}`,
+                    backgroundColor: withAlpha(meta.color, '1c'),
+                    border: `1px solid ${withAlpha(meta.color, '40')}`,
+                    boxShadow: `0 0 8px ${withAlpha(meta.color, '20')}`,
                   }}
                   aria-hidden="true"
                 >
@@ -101,7 +105,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
         </div>
         <span
           className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-          style={{ border: '1px solid rgba(255,255,255,.18)', background: 'rgba(255,255,255,.05)' }}
+          style={{ border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.04)' }}
           aria-hidden="true"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
