@@ -146,6 +146,18 @@ export function describeMuscleFocus(mg: MuscleGroup): { region: string; relatedG
   return { region: MUSCLE_GROUP_BODY_REGION[mg], relatedGroups: [mg, ...DEFAULT_SECONDARY_BY_PRIMARY[mg]] }
 }
 
+// กล้ามเนื้อที่มีท่ามากที่สุดในชุดท่า (เทมเพลต/แผนวันนี้ ฯลฯ) — ใช้แทน "ท่าแรกที่ตรง mg" หรือ mg เดี่ยวๆ
+// เมื่อต้องบอกว่ากลุ่มกล้ามเนื้อไหนเป็น "โฟกัสหลักจริงๆ" ของชุดท่าทั้งชุด (ดู AICoachCompactCard.tsx —
+// เลือกเทมเพลตที่จะเริ่มจริง แล้วต้องคำนวณ headline จากกล้ามเนื้อหลักของเทมเพลตนั้น ไม่ใช่ mg ที่แนะนำแยกมา)
+export function dominantMuscleGroup(items: { muscle_group: string | null }[]): MuscleGroup | null {
+  return items.reduce<MuscleGroup | null>((best, item) => {
+    const g = item.muscle_group as MuscleGroup | null
+    if (!g) return best
+    const count = (target: MuscleGroup) => items.filter((i) => i.muscle_group === target).length
+    return !best || count(g) > count(best) ? g : best
+  }, null)
+}
+
 export function guessSecondaryMuscles(exerciseName: string, primaryMuscle: MuscleGroup): MuscleGroup[] {
   const name = exerciseName.toLowerCase()
   const rule = SECONDARY_MUSCLE_RULES.find((r) => r.keywords.test(name))

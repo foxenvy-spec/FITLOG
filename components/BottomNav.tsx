@@ -64,7 +64,12 @@ const TABS = [
 // ปุ่มกับการ์ดขัดกันเอง — กดตอน completed แล้วยัง href ไป /session เหมือนเดิม (ไม่เปลี่ยนปลายทาง) เพราะ
 // session/page.tsx (แก้ไปพร้อมกันใน P3 ของฟีดแบ็กรอบก่อน) ตรวจแล้วว่าวันนี้ทำครบ จะพาไปหน้าสรุปผลตรงๆ
 // ให้เองอยู่แล้ว ไม่ต้องเปลี่ยน route ที่นี่ซ้ำ
-function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean } {
+// v66: ฟีดแบ็ก "หน้า Home ควรมี State: ก่อน Workout (START WORKOUT) / กำลัง Workout (RESUME WORKOUT) /
+// Complete (VIEW SUMMARY) / Recovery Day (VIEW RECOVERY)" — isCompleted/isRestDay มีอยู่แล้ว เพิ่ม
+// isInProgress (0 < completed < total) ให้ปุ่มแยก "ยังไม่เริ่มเลย" ออกจาก "เริ่มแล้วแต่ยังไม่ครบ" ได้ —
+// สูตรเดียวกับ isCompleted เป๊ะ ("Program Complete" ในฟีดแบ็กไม่ได้ทำ — FITLOG ไม่มีข้อมูล "จบโปรแกรม
+// ทั้งชุด" จริง โปรแกรมเป็นตารางประจำสัปดาห์ที่วนซ้ำไม่มีจุดจบ ใส่ state นี้จะต้องเดา/ปั้นความหมายขึ้นมาเอง)
+function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean; isInProgress: boolean } {
   const pathname = usePathname()
   const supabase = createClient()
   const today = todayStr()
@@ -73,7 +78,7 @@ function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean } {
     queryFn: () => fetchDashboardData(supabase),
     enabled: pathname === '/dashboard',
   })
-  if (!data) return { isRestDay: false, isCompleted: false }
+  if (!data) return { isRestDay: false, isCompleted: false, isInProgress: false }
   const hasTodayPlan = data.todayExercises.length > 0
   const hasLoggedToday = data.todayWorkouts.length > 0
   const hasAnyProgram = data.programDays.length > 0
@@ -83,13 +88,14 @@ function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean } {
   const completed = hasTodayPlan ? data.completedCount + data.adhocCompletedCount : entryCount
   const total = Math.max(data.todayExercises.length, entryCount, 1)
   const isCompleted = !isRestDay && completed >= total && (hasTodayPlan || hasLoggedToday)
+  const isInProgress = !isRestDay && !isCompleted && completed > 0
 
-  return { isRestDay, isCompleted }
+  return { isRestDay, isCompleted, isInProgress }
 }
 
 export default function BottomNav() {
   const pathname = usePathname()
-  const { isRestDay, isCompleted } = useTodayWorkoutStatus()
+  const { isRestDay, isCompleted, isInProgress } = useTodayWorkoutStatus()
   // มุมตัด CNC เดียวกับลายเซ็นทั้งแอป (บนซ้าย 18px) — เฉพาะ 2 มุมบน (มุมล่างชิดขอบจอจริง ไม่มีอะไรให้ตัด)
   // minorCut=0 ให้มุมบนขวา/ล่างทั้งสองเหลี่ยมคม ตัดจริงแค่มุมเดียวตรงตามสัญลักษณ์ CNC ของแอป
   const navClipPath = cncCornerClipPath('tl', 18, 0)
@@ -162,7 +168,7 @@ export default function BottomNav() {
                 key={href}
                 href={sessionHref}
                 className="relative flex items-start justify-center"
-                aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : 'เริ่ม/ไปต่อเวิร์กเอาต์'}
+                aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : isInProgress ? 'ทำเวิร์กเอาต์ต่อ' : 'เริ่มเวิร์กเอาต์'}
                 onPointerDown={hapticSuccess}
               >
                 <span
@@ -219,6 +225,12 @@ export default function BottomNav() {
                             VIEW
                             <br />
                             SUMMARY
+                          </>
+                        ) : isInProgress ? (
+                          <>
+                            RESUME
+                            <br />
+                            WORKOUT
                           </>
                         ) : (
                           <>

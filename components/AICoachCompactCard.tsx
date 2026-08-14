@@ -19,7 +19,7 @@ import {
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import { recoveryStatusColor, computeRecoveryPct } from '@/lib/dashboardStats'
-import { describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
+import { describeMuscleFocus, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
@@ -160,13 +160,7 @@ export default function AICoachCompactCard({
   // ในการคำนวณ headline/subtitle/recovery % ทั้งหมด รับประกันว่าสิ่งที่เห็นบนการ์ดตรงกับสิ่งที่ปุ่มจะทำเป๊ะ
   // เสมอ — ไม่มีเทมเพลตที่เลือกได้ (Rest Day/ไม่มีเทมเพลตตรงเลย) ไม่มีปุ่มให้ต้องสอดคล้องด้วย จึงกลับไปใช้ mg
   // เดิมตามปกติ (คำแนะนำล้วนๆ ไม่ผูกกับ action ไหน)
-  const dominantMg = chosenExercises.reduce<MuscleGroup | null>((best, ex) => {
-    const g = ex.muscle_group as MuscleGroup | null
-    if (!g) return best
-    const count = (target: MuscleGroup) => chosenExercises.filter((e) => e.muscle_group === target).length
-    return !best || count(g) > count(best) ? g : best
-  }, null)
-  const displayMg = dominantMg ?? mg
+  const displayMg = dominantMuscleGroup(chosenExercises) ?? mg
   const focus = displayMg ? describeMuscleFocus(displayMg) : null
   const region = focus?.region ?? null
   const relatedGroups = focus?.relatedGroups ?? []
