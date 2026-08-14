@@ -20,6 +20,15 @@ interface WorkoutStreakCardProps {
 // WorkoutStreakDetailSheet โชว์ Current เทียบ Best (ไม่เพิ่ม Best ขึ้นการ์ดหลักตามที่ขอ)
 export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, today }: WorkoutStreakCardProps) {
   const [open, setOpen] = useState(false)
+  // ฟีดแบ็ก "WEEKLY ACTIVITY — 2 วัน ให้ตรงกับวันที่แสดง" — ตัวเลขบรรทัดนี้เดิมใช้ `streak` (สายโซ่ต่อเนื่อง
+  // จาก computeCurrentStreakDates) ซึ่งนับคนละแบบกับจุดวงกลม 7 วันด้านขวา (ตั้งแต่ v62 จุดสีเขียว = "ฝึกแล้ว
+  // วันนั้นๆ" ล้วนๆ ไม่สนว่าสายโซ่ขาดหรือไม่ — ดู comment v62 ด้านล่าง) ทำให้ 2 ค่าอาจไม่ตรงกัน (เช่น ฝึก
+  // จ./พ./พฤ./ศ. ขาดอังคาร -> จุดเขียวติด 4 จุด แต่ตัวเลขสายโซ่เหลือแค่ 1) — ป้ายหัวข้อเปลี่ยนเป็น "Weekly
+  // Activity" ไปแล้วตั้งแต่รอบก่อน แต่ตัวเลขยังไม่ได้ตามไปด้วย จุดนี้แก้ให้ตัวเลขนับจาก weekDayTicks ชุด
+  // เดียวกับที่ render จุดจริงๆ (จำนวนวันที่ trained ในแถวที่เห็น) รับประกันว่าตรงกันเป๊ะเสมอ — แนวคิด
+  // "สายโซ่ต่อเนื่อง" (streak/bestStreak เดิม) ยังไม่ทิ้ง ยังส่งเข้า Detail Sheet ที่เปิดจากการแตะการ์ดนี้
+  // ต่อไป ซึ่งมีป้าย "Current Streak"/"Best Streak" ระบุความหมายชัดเจนแยกจากหน้าการ์ดหลักอยู่แล้ว
+  const weeklyTrainedCount = weekDayTicks.filter((t) => t.trained).length
   return (
     <>
     <PremiumCard as="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="animate-rise px-4 py-3 w-full text-left">
@@ -57,7 +66,7 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                 ลดความแน่นของแถวจุด ไม่ใช่เพิ่มความกว้างฝั่งซ้ายไปแย่งพื้นที่คืน) — 🔥 + สีอำพันของตัวเลขบรรทัด
                 นี้สื่อความหมาย "streak" อยู่แล้วโดยไม่ต้องเขียนคำว่า streak ซ้ำ */}
             <p className="text-[9px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Weekly Activity</p>
-            <p className="font-mono text-amber leading-none mt-1" style={{ fontSize: 13 }}>{streak} วัน</p>
+            <p className="font-mono text-amber leading-none mt-1" style={{ fontSize: 13 }}>{weeklyTrainedCount} วัน</p>
           </div>
         </div>
 

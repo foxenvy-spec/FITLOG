@@ -126,12 +126,26 @@ export default function AICoachCompactCard({
   const region = focus?.region ?? null
   const relatedGroups = focus?.relatedGroups ?? []
 
-  // จับคู่เทมเพลตที่มีท่าตรงกับกล้ามเนื้อที่แนะนำวันนี้ (ถ้ามี) ไม่งั้นใช้เทมเพลตล่าสุด — ตรรกะเดียวกับ
-  // RecommendedProgramCard เดิมเป๊ะๆ
+  // จับคู่เทมเพลตที่มีท่าตรงกับกล้ามเนื้อที่แนะนำวันนี้ — ตรรกะเดิม (RecommendedProgramCard เก่า) หา
+  // เทมเพลต "ตัวแรก" ที่มีท่าใดท่าหนึ่งตรงกับ mg เท่านั้น ไม่สนสัดส่วน — ทำให้เทมเพลตที่โฟกัสกล้ามเนื้ออื่น
+  // แต่มีท่า mg ปนอยู่แค่ท่าเดียวก็ถูกจับคู่ได้ (เช่น mg=Core ไปจับคู่กับ "Day 5 — Lower" เพราะมีท่า core
+  // ปนอยู่ 1 ท่า) และถ้าไม่มีเทมเพลตไหนตรงเลย เดิม fallback ไปที่เทมเพลต "ล่าสุดที่สร้าง" (templates[0])
+  // ซึ่งไม่เกี่ยวอะไรกับ mg เลย — ผลคือ headline/tag ด้านบน ("CORE", มาจาก program_days/recovery) กับ
+  // ปุ่ม CTA ด้านล่าง ("เริ่ม Day 5 — Lower", มาจาก workout_templates คนละตาราง) ขัดกันได้จริง (ฟีดแบ็ก
+  // "CORE กับ DAY 5 — LOWER ต้องแน่ใจว่า Next Session จริงๆ คืออะไร") — แก้โดย (1) เลือกเทมเพลตที่มี
+  // "จำนวนท่า" ตรงกับ mg มากที่สุด แทนตัวแรกที่เจอ ลดโอกาสจับคู่กับเทมเพลตที่ mg แค่ปนอยู่ท่าเดียว (2) ตัด
+  // fallback ไปเทมเพลตล่าสุดที่ไม่เกี่ยวข้องออก — ไม่มีเทมเพลตไหนมีท่าตรงกับ mg เลยจริงๆ ให้ chosen เป็น
+  // undefined แล้วปุ่มด้านล่างเปลี่ยนไปโชว์ "ดูเทมเพลตทั้งหมด" แทนที่จะแอบใช้ชื่อเทมเพลตที่ไม่เกี่ยวข้อง
   const templates = templateData?.templates ?? []
   const exercisesByTemplate = templateData?.exercisesByTemplate ?? {}
-  const matched = mg ? templates.find((t) => (exercisesByTemplate[t.id] ?? []).some((ex) => ex.muscle_group === mg)) : undefined
-  const chosen = matched ?? templates[0]
+  const bestTemplateFor = (targetMg: MuscleGroup) =>
+    templates.reduce<WorkoutTemplate | undefined>((best, t) => {
+      const count = (exercisesByTemplate[t.id] ?? []).filter((ex) => ex.muscle_group === targetMg).length
+      if (count === 0) return best
+      const bestCount = best ? (exercisesByTemplate[best.id] ?? []).filter((ex) => ex.muscle_group === targetMg).length : 0
+      return count > bestCount ? t : best
+    }, undefined)
+  const chosen = mg ? bestTemplateFor(mg) : templates[0]
   const chosenExercises = chosen ? exercisesByTemplate[chosen.id] ?? [] : []
 
   async function handleStart() {
@@ -313,6 +327,13 @@ export default function AICoachCompactCard({
             <Button type="button" onClick={handleStart} disabled={starting} className="flex-1 min-w-0">
               <span className="truncate">{starting ? '...' : `เริ่ม ${splitTitleDetail(chosen.title).main}`}</span>
               {!starting && <span aria-hidden="true">→</span>}
+            </Button>
+          ) : templates.length > 0 ? (
+            // ฟีดแบ็ก "CORE กับ DAY 5 — LOWER" — กรณีมีเทมเพลตอยู่แล้วแต่ไม่มีตัวไหนมีท่าตรงกับ mg เลย
+            // (bestTemplateFor คืน undefined) เดิมจะหลุดไปโชว์ "สร้างโปรแกรมแรก" ซึ่งผิด (มีเทมเพลตอยู่แล้ว)
+            // และก่อนหน้านั้นยิ่งแย่กว่าคือแอบใช้เทมเพลตที่ไม่เกี่ยวข้องแทน — แยกเป็นข้อความที่ตรงความจริง
+            <Button as={Link} href="/templates" className="flex-1 min-w-0">
+              ดูเทมเพลตทั้งหมด →
             </Button>
           ) : (
             <Button as={Link} href="/templates" className="flex-1 min-w-0">

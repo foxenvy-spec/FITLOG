@@ -323,6 +323,19 @@ export default function SessionPage() {
     setExercises(combinedExercises)
     setStates(adjustedStates)
     setIndex(firstUnfinishedIndex(combinedExercises, adjustedStates))
+
+    // ฟีดแบ็ก "กดเข้าการ์ด Today's Workout ตอนทำครบแล้ว ควรเห็นหน้าสรุปผล ไม่ใช่กลับไปหน้าทำท่า" — เดิม
+    // set 'active' เสมอไม่ว่าจะทำครบหรือยัง ทำให้กลับเข้ามาที่ท่าสุดท้าย (firstUnfinishedIndex fallback)
+    // แทนที่จะเห็นสรุปผล — ถ้าทุกท่า (รวม ad-hoc) ถูกบันทึกจบแล้วจริง ให้ข้ามตรงไปหน้า 'done' เลย (ใช้
+    // states/exercises ที่เพิ่ง set ไปด้านบน — คำนวณสรุปได้ทันทีเหมือนตอนกดจบเซสชันปกติ) เคลียร์ timestamp
+    // เซสชันทิ้งด้วยเหตุผลเดียวกับ endSession() — ไม่มีเซสชันที่กำลังนับเวลาอยู่จริงให้ resume ต่อ
+    const allFinished = combinedExercises.length > 0 && combinedExercises.every((ex) => adjustedStates[ex.id]?.logged)
+    if (allFinished) {
+      if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
+      setPhase('done')
+      return
+    }
+
     setPhase('active')
   }, [supabase])
 
