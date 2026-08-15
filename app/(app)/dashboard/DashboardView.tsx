@@ -124,6 +124,10 @@ export interface DashboardData {
   // ใช้ประกอบ dynamic greeting ด้านบนสุด — กล้ามเนื้อที่ฟื้นตัวมากที่สุด (สำหรับ "X ฟื้นตัวเต็มที่แล้ว")
   // และกลุ่มที่วอลุ่มเพิ่มขึ้นเด่นที่สุดสัปดาห์นี้ (สำหรับ "วอลุ่มเพิ่มขึ้น X%")
   muscleRecommendation: MuscleRecommendation | null
+  // true เมื่อ muscleRecommendation ข้างบนคือกล้ามเนื้อของ "วันนี้" จริงๆ (ยังทำไม่ครบ/ยังไม่ได้เริ่ม) —
+  // false เมื่อเป็นคำแนะนำของเซสชัน "ถัดไป" (วันนี้ทำครบแล้ว/เป็นวันพัก) ใช้ตัดสินป้าย "AI Coach · Today"
+  // vs "· Next" ให้ตรงกับความเป็นจริง (ดู comment เต็มที่จุดคำนวณ scheduledMuscle ด้านล่าง)
+  isRecommendationForToday: boolean
   bestVolumeIncrease: VolumeIncrease | null
   // ใช้กับการ์ด Weekly Goal แบบ motivation — จำนวนครั้งที่ฝึกแล้วสัปดาห์นี้ เทียบกับเป้าหมาย
   // (เป้าหมายนับจากจำนวนวันที่ตั้งโปรแกรมไว้เอง ถ้ายังไม่ตั้งเลยใช้ 3 เป็นค่าเริ่มต้น)
@@ -341,11 +345,14 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // เพื่อไม่ให้แนะนำสวนทางกับตาราง เช่น ตารางบอกวันนี้เป็นวันขา แต่ recovery ของอกดันสูงกว่า
   // ถ้าวันนี้ทำครบตามแผนแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตาราง
   const todayScheduledMuscle = getScheduledMuscleForDay(typedDays, dow, MUSCLE_GROUPS)
-  const scheduledMuscle =
-    todayScheduledMuscle && (progressPctForLabel === null || progressPctForLabel < 100)
-      ? todayScheduledMuscle
-      : getNextScheduledMuscle(typedDays, dow, MUSCLE_GROUPS)
+  const preferTodayMuscle = !!todayScheduledMuscle && (progressPctForLabel === null || progressPctForLabel < 100)
+  const scheduledMuscle = preferTodayMuscle ? todayScheduledMuscle : getNextScheduledMuscle(typedDays, dow, MUSCLE_GROUPS)
   const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary, scheduledMuscle)
+  // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีอยู่ใน
+  // recoveryPctByMuscle (เช่น วันนี้ตั้งชื่อวันเป็น "ทั้งตัว"/"อื่นๆ" ซึ่งไม่อยู่ใน RECOVERY_MUSCLES) —
+  // เช็คว่าผลลัพธ์จริงตรงกับ todayScheduledMuscle เป๊ะๆ ก่อน ไม่ใช่เชื่อแค่ preferTodayMuscle เฉยๆ กัน
+  // ป้าย "· Today" ผิดพลาดในเคสขอบนี้
+  const isRecommendationForToday = preferTodayMuscle && muscleRecommendation?.muscleGroup === todayScheduledMuscle
 
   const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel)
 
@@ -371,6 +378,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     bodyMetricsSummary,
     weeklyGoalPct,
     muscleRecommendation,
+    isRecommendationForToday,
     bestVolumeIncrease,
     thisWeekWorkoutDays,
     weeklyWorkoutGoal,
@@ -1662,6 +1670,7 @@ export default function DashboardPage() {
             href="/coach"
             lastUpdatedAt={dataUpdatedAt}
             recoveryDates={data.recoveryDates}
+            isRecommendationForToday={data.isRecommendationForToday}
           />
           {/* v48: ฟีดแบ็ก "Insight มี 2 ใบ วางซ้อนกันแนวตั้งกินพื้นที่ ทำเป็น Carousel จะดีกว่า" —
               เดิม map วาง InsightCard เรียงต่อกัน space-y-2 (สูงเท่าจำนวนใบรวมกัน) เปลี่ยนเป็น

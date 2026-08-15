@@ -401,6 +401,7 @@ export default function MobileDashboardView() {
           isRestDay={workoutCardVariant === 'restDay'}
           lastUpdatedAt={dataUpdatedAt}
           recoveryDates={data.recoveryDates}
+          isRecommendationForToday={data.isRecommendationForToday}
         />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม
