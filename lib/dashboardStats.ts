@@ -306,6 +306,7 @@ export interface RecoveryTier {
   color: string
   labelEn: string
   labelTh: string
+  adviceTh: string
 }
 
 // v51: ฟีดแบ็ก "Excellent พื้นเขียวสดไป (~10-15% saturation เกิน), REST แดงจัดไป — Apple แทบไม่ใช้แดงสด
@@ -315,16 +316,19 @@ export interface RecoveryTier {
 // (ไม่ผูกกับ COLORS อีกต่อไปสำหรับ 2 ระดับนี้) ตามค่าที่ขอเป๊ะ: Excellent #4ADE80 -> #6CBF74 (เขียวมอสอุ่น
 // กว่า, ตัดสดออก), Rest #C1503A -> #C96A57 (แดงอมส้ม ไม่ใช่แดงจัด) — Good/Recovering ยังอ้าง COLORS.amber/
 // FIRE_ACCENT เดิม เพราะฟีดแบ็กรอบนี้พูดถึงแค่ 2 ระดับนี้เท่านั้น
-const RECOVERY_TIERS: readonly { min: number; color: string; labelEn: string; labelTh: string }[] = [
-  { min: 90, color: '#6CBF74', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' },
-  { min: 65, color: COLORS.amber, labelEn: 'Good', labelTh: 'ดี' },
-  { min: 35, color: FIRE_ACCENT, labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว' },
-  { min: 0, color: '#C96A57', labelEn: 'Rest', labelTh: 'ควรพัก' },
+// v70: ฟีดแบ็ก "AI Coach ควรอธิบายเหตุผลสั้นๆ (1-2 บรรทัด) ไม่ใช่แค่โชว์ % เฉยๆ — Recovery ต่ำ→แนะนำเบาลง,
+// สูง→แนะนำเพิ่ม intensity" — เพิ่ม adviceTh ต่อ tier แทนที่จะเขียนเกณฑ์ใหม่แยกต่างหาก (ใช้รอยต่อ 90/65/35
+// เดียวกับ label/สีที่มีอยู่แล้ว กันข้อความกับสี/ป้ายขัดกันเอง เช่น สีบอก "ดี" แต่ข้อความแนะนำของอีกระดับ)
+const RECOVERY_TIERS: readonly { min: number; color: string; labelEn: string; labelTh: string; adviceTh: string }[] = [
+  { min: 90, color: '#6CBF74', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม', adviceTh: 'วันนี้เพิ่มน้ำหนักหรือ Volume ได้เต็มที่' },
+  { min: 65, color: COLORS.amber, labelEn: 'Good', labelTh: 'ดี', adviceTh: 'เหมาะกับการฝึกความหนักปกติวันนี้' },
+  { min: 35, color: FIRE_ACCENT, labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว', adviceTh: 'เหมาะกับการฝึกระดับเบาถึงปานกลางวันนี้' },
+  { min: 0, color: '#C96A57', labelEn: 'Rest', labelTh: 'ควรพัก', adviceTh: 'แนะนำพักหรือฝึกเบามากๆ วันนี้' },
 ]
 
 export function recoveryTier(pct: number): RecoveryTier {
   const tier = RECOVERY_TIERS.find((t) => pct >= t.min) ?? RECOVERY_TIERS[RECOVERY_TIERS.length - 1]
-  return { color: tier.color, labelEn: tier.labelEn, labelTh: tier.labelTh }
+  return { color: tier.color, labelEn: tier.labelEn, labelTh: tier.labelTh, adviceTh: tier.adviceTh }
 }
 
 export function recoveryStatusColor(pct: number): string {

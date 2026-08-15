@@ -18,7 +18,7 @@ import {
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
-import { recoveryStatusColor, computeRecoveryPct } from '@/lib/dashboardStats'
+import { recoveryStatusColor, recoveryTier, computeRecoveryPct } from '@/lib/dashboardStats'
 import { describeMuscleFocus, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
@@ -317,6 +317,15 @@ export default function AICoachCompactCard({
                   {displayPct}%
                 </p>
               </div>
+              {/* v70: ฟีดแบ็ก "AI Coach ควรอธิบายเหตุผลสั้นๆ 1-2 บรรทัด เช่น 'เหมาะกับการฝึกระดับปานกลาง
+                  วันนี้' แทนที่จะโชว์แค่ % เฉยๆ" — ดึงจาก recoveryTier().adviceTh (เกณฑ์/รอยต่อเดียวกับสี
+                  ของแท่ง Recovery ด้านบนเป๊ะ ไม่คิดเกณฑ์ใหม่แยกต่างหาก กันข้อความกับสีขัดกันเอง) ไม่โชว์ตอน
+                  Rest Day (มีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่คำแนะนำระดับความหนัก) */}
+              {!isRestDay && (
+                <p className="truncate mt-1" style={{ fontSize: 10, color: barColor }}>
+                  {recoveryTier(displayPct).adviceTh}
+                </p>
+              )}
             </>
           ) : (
             <p className="text-xs text-ink mt-1 truncate">{message}</p>

@@ -313,10 +313,36 @@ describe('recoveryTier', () => {
   })
 
   it('returns matching label + color for each tier', () => {
-    expect(recoveryTier(95)).toEqual({ color: '#6CBF74', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม' })
-    expect(recoveryTier(70)).toEqual({ color: '#E8A33D', labelEn: 'Good', labelTh: 'ดี' })
-    expect(recoveryTier(40)).toEqual({ color: '#FF8A00', labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว' })
-    expect(recoveryTier(10)).toEqual({ color: '#C96A57', labelEn: 'Rest', labelTh: 'ควรพัก' })
+    expect(recoveryTier(95)).toEqual({
+      color: '#6CBF74',
+      labelEn: 'Excellent',
+      labelTh: 'ดีเยี่ยม',
+      adviceTh: 'วันนี้เพิ่มน้ำหนักหรือ Volume ได้เต็มที่',
+    })
+    expect(recoveryTier(70)).toEqual({
+      color: '#E8A33D',
+      labelEn: 'Good',
+      labelTh: 'ดี',
+      adviceTh: 'เหมาะกับการฝึกความหนักปกติวันนี้',
+    })
+    expect(recoveryTier(40)).toEqual({
+      color: '#FF8A00',
+      labelEn: 'Recovering',
+      labelTh: 'กำลังฟื้นตัว',
+      adviceTh: 'เหมาะกับการฝึกระดับเบาถึงปานกลางวันนี้',
+    })
+    expect(recoveryTier(10)).toEqual({
+      color: '#C96A57',
+      labelEn: 'Rest',
+      labelTh: 'ควรพัก',
+      adviceTh: 'แนะนำพักหรือฝึกเบามากๆ วันนี้',
+    })
+  })
+
+  it('each tier has a non-empty advice sentence', () => {
+    ;[0, 40, 70, 95].forEach((pct) => {
+      expect(recoveryTier(pct).adviceTh.length).toBeGreaterThan(0)
+    })
   })
 })
 
