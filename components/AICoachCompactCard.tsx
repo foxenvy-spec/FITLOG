@@ -52,6 +52,13 @@ interface AICoachCompactCardProps {
    * ด้านล่าง — แก้ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ต้องเป็นเรื่องเดียวกัน") ไม่ระบุ = ใช้
    * muscleRecommendation.pct เดิมตรงๆ เหมือนก่อนหน้า (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
   recoveryDates?: Record<string, string | null>
+  /** true เมื่อ muscleRecommendation คือกล้ามเนื้อของ "วันนี้" จริงๆ (data.isRecommendationForToday จาก
+   * DashboardView.tsx) — ฟีดแบ็ก "Today's Focus บอก DAY 5 — LOWER, AI Coach ก็บอก DAY 5 — LOWER แล้วทำไม
+   * ป้ายเขียน '· Next'? ถ้ายังไม่เริ่ม Workout วันนี้ ควรเป็น '· Today'" — เดิมป้าย "· Next" hardcode
+   * ตายตัวทุกกรณี ทั้งที่ข้อมูลเบื้องหลัง (muscleRecommendation) แยกอยู่แล้วว่าเป็นคำแนะนำของวันนี้เองหรือ
+   * ของเซสชันถัดไป (วันนี้ทำครบแล้ว/วันพัก) — เปลี่ยนป้ายให้ตรงกับความจริงแทน ไม่ระบุ = "· Next" เดิม
+   * เหมือนก่อนหน้า (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
+  isRecommendationForToday?: boolean
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -114,6 +121,7 @@ export default function AICoachCompactCard({
   avatarSrc = '/icons/ai-coach-avatar.png',
   lastUpdatedAt,
   recoveryDates,
+  isRecommendationForToday = false,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -261,9 +269,14 @@ export default function AICoachCompactCard({
               (เทาสว่าง) เก็บ sparkle emoji ไว้เป็นตัวบ่งชี้ AI เพียงพอโดยไม่ต้องย้อมสีข้อความทั้งบรรทัด
               v61: ฟีดแบ็ก "Today's Workout บอก LOWER BODY เสร็จแล้ว แต่ AI Coach บอก UPPER BODY — ผู้ใช้
               อาจสงสัยว่าทำไมขัดกัน ทั้งที่จริงๆ AI Coach ตั้งใจแนะนำ 'ครั้งถัดไป' ควรสื่อให้ชัดกว่านี้" —
-              เพิ่ม '· Next' ต่อท้ายป้าย ให้รู้ทันทีว่าการ์ดนี้พูดถึงเซสชันถัดไป ไม่ใช่สรุปสิ่งที่ทำไปวันนี้ */}
+              เพิ่ม '· Next' ต่อท้ายป้าย ให้รู้ทันทีว่าการ์ดนี้พูดถึงเซสชันถัดไป ไม่ใช่สรุปสิ่งที่ทำไปวันนี้
+              v69: ฟีดแบ็ก "Today's Focus บอก DAY 5 — LOWER, AI Coach ก็บอก DAY 5 — LOWER แล้วทำไมป้าย
+              ยังเขียน '· Next'? ถ้ายังไม่เริ่ม Workout วันนี้ ควรเป็น '· Today'" — เดิม '· Next' ตายตัว
+              ทุกกรณี ทั้งที่ muscleRecommendation แยกอยู่แล้วว่าเป็นคำแนะนำของวันนี้เองหรือของเซสชันถัดไป
+              (isRecommendationForToday จาก DashboardView.tsx) — สลับป้ายตามจริง: วันนี้ยังไม่เริ่ม/ทำไม่
+              ครบ = '· Today', ทำครบแล้ว/วันพัก = '· Next' เดิม */}
           <p className="font-display text-[10px] tracked uppercase flex items-center gap-1" style={{ color: TEXT.body }}>
-            <span aria-hidden="true">✨</span> AI Coach · Next
+            <span aria-hidden="true">✨</span> AI Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
           </p>
           {muscleRecommendation ? (
             <>
@@ -277,9 +290,13 @@ export default function AICoachCompactCard({
               </p>
               {/* v61: ฟีดแบ็ก "'UPPER BODY' อ่านเดี่ยวๆ เหมือนสรุปวันนี้ ไม่ใช่คำแนะนำครั้งถัดไป" — เติม
                   "Next session • " นำหน้า relatedGroups เฉพาะกรณีมีกลุ่มกล้ามเนื้อแนะนำจริง (ไม่ใช่ Rest
-                  Day ซึ่งมีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่ "ครั้งถัดไป" แบบมีกลุ่มกล้ามเนื้อ) */}
+                  Day ซึ่งมีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่ "ครั้งถัดไป" แบบมีกลุ่มกล้ามเนื้อ)
+                  v69: บรรทัดนี้ต้องสลับคำนำหน้าให้ตรงกับป้าย "· Today"/"· Next" ด้านบนด้วย ไม่งั้นหัวข้อ
+                  บอก "Today" แต่บรรทัดรองยังพูดว่า "Next session" ขัดกันเอง */}
               <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>
-                {isRestDay ? 'วันนี้เหมาะกับการพักและฟื้นตัว' : `Next session • ${relatedGroups.join(' • ')}`}
+                {isRestDay
+                  ? 'วันนี้เหมาะกับการพักและฟื้นตัว'
+                  : `${isRecommendationForToday ? 'Today' : 'Next session'} • ${relatedGroups.join(' • ')}`}
               </p>
 
               {/* v58: ฟีดแบ็ก "Training Readiness 48 vs Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้อง
