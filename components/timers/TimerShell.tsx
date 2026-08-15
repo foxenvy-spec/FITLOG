@@ -115,7 +115,7 @@ export function NumberStepper({
           −
         </button>
         <span className="font-mono tabular text-xl text-ink">
-          {value}
+          {clamp(value)}
           {unit && <span className="text-xs text-muted ml-1">{unit}</span>}
         </span>
         <button
