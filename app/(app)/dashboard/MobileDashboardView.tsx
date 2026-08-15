@@ -402,6 +402,7 @@ export default function MobileDashboardView() {
           lastUpdatedAt={dataUpdatedAt}
           recoveryDates={data.recoveryDates}
           isRecommendationForToday={data.isRecommendationForToday}
+          todayWorkoutTitle={workoutTitle}
         />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม
