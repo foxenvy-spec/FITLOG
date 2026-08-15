@@ -309,6 +309,7 @@ export default function BodyMetricsRow({
               deltaDir: openCard.deltaDir,
               theme: METRIC_THEME[openCard.icon],
               goal: openCard.goal,
+              series: openCard.series,
             }
           }
         />

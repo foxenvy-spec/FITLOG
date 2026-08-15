@@ -5,6 +5,7 @@ import Link from 'next/link'
 import PremiumCard from '@/components/ui/PremiumCard'
 import { COLORS, TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
 import { METRIC_ICON_IMAGES, type MetricIconImageKey, type MetricCardTheme } from '@/components/MetricCard'
+import Sparkline from '@/components/dashboard/Sparkline'
 
 interface GoalDetail {
   targetText: string
@@ -20,6 +21,9 @@ export interface MetricDetailCard {
   deltaDir: 'up' | 'down' | null
   theme: MetricCardTheme
   goal: GoalDetail | null
+  // ประวัติค่าย้อนหลัง (เรียงเก่า→ใหม่) สำหรับวาดกราฟ Trend ใน Detail Sheet — คำนวณไว้แล้วใน
+  // BodyMetricsRow.tsx (ใช้ชุดเดียวกับ sparkline จิ๋วบนการ์ดสรุป) ไม่ระบุ/ว่าง = ไม่โชว์ส่วน Trend
+  series: number[]
 }
 
 interface MetricDetailSheetProps {
@@ -75,7 +79,7 @@ export default function MetricDetailSheet({ open, onClose, card }: MetricDetailS
   }, [mounted, onClose])
 
   if (!mounted || !displayCard) return null
-  const { icon, label, valueText, deltaText, deltaColor, deltaDir, theme, goal } = displayCard
+  const { icon, label, valueText, deltaText, deltaColor, deltaDir, theme, goal, series } = displayCard
   const closing = !open
 
   return (
@@ -148,6 +152,15 @@ export default function MetricDetailSheet({ open, onClose, card }: MetricDetailS
           </div>
 
           <div className="my-4 h-px" style={{ backgroundColor: withAlpha('#FFFFFF', '0f') }} />
+
+          {series.length >= 2 && (
+            <div className="mb-4">
+              <p className="text-[10px] tracked uppercase mb-1.5" style={{ color: TEXT.secondary }}>
+                30 DAY TREND
+              </p>
+              <Sparkline series={series} color="#9498A0" endpointColor="#8CB264" height={48} width={400} stretch />
+            </div>
+          )}
 
           {goal ? (
             <div className="pb-5">
