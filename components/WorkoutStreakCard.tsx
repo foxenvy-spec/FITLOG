@@ -31,16 +31,20 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
   const weeklyTrainedCount = weekDayTicks.filter((t) => t.trained).length
   return (
     <>
-    <PremiumCard as="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="animate-rise px-4 py-3 w-full text-left">
+    <PremiumCard as="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="animate-rise px-4 py-2.5 w-full text-left">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 shrink-0">
           {/* v60: ฟีดแบ็ก "Hierarchy ช่วงล่างควรเป็น AI Coach > Workout > Body > Streak > Health > Quick
               Actions ตอนนี้ใกล้เคียงกันหมด — ลด visual emphasis ของ Streak ลงเล็กน้อย" — ลด alpha พื้นหลัง
               ไอคอนไฟจาก 22 (13%) เหลือ 18 (~9%) จุดเดียว (ไม่แตะสีตัวเลข streak — ยังเป็นอำพันเต็มตามกฎ
-              "Orange = Progress" เดิม, ไม่แตะจุดวงกลม/contrast ที่เพิ่งแก้ readability ไปรอบก่อน) */}
+              "Orange = Progress" เดิม, ไม่แตะจุดวงกลม/contrast ที่เพิ่งแก้ readability ไปรอบก่อน)
+              v71: ฟีดแบ็ก "Weekly Activity ยังไม่ควรเด่นเท่า AI Coach — ลด visual weight ลงอีก ~20-30%" —
+              ลดต่อจาก v60: การ์ดพี่ padding แนวตั้ง 12px -> 10px (-17%), ไอคอนไฟ 32px -> 28px (-12.5%) +
+              alpha พื้นหลัง 18 (~9%) -> 12 (~7%) — ไม่แตะวงกลม 7 วันด้านขวา/ตัวเลข streak สีอำพัน (ทั้งคู่
+              เพิ่งผ่านการปรับ readability มาหลายรอบแล้วในไฟล์นี้ v56/v62/v63 การลดต่อจะย้อนกลับปัญหาที่แก้ไปแล้ว) */}
           <span
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm"
-            style={{ backgroundColor: withAlpha(COLORS.amber, '18') }}
+            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs"
+            style={{ backgroundColor: withAlpha(COLORS.amber, '12') }}
             aria-hidden="true"
           >
             🔥

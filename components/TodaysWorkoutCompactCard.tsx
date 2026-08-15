@@ -16,7 +16,6 @@ import {
   DUST_PARTICLES_BG,
 } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { MUSCLE_GROUP_BODY_REGION, type MuscleGroup } from '@/lib/muscle-groups'
 import AnimatedBarFill from './AnimatedBarFill'
 import PremiumCard from './ui/PremiumCard'
 import FitnessRing from './dashboard/FitnessRing'
@@ -25,8 +24,6 @@ interface TodaysWorkoutCompactCardProps {
   completed: number
   total: number
   href: string
-  /** กลุ่มกล้ามเนื้อของโปรแกรมวันนี้ (จาก ProgramExercise.muscle_group) — โชว์สูงสุด 2 กลุ่มแรกคั่นด้วย "•" */
-  muscleGroups?: string[]
 }
 
 // การ์ด "Today's Workout" — v10: 3 การปรับตามฟีดแบ็กหลังขึ้น production —
@@ -52,17 +49,8 @@ interface TodaysWorkoutCompactCardProps {
 // FitnessRing component เดียวกับ Fitness Score บน Header) แทนไอคอนแบนเดิม — การ์ดสูงขึ้น 92 -> 112px
 // เพื่อให้มีที่พอ ปุ่มลูกศรวงกลมย้ายจากคอลัมน์ซ้ายไปลอยทับมุมล่างขวาของรูปแทน (ยกเลิกสเปกเดิม "Button
 // should NOT overlap image" ของ v5 โดยตั้งใจ ยืนยันจากผู้ใช้แล้ว)
-export default function TodaysWorkoutCompactCard({ completed, total, href, muscleGroups = [] }: TodaysWorkoutCompactCardProps) {
+export default function TodaysWorkoutCompactCard({ completed, total, href }: TodaysWorkoutCompactCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
-  // v21: ฟีดแบ็ก "ขา ซ้ำกับ DAY 5 — LOWER ที่อยู่ด้านบนแล้ว (Today's Focus card) ดูเหมือนข้อมูลซ้ำกัน" —
-  // เดิม join ชื่อกลุ่มกล้ามเนื้อไทยดิบๆ (เช่น "ขา") ซึ่งเป็นคนละคำกับ "LOWER" บน Today's Focus (มาจาก
-  // ชื่อโปรแกรมที่ผู้ใช้พิมพ์เอง) — แปลงเป็นหมวดร่างกายภาษาอังกฤษตัวพิมพ์ใหญ่แทน (ตารางเดียวกับที่
-  // AICoachCompactCard ใช้อยู่แล้ว ไม่สร้างชุดใหม่) ให้เข้าชุดกับคำว่า LOWER/UPPER ด้านบนจริงๆ แทนที่จะ
-  // เป็นแค่คำแปลตรงตัวคนละภาษา
-  const muscleRegions = Array.from(
-    new Set(muscleGroups.map((m) => MUSCLE_GROUP_BODY_REGION[m as MuscleGroup]).filter((r): r is string => !!r))
-  )
-  const muscleLine = muscleRegions.slice(0, 2).join(' • ').toUpperCase()
   // v53: ฟีดแบ็ก "Card ควรมี state ต่างกันชัดเจน — เสร็จแล้วควรบอกว่า COMPLETED ไม่ใช่แค่โชว์ N/N เฉยๆ,
   // '0/1 Exercise' เอกพจน์ไม่ใช่พหูพจน์" — ใช้ช่องป้ายเดิม ("Exercises") สลับข้อความแทนที่จะเพิ่มบรรทัดใหม่
   // (การ์ดนี้ถูกจำกัดความสูงมาหลายสิบรอบแล้ว ไม่อยากเพิ่มความสูงเพื่อ state คำเดียว) — isCompleted ใช้สี
@@ -331,17 +319,11 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, muscl
             </span>
           </div>
 
-          {/* v30: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium เล็กน้อย" — text-muted เดิม (#9498A0)
-              จางไปในที่แสงน้อย ขยับเป็น #A8ACB4 เหมือนจุดอื่นในรอบนี้
-              v22: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ Lower Body" (บรรทัดนี้
-              คือ muscleLine ซึ่งตอนนี้แสดง "LOWER BODY" ตามที่ยกตัวอย่างพอดี) — #A8ACB4 -> #BCC1CA
-              v23: ฟีดแบ็ก "ยังบางอยู่ เพิ่ม contrast ก่อน ไม่ต้องขยายขนาดเยอะ" — บวกอีกขั้น
-              #BCC1CA -> #CFD4DE */}
-          {muscleLine && (
-            <p className="truncate" style={{ fontSize: 10, marginTop: 1, color: '#CFD4DE' }}>
-              {muscleLine}
-            </p>
-          )}
+          {/* v69: ฟีดแบ็ก "Today's Focus/Today's Workout/AI Coach พูดกลุ่มกล้ามเนื้อซ้ำกันสามจุด — แต่ละ
+              Component ควรมีหน้าที่ต่างกัน: Focus=ทำอะไร, Workout=ทำไปเท่าไร, Coach=ทำไม" — เดิมมีบรรทัด
+              muscleLine ("LOWER BODY") ซ้ำกับที่ Today's Focus การ์ดเหนือขึ้นไปแสดงอยู่แล้ว (ทั้งหัวข้อหลัก
+              และบรรทัดรายละเอียด) ตัดออก ให้การ์ดนี้เหลือแค่หน้าที่ "ทำไปแล้วเท่าไร" (progress) ตามบทบาทใหม่
+              — muscleGroups prop เดิม/MUSCLE_GROUP_BODY_REGION import ตัดออกทั้งคู่ (ไม่มีที่ใช้อื่นในไฟล์นี้) */}
 
           {/* progress bar — v2: เพิ่ม inner shadow เบาๆ (จมลงเล็กน้อย) + reflection บาง 2% ด้านบน ให้
               รางดูเป็นร่องโลหะจริง (ไม่ใช่แถบสีทึบแบน) */}

@@ -62,6 +62,13 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
       // Activity และ Health App แทนที่จะลด AI Coach" — การ์ดนี้ (สถานะยังไม่เชื่อมต่อ ซึ่งเป็นสถานะ default
       // ของผู้ใช้เกือบทุกคน) มีจุดเรืองแสง 3 จุด + border/shadow ชัดเจน แข่งความสนใจกับ AI Coach ด้านล่าง
       // โดยไม่ตั้งใจ — ลด alpha ของ glow/border/background ทุกชั้นลง ~20-30% (ไม่แตะขนาด/ตำแหน่ง/ข้อความ)
+      // v71: ฟีดแบ็ก "Health App Card ยังดูเหมือน Promotion" — chrome ของการ์ด (background/border/shadow
+      // ด้านนอก) ผ่านการลดความเด่นไปแล้วรอบ v67 สิ่งที่ยังเหลือความรู้สึก "โฆษณา" คือไอคอน 3 วง (calories/
+      // steps/sleep) ที่มี glow เรืองแสงรอบตัวเอง — เป็นภาษาภาพแบบ "แสดงฟีเจอร์เด่น" (feature showcase)
+      // ไม่ใช่ system icon ปกติ — ผู้ใช้เสนอเปลี่ยนข้อความเป็น "Connected ✓" แต่ FITLOG ยังไม่มีการเชื่อมต่อ
+      // health app จริงเลย (ดู lib/healthIntegration.ts) การขึ้น "Connected" จะเป็นสถานะเท็จ — เก็บข้อความ
+      // "ยังไม่เชื่อมต่อ" เดิมไว้ (ตรงความจริง) แล้วลดความเด่นของไอคอนแทน: ตัด glow (boxShadow) ออกทั้ง 3 วง
+      // + ลด border alpha 40 -> 28 ให้เป็นวงไอคอนธรรมดา ไม่ใช่ badge เรืองแสง
       <Link
         href="/profile"
         className="relative overflow-hidden rounded-[20px] flex items-center justify-between gap-3 px-4 backdrop-blur-md active:scale-[0.99] transition"
@@ -82,8 +89,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
                   className="w-7 h-7 rounded-full flex items-center justify-center text-[11px]"
                   style={{
                     backgroundColor: withAlpha(meta.color, '1c'),
-                    border: `1px solid ${withAlpha(meta.color, '40')}`,
-                    boxShadow: `0 0 8px ${withAlpha(meta.color, '20')}`,
+                    border: `1px solid ${withAlpha(meta.color, '28')}`,
                   }}
                   aria-hidden="true"
                 >
