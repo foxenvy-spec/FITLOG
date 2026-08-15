@@ -12,7 +12,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
-import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, type MuscleGroup } from '@/lib/muscle-groups'
+import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
 import {
   computeRecoveryPct,
   recoveryStatusColor,
@@ -24,6 +24,7 @@ import {
   recoveryRecommendationLabel,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
+  type ScheduledDay,
 } from '@/lib/dashboardStats'
 import { computeRecoveryHistory } from '@/lib/trends'
 import { todayStr } from '@/lib/weekdays'
@@ -83,6 +84,31 @@ export default function RecoveryPage() {
       const allProgramDays = (allProgramDayRows as { id: string; day_of_week: number; title: string }[]) ?? []
       const todayDayId = allProgramDays.find((d) => d.day_of_week === dow)?.id ?? null
 
+      // ท่าของทุกวันในตาราง — ใช้หากล้ามเนื้อหลักจริงของแต่ละวัน (dominantMuscleGroup) แทนการเดาจาก title
+      // ตรงๆ (เดิม getScheduledMuscleForDay ต้องตั้งชื่อวันเป็นชื่อกล้ามเนื้อไทยล้วนๆ เช่น "ขา" ถึงจะจับคู่
+      // ได้ ทำให้ผู้ใช้ที่ตั้งชื่อวันแบบบรรยาย เช่น "Day 5 — Lower" ไม่เคยได้ประโยชน์จากตารางเลย — ดู comment
+      // เต็มที่ ScheduledDay ใน lib/dashboardStats.ts)
+      const { data: allProgramExRows } =
+        allProgramDays.length > 0
+          ? await supabase
+              .from('program_exercises')
+              .select('program_day_id, muscle_group')
+              .in(
+                'program_day_id',
+                allProgramDays.map((d) => d.id)
+              )
+          : { data: [] as { program_day_id: string; muscle_group: string | null }[] }
+      const exercisesByDayId: Record<string, { muscle_group: string | null }[]> = {}
+      ;((allProgramExRows as { program_day_id: string; muscle_group: string | null }[]) ?? []).forEach((row) => {
+        exercisesByDayId[row.program_day_id] = exercisesByDayId[row.program_day_id] ?? []
+        exercisesByDayId[row.program_day_id].push(row)
+      })
+      const scheduledDaysWithMuscle: ScheduledDay[] = allProgramDays.map((d) => ({
+        day_of_week: d.day_of_week,
+        title: d.title,
+        muscleGroup: dominantMuscleGroup(exercisesByDayId[d.id] ?? []),
+      }))
+
       let currentProgressPct: number | null = null
 
       if (todayDayId) {
@@ -112,11 +138,11 @@ export default function RecoveryPage() {
 
       // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) — ถ้าวันนี้ทำครบแล้วหรือเป็น
       // วันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางแทน ไม่มีตารางเลยจึงตกกลับไปใช้ recovery % ล้วนๆ
-      const todayScheduledMuscle = getScheduledMuscleForDay(allProgramDays, dow, MUSCLE_GROUPS)
+      const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
       setScheduledMuscle(
         todayScheduledMuscle && (currentProgressPct === null || currentProgressPct < 100)
           ? todayScheduledMuscle
-          : getNextScheduledMuscle(allProgramDays, dow, MUSCLE_GROUPS)
+          : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
       )
 
       const lastTrainedByMuscle: Record<string, string> = {}

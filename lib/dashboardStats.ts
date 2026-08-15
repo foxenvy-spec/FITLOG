@@ -370,12 +370,20 @@ export function suggestMuscleToTrain(
 }
 
 // ==================== หากล้ามเนื้อที่ตารางโปรแกรมประจำสัปดาห์กำหนดไว้ ====================
-// programDays คือรายการวันในโปรแกรม (ทั้งสัปดาห์) — ใช้ title ของวันนั้นเป็นชื่อกลุ่มกล้ามเนื้อ
-// เฉพาะกรณีที่ title ตรงกับ MUSCLE_GROUPS พอดี (เช่น "ขา", "อก") ถ้าตั้งชื่อวันแบบอื่น (เช่น "Push Day",
-// "พัก") จะถือว่าวันนั้นไม่ได้ผูกกับกล้ามเนื้อกลุ่มเดียวชัดเจน แล้วคืนค่า null (ไม่เดา)
+// เดิมใช้ title ของวันนั้นเป็นชื่อกลุ่มกล้ามเนื้อโดยตรง เฉพาะกรณีที่ title ตรงกับ MUSCLE_GROUPS พอดี
+// (เช่น "ขา", "อก") — ปัญหา: ผู้ใช้จริงมักตั้งชื่อวันแบบบรรยาย (เช่น "Day 5 — Lower", "Push Day") ไม่ใช่
+// ชื่อกล้ามเนื้อไทยดิบๆ ทำให้ฟังก์ชันนี้คืน null แทบทุกกรณี ทั้งที่วันนั้นมีท่าตั้งไว้จริงและกล้ามเนื้อ
+// ของท่าเหล่านั้นก็ระบุกล้ามเนื้อหลักได้ชัดเจนอยู่แล้ว (ฟีดแบ็ก "AI Coach ยังบอก NEXT ทั้งที่วันนี้คือ
+// Day 5 — Lower จริงๆ" — root cause คือจุดนี้ ไม่ใช่ label — "เคารพตารางประจำสัปดาห์" เลยไม่เคยทำงานจริง
+// เลยสำหรับผู้ใช้ที่ตั้งชื่อวันแบบบรรยาย ไม่ใช่แค่กระทบ label เดียว)
+// แก้โดยเพิ่ม `muscleGroup` (optional) — กล้ามเนื้อหลักที่คำนวณจากท่าจริงในวันนั้น (dominantMuscleGroup
+// ใน lib/muscle-groups.ts, ผู้เรียกต้อง query program_exercises ของวันนั้นมาคำนวณเอง) ให้ความสำคัญก่อน
+// title matching เสมอเมื่อมีค่า — title matching เดิมยังอยู่เป็น fallback (เผื่อวันที่ยังไม่มีท่าเลย หรือ
+//ผู้เรียกเก่าที่ยังไม่ได้ส่ง muscleGroup มา ไม่ breaking change)
 export interface ScheduledDay {
   day_of_week: number
   title: string
+  muscleGroup?: string | null
 }
 
 export function getScheduledMuscleForDay(
@@ -385,6 +393,7 @@ export function getScheduledMuscleForDay(
 ): string | null {
   const day = programDays.find((d) => d.day_of_week === dayOfWeek)
   if (!day) return null
+  if (day.muscleGroup && validMuscleGroups.includes(day.muscleGroup)) return day.muscleGroup
   const title = day.title.trim()
   return validMuscleGroups.includes(title) ? title : null
 }
