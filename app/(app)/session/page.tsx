@@ -1064,6 +1064,52 @@ export default function SessionPage() {
         </button>
       )}
 
+      {/* บั๊ก: เดิม panel นี้เรนเดอร์เป็น sibling หลังปิดการ์ดหลักทั้งใบ (รูป+เซ็ต+reps/น้ำหนัก+drop
+          set+ปุ่มเสร็จเซ็ต) ซึ่งกินพื้นที่สูงมากบนมือถือ — ปุ่ม "🔁 เปลี่ยนท่า" อยู่บนสุดของการ์ด (ทับรูป)
+          กดแล้ว panel เปิดจริงแต่โผล่ไกลเกินจอ ผู้ใช้เห็นแค่ viewport เดิมไม่ขยับเลยดูเหมือนกดไม่ติด —
+          ย้ายมาไว้ตรงนี้แทน (เหนือการ์ดหลัก) ให้ตำแหน่งเดียวกับ panel "เพิ่มท่านอกแผน" ด้านบนซึ่งทำงานถูกอยู่แล้ว
+          (โผล่ทันทีในตำแหน่งเดิมที่กดไม่ต้องเลื่อนจอ) */}
+      {showSwapExercise && (
+        <PremiumCard className="px-4 py-3.5 space-y-2.5">
+          <p className="text-[10px] tracked uppercase text-muted">
+            เปลี่ยนท่า &quot;{current.exercise_name}&quot; เป็นท่าอื่น
+            {currentState.setsLog.length > 0 && ` (บันทึก ${currentState.setsLog.length} เซ็ตที่ทำไปแล้วไว้ก่อน)`}
+          </p>
+          <ExercisePicker
+            value={swapName}
+            onChange={(name) => {
+              setSwapName(name)
+              setSwapDef(null)
+            }}
+            onSelect={(ex) => setSwapDef(ex)}
+            placeholder="พิมพ์ชื่อท่าใหม่ หรือเลือกจากคลัง"
+          />
+          {swapError && <p className="text-xs text-rusttext">{swapError}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowSwapExercise(false)
+                setSwapName('')
+                setSwapDef(null)
+                setSwapError(null)
+              }}
+              className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2.5 text-xs transition"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              onClick={swapCurrentExercise}
+              disabled={swapping}
+              className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] disabled:opacity-50 transition"
+            >
+              {swapping ? 'กำลังเปลี่ยน...' : 'เปลี่ยนเป็นท่านี้'}
+            </button>
+          </div>
+        </PremiumCard>
+      )}
+
       {/* v48: การ์ดหลักนี้มีพื้นหลัง radial-gradient เฉพาะตัว (ไม่ใช่ CARD_GRADIENT_CSS ไทเทเนียมทั่วไป) —
           ไม่ห่อด้วย PremiumCard เพราะจะไปแทนที่พื้นหลังนี้ (backgroundImage ของ PremiumCard ชนะทับ) แค่ตัด
           border-line เส้นกรอบทึบออก ให้ contact shadow ตัวเดียวกับ PremiumCard บอกขอบแทน + มุมตัด CNC
@@ -1248,47 +1294,6 @@ export default function SessionPage() {
           )}
         </div>
       </div>
-
-      {showSwapExercise && (
-        <PremiumCard className="px-4 py-3.5 space-y-2.5">
-          <p className="text-[10px] tracked uppercase text-muted">
-            เปลี่ยนท่า &quot;{current.exercise_name}&quot; เป็นท่าอื่น
-            {currentState.setsLog.length > 0 && ` (บันทึก ${currentState.setsLog.length} เซ็ตที่ทำไปแล้วไว้ก่อน)`}
-          </p>
-          <ExercisePicker
-            value={swapName}
-            onChange={(name) => {
-              setSwapName(name)
-              setSwapDef(null)
-            }}
-            onSelect={(ex) => setSwapDef(ex)}
-            placeholder="พิมพ์ชื่อท่าใหม่ หรือเลือกจากคลัง"
-          />
-          {swapError && <p className="text-xs text-rusttext">{swapError}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setShowSwapExercise(false)
-                setSwapName('')
-                setSwapDef(null)
-                setSwapError(null)
-              }}
-              className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2.5 text-xs transition"
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="button"
-              onClick={swapCurrentExercise}
-              disabled={swapping}
-              className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] disabled:opacity-50 transition"
-            >
-              {swapping ? 'กำลังเปลี่ยน...' : 'เปลี่ยนเป็นท่านี้'}
-            </button>
-          </div>
-        </PremiumCard>
-      )}
 
       {errorMsg && <p className="text-xs text-rusttext text-center">{errorMsg}</p>}
 

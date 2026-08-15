@@ -22,7 +22,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
   const [browseEquipment, setBrowseEquipment] = useState<Equipment | null>(null)
   const [lang, setLang] = useState<MuscleLabelLang>('th')
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { data: exercises = [], isLoading } = useExerciseLibrary()
+  const { data: exercises = [], isLoading, isError, refetch } = useExerciseLibrary()
 
   useEffect(() => {
     setLang(loadMuscleLabelLang())
@@ -126,7 +126,19 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
           )}
 
           <ul className="max-h-64 overflow-y-auto">
-            {results.length === 0 ? (
+            {isError ? (
+              <li className="px-3 py-4 text-xs text-center space-y-1.5">
+                <p className="text-rusttext">โหลดฐานข้อมูลท่าไม่สำเร็จ — เช็คสัญญาณอินเทอร์เน็ต</p>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => refetch()}
+                  className="text-amber underline"
+                >
+                  ลองใหม่
+                </button>
+              </li>
+            ) : results.length === 0 ? (
               <li className="px-3 py-4 text-xs text-muted text-center">
                 {isLoading ? 'กำลังโหลดฐานข้อมูลท่า...' : 'ไม่พบท่านี้ในฐานข้อมูล — พิมพ์ชื่อเองแล้วบันทึกได้เลย'}
               </li>
