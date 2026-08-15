@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS_EN, muscleGroupLabel, guessSecondaryMuscles } from './muscle-groups'
+import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS_EN, muscleGroupLabel, guessSecondaryMuscles, dominantMuscleGroup } from './muscle-groups'
 
 describe('muscleGroupLabel', () => {
   it('returns the Thai muscle group name unchanged for lang=th', () => {
@@ -55,5 +55,25 @@ describe('guessSecondaryMuscles', () => {
 
   it('never includes the primary muscle in the secondary list', () => {
     expect(guessSecondaryMuscles('Overhead Press', 'ไหล่')).not.toContain('ไหล่')
+  })
+})
+
+describe('dominantMuscleGroup', () => {
+  it('returns the muscle group with the most exercises', () => {
+    const items = [{ muscle_group: 'ขา' }, { muscle_group: 'ขา' }, { muscle_group: 'แกนกลางลำตัว' }]
+    expect(dominantMuscleGroup(items)).toBe('ขา')
+  })
+
+  it('ignores null muscle_group entries', () => {
+    const items = [{ muscle_group: null }, { muscle_group: 'อก' }, { muscle_group: null }]
+    expect(dominantMuscleGroup(items)).toBe('อก')
+  })
+
+  it('returns null for an empty list', () => {
+    expect(dominantMuscleGroup([])).toBeNull()
+  })
+
+  it('returns null when every entry has a null muscle_group', () => {
+    expect(dominantMuscleGroup([{ muscle_group: null }, { muscle_group: null }])).toBeNull()
   })
 })

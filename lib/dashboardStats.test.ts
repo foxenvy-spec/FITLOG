@@ -576,6 +576,24 @@ describe('getScheduledMuscleForDay', () => {
   it('returns null when there is no schedule at all', () => {
     expect(getScheduledMuscleForDay([], 4, MUSCLE_GROUPS)).toBeNull()
   })
+
+  // ฟีดแบ็ก "AI Coach ยังบอก NEXT ทั้งที่วันนี้คือ Day 5 — Lower จริงๆ" — root cause: title matching เดิม
+  // ต้องเป็นชื่อกล้ามเนื้อไทยล้วนๆ เท่านั้น ผู้ใช้จริงตั้งชื่อวันแบบบรรยาย (เช่น "Day 5 — Lower") ไม่เคย
+  // ตรงเลย — muscleGroup (คำนวณจากท่าจริงของวันนั้น) ต้องมาก่อน title เสมอเมื่อมีค่า
+  it('prefers muscleGroup over title matching when provided', () => {
+    const days = [{ day_of_week: 4, title: 'Day 5 — Lower', muscleGroup: 'ขา' }]
+    expect(getScheduledMuscleForDay(days, 4, MUSCLE_GROUPS)).toBe('ขา')
+  })
+
+  it('falls back to title matching when muscleGroup is null/undefined', () => {
+    const days = [{ day_of_week: 4, title: 'ขา', muscleGroup: null }]
+    expect(getScheduledMuscleForDay(days, 4, MUSCLE_GROUPS)).toBe('ขา')
+  })
+
+  it('returns null when neither muscleGroup nor title match a known muscle group', () => {
+    const days = [{ day_of_week: 4, title: 'Day 5 — Lower', muscleGroup: null }]
+    expect(getScheduledMuscleForDay(days, 4, MUSCLE_GROUPS)).toBeNull()
+  })
 })
 
 describe('getNextScheduledMuscle', () => {

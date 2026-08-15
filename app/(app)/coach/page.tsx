@@ -14,7 +14,7 @@ import {
   type GeneratedWorkout,
 } from '@/lib/workoutGenerator'
 import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
-import { MUSCLE_GROUPS, VOLUME_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
+import { MUSCLE_GROUPS, VOLUME_MUSCLES, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
 import { todayStr } from '@/lib/weekdays'
 import {
   computeRecoveryPct,
@@ -24,6 +24,7 @@ import {
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   type Insight,
+  type ScheduledDay,
 } from '@/lib/dashboardStats'
 import {
   computePushPullBalance,
@@ -156,6 +157,31 @@ export default function CoachPage() {
       const { data: allProgramDayRows } = await supabase.from('program_days').select('id, day_of_week, title')
       const allProgramDays = (allProgramDayRows as { id: string; day_of_week: number; title: string }[]) ?? []
 
+      // ท่าของทุกวันในตาราง — ใช้หากล้ามเนื้อหลักจริงของแต่ละวัน (dominantMuscleGroup) แทนการเดาจาก title
+      // ตรงๆ (เดิม getScheduledMuscleForDay ต้องตั้งชื่อวันเป็นชื่อกล้ามเนื้อไทยล้วนๆ เช่น "ขา" ถึงจะจับคู่
+      // ได้ ทำให้ผู้ใช้ที่ตั้งชื่อวันแบบบรรยาย เช่น "Day 5 — Lower" ไม่เคยได้ประโยชน์จากตารางเลย — ดู comment
+      // เต็มที่ ScheduledDay ใน lib/dashboardStats.ts)
+      const { data: allProgramExRows } =
+        allProgramDays.length > 0
+          ? await supabase
+              .from('program_exercises')
+              .select('program_day_id, muscle_group')
+              .in(
+                'program_day_id',
+                allProgramDays.map((d) => d.id)
+              )
+          : { data: [] as { program_day_id: string; muscle_group: string | null }[] }
+      const exercisesByDayId: Record<string, { muscle_group: string | null }[]> = {}
+      ;((allProgramExRows as { program_day_id: string; muscle_group: string | null }[]) ?? []).forEach((row) => {
+        exercisesByDayId[row.program_day_id] = exercisesByDayId[row.program_day_id] ?? []
+        exercisesByDayId[row.program_day_id].push(row)
+      })
+      const scheduledDaysWithMuscle: ScheduledDay[] = allProgramDays.map((d) => ({
+        day_of_week: d.day_of_week,
+        title: d.title,
+        muscleGroup: dominantMuscleGroup(exercisesByDayId[d.id] ?? []),
+      }))
+
       // --- % ความคืบหน้าของแผนวันนี้ (ใช้กับ dailySummary ด้านล่าง) ---
       const today = todayStr()
       const trainedAnyToday = allEntries.some((w) => w.performed_at?.slice(0, 10) === today)
@@ -187,11 +213,11 @@ export default function CoachPage() {
       // ถ้าวันนี้ยังทำไม่ครบ (< 100%) และตารางระบุกล้ามเนื้อของ "วันนี้" ไว้ชัดเจน ให้ใช้ตัวนั้น
       // ถ้าวันนี้ทำครบแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางที่ระบุไว้
       // ถ้าไม่มีตารางเลย (ผู้ใช้ยังไม่ได้ตั้งโปรแกรม) ตกกลับไปใช้ recovery % สูงสุดเหมือนเดิมทั้งหมด
-      const todayScheduledMuscle = getScheduledMuscleForDay(allProgramDays, todayDow, MUSCLE_GROUPS)
+      const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
       const scheduledMuscle =
         todayScheduledMuscle && (todayProgressPct === null || todayProgressPct < 100)
           ? todayScheduledMuscle
-          : getNextScheduledMuscle(allProgramDays, todayDow, MUSCLE_GROUPS)
+          : getNextScheduledMuscle(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
 
       const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
       const dailySummary = computeAIDailySummary(recommendation, balance, todayProgressPct)

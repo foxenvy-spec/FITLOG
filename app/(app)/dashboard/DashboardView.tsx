@@ -39,13 +39,14 @@ import {
   type VolumeIncrease,
   type LatestPR,
   type TopMuscle,
+  type ScheduledDay,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
-import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, type MuscleGroup } from '@/lib/muscle-groups'
+import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
@@ -341,12 +342,39 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
         ? 100
         : null
 
+  // ท่าของ "ทุกวัน" ในตาราง (ไม่ใช่แค่วันนี้) — ใช้หากล้ามเนื้อหลักจริงของแต่ละวันจากท่าที่ตั้งไว้
+  // (dominantMuscleGroup) แทนการเดาจาก title ตรงๆ (ดู comment เต็มที่ ScheduledDay ใน lib/dashboardStats.ts
+  // — เดิม getScheduledMuscleForDay ต้องตั้งชื่อวันเป็นชื่อกล้ามเนื้อไทยล้วนๆ เช่น "ขา" ถึงจะจับคู่ได้ ทำให้
+  // ผู้ใช้ที่ตั้งชื่อวันแบบบรรยาย เช่น "Day 5 — Lower" ไม่เคยได้ประโยชน์จาก "เคารพตารางประจำสัปดาห์" เลย —
+  // ฟีดแบ็ก "AI Coach ยังบอก NEXT ทั้งที่ Today's Focus บอก Day 5 — Lower ซึ่งควรเป็นวันนี้จริงๆ") —
+  // currentDay ใช้ todayExercises ที่ดึงไปแล้วด้านบน ไม่ต้อง query ซ้ำ ส่วนวันอื่นดึงเพิ่มทีเดียว
+  const otherDayIds = typedDays.filter((d) => d.id !== currentDay?.id).map((d) => d.id)
+  const { data: otherDaysExRows } =
+    otherDayIds.length > 0
+      ? await supabase.from('program_exercises').select('program_day_id, muscle_group').in('program_day_id', otherDayIds)
+      : { data: [] as { program_day_id: string; muscle_group: string | null }[] }
+
+  const exercisesByDayId: Record<string, { muscle_group: string | null }[]> = {}
+  if (currentDay) exercisesByDayId[currentDay.id] = todayExercises
+  ;((otherDaysExRows as { program_day_id: string; muscle_group: string | null }[]) ?? []).forEach((row) => {
+    exercisesByDayId[row.program_day_id] = exercisesByDayId[row.program_day_id] ?? []
+    exercisesByDayId[row.program_day_id].push(row)
+  })
+
+  const scheduledDaysWithMuscle: ScheduledDay[] = typedDays.map((d) => ({
+    day_of_week: d.day_of_week,
+    title: d.title,
+    muscleGroup: dominantMuscleGroup(exercisesByDayId[d.id] ?? []),
+  }))
+
   // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) แทนที่จะดู recovery % สูงสุดล้วนๆ
   // เพื่อไม่ให้แนะนำสวนทางกับตาราง เช่น ตารางบอกวันนี้เป็นวันขา แต่ recovery ของอกดันสูงกว่า
   // ถ้าวันนี้ทำครบตามแผนแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตาราง
-  const todayScheduledMuscle = getScheduledMuscleForDay(typedDays, dow, MUSCLE_GROUPS)
+  const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
   const preferTodayMuscle = !!todayScheduledMuscle && (progressPctForLabel === null || progressPctForLabel < 100)
-  const scheduledMuscle = preferTodayMuscle ? todayScheduledMuscle : getNextScheduledMuscle(typedDays, dow, MUSCLE_GROUPS)
+  const scheduledMuscle = preferTodayMuscle
+    ? todayScheduledMuscle
+    : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
   const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary, scheduledMuscle)
   // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีอยู่ใน
   // recoveryPctByMuscle (เช่น วันนี้ตั้งชื่อวันเป็น "ทั้งตัว"/"อื่นๆ" ซึ่งไม่อยู่ใน RECOVERY_MUSCLES) —
