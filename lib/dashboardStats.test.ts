@@ -317,25 +317,25 @@ describe('recoveryTier', () => {
       color: '#6CBF74',
       labelEn: 'Excellent',
       labelTh: 'ดีเยี่ยม',
-      adviceTh: 'วันนี้เพิ่มน้ำหนักหรือ Volume ได้เต็มที่',
+      adviceTh: 'กล้ามเนื้อกลุ่มนี้พร้อมเต็มที่ เพิ่มน้ำหนักหรือ Volume ได้เลย',
     })
     expect(recoveryTier(70)).toEqual({
       color: '#E8A33D',
       labelEn: 'Good',
       labelTh: 'ดี',
-      adviceTh: 'เหมาะกับการฝึกความหนักปกติวันนี้',
+      adviceTh: 'กล้ามเนื้อกลุ่มนี้ฟื้นตัวดี เล่นความหนักปกติได้',
     })
     expect(recoveryTier(40)).toEqual({
       color: '#FF8A00',
       labelEn: 'Recovering',
       labelTh: 'กำลังฟื้นตัว',
-      adviceTh: 'เหมาะกับการฝึกระดับเบาถึงปานกลางวันนี้',
+      adviceTh: 'กล้ามเนื้อกลุ่มนี้ยังฟื้นตัวไม่เต็มที่ เล่นเบาถึงปานกลางพอ',
     })
     expect(recoveryTier(10)).toEqual({
       color: '#C96A57',
       labelEn: 'Rest',
       labelTh: 'ควรพัก',
-      adviceTh: 'แนะนำพักหรือฝึกเบามากๆ วันนี้',
+      adviceTh: 'กล้ามเนื้อกลุ่มนี้ยังล้าอยู่ แนะนำพักหรือเล่นเบามากๆ',
     })
   })
 

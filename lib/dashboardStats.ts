@@ -319,11 +319,16 @@ export interface RecoveryTier {
 // v70: ฟีดแบ็ก "AI Coach ควรอธิบายเหตุผลสั้นๆ (1-2 บรรทัด) ไม่ใช่แค่โชว์ % เฉยๆ — Recovery ต่ำ→แนะนำเบาลง,
 // สูง→แนะนำเพิ่ม intensity" — เพิ่ม adviceTh ต่อ tier แทนที่จะเขียนเกณฑ์ใหม่แยกต่างหาก (ใช้รอยต่อ 90/65/35
 // เดียวกับ label/สีที่มีอยู่แล้ว กันข้อความกับสี/ป้ายขัดกันเอง เช่น สีบอก "ดี" แต่ข้อความแนะนำของอีกระดับ)
+// v71: ฟีดแบ็ก "Training Readiness 48 (Light Training) กับ AI Coach 'เหมาะกับการฝึกความหนักปกติวันนี้'
+// ขัดกัน" — สอง metric นี้วัดคนละอย่าง (Training Readiness = ร่างกายโดยรวม, tier นี้ = กล้ามเนื้อกลุ่ม
+// เดียวที่จะเล่นวันนี้) เดิมข้อความใช้คำว่า "วันนี้" ทำให้อ่านเหมือนเป็นคำตอบเดียวกับ Training Readiness
+// เปลี่ยนมาระบุ scope ชัดว่า "กล้ามเนื้อกลุ่มนี้" แทน ไม่ใช่ภาพรวมวันนี้ ให้สองตัวเลขไม่แย่งกันตอบคำถาม
+// "วันนี้ควรหนักแค่ไหน" (เกณฑ์ตัวเลข 90/65/35 ไม่แตะ แก้แค่คำที่ใช้)
 const RECOVERY_TIERS: readonly { min: number; color: string; labelEn: string; labelTh: string; adviceTh: string }[] = [
-  { min: 90, color: '#6CBF74', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม', adviceTh: 'วันนี้เพิ่มน้ำหนักหรือ Volume ได้เต็มที่' },
-  { min: 65, color: COLORS.amber, labelEn: 'Good', labelTh: 'ดี', adviceTh: 'เหมาะกับการฝึกความหนักปกติวันนี้' },
-  { min: 35, color: FIRE_ACCENT, labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว', adviceTh: 'เหมาะกับการฝึกระดับเบาถึงปานกลางวันนี้' },
-  { min: 0, color: '#C96A57', labelEn: 'Rest', labelTh: 'ควรพัก', adviceTh: 'แนะนำพักหรือฝึกเบามากๆ วันนี้' },
+  { min: 90, color: '#6CBF74', labelEn: 'Excellent', labelTh: 'ดีเยี่ยม', adviceTh: 'กล้ามเนื้อกลุ่มนี้พร้อมเต็มที่ เพิ่มน้ำหนักหรือ Volume ได้เลย' },
+  { min: 65, color: COLORS.amber, labelEn: 'Good', labelTh: 'ดี', adviceTh: 'กล้ามเนื้อกลุ่มนี้ฟื้นตัวดี เล่นความหนักปกติได้' },
+  { min: 35, color: FIRE_ACCENT, labelEn: 'Recovering', labelTh: 'กำลังฟื้นตัว', adviceTh: 'กล้ามเนื้อกลุ่มนี้ยังฟื้นตัวไม่เต็มที่ เล่นเบาถึงปานกลางพอ' },
+  { min: 0, color: '#C96A57', labelEn: 'Rest', labelTh: 'ควรพัก', adviceTh: 'กล้ามเนื้อกลุ่มนี้ยังล้าอยู่ แนะนำพักหรือเล่นเบามากๆ' },
 ]
 
 export function recoveryTier(pct: number): RecoveryTier {

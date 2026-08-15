@@ -1699,6 +1699,7 @@ export default function DashboardPage() {
             lastUpdatedAt={dataUpdatedAt}
             recoveryDates={data.recoveryDates}
             isRecommendationForToday={data.isRecommendationForToday}
+            todayWorkoutTitle={workoutTitle}
           />
           {/* v48: ฟีดแบ็ก "Insight มี 2 ใบ วางซ้อนกันแนวตั้งกินพื้นที่ ทำเป็น Carousel จะดีกว่า" —
               เดิม map วาง InsightCard เรียงต่อกัน space-y-2 (สูงเท่าจำนวนใบรวมกัน) เปลี่ยนเป็น

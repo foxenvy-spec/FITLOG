@@ -59,6 +59,13 @@ interface AICoachCompactCardProps {
    * ของเซสชันถัดไป (วันนี้ทำครบแล้ว/วันพัก) — เปลี่ยนป้ายให้ตรงกับความจริงแทน ไม่ระบุ = "· Next" เดิม
    * เหมือนก่อนหน้า (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
   isRecommendationForToday?: boolean
+  /** ชื่อโปรแกรมจริงของวันนี้ (scheduledDay.title เดียวกับที่ TodaysFocusCard ใช้) — ฟีดแบ็ก "Today's
+   * Focus บอก 'Lower Body • Hamstring • Glute' (จากชื่อโปรแกรมที่ผู้ใช้พิมพ์เอง) แต่ AI Coach บอก 'ขา •
+   * แกนกลางลำตัว' (จากตาราง DEFAULT_SECONDARY_BY_PRIMARY ที่ hardcode ไว้ ไม่ได้ดูท่าจริงของวันนี้เลย) —
+   * สองการ์ดควรพูดกลุ่มกล้ามเนื้อเดียวกันด้วยคำเดียวกัน ไม่ใช่บังเอิญคล้ายกัน" — มีชื่อโปรแกรมจริงและเป็น
+   * คำแนะนำของ "วันนี้" จริง (ไม่ใช่ Next session ของวันอื่น) ใช้ข้อความในวงเล็บของชื่อโปรแกรมแทนตาราง
+   * generic เดิม ไม่ระบุ/ไม่มีวงเล็บ = fallback กลับไปใช้ relatedGroups เดิมทุกประการ */
+  todayWorkoutTitle?: string | null
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -122,6 +129,7 @@ export default function AICoachCompactCard({
   lastUpdatedAt,
   recoveryDates,
   isRecommendationForToday = false,
+  todayWorkoutTitle = null,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -172,6 +180,12 @@ export default function AICoachCompactCard({
   const focus = displayMg ? describeMuscleFocus(displayMg) : null
   const region = focus?.region ?? null
   const relatedGroups = focus?.relatedGroups ?? []
+  // ใช้ชื่อโปรแกรมจริงของวันนี้แทนตาราง generic ด้านบน เมื่อมีชื่อโปรแกรมจริงและเป็นคำแนะนำของวันนี้
+  // จริง (ไม่ใช่ Next session ของวันอื่นที่ todayWorkoutTitle ไม่ได้อธิบายอยู่แล้ว) — ดู comment ที่
+  // todayWorkoutTitle prop ด้านบน
+  const specificDetail =
+    isRecommendationForToday && todayWorkoutTitle ? splitTitleDetail(todayWorkoutTitle).detail : null
+  const relatedGroupsText = specificDetail ?? relatedGroups.join(' • ')
   const displayPct = displayMg
     ? recoveryDates
       ? computeRecoveryPct(recoveryDates[displayMg] ?? null, displayMg)
@@ -296,7 +310,7 @@ export default function AICoachCompactCard({
               <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>
                 {isRestDay
                   ? 'วันนี้เหมาะกับการพักและฟื้นตัว'
-                  : `${isRecommendationForToday ? 'Today' : 'Next session'} • ${relatedGroups.join(' • ')}`}
+                  : `${isRecommendationForToday ? 'Today' : 'Next session'} • ${relatedGroupsText}`}
               </p>
 
               {/* v58: ฟีดแบ็ก "Training Readiness 48 vs Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้อง
