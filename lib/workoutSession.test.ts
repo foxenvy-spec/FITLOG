@@ -78,6 +78,17 @@ describe('initSessionSet', () => {
     expect(state.weightKg).toBeNull()
     expect(state.rpe).toBeNull()
   })
+
+  it('clamps a negative default_weight_kg to 0 instead of passing it through', () => {
+    const state = initSessionSet(makeExercise({ default_weight_kg: -11.35 }))
+    expect(state.weightKg).toBe(0)
+  })
+
+  it('clamps a negative weight/reps from "last performance" to 0', () => {
+    const state = initSessionSet(makeExercise(), { reps: -2, weightKg: -20 })
+    expect(state.reps).toBe(0)
+    expect(state.weightKg).toBe(0)
+  })
 })
 
 describe('initSessionStates', () => {

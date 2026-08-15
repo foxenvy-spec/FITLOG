@@ -1057,7 +1057,10 @@ export default function SessionPage() {
       ) : (
         <button
           type="button"
-          onClick={() => setShowAddExercise(true)}
+          onClick={() => {
+            setShowAddExercise(true)
+            setShowSwapExercise(false)
+          }}
           className="w-full rounded-lg border border-dashed border-line text-muted hover:text-amber hover:border-amber/50 font-display tracked uppercase py-2.5 text-xs transition"
         >
           + เพิ่มท่า
@@ -1068,7 +1071,9 @@ export default function SessionPage() {
           set+ปุ่มเสร็จเซ็ต) ซึ่งกินพื้นที่สูงมากบนมือถือ — ปุ่ม "🔁 เปลี่ยนท่า" อยู่บนสุดของการ์ด (ทับรูป)
           กดแล้ว panel เปิดจริงแต่โผล่ไกลเกินจอ ผู้ใช้เห็นแค่ viewport เดิมไม่ขยับเลยดูเหมือนกดไม่ติด —
           ย้ายมาไว้ตรงนี้แทน (เหนือการ์ดหลัก) ให้ตำแหน่งเดียวกับ panel "เพิ่มท่านอกแผน" ด้านบนซึ่งทำงานถูกอยู่แล้ว
-          (โผล่ทันทีในตำแหน่งเดิมที่กดไม่ต้องเลื่อนจอ) */}
+          (โผล่ทันทีในตำแหน่งเดิมที่กดไม่ต้องเลื่อนจอ) — showAddExercise/showSwapExercise เป็นสอง state
+          อิสระต่อกัน ถ้าไม่บังคับ mutual-exclusive ตรงนี้ เปิดทั้งคู่พร้อมกันได้ (เช่น เปิด "+เพิ่มท่า" ค้างไว้
+          แล้วกด "🔁 เปลี่ยนท่า" ต่อ) จะกลับไปเจอปัญหาการ์ดสูงเกินจอแบบเดิมอีกรอบ เพราะสอง panel ซ้อนกัน */}
       {showSwapExercise && (
         <PremiumCard className="px-4 py-3.5 space-y-2.5">
           <p className="text-[10px] tracked uppercase text-muted">
@@ -1166,7 +1171,10 @@ export default function SessionPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setShowSwapExercise((v) => !v)}
+                onClick={() => {
+                  setShowSwapExercise((v) => !v)
+                  setShowAddExercise(false)
+                }}
                 className="shrink-0 text-[10px] tracked uppercase text-muted hover:text-amber transition"
                 style={knownExercise?.imageUrl ? { textShadow: '0 1px 3px rgba(0,0,0,0.9)' } : undefined}
               >

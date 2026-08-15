@@ -54,11 +54,18 @@ export interface LastPerformance {
 // ค่าเริ่มต้นของแต่ละท่าตอนเปิดเซสชัน — ใช้ผลงานครั้งล่าสุดจริงเป็นจุดตั้งต้นก่อน (ถ้ามี)
 // ตกไปใช้ค่าเป้าหมาย/ค่าเริ่มต้นจากโปรแกรมก็ต่อเมื่อไม่เคยเล่นท่านี้มาก่อนเลย
 // ผู้ใช้ยังปรับค่าได้ระหว่างเล่นจริง (ต่างจาก "log all today" ที่บันทึกค่าเป้าหมายตรงๆ โดยไม่ให้ปรับ)
+// กันค่าติดลบหลุดเข้ามาเป็นค่าเริ่มต้น (ไม่ควรเกิดขึ้นได้ แต่ default_weight_kg มาจากคอลัมน์ที่แก้ผ่าน
+// SQL Editor ตรงๆ ได้ และผลงาน "ครั้งก่อน" ก็มาจากข้อมูลเก่าที่อาจไม่ผ่านการตรวจสอบเดียวกัน) —
+// reps/น้ำหนักติดลบไม่มีความหมายทางกายภาพ ไม่ต่างจาก null ในแง่ที่ต้องกันไว้ที่ต้นทาง ไม่ใช่แค่ตอนแสดงผล
+function nonNegative(n: number | null): number | null {
+  return n === null ? null : Math.max(0, n)
+}
+
 export function initSessionSet(ex: ProgramExercise, last?: LastPerformance | null): SessionSetState {
   return {
     setsLog: [],
-    reps: last ? last.reps : parseRangeToNumber(ex.target_reps),
-    weightKg: last ? last.weightKg : ex.default_weight_kg,
+    reps: nonNegative(last ? last.reps : parseRangeToNumber(ex.target_reps)),
+    weightKg: nonNegative(last ? last.weightKg : ex.default_weight_kg),
     rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
     logged: false,
     skipped: false,
