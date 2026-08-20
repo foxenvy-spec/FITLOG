@@ -186,6 +186,12 @@ export default function AICoachCompactCard({
   const specificDetail =
     isRecommendationForToday && todayWorkoutTitle ? splitTitleDetail(todayWorkoutTitle).detail : null
   const relatedGroupsText = specificDetail ?? relatedGroups.join(' • ')
+  // ฟีดแบ็ก "ทำไม AI บอกว่าเป็น Day 2 ทั้งที่ตารางจริงเป็น Day 4 แล้ว" — chosen.title มาจาก
+  // workout_templates (คลังเทมเพลตแยกต่างหาก ไม่ผูกกับ program_days ที่หน้าโปรแกรมใช้เลย) บังเอิญตั้งชื่อ
+  // เทมเพลตด้วยคำนำหน้า "Day N" แบบเดียวกับเลขวันในตารางโปรแกรมจริง ทำให้ผู้ใช้เข้าใจผิดว่าเป็นเลขวัน
+  // เดียวกัน — ใช้ชื่อกล้ามเนื้อหลัก (displayMg) แทน chosen.title ทั้งปุ่มเริ่ม/ข้อความสำเร็จ/ข้อผิดพลาด
+  // ตัดคำว่า "Day N" ที่ไม่มีความหมายอะไรกับผู้ใช้ออกไปเลย
+  const startLabel = displayMg ?? 'ท่านี้'
   const displayPct = displayMg
     ? recoveryDates
       ? computeRecoveryPct(recoveryDates[displayMg] ?? null, displayMg)
@@ -221,10 +227,10 @@ export default function AICoachCompactCard({
       }))
       const { error } = await supabase.from('workouts').insert(payload)
       if (error) {
-        setErrorMessage(`เริ่ม "${chosen.title}" ไม่สำเร็จ: ${error.message}`)
+        setErrorMessage(`เริ่ม "${startLabel}" ไม่สำเร็จ: ${error.message}`)
         return
       }
-      setStartedMessage(`บันทึก "${chosen.title}" (${payload.length} ท่า) เข้า Log วันนี้แล้ว`)
+      setStartedMessage(`บันทึก "${startLabel}" (${payload.length} ท่า) เข้า Log วันนี้แล้ว`)
       queryClient.invalidateQueries()
     } catch (err) {
       setErrorMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
@@ -384,14 +390,14 @@ export default function AICoachCompactCard({
           ) : templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />
           ) : chosen && chosenExercises.length > 0 ? (
-            // v50: ฟีดแบ็ก "CTA ยาวเกินไป — เริ่ม DAY 5 — LOWER (HAMSTRING/GL... ถูกตัด บนมือถือ" —
-            // ชื่อเทมเพลตเต็ม (chosen.title) มักมีรายละเอียดกล้ามเนื้อในวงเล็บต่อท้าย (เช่น
-            // "Day 5 — Lower (Hamstring/Glute)") ซึ่งซ้ำกับข้อมูลที่ relatedGroups ด้านบนแสดงอยู่แล้ว
-            // (บรรทัด "วันนี้เหมาะกับ") — ปุ่มโชว์แค่ main (ก่อนวงเล็บ) พอ ใช้ splitTitleDetail ตัวเดียว
-            // กับที่ TodaysFocusCard ใช้อยู่แล้ว (แยกออกมาเป็น export แทนเขียนซ้ำ) ไม่ต้องยัดรายละเอียด
-            // กลับเข้าไปในปุ่มอีก ตามที่ขอ "อย่าพยายามยัดข้อมูลทั้งหมดลง Button"
+            // v50: ฟีดแบ็ก "CTA ยาวเกินไป — เริ่ม DAY 5 — LOWER (HAMSTRING/GL... ถูกตัด บนมือถือ" — เดิมใช้
+            // chosen.title (ชื่อเทมเพลตเต็ม) ตัดแค่ส่วนในวงเล็บออกด้วย splitTitleDetail
+            // v72: ฟีดแบ็ก "ทำไม AI บอกว่าเป็น Day 2 ทั้งที่ตารางจริงเป็น Day 4 แล้ว" — chosen.title มาจาก
+            // workout_templates (คนละตารางกับ program_days ที่หน้าโปรแกรมใช้) บังเอิญตั้งชื่อด้วยคำนำหน้า
+            // "Day N" ชนกับเลขวันในตารางโปรแกรมจริงของผู้ใช้ ทำให้เข้าใจผิดว่าเป็นเลขเดียวกัน — เปลี่ยนไปใช้
+            // startLabel (ชื่อกล้ามเนื้อหลัก) แทนทั้งหมด ตัดคำว่า "Day N" ที่ไม่มีความหมายออกไปเลย
             <Button type="button" onClick={handleStart} disabled={starting} className="flex-1 min-w-0">
-              <span className="truncate">{starting ? '...' : `เริ่ม ${splitTitleDetail(chosen.title).main}`}</span>
+              <span className="truncate">{starting ? '...' : `เริ่ม ${startLabel}`}</span>
               {!starting && <span aria-hidden="true">→</span>}
             </Button>
           ) : templates.length > 0 ? (
