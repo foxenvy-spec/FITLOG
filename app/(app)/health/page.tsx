@@ -1161,7 +1161,6 @@ export default function HealthPage() {
               periodCaption={weightPeriodCaption}
               insight={weightInsight}
               insightTone={weightGainLooksLikeMuscle ? 'good' : undefined}
-              primary
             />
             <IconStatCard
               label="ไขมันในร่างกาย"
