@@ -66,7 +66,9 @@ function LogPageInner() {
     staleTime: 60_000,
   })
 
-  const [type, setType] = useState<WorkoutType>('strength')
+  // ฟีดแบ็ก "อยากให้มีการ์ดลัดไปหน้านำเข้าคาร์ดิโอจากรูปโดยตรง" — เปิดหน้านี้พร้อม ?type=cardio (จากการ์ด
+  // Quick Action ใน MobileDashboardView.tsx) ให้ตั้งค่าเริ่มต้นเป็นแท็บคาร์ดิโอทันที ไม่ต้องกดสลับเอง
+  const [type, setType] = useState<WorkoutType>(() => (searchParams.get('type') === 'cardio' ? 'cardio' : 'strength'))
   const [date, setDate] = useState(todayStr())
   const [editingId, setEditingId] = useState<string | null>(null)
 

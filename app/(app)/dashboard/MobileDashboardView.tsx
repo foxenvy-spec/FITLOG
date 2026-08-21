@@ -57,6 +57,10 @@ const DashboardSettings = dynamic(() => import('@/components/DashboardSettings')
 const QUICK_ACTIONS = [
   { href: '/templates', label: 'เลือกโปรแกรม', icon: '📋', accent: '#6C8CA8' },
   { href: '/health', label: 'วิเคราะห์ร่างกาย', icon: '🔍', accent: '#E8A33D' },
+  // ฟีดแบ็ก "อยากให้ทำเป็นการ์ดอีกใบอยู่ข้างๆ วิเคราะห์ร่างกาย" — ทางลัดไปฟีเจอร์นำเข้าคาร์ดิโอจากรูป
+  // ที่มีอยู่แล้ว (ImportCardioPhotoGemini ในหน้า /log แท็บคาร์ดิโอ) — ?type=cardio ให้หน้า /log ตั้ง
+  // แท็บเริ่มต้นเป็นคาร์ดิโอให้เลย ไม่ต้องกดสลับเอง (ดู useState(type) ใน log/page.tsx)
+  { href: '/log?type=cardio', label: 'ถ่ายรูปคาร์ดิโอ', icon: '📷', accent: '#7A9B57' },
 ] as const
 
 /**
