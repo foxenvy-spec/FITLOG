@@ -1132,7 +1132,15 @@ export default function HealthPage() {
               กล้ามเนื้อ, ระดับ 2 (ติดตาม): BMI/น้ำในร่างกาย/มวลไขมัน/กล้ามเนื้อโครงร่าง, ระดับ 3 (ประกอบ):
               โปรตีน/ไขมันช่องท้อง/อายุร่างกาย/BMR/มวลกระดูก" — ปรับ tier ให้ตรงตามนี้ (BMI ย้ายจาก tier 1
               ไป 2, โปรตีน/ไขมันช่องท้อง ย้ายจาก tier 2 ไป 3) แทนเดิมที่กลุ่ม 2 กับ 3 ไม่ตรงกับที่ขอรอบนี้ */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 md:grid-flow-row-dense gap-2.5 items-stretch">
+          {/* ฟีดแบ็ก "อยากได้ตำแหน่ง card แบบนี้" (เทียบ mockup ที่แบ่ง KEY METRICS/ADDITIONAL METRICS
+              ชัดเจนเป็น 2 แถว) — เดิม grid เดียวยาว 12 การ์ด ใช้ tier (1/2/3) แค่จัดลำดับ/ความหนาแน่นของ
+              grid-flow-dense เท่านั้น ไม่มี label แบ่งหมวดให้เห็นชัดว่าอันไหน "หลัก" อันไหน "เพิ่มเติม" — แบ่ง
+              เป็น 2 grid แยกกันตรงๆ (5 การ์ดแรก = หลัก, 7 การ์ดที่เหลือ = เพิ่มเติม ตามลำดับเดิมเป๊ะ ไม่ได้
+              เปลี่ยนว่าการ์ดไหนอยู่ก่อน/หลัง) พร้อม label กำกับ ไม่แตะ tier prop ของการ์ดแต่ละใบ (ยังใช้ปรับ
+              ขนาด/ความหนาแน่นใน grid ของตัวเองต่อไป) */}
+          <div>
+            <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Key Metrics</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 items-stretch">
             <IconStatCard
               label="น้ำหนัก"
               subLabel="WEIGHT"
@@ -1224,6 +1232,12 @@ export default function HealthPage() {
               tier={3}
               forceZonePill
             />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Additional Metrics</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5 items-stretch">
             <IconStatCard
               // ฟีดแบ็ก "Protein 10.3 kg อาจทำให้เข้าใจผิดว่าเป็นปริมาณโปรตีนที่กินวันนี้ — ควรระบุให้ชัดว่า
               // เป็นมวลโปรตีนในร่างกาย" — เปลี่ยนทั้ง label ไทย/subLabel อังกฤษให้ชัดเจนขึ้น ไม่กระทบ field
@@ -1330,6 +1344,7 @@ export default function HealthPage() {
               direction="neutral"
               tier={3}
             />
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-4 items-start">
