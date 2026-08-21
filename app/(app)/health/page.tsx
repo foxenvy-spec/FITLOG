@@ -20,6 +20,7 @@ import GoalRing from '@/components/GoalRing'
 import InsightCard from '@/components/InsightCard'
 import type { Insight } from '@/lib/dashboardStats'
 import { zoneOf, classifyMetric, summarizeHealthScore, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
+import { periodLabelOf } from '@/lib/bodyMetricsSummary'
 import { saveAge } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -1121,6 +1122,7 @@ export default function HealthPage() {
             trendScorePct={trendScorePct}
             unit={unit}
             summary={bodyCompositionSummary}
+            changePeriodLabel={periodLabelOf(latest, metrics[1] ?? null)}
           />
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
@@ -2223,6 +2225,7 @@ function OverviewHealthScoreHeader({
   trendScorePct,
   unit,
   summary,
+  changePeriodLabel,
 }: {
   score: { good: number; standard: number; needsWork: number; total: number; score: number }
   items: { label: string; status: 'good' | 'standard' | 'needsWork' }[]
@@ -2243,6 +2246,10 @@ function OverviewHealthScoreHeader({
   // จะทำให้ Health Score กลายเป็น Insight ไม่ใช่แค่คะแนน" — คำนวณที่จุดเรียกใช้ (มีข้อมูล delta/เป้าหมาย
   // ครบอยู่แล้ว) ส่งมาเป็นประโยคสำเร็จรูป ไม่ต้องคำนวณซ้ำในนี้
   summary: string | null
+  // v24: ฟีดแบ็ก "การเปลี่ยนแปลง ควรบอกว่าเทียบกับช่วงไหน ไม่งั้นดูลอยๆ" — ระยะห่างจริงระหว่างการวัดล่าสุด
+  // 2 ครั้ง (periodLabelOf จาก lib/bodyMetricsSummary — คืนวลีเต็ม "จาก X ก่อน" พร้อมใช้) ไม่ใช่ "1 สัปดาห์"
+  // ตายตัว เพราะผู้ใช้บางคนอาจ log ทุกวัน บางคน 2 สัปดาห์ครั้ง — ไม่ระบุ = ไม่โชว์ (ข้อมูลไม่พอเทียบ)
+  changePeriodLabel: string | null
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false)
   if (score.total === 0) return null
@@ -2350,7 +2357,9 @@ function OverviewHealthScoreHeader({
             label ท้ายแถว (Tertiary) จาก text-[11px] เป็น text-xs ให้จับคู่กับระดับ Tertiary อื่นๆ ในการ์ดนี้ */}
         {signals.length > 0 && (
           <div className="shrink-0 border-l border-line/40 pl-5">
-            <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>การเปลี่ยนแปลง</p>
+            <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>
+              การเปลี่ยนแปลง{changePeriodLabel && <span style={{ color: '#9DA0A8', textTransform: 'none' }}> · {changePeriodLabel}</span>}
+            </p>
             <div className="flex flex-col gap-1.5">
               {signals.map((s) => (
                 <p key={s.label} className="whitespace-nowrap">
