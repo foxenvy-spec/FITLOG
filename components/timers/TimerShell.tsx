@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import PremiumCard from '@/components/ui/PremiumCard'
 
 export function TimerShell({
@@ -102,6 +103,27 @@ export function NumberStepper({
     if (max !== undefined) out = Math.min(max, out)
     return out
   }
+
+  // ฟีดแบ็ก "ใส่เลขเองไม่ได้ ต้องกด +/- อย่างเดียว" — เพิ่มช่องพิมพ์เลขตรงกลางแทน span เดิม ใช้ local
+  // draft state คั่นกลางกันไม่ให้ค่าที่พิมพ์อยู่ (เช่น "3" ระหว่างพิมพ์ "35") ถูก prop value ทับจนพิมพ์ไม่ได้
+  // ค่อย commit (clamp + onChange) ตอน blur/กด Enter เท่านั้น ไม่ commit ทุกตัวอักษรที่พิมพ์
+  const [draft, setDraft] = useState(String(value))
+  useEffect(() => {
+    setDraft(String(clamp(value)))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+
+  function commit() {
+    const parsed = parseFloat(draft.replace(',', '.'))
+    if (Number.isNaN(parsed)) {
+      setDraft(String(clamp(value)))
+      return
+    }
+    const clamped = clamp(parsed)
+    setDraft(String(clamped))
+    onChange(clamped)
+  }
+
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
       <p className="text-[11px] tracked uppercase text-muted mb-1.5">{label}</p>
@@ -114,8 +136,19 @@ export function NumberStepper({
         >
           −
         </button>
-        <span className="font-mono tabular text-xl text-ink">
-          {clamp(value)}
+        <span className="flex items-baseline">
+          <input
+            type="text"
+            inputMode="decimal"
+            disabled={disabled}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur()
+            }}
+            className="font-mono tabular text-xl text-ink bg-transparent text-center w-14 outline-none disabled:opacity-40"
+          />
           {unit && <span className="text-xs text-muted ml-1">{unit}</span>}
         </span>
         <button
