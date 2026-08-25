@@ -12,6 +12,8 @@ import {
   CartesianGrid,
   AreaChart,
   Area,
+  ReferenceLine,
+  LabelList,
 } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, Profile, ProgressPhoto } from '@/lib/types'
@@ -1181,6 +1183,8 @@ export default function HealthPage() {
             bodyFatDelta={bodyFatDeltaForCard}
             muscleDelta={fieldDelta('muscle_kg', toDisplay)}
             changePeriodLabel={periodLabelOf(latest, metrics[1] ?? null)}
+            weightGoalTarget={weightGoal?.target_value ?? null}
+            bodyFatGoalTarget={bodyFatGoalForBanner?.target_value ?? null}
           />
 
           {/* v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ" — เรียงลำดับตามความสำคัญจริง
@@ -2110,6 +2114,12 @@ function ChartPointTooltip({
   )
 }
 
+// v36: ฟีดแบ็ก "ให้คะแนน 4 มockup สี แล้วเลือก Version 1 (Amber)" ตามด้วย "ทำตามแบบนี้เลยดีไหม" (มี stat
+// row เฉลี่ย/ต่ำสุด/สูงสุด, เส้นเป้าหมายประปราย, ป้ายค่าตัวเลขลอยที่จุดแรก/ต่ำสุด/ล่าสุดบนกราฟ, badge เป้าหมาย
+// ใต้ตัวเลขหลัก) — เพิ่มฟีเจอร์เหล่านี้ตามภาพ mockup ที่ยังไม่มีในโค้ดจริง (เดิมมีแค่ tabs/range picker/
+// headline/insight — ไม่มี stat row, ไม่มีเส้นเป้าหมาย, ไม่มี label ค้างบนจุด) ส่วน insight card ใช้ 💡 อยู่
+// แล้ว (ไม่ใช่ ⭐ ตามที่เห็นใน mockup ซึ่งเป็นแค่ภาพตัวอย่างจาก AI ไม่ใช่โค้ดจริง) และ period label
+// (changePeriodLabel) แยกจาก range selector (7D-1Y) อยู่แล้วตั้งแต่ v27 — ทั้งสองจุดนี้ไม่ต้องแก้เพิ่ม
 function OverviewTrendChart({
   metrics,
   unit,
@@ -2118,6 +2128,8 @@ function OverviewTrendChart({
   bodyFatDelta,
   muscleDelta,
   changePeriodLabel,
+  weightGoalTarget,
+  bodyFatGoalTarget,
 }: {
   metrics: BodyMetric[]
   unit: string
@@ -2126,6 +2138,8 @@ function OverviewTrendChart({
   bodyFatDelta: number | null
   muscleDelta: number | null
   changePeriodLabel: string | null
+  weightGoalTarget: number | null
+  bodyFatGoalTarget: number | null
 }) {
   const [metricKey, setMetricKey] = useState<OverviewTrendMetricKey>('weight')
   const [rangeDays, setRangeDays] = useState(30)
@@ -2152,6 +2166,49 @@ function OverviewTrendChart({
 
   const latestVal = data.length > 0 ? data[data.length - 1].value : null
   const headlineDelta = metricKey === 'weight' ? weightDelta : metricKey === 'bodyFat' ? bodyFatDelta : muscleDelta
+
+  // v36: เป้าหมาย (เส้นประ + badge) มีเฉพาะน้ำหนัก/Body Fat เพราะเป็น goal_type เดียวที่แอปนี้รองรับ (ไม่มี
+  // เป้าหมายมวลกล้ามเนื้อ) — น้ำหนักแปลงหน่วยแสดงผลด้วย toDisplay เหมือนค่าอื่นในกราฟนี้, Body Fat ไม่ต้องแปลง
+  const goalTarget =
+    metricKey === 'weight' && weightGoalTarget !== null
+      ? toDisplay(weightGoalTarget)
+      : metricKey === 'bodyFat' && bodyFatGoalTarget !== null
+        ? bodyFatGoalTarget
+        : null
+
+  // v36: สรุปเฉลี่ย/ต่ำสุด/สูงสุดของช่วงที่กำลังดูอยู่ (data ตัวเดียวกับที่ขึ้นกราฟ — ไม่ใช่ตัวเลขแยกชุด)
+  const stats = useMemo(() => {
+    if (data.length === 0) return null
+    const values = data.map((d) => d.value)
+    const avg = values.reduce((s, v) => s + v, 0) / values.length
+    return { avg, min: Math.min(...values), max: Math.max(...values) }
+  }, [data])
+
+  // v36: จุดที่มี label ค้างอยู่บนกราฟ (ไม่ใช่แค่ hover) — จุดแรก/ต่ำสุด/ล่าสุดเท่านั้น ตามที่เห็นใน mockup
+  // (ไม่ใส่ label ทุกจุดจนรก) — ต่ำสุดหาแบบ index แรกที่เจอค่าต่ำสุด กันชนกับจุดแรก/ล่าสุดถ้าเป็นจุดเดียวกัน
+  const labelIndices = useMemo(() => {
+    if (data.length === 0) return new Set<number>()
+    let minIdx = 0
+    data.forEach((d, i) => {
+      if (d.value < data[minIdx].value) minIdx = i
+    })
+    return new Set([0, minIdx, data.length - 1])
+  }, [data])
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts' LabelList content prop type doesn't expose a usable prop shape to narrow against
+  const renderPointLabel = (props: any) => {
+    const { x, y, index, value } = props as { x?: number; y?: number; index?: number; value?: number }
+    if (x === undefined || y === undefined || index === undefined || value === undefined || !labelIndices.has(index)) return null
+    const isLatest = index === data.length - 1
+    return (
+      <g>
+        <rect x={x - 21} y={y - 28} width={42} height={18} rx={9} fill={isLatest ? meta.color : '#1C1F24'} stroke={isLatest ? 'none' : '#2E333A'} />
+        <text x={x} y={y - 15} textAnchor="middle" fontSize={11} fontFamily="ui-monospace, monospace" fontWeight={600} fill={isLatest ? '#0B0C0E' : '#F3F0E8'}>
+          {value.toFixed(1)}
+        </text>
+      </g>
+    )
+  }
 
   // ฟีดแบ็ก "Graph ใหญ่ดีแล้ว แต่ควรเพิ่ม Insight...FITLOG ไม่ควรเป็นแค่ 'ดูข้อมูล' แต่ควรเป็น 'เข้าใจข้อมูล'"
   // + "FITLOG ควรเป็น Coach ที่ให้คำแนะนำ มากกว่าเป็นระบบเตือน — ไม่ชอบคำว่า 'ควรทบทวน'" — ใช้ weightDelta/
@@ -2211,21 +2268,54 @@ function OverviewTrendChart({
 
       {data.length > 1 ? (
         <>
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="font-mono tabular text-2xl text-ink">
-              {latestVal?.toFixed(1)}
-              <span className="text-xs text-muted ml-1">{valueUnit}</span>
-            </span>
-            {headlineDelta !== null && (
-              <span className="text-xs font-mono text-muted">
-                {headlineDelta > 0 ? '↑' : headlineDelta < 0 ? '↓' : '·'} {Math.abs(headlineDelta).toFixed(1)} {valueUnit}
-                {changePeriodLabel && <span className="text-muted/70"> · {changePeriodLabel}</span>}
-              </span>
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono tabular text-2xl text-ink">
+                  {latestVal?.toFixed(1)}
+                  <span className="text-xs text-muted ml-1">{valueUnit}</span>
+                </span>
+                {headlineDelta !== null && (
+                  <span className="text-xs font-mono text-muted">
+                    {headlineDelta > 0 ? '↑' : headlineDelta < 0 ? '↓' : '·'} {Math.abs(headlineDelta).toFixed(1)} {valueUnit}
+                    {changePeriodLabel && <span className="text-muted/70"> · {changePeriodLabel}</span>}
+                  </span>
+                )}
+              </div>
+              {/* v36: badge เป้าหมาย — โผล่เฉพาะน้ำหนัก/Body Fat ที่มีเป้าหมาย active อยู่ (ดู goalTarget ด้านบน) */}
+              {goalTarget !== null && (
+                <p className="inline-flex items-center gap-1 text-[11px] mt-1.5 px-2 py-0.5 rounded-full bg-surface border border-line text-muted">
+                  <span aria-hidden="true">🎯</span> เป้าหมาย {goalTarget.toFixed(1)} {valueUnit}
+                </p>
+              )}
+            </div>
+            {/* v36: สรุปเฉลี่ย/ต่ำสุด/สูงสุดของช่วงที่กำลังดู (ตาม mockup) — คำนวณจาก data ชุดเดียวกับกราฟ */}
+            {stats && (
+              <div className="flex items-center gap-3 rounded-xl bg-surface border border-line px-3 py-2 text-[11px]">
+                <div className="text-center">
+                  <p className="text-muted flex items-center gap-1 justify-center">〜 เฉลี่ย</p>
+                  <p className="font-mono text-ink mt-0.5">
+                    {stats.avg.toFixed(1)} {valueUnit}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-muted flex items-center gap-1 justify-center">↓ ต่ำสุด</p>
+                  <p className="font-mono text-moss mt-0.5">
+                    {stats.min.toFixed(1)} {valueUnit}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-muted flex items-center gap-1 justify-center">↑ สูงสุด</p>
+                  <p className="font-mono text-rusttext mt-0.5">
+                    {stats.max.toFixed(1)} {valueUnit}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <LineChart data={data} margin={{ top: 28, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid stroke="#2E333A" vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -2240,7 +2330,18 @@ function OverviewTrendChart({
                     เส้น (2px → 1.5px) ให้ตัวเลขไม่โดนเส้นกลบ */}
                 <YAxis tick={{ fill: '#B8BBC2', fontSize: 10 }} axisLine={false} tickLine={false} width={32} domain={['auto', 'auto']} />
                 <Tooltip content={<ChartPointTooltip unit={valueUnit} />} />
-                <Line type="monotone" dataKey="value" stroke={meta.color} strokeWidth={1.5} dot={{ r: 2, fill: meta.color }} isAnimationActive={false} />
+                {/* v36: เส้นเป้าหมายประปราย ตาม mockup — โผล่เฉพาะตอนมี goal target สำหรับตัวชี้วัดที่กำลังดูอยู่ */}
+                {goalTarget !== null && (
+                  <ReferenceLine
+                    y={goalTarget}
+                    stroke="#8CB264"
+                    strokeDasharray="4 4"
+                    label={{ value: `เป้าหมาย ${goalTarget.toFixed(1)} ${valueUnit}`, position: 'insideTopRight', fill: '#8CB264', fontSize: 10 }}
+                  />
+                )}
+                <Line type="monotone" dataKey="value" stroke={meta.color} strokeWidth={1.5} dot={{ r: 2, fill: meta.color }} isAnimationActive={false}>
+                  <LabelList dataKey="value" content={renderPointLabel} />
+                </Line>
               </LineChart>
             </ResponsiveContainer>
           </div>
