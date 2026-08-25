@@ -2436,9 +2436,16 @@ function OverviewTrendChart({
                   </p>
                 </div>
                 <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                {/* v45: ฟีดแบ็ก "ลูกศรสีถูกแล้ว แต่ตัวเลขไม่ต้องตามสีลูกศร" — เดิมสี style อยู่ที่ <p> ครอบทั้ง
+                    ลูกศร+ตัวเลข ทำให้ตัวเลขติดสีไปด้วย แยกให้ลูกศรมีสีเขียว/แดงของตัวเอง ส่วนตัวเลขคง text-ink
+                    กลางเสมอไม่ว่า minIsGood จะเป็นอะไร */}
                 <div className="text-center px-3">
-                  <p className="font-mono text-sm" style={{ color: minIsGood === null ? '#F3F0E8' : minIsGood ? '#8CB264' : '#C1503A' }}>
-                    {minIsGood !== null && <span aria-hidden="true">↓ </span>}
+                  <p className="font-mono text-sm text-ink">
+                    {minIsGood !== null && (
+                      <span aria-hidden="true" style={{ color: minIsGood ? '#8CB264' : '#C1503A' }}>
+                        ↓{' '}
+                      </span>
+                    )}
                     {stats.min.toFixed(1)}
                   </p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
@@ -2447,8 +2454,12 @@ function OverviewTrendChart({
                 </div>
                 <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <div className="text-center px-3">
-                  <p className="font-mono text-sm" style={{ color: maxIsGood === null ? '#F3F0E8' : maxIsGood ? '#8CB264' : '#C1503A' }}>
-                    {maxIsGood !== null && <span aria-hidden="true">↑ </span>}
+                  <p className="font-mono text-sm text-ink">
+                    {maxIsGood !== null && (
+                      <span aria-hidden="true" style={{ color: maxIsGood ? '#8CB264' : '#C1503A' }}>
+                        ↑{' '}
+                      </span>
+                    )}
                     {stats.max.toFixed(1)}
                   </p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
