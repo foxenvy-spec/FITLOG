@@ -2195,6 +2195,13 @@ function OverviewTrendChart({
           ? headlineDelta > 0
           : null
 
+  // v44: ฟีดแบ็ก "ต่ำสุด/สูงสุด ควรมีลูกศร/สีบอกด้วยไหม" — ย้อนกลับไปเจอปัญหาเดียวกับ v43 ถ้าใส่แบบเดียวกันหมด
+  // (น้ำหนักสูงสุด = แดงเสมอ ไม่จริงเพราะอาจมาจากกล้ามเนื้อ) — ใส่เฉพาะ Body Fat/Muscle ที่มีทิศทาง "ดี" ชัด
+  // ในตัวเอง เหมือน headlineDeltaGood ด้านบน (คนละค่ากันเพราะ min/max ไม่ใช่เดลต้า): Body Fat ต่ำสุด=ดี(เขียว),
+  // สูงสุด=แย่(แดง) / Muscle สูงสุด=ดี(เขียว), ต่ำสุด=แย่(แดง) — Weight เป็น null ทั้งคู่ = ไม่มีลูกศร/สี เหมือนเดิม
+  const minIsGood = metricKey === 'bodyFat' ? true : metricKey === 'muscle' ? false : null
+  const maxIsGood = metricKey === 'bodyFat' ? false : metricKey === 'muscle' ? true : null
+
   // v36: เป้าหมาย (เส้นประ + badge) มีเฉพาะน้ำหนัก/Body Fat เพราะเป็น goal_type เดียวที่แอปนี้รองรับ (ไม่มี
   // เป้าหมายมวลกล้ามเนื้อ) — น้ำหนักแปลงหน่วยแสดงผลด้วย toDisplay เหมือนค่าอื่นในกราฟนี้, Body Fat ไม่ต้องแปลง
   const goalTarget =
@@ -2409,7 +2416,10 @@ function OverviewTrendChart({
                 แท็บน้ำหนักที่ delta เป็นกลาง แต่ 'สูงสุด' ในนี้ยังแดงอยู่ — สื่อว่าน้ำหนักสูงสุด=แย่ ทั้งที่ไม่ใช่"
                 — เฉลี่ย/ต่ำสุด/สูงสุด เป็นข้อเท็จจริงเชิงตัวเลขล้วนๆ (ค่าต่ำ-สูงสุดที่ log ไว้ในช่วงที่ดู) ไม่ใช่
                 การตัดสินดี/แย่ เปลี่ยนทั้ง 3 ตัวเป็นสีกลาง (text-ink) เหมือนกันหมด เก็บสีเขียว/แดงไว้ให้ delta
-                เท่านั้น ไม่ให้ความหมายชนกัน */}
+                เท่านั้น ไม่ให้ความหมายชนกัน
+                v44: ฟีดแบ็ก "ต่ำสุด/สูงสุด ควรมีลูกศร/สีบอกด้วยไหม" — ใส่กลับเฉพาะ Body Fat/Muscle (ดู
+                minIsGood/maxIsGood ด้านบน) ที่มีทิศทาง "ดี" ชัดในตัวเอง ไม่ขัดกับ v43 เพราะ Weight ยัง
+                minIsGood/maxIsGood เป็น null ทั้งคู่ = ไม่มีลูกศร/สี เหมือนเดิมทุกประการ */}
             {stats && (
               <div
                 className="flex items-stretch rounded-2xl px-4 py-2.5"
@@ -2427,14 +2437,20 @@ function OverviewTrendChart({
                 </div>
                 <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <div className="text-center px-3">
-                  <p className="font-mono text-sm text-ink">{stats.min.toFixed(1)}</p>
+                  <p className="font-mono text-sm" style={{ color: minIsGood === null ? '#F3F0E8' : minIsGood ? '#8CB264' : '#C1503A' }}>
+                    {minIsGood !== null && <span aria-hidden="true">↓ </span>}
+                    {stats.min.toFixed(1)}
+                  </p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     ต่ำสุด
                   </p>
                 </div>
                 <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <div className="text-center px-3">
-                  <p className="font-mono text-sm text-ink">{stats.max.toFixed(1)}</p>
+                  <p className="font-mono text-sm" style={{ color: maxIsGood === null ? '#F3F0E8' : maxIsGood ? '#8CB264' : '#C1503A' }}>
+                    {maxIsGood !== null && <span aria-hidden="true">↑ </span>}
+                    {stats.max.toFixed(1)}
+                  </p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     สูงสุด
                   </p>
