@@ -2200,10 +2200,15 @@ function OverviewTrendChart({
     const { x, y, index, value } = props as { x?: number; y?: number; index?: number; value?: number }
     if (x === undefined || y === undefined || index === undefined || value === undefined || !labelIndices.has(index)) return null
     const isLatest = index === data.length - 1
+    // v37: ฟีดแบ็ก (จากสกรีนช็อตจริง) "ป้าย 67.x ของจุดล่าสุดโดนตัดที่ขอบขวาการ์ด" — บับเบิลเดิม center
+    // ที่ x เป๊ะ (x-21..x+21) ทำให้ครึ่งขวาล้นออกไปนอกกราฟถ้าจุดนั้นอยู่ชิดขอบขวาสุด (จุดล่าสุดเป็นแบบนี้เสมอ) —
+    // เฉพาะจุดล่าสุด เลื่อนบับเบิลไปทางซ้ายให้ขอบขวาบับเบิลชนกับจุดพอดีแทนที่จะ center ทับจุด กันล้นขอบ
+    const width = 42
+    const rectX = isLatest ? x - width + 6 : x - width / 2
     return (
       <g>
-        <rect x={x - 21} y={y - 28} width={42} height={18} rx={9} fill={isLatest ? meta.color : '#1C1F24'} stroke={isLatest ? 'none' : '#2E333A'} />
-        <text x={x} y={y - 15} textAnchor="middle" fontSize={11} fontFamily="ui-monospace, monospace" fontWeight={600} fill={isLatest ? '#0B0C0E' : '#F3F0E8'}>
+        <rect x={rectX} y={y - 28} width={width} height={18} rx={9} fill={isLatest ? meta.color : '#1C1F24'} stroke={isLatest ? 'none' : '#2E333A'} />
+        <text x={rectX + width / 2} y={y - 15} textAnchor="middle" fontSize={11} fontFamily="ui-monospace, monospace" fontWeight={600} fill={isLatest ? '#0B0C0E' : '#F3F0E8'}>
           {value.toFixed(1)}
         </text>
       </g>
@@ -2315,7 +2320,12 @@ function OverviewTrendChart({
           </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 28, right: 8, left: -20, bottom: 0 }}>
+              {/* v37: ฟีดแบ็ก (จากสกรีนช็อตจริง) "ตัวเลขแกน Y โดนตัดเหลือแค่หลักเดียว (69→9 ทำนองนี้)" —
+                  margin.left เดิม -20 ดึงทั้งกราฟ (รวมแกน Y) ล้นไปทางซ้ายเกินขอบการ์ดที่เป็น overflow-hidden
+                  (rounded corner) ตัวเลข 2 หลักเลยโดนตัดครึ่งซ้าย — เปลี่ยนเป็น -4 (ยังกระชับกว่า default
+                  แต่ไม่ล้นขอบ) และเผื่อ width แกนเพิ่มเล็กน้อย (32→36) กันตัวเลขทศนิยม/2 หลักโดนตัดอีก
+                  ส่วน margin.right เพิ่มเป็น 22 ให้บับเบิลป้ายจุดล่าสุดมีที่ว่างพอ (ดูคอมเมนต์ renderPointLabel) */}
+              <LineChart data={data} margin={{ top: 28, right: 22, left: -4, bottom: 0 }}>
                 <CartesianGrid stroke="#2E333A" vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -2328,7 +2338,7 @@ function OverviewTrendChart({
                 {/* v29: ฟีดแบ็ก "เส้นกราฟเด่นกว่าข้อมูล และตัวเลขแกน Y ค่อนข้างเบา" — สว่างแกน Y ขึ้น
                     (#9498A0 → #B8BBC2 เทียบเท่าระดับ Level 2 ที่ใช้ใน Health Score banner) พร้อมลดความหนา
                     เส้น (2px → 1.5px) ให้ตัวเลขไม่โดนเส้นกลบ */}
-                <YAxis tick={{ fill: '#B8BBC2', fontSize: 10 }} axisLine={false} tickLine={false} width={32} domain={['auto', 'auto']} />
+                <YAxis tick={{ fill: '#B8BBC2', fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={['auto', 'auto']} />
                 <Tooltip content={<ChartPointTooltip unit={valueUnit} />} />
                 {/* v36: เส้นเป้าหมายประปราย ตาม mockup — โผล่เฉพาะตอนมี goal target สำหรับตัวชี้วัดที่กำลังดูอยู่ */}
                 {goalTarget !== null && (
