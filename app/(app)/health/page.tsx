@@ -1061,6 +1061,85 @@ export default function HealthPage() {
   // จริงตอนบันทึกแถว (ต่างจาก measured_at ซึ่งเป็นแค่วันที่ผู้ใช้เลือกเอง ไม่มีเวลา อาจย้อนหลังได้)
   const latestDateTime = latest?.created_at ? formatDateTimeTH(latest.created_at) : null
 
+  // ฟีดแบ็ก "ลด Information Density...ยุบ Additional Metrics เป็นตาราง" — ข้อมูล/สูตร zone แต่ละแถว
+  // เหมือนกับที่การ์ด IconStatCard 7 ใบเดิมเคยใช้ทุกประการ (ดูคอมเมนต์เดิมที่จุดเรียกใช้ AdditionalMetricsTable)
+  // ย้ายมาเป็น row object ล้วนๆ เพื่อ map เป็นตารางแทน — ไม่ได้คำนวณอะไรใหม่หรือเปลี่ยน field ที่ใช้เลย
+  const additionalMetricRows: AdditionalMetricRow[] = [
+    {
+      key: 'protein',
+      label: 'โปรตีนในร่างกาย',
+      value: latest?.protein_kg != null ? `${toDisplay(latest.protein_kg).toFixed(1)} ${unit}` : '—',
+      zone:
+        latest?.protein_kg != null && latestLbm != null
+          ? proteinPctZone(latest.protein_kg, latestLbm, profile?.sex ?? null)
+          : null,
+      direction: 'neutral',
+      delta: fieldDelta('protein_kg', toDisplay),
+      deltaUnit: unit,
+      decimals: 1,
+    },
+    {
+      key: 'visceralFat',
+      label: 'ไขมันช่องท้อง',
+      value: latest?.visceral_fat_grade != null ? `${latest.visceral_fat_grade} ระดับ` : '—',
+      zone: latest?.visceral_fat_grade != null ? (latest.visceral_fat_grade <= 9 ? 'Standard' : 'High') : null,
+      direction: 'lowerBetter',
+      delta: fieldDelta('visceral_fat_grade'),
+      deltaUnit: 'ระดับ',
+      decimals: 0,
+    },
+    {
+      key: 'fatMass',
+      label: 'มวลไขมัน',
+      value: latest?.body_fat_kg != null ? `${toDisplay(latest.body_fat_kg).toFixed(1)} ${unit}` : '—',
+      zone: null,
+      direction: 'lowerBetter',
+      delta: fieldDelta('body_fat_kg', toDisplay),
+      deltaUnit: unit,
+      decimals: 1,
+    },
+    {
+      key: 'skeletalMuscle',
+      label: 'กล้ามเนื้อโครงร่าง',
+      value: latest?.skeletal_muscle_kg != null ? `${toDisplay(latest.skeletal_muscle_kg).toFixed(1)} ${unit}` : '—',
+      zone: null,
+      direction: 'higherBetter',
+      delta: fieldDelta('skeletal_muscle_kg', toDisplay),
+      deltaUnit: unit,
+      decimals: 1,
+    },
+    {
+      key: 'boneMass',
+      label: 'มวลกระดูก',
+      value: latest?.bone_mass_kg != null ? `${toDisplay(latest.bone_mass_kg).toFixed(1)} ${unit}` : '—',
+      zone: null,
+      direction: 'neutral',
+      delta: fieldDelta('bone_mass_kg', toDisplay),
+      deltaUnit: unit,
+      decimals: 1,
+    },
+    {
+      key: 'bodyAge',
+      label: 'อายุร่างกาย',
+      value: latest?.body_age_years != null ? `${latest.body_age_years.toFixed(0)} ปี` : '—',
+      zone: null,
+      direction: 'lowerBetter',
+      delta: fieldDelta('body_age_years'),
+      deltaUnit: 'ปี',
+      decimals: 0,
+    },
+    {
+      key: 'bmr',
+      label: 'อัตราการเผาผลาญ',
+      value: latest?.bmr_kcal != null ? `${latest.bmr_kcal.toFixed(0)} kcal` : '—',
+      zone: null,
+      direction: 'neutral',
+      delta: null,
+      deltaUnit: 'kcal',
+      decimals: 0,
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
@@ -1242,117 +1321,14 @@ export default function HealthPage() {
             </div>
           </div>
 
-          <div>
-            <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Additional Metrics</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5 items-stretch">
-            <IconStatCard
-              // ฟีดแบ็ก "Protein 10.3 kg อาจทำให้เข้าใจผิดว่าเป็นปริมาณโปรตีนที่กินวันนี้ — ควรระบุให้ชัดว่า
-              // เป็นมวลโปรตีนในร่างกาย" — เปลี่ยนทั้ง label ไทย/subLabel อังกฤษให้ชัดเจนขึ้น ไม่กระทบ field
-              // ข้อมูลเดิม (protein_kg) หรือ logic การคำนวณ zone ใดๆ
-              label="โปรตีนในร่างกาย"
-              subLabel="BODY PROTEIN"
-              icon="protein"
-              imageKey="protein"
-              color="#5FA8A0"
-              value={latest?.protein_kg != null ? toDisplay(latest.protein_kg) : null}
-              unit={unit}
-              delta={fieldDelta('protein_kg', toDisplay)}
-              deltaUnit={unit}
-              direction="neutral"
-              zone={
-                latest?.protein_kg != null && latestLbm != null
-                  ? proteinPctZone(latest.protein_kg, latestLbm, profile?.sex ?? null)
-                  : null
-              }
-              zoneScheme="higherOk"
-              tier={3}
-            />
-            <IconStatCard
-              label="ไขมันช่องท้อง"
-              subLabel="VISCERAL FAT"
-              icon="fat"
-              imageKey="visceralFat"
-              color="#CF9A3D"
-              value={latest?.visceral_fat_grade ?? null}
-              unit="ระดับ"
-              decimals={0}
-              delta={fieldDelta('visceral_fat_grade')}
-              deltaUnit="ระดับ"
-              direction="lowerBetter"
-              zone={latest?.visceral_fat_grade != null ? (latest.visceral_fat_grade <= 9 ? 'Standard' : 'High') : null}
-              zoneScheme="symmetric"
-              tier={2}
-            />
-            <IconStatCard
-              label="มวลไขมัน"
-              subLabel="FAT MASS"
-              icon="fat"
-              imageKey="fatMass"
-              color="#C1503A"
-              value={latest?.body_fat_kg != null ? toDisplay(latest.body_fat_kg) : null}
-              unit={unit}
-              delta={fieldDelta('body_fat_kg', toDisplay)}
-              deltaUnit={unit}
-              direction="lowerBetter"
-              series={bodyFatKgTrend30}
-              tier={2}
-            />
-            <IconStatCard
-              label="กล้ามเนื้อโครงร่าง"
-              subLabel="SKELETAL MUSCLE"
-              icon="muscle"
-              imageKey="skeletalMuscle"
-              color="#7FA85F"
-              value={latest?.skeletal_muscle_kg != null ? toDisplay(latest.skeletal_muscle_kg) : null}
-              unit={unit}
-              delta={fieldDelta('skeletal_muscle_kg', toDisplay)}
-              deltaUnit={unit}
-              direction="higherBetter"
-              tier={2}
-            />
-            <IconStatCard
-              label="มวลกระดูก"
-              subLabel="BONE MASS"
-              icon="bone"
-              imageKey="boneMass"
-              color="#B08968"
-              value={latest?.bone_mass_kg != null ? toDisplay(latest.bone_mass_kg) : null}
-              unit={unit}
-              delta={fieldDelta('bone_mass_kg', toDisplay)}
-              deltaUnit={unit}
-              direction="neutral"
-              tier={3}
-            />
-            <IconStatCard
-              label="อายุร่างกาย"
-              subLabel="BODY AGE"
-              icon="heart"
-              imageKey="bodyAge"
-              color="#CF715F"
-              value={latest?.body_age_years ?? null}
-              unit="ปี"
-              decimals={0}
-              delta={fieldDelta('body_age_years')}
-              deltaUnit="ปี"
-              direction="lowerBetter"
-              tier={3}
-              infoText="ค่าเปรียบเทียบองค์ประกอบร่างกายกับค่าเฉลี่ยตามอายุ ไม่ใช่อายุจริงของร่างกาย"
-            />
-            <IconStatCard
-              label="อัตราการเผาผลาญ"
-              subLabel="BMR"
-              icon="fire"
-              imageKey="bmr"
-              color="#5FA85F"
-              value={latest?.bmr_kcal ?? null}
-              unit="kcal"
-              decimals={0}
-              delta={null}
-              direction="neutral"
-              tier={3}
-            />
-            </div>
-          </div>
+          {/* ฟีดแบ็ก "Key Metrics เยอะเกินไป...12 metrics รวมกับที่ซ้ำด้านล่างอีก ทำให้หน้าเริ่มเป็น Data
+              Warehouse มากกว่า Health Dashboard — ลด Information Density จาก 12+ metrics visible เหลือ
+              ประมาณ 6-8" (Priority 1 จากที่จัดลำดับไว้) — Additional Metrics เดิมเป็นการ์ด IconStatCard 7 ใบ
+              เต็มยศ (icon+label+value+delta+graph) หนักสายตาเท่า Key Metrics ทั้งที่เป็นข้อมูลระดับรอง —
+              ยุบเป็นตารางกะทัดรัด (label+value+status บรรทัดเดียว) พร้อมยุบเหลือ 4 แถวแรกโดยดีฟอลต์ + ปุ่ม
+              "ดูตัวชี้วัดเพิ่มเติม" ขยายดูครบ 7 — ข้อมูล/การคำนวณ zone ทุกตัวเหมือนเดิมทุกประการ ย้ายแค่การแสดงผล
+              ไม่ตัดตัวชี้วัดไหนออกจริง (กดขยายดูได้ครบ ไม่ใช่ซ่อนถาวร) */}
+          <AdditionalMetricsTable rows={additionalMetricRows} />
 
           <div className="grid lg:grid-cols-2 gap-4 items-start">
             {(bmi !== null || latest?.body_fat_pct != null) && (
@@ -1774,6 +1750,72 @@ function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' |
       {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
       {ZONE_LABEL_TH[zone]}
     </span>
+  )
+}
+
+type AdditionalMetricRow = {
+  key: string
+  label: string
+  value: string
+  zone: Zone | null
+  direction: Direction
+  delta: number | null
+  deltaUnit: string
+  decimals: number
+}
+
+// ไม่มี zone (ไม่มีช่วงมาตรฐานให้เทียบ เช่น มวลไขมัน/มวลกระดูก/BMR) — โชว์เดลต้าแทนแบบเดียวกับที่การ์ด
+// IconStatCard เดิมเคยใช้ ไม่เดา zone ที่ไม่มีข้อมูลรองรับให้
+function AdditionalMetricStatus({ zone, direction, delta, deltaUnit, decimals }: Pick<AdditionalMetricRow, 'zone' | 'direction' | 'delta' | 'deltaUnit' | 'decimals'>) {
+  if (zone) return <ZoneBadge zone={zone} direction={direction} />
+  if (delta !== null) {
+    const good = direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
+    const bad = direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
+    const cls = good ? 'text-moss' : bad ? 'text-rusttext' : 'text-muted'
+    return (
+      <span className={`text-xs font-mono whitespace-nowrap ${cls}`}>
+        {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)} {deltaUnit}
+      </span>
+    )
+  }
+  return <span className="text-xs text-muted">—</span>
+}
+
+// ฟีดแบ็ก "ลด Information Density...ยุบ Additional Metrics เป็นตาราง Metric/Value/Status + View all
+// metrics" (Priority 1) — แถวเดียว label+value+status กะทัดรัดกว่าการ์ด IconStatCard เต็มยศมาก ดีฟอลต์โชว์
+// แค่ 4 แถวแรก กดขยายดูครบ 7 ได้ (รูปแบบเดียวกับปุ่ม "ดูตัวชี้วัดเพิ่มเติม" ในแท็บแนวโน้ม)
+function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
+  const [expanded, setExpanded] = useState(false)
+  const visible = expanded ? rows : rows.slice(0, 4)
+  return (
+    <div>
+      <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Additional Metrics</p>
+      <PremiumCard className="px-4 py-1">
+        <div className="divide-y divide-line/60">
+          {visible.map((r) => (
+            <div key={r.key} className="flex items-center justify-between gap-3 py-2.5">
+              <span className="text-xs text-ink">{r.label}</span>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="font-mono text-xs tabular text-ink whitespace-nowrap">{r.value}</span>
+                <AdditionalMetricStatus zone={r.zone} direction={r.direction} delta={r.delta} deltaUnit={r.deltaUnit} decimals={r.decimals} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </PremiumCard>
+      {rows.length > 4 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="w-full flex items-center justify-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-lg py-2 mt-2 active:scale-[0.99] transition"
+        >
+          {expanded ? 'แสดงน้อยลง' : 'ดูตัวชี้วัดเพิ่มเติม'}
+          <span className={`transition-transform ${expanded ? '-rotate-90' : 'rotate-90'}`}>
+            <ChevronRightIcon />
+          </span>
+        </button>
+      )}
+    </div>
   )
 }
 
