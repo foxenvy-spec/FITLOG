@@ -5,6 +5,7 @@ import Image from 'next/image'
 import {
   ResponsiveContainer,
   LineChart,
+  ComposedChart,
   Line,
   XAxis,
   YAxis,
@@ -2070,6 +2071,18 @@ const OVERVIEW_TREND_METRICS: Record<OverviewTrendMetricKey, { label: string; co
   muscle: { label: 'มวลกล้ามเนื้อ', color: '#7FA85F' },
 }
 
+// v38: ฟีดแบ็ก "เส้นกราฟควรมี depth — ไม่ใช่สีส้มบางๆ แบนๆ" — ไล่เฉด (มืด→สี metric เดิม→สว่าง) ทำเส้นแบบ
+// metallic gradient แทนสีเดียวแบน ใช้สี metric เดิมของแต่ละแท็บเป็นฐาน (ไม่ผูกสีทองตายตัวแบบที่แนะนำมา เพราะ
+// การ์ดนี้สลับได้ 3 ตัวชี้วัด สีต้องตามด้วย ไม่ใช่แค่ตอนดูน้ำหนัก) — amt ติดลบ = เข้มขึ้น, บวก = สว่างขึ้น
+function shadeColor(hex: string, amt: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  const r = (n >> 16) & 255
+  const g = (n >> 8) & 255
+  const b = n & 255
+  const f = (c: number) => Math.max(0, Math.min(255, Math.round(amt > 0 ? c + (255 - c) * amt : c + c * amt)))
+  return `rgb(${f(r)}, ${f(g)}, ${f(b)})`
+}
+
 // ฟีดแบ็ก "ให้คะแนน วิเคราะห์" mockup 4 เวอร์ชัน แล้วเลือกทำ "Version 3" — จุดเด่นสุดคือกราฟเทรนด์เป็น
 // พระเอกของหน้า Overview พร้อมสลับช่วงเวลา (7D-1Y) และตัวชี้วัดได้ในตัว — เพิ่มเป็น section ใหม่เหนือ
 // Key Metrics เดิม (ไม่ทุบ IconStatCard grid ที่เพิ่งจัดหมวด Key/Additional Metrics เสร็จตามฟีดแบ็กรอบก่อน)
@@ -2184,6 +2197,22 @@ function OverviewTrendChart({
     return { avg, min: Math.min(...values), max: Math.max(...values) }
   }, [data])
 
+  // v38: ฟีดแบ็ก "เป้าหมาย 60.0 kg อยู่บนหัวการ์ด แต่กราฟไม่มีเส้นเป้าหมายให้เห็นเลย เพราะ target ต่ำกว่า
+  // ช่วงกราฟ" — domain เดิม ['auto','auto'] ของ recharts คำนวณจากแค่ค่าข้อมูลในกราฟ ไม่รู้จัก ReferenceLine
+  // เลยไม่ขยายแกนให้เห็นเส้นเป้าหมายที่อยู่นอกช่วงข้อมูลจริง — คำนวณ domain เองให้ครอบคลุมทั้งข้อมูลและ
+  // เป้าหมาย (ถ้ามี) พร้อม padding กันเส้น/จุดชิดขอบเกินไป
+  const yDomain = useMemo((): [number, number] | ['auto', 'auto'] => {
+    if (!stats) return ['auto', 'auto']
+    let lo = stats.min
+    let hi = stats.max
+    if (goalTarget !== null) {
+      lo = Math.min(lo, goalTarget)
+      hi = Math.max(hi, goalTarget)
+    }
+    const pad = Math.max((hi - lo) * 0.15, 0.5)
+    return [lo - pad, hi + pad]
+  }, [stats, goalTarget])
+
   // v36: จุดที่มี label ค้างอยู่บนกราฟ (ไม่ใช่แค่ hover) — จุดแรก/ต่ำสุด/ล่าสุดเท่านั้น ตามที่เห็นใน mockup
   // (ไม่ใส่ label ทุกจุดจนรก) — ต่ำสุดหาแบบ index แรกที่เจอค่าต่ำสุด กันชนกับจุดแรก/ล่าสุดถ้าเป็นจุดเดียวกัน
   const labelIndices = useMemo(() => {
@@ -2195,22 +2224,41 @@ function OverviewTrendChart({
     return new Set([0, minIdx, data.length - 1])
   }, [data])
 
+  // v38: ฟีดแบ็ก "จุดล่าสุดควรเด่นที่สุด — ● 67.1 kg พร้อม glow เล็กๆ แบบ floating titanium pill" — จุด
+  // ล่าสุดตอนนี้มีทั้งหน่วยต่อท้าย (67.1 kg แทน 67.1 เฉยๆ) และ bullet นำหน้า ส่วนจุดอื่น (แรก/ต่ำสุด) ยังเป็น
+  // ตัวเลขล้วนไม่มีหน่วยเหมือนเดิม (สั้นกว่า อ่านไว กันรก) — บับเบิลจุดล่าสุดกว้างขึ้นให้พอดีกับข้อความที่ยาวขึ้น
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts' LabelList content prop type doesn't expose a usable prop shape to narrow against
   const renderPointLabel = (props: any) => {
     const { x, y, index, value } = props as { x?: number; y?: number; index?: number; value?: number }
     if (x === undefined || y === undefined || index === undefined || value === undefined || !labelIndices.has(index)) return null
     const isLatest = index === data.length - 1
+    const text = isLatest ? `● ${value.toFixed(1)} ${valueUnit}` : value.toFixed(1)
     // v37: ฟีดแบ็ก (จากสกรีนช็อตจริง) "ป้าย 67.x ของจุดล่าสุดโดนตัดที่ขอบขวาการ์ด" — บับเบิลเดิม center
     // ที่ x เป๊ะ (x-21..x+21) ทำให้ครึ่งขวาล้นออกไปนอกกราฟถ้าจุดนั้นอยู่ชิดขอบขวาสุด (จุดล่าสุดเป็นแบบนี้เสมอ) —
     // เฉพาะจุดล่าสุด เลื่อนบับเบิลไปทางซ้ายให้ขอบขวาบับเบิลชนกับจุดพอดีแทนที่จะ center ทับจุด กันล้นขอบ
-    const width = 42
+    const width = isLatest ? 76 : 42
     const rectX = isLatest ? x - width + 6 : x - width / 2
     return (
-      <g>
+      <g style={isLatest ? { filter: `drop-shadow(0 0 4px ${meta.color}aa)` } : undefined}>
         <rect x={rectX} y={y - 28} width={width} height={18} rx={9} fill={isLatest ? meta.color : '#1C1F24'} stroke={isLatest ? 'none' : '#2E333A'} />
         <text x={rectX + width / 2} y={y - 15} textAnchor="middle" fontSize={11} fontFamily="ui-monospace, monospace" fontWeight={600} fill={isLatest ? '#0B0C0E' : '#F3F0E8'}>
-          {value.toFixed(1)}
+          {text}
         </text>
+      </g>
+    )
+  }
+
+  // v38: ฟีดแบ็ก "จุดข้อมูลไม่ต้องใหญ่ แต่ให้มีวงแหวนเรืองแสงบางๆ" — วงกลมทึบเล็กเหมือนเดิม (r 2/3) แต่เพิ่ม
+  // วงแหวนโปร่งแสงล้อมรอบ (opacity ต่ำ) จำลอง glow แทนการใช้ SVG filter blur จริง (เบากว่า เรนเดอร์ไวกว่า)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts' custom dot prop type doesn't expose a usable shape to narrow against
+  const renderDot = (props: any) => {
+    const { cx, cy, index } = props as { cx?: number; cy?: number; index?: number }
+    if (cx === undefined || cy === undefined) return null
+    const isLatest = index === data.length - 1
+    return (
+      <g key={`dot-${index}`}>
+        <circle cx={cx} cy={cy} r={isLatest ? 7 : 5} fill={meta.color} opacity={0.16} />
+        <circle cx={cx} cy={cy} r={isLatest ? 3 : 2} fill={meta.color} />
       </g>
     )
   }
@@ -2294,25 +2342,34 @@ function OverviewTrendChart({
                 </p>
               )}
             </div>
-            {/* v36: สรุปเฉลี่ย/ต่ำสุด/สูงสุดของช่วงที่กำลังดู (ตาม mockup) — คำนวณจาก data ชุดเดียวกับกราฟ */}
+            {/* v38: ฟีดแบ็ก "Summary เล็กกลืนพื้นหลัง — ทำเป็น titanium glass capsule ตัวเลขเด่นกว่า label
+                1.5-2 เท่า" — สลับลำดับเป็นตัวเลขก่อน (text-sm มากกว่า label text-[9px] ~2 เท่า) แล้ว label
+                ใต้ พื้นหลังทำ glass effect (gradient ขาวจางๆ ทับพื้นเข้ม + ขอบสว่างบางๆ) แทน bg-surface เรียบ */}
             {stats && (
-              <div className="flex items-center gap-3 rounded-xl bg-surface border border-line px-3 py-2 text-[11px]">
+              <div
+                className="flex items-center gap-4 rounded-2xl px-4 py-2.5"
+                style={{
+                  background: 'linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))',
+                  border: '1px solid rgba(255,255,255,0.09)',
+                  backdropFilter: 'blur(6px)',
+                }}
+              >
                 <div className="text-center">
-                  <p className="text-muted flex items-center gap-1 justify-center">〜 เฉลี่ย</p>
-                  <p className="font-mono text-ink mt-0.5">
-                    {stats.avg.toFixed(1)} {valueUnit}
+                  <p className="font-mono text-sm text-ink">{stats.avg.toFixed(1)}</p>
+                  <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
+                    เฉลี่ย
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-muted flex items-center gap-1 justify-center">↓ ต่ำสุด</p>
-                  <p className="font-mono text-moss mt-0.5">
-                    {stats.min.toFixed(1)} {valueUnit}
+                  <p className="font-mono text-sm text-moss">{stats.min.toFixed(1)}</p>
+                  <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
+                    ต่ำสุด
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-muted flex items-center gap-1 justify-center">↑ สูงสุด</p>
-                  <p className="font-mono text-rusttext mt-0.5">
-                    {stats.max.toFixed(1)} {valueUnit}
+                  <p className="font-mono text-sm text-rusttext">{stats.max.toFixed(1)}</p>
+                  <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
+                    สูงสุด
                   </p>
                 </div>
               </div>
@@ -2324,9 +2381,31 @@ function OverviewTrendChart({
                   margin.left เดิม -20 ดึงทั้งกราฟ (รวมแกน Y) ล้นไปทางซ้ายเกินขอบการ์ดที่เป็น overflow-hidden
                   (rounded corner) ตัวเลข 2 หลักเลยโดนตัดครึ่งซ้าย — เปลี่ยนเป็น -4 (ยังกระชับกว่า default
                   แต่ไม่ล้นขอบ) และเผื่อ width แกนเพิ่มเล็กน้อย (32→36) กันตัวเลขทศนิยม/2 หลักโดนตัดอีก
-                  ส่วน margin.right เพิ่มเป็น 22 ให้บับเบิลป้ายจุดล่าสุดมีที่ว่างพอ (ดูคอมเมนต์ renderPointLabel) */}
-              <LineChart data={data} margin={{ top: 28, right: 22, left: -4, bottom: 0 }}>
-                <CartesianGrid stroke="#2E333A" vertical={false} />
+                  ส่วน margin.right เพิ่มเป็น 22 ให้บับเบิลป้ายจุดล่าสุดมีที่ว่างพอ (ดูคอมเมนต์ renderPointLabel)
+                  v38: เปลี่ยนจาก LineChart เป็น ComposedChart เพื่อวาง Area (gradient fade ใต้เส้น) กับ Line
+                  (gradient stroke + glow) ซ้อนกันได้ในกราฟเดียว — ดูคอมเมนต์ defs/Area/Line ด้านล่าง */}
+              <ComposedChart data={data} margin={{ top: 28, right: 22, left: -4, bottom: 0 }}>
+                <defs>
+                  {/* v38: ฟีดแบ็ก "เส้นควรมี depth ไม่ใช่สีแบนๆ" — ไล่เฉดมืด→สี metric เดิม→สว่าง แทนสีเดียวแบน
+                      (เห็นชัดสุดตอนเส้นเอียงแนวนอน เพราะ gradient แนวนอนขวางเส้น) ยังใช้สี metric เดิมเป็นฐาน
+                      ไม่ผูกสีทองตายตัว เพราะแท็บนี้สลับได้ 3 ตัวชี้วัด (น้ำหนัก/ไขมัน/กล้ามเนื้อ) */}
+                  <linearGradient id={`trendLineGrad-${metricKey}`} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={shadeColor(meta.color, -0.3)} />
+                    <stop offset="50%" stopColor={meta.color} />
+                    <stop offset="100%" stopColor={shadeColor(meta.color, 0.35)} />
+                  </linearGradient>
+                  {/* v38: ฟีดแบ็ก "ใต้เส้นทำ gradient fade ลงไปประมาณ 20-30%" — โปร่งแสง 26% ที่เส้น ไล่จาง
+                      ลงจนหายไปที่ก้นกราฟ ให้ความรู้สึกมีมวล/depth โดยไม่ทึบจนแข่งกับเส้น */}
+                  <linearGradient id={`trendAreaGrad-${metricKey}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={meta.color} stopOpacity={0.26} />
+                    <stop offset="100%" stopColor={meta.color} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                {/* v38: ฟีดแบ็ก "ลด grid ลง 30-40% — major ~10-12%, minor ~3-5%, แนวตั้งบางแทบมองไม่เห็น" —
+                    เดิม CartesianGrid เดียว stroke ทึบ #2E333A (ไม่มี opacity control, ไม่มีเส้นแนวตั้งเลย)
+                    แยกเป็น 2 ชั้น: แนวนอน (major) opacity 11%, แนวตั้ง (minor) opacity 4% */}
+                <CartesianGrid stroke="#B8BBC2" strokeOpacity={0.11} horizontal vertical={false} />
+                <CartesianGrid stroke="#B8BBC2" strokeOpacity={0.04} horizontal={false} vertical />
                 <XAxis
                   dataKey="label"
                   tick={{ fill: '#9498A0', fontSize: 10 }}
@@ -2337,22 +2416,49 @@ function OverviewTrendChart({
                 />
                 {/* v29: ฟีดแบ็ก "เส้นกราฟเด่นกว่าข้อมูล และตัวเลขแกน Y ค่อนข้างเบา" — สว่างแกน Y ขึ้น
                     (#9498A0 → #B8BBC2 เทียบเท่าระดับ Level 2 ที่ใช้ใน Health Score banner) พร้อมลดความหนา
-                    เส้น (2px → 1.5px) ให้ตัวเลขไม่โดนเส้นกลบ */}
-                <YAxis tick={{ fill: '#B8BBC2', fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={['auto', 'auto']} />
+                    เส้น (2px → 1.5px) ให้ตัวเลขไม่โดนเส้นกลบ
+                    v38: ฟีดแบ็ก "เป้าหมาย 60.0 kg อยู่บนหัวการ์ด แต่กราฟไม่มีเส้นเป้าหมายให้เห็น เพราะ target
+                    ต่ำกว่าช่วงกราฟ — ควรขยาย Y-axis ให้เห็นเส้นเป้าหมายด้วย" — domain เดิม ['auto','auto']
+                    เปลี่ยนเป็น yDomain ที่คำนวณเองครอบคลุมทั้งข้อมูลและเป้าหมาย (ดู yDomain ด้านบน) */}
+                <YAxis tick={{ fill: '#B8BBC2', fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={yDomain} />
                 <Tooltip content={<ChartPointTooltip unit={valueUnit} />} />
-                {/* v36: เส้นเป้าหมายประปราย ตาม mockup — โผล่เฉพาะตอนมี goal target สำหรับตัวชี้วัดที่กำลังดูอยู่ */}
+                {/* v36: เส้นเป้าหมายประปราย ตาม mockup — โผล่เฉพาะตอนมี goal target สำหรับตัวชี้วัดที่กำลังดูอยู่
+                    v38: บางลง (1.5px) และใช้ muted green (#7A9B57 โทนเดียวกับ moss ที่ใช้ทั่วแอป) แทน #8CB264
+                    เดิมที่สดไปหน่อย — ตอนนี้เห็นเส้นจริงในกราฟแล้วเพราะ yDomain ขยายให้ครอบคลุมแล้ว */}
                 {goalTarget !== null && (
                   <ReferenceLine
                     y={goalTarget}
-                    stroke="#8CB264"
+                    stroke="#7A9B57"
+                    strokeWidth={1.5}
+                    strokeOpacity={0.7}
                     strokeDasharray="4 4"
-                    label={{ value: `เป้าหมาย ${goalTarget.toFixed(1)} ${valueUnit}`, position: 'insideTopRight', fill: '#8CB264', fontSize: 10 }}
+                    label={{ value: `🎯 เป้าหมาย ${goalTarget.toFixed(1)} ${valueUnit}`, position: 'insideBottomRight', fill: '#8CB264', fontSize: 10 }}
                   />
                 )}
-                <Line type="monotone" dataKey="value" stroke={meta.color} strokeWidth={1.5} dot={{ r: 2, fill: meta.color }} isAnimationActive={false}>
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="none"
+                  fill={`url(#trendAreaGrad-${metricKey})`}
+                  isAnimationActive={false}
+                  activeDot={false}
+                />
+                {/* v38: ฟีดแบ็ก "เส้นประมาณ 2-2.5px + glow เบาๆ รอบเส้น" — หนาขึ้น 1.5→2.2px, glow ผ่าน
+                    CSS drop-shadow (เบากว่า SVG filter blur จริง, สีเดียวกับเส้นแต่โปร่งแสง ให้รู้สึกเรืองแสง
+                    บางๆ ไม่ใช่ neon เต็มๆ แบบเกม) */}
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={`url(#trendLineGrad-${metricKey})`}
+                  strokeWidth={2.2}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts' dot prop type doesn't accept a custom render function's inferred signature cleanly
+                  dot={renderDot as any}
+                  isAnimationActive={false}
+                  style={{ filter: `drop-shadow(0 0 4px ${meta.color}55)` }}
+                >
                   <LabelList dataKey="value" content={renderPointLabel} />
                 </Line>
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
           {combinedInsight && (
