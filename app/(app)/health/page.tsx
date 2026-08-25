@@ -1782,21 +1782,35 @@ type AdditionalMetricRow = {
   decimals: number
 }
 
-// ไม่มี zone (ไม่มีช่วงมาตรฐานให้เทียบ เช่น มวลไขมัน/มวลกระดูก/BMR) — โชว์เดลต้าแทนแบบเดียวกับที่การ์ด
-// IconStatCard เดิมเคยใช้ ไม่เดา zone ที่ไม่มีข้อมูลรองรับให้
+// v30: ฟีดแบ็ก "Additional Metrics ยังดูแบนกว่าส่วนอื่น...visual hierarchy ยังดูเหมือน table ขณะที่ส่วนอื่น
+// ดู Premium มาก — ไม่จำเป็นต้องเพิ่มกราฟ แค่เพิ่มสถานะ/คำอธิบายเล็กๆ เช่น 🔴 สูงกว่าเกณฑ์/🔵 ปกติ" — เดิมมีแค่
+// ZoneBadge pill เดียว เปลี่ยนเป็นวงกลมสี + ข้อความสถานะเต็ม (บรรทัดแยกใต้ label+value) ให้เข้าภาษาเดียวกับ
+// interpretation line ที่เพิ่งเพิ่มใน Analysis ด้านล่าง — สีวงกลมอิง classifyMetric เดียวกับ ZoneBadge หลัง
+// แก้ปัญหาสีเขียวใช้เยอะเกินไป (🔵 ปกติ, 🟢 เฉพาะ favorable จริง, 🔴 needsWork) ไม่มี zone = โชว์เดลต้าแทน
+// เหมือนเดิม (ไม่เดา zone ที่ไม่มีข้อมูลรองรับ)
 function AdditionalMetricStatus({ zone, direction, delta, deltaUnit, decimals }: Pick<AdditionalMetricRow, 'zone' | 'direction' | 'delta' | 'deltaUnit' | 'decimals'>) {
-  if (zone) return <ZoneBadge zone={zone} direction={direction} />
+  if (zone) {
+    const status = classifyMetric(zone, direction)
+    const dot = status === 'needsWork' ? '🔴' : status === 'good' ? '🟢' : '🔵'
+    const color = status === 'needsWork' ? '#CF715F' : status === 'good' ? '#8CB264' : '#9DA0A8'
+    return (
+      <span className="text-[11px] whitespace-nowrap" style={{ color }}>
+        {dot} {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
+        {ZONE_LABEL_TH[zone]}
+      </span>
+    )
+  }
   if (delta !== null) {
     const good = direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
     const bad = direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
     const cls = good ? 'text-moss' : bad ? 'text-rusttext' : 'text-muted'
     return (
-      <span className={`text-xs font-mono whitespace-nowrap ${cls}`}>
+      <span className={`text-[11px] font-mono whitespace-nowrap ${cls}`}>
         {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)} {deltaUnit}
       </span>
     )
   }
-  return <span className="text-xs text-muted">—</span>
+  return <span className="text-[11px] text-muted">—</span>
 }
 
 // ฟีดแบ็ก "ลด Information Density...ยุบ Additional Metrics เป็นตาราง Metric/Value/Status + View all
@@ -1811,10 +1825,12 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
       <PremiumCard className="px-4 py-1">
         <div className="divide-y divide-line/60">
           {visible.map((r) => (
-            <div key={r.key} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="text-xs text-ink">{r.label}</span>
-              <div className="flex items-center gap-3 shrink-0">
+            <div key={r.key} className="py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-ink">{r.label}</span>
                 <span className="font-mono text-xs tabular text-ink whitespace-nowrap">{r.value}</span>
+              </div>
+              <div className="flex justify-end mt-1">
                 <AdditionalMetricStatus zone={r.zone} direction={r.direction} delta={r.delta} deltaUnit={r.deltaUnit} decimals={r.decimals} />
               </div>
             </div>
@@ -2569,14 +2585,19 @@ function OverviewHealthScoreHeader({
   // ที่จุดเรียกใช้ — คนละฐานเวลากับ changePeriodLabel ที่มาจาก fieldDelta ของแถวไขมัน/กล้ามเนื้อ ซึ่งคือ
   // "ล่าสุด vs ก่อนหน้าล่าสุด" อาจเป็นวัน/สัปดาห์ก็ได้) — ใช้คำที่ตรงกับสิ่งที่คำนวณจริง ("จากเดือนที่แล้ว")
   // แทนการก็อปคำตัวอย่าง "จากสัปดาห์ที่แล้ว" มาเฉยๆ ซึ่งจะไม่ตรงกับข้อมูลจริง
+  // v30: ฟีดแบ็ก "↓ 10 คะแนน คะแนนสุขภาพ · จากเดือนที่แล้ว อยู่ข้าง 90% ดีมาก รู้สึก conflict — ทำไมดีมาก
+  // ถ้าคะแนนลดลง 10? แนะนำ ↓ 10 คะแนน จากเดือนที่แล้ว แล้วเพิ่ม context เช่น ยังอยู่ในระดับดีมาก" — ตัด
+  // label 'คะแนนสุขภาพ' ออก (ซ้ำซ้อนอยู่แล้วเพราะติดกับตัวเลขคะแนนใหญ่ด้านซ้าย) ย้าย 'จากเดือนที่แล้ว' ไปเป็น
+  // label หลักแทน แล้วต่อท้ายด้วย "ยังอยู่ในระดับ{tier}" เฉพาะตอนคะแนนลดแต่ tier ปัจจุบันยังดี (ดี/ดีมาก
+  // เท่านั้น — pct>=65 ตรงกับเกณฑ์ใน healthScoreTier ด้านล่าง) ไม่ใส่ข้อความปลอบใจถ้า tier จริงๆ ไม่ดีแล้ว
   const signals: { label: string; dir: 'up' | 'down'; good: boolean; valueText: string; periodOverride?: string }[] = []
   if (monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0) {
     signals.push({
-      label: 'คะแนนสุขภาพ',
+      label: 'จากเดือนที่แล้ว',
       dir: monthDeltaPct > 0 ? 'up' : 'down',
       good: monthDeltaPct > 0,
       valueText: `${Math.abs(monthDeltaPct)} คะแนน`,
-      periodOverride: 'จากเดือนที่แล้ว',
+      periodOverride: monthDeltaPct < 0 && pct >= 65 ? `ยังอยู่ในระดับ${label}` : undefined,
     })
   }
   if (bodyFatDeltaPct !== null && bodyFatDeltaPct !== 0) {
