@@ -421,16 +421,35 @@ export default function HealthPage() {
     return bmiOf(nonNull[1], profile.height_cm)
   }, [metrics, profile?.height_cm])
 
+  // v29: ฟีดแบ็ก "Weight/Skeletal Muscle เป็น Primary, Fat Mass เป็น Secondary...ผู้ใช้ไม่ควรต้องตีความเอง
+  // ว่าเลขนั้นดีหรือไม่ดี" — เพิ่ม primary (สำหรับความหนาแน่นภาพ) + delta จริง (fieldDelta เดียวกับ Key
+  // Metrics/Health Score ใช้ ไม่คำนวณใหม่) ให้ MuscleFatBarRow สร้างประโยค interpretation เองจาก zone+delta
   const muscleFatItems = useMemo(() => {
-    const defs: { label: string; value: number | null; low: number | null; high: number | null }[] = [
-      { label: 'Weight', value: latest?.weight_kg ?? null, low: latestNonNull('weight_range_low'), high: latestNonNull('weight_range_high') },
+    const defs: { label: string; value: number | null; low: number | null; high: number | null; delta: number | null; primary: boolean }[] = [
+      {
+        label: 'Weight',
+        value: latest?.weight_kg ?? null,
+        low: latestNonNull('weight_range_low'),
+        high: latestNonNull('weight_range_high'),
+        delta: fieldDelta('weight_kg', toDisplay),
+        primary: true,
+      },
       {
         label: 'Skeletal Muscle',
         value: latest?.skeletal_muscle_kg ?? null,
         low: latestNonNull('skeletal_muscle_range_low'),
         high: latestNonNull('skeletal_muscle_range_high'),
+        delta: fieldDelta('skeletal_muscle_kg', toDisplay),
+        primary: true,
       },
-      { label: 'Fat Mass', value: latest?.body_fat_kg ?? null, low: latestNonNull('fat_mass_range_low'), high: latestNonNull('fat_mass_range_high') },
+      {
+        label: 'Fat Mass',
+        value: latest?.body_fat_kg ?? null,
+        low: latestNonNull('fat_mass_range_low'),
+        high: latestNonNull('fat_mass_range_high'),
+        delta: fieldDelta('body_fat_kg', toDisplay),
+        primary: false,
+      },
     ]
     return defs
       .filter((d) => d.value !== null && d.low !== null && d.high !== null && (d.high as number) > (d.low as number))
@@ -439,6 +458,8 @@ export default function HealthPage() {
         value: toDisplay(d.value as number),
         low: toDisplay(d.low as number),
         high: toDisplay(d.high as number),
+        delta: d.delta,
+        primary: d.primary,
       }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metrics, latest, toDisplay])
@@ -1318,11 +1339,18 @@ export default function HealthPage() {
 
           <div className="grid lg:grid-cols-2 gap-4 items-start">
             {(bmi !== null || latest?.body_fat_pct != null) && (
-              <ObesityAnalysisChart bmi={bmi} bodyFatPct={latest?.body_fat_pct ?? null} sex={profile?.sex ?? null} />
+              <ObesityAnalysisChart
+                bmi={bmi}
+                bodyFatPct={latest?.body_fat_pct ?? null}
+                sex={profile?.sex ?? null}
+                bmiDelta={previousBmi !== null && bmi !== null ? bmi - previousBmi : null}
+                bodyFatDelta={bodyFatDeltaForCard}
+                periodLabel={periodLabelOf(latest, metrics[1] ?? null)}
+              />
             )}
 
             {muscleFatItems.length > 0 ? (
-              <MuscleFatAnalysisChart items={muscleFatItems} unit={unit} />
+              <MuscleFatAnalysisChart items={muscleFatItems} unit={unit} periodLabel={periodLabelOf(latest, metrics[1] ?? null)} />
             ) : (
               <PremiumCard className="text-[11px] text-muted px-4 py-3">
                 อยากดูกราฟ Muscle Fat Analysis (น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน เทียบช่วงมาตรฐาน) — กรอกช่วงมาตรฐานจากรายงานเครื่องชั่งในฟอร์มด้านล่าง (ช่อง &quot;ช่วงมาตรฐาน&quot;) สักครั้ง แล้วกราฟจะขึ้นให้อัตโนมัติ
@@ -2070,6 +2098,37 @@ const OVERVIEW_TREND_METRICS: Record<OverviewTrendMetricKey, { label: string; co
 // (คำนวณครั้งเดียวด้วย fieldDelta เดียวกับที่ Health Score header ใช้ ผ่าน props แทนคำนวณซ้ำในนี้) ให้
 // เดลต้า/Insight ในการ์ดนี้เป็น "ค่าเดียวกันเป๊ะ" กับที่ Health Score/Key Metrics แสดงเสมอ ไม่มีทางขัดกันอีก —
 // range selector (7D-1Y) ตอนนี้คุมแค่ "กราฟจะย้อนดูข้อมูลไกลแค่ไหน" ไม่ได้คุมตัวเลขเดลต้า/Insight แล้ว
+// v29: ฟีดแบ็ก "hover/point ควรแสดง 24 Aug / 67.1 kg / +0.6 kg แทนที่จะพยายามแสดง label ทุกจุด" — เดลต้า
+// เป็นแค่การเปลี่ยนแปลงระหว่างจุด ไม่ตัดสินว่าดี/ไม่ดี (ทิศทางที่ "ดี" ต่างกันไปตามตัวชี้วัด/เป้าหมายผู้ใช้
+// ซึ่ง tooltip นี้ไม่รู้บริบทนั้น) เลยใช้สีกลางเสมอ ไม่ใช้เขียว/แดงตามเครื่องหมาย +/- กันสื่อความหมายผิด
+function ChartPointTooltip({
+  active,
+  payload,
+  label,
+  unit,
+}: {
+  active?: boolean
+  payload?: { payload: { value: number; delta: number | null } }[]
+  label?: string
+  unit: string
+}) {
+  if (!active || !payload || payload.length === 0) return null
+  const point = payload[0].payload
+  return (
+    <div style={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+      <p style={{ color: '#9498A0', marginBottom: 2 }}>{label}</p>
+      <p style={{ color: '#F3F0E8', fontWeight: 600 }}>
+        {point.value.toFixed(1)} {unit}
+      </p>
+      {point.delta !== null && (
+        <p style={{ color: '#9DA0A8', marginTop: 2 }}>
+          {point.delta > 0 ? '+' : point.delta < 0 ? '−' : '·'} {Math.abs(point.delta).toFixed(1)} {unit}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function OverviewTrendChart({
   metrics,
   unit,
@@ -2104,7 +2163,10 @@ function OverviewTrendChart({
         : metricKey === 'bodyFat'
           ? filtered.filter((m) => m.body_fat_pct !== null).map((m) => ({ measured_at: m.measured_at, value: m.body_fat_pct as number }))
           : filtered.filter((m) => m.muscle_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.muscle_kg as number) }))
-    return rows.reverse().map((r) => ({ label: shortLabel(r.measured_at), value: r.value }))
+    const reversed = rows.reverse()
+    // v29: ฟีดแบ็ก "hover/point ควรแสดง 24 Aug / 67.1 kg / +0.6 kg แทนที่จะพยายามแสดง label ทุกจุด" — เดลต้า
+    // ต่อจุด (เทียบจุดก่อนหน้าในกราฟเดียวกันเท่านั้น ไม่ใช่ fieldDelta ของทั้งหน้า) ใช้เฉพาะใน tooltip ตอน hover
+    return reversed.map((r, i) => ({ label: shortLabel(r.measured_at), value: r.value, delta: i > 0 ? r.value - reversed[i - 1].value : null }))
   }, [metrics, rangeDays, metricKey, toDisplay])
 
   const latestVal = data.length > 0 ? data[data.length - 1].value : null
@@ -2192,14 +2254,12 @@ function OverviewTrendChart({
                   interval="preserveStartEnd"
                   minTickGap={24}
                 />
-                <YAxis tick={{ fill: '#9498A0', fontSize: 10 }} axisLine={false} tickLine={false} width={32} domain={['auto', 'auto']} />
-                <Tooltip
-                  contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: '#9498A0' }}
-                  itemStyle={{ color: '#F3F0E8' }}
-                  formatter={(v: number) => [`${v.toFixed(1)} ${valueUnit}`, meta.label]}
-                />
-                <Line type="monotone" dataKey="value" stroke={meta.color} strokeWidth={2} dot={{ r: 2, fill: meta.color }} isAnimationActive={false} />
+                {/* v29: ฟีดแบ็ก "เส้นกราฟเด่นกว่าข้อมูล และตัวเลขแกน Y ค่อนข้างเบา" — สว่างแกน Y ขึ้น
+                    (#9498A0 → #B8BBC2 เทียบเท่าระดับ Level 2 ที่ใช้ใน Health Score banner) พร้อมลดความหนา
+                    เส้น (2px → 1.5px) ให้ตัวเลขไม่โดนเส้นกลบ */}
+                <YAxis tick={{ fill: '#B8BBC2', fontSize: 10 }} axisLine={false} tickLine={false} width={32} domain={['auto', 'auto']} />
+                <Tooltip content={<ChartPointTooltip unit={valueUnit} />} />
+                <Line type="monotone" dataKey="value" stroke={meta.color} strokeWidth={1.5} dot={{ r: 2, fill: meta.color }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -2923,10 +2983,16 @@ function ObesityAnalysisChart({
   bmi,
   bodyFatPct,
   sex,
+  bmiDelta,
+  bodyFatDelta,
+  periodLabel,
 }: {
   bmi: number | null
   bodyFatPct: number | null
   sex: 'male' | 'female' | null
+  bmiDelta?: number | null
+  bodyFatDelta?: number | null
+  periodLabel?: string | null
 }) {
   const bf = bodyFatPctRange(sex)
   return (
@@ -2959,6 +3025,9 @@ function ObesityAnalysisChart({
             imageKey="bmiObesity"
             iconKey="bmi"
             direction="neutral"
+            primary={false}
+            delta={bmiDelta}
+            periodLabel={periodLabel}
           />
         )}
         {bmi !== null && bodyFatPct !== null && <div className="border-t border-white/5" />}
@@ -2975,6 +3044,9 @@ function ObesityAnalysisChart({
             imageKey="bodyFatObesity"
             iconKey="fat"
             direction="lowerBetter"
+            delta={bodyFatDelta}
+            deltaUnit="%"
+            periodLabel={periodLabel}
           />
         )}
       </PremiumCard>
@@ -2994,6 +3066,10 @@ function ZoneBarRow({
   imageKey,
   iconKey,
   direction = 'neutral',
+  primary = true,
+  delta,
+  deltaUnit = '',
+  periodLabel,
 }: {
   label: string
   value: number
@@ -3006,18 +3082,37 @@ function ZoneBarRow({
   imageKey?: string
   iconKey?: string
   direction?: Direction
+  // v29: ฟีดแบ็ก "Card ด้านบน 5 ใบยัง 'เท่ากันเกินไป'...ไม่จำเป็นต้องให้ทุก metric มี visual weight เท่ากัน"
+  // — เดิม Obesity Analysis (BMI/Body Fat) ทั้ง 2 แถวเท่ากันหมด ตอนนี้ผู้เรียกกำหนดว่าแถวไหนเป็น
+  // primary (Body Fat) vs secondary (BMI) ได้ — ดีฟอลต์ true (ไม่กระทบจุดเรียกใช้เดิมถ้าไม่ระบุ)
+  primary?: boolean
+  // v29: ฟีดแบ็ก "ผู้ใช้ไม่ควรต้องตีความเองว่าเลขนั้นดีหรือไม่ดี...อยากให้แต่ละ metric มีหนึ่งประโยค
+  // interpretation" — ส่ง delta จริง (fieldDelta เดียวกับที่ Key Metrics/Health Score ใช้) เข้ามา ให้
+  // component คำนวณประโยคเองจาก zone ที่มันคำนวณอยู่แล้ว ไม่ต้องคำนวณ zone ซ้ำสองที่ — ไม่มี delta พอ
+  // (< 0.1 หรือไม่มีข้อมูล) fallback เป็นคำอธิบายโซนเฉยๆ ไม่เดาตัวเลขที่ไม่มี
+  delta?: number | null
+  deltaUnit?: string
+  periodLabel?: string | null
 }) {
   const pct = (v: number) => ((Math.min(Math.max(v, min), max) - min) / (max - min)) * 100
   const lowPct = pct(low)
   const highPct = pct(high)
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
+  const interpretation =
+    delta !== null && delta !== undefined && Math.abs(delta) >= 0.1
+      ? `${delta < 0 ? 'ลดลง' : 'เพิ่มขึ้น'} ${Math.abs(delta).toFixed(decimals)}${deltaUnit}${periodLabel ? ` ${periodLabel}` : ''}`
+      : zone === 'Standard'
+        ? 'อยู่ในช่วงมาตรฐาน'
+        : zone === 'Low'
+          ? 'ต่ำกว่าช่วงมาตรฐาน'
+          : 'สูงกว่าช่วงมาตรฐาน'
 
   return (
-    <div>
+    <div className={primary ? '' : 'opacity-90'}>
       <div className="flex items-center justify-between mb-2">
-        <span className="flex items-center gap-2 text-sm text-ink font-medium">
-          {imageKey && <MetricIconChip iconKey={iconKey ?? 'ruler'} imageKey={imageKey} color="#6C8CA8" size={28} />}
+        <span className={`flex items-center gap-2 text-ink font-medium ${primary ? 'text-sm' : 'text-xs'}`}>
+          {imageKey && <MetricIconChip iconKey={iconKey ?? 'ruler'} imageKey={imageKey} color="#6C8CA8" size={primary ? 28 : 20} />}
           <span className="flex items-center gap-1.5">
             {label}
             <span className="text-muted">
@@ -3026,7 +3121,7 @@ function ZoneBarRow({
           </span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="font-mono text-lg tabular text-ink">
+          <span className={`font-mono tabular text-ink ${primary ? 'text-lg' : 'text-base'}`}>
             {value.toFixed(decimals)}
             {unit && <span className="text-xs text-muted ml-0.5">{unit}</span>}
           </span>
@@ -3036,6 +3131,7 @@ function ZoneBarRow({
           </span>
         </span>
       </div>
+      {interpretation && <p className="text-[11px] text-muted mb-2 -mt-1">{interpretation}</p>}
       <div className="flex text-[10px] mb-1.5">
         <span style={{ width: `${lowPct}%` }} className="truncate text-steel">
           Low
@@ -3069,9 +3165,11 @@ function ZoneBarRow({
 function MuscleFatAnalysisChart({
   items,
   unit,
+  periodLabel,
 }: {
-  items: { label: string; value: number; low: number; high: number }[]
+  items: { label: string; value: number; low: number; high: number; delta: number | null; primary: boolean }[]
   unit: string
+  periodLabel?: string | null
 }) {
   return (
     <section>
@@ -3088,7 +3186,7 @@ function MuscleFatAnalysisChart({
       <PremiumCard className="divide-y divide-white/5">
         {items.map((it) => (
           <div key={it.label} className="p-4">
-            <MuscleFatBarRow {...it} unit={unit} />
+            <MuscleFatBarRow {...it} unit={unit} periodLabel={periodLabel} />
           </div>
         ))}
       </PremiumCard>
@@ -3102,12 +3200,18 @@ function MuscleFatBarRow({
   low,
   high,
   unit,
+  delta,
+  primary = true,
+  periodLabel,
 }: {
   label: string
   value: number
   low: number
   high: number
   unit: string
+  delta?: number | null
+  primary?: boolean
+  periodLabel?: string | null
 }) {
   const span = Math.max(high - low, 0.1)
   const min = low - span * 1.4
@@ -3118,13 +3222,21 @@ function MuscleFatBarRow({
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
   const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel', color: '#6C8CA8', iconKey: 'ruler', direction: 'neutral' as Direction }
+  const interpretation =
+    delta !== null && delta !== undefined && Math.abs(delta) >= 0.1
+      ? `${delta < 0 ? 'ลดลง' : 'เพิ่มขึ้น'} ${Math.abs(delta).toFixed(1)} ${unit}${periodLabel ? ` ${periodLabel}` : ''}`
+      : zone === 'Standard'
+        ? 'อยู่ในช่วงมาตรฐาน'
+        : zone === 'Low'
+          ? 'ต่ำกว่าช่วงมาตรฐาน'
+          : 'สูงกว่าช่วงมาตรฐาน'
 
   return (
-    <div>
+    <div className={primary ? '' : 'opacity-90'}>
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-3">
-          <MetricIconChip iconKey={meta.iconKey} imageKey={meta.imageKey} color={meta.color} size={36} />
-          <span className="flex items-center gap-1.5 text-sm text-ink font-medium">
+          <MetricIconChip iconKey={meta.iconKey} imageKey={meta.imageKey} color={meta.color} size={primary ? 36 : 26} />
+          <span className={`flex items-center gap-1.5 text-ink font-medium ${primary ? 'text-sm' : 'text-xs'}`}>
             {label}
             <span className="text-muted">
               <InfoIcon />
@@ -3132,7 +3244,7 @@ function MuscleFatBarRow({
           </span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="font-mono text-lg tabular text-ink">
+          <span className={`font-mono tabular text-ink ${primary ? 'text-lg' : 'text-base'}`}>
             {value.toFixed(1)}
             <span className="text-xs text-muted ml-0.5">{unit}</span>
           </span>
@@ -3142,7 +3254,7 @@ function MuscleFatBarRow({
           </span>
         </span>
       </div>
-      <p className="text-[11px] text-steel mb-1.5 ml-12">Low {low.toFixed(1)}</p>
+      <p className="text-[11px] text-muted mb-1.5 ml-12">{interpretation}</p>
       <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
         <div className="absolute inset-y-0 bg-steel/70" style={{ left: 0, width: `${lowPct}%` }} />
         <div className="absolute inset-y-0 bg-moss/70" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />

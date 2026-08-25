@@ -523,6 +523,10 @@ export interface Insight {
   icon: string
   title: string
   detail: string
+  // v29: ฟีดแบ็ก "Insight ควรเรียงจาก ต้องแก้ → ควรรู้ → ทำได้ดี ไม่ใช่แค่ positive/warning 2 ระดับ" — ใช้
+  // เฉพาะ computeHealthTrendInsights (lib/healthInsights.ts) ตอนนี้ ตัวสร้าง insight อื่น (เช่น
+  // computeVolumeTrendInsights ด้านล่าง) ไม่ใส่ก็ได้ ไม่บังคับ (optional) เพื่อไม่กระทบจุดใช้เดิม
+  tier?: 'attention' | 'watch' | 'good'
 }
 
 // เทียบเซ็ตต่อกลุ่มกล้ามเนื้อของสัปดาห์นี้กับสัปดาห์ที่แล้ว แจ้งเฉพาะกลุ่มที่วอลุ่มเพิ่มขึ้นชัดเจน (>=15%)

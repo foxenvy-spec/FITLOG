@@ -7,6 +7,16 @@ const KIND_STYLE: Record<Insight['kind'], { border: string; accent: string; chip
   warning: { border: 'border-l-rust', accent: 'text-rusttext', chipBg: '#C1503A22', chipColor: '#C1503A' },
 }
 
+// v29: ฟีดแบ็ก "Insight ควรเรียงจาก ต้องแก้ → ควรรู้ → ทำได้ดี ให้เป็น Coach ไม่ใช่แค่ Report" — insight.tier
+// (มีเฉพาะจุดที่มาจาก computeHealthTrendInsights ตอนนี้ — insight producer อื่น เช่น
+// computeVolumeTrendInsights ไม่ได้ใส่ tier มา = undefined = ใช้ KIND_STYLE เดิมเป๊ะ ไม่กระทบ) แทนที่
+// border/accent/chip เดิมด้วยชุดสี 3 ระดับ พร้อม label แทนคำว่า "Insight" เฉยๆ ให้เห็นความสำคัญทันที
+const TIER_STYLE: Record<'attention' | 'watch' | 'good', { border: string; accent: string; chipBg: string; chipColor: string; label: string }> = {
+  attention: { border: 'border-l-rust', accent: 'text-rusttext', chipBg: '#C1503A22', chipColor: '#C1503A', label: '🔴 ควรแก้' },
+  watch: { border: 'border-l-amber', accent: 'text-amber', chipBg: '#E8A33D22', chipColor: '#E8A33D', label: '🟡 ควรติดตาม' },
+  good: { border: 'border-l-moss', accent: 'text-moss', chipBg: '#7A9B5722', chipColor: '#7A9B57', label: '🟢 ทำได้ดี' },
+}
+
 export default function InsightCard({
   insight,
   showChevron = false,
@@ -22,7 +32,8 @@ export default function InsightCard({
   // ลำดับความสำคัญ: imageSrc > metricIcon > emoji ของ insight เดิม
   metricIcon?: MetricIconName
 }) {
-  const style = KIND_STYLE[insight.kind]
+  const tierStyle = insight.tier ? TIER_STYLE[insight.tier] : null
+  const style = tierStyle ?? KIND_STYLE[insight.kind]
   return (
     <div className={`rounded-lg bg-surface border border-line shadow-elevated border-l-[3px] ${style.border} px-4 py-3 flex items-start gap-3`}>
       {imageSrc ? (
@@ -47,7 +58,7 @@ export default function InsightCard({
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] tracked uppercase text-muted">Insight</p>
+        <p className="text-[10px] tracked uppercase text-muted">{tierStyle ? tierStyle.label : 'Insight'}</p>
         <p className={`font-display text-sm tracked uppercase mt-0.5 ${style.accent}`}>{insight.title}</p>
         <p className="text-xs text-muted mt-0.5">{insight.detail}</p>
       </div>
