@@ -3212,8 +3212,13 @@ function IconStatCard({
           : undefined
       }
     >
+      {/* v26: ฟีดแบ็ก "ทำ Secondary Cards ให้เรียบกว่า Primary Cards...ตัวเลขควรเป็น visual anchor มากกว่า
+          icon" (Priority 4) — tier 1 (Weight/Body Fat/Muscle Mass) คือ Primary การ์ดในสายตาผู้ใช้ตอนนี้
+          (แม้ไม่ได้ใช้ primary prop ที่เป็นเลย์เอาต์ 2x2 แล้วก็ตาม — ดูคอมเมนต์จุดที่ตัด series ออกด้านบน)
+          เก็บไอคอน/ตัวเลขขนาดเดิมไว้ ส่วน tier 2/3 (BMI/Body Water — การ์ดรองที่เหลือใน Key Metrics) ลด
+          ขนาดไอคอนลง ให้ตัวเลขเด่นกว่าไอคอนตามที่ขอ ไม่กระทบการ์ด tier 1 หรือการ์ดอื่นนอกหน้านี้เลย */}
       <div className={`flex items-start gap-2 ${primary ? 'mb-2.5' : 'mb-2'}`}>
-        <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : 32} />
+        <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : tier >= 2 ? 22 : 32} />
         <div className="min-w-0">
           {/* ฟีดแบ็ก "ชื่อไทยบาง Card ขึ้น 2-3 บรรทัด (โปรตีนในร่างกาย, ดัชนีมวลกาย) พื้นที่การ์ดแคบไป —
               ควรลด font size แทนปล่อยให้ตัดคำรก" — ลดจาก text-xs (12px) เหลือ 11px เฉพาะการ์ดไม่ใช่ primary
@@ -3331,8 +3336,11 @@ function IconStatCard({
         <div>
           {/* v21: ฟีดแบ็ก "ตัวเลขหลักของ Cards เล็กเกินไปเมื่อเทียบกับ Weight...แนะนำ Cards เล็กใช้ตัวเลข
               ประมาณ 30-34px อย่างสม่ำเสมอ...จะทำให้ผู้ใช้เข้าใจทันทีว่า Weight = ข้อมูลหลัก, Metrics อื่น =
-              ข้อมูลสนับสนุน" — จาก text-xl (20px) เป็น text-3xl (30px) */}
-          <p className="font-mono tabular text-ink shrink-0 whitespace-nowrap text-3xl">
+              ข้อมูลสนับสนุน" — จาก text-xl (20px) เป็น text-3xl (30px)
+              v26: ฟีดแบ็ก "ทำ Secondary Cards ให้เรียบกว่า Primary Cards" (Priority 4) — ลดอีกขั้นเฉพาะ
+              tier 2/3 (text-3xl 30px → text-2xl 24px) ให้การ์ด tier 1 (Weight/Body Fat/Muscle Mass) ยังคง
+              เป็นตัวเลขใหญ่สุดในกริดเหมือนเดิม สร้างลำดับชั้นด้วยขนาด ไม่ต้องพึ่ง layout 2x2 แบบ primary เดิม */}
+          <p className={`font-mono tabular text-ink shrink-0 whitespace-nowrap ${tier >= 2 ? 'text-2xl' : 'text-3xl'}`}>
             {value !== null && value !== undefined ? value.toFixed(decimals) : '—'}
             {unit && <span className="text-muted ml-1 text-xs">{unit}</span>}
           </p>
