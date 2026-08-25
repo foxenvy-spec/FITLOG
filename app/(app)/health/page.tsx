@@ -1026,10 +1026,14 @@ export default function HealthPage() {
   // v19: ฟีดแบ็ก "เพิ่ม Progress เล็กๆ ใต้เป้าหมาย — เส้นบางๆ 2-3px ผู้ใช้จะเห็นทันทีว่ากำลังเข้าใกล้เป้าหมาย
   // แทนที่จะต้องคำนวณเองจากตัวเลข" — ใช้ goalProgressPct() ที่มีอยู่แล้ว (การ์ด "เป้าหมายของคุณ" ด้านล่างใช้
   // ตัวเดียวกันอยู่แล้ว ไม่ได้คำนวณซ้ำแบบใหม่) ไม่ต้องเพิ่ม field/ที่มาข้อมูลใหม่
+  // v25: ฟีดแบ็ก "อยากให้เห็น 67.1 → 60.0 kg ไม่ใช่แค่ 60.0 kg เฉยๆ — เห็นทั้งจุดเริ่มและเป้าหมายพร้อมกัน
+  // อ่านเป็น progress ทันทีโดยไม่ต้องคำนวณเอง" — ใส่ค่าปัจจุบัน (latest) นำหน้าลูกศรเมื่อมีข้อมูล ไม่มี = แสดง
+  // แค่เป้าหมายเหมือนเดิม (พฤติกรรมเดิม กันพังตอนยังไม่มี metric ล่าสุด)
   const goalRows: { valueText: string; label: string; subText: string | null; progressPct: number | null }[] = []
   if (weightGoal?.target_value != null) {
+    const targetText = `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`
     goalRows.push({
-      valueText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`,
+      valueText: latest?.weight_kg != null ? `${toDisplay(latest.weight_kg).toFixed(1)} → ${targetText}` : targetText,
       label: 'น้ำหนักเป้าหมาย',
       subText:
         latest?.weight_kg != null
@@ -1040,8 +1044,9 @@ export default function HealthPage() {
   }
   if (bodyFatGoalForBanner?.target_value != null) {
     const bodyFatDiff = latest?.body_fat_pct != null ? latest.body_fat_pct - bodyFatGoalForBanner.target_value : null
+    const bodyFatTargetText = `${bodyFatGoalForBanner.target_value.toFixed(1)}%`
     goalRows.push({
-      valueText: `${bodyFatGoalForBanner.target_value.toFixed(1)}%`,
+      valueText: latest?.body_fat_pct != null ? `${latest.body_fat_pct.toFixed(1)}% → ${bodyFatTargetText}` : bodyFatTargetText,
       label: 'Body Fat เป้าหมาย',
       // ฟีดแบ็ก "เป้าหมายควรให้ความรู้สึกเป็น Progress ไม่ใช่รายงานข้อมูล — เหลือ 6.3 kg / เหลืออีก 1.9%
       // Body Fat อ่านง่ายกว่า" — เดิม "ลดอีก X% / เพิ่มอีก X%" แยกคำตามทิศทาง ตอนนี้รวมเป็น "เหลืออีก X%"
@@ -2536,19 +2541,21 @@ function OverviewHealthScoreHeader({
             <div className="flex flex-col gap-2">
               {goalRows.map((g) => (
                 <div key={g.label}>
-                  <p className="font-mono font-semibold text-sm text-ink leading-none">{g.valueText}</p>
+                  <p className="font-mono font-semibold text-sm text-ink leading-none whitespace-nowrap">{g.valueText}</p>
                   {g.subText && (
                     <p className="text-xs whitespace-nowrap mt-1" style={{ color: '#8CB264' }}>
                       {g.subText}
                     </p>
                   )}
-                  {/* ฟีดแบ็ก "เพิ่ม Progress เล็กๆ ใต้เป้าหมาย — เส้นบางๆ 2-3px ผู้ใช้จะเห็นทันทีว่ากำลังเข้าใกล้
-                      เป้าหมาย แทนที่จะต้องคำนวณเองจากตัวเลข ไม่ต้องทำใหญ่" — ใช้ progressPct ที่คำนวณมาจาก
-                      goalProgressPct() แล้ว (จุดเรียกใช้ด้านบน) สีทอง/อำพันตามความหมายสี "Orange/Gold =
-                      Goal/Achievement" ที่ขอไว้ */}
+                  {/* v25: ฟีดแบ็ก "อยากให้ progress เป็น visual มากขึ้น เช่นแถบยาว + '41% toward goal' ชัดๆ
+                      ไม่ใช่แค่เส้นบางๆ" — ขยายแถบจาก 3px เป็น 6px (ยังเป็นสไตล์ progress bar เดิม ไม่ใช่
+                      ปุ่ม CTA) พร้อมข้อความเปอร์เซ็นต์กำกับใต้แถบ (คำเดียวกับที่ใช้ทั่วแอป "ความคืบหน้า") */}
                   {g.progressPct !== null && (
-                    <div className="h-[3px] w-24 rounded-full bg-white/10 overflow-hidden mt-1">
-                      <div className="h-full rounded-full bg-amber" style={{ width: `${g.progressPct}%` }} />
+                    <div className="mt-1.5">
+                      <div className="h-1.5 w-28 rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-full rounded-full bg-amber" style={{ width: `${g.progressPct}%` }} />
+                      </div>
+                      <p className="text-[10px] text-muted mt-1">คืบหน้า {Math.round(g.progressPct)}%</p>
                     </div>
                   )}
                 </div>
