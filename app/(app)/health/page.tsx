@@ -2197,21 +2197,34 @@ function OverviewTrendChart({
     return { avg, min: Math.min(...values), max: Math.max(...values) }
   }, [data])
 
-  // v38: ฟีดแบ็ก "เป้าหมาย 60.0 kg อยู่บนหัวการ์ด แต่กราฟไม่มีเส้นเป้าหมายให้เห็นเลย เพราะ target ต่ำกว่า
-  // ช่วงกราฟ" — domain เดิม ['auto','auto'] ของ recharts คำนวณจากแค่ค่าข้อมูลในกราฟ ไม่รู้จัก ReferenceLine
-  // เลยไม่ขยายแกนให้เห็นเส้นเป้าหมายที่อยู่นอกช่วงข้อมูลจริง — คำนวณ domain เองให้ครอบคลุมทั้งข้อมูลและ
-  // เป้าหมาย (ถ้ามี) พร้อม padding กันเส้น/จุดชิดขอบเกินไป
-  const yDomain = useMemo((): [number, number] | ['auto', 'auto'] => {
-    if (!stats) return ['auto', 'auto']
+  // v39: ฟีดแบ็ก "Y-axis พัง เห็นเลขแปลกๆ (9999, 1.935, 1.935, 3.935)" — สาเหตุจริงคือ v38 คำนวณ domain
+  // จากตัวเลขทศนิยมตรงๆ (เช่น lo=58.935) แล้วปล่อยให้ recharts auto-generate tick ระหว่างขอบเขตทศนิยมพวกนั้น
+  // เอง (default tickCount 5, หารเท่าๆ กันไม่ลงตัว) ได้ tick เป็นเลขทศนิยมยาวๆ ไม่ลงตัว (เช่น 61.2425) ซึ่ง
+  // ยาวเกินความกว้างแกนจนโดนตัดบางส่วน อ่านไม่ออก — แก้ที่ต้นตอ: ปัด domain ให้เป็นเลขจำนวนเต็มก่อน (floor/
+  // ceil) แล้วสร้าง ticks เองเป็นขั้นละ 1 หน่วย (kg/%) ให้เป็นเลขกลมเสมอ ไม่ยกให้ recharts เดาระยะห่าง tick เอง
+  // อีกต่อไป — ฟีดแบ็ก "อย่าใช้ scale แคบเกินไป กราฟ 65.8→67.1 ดูใหญ่เกินจริง" ก็แก้ไปพร้อมกันในตัว เพราะ
+  // domain ที่ครอบคลุมถึง goal (60) ทำให้ช่วงกว้างขึ้นเป็น ~8-10 หน่วยอยู่แล้ว ไม่แคบจนเกินจริงอีกต่อไป
+  const yDomain = useMemo((): [number, number] | undefined => {
+    if (!stats) return undefined
     let lo = stats.min
     let hi = stats.max
     if (goalTarget !== null) {
       lo = Math.min(lo, goalTarget)
       hi = Math.max(hi, goalTarget)
     }
-    const pad = Math.max((hi - lo) * 0.15, 0.5)
-    return [lo - pad, hi + pad]
+    const pad = Math.max((hi - lo) * 0.15, 1)
+    return [Math.floor(lo - pad), Math.ceil(hi + pad)]
   }, [stats, goalTarget])
+
+  const yTicks = useMemo(() => {
+    if (!yDomain) return undefined
+    const [lo, hi] = yDomain
+    const range = hi - lo
+    const step = range <= 10 ? 1 : range <= 20 ? 2 : range <= 50 ? 5 : Math.ceil(range / 10 / 10) * 10
+    const ticks: number[] = []
+    for (let v = lo; v <= hi + 0.001; v += step) ticks.push(v)
+    return ticks
+  }, [yDomain])
 
   // v36: จุดที่มี label ค้างอยู่บนกราฟ (ไม่ใช่แค่ hover) — จุดแรก/ต่ำสุด/ล่าสุดเท่านั้น ตามที่เห็นใน mockup
   // (ไม่ใส่ label ทุกจุดจนรก) — ต่ำสุดหาแบบ index แรกที่เจอค่าต่ำสุด กันชนกับจุดแรก/ล่าสุดถ้าเป็นจุดเดียวกัน
@@ -2238,10 +2251,21 @@ function OverviewTrendChart({
     // เฉพาะจุดล่าสุด เลื่อนบับเบิลไปทางซ้ายให้ขอบขวาบับเบิลชนกับจุดพอดีแทนที่จะ center ทับจุด กันล้นขอบ
     const width = isLatest ? 76 : 42
     const rectX = isLatest ? x - width + 6 : x - width / 2
+    // v39: ฟีดแบ็ก "pill สีทองทึบดูหนักไป — เปลี่ยนเป็น Dark Titanium + gold border บางๆ จะดู premium กว่า"
+    // เปลี่ยนจาก fill ทึบสี meta.color เป็น fill เข้มเหมือนจุดอื่น + stroke สี meta.color บางๆ แทน
     return (
-      <g style={isLatest ? { filter: `drop-shadow(0 0 4px ${meta.color}aa)` } : undefined}>
-        <rect x={rectX} y={y - 28} width={width} height={18} rx={9} fill={isLatest ? meta.color : '#1C1F24'} stroke={isLatest ? 'none' : '#2E333A'} />
-        <text x={rectX + width / 2} y={y - 15} textAnchor="middle" fontSize={11} fontFamily="ui-monospace, monospace" fontWeight={600} fill={isLatest ? '#0B0C0E' : '#F3F0E8'}>
+      <g style={isLatest ? { filter: `drop-shadow(0 0 6px ${meta.color}66)` } : undefined}>
+        <rect
+          x={rectX}
+          y={y - 28}
+          width={width}
+          height={18}
+          rx={9}
+          fill="#14161A"
+          stroke={isLatest ? meta.color : '#2E333A'}
+          strokeWidth={isLatest ? 1.25 : 1}
+        />
+        <text x={rectX + width / 2} y={y - 15} textAnchor="middle" fontSize={11} fontFamily="ui-monospace, monospace" fontWeight={600} fill={isLatest ? meta.color : '#F3F0E8'}>
           {text}
         </text>
       </g>
@@ -2344,29 +2368,34 @@ function OverviewTrendChart({
             </div>
             {/* v38: ฟีดแบ็ก "Summary เล็กกลืนพื้นหลัง — ทำเป็น titanium glass capsule ตัวเลขเด่นกว่า label
                 1.5-2 เท่า" — สลับลำดับเป็นตัวเลขก่อน (text-sm มากกว่า label text-[9px] ~2 เท่า) แล้ว label
-                ใต้ พื้นหลังทำ glass effect (gradient ขาวจางๆ ทับพื้นเข้ม + ขอบสว่างบางๆ) แทน bg-surface เรียบ */}
+                ใต้ พื้นหลังทำ glass effect (gradient ขาวจางๆ ทับพื้นเข้ม + ขอบสว่างบางๆ) แทน bg-surface เรียบ
+                v39: ฟีดแบ็ก "ยังดูลอยอยู่เฉยๆ — ลด border รอบนอกให้บางลง (rgba(255,255,255,.06)) แล้วเพิ่ม
+                divider บางมากคั่นระหว่าง 3 คอลัมน์แทน ไม่ควรมี border ชัดเกินไป" — border รอบนอก 0.09→0.06,
+                เพิ่ม divider เส้นตั้งบางๆ (0.06 เท่ากัน) คั่นระหว่างเฉลี่ย/ต่ำสุด/สูงสุด */}
             {stats && (
               <div
-                className="flex items-center gap-4 rounded-2xl px-4 py-2.5"
+                className="flex items-stretch rounded-2xl px-4 py-2.5"
                 style={{
                   background: 'linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))',
-                  border: '1px solid rgba(255,255,255,0.09)',
+                  border: '1px solid rgba(255,255,255,0.06)',
                   backdropFilter: 'blur(6px)',
                 }}
               >
-                <div className="text-center">
+                <div className="text-center px-3">
                   <p className="font-mono text-sm text-ink">{stats.avg.toFixed(1)}</p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     เฉลี่ย
                   </p>
                 </div>
-                <div className="text-center">
+                <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <div className="text-center px-3">
                   <p className="font-mono text-sm text-moss">{stats.min.toFixed(1)}</p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     ต่ำสุด
                   </p>
                 </div>
-                <div className="text-center">
+                <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <div className="text-center px-3">
                   <p className="font-mono text-sm text-rusttext">{stats.max.toFixed(1)}</p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     สูงสุด
@@ -2394,10 +2423,10 @@ function OverviewTrendChart({
                     <stop offset="50%" stopColor={meta.color} />
                     <stop offset="100%" stopColor={shadeColor(meta.color, 0.35)} />
                   </linearGradient>
-                  {/* v38: ฟีดแบ็ก "ใต้เส้นทำ gradient fade ลงไปประมาณ 20-30%" — โปร่งแสง 26% ที่เส้น ไล่จาง
-                      ลงจนหายไปที่ก้นกราฟ ให้ความรู้สึกมีมวล/depth โดยไม่ทึบจนแข่งกับเส้น */}
+                  {/* v39: ฟีดแบ็ก "ไม่ต้องทองเต็มพื้นที่หนักๆ ให้เป็นแค่ประมาณ 10-15% ด้านบน → 0% ด้านล่าง จะดู
+                      แพงกว่า" — ลดจาก 26% ที่เคยใช้ (v38) ลงเหลือ 13% */}
                   <linearGradient id={`trendAreaGrad-${metricKey}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={meta.color} stopOpacity={0.26} />
+                    <stop offset="0%" stopColor={meta.color} stopOpacity={0.13} />
                     <stop offset="100%" stopColor={meta.color} stopOpacity={0} />
                   </linearGradient>
                 </defs>
@@ -2420,19 +2449,31 @@ function OverviewTrendChart({
                     v38: ฟีดแบ็ก "เป้าหมาย 60.0 kg อยู่บนหัวการ์ด แต่กราฟไม่มีเส้นเป้าหมายให้เห็น เพราะ target
                     ต่ำกว่าช่วงกราฟ — ควรขยาย Y-axis ให้เห็นเส้นเป้าหมายด้วย" — domain เดิม ['auto','auto']
                     เปลี่ยนเป็น yDomain ที่คำนวณเองครอบคลุมทั้งข้อมูลและเป้าหมาย (ดู yDomain ด้านบน) */}
-                <YAxis tick={{ fill: '#B8BBC2', fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={yDomain} />
+                {/* v39: allowDecimals={false} + ticks ที่คำนวณเองเป็นเลขจำนวนเต็มขั้นละ 1 หน่วยเสมอ (ดู
+                    yTicks ด้านบน) กันไม่ให้ recharts auto-generate tick เป็นทศนิยมยาวๆ ไม่ลงตัวอีก */}
+                <YAxis
+                  tick={{ fill: '#B8BBC2', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={36}
+                  domain={yDomain ?? ['auto', 'auto']}
+                  ticks={yTicks}
+                  allowDecimals={false}
+                />
                 <Tooltip content={<ChartPointTooltip unit={valueUnit} />} />
                 {/* v36: เส้นเป้าหมายประปราย ตาม mockup — โผล่เฉพาะตอนมี goal target สำหรับตัวชี้วัดที่กำลังดูอยู่
                     v38: บางลง (1.5px) และใช้ muted green (#7A9B57 โทนเดียวกับ moss ที่ใช้ทั่วแอป) แทน #8CB264
-                    เดิมที่สดไปหน่อย — ตอนนี้เห็นเส้นจริงในกราฟแล้วเพราะ yDomain ขยายให้ครอบคลุมแล้ว */}
+                    เดิมที่สดไปหน่อย — ตอนนี้เห็นเส้นจริงในกราฟแล้วเพราะ yDomain ขยายให้ครอบคลุมแล้ว
+                    v39: ฟีดแบ็ก "เขียวเป้าหมายอย่าสดเกิน จะหลุดจาก Dark Titanium — ใช้ #7FAF72" — เปลี่ยนตาม
+                    เฉดที่ระบุมาเป๊ะ */}
                 {goalTarget !== null && (
                   <ReferenceLine
                     y={goalTarget}
-                    stroke="#7A9B57"
+                    stroke="#7FAF72"
                     strokeWidth={1.5}
                     strokeOpacity={0.7}
                     strokeDasharray="4 4"
-                    label={{ value: `🎯 เป้าหมาย ${goalTarget.toFixed(1)} ${valueUnit}`, position: 'insideBottomRight', fill: '#8CB264', fontSize: 10 }}
+                    label={{ value: `🎯 เป้าหมาย ${goalTarget.toFixed(1)} ${valueUnit}`, position: 'insideBottomRight', fill: '#7FAF72', fontSize: 10 }}
                   />
                 )}
                 <Area
@@ -2445,7 +2486,9 @@ function OverviewTrendChart({
                 />
                 {/* v38: ฟีดแบ็ก "เส้นประมาณ 2-2.5px + glow เบาๆ รอบเส้น" — หนาขึ้น 1.5→2.2px, glow ผ่าน
                     CSS drop-shadow (เบากว่า SVG filter blur จริง, สีเดียวกับเส้นแต่โปร่งแสง ให้รู้สึกเรืองแสง
-                    บางๆ ไม่ใช่ neon เต็มๆ แบบเกม) */}
+                    บางๆ ไม่ใช่ neon เต็มๆ แบบเกม)
+                    v39: ฟีดแบ็ก "glow blur 8-12px / opacity 15-20%" — ปรับจาก blur 4px/opacity ~33% (v38)
+                    ตามตัวเลขที่ระบุมาเป๊ะ (blur 8px, opacity ~18%) */}
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -2454,7 +2497,7 @@ function OverviewTrendChart({
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts' dot prop type doesn't accept a custom render function's inferred signature cleanly
                   dot={renderDot as any}
                   isAnimationActive={false}
-                  style={{ filter: `drop-shadow(0 0 4px ${meta.color}55)` }}
+                  style={{ filter: `drop-shadow(0 0 8px ${meta.color}2e)` }}
                 >
                   <LabelList dataKey="value" content={renderPointLabel} />
                 </Line>
