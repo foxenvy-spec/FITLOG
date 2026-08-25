@@ -1,0 +1,164 @@
+import type { BodyMetric } from './types'
+
+// v32: ฟีดแบ็ก "Health Score ที่ดี = แปลงข้อมูลต่อเนื่องเป็นคะแนน 0-100 แบบ trapezoid (อยู่ในช่วง ideal =
+// 100, ยิ่งห่างยิ่งลดแบบเส้นตรง) แทน pass/fail แบบเดิม (23.9 → 100, 25.1 → 0 ทั้งที่ต่างกันนิดเดียว)" —
+// เอนจิ้นคะแนนสุขภาพเวอร์ชันใหม่ทั้งหมด: Body Composition 40% (Body Fat 50/BMI 20/Visceral Fat 20 —
+// Waist 10% ข้ามไปก่อน ไม่มี threshold มาตรฐานในระบบ, redistribute ให้ 3 ตัวที่เหลือ) + Muscle 25%
+// (Muscle Mass 60/Skeletal Muscle 40) + Metabolic Health 20% (Visceral Fat 40/Body Age 30 — BMR 30% ข้าม
+// เหตุผลเดียวกับ Waist) + Progress 15% (Weight/Body Fat/Muscle เทียบค่าก่อนหน้าล่าสุด) — ไม่มี Hydration
+// ในคะแนนหลักแล้วตามที่ตกลง ทุกน้ำหนัก/สูตรมาจากที่ผู้ใช้ออกแบบไว้ตรงๆ ไม่ได้เดาเอง
+
+export type ScoreDirection = 'lowerBetter' | 'higherBetter'
+
+// ค่าที่ "ดี" อยู่ตรงกลาง (อยู่ในช่วง [low,high] = 100 เต็ม) ยิ่งเบี่ยงออกจากช่วงยิ่งลดแบบเส้นตรง ไปแตะ 0
+// ที่ min/max — ใช้กับตัวชี้วัดที่ทั้งต่ำไปและสูงไปแย่ทั้งคู่ (Body Fat, BMI)
+export function trapezoidScore(value: number, min: number, low: number, high: number, max: number): number {
+  if (value >= low && value <= high) return 100
+  if (value < low) {
+    if (value <= min) return 0
+    return ((value - min) / (low - min)) * 100
+  }
+  if (value >= max) return 0
+  return ((max - value) / (max - high)) * 100
+}
+
+// ยิ่งสูงยิ่งดี ไม่มีเพดานโทษ (ไม่แตะ 0 อีกฝั่งถ้าค่าสูงเกินไป) — value <= floor = 0, value >= good = 100
+export function higherBetterScore(value: number, floor: number, good: number): number {
+  if (value >= good) return 100
+  if (value <= floor) return 0
+  return ((value - floor) / (good - floor)) * 100
+}
+
+// ยิ่งต่ำยิ่งดี ไม่มีเพดานโทษฝั่งต่ำ — value <= good = 100, value >= ceiling = 0
+export function lowerBetterScore(value: number, good: number, ceiling: number): number {
+  if (value <= good) return 100
+  if (value >= ceiling) return 0
+  return ((ceiling - value) / (ceiling - good)) * 100
+}
+
+export interface WeightedInput {
+  weight: number
+  score: number | null
+}
+
+// ไม่มีข้อมูล (score: null) = ตัวนั้นหลุดออกจากการคำนวณ แล้ว normalize น้ำหนักที่เหลือใหม่โดยอัตโนมัติ
+// (ผลรวมน้ำหนักไม่ต้องเท่ากับ 100 พอดีก็ได้ — หารด้วยผลรวมจริงของตัวที่มีข้อมูลเสมอ) ไม่มีตัวไหนมีข้อมูลเลย = null
+export function weightedAverage(inputs: WeightedInput[]): number | null {
+  const available = inputs.filter((i): i is { weight: number; score: number } => i.score !== null)
+  const total = available.reduce((s, i) => s + i.weight, 0)
+  if (total === 0) return null
+  return available.reduce((s, i) => s + i.score * i.weight, 0) / total
+}
+
+// คะแนนความคืบหน้าจากเดลต้าจริง (ไม่ใช่ pass/fail "ขยับถูกทาง y/n" แบบเดิมของ trendScorePct) — ไม่เปลี่ยนแปลง
+// เลย = 50 (กลาง) ขยับถูกทาง = ไล่ขึ้นถึง 100 ขยับผิดทาง = ไล่ลงถึง 0 ตาม magnitude เทียบหน่วยอ้างอิง `unit`
+// (ครบ 1 unit เต็มในทิศทางใดทิศทางหนึ่ง = สุดสเกล 0 หรือ 100) — unit เป็นค่าที่เลือกเองให้สมเหตุสมผลต่อหน่วย
+// (เช่น 2kg สำหรับน้ำหนัก, 2 percentage point สำหรับไขมัน) ไม่มีเกณฑ์การแพทย์ตายตัวมารองรับตัวเลขนี้โดยตรง
+export function progressScore(delta: number | null, direction: ScoreDirection, unit: number): number | null {
+  if (delta === null) return null
+  const signedGood = direction === 'higherBetter' ? delta : -delta
+  const magnitude = Math.max(-1, Math.min(1, signedGood / unit))
+  return 50 + magnitude * 50
+}
+
+// เกณฑ์ %ไขมันในร่างกาย — ซ้ำกับ bodyFatPctRange ใน app/(app)/health/page.tsx โดยตั้งใจ (ไฟล์นั้น import
+// จากที่นี่แทนแล้ว ดูจุด import ในไฟล์นั้น) เก็บไว้ในนี้เพราะ compute*Score ทุกตัวต้องใช้ ให้ lib/healthScore.ts
+// ทดสอบเป็นเอกเทศได้โดยไม่ต้อง import จากไฟล์หน้า
+export function bodyFatPctRange(sex: 'male' | 'female' | null): { min: number; low: number; high: number; max: number } {
+  if (sex === 'male') return { min: 2, low: 10, high: 20, max: 40 }
+  return { min: 8, low: 18, high: 28, max: 48 }
+}
+
+export interface HealthScoreCategory {
+  title: string
+  pct: number
+}
+
+export interface HealthScoreResult {
+  overall: number
+  categories: HealthScoreCategory[]
+}
+
+export interface HealthScoreRanges {
+  skeletalMuscleLow: number | null
+  skeletalMuscleHigh: number | null
+  muscleLow: number | null
+  muscleHigh: number | null
+  bodyAgeLow: number | null
+  bodyAgeHigh: number | null
+}
+
+export function computeHealthScore(params: {
+  row: BodyMetric | null
+  // เอนทรีก่อนหน้า `row` ทันที (ไม่จำเป็นต้องเป็น metrics[1] เป๊ะ — ถ้า row มาจาก history อื่น prevRow ก็ควร
+  // เป็นเอนทรีก่อนหน้าของ history นั้น) ใช้คำนวณ Progress เท่านั้น ไม่มี = หมวด Progress หลุด (redistribute)
+  prevRow: BodyMetric | null
+  bmi: number | null
+  sex: 'male' | 'female' | null
+  ranges: HealthScoreRanges
+  // ทิศทาง "ดีขึ้น" ของน้ำหนัก — อ้างอิงเป้าหมายที่ตั้งไว้ถ้ามี ไม่มี = lowerBetter (ดีฟอลต์เดิมของทั้งแอป)
+  weightDirection: ScoreDirection
+}): HealthScoreResult | null {
+  const { row, prevRow, bmi, sex, ranges, weightDirection } = params
+  if (!row) return null
+
+  const bf = bodyFatPctRange(sex)
+  const bodyFatComp = row.body_fat_pct != null ? trapezoidScore(row.body_fat_pct, bf.min, bf.low, bf.high, bf.max) : null
+  const bmiComp = bmi != null ? trapezoidScore(bmi, 10, 18.5, 25, 40) : null
+  const visceralComp = row.visceral_fat_grade != null ? lowerBetterScore(row.visceral_fat_grade, 9, 30) : null
+  const bodyComposition = weightedAverage([
+    { weight: 50, score: bodyFatComp },
+    { weight: 20, score: bmiComp },
+    { weight: 20, score: visceralComp },
+  ])
+
+  const muscleMassComp =
+    row.muscle_kg != null && ranges.muscleLow != null && ranges.muscleHigh != null
+      ? higherBetterScore(row.muscle_kg, ranges.muscleLow - (ranges.muscleHigh - ranges.muscleLow), ranges.muscleLow)
+      : null
+  const skeletalComp =
+    row.skeletal_muscle_kg != null && ranges.skeletalMuscleLow != null && ranges.skeletalMuscleHigh != null
+      ? higherBetterScore(
+          row.skeletal_muscle_kg,
+          ranges.skeletalMuscleLow - (ranges.skeletalMuscleHigh - ranges.skeletalMuscleLow),
+          ranges.skeletalMuscleLow
+        )
+      : null
+  const muscle = weightedAverage([
+    { weight: 60, score: muscleMassComp },
+    { weight: 40, score: skeletalComp },
+  ])
+
+  const bodyAgeComp =
+    row.body_age_years != null && ranges.bodyAgeLow != null && ranges.bodyAgeHigh != null
+      ? lowerBetterScore(row.body_age_years, ranges.bodyAgeLow, ranges.bodyAgeHigh)
+      : null
+  const metabolic = weightedAverage([
+    { weight: 40, score: visceralComp },
+    { weight: 30, score: bodyAgeComp },
+  ])
+
+  const weightDelta = row.weight_kg != null && prevRow?.weight_kg != null ? row.weight_kg - prevRow.weight_kg : null
+  const bodyFatDelta = row.body_fat_pct != null && prevRow?.body_fat_pct != null ? row.body_fat_pct - prevRow.body_fat_pct : null
+  const muscleDelta = row.muscle_kg != null && prevRow?.muscle_kg != null ? row.muscle_kg - prevRow.muscle_kg : null
+  const progress = weightedAverage([
+    { weight: 30, score: progressScore(weightDelta, weightDirection, 2) },
+    { weight: 40, score: progressScore(bodyFatDelta, 'lowerBetter', 2) },
+    { weight: 30, score: progressScore(muscleDelta, 'higherBetter', 0.3) },
+  ])
+
+  const categories: HealthScoreCategory[] = []
+  if (bodyComposition !== null) categories.push({ title: 'BODY COMPOSITION', pct: Math.round(bodyComposition) })
+  if (muscle !== null) categories.push({ title: 'MUSCLE', pct: Math.round(muscle) })
+  if (metabolic !== null) categories.push({ title: 'METABOLIC HEALTH', pct: Math.round(metabolic) })
+  if (progress !== null) categories.push({ title: 'PROGRESS', pct: Math.round(progress) })
+
+  const overall = weightedAverage([
+    { weight: 40, score: bodyComposition },
+    { weight: 25, score: muscle },
+    { weight: 20, score: metabolic },
+    { weight: 15, score: progress },
+  ])
+  if (overall === null) return null
+  return { overall: Math.round(overall), categories }
+}

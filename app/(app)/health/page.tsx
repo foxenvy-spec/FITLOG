@@ -19,7 +19,8 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import GoalRing from '@/components/GoalRing'
 import InsightCard from '@/components/InsightCard'
 import type { Insight } from '@/lib/dashboardStats'
-import { zoneOf, classifyMetric, summarizeHealthScore, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
+import { zoneOf, classifyMetric, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
+import { computeHealthScore, type HealthScoreRanges, type HealthScoreResult, type ScoreDirection } from '@/lib/healthScore'
 import { periodLabelOf } from '@/lib/bodyMetricsSummary'
 import { saveAge } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
@@ -714,122 +715,96 @@ export default function HealthPage() {
     [waistTrend, chestTrend, armTrend, thighTrend]
   )
 
-  // สรุปภาพรวม (วงแหวน + ดีมาก/มาตรฐาน/ควรปรับปรุง) — จำแนกตัวชี้วัดของแถวข้อมูลใดๆ เทียบกับช่วงมาตรฐาน
-  // แยกเป็นฟังก์ชันเพื่อใช้ซ้ำได้ทั้งกับ "ค่าล่าสุดจริง" และ "ค่าเมื่อประมาณ 1 เดือนก่อน" (ดูคะแนนเปลี่ยนแปลงย้อนหลัง)
-  function computeScoreItems(row: BodyMetric | null, rowBmi: number | null) {
-    const items: { label: string; status: 'good' | 'standard' | 'needsWork' }[] = []
-    if (row?.weight_kg != null && weightRangeLow !== null && weightRangeHigh !== null) {
-      items.push({ label: 'น้ำหนัก', status: classifyMetric(zoneOf(row.weight_kg, weightRangeLow, weightRangeHigh), 'neutral') })
-    }
-    if (row?.body_fat_pct != null) {
-      const bfRange = bodyFatPctRange(profile?.sex ?? null)
-      items.push({ label: 'ไขมันในร่างกาย', status: classifyMetric(zoneOf(row.body_fat_pct, bfRange.low, bfRange.high), 'lowerBetter') })
-    }
-    if (row?.skeletal_muscle_kg != null && skeletalRangeLow !== null && skeletalRangeHigh !== null) {
-      items.push({
-        label: 'กล้ามเนื้อโครงร่าง',
-        status: classifyMetric(zoneOf(row.skeletal_muscle_kg, skeletalRangeLow, skeletalRangeHigh), 'higherBetter'),
-      })
-    }
-    if (row?.body_fat_kg != null && fatMassRangeLow !== null && fatMassRangeHigh !== null) {
-      items.push({ label: 'มวลไขมัน', status: classifyMetric(zoneOf(row.body_fat_kg, fatMassRangeLow, fatMassRangeHigh), 'lowerBetter') })
-    }
-    if (rowBmi !== null) {
-      items.push({ label: 'BMI', status: classifyMetric(zoneOf(rowBmi, 18.5, 25), 'neutral') })
-    }
-    if (row?.visceral_fat_grade != null) {
-      items.push({ label: 'ไขมันช่องท้อง', status: classifyMetric(zoneOf(row.visceral_fat_grade, 1, 9), 'lowerBetter') })
-    }
-    if (row?.muscle_kg != null && muscleRangeLow !== null && muscleRangeHigh !== null) {
-      items.push({ label: 'มวลกล้ามเนื้อ', status: classifyMetric(zoneOf(row.muscle_kg, muscleRangeLow, muscleRangeHigh), 'higherBetter') })
-    }
-    if (row?.body_age_years != null && bodyAgeRangeLow !== null && bodyAgeRangeHigh !== null) {
-      items.push({ label: 'อายุร่างกาย', status: classifyMetric(zoneOf(row.body_age_years, bodyAgeRangeLow, bodyAgeRangeHigh), 'lowerBetter') })
-    }
-    if (row?.body_water_kg != null && row?.weight_kg != null) {
-      const zone = bodyWaterPctZone(row.body_water_kg, row.weight_kg, profile?.sex ?? null)
-      if (zone) items.push({ label: 'น้ำในร่างกาย', status: classifyMetric(zone, 'higherBetter') })
-    }
-    if (row?.inorganic_salt_kg != null && saltRangeLow !== null && saltRangeHigh !== null) {
-      items.push({ label: 'เกลือแร่', status: classifyMetric(zoneOf(row.inorganic_salt_kg, saltRangeLow, saltRangeHigh), 'neutral') })
-    }
-    if (row?.protein_kg != null) {
-      const lbm = lbmOf(row)
-      const zone = lbm != null ? proteinPctZone(row.protein_kg, lbm, profile?.sex ?? null) : null
-      if (zone) items.push({ label: 'โปรตีน', status: classifyMetric(zone, 'higherBetter') })
-    }
-    if (row?.bone_mass_kg != null && boneMassRangeLow !== null && boneMassRangeHigh !== null) {
-      items.push({ label: 'มวลกระดูก', status: classifyMetric(zoneOf(row.bone_mass_kg, boneMassRangeLow, boneMassRangeHigh), 'neutral') })
-    }
-    return items
-  }
+  // ทิศทางที่ "ดีขึ้น" ของน้ำหนัก/BMI อ้างอิงจากเป้าหมายน้ำหนักที่ตั้งไว้ (ถ้ามี): ถ้าเป้าหมายต่ำกว่าจุดเริ่มต้นคือลดน้ำหนัก, สูงกว่าคือเพิ่มน้ำหนัก
+  // ถ้ายังไม่ได้ตั้งเป้าหมาย ใช้ค่าเริ่มต้นเป็น "ลดน้ำหนักคือดีขึ้น" ซึ่งเป็นกรณีที่พบบ่อยที่สุด — ย้ายมาไว้ก่อน
+  // engine คะแนนสุขภาพใหม่ (เดิมอยู่หลังจุดนี้) เพราะตอนนี้ต้องใช้ weightDirection คำนวณหมวด Progress ด้วย
+  const weightGoal = goals.find((g) => g.goal_type === 'weight' && g.status === 'active')
+  const weightDirection: Direction =
+    weightGoal && weightGoal.target_value !== null && weightGoal.starting_value !== null
+      ? weightGoal.target_value < weightGoal.starting_value
+        ? 'lowerBetter'
+        : weightGoal.target_value > weightGoal.starting_value
+          ? 'higherBetter'
+          : 'neutral'
+      : 'lowerBetter'
 
-  const healthScoreItems = useMemo(
-    () => computeScoreItems(latest, bmi),
-    [
-      latest,
-      bmi,
-      profile?.sex,
-      weightRangeLow,
-      weightRangeHigh,
-      skeletalRangeLow,
-      skeletalRangeHigh,
-      fatMassRangeLow,
-      fatMassRangeHigh,
-      muscleRangeLow,
-      muscleRangeHigh,
-      bodyAgeRangeLow,
-      bodyAgeRangeHigh,
-      saltRangeLow,
-      saltRangeHigh,
-      boneMassRangeLow,
-      boneMassRangeHigh,
-    ]
+  // v32: ฟีดแบ็ก "สูตร Health Score ที่ผู้ใช้ออกแบบ — Body Composition 40% (Body Fat 50/BMI 20/Visceral
+  // Fat 20, Waist 10% ข้ามไปก่อนไม่มี threshold มาตรฐาน) + Muscle 25% (Muscle Mass 60/Skeletal Muscle 40)
+  // + Metabolic Health 20% (Visceral Fat 40/Body Age 30, BMR 30% ข้ามเหตุผลเดียวกัน) + Progress 15%
+  // (Weight/Body Fat/Muscle เทียบเอนทรีก่อนหน้า) — แทนที่ pass/fail เดิม (computeScoreItems) ทั้งหมด เอนจิ้น
+  // จริงอยู่ที่ lib/healthScore.ts (มีเทสต์ครบ) ไฟล์นี้แค่ประกอบ ranges จากข้อมูลจริงแล้วเรียกใช้
+  const healthScoreRanges: HealthScoreRanges = {
+    skeletalMuscleLow: skeletalRangeLow,
+    skeletalMuscleHigh: skeletalRangeHigh,
+    muscleLow: muscleRangeLow,
+    muscleHigh: muscleRangeHigh,
+    bodyAgeLow: bodyAgeRangeLow,
+    bodyAgeHigh: bodyAgeRangeHigh,
+  }
+  // computeHealthScore รับแค่ lowerBetter/higherBetter (ไม่มี neutral) — กรณี weightDirection เป็น neutral
+  // (เป้าหมายน้ำหนักตั้งค่าเป้าหมาย = จุดเริ่มต้นเป๊ะ กรณีหายากมาก) fallback เป็น lowerBetter เหมือนดีฟอลต์เดิม
+  const scoreWeightDirection: ScoreDirection = weightDirection === 'higherBetter' ? 'higherBetter' : 'lowerBetter'
+
+  const healthScoreResult = useMemo(
+    () =>
+      computeHealthScore({ row: latest, prevRow: metrics[1] ?? null, bmi, sex: profile?.sex ?? null, ranges: healthScoreRanges, weightDirection: scoreWeightDirection }),
+    [latest, metrics, bmi, profile?.sex, healthScoreRanges, scoreWeightDirection]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   )
 
   // แถวข้อมูลที่ใกล้เคียง "1 เดือนก่อน" มากที่สุด (ล่าสุดที่บันทึกไว้ ณ หรือก่อนวันนั้น) — ใช้เทียบคะแนนสุขภาพย้อนหลัง
-  const oneMonthAgoMetric = useMemo(() => {
+  const oneMonthAgoIndex = useMemo(() => {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 30)
     const offset = cutoff.getTimezoneOffset()
     const cutoffStr = new Date(cutoff.getTime() - offset * 60000).toISOString().slice(0, 10)
-    return metrics.find((m) => m.measured_at <= cutoffStr && m.id !== latest?.id) ?? null
+    return metrics.findIndex((m) => m.measured_at <= cutoffStr && m.id !== latest?.id)
   }, [metrics, latest?.id])
-
+  const oneMonthAgoMetric = oneMonthAgoIndex >= 0 ? metrics[oneMonthAgoIndex] : null
   const previousBmiForScore = bmiOf(oneMonthAgoMetric?.weight_kg ?? null, profile?.height_cm ?? null)
 
-  const healthScoreItemsPrevMonth = useMemo(
-    () => (oneMonthAgoMetric ? computeScoreItems(oneMonthAgoMetric, previousBmiForScore) : []),
-    [oneMonthAgoMetric, previousBmiForScore]
+  const healthScoreResultPrevMonth = useMemo(
+    () =>
+      oneMonthAgoMetric
+        ? computeHealthScore({
+            row: oneMonthAgoMetric,
+            prevRow: oneMonthAgoIndex >= 0 ? metrics[oneMonthAgoIndex + 1] ?? null : null,
+            bmi: previousBmiForScore,
+            sex: profile?.sex ?? null,
+            ranges: healthScoreRanges,
+            weightDirection: scoreWeightDirection,
+          })
+        : null,
+    [oneMonthAgoMetric, oneMonthAgoIndex, metrics, previousBmiForScore, profile?.sex, healthScoreRanges, scoreWeightDirection]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   )
-  const healthScorePrevMonth = useMemo(() => summarizeHealthScore(healthScoreItemsPrevMonth), [healthScoreItemsPrevMonth])
 
-  // ผลต่างคะแนนสุขภาพเทียบเดือนที่แล้ว เป็นเปอร์เซ็นต์แต้ม (กันกรณีจำนวนตัวชี้วัดที่มีข้อมูลในแต่ละช่วงไม่เท่ากัน)
+  // ผลต่างคะแนนสุขภาพเทียบเดือนที่แล้ว — ทั้งคู่เป็นคะแนนรวม 0-100 จากสูตรเดียวกันอยู่แล้ว ลบตรงๆ ได้เลย
   const healthScoreMonthDeltaPct =
-    oneMonthAgoMetric && healthScorePrevMonth.total > 0 && healthScoreItems.length > 0
-      ? Math.round((healthScoreItems.filter((i) => i.status !== 'needsWork').length / healthScoreItems.length) * 100) -
-        Math.round((healthScorePrevMonth.score / healthScorePrevMonth.total) * 100)
-      : null
-
-  const healthScore = useMemo(() => summarizeHealthScore(healthScoreItems), [healthScoreItems])
+    healthScoreResult && healthScoreResultPrevMonth ? healthScoreResult.overall - healthScoreResultPrevMonth.overall : null
 
   // เปอร์เซ็นต์ไทล์ของคะแนนวันนี้ เทียบกับ "ประวัติคะแนนของตัวเองย้อนหลัง" (ไม่ใช่เทียบกับผู้ใช้คนอื่น
   // เพราะแอปนี้ยังไม่มีข้อมูลรวมของผู้ใช้ทุกคนให้เทียบแบบนั้นได้จริง) ต้องมีประวัติอย่างน้อย 6 ครั้งถึงจะมีความหมาย
   const healthScorePercentile = useMemo(() => {
+    if (!healthScoreResult) return null
     const history = metrics
-      .map((m) => {
-        const items = computeScoreItems(m, bmiOf(m.weight_kg, profile?.height_cm ?? null))
-        return items.length > 0 ? (items.filter((i) => i.status !== 'needsWork').length / items.length) * 100 : null
-      })
+      .map((m, i) =>
+        computeHealthScore({
+          row: m,
+          prevRow: metrics[i + 1] ?? null,
+          bmi: bmiOf(m.weight_kg, profile?.height_cm ?? null),
+          sex: profile?.sex ?? null,
+          ranges: healthScoreRanges,
+          weightDirection: scoreWeightDirection,
+        })
+      )
+      .map((r) => r?.overall ?? null)
       .filter((v): v is number => v !== null)
-    if (history.length < 6 || healthScore.total === 0) return null
-    const currentPct = (healthScore.score / healthScore.total) * 100
-    const beatCount = history.filter((v) => v <= currentPct).length
+    if (history.length < 6) return null
+    const beatCount = history.filter((v) => v <= healthScoreResult.overall).length
     return Math.max(1, Math.min(100, Math.round((beatCount / history.length) * 100)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metrics, profile?.height_cm, healthScore])
+  }, [metrics, profile?.height_cm, profile?.sex, healthScoreResult, healthScoreRanges, scoreWeightDirection])
 
   // Insight ที่คำนวณจากการเปลี่ยนแปลงจริงในช่วงเวลาที่เลือกดู (ไม่ใช่คำแนะนำทั่วไปที่ไม่มีข้อมูลรองรับ)
   const healthInsights: Insight[] = useMemo(() => {
@@ -849,18 +824,6 @@ export default function HealthPage() {
     if (goal.goal_type === 'body_fat') return latest?.body_fat_pct ?? null
     return null
   }
-
-  // ทิศทางที่ "ดีขึ้น" ของน้ำหนัก/BMI อ้างอิงจากเป้าหมายน้ำหนักที่ตั้งไว้ (ถ้ามี): ถ้าเป้าหมายต่ำกว่าจุดเริ่มต้นคือลดน้ำหนัก, สูงกว่าคือเพิ่มน้ำหนัก
-  // ถ้ายังไม่ได้ตั้งเป้าหมาย ใช้ค่าเริ่มต้นเป็น "ลดน้ำหนักคือดีขึ้น" ซึ่งเป็นกรณีที่พบบ่อยที่สุด
-  const weightGoal = goals.find((g) => g.goal_type === 'weight' && g.status === 'active')
-  const weightDirection: Direction =
-    weightGoal && weightGoal.target_value !== null && weightGoal.starting_value !== null
-      ? weightGoal.target_value < weightGoal.starting_value
-        ? 'lowerBetter'
-        : weightGoal.target_value > weightGoal.starting_value
-          ? 'higherBetter'
-          : 'neutral'
-      : 'lowerBetter'
 
   function goalProgressPct(goal: Goal): number | null {
     const current = goalCurrentValue(goal)
@@ -968,27 +931,9 @@ export default function HealthPage() {
           ? 'ไขมันลดลงต่อเนื่อง'
           : 'ไขมันเพิ่มขึ้น ลองเพิ่มคาร์ดิโอ'
 
-  // ฟีดแบ็ก "Health Score 90% ต้องสัมพันธ์กับข้อมูลด้านล่าง — อยากให้กด Score แล้วเห็น Breakdown เป็นหมวด
-  // (Body Composition/Metabolic Health/Muscle/Hydration/Trend) พร้อมคะแนนย่อย" — 4 หมวดแรกรวมจาก
-  // healthScoreItems ที่มีอยู่แล้ว (จัดหมวดตาม label ใน OverviewHealthScoreHeader) ส่วน "Trend" คำนวณแยก
-  // ที่นี่ เพราะเป็นคนละมิติ (ทิศทางการเปลี่ยนแปลงล่าสุด ไม่ใช่ตำแหน่งเทียบช่วงมาตรฐาน ณ ปัจจุบัน) — สัดส่วน
-  // ตัวชี้วัดที่ "ขยับไปทางที่ดี" เทียบกับค่าก่อนหน้า จากตัวชี้วัดหลักที่มีทิศทางชัดเจน (ไม่รวม neutral)
-  const trendScoreDefs: { field: keyof BodyMetric; direction: Direction; toDisplayFn?: (v: number) => number }[] = [
-    { field: 'weight_kg', direction: weightDirection, toDisplayFn: toDisplay },
-    { field: 'body_fat_pct', direction: 'lowerBetter' },
-    { field: 'muscle_kg', direction: 'higherBetter', toDisplayFn: toDisplay },
-    { field: 'body_fat_kg', direction: 'lowerBetter', toDisplayFn: toDisplay },
-    { field: 'skeletal_muscle_kg', direction: 'higherBetter', toDisplayFn: toDisplay },
-    { field: 'body_age_years', direction: 'lowerBetter' },
-    { field: 'visceral_fat_grade', direction: 'lowerBetter' },
-  ]
-  const trackedTrends = trendScoreDefs
-    .map((d) => ({ delta: fieldDelta(d.field, d.toDisplayFn), direction: d.direction }))
-    .filter((d): d is { delta: number; direction: Direction } => d.delta !== null && d.direction !== 'neutral')
-  const trendScorePct =
-    trackedTrends.length === 0
-      ? null
-      : Math.round((trackedTrends.filter((d) => (d.direction === 'higherBetter' ? d.delta > 0 : d.delta < 0)).length / trackedTrends.length) * 100)
+  // v32: trendScorePct (สัดส่วนตัวชี้วัดที่ "ขยับไปทางที่ดี" แบบ pass/fail) ถูกแทนที่ด้วยหมวด PROGRESS
+  // ในเอนจิ้นคะแนนสุขภาพใหม่แล้ว (healthScoreResult.categories — คำนวณแบบ magnitude-aware ไม่ใช่แค่ y/n)
+  // ไม่ต้องคำนวณแยกซ้ำอีกต่อไป
 
   // ฟีดแบ็ก "พื้นที่ด้านขวาของ Health Score ยังว่างค่อนข้างเยอะ — อยากได้สรุปประโยคเดียวแทนที่จะเพิ่ม metric
   // อีกตัว จะทำให้ Health Score กลายเป็น Insight ไม่ใช่แค่คะแนน" — ใช้ delta ไขมัน/กล้ามเนื้อที่มีอยู่แล้ว
@@ -1191,15 +1136,13 @@ export default function HealthPage() {
         // ทั้งแท็บ ร่วมกับลด padding/gap ของการ์ดใน grid ด้านล่าง (ดูคอมเมนต์ตรงนั้น) แทนการตัดเนื้อหาออก
         <div className="space-y-5">
           <OverviewHealthScoreHeader
-            score={healthScore}
-            items={healthScoreItems}
+            result={healthScoreResult}
             monthDeltaPct={healthScoreMonthDeltaPct}
             bodyFatDeltaPct={fieldDelta('body_fat_pct')}
             muscleMassDelta={fieldDelta('muscle_kg', toDisplay)}
             goalRows={goalRows}
             updatedDateLabel={latestDateTime?.date ?? null}
             updatedTimeLabel={latestDateTime?.time ?? null}
-            trendScorePct={trendScorePct}
             unit={unit}
             summary={bodyCompositionSummary}
             changePeriodLabel={periodLabelOf(latest, metrics[1] ?? null)}
@@ -1564,7 +1507,7 @@ export default function HealthPage() {
             </div>
 
             <div className="space-y-4">
-              <HealthScoreCard score={healthScore} monthDeltaPct={healthScoreMonthDeltaPct} selfPercentile={healthScorePercentile} />
+              <HealthScoreCard result={healthScoreResult} monthDeltaPct={healthScoreMonthDeltaPct} selfPercentile={healthScorePercentile} />
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -2521,32 +2464,22 @@ function healthScoreTier(pct: number): { label: string; color: string } {
 // จริง ไม่ใช่ข้อความสำเร็จรูปที่ขึ้นเสมอ (ถ้าไขมันเพิ่มขึ้นจริงจะขึ้น "ไขมันเพิ่ม" สีแดง ไม่ใช่ทำเนียนเป็นข่าวดี)
 // วันที่วัดล่าสุด/เป้าหมายน้ำหนัก ยังดูได้ตามปกติจากป้ายวันที่ที่ header บนสุดของหน้า และการ์ด "เป้าหมายของคุณ"
 // ในแท็บ "แนวโน้ม" อยู่แล้ว ไม่ต้องพูดซ้ำสองที่
-// ฟีดแบ็ก "Health Score 90% ต้องสัมพันธ์กับข้อมูลด้านล่าง — อยากให้กด Score แล้วเห็น Breakdown เป็นหมวด
-// (Body Composition/Metabolic Health/Muscle/Hydration) พร้อมคะแนนย่อย" — จัดกลุ่ม healthScoreItems (มีอยู่
-// แล้ว จาก computeScoreItems) ตาม label เข้า 4 หมวดนี้ ไม่ต้องคำนวณคะแนนย่อยใหม่ทั้งหมด แค่รวมยอดต่อหมวด
-const HEALTH_SCORE_CATEGORIES: { title: string; labels: string[] }[] = [
-  { title: 'BODY COMPOSITION', labels: ['น้ำหนัก', 'BMI', 'ไขมันในร่างกาย', 'มวลไขมัน'] },
-  { title: 'METABOLIC HEALTH', labels: ['ไขมันช่องท้อง', 'อายุร่างกาย'] },
-  { title: 'MUSCLE', labels: ['กล้ามเนื้อโครงร่าง', 'มวลกล้ามเนื้อ', 'โปรตีน', 'มวลกระดูก'] },
-  { title: 'HYDRATION', labels: ['น้ำในร่างกาย', 'เกลือแร่'] },
-]
-
 function OverviewHealthScoreHeader({
-  score,
-  items,
+  result,
   monthDeltaPct,
   bodyFatDeltaPct,
   muscleMassDelta,
   goalRows,
   updatedDateLabel,
   updatedTimeLabel,
-  trendScorePct,
   unit,
   summary,
   changePeriodLabel,
 }: {
-  score: { good: number; standard: number; needsWork: number; total: number; score: number }
-  items: { label: string; status: 'good' | 'standard' | 'needsWork' }[]
+  // v32: แทนที่ score/items/trendScorePct เดิม (pass/fail summarizeHealthScore) ด้วยผลลัพธ์จาก
+  // computeHealthScore ตรงๆ — result.categories คือหมวดคะแนนพร้อมใช้ (Body Composition/Muscle/Metabolic
+  // Health/Progress) ไม่ต้องจัดกลุ่ม items เองในนี้อีกต่อไป
+  result: HealthScoreResult | null
   monthDeltaPct?: number | null
   bodyFatDeltaPct: number | null
   muscleMassDelta: number | null
@@ -2558,7 +2491,6 @@ function OverviewHealthScoreHeader({
   // ที่มีแค่วันที่บรรทัดเดียว
   updatedDateLabel: string | null
   updatedTimeLabel: string | null
-  trendScorePct: number | null
   unit: string
   // v8: ฟีดแบ็ก "พื้นที่ด้านขวาของ Health Score ยังว่างค่อนข้างเยอะ — อยากได้สรุปประโยคเดียวแทน metric อีกตัว
   // จะทำให้ Health Score กลายเป็น Insight ไม่ใช่แค่คะแนน" — คำนวณที่จุดเรียกใช้ (มีข้อมูล delta/เป้าหมาย
@@ -2570,8 +2502,8 @@ function OverviewHealthScoreHeader({
   changePeriodLabel: string | null
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false)
-  if (score.total === 0) return null
-  const pct = (score.score / score.total) * 100
+  if (!result) return null
+  const pct = result.overall
   const { label, color: ringColor } = healthScoreTier(pct)
 
   // ป้าย signal ต่อการ์ด — v3: ฟีดแบ็ก "อยากได้ Chip แบบ Apple (✔ Fat ↓)" เปลี่ยนจากวลีสำเร็จรูปที่ผูก
@@ -2607,14 +2539,7 @@ function OverviewHealthScoreHeader({
     signals.push({ label: 'กล้ามเนื้อ', dir: muscleMassDelta > 0 ? 'up' : 'down', good: muscleMassDelta > 0, valueText: `${Math.abs(muscleMassDelta).toFixed(1)} ${unit}` })
   }
 
-  const categoryRows = HEALTH_SCORE_CATEGORIES.map((c) => {
-    const catItems = items.filter((i) => c.labels.includes(i.label))
-    if (catItems.length === 0) return null
-    return { title: c.title, pct: Math.round((catItems.filter((i) => i.status !== 'needsWork').length / catItems.length) * 100) }
-  }).filter((r): r is { title: string; pct: number } => r !== null)
-  if (trendScorePct !== null && trendScorePct !== undefined) {
-    categoryRows.push({ title: 'TREND', pct: trendScorePct })
-  }
+  const categoryRows = result.categories
 
   return (
     <div
@@ -2815,20 +2740,20 @@ function OverviewHealthScoreHeader({
 }
 
 function HealthScoreCard({
-  score,
+  result,
   monthDeltaPct,
   selfPercentile,
 }: {
-  score: { good: number; standard: number; needsWork: number; total: number; score: number }
+  result: HealthScoreResult | null
   monthDeltaPct?: number | null
   selfPercentile?: number | null
 }) {
-  const pct = score.total > 0 ? (score.score / score.total) * 100 : 0
+  const pct = result?.overall ?? 0
   const { label, color: ringColor } = healthScoreTier(pct)
   return (
     <PremiumCard className="p-4">
       <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คะแนนสุขภาพรวม</h2>
-      {score.total === 0 ? (
+      {!result ? (
         <p className="text-[11px] text-muted">กรอกช่วงมาตรฐานในฟอร์มบันทึกข้อมูล เพื่อดูคะแนนสุขภาพตรงนี้</p>
       ) : (
         <div className="flex items-center gap-4">
