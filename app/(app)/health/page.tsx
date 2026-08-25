@@ -2052,25 +2052,57 @@ function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[
   const meta = OVERVIEW_TREND_METRICS[metricKey]
   const valueUnit = metricKey === 'bodyFat' ? '%' : unit
 
-  const data = useMemo(() => {
+  const rangeMetrics = useMemo(() => {
     const since = new Date()
     since.setDate(since.getDate() - rangeDays)
     const offset = since.getTimezoneOffset()
     const sinceStr = new Date(since.getTime() - offset * 60000).toISOString().slice(0, 10)
-    const filtered = metrics.filter((m) => m.measured_at >= sinceStr)
+    return metrics.filter((m) => m.measured_at >= sinceStr)
+  }, [metrics, rangeDays])
+
+  const data = useMemo(() => {
     const rows =
       metricKey === 'weight'
-        ? filtered.filter((m) => m.weight_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.weight_kg as number) }))
+        ? rangeMetrics.filter((m) => m.weight_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.weight_kg as number) }))
         : metricKey === 'bodyFat'
-          ? filtered.filter((m) => m.body_fat_pct !== null).map((m) => ({ measured_at: m.measured_at, value: m.body_fat_pct as number }))
-          : filtered.filter((m) => m.muscle_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.muscle_kg as number) }))
+          ? rangeMetrics.filter((m) => m.body_fat_pct !== null).map((m) => ({ measured_at: m.measured_at, value: m.body_fat_pct as number }))
+          : rangeMetrics.filter((m) => m.muscle_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.muscle_kg as number) }))
     return rows.reverse().map((r) => ({ label: shortLabel(r.measured_at), value: r.value }))
-  }, [metrics, rangeDays, metricKey, toDisplay])
+  }, [rangeMetrics, metricKey, toDisplay])
 
   const latestVal = data.length > 0 ? data[data.length - 1].value : null
   const firstVal = data.length > 0 ? data[0].value : null
   const delta = latestVal !== null && firstVal !== null ? latestVal - firstVal : null
   const rangeLongLabel = OVERVIEW_TREND_RANGES.find((r) => r.days === rangeDays)?.longLabel ?? ''
+
+  // ฟีดแบ็ก "Graph ใหญ่ดีแล้ว แต่ควรเพิ่ม Insight...น้ำหนักเพิ่มขึ้น 0.8 kg ใน 30 วัน แต่ Body Fat ลดลง
+  // 0.4% → แนวโน้มดี — FITLOG ไม่ควรเป็นแค่ 'ดูข้อมูล' แต่ควรเป็น 'เข้าใจข้อมูล'" — เดลต้าน้ำหนัก/ไขมัน คำนวณ
+  // จากข้อมูลจริงในช่วงเวลาเดียวกับกราฟที่กำลังดูอยู่ (rangeMetrics เดียวกับที่ใช้วาดกราฟ) ไม่ขึ้นกับว่า
+  // metricKey ที่เลือกดูอยู่ตอนนี้คือตัวไหน (ข้อความนี้พูดถึงความสัมพันธ์น้ำหนัก/ไขมันเสมอ เพราะเป็นสัญญาณ
+  // "แนวโน้มดี/ควรทบทวน" ที่ตีความได้จริง ไม่ใช่แค่ตัวเลขเปลี่ยน) — ไม่มีข้อมูลพอ (< 2 จุดของตัวใดตัวหนึ่งใน
+  // ช่วงนี้) = ไม่แสดงอะไร ไม่เดา
+  const weightDeltaInRange = (() => {
+    const rows = rangeMetrics.filter((m) => m.weight_kg !== null)
+    if (rows.length < 2) return null
+    return toDisplay(rows[0].weight_kg as number) - toDisplay(rows[rows.length - 1].weight_kg as number)
+  })()
+  const bodyFatDeltaInRange = (() => {
+    const rows = rangeMetrics.filter((m) => m.body_fat_pct !== null)
+    if (rows.length < 2) return null
+    return (rows[0].body_fat_pct as number) - (rows[rows.length - 1].body_fat_pct as number)
+  })()
+  const combinedInsight = (() => {
+    if (weightDeltaInRange === null || bodyFatDeltaInRange === null) return null
+    // เกณฑ์ขั้นต่ำกันสัญญาณรบกวนจากความคลาดเคลื่อนเล็กน้อยของเครื่องชั่ง — ทั้งคู่ต้องเปลี่ยนแปลงพอมีนัยจริง
+    if (Math.abs(weightDeltaInRange) < 0.1 && Math.abs(bodyFatDeltaInRange) < 0.1) return null
+    const weightDir = weightDeltaInRange > 0 ? 'เพิ่มขึ้น' : weightDeltaInRange < 0 ? 'ลดลง' : 'คงที่'
+    const bodyFatDir = bodyFatDeltaInRange > 0 ? 'เพิ่มขึ้น' : bodyFatDeltaInRange < 0 ? 'ลดลง' : 'คงที่'
+    const isGood = (weightDeltaInRange >= 0 && bodyFatDeltaInRange < 0) || (weightDeltaInRange <= 0 && bodyFatDeltaInRange <= 0)
+    const isBad = weightDeltaInRange > 0 && bodyFatDeltaInRange > 0
+    const tag = isGood ? ' → แนวโน้มดี' : isBad ? ' → ควรทบทวน' : ''
+    const joiner = weightDir === bodyFatDir ? 'และ' : 'แต่'
+    return `น้ำหนัก${weightDir} ${Math.abs(weightDeltaInRange).toFixed(1)} ${unit} ${joiner} Body Fat ${bodyFatDir} ${Math.abs(bodyFatDeltaInRange).toFixed(1)}%${tag}`
+  })()
 
   return (
     <PremiumCard className="p-4">
@@ -2143,6 +2175,11 @@ function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[
               </LineChart>
             </ResponsiveContainer>
           </div>
+          {combinedInsight && (
+            <p className="text-xs mt-3 pt-3 border-t border-line" style={{ color: '#A8ACB4' }}>
+              💡 {combinedInsight}
+            </p>
+          )}
         </>
       ) : (
         <p className="text-[11px] text-muted px-1 py-10 text-center">
@@ -2510,16 +2547,17 @@ function OverviewHealthScoreHeader({
           </div>
         </div>
 
-        {/* v23: ฟีดแบ็ก "บางส่วนของ Secondary/Tertiary ใกล้กันเกินไป" — updatedTimeLabel เดิมชิด
-            updatedDateLabel ทันทีไม่มี margin เลย เพิ่ม mt-0.5 คั่น พร้อมขยับจาก text-[10px] เป็น text-[11px]
-            เล็กน้อยให้ยังอ่านง่ายในระดับ Tertiary */}
+        {/* v26: ฟีดแบ็ก "Health Score ยังใหญ่และหนักไปนิด...จะลดความสำคัญของส่วน 'ล่าสุด' ลงหน่อย เพราะ
+            ข้อมูลนี้ไม่ได้สำคัญเท่า Score/Progress" — เดิมวันที่ใช้ text-sm/text-ink (สว่างเท่าตัวเลขสำคัญ
+            อื่นในการ์ด) แยกวันที่/เวลาคนละบรรทัด — ลดลงเหลือ text-xs/#9DA0A8 (โทนเดียวกับ Tertiary อื่นในการ์ด)
+            รวมวันที่+เวลาเป็นบรรทัดเดียวด้วย "·" ให้กินพื้นที่แนวตั้งน้อยลงด้วย ไม่ได้ซ่อนข้อมูล แค่ลดน้ำหนักภาพ */}
         {updatedDateLabel && (
           <div className="shrink-0 border-l border-line/40 pl-5">
             <p className="text-[10px] tracked uppercase" style={{ color: '#B8BBC2' }}>ล่าสุด</p>
-            <p className="font-mono text-sm text-ink">{updatedDateLabel}</p>
-            {updatedTimeLabel && (
-              <p className="text-[11px] mt-0.5" style={{ color: '#9DA0A8' }}>{updatedTimeLabel}</p>
-            )}
+            <p className="font-mono text-xs mt-0.5" style={{ color: '#9DA0A8' }}>
+              {updatedDateLabel}
+              {updatedTimeLabel && <span> · {updatedTimeLabel}</span>}
+            </p>
           </div>
         )}
 
