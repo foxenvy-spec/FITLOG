@@ -2023,12 +2023,16 @@ function TopStatCard({
 
 type OverviewTrendMetricKey = 'weight' | 'bodyFat' | 'muscle'
 
-const OVERVIEW_TREND_RANGES: { days: number; label: string }[] = [
-  { days: 7, label: '7D' },
-  { days: 30, label: '30D' },
-  { days: 90, label: '3M' },
-  { days: 180, label: '6M' },
-  { days: 365, label: '1Y' },
+// longLabel: ฟีดแบ็ก "67.1 kg / ↑ 0.8 kg เฉยๆ ไม่บอกว่าเทียบกับช่วงไหน อยากได้ 'vs previous period' ต่อท้าย"
+// — เดลต้าตรงนี้คือ (ค่าล่าสุด - ค่าแรกในช่วงที่เลือกดู 7D-1Y) ไม่ใช่การเทียบกับ "ช่วงก่อนหน้าที่เท่ากัน" แบบ
+// period-over-period จริงๆ — ใช้คำที่ตรงกับสิ่งที่คำนวณจริง (ระบุช่วงเวลาที่เลือกอยู่ตรงๆ) แทนการแปล
+// "vs previous period" ตรงตัว ซึ่งจะสื่อความหมายผิดจากที่คำนวณจริง
+const OVERVIEW_TREND_RANGES: { days: number; label: string; longLabel: string }[] = [
+  { days: 7, label: '7D', longLabel: '7 วันที่ผ่านมา' },
+  { days: 30, label: '30D', longLabel: '30 วันที่ผ่านมา' },
+  { days: 90, label: '3M', longLabel: '3 เดือนที่ผ่านมา' },
+  { days: 180, label: '6M', longLabel: '6 เดือนที่ผ่านมา' },
+  { days: 365, label: '1Y', longLabel: '1 ปีที่ผ่านมา' },
 ]
 
 const OVERVIEW_TREND_METRICS: Record<OverviewTrendMetricKey, { label: string; color: string }> = {
@@ -2066,6 +2070,7 @@ function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[
   const latestVal = data.length > 0 ? data[data.length - 1].value : null
   const firstVal = data.length > 0 ? data[0].value : null
   const delta = latestVal !== null && firstVal !== null ? latestVal - firstVal : null
+  const rangeLongLabel = OVERVIEW_TREND_RANGES.find((r) => r.days === rangeDays)?.longLabel ?? ''
 
   return (
     <PremiumCard className="p-4">
@@ -2111,6 +2116,7 @@ function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[
             {delta !== null && (
               <span className="text-xs font-mono text-muted">
                 {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(1)} {valueUnit}
+                {rangeLongLabel && <span className="text-muted/70"> · {rangeLongLabel}</span>}
               </span>
             )}
           </div>
