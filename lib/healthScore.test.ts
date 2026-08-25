@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { trapezoidScore, higherBetterScore, lowerBetterScore, weightedAverage, progressScore, computeHealthScore } from './healthScore'
+import { peakScore, higherBetterScore, lowerBetterScore, weightedAverage, progressScore, computeHealthScore } from './healthScore'
 import type { BodyMetric } from './types'
 
 function metric(overrides: Partial<BodyMetric>): BodyMetric {
@@ -48,22 +48,31 @@ function metric(overrides: Partial<BodyMetric>): BodyMetric {
   }
 }
 
-describe('trapezoidScore', () => {
-  it('scores 100 inside the ideal range', () => {
-    expect(trapezoidScore(22, 10, 18.5, 25, 40)).toBe(100)
+describe('peakScore', () => {
+  it('scores 100 only at the center of the ideal range', () => {
+    // center between low(18.5) and high(25) -> 21.75
+    expect(peakScore(21.75, 10, 18.5, 25, 40)).toBe(100)
+  })
+  it('scores the edgeScore (not 100) at the low/high boundaries', () => {
+    expect(peakScore(18.5, 10, 18.5, 25, 40)).toBeCloseTo(88, 5)
+    expect(peakScore(25, 10, 18.5, 25, 40)).toBeCloseTo(88, 5)
+  })
+  it('scores less inside the range near an edge than at the center', () => {
+    expect(peakScore(19, 10, 18.5, 25, 40)).toBeLessThan(100)
+    expect(peakScore(24, 10, 18.5, 25, 40)).toBeLessThan(100)
   })
   it('scores 0 at or beyond min/max', () => {
-    expect(trapezoidScore(10, 10, 18.5, 25, 40)).toBe(0)
-    expect(trapezoidScore(5, 10, 18.5, 25, 40)).toBe(0)
-    expect(trapezoidScore(40, 10, 18.5, 25, 40)).toBe(0)
-    expect(trapezoidScore(50, 10, 18.5, 25, 40)).toBe(0)
+    expect(peakScore(10, 10, 18.5, 25, 40)).toBe(0)
+    expect(peakScore(5, 10, 18.5, 25, 40)).toBe(0)
+    expect(peakScore(40, 10, 18.5, 25, 40)).toBe(0)
+    expect(peakScore(50, 10, 18.5, 25, 40)).toBe(0)
   })
   it('interpolates linearly between min and low', () => {
-    // midpoint between min(10) and low(18.5) -> 50
-    expect(trapezoidScore(14.25, 10, 18.5, 25, 40)).toBeCloseTo(50, 5)
+    // midpoint between min(10) and low(18.5) -> half of edgeScore(88)
+    expect(peakScore(14.25, 10, 18.5, 25, 40)).toBeCloseTo(44, 5)
   })
   it('interpolates linearly between high and max', () => {
-    expect(trapezoidScore(32.5, 10, 18.5, 25, 40)).toBeCloseTo(50, 5)
+    expect(peakScore(32.5, 10, 18.5, 25, 40)).toBeCloseTo(44, 5)
   })
 })
 

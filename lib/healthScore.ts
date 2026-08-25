@@ -7,19 +7,33 @@ import type { BodyMetric } from './types'
 // (Muscle Mass 60/Skeletal Muscle 40) + Metabolic Health 20% (Visceral Fat 40/Body Age 30 — BMR 30% ข้าม
 // เหตุผลเดียวกับ Waist) + Progress 15% (Weight/Body Fat/Muscle เทียบค่าก่อนหน้าล่าสุด) — ไม่มี Hydration
 // ในคะแนนหลักแล้วตามที่ตกลง ทุกน้ำหนัก/สูตรมาจากที่ผู้ใช้ออกแบบไว้ตรงๆ ไม่ได้เดาเอง
+//
+// v33: ฟีดแบ็ก "Body Fat 25.1%/BMI ยังห่างเป้าหมายมาก แต่ Body Composition ขึ้น 100/100/100 เพราะทั้งโซน
+// Standard แบนคะแนน 100 หมด" — เปลี่ยน Body Fat/BMI จาก trapezoidScore (แบนเต็มโซน) เป็น peakScore
+// (จุดสูงสุดกึ่งกลางโซนเท่านั้น ไล่ลดหลั่นไปสองขอบ) ขอบเขตโซน (min/low/high/max) ไม่เปลี่ยน ยังตรงกับ
+// ZoneBarRow/pills ที่แสดงผลอยู่ทั่วแอป — Muscle/Visceral Fat/Body Age (ทางเดียว) คงค้างไว้แบบเดิมตามที่
+// ยืนยัน (ยิ่งดีกว่ายิ่งไม่โดนหักคะแนน) และปรับน้ำหนัก Progress เป็น Fat 40/Muscle 35/Weight 15 (เดิม
+// Weight 30/Fat 40/Muscle 30) ยังไม่ใส่ Consistency เพราะไม่มีนิยาม/เกณฑ์อ้างอิงในระบบตอนนี้
 
 export type ScoreDirection = 'lowerBetter' | 'higherBetter'
 
-// ค่าที่ "ดี" อยู่ตรงกลาง (อยู่ในช่วง [low,high] = 100 เต็ม) ยิ่งเบี่ยงออกจากช่วงยิ่งลดแบบเส้นตรง ไปแตะ 0
-// ที่ min/max — ใช้กับตัวชี้วัดที่ทั้งต่ำไปและสูงไปแย่ทั้งคู่ (Body Fat, BMI)
-export function trapezoidScore(value: number, min: number, low: number, high: number, max: number): number {
-  if (value >= low && value <= high) return 100
-  if (value < low) {
-    if (value <= min) return 0
-    return ((value - min) / (low - min)) * 100
+// v33: ฟีดแบ็ก "Body Fat 25.1%/BMI ยังห่างเป้าหมายแต่ Body Composition ขึ้น 100 เพราะทั้งโซน Standard (เช่น
+// หญิง 18-28%) ให้ 100 แบนตลอด ไม่แยกว่า 18% กับ 27.9% ต่างกัน" — เปลี่ยนทรงคะแนนจาก "แบนเต็มโซน" เป็น
+// "จุดสูงสุดอยู่กึ่งกลางโซนเท่านั้น" ไล่ลดหลั่นแบบเส้นตรงไปทั้งสองขอบของโซน (ถึงขอบ = edgeScore ไม่ใช่ 100)
+// แล้วไล่ต่อจากขอบไปแตะ 0 ที่ min/max เหมือนเดิม — min/low/high/max ยังเป็นขอบเขตเดียวกับโซน Low/Standard/
+// High ที่ใช้แสดงผล (ZoneBarRow/pills) อยู่ทั่วแอปไม่เปลี่ยน เปลี่ยนแค่ทรงคะแนนภายในโซน ใช้กับตัวชี้วัดสองทาง
+// (Body Fat, BMI) ที่ทั้งต่ำไปและสูงไปแย่ทั้งคู่ — edgeScore ดีฟอลต์ 88 (กึ่งกลางของช่วง 85-90 ที่ตกลงกันไว้)
+export function peakScore(value: number, min: number, low: number, high: number, max: number, edgeScore = 88): number {
+  const center = (low + high) / 2
+  if (value === center) return 100
+  if (value > center) {
+    if (value >= max) return 0
+    if (value <= high) return 100 - ((value - center) / (high - center)) * (100 - edgeScore)
+    return (edgeScore * (max - value)) / (max - high)
   }
-  if (value >= max) return 0
-  return ((max - value) / (max - high)) * 100
+  if (value <= min) return 0
+  if (value >= low) return 100 - ((center - value) / (center - low)) * (100 - edgeScore)
+  return (edgeScore * (value - min)) / (low - min)
 }
 
 // ยิ่งสูงยิ่งดี ไม่มีเพดานโทษ (ไม่แตะ 0 อีกฝั่งถ้าค่าสูงเกินไป) — value <= floor = 0, value >= good = 100
@@ -103,8 +117,8 @@ export function computeHealthScore(params: {
   if (!row) return null
 
   const bf = bodyFatPctRange(sex)
-  const bodyFatComp = row.body_fat_pct != null ? trapezoidScore(row.body_fat_pct, bf.min, bf.low, bf.high, bf.max) : null
-  const bmiComp = bmi != null ? trapezoidScore(bmi, 10, 18.5, 25, 40) : null
+  const bodyFatComp = row.body_fat_pct != null ? peakScore(row.body_fat_pct, bf.min, bf.low, bf.high, bf.max) : null
+  const bmiComp = bmi != null ? peakScore(bmi, 10, 18.5, 25, 40) : null
   const visceralComp = row.visceral_fat_grade != null ? lowerBetterScore(row.visceral_fat_grade, 9, 30) : null
   const bodyComposition = weightedAverage([
     { weight: 50, score: bodyFatComp },
@@ -141,10 +155,13 @@ export function computeHealthScore(params: {
   const weightDelta = row.weight_kg != null && prevRow?.weight_kg != null ? row.weight_kg - prevRow.weight_kg : null
   const bodyFatDelta = row.body_fat_pct != null && prevRow?.body_fat_pct != null ? row.body_fat_pct - prevRow.body_fat_pct : null
   const muscleDelta = row.muscle_kg != null && prevRow?.muscle_kg != null ? row.muscle_kg - prevRow.muscle_kg : null
+  // v33: ฟีดแบ็ก "Fat Trend 40% / Muscle Trend 35% / Weight Trend 15%" — เดิม Weight 30/Fat 40/Muscle 30
+  // ลดน้ำหนัก Weight ลง (มักเป็นผลพลอยได้จาก Fat/Muscle อยู่แล้ว ไม่ใช่ตัวชี้ทิศทางหลัก) เพิ่มให้ Muscle
+  // Trend แทน — ไม่ใส่ Consistency (ยังไม่มีนิยาม/เกณฑ์อ้างอิงในระบบตอนนี้)
   const progress = weightedAverage([
-    { weight: 30, score: progressScore(weightDelta, weightDirection, 2) },
+    { weight: 15, score: progressScore(weightDelta, weightDirection, 2) },
     { weight: 40, score: progressScore(bodyFatDelta, 'lowerBetter', 2) },
-    { weight: 30, score: progressScore(muscleDelta, 'higherBetter', 0.3) },
+    { weight: 35, score: progressScore(muscleDelta, 'higherBetter', 0.3) },
   ])
 
   const categories: HealthScoreCategory[] = []
