@@ -1127,6 +1127,9 @@ export default function HealthPage() {
           {profile && !profile.sex && (
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
+
+          <OverviewTrendChart metrics={metrics} unit={unit} toDisplay={toDisplay} />
+
           {/* v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ" — เรียงลำดับตามความสำคัญจริง
               v6: ฟีดแบ็ก "ผมจะให้ความสำคัญของข้อมูลแบบนี้ — ระดับ 1 (ต้องรู้ทันที): น้ำหนัก/ไขมันในร่างกาย/
               กล้ามเนื้อ, ระดับ 2 (ติดตาม): BMI/น้ำในร่างกาย/มวลไขมัน/กล้ามเนื้อโครงร่าง, ระดับ 3 (ประกอบ):
@@ -1993,6 +1996,132 @@ function TopStatCard({
           <ZoneBadge zone={zone} direction={direction} />
         </div>
       ) : null}
+    </PremiumCard>
+  )
+}
+
+type OverviewTrendMetricKey = 'weight' | 'bodyFat' | 'muscle'
+
+const OVERVIEW_TREND_RANGES: { days: number; label: string }[] = [
+  { days: 7, label: '7D' },
+  { days: 30, label: '30D' },
+  { days: 90, label: '3M' },
+  { days: 180, label: '6M' },
+  { days: 365, label: '1Y' },
+]
+
+const OVERVIEW_TREND_METRICS: Record<OverviewTrendMetricKey, { label: string; color: string }> = {
+  weight: { label: 'น้ำหนัก', color: '#E8A33D' },
+  bodyFat: { label: 'ไขมัน', color: '#C1503A' },
+  muscle: { label: 'มวลกล้ามเนื้อ', color: '#7FA85F' },
+}
+
+// ฟีดแบ็ก "ให้คะแนน วิเคราะห์" mockup 4 เวอร์ชัน แล้วเลือกทำ "Version 3" — จุดเด่นสุดคือกราฟเทรนด์เป็น
+// พระเอกของหน้า Overview พร้อมสลับช่วงเวลา (7D-1Y) และตัวชี้วัดได้ในตัว — เพิ่มเป็น section ใหม่เหนือ
+// Key Metrics เดิม (ไม่ทุบ IconStatCard grid ที่เพิ่งจัดหมวด Key/Additional Metrics เสร็จตามฟีดแบ็กรอบก่อน)
+// ใช้ recharts LineChart สไตล์เดียวกับ MetricRowCard ในแท็บ "แนวโน้ม" ด้านล่าง แต่ผูก state ช่วงเวลา
+// ของตัวเองแยกต่างหาก (7D-1Y คนละบริบทกับ trendPeriodDays 7/30/90 ของแท็บแนวโน้ม)
+function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[]; unit: string; toDisplay: (v: number) => number }) {
+  const [metricKey, setMetricKey] = useState<OverviewTrendMetricKey>('weight')
+  const [rangeDays, setRangeDays] = useState(30)
+  const meta = OVERVIEW_TREND_METRICS[metricKey]
+  const valueUnit = metricKey === 'bodyFat' ? '%' : unit
+
+  const data = useMemo(() => {
+    const since = new Date()
+    since.setDate(since.getDate() - rangeDays)
+    const offset = since.getTimezoneOffset()
+    const sinceStr = new Date(since.getTime() - offset * 60000).toISOString().slice(0, 10)
+    const filtered = metrics.filter((m) => m.measured_at >= sinceStr)
+    const rows =
+      metricKey === 'weight'
+        ? filtered.filter((m) => m.weight_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.weight_kg as number) }))
+        : metricKey === 'bodyFat'
+          ? filtered.filter((m) => m.body_fat_pct !== null).map((m) => ({ measured_at: m.measured_at, value: m.body_fat_pct as number }))
+          : filtered.filter((m) => m.muscle_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.muscle_kg as number) }))
+    return rows.reverse().map((r) => ({ label: shortLabel(r.measured_at), value: r.value }))
+  }, [metrics, rangeDays, metricKey, toDisplay])
+
+  const latestVal = data.length > 0 ? data[data.length - 1].value : null
+  const firstVal = data.length > 0 ? data[0].value : null
+  const delta = latestVal !== null && firstVal !== null ? latestVal - firstVal : null
+
+  return (
+    <PremiumCard className="p-4">
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+        <div className="flex gap-2 flex-wrap">
+          {(Object.keys(OVERVIEW_TREND_METRICS) as OverviewTrendMetricKey[]).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setMetricKey(k)}
+              className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
+                metricKey === k ? 'text-bg' : 'bg-surface border border-line text-muted'
+              }`}
+              style={metricKey === k ? { background: OVERVIEW_TREND_METRICS[k].color } : undefined}
+            >
+              {OVERVIEW_TREND_METRICS[k].label}
+            </button>
+          ))}
+        </div>
+        <div className="flex rounded-full bg-surface p-1 border border-line shrink-0">
+          {OVERVIEW_TREND_RANGES.map((r) => (
+            <button
+              key={r.days}
+              type="button"
+              onClick={() => setRangeDays(r.days)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-display tracked uppercase transition ${
+                rangeDays === r.days ? 'bg-steel text-bg' : 'text-muted'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {data.length > 1 ? (
+        <>
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="font-mono tabular text-2xl text-ink">
+              {latestVal?.toFixed(1)}
+              <span className="text-xs text-muted ml-1">{valueUnit}</span>
+            </span>
+            {delta !== null && (
+              <span className="text-xs font-mono text-muted">
+                {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(1)} {valueUnit}
+              </span>
+            )}
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid stroke="#2E333A" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: '#9498A0', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={24}
+                />
+                <YAxis tick={{ fill: '#9498A0', fontSize: 10 }} axisLine={false} tickLine={false} width={32} domain={['auto', 'auto']} />
+                <Tooltip
+                  contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: '#9498A0' }}
+                  itemStyle={{ color: '#F3F0E8' }}
+                  formatter={(v: number) => [`${v.toFixed(1)} ${valueUnit}`, meta.label]}
+                />
+                <Line type="monotone" dataKey="value" stroke={meta.color} strokeWidth={2} dot={{ r: 2, fill: meta.color }} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      ) : (
+        <p className="text-[11px] text-muted px-1 py-10 text-center">
+          ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มช่วงนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งในช่วงเวลาที่เลือก แล้วกราฟจะขึ้นให้อัตโนมัติ
+        </p>
+      )}
     </PremiumCard>
   )
 }
