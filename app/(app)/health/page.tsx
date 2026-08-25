@@ -2441,8 +2441,16 @@ function OverviewTrendChart({
                   backdropFilter: 'blur(6px)',
                 }}
               >
+                {/* v48: ฟีดแบ็ก "ข้างหน้าเฉลี่ยควรใส่สัญลักษณ์อะไร" — เลือก ~ (ประมาณ/เฉลี่ย ความหมายที่คนคุ้น
+                    อยู่แล้ว เช่น "~65 kg") สีกลาง #9DA0A8 เหมือน label ไม่ใช่เขียว/แดงแบบลูกศรต่ำสุด-สูงสุด
+                    เพราะค่าเฉลี่ยไม่มีทิศทางดี/แย่ในตัวเอง — ขนาด 13px เท่าลูกศร แต่ไม่ bold (ไม่ได้ตัดสินอะไร) */}
                 <div className="text-center px-3">
-                  <p className="font-mono text-sm text-ink">{stats.avg.toFixed(1)}</p>
+                  <p className="font-mono text-sm text-ink">
+                    <span aria-hidden="true" style={{ color: '#9DA0A8', fontSize: 13 }}>
+                      ~{' '}
+                    </span>
+                    {stats.avg.toFixed(1)}
+                  </p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     เฉลี่ย
                   </p>
