@@ -1023,7 +1023,11 @@ export default function HealthPage() {
       // Body Fat อ่านง่ายกว่า" — เดิม "ลดอีก X% / เพิ่มอีก X%" แยกคำตามทิศทาง ตอนนี้รวมเป็น "เหลืออีก X%"
       // เดียวกันทั้งสองทิศทาง (ระยะห่างจากเป้าหมายยังสื่อความหมายเดิม ไม่ว่าจะต้องลดหรือเพิ่ม) ต่อท้ายด้วย
       // "Body Fat" ให้อ่านคู่กับ "เหลือ X kg" ของน้ำหนักได้โดยไม่ต้องมี label แยกบรรทัดข้างบนอีกต่อไป
-      subText: bodyFatDiff === null || bodyFatDiff === 0 ? null : `เหลืออีก ${Math.abs(bodyFatDiff).toFixed(1)}% Body Fat`,
+      // v27: ฟีดแบ็ก "25.1 → 20.0 คือ 5.1 percentage points ไม่ใช่ลดลง 5.1% เชิง relative — 'เหลืออีก 5.1%
+      // Body Fat' อ่านกำกวม" — เติม "เพื่อถึงเป้าหมาย" ต่อท้าย (ทางเลือกที่ขอไว้สำหรับผู้ใช้ทั่วไป แทนศัพท์
+      // เทคนิค "จุดเปอร์เซ็นต์" ที่ไม่คุ้นในภาษาพูดทั่วไป) ให้ชัดว่า 5.1% นี้คือ "ระยะห่างจากเป้าหมาย" ไม่ใช่
+      // "ลดลง 5.1% ของค่าเดิม" — ไม่กระทบตัวเลขหรือการคำนวณใดๆ แค่ข้อความ
+      subText: bodyFatDiff === null || bodyFatDiff === 0 ? null : `เหลืออีก ${Math.abs(bodyFatDiff).toFixed(1)}% เพื่อถึงเป้าหมาย`,
       progressPct: goalProgressPct(bodyFatGoalForBanner),
     })
   }
@@ -2495,9 +2499,21 @@ function OverviewHealthScoreHeader({
   // v6: ฟีดแบ็ก "✓ ดูเหมือน checklist ธรรมดาไปนิดสำหรับ UI Titanium — อยากได้ ↓ ไขมัน 2.3% แบบไม่มี ✓"
   // ตัดสัญลักษณ์ ✓/! ออก ให้ลูกศรทิศทางขึ้นนำหน้าแทน ใส่ตัวเลขเดลต้าจริง (valueText) ต่อท้าย label แทนที่จะ
   // มีแค่ label เฉยๆ — อ่านได้ข้อมูลมากขึ้นในพื้นที่เท่าเดิม เหมือน Fitness Analytics มากกว่า checklist
-  const signals: { label: string; dir: 'up' | 'down'; good: boolean; valueText: string }[] = []
+  // v27: ฟีดแบ็ก "↓ 10 คะแนน แต่ไม่บอกว่าเทียบกับช่วงไหน — user อาจสงสัยทำไมลด 10 คะแนนแต่ยังดีมาก...
+  // แนะนำ ↓ 10 คะแนน จากสัปดาห์ที่แล้ว" — periodOverride เฉพาะแถวนี้ (ไม่ใช้ changePeriodLabel ของ header
+  // ร่วมกับแถวไขมัน/กล้ามเนื้อ) เพราะ monthDeltaPct คำนวณเทียบ "เดือนที่แล้ว" เสมอ (ดู healthScoreMonthDeltaPct
+  // ที่จุดเรียกใช้ — คนละฐานเวลากับ changePeriodLabel ที่มาจาก fieldDelta ของแถวไขมัน/กล้ามเนื้อ ซึ่งคือ
+  // "ล่าสุด vs ก่อนหน้าล่าสุด" อาจเป็นวัน/สัปดาห์ก็ได้) — ใช้คำที่ตรงกับสิ่งที่คำนวณจริง ("จากเดือนที่แล้ว")
+  // แทนการก็อปคำตัวอย่าง "จากสัปดาห์ที่แล้ว" มาเฉยๆ ซึ่งจะไม่ตรงกับข้อมูลจริง
+  const signals: { label: string; dir: 'up' | 'down'; good: boolean; valueText: string; periodOverride?: string }[] = []
   if (monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0) {
-    signals.push({ label: 'คะแนนสุขภาพ', dir: monthDeltaPct > 0 ? 'up' : 'down', good: monthDeltaPct > 0, valueText: `${Math.abs(monthDeltaPct)} คะแนน` })
+    signals.push({
+      label: 'คะแนนสุขภาพ',
+      dir: monthDeltaPct > 0 ? 'up' : 'down',
+      good: monthDeltaPct > 0,
+      valueText: `${Math.abs(monthDeltaPct)} คะแนน`,
+      periodOverride: 'จากเดือนที่แล้ว',
+    })
   }
   if (bodyFatDeltaPct !== null && bodyFatDeltaPct !== 0) {
     signals.push({ label: 'ไขมัน', dir: bodyFatDeltaPct < 0 ? 'down' : 'up', good: bodyFatDeltaPct < 0, valueText: `${Math.abs(bodyFatDeltaPct).toFixed(1)}%` })
@@ -2601,7 +2617,10 @@ function OverviewHealthScoreHeader({
                   <span className="font-mono font-semibold text-sm" style={{ color: s.good ? '#8CB264' : '#C1503A' }}>
                     {s.dir === 'up' ? '↑' : '↓'} {s.valueText}
                   </span>{' '}
-                  <span className="text-xs" style={{ color: '#9DA0A8' }}>{s.label}</span>
+                  <span className="text-xs" style={{ color: '#9DA0A8' }}>
+                    {s.label}
+                    {s.periodOverride && <span className="text-muted/70"> · {s.periodOverride}</span>}
+                  </span>
                 </p>
               ))}
             </div>
