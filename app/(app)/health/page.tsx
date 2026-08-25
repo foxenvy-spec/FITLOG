@@ -2450,11 +2450,14 @@ function OverviewTrendChart({
                 <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 {/* v45: ฟีดแบ็ก "ลูกศรสีถูกแล้ว แต่ตัวเลขไม่ต้องตามสีลูกศร" — เดิมสี style อยู่ที่ <p> ครอบทั้ง
                     ลูกศร+ตัวเลข ทำให้ตัวเลขติดสีไปด้วย แยกให้ลูกศรมีสีเขียว/แดงของตัวเอง ส่วนตัวเลขคง text-ink
-                    กลางเสมอไม่ว่า minIsGood จะเป็นอะไร */}
+                    กลางเสมอไม่ว่า minIsGood จะเป็นอะไร
+                    v47: ฟีดแบ็ก "ลูกศรดูยากไปนิด ควรเด่นกว่านี้" — เดิมลูกศรใช้ font-weight/ขนาดเดียวกับตัวเลข
+                    (font-mono ปกติ ไม่ bold) สีก็เลยเป็นตัวช่วยแยกอย่างเดียว มองเร็วๆ ไม่ทันสังเกต — เพิ่ม
+                    font-weight 700 + ขนาดใหญ่ขึ้นเล็กน้อย (13px) เฉพาะตัวลูกศร ให้เด่นขึ้นโดยไม่ต้องเปลี่ยนสี */}
                 <div className="text-center px-3">
                   <p className="font-mono text-sm text-ink">
                     {minIsGood !== null && (
-                      <span aria-hidden="true" style={{ color: minIsGood ? '#8CB264' : '#C1503A' }}>
+                      <span aria-hidden="true" style={{ color: minIsGood ? '#8CB264' : '#C1503A', fontWeight: 700, fontSize: 13 }}>
                         ↓{' '}
                       </span>
                     )}
@@ -2468,7 +2471,7 @@ function OverviewTrendChart({
                 <div className="text-center px-3">
                   <p className="font-mono text-sm text-ink">
                     {maxIsGood !== null && (
-                      <span aria-hidden="true" style={{ color: maxIsGood ? '#8CB264' : '#C1503A' }}>
+                      <span aria-hidden="true" style={{ color: maxIsGood ? '#8CB264' : '#C1503A', fontWeight: 700, fontSize: 13 }}>
                         ↑{' '}
                       </span>
                     )}
