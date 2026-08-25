@@ -280,35 +280,6 @@ export default function HealthPage() {
       .map((m) => ({ label: shortLabel(m.measured_at), value: toDisplay(m.muscle_kg as number) }))
   }, [periodMetrics, toDisplay])
 
-  // ฟีดแบ็ก "Weight Card ใหญ่แต่ไม่มีข้อมูลพอ อยากได้ 30-day Mini Trend" — เฉพาะการ์ด Weight/Body Fat/
-  // Muscle/Fat Mass (tier 1 ตัวชี้วัดหลัก 4 ตัว) เท่านั้นที่ยังโชว์เส้นเทรนด์ในแท็บภาพรวม ใช้หน้าต่าง 30 วัน
-  // คงที่ (ไม่ผูกกับ trendPeriodDays ของแท็บ "แนวโน้ม" ซึ่งผู้ใช้ปรับเป็น 7/30/90 ได้ — อันนั้นคือคนละบริบท)
-  // ให้ label "30 DAY TREND" ตรงกับข้อมูลจริงเสมอ ไม่ว่าผู้ใช้จะสลับช่วงเวลาในแท็บแนวโน้มไว้ที่เท่าไหร่
-  const overview30dMetrics = useMemo(() => {
-    const since = new Date()
-    since.setDate(since.getDate() - 30)
-    const offset = since.getTimezoneOffset()
-    const sinceStr = new Date(since.getTime() - offset * 60000).toISOString().slice(0, 10)
-    return metrics.filter((m) => m.measured_at >= sinceStr)
-  }, [metrics])
-
-  const weightTrend30 = useMemo(
-    () => [...overview30dMetrics].filter((m) => m.weight_kg !== null).reverse().map((m) => toDisplay(m.weight_kg as number)),
-    [overview30dMetrics, toDisplay]
-  )
-  const bodyFatTrend30 = useMemo(
-    () => [...overview30dMetrics].filter((m) => m.body_fat_pct !== null).reverse().map((m) => m.body_fat_pct as number),
-    [overview30dMetrics]
-  )
-  const muscleTrend30 = useMemo(
-    () => [...overview30dMetrics].filter((m) => m.muscle_kg !== null).reverse().map((m) => toDisplay(m.muscle_kg as number)),
-    [overview30dMetrics, toDisplay]
-  )
-  const bodyFatKgTrend30 = useMemo(
-    () => [...overview30dMetrics].filter((m) => m.body_fat_kg !== null).reverse().map((m) => toDisplay(m.body_fat_kg as number)),
-    [overview30dMetrics, toDisplay]
-  )
-
   const waistTrend = useMemo(() => {
     return [...periodMetrics]
       .filter((m) => m.waist_cm !== null)
@@ -1225,6 +1196,12 @@ export default function HealthPage() {
               เป็น 2 grid แยกกันตรงๆ (5 การ์ดแรก = หลัก, 7 การ์ดที่เหลือ = เพิ่มเติม ตามลำดับเดิมเป๊ะ ไม่ได้
               เปลี่ยนว่าการ์ดไหนอยู่ก่อน/หลัง) พร้อม label กำกับ ไม่แตะ tier prop ของการ์ดแต่ละใบ (ยังใช้ปรับ
               ขนาด/ความหนาแน่นใน grid ของตัวเองต่อไป) */}
+          {/* ฟีดแบ็ก "Weight/Body Fat/Muscle ไม่ควรปรากฏซ้ำในหลาย section โดยไม่มีข้อมูลใหม่" (Priority 3) —
+              เดิม 3 การ์ดนี้มีเส้นเทรนด์ 30 วันจิ๋ว (18px) ท้ายการ์ดด้วย ซึ่งตอนนี้ซ้ำกับ Body Progress
+              (OverviewTrendChart) ด้านบนที่โชว์เทรนด์ 3 ตัวนี้แบบใหญ่กว่า ปรับช่วงเวลาได้ ละเอียดกว่ามาก —
+              ตัด series ออกจากการ์ด Key Metrics เหล่านี้ (ลบ weightTrend30/bodyFatTrend30/muscleTrend30
+              ที่ไม่มีจุดใช้อื่นแล้วออกไปด้วย) ให้การ์ด Key Metrics โฟกัสแค่ "ค่าปัจจุบัน + เดลต้า" (Level 1)
+              ส่วนเทรนด์เป็นหน้าที่ของ Body Progress (Level 2) เพียงจุดเดียว ไม่ซ้ำข้อมูลกันอีก */}
           <div>
             <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Key Metrics</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 items-stretch">
@@ -1239,7 +1216,6 @@ export default function HealthPage() {
               delta={weightDeltaForCard}
               deltaUnit={unit}
               direction={weightCardDirection}
-              series={weightTrend30}
               trendLabel="30 DAY TREND"
               trendTag={weightGainLooksLikeMuscle ? 'Muscle-driven ↑' : null}
               trendColor="#9498A0"
@@ -1262,7 +1238,6 @@ export default function HealthPage() {
               direction="lowerBetter"
               zone={bodyFatZone}
               zoneScheme="lowerOk"
-              series={bodyFatTrend30}
               insight={bodyFatInsight}
             />
             <IconStatCard
@@ -1276,7 +1251,6 @@ export default function HealthPage() {
               delta={fieldDelta('muscle_kg', toDisplay)}
               deltaUnit={unit}
               direction="higherBetter"
-              series={muscleTrend30}
             />
             <IconStatCard
               label="ดัชนีมวลกาย"
