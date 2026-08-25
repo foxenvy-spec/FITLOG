@@ -2180,6 +2180,21 @@ function OverviewTrendChart({
   const latestVal = data.length > 0 ? data[data.length - 1].value : null
   const headlineDelta = metricKey === 'weight' ? weightDelta : metricKey === 'bodyFat' ? bodyFatDelta : muscleDelta
 
+  // v42: ฟีดแบ็ก "↑ 0.6 kg ควรมีสีบอกว่าดีขึ้น/แย่ลงชัดเจนไหม" — ใส่สีให้เฉพาะ Body Fat (ลง=ดีเสมอ) กับ
+  // Muscle (ขึ้น=ดีเสมอ) เพราะทิศทาง "ดี" ของสองตัวนี้ไม่ผูกกับบริบทอะไรเลย ตัดสินได้ตรงไปตรงมา — Weight
+  // จงใจให้เป็นสีกลางต่อไป (ไม่ใช่ bug ที่ลืมใส่สี) ตามหลักการเดิมของทั้งแอปที่ตัดสินใจไว้แล้วรอบก่อนๆ (v39/
+  // Round 23-5 "Weight delta always neutral color") เพราะน้ำหนักขึ้นอาจมาจากกล้ามเนื้อเพิ่ม (ดี) หรือไขมัน
+  // เพิ่ม (ไม่ดี) พอๆ กัน สีเขียว/แดงตายตัวจะสื่อความหมายผิดได้ — ให้ดูสัญญาณจากไขมัน/กล้ามเนื้อในบรรทัดเดียวกัน
+  // (Insight ใต้กราฟ) แทนสำหรับแท็บน้ำหนัก
+  const headlineDeltaGood =
+    headlineDelta === null || headlineDelta === 0
+      ? null
+      : metricKey === 'bodyFat'
+        ? headlineDelta < 0
+        : metricKey === 'muscle'
+          ? headlineDelta > 0
+          : null
+
   // v36: เป้าหมาย (เส้นประ + badge) มีเฉพาะน้ำหนัก/Body Fat เพราะเป็น goal_type เดียวที่แอปนี้รองรับ (ไม่มี
   // เป้าหมายมวลกล้ามเนื้อ) — น้ำหนักแปลงหน่วยแสดงผลด้วย toDisplay เหมือนค่าอื่นในกราฟนี้, Body Fat ไม่ต้องแปลง
   const goalTarget =
@@ -2363,9 +2378,15 @@ function OverviewTrendChart({
                 </span>
                 {/* v40: ฟีดแบ็ก "จากสัปดาห์ที่แล้ว contrast ต่ำไปนิด บนจอมือถือ/brightness ต่ำอาจอ่านยาก —
                     เพิ่ม brightness/opacity secondary text ~10-20%" — text-muted (#9498A0) → #9DA0A8 สำหรับ
-                    เดลต้า, ตัด /70 ออกจาก period label (เดิมจาง #9498A0 ที่ 70% alpha คือส่วนที่จางสุดในบรรทัด) */}
+                    เดลต้า, ตัด /70 ออกจาก period label (เดิมจาง #9498A0 ที่ 70% alpha คือส่วนที่จางสุดในบรรทัด)
+                    v42: ฟีดแบ็ก "ควรมีสีบอกดีขึ้น/แย่ลงชัดเจนไหม" — ใส่สีเขียว/แดงเฉพาะ Body Fat/Muscle (ดู
+                    headlineDeltaGood ด้านบน) ตัวเลขเดลต้าเปลี่ยนสีตามนั้น ส่วน period label ท้ายสุดคงสีกลาง
+                    #9DA0A8 เสมอ (เป็นแค่บอกช่วงเวลา ไม่ใช่ตัวเลขที่ต้องตัดสินดี/ไม่ดี) */}
                 {headlineDelta !== null && (
-                  <span className="text-xs font-mono" style={{ color: '#9DA0A8' }}>
+                  <span
+                    className="text-xs font-mono"
+                    style={{ color: headlineDeltaGood === null ? '#9DA0A8' : headlineDeltaGood ? '#8CB264' : '#C1503A' }}
+                  >
                     {headlineDelta > 0 ? '↑' : headlineDelta < 0 ? '↓' : '·'} {Math.abs(headlineDelta).toFixed(1)} {valueUnit}
                     {changePeriodLabel && <span style={{ color: '#9DA0A8' }}> · {changePeriodLabel}</span>}
                   </span>
