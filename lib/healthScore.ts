@@ -1,12 +1,11 @@
 import type { BodyMetric } from './types'
+import { computeBmr } from './bmr'
 
 // v32: ฟีดแบ็ก "Health Score ที่ดี = แปลงข้อมูลต่อเนื่องเป็นคะแนน 0-100 แบบ trapezoid (อยู่ในช่วง ideal =
 // 100, ยิ่งห่างยิ่งลดแบบเส้นตรง) แทน pass/fail แบบเดิม (23.9 → 100, 25.1 → 0 ทั้งที่ต่างกันนิดเดียว)" —
-// เอนจิ้นคะแนนสุขภาพเวอร์ชันใหม่ทั้งหมด: Body Composition 40% (Body Fat 50/BMI 20/Visceral Fat 20 —
-// Waist 10% ข้ามไปก่อน ไม่มี threshold มาตรฐานในระบบ, redistribute ให้ 3 ตัวที่เหลือ) + Muscle 25%
-// (Muscle Mass 60/Skeletal Muscle 40) + Metabolic Health 20% (Visceral Fat 40/Body Age 30 — BMR 30% ข้าม
-// เหตุผลเดียวกับ Waist) + Progress 15% (Weight/Body Fat/Muscle เทียบค่าก่อนหน้าล่าสุด) — ไม่มี Hydration
-// ในคะแนนหลักแล้วตามที่ตกลง ทุกน้ำหนัก/สูตรมาจากที่ผู้ใช้ออกแบบไว้ตรงๆ ไม่ได้เดาเอง
+// เอนจิ้นคะแนนสุขภาพเวอร์ชันใหม่ทั้งหมด ไม่มี Hydration ในคะแนนหลักตามที่ตกลง 4 หมวดหลัก 40/25/20/15
+// (Body Composition/Muscle/Metabolic Health/Progress) — ดูสูตรย่อยล่าสุดของแต่ละหมวดที่ v35 ด้านล่าง
+// (โครงสร้าง Body Composition/Metabolic Health เปลี่ยนจากตอน v32 ไปแล้ว)
 //
 // v33: ฟีดแบ็ก "Body Fat 25.1%/BMI ยังห่างเป้าหมายมาก แต่ Body Composition ขึ้น 100/100/100 เพราะทั้งโซน
 // Standard แบนคะแนน 100 หมด" — เปลี่ยน Body Fat/BMI จาก trapezoidScore (แบนเต็มโซน) เป็น peakScore
@@ -14,6 +13,17 @@ import type { BodyMetric } from './types'
 // ZoneBarRow/pills ที่แสดงผลอยู่ทั่วแอป — Muscle/Visceral Fat/Body Age (ทางเดียว) คงค้างไว้แบบเดิมตามที่
 // ยืนยัน (ยิ่งดีกว่ายิ่งไม่โดนหักคะแนน) และปรับน้ำหนัก Progress เป็น Fat 40/Muscle 35/Weight 15 (เดิม
 // Weight 30/Fat 40/Muscle 30) ยังไม่ใส่ Consistency เพราะไม่มีนิยาม/เกณฑ์อ้างอิงในระบบตอนนี้
+//
+// v35: ฟีดแบ็ก "ผมแนะนำโครงสร้างใหม่ — Body Composition ตัด Visceral Fat ออก เหลือ Body Fat 65/BMI 35
+// (สองตัวนี้ตอบเรื่อง composition โดยตรงกว่า) ย้าย Visceral Fat ไป Metabolic Health แทน (Visceral Fat 50/
+// Body Age 25/BMR 25 — Visceral Fat เกี่ยวกับความเสี่ยง metabolic มากที่สุด, Body Age/BMR ให้น้ำหนักน้อย
+// กว่าเพราะเป็นค่าคำนวณอ้อม ไม่ใช่ biomarker ตรง)" — ทำตามเป๊ะ ส่วน BMR ที่เคยข้ามไปเพราะ "ไม่มี threshold
+// มาตรฐานในระบบ" ตอนนี้มีจริงแล้ว: lib/bmr.ts มีสูตร Mifflin-St Jeor (อ้างอิงงานตีพิมพ์ 1990) คำนวณ BMR
+// ที่ "คาดว่าควรจะเป็น" จากน้ำหนัก/ส่วนสูง/อายุ/เพศ — เทียบกับ BMR ที่วัดจริงจากเครื่องชั่ง (row.bmr_kcal)
+// เป็น %ส่วนต่าง แล้วให้คะแนนแบบ peakScore (0%ต่าง = 100, ±10% = ขอบยังโอเค ~88, ±25% ขึ้นไป = 0) ตัวเลข
+// ±10%/±25% เป็นค่าที่เลือกเองตามความแม่นยำทั่วไปของสมการทำนาย BMR ในงานวิจัย (แม่นภายใน ~10% สำหรับคนส่วน
+// ใหญ่) ไม่ใช่เกณฑ์การแพทย์ตายตัว — ต้องมีน้ำหนัก/ส่วนสูง/อายุ/เพศครบถึงจะคำนวณค่าคาดหวังได้ ไม่งั้นหมวดนี้
+// ของ BMR จะเป็น null (ไม่ใส่ค่าเดา) แล้ว redistribute ตามปกติ
 
 export type ScoreDirection = 'lowerBetter' | 'higherBetter'
 
@@ -117,19 +127,24 @@ export function computeHealthScore(params: {
   ranges: HealthScoreRanges
   // ทิศทาง "ดีขึ้น" ของน้ำหนัก — อ้างอิงเป้าหมายที่ตั้งไว้ถ้ามี ไม่มี = lowerBetter (ดีฟอลต์เดิมของทั้งแอป)
   weightDirection: ScoreDirection
+  // v35: ใช้คำนวณ BMR ที่คาดหวัง (Mifflin-St Jeor, lib/bmr.ts) เทียบกับ row.bmr_kcal ที่วัดจริง — ไม่ครบ
+  // (ไม่มีส่วนสูง/อายุ) = ไม่คำนวณ BMR component เลย ไม่เดา
+  age: number | null
+  heightCm: number | null
 }): HealthScoreResult | null {
-  const { row, prevRow, bmi, sex, ranges, weightDirection } = params
+  const { row, prevRow, bmi, sex, ranges, weightDirection, age, heightCm } = params
   if (!row) return null
 
   const bf = bodyFatPctRange(sex)
   const bodyFatComp = row.body_fat_pct != null ? peakScore(row.body_fat_pct, bf.min, bf.low, bf.high, bf.max) : null
   const bmiComp = bmi != null ? peakScore(bmi, 10, 18.5, 25, 40) : null
-  const visceralComp = row.visceral_fat_grade != null ? lowerBetterScore(row.visceral_fat_grade, 9, 30) : null
+  // v35: ฟีดแบ็ก "Body Composition ตัด Visceral Fat ออก เหลือ Body Fat 65/BMI 35 — สองตัวนี้ตอบเรื่อง
+  // composition โดยตรงกว่า" — Visceral Fat ย้ายไปเป็นส่วนหนึ่งของ Metabolic Health แทน (ดูด้านล่าง)
   const bodyComposition = weightedAverage([
-    { weight: 50, score: bodyFatComp },
-    { weight: 20, score: bmiComp },
-    { weight: 20, score: visceralComp },
+    { weight: 65, score: bodyFatComp },
+    { weight: 35, score: bmiComp },
   ])
+  const visceralComp = row.visceral_fat_grade != null ? lowerBetterScore(row.visceral_fat_grade, 9, 30) : null
 
   const muscleMassComp =
     row.muscle_kg != null && ranges.muscleLow != null && ranges.muscleHigh != null
@@ -152,9 +167,21 @@ export function computeHealthScore(params: {
     row.body_age_years != null && ranges.bodyAgeLow != null && ranges.bodyAgeHigh != null
       ? lowerBetterScore(row.body_age_years, ranges.bodyAgeLow, ranges.bodyAgeHigh)
       : null
+  // v35: BMR ที่วัดจริง (row.bmr_kcal) เทียบกับ BMR ที่คาดว่าควรจะเป็นตามน้ำหนัก/ส่วนสูง/อายุ/เพศของแถวนี้
+  // (สูตร Mifflin-St Jeor เดียวกับที่ lib/bmr.ts ใช้อยู่แล้วสำหรับคำนวณ TDEE) — %ส่วนต่างจากค่าคาดหวัง 0% =
+  // 100, ±10% = ขอบยังโอเค, ±25% ขึ้นไป = 0 (ดูคอมเมนต์หัวไฟล์)
+  const predictedBmr = row.weight_kg != null && heightCm != null && age != null && sex != null
+    ? computeBmr(row.weight_kg, heightCm, age, sex)
+    : null
+  const bmrDeviationPct =
+    row.bmr_kcal != null && predictedBmr != null && predictedBmr !== 0
+      ? ((row.bmr_kcal - predictedBmr) / predictedBmr) * 100
+      : null
+  const bmrComp = bmrDeviationPct != null ? peakScore(bmrDeviationPct, -25, -10, 10, 25) : null
   const metabolic = weightedAverage([
-    { weight: 40, score: visceralComp },
-    { weight: 30, score: bodyAgeComp },
+    { weight: 50, score: visceralComp },
+    { weight: 25, score: bodyAgeComp },
+    { weight: 25, score: bmrComp },
   ])
 
   const weightDelta = row.weight_kg != null && prevRow?.weight_kg != null ? row.weight_kg - prevRow.weight_kg : null

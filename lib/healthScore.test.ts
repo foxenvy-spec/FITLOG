@@ -142,12 +142,14 @@ describe('computeHealthScore', () => {
   const ranges = { skeletalMuscleLow: 28, skeletalMuscleHigh: 32, muscleLow: 45, muscleHigh: 50, bodyAgeLow: 25, bodyAgeHigh: 35 }
 
   it('returns null when there is no current row', () => {
-    expect(computeHealthScore({ row: null, prevRow: null, bmi: null, sex: 'male', ranges, weightDirection: 'lowerBetter' })).toBeNull()
+    expect(
+      computeHealthScore({ row: null, prevRow: null, bmi: null, sex: 'male', ranges, weightDirection: 'lowerBetter', age: null, heightCm: null })
+    ).toBeNull()
   })
 
   it('computes an overall score and per-category breakdown from a fully-populated row', () => {
     const row = metric({ body_fat_pct: 15, visceral_fat_grade: 5, muscle_kg: 48, skeletal_muscle_kg: 30, body_age_years: 28 })
-    const result = computeHealthScore({ row, prevRow: null, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter' })
+    const result = computeHealthScore({ row, prevRow: null, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter', age: null, heightCm: null })
     expect(result).not.toBeNull()
     expect(result!.overall).toBeGreaterThan(0)
     expect(result!.overall).toBeLessThanOrEqual(100)
@@ -162,21 +164,61 @@ describe('computeHealthScore', () => {
   it('adds a PROGRESS category once a previous row is available', () => {
     const row = metric({ weight_kg: 70, body_fat_pct: 15, muscle_kg: 48 })
     const prevRow = metric({ weight_kg: 71, body_fat_pct: 15.5, muscle_kg: 47.8 })
-    const result = computeHealthScore({ row, prevRow, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter' })
+    const result = computeHealthScore({ row, prevRow, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter', age: null, heightCm: null })
     expect(result!.categories.map((c) => c.title)).toContain('PROGRESS')
   })
 
   it('drops a whole category cleanly when none of its inputs have data (no fabricated score)', () => {
-    // no visceral fat grade and no body age -> Metabolic Health has nothing to score
+    // no visceral fat grade, no body age, no age/height for a predicted BMR -> Metabolic Health has nothing to score
     const row = metric({ body_fat_pct: 15, muscle_kg: 48, skeletal_muscle_kg: 30 })
-    const result = computeHealthScore({ row, prevRow: null, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter' })
+    const result = computeHealthScore({ row, prevRow: null, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter', age: null, heightCm: null })
     expect(result!.categories.map((c) => c.title)).not.toContain('METABOLIC HEALTH')
+  })
+
+  it('does not score Body Composition off Visceral Fat anymore (moved to Metabolic Health)', () => {
+    // visceral fat grade present but no body fat/BMI -> Body Composition has nothing to score even though
+    // visceral fat data exists, since it now lives entirely in Metabolic Health
+    const row = metric({ visceral_fat_grade: 5 })
+    const result = computeHealthScore({ row, prevRow: null, bmi: null, sex: 'male', ranges, weightDirection: 'lowerBetter', age: null, heightCm: null })
+    const titles = result!.categories.map((c) => c.title)
+    expect(titles).not.toContain('BODY COMPOSITION')
+    expect(titles).toContain('METABOLIC HEALTH')
+  })
+
+  it('scores BMR against the Mifflin-St Jeor prediction when age/height are available', () => {
+    // predicted BMR for a 30yo male, 70kg, 175cm: 10*70 + 6.25*175 - 5*30 + 5 = 700+1093.75-150+5 = 1648.75 -> 1649
+    const onTarget = metric({ visceral_fat_grade: 5, weight_kg: 70, bmr_kcal: 1649 })
+    const result = computeHealthScore({
+      row: onTarget,
+      prevRow: null,
+      bmi: null,
+      sex: 'male',
+      ranges,
+      weightDirection: 'lowerBetter',
+      age: 30,
+      heightCm: 175,
+    })
+    const metabolicOnTarget = result!.categories.find((c) => c.title === 'METABOLIC HEALTH')!.pct
+    // way off (measured much lower than predicted) should score noticeably worse
+    const wayOff = metric({ visceral_fat_grade: 5, weight_kg: 70, bmr_kcal: 1200 })
+    const resultOff = computeHealthScore({
+      row: wayOff,
+      prevRow: null,
+      bmi: null,
+      sex: 'male',
+      ranges,
+      weightDirection: 'lowerBetter',
+      age: 30,
+      heightCm: 175,
+    })
+    const metabolicOff = resultOff!.categories.find((c) => c.title === 'METABOLIC HEALTH')!.pct
+    expect(metabolicOnTarget).toBeGreaterThan(metabolicOff)
   })
 
   it('reports each category\'s nominal weight (40/25/20/15) when all four are present', () => {
     const row = metric({ weight_kg: 70, body_fat_pct: 15, visceral_fat_grade: 5, muscle_kg: 48, skeletal_muscle_kg: 30, body_age_years: 28 })
     const prevRow = metric({ weight_kg: 71, body_fat_pct: 15.5, muscle_kg: 47.8 })
-    const result = computeHealthScore({ row, prevRow, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter' })
+    const result = computeHealthScore({ row, prevRow, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter', age: null, heightCm: null })
     const byTitle = Object.fromEntries(result!.categories.map((c) => [c.title, c.weight]))
     expect(byTitle['BODY COMPOSITION']).toBe(40)
     expect(byTitle['MUSCLE']).toBe(25)
@@ -185,10 +227,10 @@ describe('computeHealthScore', () => {
   })
 
   it('redistributes a dropped category\'s weight proportionally to the remaining categories', () => {
-    // no visceral fat grade/body age -> Metabolic Health (20%) drops; remaining 40/25/15 renormalize over 80
+    // no visceral fat grade/body age/BMR data -> Metabolic Health (20%) drops; remaining 40/25/15 renormalize over 80
     const row = metric({ weight_kg: 70, body_fat_pct: 15, muscle_kg: 48, skeletal_muscle_kg: 30 })
     const prevRow = metric({ weight_kg: 71, body_fat_pct: 15.5, muscle_kg: 47.8 })
-    const result = computeHealthScore({ row, prevRow, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter' })
+    const result = computeHealthScore({ row, prevRow, bmi: 22, sex: 'male', ranges, weightDirection: 'lowerBetter', age: null, heightCm: null })
     const byTitle = Object.fromEntries(result!.categories.map((c) => [c.title, c.weight]))
     expect(byTitle['BODY COMPOSITION']).toBe(50) // 40/80
     expect(byTitle['MUSCLE']).toBe(31) // round(25/80*100)

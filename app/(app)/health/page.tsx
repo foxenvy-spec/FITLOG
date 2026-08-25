@@ -728,11 +728,10 @@ export default function HealthPage() {
           : 'neutral'
       : 'lowerBetter'
 
-  // v32: ฟีดแบ็ก "สูตร Health Score ที่ผู้ใช้ออกแบบ — Body Composition 40% (Body Fat 50/BMI 20/Visceral
-  // Fat 20, Waist 10% ข้ามไปก่อนไม่มี threshold มาตรฐาน) + Muscle 25% (Muscle Mass 60/Skeletal Muscle 40)
-  // + Metabolic Health 20% (Visceral Fat 40/Body Age 30, BMR 30% ข้ามเหตุผลเดียวกัน) + Progress 15%
-  // (Weight/Body Fat/Muscle เทียบเอนทรีก่อนหน้า) — แทนที่ pass/fail เดิม (computeScoreItems) ทั้งหมด เอนจิ้น
-  // จริงอยู่ที่ lib/healthScore.ts (มีเทสต์ครบ) ไฟล์นี้แค่ประกอบ ranges จากข้อมูลจริงแล้วเรียกใช้
+  // v32: สูตร Health Score — แทนที่ pass/fail เดิม (computeScoreItems) ทั้งหมด เอนจิ้นจริงอยู่ที่
+  // lib/healthScore.ts (มีเทสต์ครบ) ไฟล์นี้แค่ประกอบ ranges/age/heightCm จากข้อมูลจริงแล้วเรียกใช้ — น้ำหนัก
+  // ต่อหมวดล่าสุดดูที่คอมเมนต์หัวไฟล์ lib/healthScore.ts (เปลี่ยนหลายรอบแล้ว ไม่ทวนซ้ำที่นี่กันหลุดจากกัน)
+  // v35: เพิ่ม age/heightCm เข้า params เพื่อคำนวณ BMR ที่คาดหวัง (Mifflin-St Jeor) เทียบกับ BMR วัดจริง
   const healthScoreRanges: HealthScoreRanges = {
     skeletalMuscleLow: skeletalRangeLow,
     skeletalMuscleHigh: skeletalRangeHigh,
@@ -747,8 +746,17 @@ export default function HealthPage() {
 
   const healthScoreResult = useMemo(
     () =>
-      computeHealthScore({ row: latest, prevRow: metrics[1] ?? null, bmi, sex: profile?.sex ?? null, ranges: healthScoreRanges, weightDirection: scoreWeightDirection }),
-    [latest, metrics, bmi, profile?.sex, healthScoreRanges, scoreWeightDirection]
+      computeHealthScore({
+        row: latest,
+        prevRow: metrics[1] ?? null,
+        bmi,
+        sex: profile?.sex ?? null,
+        ranges: healthScoreRanges,
+        weightDirection: scoreWeightDirection,
+        age: profile?.age ?? null,
+        heightCm: profile?.height_cm ?? null,
+      }),
+    [latest, metrics, bmi, profile?.sex, profile?.age, profile?.height_cm, healthScoreRanges, scoreWeightDirection]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   )
 
@@ -773,9 +781,21 @@ export default function HealthPage() {
             sex: profile?.sex ?? null,
             ranges: healthScoreRanges,
             weightDirection: scoreWeightDirection,
+            age: profile?.age ?? null,
+            heightCm: profile?.height_cm ?? null,
           })
         : null,
-    [oneMonthAgoMetric, oneMonthAgoIndex, metrics, previousBmiForScore, profile?.sex, healthScoreRanges, scoreWeightDirection]
+    [
+      oneMonthAgoMetric,
+      oneMonthAgoIndex,
+      metrics,
+      previousBmiForScore,
+      profile?.sex,
+      profile?.age,
+      profile?.height_cm,
+      healthScoreRanges,
+      scoreWeightDirection,
+    ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   )
 
@@ -796,6 +816,8 @@ export default function HealthPage() {
           sex: profile?.sex ?? null,
           ranges: healthScoreRanges,
           weightDirection: scoreWeightDirection,
+          age: profile?.age ?? null,
+          heightCm: profile?.height_cm ?? null,
         })
       )
       .map((r) => r?.overall ?? null)
@@ -804,7 +826,7 @@ export default function HealthPage() {
     const beatCount = history.filter((v) => v <= healthScoreResult.overall).length
     return Math.max(1, Math.min(100, Math.round((beatCount / history.length) * 100)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metrics, profile?.height_cm, profile?.sex, healthScoreResult, healthScoreRanges, scoreWeightDirection])
+  }, [metrics, profile?.height_cm, profile?.sex, profile?.age, healthScoreResult, healthScoreRanges, scoreWeightDirection])
 
   // Insight ที่คำนวณจากการเปลี่ยนแปลงจริงในช่วงเวลาที่เลือกดู (ไม่ใช่คำแนะนำทั่วไปที่ไม่มีข้อมูลรองรับ)
   const healthInsights: Insight[] = useMemo(() => {
