@@ -2255,8 +2255,12 @@ function OverviewTrendChart({
     const rectX = isLatest ? x - width + 6 : x - width / 2
     // v39: ฟีดแบ็ก "pill สีทองทึบดูหนักไป — เปลี่ยนเป็น Dark Titanium + gold border บางๆ จะดู premium กว่า"
     // เปลี่ยนจาก fill ทึบสี meta.color เป็น fill เข้มเหมือนจุดอื่น + stroke สี meta.color บางๆ แทน
+    // v41: ฟีดแบ็ก "จุดแรก/ต่ำสุด มี tooltip สีดำเด่นดีอยู่แล้ว แต่อาจเพิ่ม border/glow บางๆ ให้สัมพันธ์กับ
+    // ล่าสุด" — เดิม stroke สีเทากลาง #2E333A ไม่เกี่ยวกับตัวชี้วัดเลย เปลี่ยนเป็นสี meta.color แบบจางมาก (25%
+    // alpha) แทน ให้เห็นว่าเป็นตระกูลเดียวกับจุดล่าสุด บวก glow แผ่วๆ (เบากว่าจุดล่าสุดมาก — 4px/~10% เทียบกับ
+    // จุดล่าสุดที่ 6px/~40%) ไม่ให้แย่งความเด่นไปจากจุดล่าสุด
     return (
-      <g style={isLatest ? { filter: `drop-shadow(0 0 6px ${meta.color}66)` } : undefined}>
+      <g style={{ filter: `drop-shadow(0 0 ${isLatest ? 6 : 4}px ${meta.color}${isLatest ? '66' : '1a'})` }}>
         <rect
           x={rectX}
           y={y - 28}
@@ -2264,7 +2268,7 @@ function OverviewTrendChart({
           height={18}
           rx={9}
           fill="#14161A"
-          stroke={isLatest ? meta.color : '#2E333A'}
+          stroke={isLatest ? meta.color : `${meta.color}40`}
           strokeWidth={isLatest ? 1.25 : 1}
         />
         <text x={rectX + width / 2} y={y - 15} textAnchor="middle" fontSize={11} fontFamily="ui-monospace, monospace" fontWeight={600} fill={isLatest ? meta.color : '#F3F0E8'}>
@@ -2466,9 +2470,10 @@ function OverviewTrendChart({
                     ต่ำกว่าช่วงกราฟ — ควรขยาย Y-axis ให้เห็นเส้นเป้าหมายด้วย" — domain เดิม ['auto','auto']
                     เปลี่ยนเป็น yDomain ที่คำนวณเองครอบคลุมทั้งข้อมูลและเป้าหมาย (ดู yDomain ด้านบน) */}
                 {/* v39: allowDecimals={false} + ticks ที่คำนวณเองเป็นเลขจำนวนเต็มขั้นละ 1 หน่วยเสมอ (ดู
-                    yTicks ด้านบน) กันไม่ให้ recharts auto-generate tick เป็นทศนิยมยาวๆ ไม่ลงตัวอีก */}
+                    yTicks ด้านบน) กันไม่ให้ recharts auto-generate tick เป็นทศนิยมยาวๆ ไม่ลงตัวอีก
+                    v41: ฟีดแบ็ก "ตัวเลขแกน Y ยังจางเล็กน้อย เพิ่ม contrast อีก ~10%" — #B8BBC2 → #C4C7CC */}
                 <YAxis
-                  tick={{ fill: '#B8BBC2', fontSize: 10 }}
+                  tick={{ fill: '#C4C7CC', fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
                   width={36}
@@ -2481,13 +2486,15 @@ function OverviewTrendChart({
                     v38: บางลง (1.5px) และใช้ muted green (#7A9B57 โทนเดียวกับ moss ที่ใช้ทั่วแอป) แทน #8CB264
                     เดิมที่สดไปหน่อย — ตอนนี้เห็นเส้นจริงในกราฟแล้วเพราะ yDomain ขยายให้ครอบคลุมแล้ว
                     v39: ฟีดแบ็ก "เขียวเป้าหมายอย่าสดเกิน จะหลุดจาก Dark Titanium — ใช้ #7FAF72" — เปลี่ยนตาม
-                    เฉดที่ระบุมาเป๊ะ */}
+                    เฉดที่ระบุมาเป๊ะ
+                    v41: ฟีดแบ็ก "เส้น Target ค่อนข้าง subtle — เพิ่ม opacity เล็กน้อยให้เห็นเป้าหมายเร็วขึ้น"
+                    — 0.7 → 0.85 (สีเดิม #7FAF72 ไม่เปลี่ยน แค่ทึบขึ้น) */}
                 {goalTarget !== null && (
                   <ReferenceLine
                     y={goalTarget}
                     stroke="#7FAF72"
                     strokeWidth={1.5}
-                    strokeOpacity={0.7}
+                    strokeOpacity={0.85}
                     strokeDasharray="4 4"
                     label={{ value: `🎯 เป้าหมาย ${goalTarget.toFixed(1)} ${valueUnit}`, position: 'insideBottomRight', fill: '#7FAF72', fontSize: 10 }}
                   />
