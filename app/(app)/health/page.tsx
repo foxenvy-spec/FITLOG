@@ -1728,9 +1728,13 @@ const ZONE_ARROW: Record<'Low' | 'Standard' | 'High', string> = { Low: '↓', St
 // ที่เป็นเรื่องไม่ดี ดูสับสนว่า "ทำไมสูงหมด" — เปลี่ยนมาใช้ classifyMetric ตัวเดียวกับที่คำนวณคะแนนสุขภาพ
 // รวม (ดูฟังก์ชันด้านบนสุดของไฟล์) ให้สีป้ายสะท้อนว่าค่านั้น "ดี/มาตรฐาน" (เขียว) หรือ "ควรปรับปรุง" (แดง)
 // จริงๆ ตามทิศทางของตัวชี้วัด ไม่ใช่แค่ตำแหน่งบน/ล่างช่วงมาตรฐานเฉยๆ
+// v28: ฟีดแบ็ก "สีเขียวถูกใช้เยอะเกินไป — Standard/'ปกติ' ไม่ใช่ favorable จริงๆ แค่อยู่ในช่วงคาดหวัง
+// ไม่ควรเขียวเหมือน 'good' — Green ควรสงวนไว้เฉพาะ Positive/Healthy/Goal achieved" — เดิม status
+// 'good' กับ 'standard' (จาก classifyMetric) ถูกจับกลุ่มเป็นเขียวเหมือนกันหมด แยก standard ออกมาใช้
+// steel (โทนกลาง) แทน เหลือเขียวไว้เฉพาะ 'good' เท่านั้น
 function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' | 'High'; direction?: Direction }) {
   const status = classifyMetric(zone, direction)
-  const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : 'bg-mossdim text-moss'
+  const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : status === 'good' ? 'bg-mossdim text-moss' : 'bg-steeldim text-steel'
   return (
     <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
       {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
@@ -2587,6 +2591,20 @@ function OverviewHealthScoreHeader({
               {label}
             </span>
             {summary && <p className="text-sm text-ink/65 mt-1.5 max-w-[190px]">{summary}</p>}
+            {/* v28: ฟีดแบ็ก "90% มาจากอะไร? ไม่จำเป็นต้องเพิ่มข้อมูลเยอะ แค่ทำให้รู้ว่าคะแนนนี้มีเหตุผล —
+                อาจมีปุ่ม 'ดูรายละเอียดคะแนน ›'" — breakdown (หมวด+% ต่อหมวด) มีอยู่แล้วหลัง ⓘ (ไม่ทำถาวรเพิ่ม
+                เพราะจะย้อนกลับไปหนาแน่นแบบที่เพิ่งลดไป) แค่เพิ่ม affordance ให้เห็นชัดว่ากดดูรายละเอียดได้
+                ไม่ใช่แค่ไอคอน ⓘ เล็กๆ เดา — ซ่อนทันทีที่กางออกแล้ว (ไม่ต้องซ้ำกับ breakdown ที่โชว์อยู่) */}
+            {!showBreakdown && categoryRows.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowBreakdown(true)}
+                className="text-xs mt-1.5 transition hover:text-ink"
+                style={{ color: '#9DA0A8' }}
+              >
+                ดูรายละเอียดคะแนน ›
+              </button>
+            )}
           </div>
         </div>
 
@@ -2648,8 +2666,12 @@ function OverviewHealthScoreHeader({
               {goalRows.map((g) => (
                 <div key={g.label}>
                   <p className="font-mono font-semibold text-sm text-ink leading-none whitespace-nowrap">{g.valueText}</p>
+                  {/* v28: ฟีดแบ็ก "สีเขียวถูกใช้เยอะเกินไป — Orange ควรใช้กับ Primary metric/progress/active
+                      แทน" — "เหลือ X kg" เป็นข้อความความคืบหน้า (ยังไปไม่ถึงเป้า) ไม่ใช่ผลสำเร็จ เดิมใช้เขียว
+                      (#8CB264) ตายตัวเหมือนเป็นเรื่องดีเสร็จสมบูรณ์แล้ว — เปลี่ยนเป็นอำพัน (#D8A34A) ให้เข้าคู่
+                      กับแถบ progress bar (bg-amber) ด้านล่างที่เป็นสีเดียวกันอยู่แล้ว */}
                   {g.subText && (
-                    <p className="text-xs whitespace-nowrap mt-1" style={{ color: '#8CB264' }}>
+                    <p className="text-xs whitespace-nowrap mt-1" style={{ color: '#D8A34A' }}>
                       {g.subText}
                     </p>
                   )}
@@ -2909,9 +2931,17 @@ function ObesityAnalysisChart({
   const bf = bodyFatPctRange(sex)
   return (
     <section>
-      <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
+      {/* v28: ฟีดแบ็ก "OBESITY ANALYSIS/MUSCLE & FAT ANALYSIS ดู professional แต่รู้สึกเหมือน Dashboard
+          ภาษาอังกฤษที่เอาข้อมูลไทยมาใส่ — FITLOG ควรมี identity ของตัวเองมากกว่านี้ ใช้ไทยเป็นหลัก อังกฤษเป็น
+          secondary label เล็กๆ" — สลับลำดับ: ไทยเด่น (ขนาด/สีเดิมของหัวข้อ section) + อังกฤษเดิมเป็นคำเล็กจาง
+          ต่อท้าย ไม่ใช่ตัวเดียวกับ subLabel การ์ด (นั่นคือ Thai label + English caption แนวตั้ง) อันนี้เป็น
+          หัวข้อ section เดี่ยว เลยทำเป็นแนวนอนคำเดียวกันแทน */}
+      <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-3">
         <ScaleIcon />
-        Obesity Analysis
+        <span>
+          น้ำหนักเทียบเกณฑ์
+          <span className="text-[10px] uppercase tracked text-muted/70 ml-1.5">Obesity Analysis</span>
+        </span>
         <span className="text-muted">
           <InfoIcon />
         </span>
@@ -3045,9 +3075,12 @@ function MuscleFatAnalysisChart({
 }) {
   return (
     <section>
-      <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
+      <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-3">
         <MuscleIcon />
-        Muscle &amp; Fat Analysis
+        <span>
+          กล้ามเนื้อและไขมัน
+          <span className="text-[10px] uppercase tracked text-muted/70 ml-1.5">Muscle &amp; Fat Analysis</span>
+        </span>
         <span className="text-muted">
           <InfoIcon />
         </span>
@@ -3251,9 +3284,14 @@ function IconStatCard({
         ? `${zone === 'High' ? 'เพียงพอ' : 'อยู่ในเกณฑ์ดี'} ✓`
         : `${ZONE_ARROW[zone]} ${ZONE_LABEL_TH[zone]}`
     : null
+  // v28: ฟีดแบ็ก "สีเขียวถูกใช้เยอะเกินไป — ปกติ/เพิ่มขึ้นดี/ผ่านเกณฑ์/เป้าหมาย ใช้เขียวหมด จนเขียวกลาย
+  // เป็นสีปกติของ UI ไป — Green ควรสงวนไว้เฉพาะ Positive/Healthy/Goal achieved จริงๆ" — โซน Standard
+  // ("ปกติ" แค่อยู่ในช่วงคาดหวัง ไม่ใช่ผลลัพธ์ที่ดีเป็นพิเศษ) เปลี่ยนจากเขียวเป็น steel (โทนกลางที่มีอยู่แล้ว
+  // ในธีม ใช้กับ BMI/แถบ Low ในกราฟ Trends) ส่วนโซนที่ favorable จริง (เพียงพอ ✓/อยู่ในเกณฑ์ดี ✓ ด้านบน)
+  // ยังเขียวเหมือนเดิม เพราะเป็นสัญญาณดีจริง ไม่ใช่แค่ "อยู่ในเกณฑ์"
   const zonePillClass =
     zone === 'Standard'
-      ? 'bg-mossdim text-moss'
+      ? 'bg-steeldim text-steel'
       : zone === 'High'
         ? zoneScheme === 'higherOk'
           ? 'bg-emerald-500/15 text-emerald-500'
