@@ -1186,6 +1186,7 @@ export default function HealthPage() {
             changePeriodLabel={periodLabelOf(latest, metrics[1] ?? null)}
             weightGoalTarget={weightGoal?.target_value ?? null}
             bodyFatGoalTarget={bodyFatGoalForBanner?.target_value ?? null}
+            weightDirection={scoreWeightDirection}
           />
 
           {/* v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ" — เรียงลำดับตามความสำคัญจริง
@@ -2143,6 +2144,7 @@ function OverviewTrendChart({
   changePeriodLabel,
   weightGoalTarget,
   bodyFatGoalTarget,
+  weightDirection,
 }: {
   metrics: BodyMetric[]
   unit: string
@@ -2153,6 +2155,11 @@ function OverviewTrendChart({
   changePeriodLabel: string | null
   weightGoalTarget: number | null
   bodyFatGoalTarget: number | null
+  // v46: ฟีดแบ็ก "อยากให้ต่ำสุด/สูงสุดของแท็บน้ำหนักมีลูกศรสีตามทิศทางเป้าหมายด้วย เหมือน Body Fat/Muscle" —
+  // ยืนยันแล้วว่ายอมรับความเสี่ยงที่เคยเตือนไว้ (กรณีน้ำหนักขึ้นจากกล้ามเนื้อ จะเห็นลูกศรแดงทั้งที่จริงๆ ดี) —
+  // ใช้ scoreWeightDirection เดียวกับที่ Health Score ใช้คำนวณ Progress (lowerBetter/higherBetter เท่านั้น
+  // ไม่มี neutral — ฝั่ง parent coerce neutral เป็น lowerBetter ไว้แล้ว)
+  weightDirection: ScoreDirection
 }) {
   const [metricKey, setMetricKey] = useState<OverviewTrendMetricKey>('weight')
   const [rangeDays, setRangeDays] = useState(30)
@@ -2198,9 +2205,14 @@ function OverviewTrendChart({
   // v44: ฟีดแบ็ก "ต่ำสุด/สูงสุด ควรมีลูกศร/สีบอกด้วยไหม" — ย้อนกลับไปเจอปัญหาเดียวกับ v43 ถ้าใส่แบบเดียวกันหมด
   // (น้ำหนักสูงสุด = แดงเสมอ ไม่จริงเพราะอาจมาจากกล้ามเนื้อ) — ใส่เฉพาะ Body Fat/Muscle ที่มีทิศทาง "ดี" ชัด
   // ในตัวเอง เหมือน headlineDeltaGood ด้านบน (คนละค่ากันเพราะ min/max ไม่ใช่เดลต้า): Body Fat ต่ำสุด=ดี(เขียว),
-  // สูงสุด=แย่(แดง) / Muscle สูงสุด=ดี(เขียว), ต่ำสุด=แย่(แดง) — Weight เป็น null ทั้งคู่ = ไม่มีลูกศร/สี เหมือนเดิม
-  const minIsGood = metricKey === 'bodyFat' ? true : metricKey === 'muscle' ? false : null
-  const maxIsGood = metricKey === 'bodyFat' ? false : metricKey === 'muscle' ? true : null
+  // สูงสุด=แย่(แดง) / Muscle สูงสุด=ดี(เขียว), ต่ำสุด=แย่(แดง)
+  // v46: ฟีดแบ็ก "อยากให้น้ำหนักมีลูกศรสีตามทิศทางเป้าหมายด้วย" — ยืนยันยอมรับความเสี่ยงที่เตือนไว้แล้ว (น้ำหนัก
+  // ขึ้นจากกล้ามเนื้อจะโดนตัดสินเป็นแดงทั้งที่จริงๆ ดี) ใช้ weightDirection: lowerBetter = ต่ำสุด(ใกล้เป้าหมาย)
+  // เป็นดี, higherBetter = สูงสุด(ใกล้เป้าหมาย)เป็นดีแทน
+  const minIsGood =
+    metricKey === 'bodyFat' ? true : metricKey === 'muscle' ? false : metricKey === 'weight' ? weightDirection === 'lowerBetter' : null
+  const maxIsGood =
+    metricKey === 'bodyFat' ? false : metricKey === 'muscle' ? true : metricKey === 'weight' ? weightDirection === 'higherBetter' : null
 
   // v36: เป้าหมาย (เส้นประ + badge) มีเฉพาะน้ำหนัก/Body Fat เพราะเป็น goal_type เดียวที่แอปนี้รองรับ (ไม่มี
   // เป้าหมายมวลกล้ามเนื้อ) — น้ำหนักแปลงหน่วยแสดงผลด้วย toDisplay เหมือนค่าอื่นในกราฟนี้, Body Fat ไม่ต้องแปลง
