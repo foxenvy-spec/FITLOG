@@ -1183,7 +1183,15 @@ export default function HealthPage() {
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
 
-          <OverviewTrendChart metrics={metrics} unit={unit} toDisplay={toDisplay} />
+          <OverviewTrendChart
+            metrics={metrics}
+            unit={unit}
+            toDisplay={toDisplay}
+            weightDelta={weightDeltaForCard}
+            bodyFatDelta={bodyFatDeltaForCard}
+            muscleDelta={fieldDelta('muscle_kg', toDisplay)}
+            changePeriodLabel={periodLabelOf(latest, metrics[1] ?? null)}
+          />
 
           {/* v3: ฟีดแบ็ก "Card ไม่มีระดับความสำคัญ" — เรียงลำดับตามความสำคัญจริง
               v6: ฟีดแบ็ก "ผมจะให้ความสำคัญของข้อมูลแบบนี้ — ระดับ 1 (ต้องรู้ทันที): น้ำหนัก/ไขมันในร่างกาย/
@@ -2023,16 +2031,16 @@ function TopStatCard({
 
 type OverviewTrendMetricKey = 'weight' | 'bodyFat' | 'muscle'
 
-// longLabel: ฟีดแบ็ก "67.1 kg / ↑ 0.8 kg เฉยๆ ไม่บอกว่าเทียบกับช่วงไหน อยากได้ 'vs previous period' ต่อท้าย"
-// — เดลต้าตรงนี้คือ (ค่าล่าสุด - ค่าแรกในช่วงที่เลือกดู 7D-1Y) ไม่ใช่การเทียบกับ "ช่วงก่อนหน้าที่เท่ากัน" แบบ
-// period-over-period จริงๆ — ใช้คำที่ตรงกับสิ่งที่คำนวณจริง (ระบุช่วงเวลาที่เลือกอยู่ตรงๆ) แทนการแปล
-// "vs previous period" ตรงตัว ซึ่งจะสื่อความหมายผิดจากที่คำนวณจริง
-const OVERVIEW_TREND_RANGES: { days: number; label: string; longLabel: string }[] = [
-  { days: 7, label: '7D', longLabel: '7 วันที่ผ่านมา' },
-  { days: 30, label: '30D', longLabel: '30 วันที่ผ่านมา' },
-  { days: 90, label: '3M', longLabel: '3 เดือนที่ผ่านมา' },
-  { days: 180, label: '6M', longLabel: '6 เดือนที่ผ่านมา' },
-  { days: 365, label: '1Y', longLabel: '1 ปีที่ผ่านมา' },
+// v27: ฟีดแบ็ก "ข้อมูลขัดกันเอง — เดลต้า/insight เดิมของการ์ดนี้ผูกกับ range 7D-1Y ที่เลือกดู ต่างจาก
+// Health Score/Key Metrics ที่ใช้ fieldDelta (ล่าสุด vs ก่อนหน้าล่าสุด) ทำให้ตัวเลขไม่ตรงกัน" — เดลต้า/
+// changePeriodLabel ไม่ผูกกับ range นี้แล้ว (ดูคอมเมนต์จุดเรียก OverviewTrendChart) เหลือแค่คุมว่ากราฟย้อนดู
+// ข้อมูลไกลแค่ไหน — เคยมี longLabel ต่อท้ายเดลต้าด้วย ตอนนี้ไม่ได้ใช้แล้วเลยตัดออก
+const OVERVIEW_TREND_RANGES: { days: number; label: string }[] = [
+  { days: 7, label: '7D' },
+  { days: 30, label: '30D' },
+  { days: 90, label: '3M' },
+  { days: 180, label: '6M' },
+  { days: 365, label: '1Y' },
 ]
 
 const OVERVIEW_TREND_METRICS: Record<OverviewTrendMetricKey, { label: string; color: string }> = {
@@ -2046,62 +2054,74 @@ const OVERVIEW_TREND_METRICS: Record<OverviewTrendMetricKey, { label: string; co
 // Key Metrics เดิม (ไม่ทุบ IconStatCard grid ที่เพิ่งจัดหมวด Key/Additional Metrics เสร็จตามฟีดแบ็กรอบก่อน)
 // ใช้ recharts LineChart สไตล์เดียวกับ MetricRowCard ในแท็บ "แนวโน้ม" ด้านล่าง แต่ผูก state ช่วงเวลา
 // ของตัวเองแยกต่างหาก (7D-1Y คนละบริบทกับ trendPeriodDays 7/30/90 ของแท็บแนวโน้ม)
-function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[]; unit: string; toDisplay: (v: number) => number }) {
+// ฟีดแบ็ก "❗ ข้อมูลขัดกันเอง — ด้านบนบอก ↓0.4% ไขมัน แต่ Insight ใต้กราฟบอก Body Fat เพิ่มขึ้น 3.2%...
+// Critical UX/Data issue เพราะผู้ใช้จะไม่รู้ว่าควรเชื่ออันไหน" — สาเหตุคือ Insight เดิมคำนวณเดลต้าจาก
+// "จุดแรก/จุดสุดท้ายในกราฟช่วงที่เลือกดู" (7D-1Y) ซึ่งเป็นคนละฐานกับ Health Score/Key Metrics ทั้งหน้าที่ใช้
+// fieldDelta (ค่าล่าสุด vs ค่าก่อนหน้าล่าสุด เท่านั้น ไม่ผูกกับ range) — ทำให้ตัวเลขไม่ตรงกันได้จริงถ้ามีการวัด
+// หลายครั้งในช่วงที่เลือก — แก้โดยรับ weightDelta/bodyFatDelta/muscleDelta/changePeriodLabel จาก parent
+// (คำนวณครั้งเดียวด้วย fieldDelta เดียวกับที่ Health Score header ใช้ ผ่าน props แทนคำนวณซ้ำในนี้) ให้
+// เดลต้า/Insight ในการ์ดนี้เป็น "ค่าเดียวกันเป๊ะ" กับที่ Health Score/Key Metrics แสดงเสมอ ไม่มีทางขัดกันอีก —
+// range selector (7D-1Y) ตอนนี้คุมแค่ "กราฟจะย้อนดูข้อมูลไกลแค่ไหน" ไม่ได้คุมตัวเลขเดลต้า/Insight แล้ว
+function OverviewTrendChart({
+  metrics,
+  unit,
+  toDisplay,
+  weightDelta,
+  bodyFatDelta,
+  muscleDelta,
+  changePeriodLabel,
+}: {
+  metrics: BodyMetric[]
+  unit: string
+  toDisplay: (v: number) => number
+  weightDelta: number | null
+  bodyFatDelta: number | null
+  muscleDelta: number | null
+  changePeriodLabel: string | null
+}) {
   const [metricKey, setMetricKey] = useState<OverviewTrendMetricKey>('weight')
   const [rangeDays, setRangeDays] = useState(30)
   const meta = OVERVIEW_TREND_METRICS[metricKey]
   const valueUnit = metricKey === 'bodyFat' ? '%' : unit
 
-  const rangeMetrics = useMemo(() => {
+  const data = useMemo(() => {
     const since = new Date()
     since.setDate(since.getDate() - rangeDays)
     const offset = since.getTimezoneOffset()
     const sinceStr = new Date(since.getTime() - offset * 60000).toISOString().slice(0, 10)
-    return metrics.filter((m) => m.measured_at >= sinceStr)
-  }, [metrics, rangeDays])
-
-  const data = useMemo(() => {
+    const filtered = metrics.filter((m) => m.measured_at >= sinceStr)
     const rows =
       metricKey === 'weight'
-        ? rangeMetrics.filter((m) => m.weight_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.weight_kg as number) }))
+        ? filtered.filter((m) => m.weight_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.weight_kg as number) }))
         : metricKey === 'bodyFat'
-          ? rangeMetrics.filter((m) => m.body_fat_pct !== null).map((m) => ({ measured_at: m.measured_at, value: m.body_fat_pct as number }))
-          : rangeMetrics.filter((m) => m.muscle_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.muscle_kg as number) }))
+          ? filtered.filter((m) => m.body_fat_pct !== null).map((m) => ({ measured_at: m.measured_at, value: m.body_fat_pct as number }))
+          : filtered.filter((m) => m.muscle_kg !== null).map((m) => ({ measured_at: m.measured_at, value: toDisplay(m.muscle_kg as number) }))
     return rows.reverse().map((r) => ({ label: shortLabel(r.measured_at), value: r.value }))
-  }, [rangeMetrics, metricKey, toDisplay])
+  }, [metrics, rangeDays, metricKey, toDisplay])
 
   const latestVal = data.length > 0 ? data[data.length - 1].value : null
-  const firstVal = data.length > 0 ? data[0].value : null
-  const delta = latestVal !== null && firstVal !== null ? latestVal - firstVal : null
-  const rangeLongLabel = OVERVIEW_TREND_RANGES.find((r) => r.days === rangeDays)?.longLabel ?? ''
+  const headlineDelta = metricKey === 'weight' ? weightDelta : metricKey === 'bodyFat' ? bodyFatDelta : muscleDelta
 
-  // ฟีดแบ็ก "Graph ใหญ่ดีแล้ว แต่ควรเพิ่ม Insight...น้ำหนักเพิ่มขึ้น 0.8 kg ใน 30 วัน แต่ Body Fat ลดลง
-  // 0.4% → แนวโน้มดี — FITLOG ไม่ควรเป็นแค่ 'ดูข้อมูล' แต่ควรเป็น 'เข้าใจข้อมูล'" — เดลต้าน้ำหนัก/ไขมัน คำนวณ
-  // จากข้อมูลจริงในช่วงเวลาเดียวกับกราฟที่กำลังดูอยู่ (rangeMetrics เดียวกับที่ใช้วาดกราฟ) ไม่ขึ้นกับว่า
-  // metricKey ที่เลือกดูอยู่ตอนนี้คือตัวไหน (ข้อความนี้พูดถึงความสัมพันธ์น้ำหนัก/ไขมันเสมอ เพราะเป็นสัญญาณ
-  // "แนวโน้มดี/ควรทบทวน" ที่ตีความได้จริง ไม่ใช่แค่ตัวเลขเปลี่ยน) — ไม่มีข้อมูลพอ (< 2 จุดของตัวใดตัวหนึ่งใน
-  // ช่วงนี้) = ไม่แสดงอะไร ไม่เดา
-  const weightDeltaInRange = (() => {
-    const rows = rangeMetrics.filter((m) => m.weight_kg !== null)
-    if (rows.length < 2) return null
-    return toDisplay(rows[0].weight_kg as number) - toDisplay(rows[rows.length - 1].weight_kg as number)
-  })()
-  const bodyFatDeltaInRange = (() => {
-    const rows = rangeMetrics.filter((m) => m.body_fat_pct !== null)
-    if (rows.length < 2) return null
-    return (rows[0].body_fat_pct as number) - (rows[rows.length - 1].body_fat_pct as number)
-  })()
+  // ฟีดแบ็ก "Graph ใหญ่ดีแล้ว แต่ควรเพิ่ม Insight...FITLOG ไม่ควรเป็นแค่ 'ดูข้อมูล' แต่ควรเป็น 'เข้าใจข้อมูล'"
+  // + "FITLOG ควรเป็น Coach ที่ให้คำแนะนำ มากกว่าเป็นระบบเตือน — ไม่ชอบคำว่า 'ควรทบทวน'" — ใช้ weightDelta/
+  // bodyFatDelta (fieldDelta เดียวกับ Health Score) ไม่ใช่เดลต้าในกราฟ กันข้อมูลขัดกันตามที่แจ้ง — สัญญาณหลัก
+  // คือทิศทางไขมัน (bodyFatDelta) เพราะเป็นตัวชี้วัดที่ Health Score ใช้ตัดสิน "ดี/ควรปรับ" อยู่แล้ว (เดียวกับ
+  // bodyCompositionSummary) ลดลง = แนวโน้มดี (เขียว, 💡) เพิ่มขึ้น = ควรติดตาม (อำพัน ไม่ใช่แดง — ไม่ใช่การเตือน
+  // แบบระบบ) พ่วงมวลกล้ามเนื้อเข้าไปด้วยเฉพาะตอนเป็นสัญญาณดีและมีข้อมูลจริงว่าเพิ่มขึ้น ไม่เดาถ้าไม่มีข้อมูล
   const combinedInsight = (() => {
-    if (weightDeltaInRange === null || bodyFatDeltaInRange === null) return null
-    // เกณฑ์ขั้นต่ำกันสัญญาณรบกวนจากความคลาดเคลื่อนเล็กน้อยของเครื่องชั่ง — ทั้งคู่ต้องเปลี่ยนแปลงพอมีนัยจริง
-    if (Math.abs(weightDeltaInRange) < 0.1 && Math.abs(bodyFatDeltaInRange) < 0.1) return null
-    const weightDir = weightDeltaInRange > 0 ? 'เพิ่มขึ้น' : weightDeltaInRange < 0 ? 'ลดลง' : 'คงที่'
-    const bodyFatDir = bodyFatDeltaInRange > 0 ? 'เพิ่มขึ้น' : bodyFatDeltaInRange < 0 ? 'ลดลง' : 'คงที่'
-    const isGood = (weightDeltaInRange >= 0 && bodyFatDeltaInRange < 0) || (weightDeltaInRange <= 0 && bodyFatDeltaInRange <= 0)
-    const isBad = weightDeltaInRange > 0 && bodyFatDeltaInRange > 0
-    const tag = isGood ? ' → แนวโน้มดี' : isBad ? ' → ควรทบทวน' : ''
-    const joiner = weightDir === bodyFatDir ? 'และ' : 'แต่'
-    return `น้ำหนัก${weightDir} ${Math.abs(weightDeltaInRange).toFixed(1)} ${unit} ${joiner} Body Fat ${bodyFatDir} ${Math.abs(bodyFatDeltaInRange).toFixed(1)}%${tag}`
+    if (weightDelta === null || bodyFatDelta === null) return null
+    if (Math.abs(weightDelta) < 0.1 && Math.abs(bodyFatDelta) < 0.1) return null
+    const weightDir = weightDelta > 0 ? 'เพิ่มขึ้น' : weightDelta < 0 ? 'ลดลง' : 'คงที่'
+    const weightText = `น้ำหนัก${weightDir} ${Math.abs(weightDelta).toFixed(1)} ${unit}`
+    const periodSuffix = changePeriodLabel ? ` ${changePeriodLabel}` : ''
+    if (bodyFatDelta < 0) {
+      const muscleClause = muscleDelta !== null && muscleDelta > 0 ? ' และมวลกล้ามเนื้อเพิ่มขึ้น' : ''
+      return { icon: '💡', tag: 'แนวโน้มดี', tagColor: '#8CB264', text: `${weightText} แต่ไขมันลดลง ${Math.abs(bodyFatDelta).toFixed(1)}%${muscleClause}` }
+    }
+    if (bodyFatDelta > 0) {
+      return { icon: '⚠️', tag: 'ควรติดตาม', tagColor: '#D8A34A', text: `${weightText} และ Body Fat เพิ่มขึ้น ${Math.abs(bodyFatDelta).toFixed(1)}%${periodSuffix}` }
+    }
+    return { icon: '💡', tag: null, tagColor: '', text: `${weightText} · ไขมันไม่เปลี่ยนแปลง${periodSuffix}` }
   })()
 
   return (
@@ -2145,10 +2165,10 @@ function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[
               {latestVal?.toFixed(1)}
               <span className="text-xs text-muted ml-1">{valueUnit}</span>
             </span>
-            {delta !== null && (
+            {headlineDelta !== null && (
               <span className="text-xs font-mono text-muted">
-                {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(1)} {valueUnit}
-                {rangeLongLabel && <span className="text-muted/70"> · {rangeLongLabel}</span>}
+                {headlineDelta > 0 ? '↑' : headlineDelta < 0 ? '↓' : '·'} {Math.abs(headlineDelta).toFixed(1)} {valueUnit}
+                {changePeriodLabel && <span className="text-muted/70"> · {changePeriodLabel}</span>}
               </span>
             )}
           </div>
@@ -2177,7 +2197,14 @@ function OverviewTrendChart({ metrics, unit, toDisplay }: { metrics: BodyMetric[
           </div>
           {combinedInsight && (
             <p className="text-xs mt-3 pt-3 border-t border-line" style={{ color: '#A8ACB4' }}>
-              💡 {combinedInsight}
+              {combinedInsight.icon}{' '}
+              {combinedInsight.tag && (
+                <span className="font-medium" style={{ color: combinedInsight.tagColor }}>
+                  {combinedInsight.tag}
+                </span>
+              )}
+              {combinedInsight.tag ? ' — ' : ''}
+              {combinedInsight.text}
             </p>
           )}
         </>
