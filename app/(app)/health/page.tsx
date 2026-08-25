@@ -2782,18 +2782,32 @@ function OverviewHealthScoreHeader({
       </div>
 
       {showBreakdown && categoryRows.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-line space-y-1.5">
+        <div className="mt-3 pt-3 border-t border-line space-y-2.5">
           {/* ฟีดแบ็ก "HEALTH SCORE ยังไม่บอกว่า 90% มาจากอะไร — เพิ่ม ⓘ แล้วกดดูรายละเอียดได้ พร้อมคำอธิบาย
               สั้นๆ ว่าคะแนนประเมินจากอะไรบ้าง" — ใส่ไว้บรรทัดแรกสุดของ breakdown ก่อนแจกแจงเป็นหมวด */}
           <p className="text-[11px] text-muted">คะแนนนี้ประเมินจากแนวโน้มไขมัน มวลกล้ามเนื้อ BMI และองค์ประกอบร่างกายโดยรวม</p>
-          {categoryRows.map((row) => (
-            <div key={row.title} className="flex items-center justify-between gap-3 text-[11px]">
-              <span className="tracked uppercase text-muted">{row.title}</span>
-              <span className="font-mono font-medium" style={{ color: healthScoreTier(row.pct).color }}>
-                {row.pct}
-              </span>
-            </div>
-          ))}
+          {/* v31: ฟีดแบ็ก "ควรเป็น Health Score → เปิดดู breakdown ของสูตรที่มีอยู่แล้ว ไม่ใช่สร้าง sub-score
+              ใหม่ — UI ควรสะท้อนสูตรจริง 1:1" — categoryRows เป็นข้อมูลจริงที่มีอยู่แล้ว (ไม่เปลี่ยน scoring
+              model เลย) แค่เปลี่ยนการแสดงผลจากตัวเลข % เฉยๆ เป็นจุดไล่ระดับ (Math.round(pct/20) จุดเต็มจาก 5
+              จุด) ตามตัวอย่างที่ให้มาเป๊ะ — สีอิง healthScoreTier เดิมที่มีอยู่แล้ว ไม่ใช้เกณฑ์สีใหม่ */}
+          {categoryRows.map((row) => {
+            const filled = Math.max(0, Math.min(5, Math.round(row.pct / 20)))
+            const dots = '●'.repeat(filled) + '○'.repeat(5 - filled)
+            const color = healthScoreTier(row.pct).color
+            return (
+              <div key={row.title} className="text-[11px]">
+                <span className="tracked uppercase text-muted">{row.title}</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="font-mono tracking-[3px]" style={{ color }}>
+                    {dots}
+                  </span>
+                  <span className="font-mono font-medium" style={{ color }}>
+                    {row.pct}%
+                  </span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
