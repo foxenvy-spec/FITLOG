@@ -86,6 +86,11 @@ export function bodyFatPctRange(sex: 'male' | 'female' | null): { min: number; l
 export interface HealthScoreCategory {
   title: string
   pct: number
+  // v34: ฟีดแบ็ก "ถ้าถ่วงน้ำหนักไม่เท่ากัน (96/100/100/71 เฉลี่ยเท่ากันไม่ได้ 94) UI ควรโชว์น้ำหนักจริง ไม่ใช่
+  // ให้ดูสัมพันธ์กันด้วยสายตาอย่างเดียว" — น้ำหนักที่ใช้จริงในการคำนวณ overall (เป็น % ที่ normalize แล้วจาก
+  // น้ำหนักตั้งต้น 40/25/20/15 เฉพาะหมวดที่มีข้อมูล — ถ้าบางหมวดหลุดเพราะไม่มีข้อมูล ตัวเลขนี้จะโตขึ้นตาม
+  // สัดส่วนจริงที่ redistribute ไป ไม่ใช่ค่าคงที่ 40/25/20/15 เสมอไป)
+  weight: number
 }
 
 export interface HealthScoreResult {
@@ -164,18 +169,20 @@ export function computeHealthScore(params: {
     { weight: 35, score: progressScore(muscleDelta, 'higherBetter', 0.3) },
   ])
 
-  const categories: HealthScoreCategory[] = []
-  if (bodyComposition !== null) categories.push({ title: 'BODY COMPOSITION', pct: Math.round(bodyComposition) })
-  if (muscle !== null) categories.push({ title: 'MUSCLE', pct: Math.round(muscle) })
-  if (metabolic !== null) categories.push({ title: 'METABOLIC HEALTH', pct: Math.round(metabolic) })
-  if (progress !== null) categories.push({ title: 'PROGRESS', pct: Math.round(progress) })
+  // v34: หมวดหลัก 4 หมวด + น้ำหนักตั้งต้นตามสูตรที่ตกลง (40/25/20/15) — ใช้ array เดียวกันทั้งคำนวณ overall
+  // และ derive น้ำหนักที่ normalize แล้วสำหรับแสดงผล ไม่ต้องคำนวณซ้ำสองที่ให้เสี่ยงหลุดจากกัน
+  const topLevel = [
+    { title: 'BODY COMPOSITION', weight: 40, score: bodyComposition },
+    { title: 'MUSCLE', weight: 25, score: muscle },
+    { title: 'METABOLIC HEALTH', weight: 20, score: metabolic },
+    { title: 'PROGRESS', weight: 15, score: progress },
+  ]
+  const availableWeightSum = topLevel.filter((c) => c.score !== null).reduce((s, c) => s + c.weight, 0)
+  const categories: HealthScoreCategory[] = topLevel
+    .filter((c): c is { title: string; weight: number; score: number } => c.score !== null)
+    .map((c) => ({ title: c.title, pct: Math.round(c.score), weight: Math.round((c.weight / availableWeightSum) * 100) }))
 
-  const overall = weightedAverage([
-    { weight: 40, score: bodyComposition },
-    { weight: 25, score: muscle },
-    { weight: 20, score: metabolic },
-    { weight: 15, score: progress },
-  ])
+  const overall = weightedAverage(topLevel.map((c) => ({ weight: c.weight, score: c.score })))
   if (overall === null) return null
   return { overall: Math.round(overall), categories }
 }

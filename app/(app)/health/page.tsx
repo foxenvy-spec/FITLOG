@@ -2532,11 +2532,29 @@ function OverviewHealthScoreHeader({
       periodOverride: monthDeltaPct < 0 && pct >= 65 ? `ยังอยู่ในระดับ${label}` : undefined,
     })
   }
+  // v34: ฟีดแบ็ก "การเปลี่ยนแปลง · จากสัปดาห์ที่แล้ว (heading) แต่ ↑ 3 คะแนน จากเดือนที่แล้ว (แถวคะแนน) —
+  // อย่าให้ heading กับตัวเลขอ้างอิงคนละช่วงเวลา" — แถวคะแนนใช้ฐานเวลาคงที่ "เดือนที่แล้ว" เสมอ (เทียบ
+  // healthScoreResultPrevMonth) ต่างจาก changePeriodLabel ที่มาจาก "ล่าสุด vs ก่อนหน้าล่าสุด" (อาจวัน/
+  // สัปดาห์/เดือนก็ได้) ซึ่งเป็นฐานเวลาจริงของสองแถวนี้ (ไขมัน/กล้ามเนื้อ มาจาก fieldDelta ตัวเดียวกัน) — ตัด
+  // changePeriodLabel ออกจาก heading รวม (ไม่ผูกทุกแถวเป็นช่วงเดียวกันอีกต่อไป) แล้วใส่ periodOverride ให้
+  // สองแถวนี้แสดงช่วงเวลาจริงของตัวเองแทน ไม่ยืมของ heading เดา
   if (bodyFatDeltaPct !== null && bodyFatDeltaPct !== 0) {
-    signals.push({ label: 'ไขมัน', dir: bodyFatDeltaPct < 0 ? 'down' : 'up', good: bodyFatDeltaPct < 0, valueText: `${Math.abs(bodyFatDeltaPct).toFixed(1)}%` })
+    signals.push({
+      label: 'ไขมัน',
+      dir: bodyFatDeltaPct < 0 ? 'down' : 'up',
+      good: bodyFatDeltaPct < 0,
+      valueText: `${Math.abs(bodyFatDeltaPct).toFixed(1)}%`,
+      periodOverride: changePeriodLabel ?? undefined,
+    })
   }
   if (muscleMassDelta !== null && muscleMassDelta !== 0) {
-    signals.push({ label: 'กล้ามเนื้อ', dir: muscleMassDelta > 0 ? 'up' : 'down', good: muscleMassDelta > 0, valueText: `${Math.abs(muscleMassDelta).toFixed(1)} ${unit}` })
+    signals.push({
+      label: 'กล้ามเนื้อ',
+      dir: muscleMassDelta > 0 ? 'up' : 'down',
+      good: muscleMassDelta > 0,
+      valueText: `${Math.abs(muscleMassDelta).toFixed(1)} ${unit}`,
+      periodOverride: changePeriodLabel ?? undefined,
+    })
   }
 
   const categoryRows = result.categories
@@ -2632,8 +2650,12 @@ function OverviewHealthScoreHeader({
             label ท้ายแถว (Tertiary) จาก text-[11px] เป็น text-xs ให้จับคู่กับระดับ Tertiary อื่นๆ ในการ์ดนี้ */}
         {signals.length > 0 && (
           <div className="shrink-0 border-l border-line/40 pl-5">
+            {/* v34: ตัด changePeriodLabel ออกจาก heading รวม — แต่ละแถวด้านล่างมีช่วงเวลาของตัวเองแล้ว
+                (periodOverride) เพราะฐานเวลาจริงไม่เท่ากันเสมอไป (แถวคะแนน = เดือนที่แล้วคงที่, แถวไขมัน/
+                กล้ามเนื้อ = ล่าสุด vs ก่อนหน้าล่าสุด) ผูก heading เป็นช่วงเดียวจะโกหกบางแถวอยู่ดี ดูคอมเมนต์
+                จุดสร้าง signals ด้านบน */}
             <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>
-              การเปลี่ยนแปลง{changePeriodLabel && <span style={{ color: '#9DA0A8', textTransform: 'none' }}> · {changePeriodLabel}</span>}
+              การเปลี่ยนแปลง
             </p>
             <div className="flex flex-col gap-1.5">
               {signals.map((s) => (
@@ -2689,7 +2711,11 @@ function OverviewHealthScoreHeader({
                       <div className="h-1.5 w-28 rounded-full bg-white/10 overflow-hidden">
                         <div className="h-full rounded-full bg-amber" style={{ width: `${g.progressPct}%` }} />
                       </div>
-                      <p className="text-[10px] text-muted mt-1">คืบหน้า {Math.round(g.progressPct)}%</p>
+                      {/* v34: ฟีดแบ็ก "PROGRESS 71% (breakdown) กับ คืบหน้า 0% (เป้าหมาย) ตรงนี้ดูขัดกัน —
+                          ต้องแยกให้ชัดว่าคนละเรื่อง" — เดิม "คืบหน้า" เฉยๆ ชวนสับสนกับหมวด PROGRESS ใน
+                          breakdown ด้านบน ทั้งที่นี่คือ % ระยะทางถึงเป้าหมาย ไม่ใช่คะแนนแนวโน้ม — เติม "สู่
+                          เป้าหมาย" ให้ชัดว่าคนละตัวเลขคนละความหมาย */}
+                      <p className="text-[10px] text-muted mt-1">คืบหน้าสู่เป้าหมาย {Math.round(g.progressPct)}%</p>
                     </div>
                   )}
                 </div>
@@ -2709,19 +2735,29 @@ function OverviewHealthScoreHeader({
       {showBreakdown && categoryRows.length > 0 && (
         <div className="mt-3 pt-3 border-t border-line space-y-2.5">
           {/* ฟีดแบ็ก "HEALTH SCORE ยังไม่บอกว่า 90% มาจากอะไร — เพิ่ม ⓘ แล้วกดดูรายละเอียดได้ พร้อมคำอธิบาย
-              สั้นๆ ว่าคะแนนประเมินจากอะไรบ้าง" — ใส่ไว้บรรทัดแรกสุดของ breakdown ก่อนแจกแจงเป็นหมวด */}
-          <p className="text-[11px] text-muted">คะแนนนี้ประเมินจากแนวโน้มไขมัน มวลกล้ามเนื้อ BMI และองค์ประกอบร่างกายโดยรวม</p>
+              สั้นๆ ว่าคะแนนประเมินจากอะไรบ้าง" — ใส่ไว้บรรทัดแรกสุดของ breakdown ก่อนแจกแจงเป็นหมวด
+              v34: ฟีดแบ็ก "breakdown มี 4 หมวดจริง (Body Composition/Muscle/Metabolic Health/Progress) ควรพูด
+              ให้ตรงกับ 4 หมวดนั้น" — เดิมพูดถึง "แนวโน้มไขมัน มวลกล้ามเนื้อ BMI" (คำละคำจากตัว metric ไม่ใช่
+              ชื่อหมวด) เปลี่ยนให้ใช้ชื่อ 4 หมวดจริงตามลำดับที่แสดงผลด้านล่าง */}
+          <p className="text-[11px] text-muted">คะแนนนี้ประเมินจากองค์ประกอบร่างกาย มวลกล้ามเนื้อ สุขภาพเมตาบอลิก และความคืบหน้าโดยรวม</p>
           {/* v31: ฟีดแบ็ก "ควรเป็น Health Score → เปิดดู breakdown ของสูตรที่มีอยู่แล้ว ไม่ใช่สร้าง sub-score
               ใหม่ — UI ควรสะท้อนสูตรจริง 1:1" — categoryRows เป็นข้อมูลจริงที่มีอยู่แล้ว (ไม่เปลี่ยน scoring
               model เลย) แค่เปลี่ยนการแสดงผลจากตัวเลข % เฉยๆ เป็นจุดไล่ระดับ (Math.round(pct/20) จุดเต็มจาก 5
-              จุด) ตามตัวอย่างที่ให้มาเป๊ะ — สีอิง healthScoreTier เดิมที่มีอยู่แล้ว ไม่ใช้เกณฑ์สีใหม่ */}
+              จุด) ตามตัวอย่างที่ให้มาเป๊ะ — สีอิง healthScoreTier เดิมที่มีอยู่แล้ว ไม่ใช้เกณฑ์สีใหม่
+              v34: ฟีดแบ็ก "96/100/100/71 เฉลี่ยเท่ากันได้ 91.75 ไม่ใช่ 94 — ถ้าน้ำหนักไม่เท่ากัน UI ต้องโชว์
+              น้ำหนักจริง อย่าให้ดูสัมพันธ์กันด้วยสายตาอย่างเดียว" — เพิ่ม row.weight (คำนวณจริงใน
+              lib/healthScore.ts, normalize จากน้ำหนักที่ยังมีข้อมูลเท่านั้น) ต่อท้ายชื่อหมวด และเพิ่มคำอธิบาย
+              สั้นๆ ใต้ PROGRESS โดยเฉพาะ (จุดที่ผู้ใช้สับสนกับ Goal Progress ด้านล่างสุด — ไม่ใช่ % ถึงเป้าหมาย
+              แต่เป็นคะแนนแนวโน้ม) กันตีความผิดว่า "ทำเป้าหมายสำเร็จแล้ว 71%" */}
           {categoryRows.map((row) => {
             const filled = Math.max(0, Math.min(5, Math.round(row.pct / 20)))
             const dots = '●'.repeat(filled) + '○'.repeat(5 - filled)
             const color = healthScoreTier(row.pct).color
             return (
               <div key={row.title} className="text-[11px]">
-                <span className="tracked uppercase text-muted">{row.title}</span>
+                <span className="tracked uppercase text-muted">
+                  {row.title} <span className="normal-case tracking-normal text-muted/60">· น้ำหนัก {row.weight}%</span>
+                </span>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="font-mono tracking-[3px]" style={{ color }}>
                     {dots}
@@ -2730,6 +2766,11 @@ function OverviewHealthScoreHeader({
                     {row.pct}%
                   </span>
                 </div>
+                {row.title === 'PROGRESS' && (
+                  <p className="normal-case tracking-normal text-muted/60 mt-0.5">
+                    คะแนนแนวโน้มไขมัน/กล้ามเนื้อ/น้ำหนักช่วงล่าสุด ไม่ใช่ % ที่ไปถึงเป้าหมายแล้ว (ดู "คืบหน้าสู่เป้าหมาย" ด้านล่าง)
+                  </p>
+                )}
               </div>
             )
           })}
