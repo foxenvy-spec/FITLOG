@@ -2404,7 +2404,12 @@ function OverviewTrendChart({
                 ใต้ พื้นหลังทำ glass effect (gradient ขาวจางๆ ทับพื้นเข้ม + ขอบสว่างบางๆ) แทน bg-surface เรียบ
                 v39: ฟีดแบ็ก "ยังดูลอยอยู่เฉยๆ — ลด border รอบนอกให้บางลง (rgba(255,255,255,.06)) แล้วเพิ่ม
                 divider บางมากคั่นระหว่าง 3 คอลัมน์แทน ไม่ควรมี border ชัดเกินไป" — border รอบนอก 0.09→0.06,
-                เพิ่ม divider เส้นตั้งบางๆ (0.06 เท่ากัน) คั่นระหว่างเฉลี่ย/ต่ำสุด/สูงสุด */}
+                เพิ่ม divider เส้นตั้งบางๆ (0.06 เท่ากัน) คั่นระหว่างเฉลี่ย/ต่ำสุด/สูงสุด
+                v43: ฟีดแบ็ก "min เขียว/max แดงข้างๆ delta ที่เพิ่งทำให้เขียว=ดี/แดง=แย่ (v42) ดูขัดกัน โดยเฉพาะ
+                แท็บน้ำหนักที่ delta เป็นกลาง แต่ 'สูงสุด' ในนี้ยังแดงอยู่ — สื่อว่าน้ำหนักสูงสุด=แย่ ทั้งที่ไม่ใช่"
+                — เฉลี่ย/ต่ำสุด/สูงสุด เป็นข้อเท็จจริงเชิงตัวเลขล้วนๆ (ค่าต่ำ-สูงสุดที่ log ไว้ในช่วงที่ดู) ไม่ใช่
+                การตัดสินดี/แย่ เปลี่ยนทั้ง 3 ตัวเป็นสีกลาง (text-ink) เหมือนกันหมด เก็บสีเขียว/แดงไว้ให้ delta
+                เท่านั้น ไม่ให้ความหมายชนกัน */}
             {stats && (
               <div
                 className="flex items-stretch rounded-2xl px-4 py-2.5"
@@ -2422,14 +2427,14 @@ function OverviewTrendChart({
                 </div>
                 <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <div className="text-center px-3">
-                  <p className="font-mono text-sm text-moss">{stats.min.toFixed(1)}</p>
+                  <p className="font-mono text-sm text-ink">{stats.min.toFixed(1)}</p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     ต่ำสุด
                   </p>
                 </div>
                 <div className="w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <div className="text-center px-3">
-                  <p className="font-mono text-sm text-rusttext">{stats.max.toFixed(1)}</p>
+                  <p className="font-mono text-sm text-ink">{stats.max.toFixed(1)}</p>
                   <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     สูงสุด
                   </p>
