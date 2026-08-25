@@ -2245,11 +2245,13 @@ function OverviewTrendChart({
     const { x, y, index, value } = props as { x?: number; y?: number; index?: number; value?: number }
     if (x === undefined || y === undefined || index === undefined || value === undefined || !labelIndices.has(index)) return null
     const isLatest = index === data.length - 1
-    const text = isLatest ? `● ${value.toFixed(1)} ${valueUnit}` : value.toFixed(1)
+    // v40: ฟีดแบ็ก "จุดล่าสุดควรบอกชัดว่าเป็น Current/ล่าสุด ไม่ใช่แค่จุดข้อมูลธรรมดา" — เปลี่ยนจาก bullet
+    // นำหน้า (● 67.1 kg) เป็นคำว่า "ล่าสุด" ตรงๆ ชัดกว่า ไม่ต้องตีความสัญลักษณ์
+    const text = isLatest ? `ล่าสุด ${value.toFixed(1)} ${valueUnit}` : value.toFixed(1)
     // v37: ฟีดแบ็ก (จากสกรีนช็อตจริง) "ป้าย 67.x ของจุดล่าสุดโดนตัดที่ขอบขวาการ์ด" — บับเบิลเดิม center
     // ที่ x เป๊ะ (x-21..x+21) ทำให้ครึ่งขวาล้นออกไปนอกกราฟถ้าจุดนั้นอยู่ชิดขอบขวาสุด (จุดล่าสุดเป็นแบบนี้เสมอ) —
     // เฉพาะจุดล่าสุด เลื่อนบับเบิลไปทางซ้ายให้ขอบขวาบับเบิลชนกับจุดพอดีแทนที่จะ center ทับจุด กันล้นขอบ
-    const width = isLatest ? 76 : 42
+    const width = isLatest ? 92 : 42
     const rectX = isLatest ? x - width + 6 : x - width / 2
     // v39: ฟีดแบ็ก "pill สีทองทึบดูหนักไป — เปลี่ยนเป็น Dark Titanium + gold border บางๆ จะดู premium กว่า"
     // เปลี่ยนจาก fill ทึบสี meta.color เป็น fill เข้มเหมือนจุดอื่น + stroke สี meta.color บางๆ แทน
@@ -2311,7 +2313,9 @@ function OverviewTrendChart({
 
   return (
     <PremiumCard className="p-4">
-      <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+      {/* v40: ฟีดแบ็ก "ช่องว่างด้านบนเยอะไปนิด บนมือถือจะเห็นข้อมูลได้น้อยลง — ลด vertical spacing ~10-15%" —
+          mb-3 (12px) ทั้งแถวแท็บ/ตัวเลือกช่วงเวลา และแถวตัวเลขหลัก+summary ลดเหลือ mb-2.5 (10px, ลด ~17%) */}
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-2.5">
         <div className="flex gap-2 flex-wrap">
           {(Object.keys(OVERVIEW_TREND_METRICS) as OverviewTrendMetricKey[]).map((k) => (
             <button
@@ -2345,17 +2349,21 @@ function OverviewTrendChart({
 
       {data.length > 1 ? (
         <>
-          <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+          {/* v40: ฟีดแบ็ก "ตัวเลข/label เดิม mb-3 อยู่แล้ว ลดเหลือ mb-2.5 ตามด้านบน" */}
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-2.5">
             <div>
               <div className="flex items-baseline gap-2">
                 <span className="font-mono tabular text-2xl text-ink">
                   {latestVal?.toFixed(1)}
                   <span className="text-xs text-muted ml-1">{valueUnit}</span>
                 </span>
+                {/* v40: ฟีดแบ็ก "จากสัปดาห์ที่แล้ว contrast ต่ำไปนิด บนจอมือถือ/brightness ต่ำอาจอ่านยาก —
+                    เพิ่ม brightness/opacity secondary text ~10-20%" — text-muted (#9498A0) → #9DA0A8 สำหรับ
+                    เดลต้า, ตัด /70 ออกจาก period label (เดิมจาง #9498A0 ที่ 70% alpha คือส่วนที่จางสุดในบรรทัด) */}
                 {headlineDelta !== null && (
-                  <span className="text-xs font-mono text-muted">
+                  <span className="text-xs font-mono" style={{ color: '#9DA0A8' }}>
                     {headlineDelta > 0 ? '↑' : headlineDelta < 0 ? '↓' : '·'} {Math.abs(headlineDelta).toFixed(1)} {valueUnit}
-                    {changePeriodLabel && <span className="text-muted/70"> · {changePeriodLabel}</span>}
+                    {changePeriodLabel && <span style={{ color: '#9DA0A8' }}> · {changePeriodLabel}</span>}
                   </span>
                 )}
               </div>
@@ -2404,7 +2412,11 @@ function OverviewTrendChart({
               </div>
             )}
           </div>
-          <div className="h-56">
+          {/* v40: ฟีดแบ็ก "background texture (diagonal lines ของ PremiumCard) แข่งกับกราฟในบริเวณ plot area
+              โดยเฉพาะ — ลด opacity ตรงนั้นลง" — ไม่แตะ texture ของ PremiumCard เอง (ใช้ทั่วทั้งแอป เปลี่ยน
+              ตรงนั้นจะกระทบทุกการ์ด ไม่ใช่แค่กราฟนี้) แต่ซ้อน overlay สีพื้นเข้มโปร่งแสงเฉพาะบริเวณกราฟแทน ทำให้
+              texture ที่ทะลุมาจากพื้น PremiumCard จางลงเฉพาะจุดนี้เท่านั้น */}
+          <div className="h-56 rounded-xl" style={{ background: 'rgba(10,11,13,0.28)' }}>
             <ResponsiveContainer width="100%" height="100%">
               {/* v37: ฟีดแบ็ก (จากสกรีนช็อตจริง) "ตัวเลขแกน Y โดนตัดเหลือแค่หลักเดียว (69→9 ทำนองนี้)" —
                   margin.left เดิม -20 ดึงทั้งกราฟ (รวมแกน Y) ล้นไปทางซ้ายเกินขอบการ์ดที่เป็น overflow-hidden
@@ -2432,12 +2444,16 @@ function OverviewTrendChart({
                 </defs>
                 {/* v38: ฟีดแบ็ก "ลด grid ลง 30-40% — major ~10-12%, minor ~3-5%, แนวตั้งบางแทบมองไม่เห็น" —
                     เดิม CartesianGrid เดียว stroke ทึบ #2E333A (ไม่มี opacity control, ไม่มีเส้นแนวตั้งเลย)
-                    แยกเป็น 2 ชั้น: แนวนอน (major) opacity 11%, แนวตั้ง (minor) opacity 4% */}
-                <CartesianGrid stroke="#B8BBC2" strokeOpacity={0.11} horizontal vertical={false} />
-                <CartesianGrid stroke="#B8BBC2" strokeOpacity={0.04} horizontal={false} vertical />
+                    แยกเป็น 2 ชั้น: แนวนอน (major) opacity 11%, แนวตั้ง (minor) opacity 4%
+                    v40: ฟีดแบ็ก "background texture ยังแข่งกับกราฟเล็กน้อยในบริเวณ plot area — ลด opacity อีกนิด"
+                    — ลดต่อจาก 11%/4% เหลือ 8%/3% (ดูคอมเมนต์ overlay ที่ div ครอบกราฟด้านล่างด้วย ซึ่งเป็นอีก
+                    ส่วนที่ช่วยลด texture ของพื้น PremiumCard ที่ทะลุมาให้เห็นในบริเวณกราฟโดยเฉพาะ) */}
+                <CartesianGrid stroke="#B8BBC2" strokeOpacity={0.08} horizontal vertical={false} />
+                <CartesianGrid stroke="#B8BBC2" strokeOpacity={0.03} horizontal={false} vertical />
+                {/* v40: ฟีดแบ็ก "แกน X contrast ต่ำไปนิด" — #9498A0 (text-muted ปกติ) → #9DA0A8 (~10% สว่างขึ้น) */}
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: '#9498A0', fontSize: 10 }}
+                  tick={{ fill: '#9DA0A8', fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
                   interval="preserveStartEnd"
@@ -2504,8 +2520,10 @@ function OverviewTrendChart({
               </ComposedChart>
             </ResponsiveContainer>
           </div>
+          {/* v40: ฟีดแบ็ก "ข้อความ insight ด้านล่าง contrast ต่ำไปนิด" — #A8ACB4 → #B8BBC2 (~10% สว่างขึ้น
+              เทียบเท่าระดับ Level 2 ที่ใช้กับแกน Y/ป้าย 'ล่าสุด' ในหัวข้อ Health Score banner) */}
           {combinedInsight && (
-            <p className="text-xs mt-3 pt-3 border-t border-line" style={{ color: '#A8ACB4' }}>
+            <p className="text-xs mt-3 pt-3 border-t border-line" style={{ color: '#B8BBC2' }}>
               {combinedInsight.icon}{' '}
               {combinedInsight.tag && (
                 <span className="font-medium" style={{ color: combinedInsight.tagColor }}>
