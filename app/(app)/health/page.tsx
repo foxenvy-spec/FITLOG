@@ -995,6 +995,19 @@ export default function HealthPage() {
           ? 'ไขมันลดลงต่อเนื่อง'
           : 'ไขมันเพิ่มขึ้น ลองเพิ่มคาร์ดิโอ'
 
+  // v63: ฟีดแบ็ก "Muscle Mass Card มีพื้นที่ว่างและขาด interpretation เทียบกับ Weight/Body Fat" — สูตรเดียวกับ
+  // weightInsight/bodyFatInsight ด้านบน (เกณฑ์ผันผวน 0.3 เดียวกับ Body Fat เพราะหน่วยเดียวกัน — kg) มวลกล้ามเนื้อ
+  // higherBetter เสมอ (ไม่มีทิศทางกำกวมแบบน้ำหนัก) ไม่ต้องเช็คเป้าหมายก่อนเหมือน weightInsight
+  const muscleDeltaForCard = fieldDelta('muscle_kg', toDisplay)
+  const muscleInsight =
+    muscleDeltaForCard === null
+      ? null
+      : Math.abs(muscleDeltaForCard) < 0.3
+        ? 'อยู่ในช่วงผันผวนปกติ'
+        : muscleDeltaForCard > 0
+          ? 'มวลกล้ามเนื้อเพิ่มขึ้นต่อเนื่อง'
+          : 'ลองเพิ่มการฝึกแรงต้าน'
+
   // v32: trendScorePct (สัดส่วนตัวชี้วัดที่ "ขยับไปทางที่ดี" แบบ pass/fail) ถูกแทนที่ด้วยหมวด PROGRESS
   // ในเอนจิ้นคะแนนสุขภาพใหม่แล้ว (healthScoreResult.categories — คำนวณแบบ magnitude-aware ไม่ใช่แค่ y/n)
   // ไม่ต้องคำนวณแยกซ้ำอีกต่อไป
@@ -1356,9 +1369,10 @@ export default function HealthPage() {
               color="#5FA88C"
               value={latest?.muscle_kg != null ? toDisplay(latest.muscle_kg) : null}
               unit={unit}
-              delta={fieldDelta('muscle_kg', toDisplay)}
+              delta={muscleDeltaForCard}
               deltaUnit={unit}
               direction="higherBetter"
+              insight={muscleInsight}
               infoText="มวลกล้ามเนื้อ (Muscle Mass) คือน้ำหนักกล้ามเนื้อรวมทั้งหมด ส่วน Skeletal Muscle ในหมวด Additional Metrics ด้านล่างนับเฉพาะกล้ามเนื้อลายที่บังคับได้ — เป็นคนละตัวเลขกัน ไม่ใช่พิมพ์ผิดหรือขัดแย้งกัน"
             />
             </div>
@@ -1814,13 +1828,25 @@ const ZONE_ARROW: Record<'Low' | 'Standard' | 'High', string> = { Low: '↓', St
 // ไม่ควรเขียวเหมือน 'good' — Green ควรสงวนไว้เฉพาะ Positive/Healthy/Goal achieved" — เดิม status
 // 'good' กับ 'standard' (จาก classifyMetric) ถูกจับกลุ่มเป็นเขียวเหมือนกันหมด แยก standard ออกมาใช้
 // steel (โทนกลาง) แทน เหลือเขียวไว้เฉพาะ 'good' เท่านั้น
+// v63: ฟีดแบ็ก "Skeletal Muscle 28.1 kg ↑ สูงกว่าเกณฑ์ (higherBetter — สีเขียวถูกแล้ว) แต่คำว่า 'สูงกว่าเกณฑ์'
+// เฉยๆ ฟังดูเหมือนผิดปกติ ทั้งที่จริงคือเรื่องดี — สีอย่างเดียวไม่พอ ต้องดูออกจากคำด้วย" — ZoneBadge เดิมใช้
+// ZONE_LABEL_TH ("สูงกว่าเกณฑ์"/"ต่ำกว่าเกณฑ์") ตรงๆ ทุกกรณีไม่ว่าจะ favorable หรือไม่ (ต่างจาก IconStatCard ที่
+// มีกลไก "favorable → เพียงพอ ✓/อยู่ในเกณฑ์ดี ✓" อยู่แล้วตั้งแต่ v55) — เอากลไกเดียวกันมาใช้กับ ZoneBadge ด้วย
+// ให้สอดคล้องกันทั้งแอป ไม่ต้องคิดคำใหม่
 function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' | 'High'; direction?: Direction }) {
   const status = classifyMetric(zone, direction)
   const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : status === 'good' ? 'bg-mossdim text-moss' : 'bg-steeldim text-steel'
+  const zoneIsFavorable = zone === 'High' ? direction === 'higherBetter' : zone === 'Low' ? direction === 'lowerBetter' : false
   return (
     <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
-      {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
-      {ZONE_LABEL_TH[zone]}
+      {zoneIsFavorable ? (
+        'อยู่ในเกณฑ์ดี ✓'
+      ) : (
+        <>
+          {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
+          {ZONE_LABEL_TH[zone]}
+        </>
+      )}
     </span>
   )
 }

@@ -11,8 +11,11 @@ const KIND_STYLE: Record<Insight['kind'], { border: string; accent: string; chip
 // (มีเฉพาะจุดที่มาจาก computeHealthTrendInsights ตอนนี้ — insight producer อื่น เช่น
 // computeVolumeTrendInsights ไม่ได้ใส่ tier มา = undefined = ใช้ KIND_STYLE เดิมเป๊ะ ไม่กระทบ) แทนที่
 // border/accent/chip เดิมด้วยชุดสี 3 ระดับ พร้อม label แทนคำว่า "Insight" เฉยๆ ให้เห็นความสำคัญทันที
+// v63: ฟีดแบ็ก "Body Fat 25.1% ถูกจัดว่า 'ปกติ' (ตามเกณฑ์สุขภาพทั่วไป) แต่ Insight บอก 'ควรแก้' — คำว่า
+// 'แก้' แรงไปเมื่อเทียบกับสถานะปกติ ทำให้ดูขัดกัน ทั้งที่ 'ควรแก้' ในที่นี้หมายถึงเทียบกับเป้าหมายส่วนตัว ไม่ใช่
+// ผิดปกติทางสุขภาพ" — เปลี่ยนจาก "ควรแก้" เป็น "ควรปรับปรุง" (นุ่มกว่า สื่อว่ายังห่างจากเป้าหมาย ไม่ใช่ผิดปกติ)
 const TIER_STYLE: Record<'attention' | 'watch' | 'good', { border: string; accent: string; chipBg: string; chipColor: string; label: string }> = {
-  attention: { border: 'border-l-rust', accent: 'text-rusttext', chipBg: '#C1503A22', chipColor: '#C1503A', label: '🔴 ควรแก้' },
+  attention: { border: 'border-l-rust', accent: 'text-rusttext', chipBg: '#C1503A22', chipColor: '#C1503A', label: '🔴 ควรปรับปรุง' },
   watch: { border: 'border-l-amber', accent: 'text-amber', chipBg: '#E8A33D22', chipColor: '#E8A33D', label: '🟡 ควรติดตาม' },
   good: { border: 'border-l-moss', accent: 'text-moss', chipBg: '#7A9B5722', chipColor: '#7A9B57', label: '🟢 ทำได้ดี' },
 }

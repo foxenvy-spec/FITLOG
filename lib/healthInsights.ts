@@ -152,11 +152,23 @@ export function computeHealthTrendInsights(params: {
       const dir = params.weightDirection ?? 'neutral'
       const isGoodDirection = dir === 'neutral' ? null : dir === 'lowerBetter' ? pct < 0 : pct > 0
       const kind: 'positive' | 'warning' = isGoodDirection === false ? 'warning' : 'positive'
+      // v63: ฟีดแบ็ก "'น้ำหนักเพิ่มขึ้น ↑2.6% · 90 วัน' กับ 'น้ำหนักที่เพิ่มขึ้นมาจากมวลกล้ามเนื้อเป็นหลัก' ใต้
+      // กราฟดูขัดกันเล็กน้อย ทั้งที่จริงสองอย่างสอดคล้องกัน" — เพิ่ม actionLabel เฉพาะตอนน้ำหนักเพิ่มขึ้นจริง
+      // (pct > 0) และมวลกล้ามเนื้อ (skeletal หรือ mass ช่วงเวลาเดียวกัน) ก็เพิ่มขึ้นด้วยจริง ไม่เดา — ใช้
+      // skeletalMuscle ก่อน (ตัวชี้วัดหลักที่ใช้เทียบในจุดอื่นของหน้านี้) ถ้าไม่มีข้อมูล fallback ไป muscleMass
+      const muscleAlsoUp =
+        pct > 0 &&
+        (params.skeletalMuscle
+          ? pctChange(params.skeletalMuscle.first, params.skeletalMuscle.last) > 0
+          : params.muscleMass
+            ? pctChange(params.muscleMass.first, params.muscleMass.last) > 0
+            : false)
       insights.push({
         id: 'trend-weight',
         kind,
         tier: isGoodDirection === null ? 'watch' : tierFor(kind, pct),
         icon: pct < 0 ? '📉' : '📈',
+        actionLabel: muscleAlsoUp ? 'สอดคล้องกับมวลกล้ามเนื้อที่เพิ่มขึ้น' : undefined,
         title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% ${periodLabel}`,
         deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
