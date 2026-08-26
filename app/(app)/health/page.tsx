@@ -2635,17 +2635,43 @@ function OverviewTrendChart({
           </div>
           {/* v40: ฟีดแบ็ก "ข้อความ insight ด้านล่าง contrast ต่ำไปนิด" — #A8ACB4 → #B8BBC2 (~10% สว่างขึ้น
               เทียบเท่าระดับ Level 2 ที่ใช้กับแกน Y/ป้าย 'ล่าสุด' ในหัวข้อ Health Score banner) */}
+          {/* v57: ฟีดแบ็ก "อยากยกระดับประโยคนี้เป็น Insight หลักของกราฟ พร้อม breakdown เช่น +0.6 kg Weight ·
+              −0.4% Body Fat · +0.6 kg Muscle ให้ไม่ต้องอ่านกราฟเองก็เข้าใจ" — ประโยคเดิม (combinedInsight)
+              รวมตัวเลขไว้ในประโยคอยู่แล้ว เพิ่มแถว chip ย่อยด้านล่างให้ scan ตัวเลขแยกทีละตัวได้เร็วขึ้น โดยไม่
+              คำนวณอะไรใหม่ (ใช้ weightDelta/bodyFatDelta/muscleDelta ตัวเดียวกับที่ประโยคด้านบนใช้อยู่แล้ว) */}
           {combinedInsight && (
-            <p className="text-xs mt-3 pt-3 border-t border-line" style={{ color: '#B8BBC2' }}>
-              {combinedInsight.icon}{' '}
-              {combinedInsight.tag && (
-                <span className="font-medium" style={{ color: combinedInsight.tagColor }}>
-                  {combinedInsight.tag}
-                </span>
-              )}
-              {combinedInsight.tag ? ' — ' : ''}
-              {combinedInsight.text}
-            </p>
+            <div className="mt-3 pt-3 border-t border-line">
+              <p className="text-xs" style={{ color: '#B8BBC2' }}>
+                {combinedInsight.icon}{' '}
+                {combinedInsight.tag && (
+                  <span className="font-medium" style={{ color: combinedInsight.tagColor }}>
+                    {combinedInsight.tag}
+                  </span>
+                )}
+                {combinedInsight.tag ? ' — ' : ''}
+                {combinedInsight.text}
+              </p>
+              <div className="flex flex-wrap gap-x-2.5 gap-y-1 mt-1.5">
+                {weightDelta !== null && Math.abs(weightDelta) >= 0.05 && (
+                  <span className="text-[10.5px] font-mono whitespace-nowrap" style={{ color: '#9DA0A8' }}>
+                    {weightDelta > 0 ? '+' : ''}
+                    {weightDelta.toFixed(1)} {unit} <span style={{ color: '#6E7178' }}>น้ำหนัก</span>
+                  </span>
+                )}
+                {bodyFatDelta !== null && Math.abs(bodyFatDelta) >= 0.05 && (
+                  <span className="text-[10.5px] font-mono whitespace-nowrap" style={{ color: '#9DA0A8' }}>
+                    {bodyFatDelta > 0 ? '+' : ''}
+                    {bodyFatDelta.toFixed(1)}% <span style={{ color: '#6E7178' }}>ไขมัน</span>
+                  </span>
+                )}
+                {muscleDelta !== null && Math.abs(muscleDelta) >= 0.05 && (
+                  <span className="text-[10.5px] font-mono whitespace-nowrap" style={{ color: '#9DA0A8' }}>
+                    {muscleDelta > 0 ? '+' : ''}
+                    {muscleDelta.toFixed(1)} {unit} <span style={{ color: '#6E7178' }}>กล้ามเนื้อ</span>
+                  </span>
+                )}
+              </div>
+            </div>
           )}
         </>
       ) : (
