@@ -96,7 +96,11 @@ export default function SidebarNav() {
 
   return (
     <aside
-      className="hidden lg:flex lg:flex-col lg:w-44 lg:shrink-0 lg:h-screen lg:sticky lg:top-0 relative"
+      // v53: ฟีดแบ็ก P6 "จอ desktop แคบ (lg, ~1024-1279px) sidebar 176px เบียดพื้นที่เนื้อหา" — เดิม
+      // w-44 คงที่ทุกขนาด >= lg เปลี่ยนเป็น icon-only rail (w-16) แค่ช่วง lg เท่านั้น แล้วกางเต็ม (w-44
+      // พร้อม label) ตอน xl (>=1280px) ขึ้นไป — เป็น flex sibling ของ main อยู่แล้ว (ไม่ใช่ fixed) เนื้อหา
+      // จึงขยับตามความกว้างจริงของแผ่นนี้เองโดยอัตโนมัติ ไม่ต้องคำนวณ margin แยก
+      className="hidden lg:flex lg:flex-col lg:w-16 xl:w-44 lg:shrink-0 lg:h-screen lg:sticky lg:top-0 relative"
       style={{
         backgroundImage: [CARD_MULTI_REFLECTION_CSS, CARD_REFLECTION_CSS, CARD_GRADIENT_CSS].join(', '),
         boxShadow: '10px 0 32px -16px rgba(0,0,0,.55)',
@@ -125,10 +129,13 @@ export default function SidebarNav() {
             8px เป็นแสงกระชับรอบตัวอักษร ไม่ใช่แสงฟุ้งกว้าง */}
         <Link
           href="/dashboard"
-          className="font-display tracked-lg uppercase text-base text-ink"
+          className="flex items-center justify-center xl:justify-start font-display tracked-lg uppercase text-base text-ink"
           style={{ textShadow: '0 0 2px rgba(255,180,70,.5), 0 0 8px rgba(255,150,30,.25)' }}
         >
-          FITLOG
+          {/* rail โหมด (lg เท่านั้น) เหลือพื้นที่ไม่พอให้คำเต็ม "FITLOG" — ย่อเหลือตัวอักษรแรก ขยับเป็น
+              wordmark เต็มตอนกางที่ xl */}
+          <span className="xl:hidden">F</span>
+          <span className="hidden xl:inline">FITLOG</span>
         </Link>
       </div>
       <nav className="relative flex-1 px-2 space-y-0.5">
@@ -138,7 +145,8 @@ export default function SidebarNav() {
             <Link
               key={href}
               href={href}
-              className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition ${active ? '' : 'hover:bg-white/5'}`}
+              title={label}
+              className={`relative flex items-center justify-center xl:justify-start gap-2.5 rounded-md px-2.5 py-2 text-sm transition ${active ? '' : 'hover:bg-white/5'}`}
               style={
                 active
                   ? {
@@ -149,7 +157,7 @@ export default function SidebarNav() {
               }
             >
               <Icon active={active} />
-              <span className={`font-display tracked uppercase text-[11px] ${active ? 'text-amber' : 'text-muted'}`}>{label}</span>
+              <span className={`hidden xl:inline font-display tracked uppercase text-[11px] ${active ? 'text-amber' : 'text-muted'}`}>{label}</span>
             </Link>
           )
         })}
@@ -161,10 +169,11 @@ export default function SidebarNav() {
         <button
           type="button"
           onClick={handleSettingsClick}
-          className="w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted hover:text-ink hover:bg-white/5 transition"
+          title="ตั้งค่า"
+          className="w-full flex items-center justify-center xl:justify-start gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted hover:text-ink hover:bg-white/5 transition"
         >
           <GearIcon active={false} />
-          <span className="font-display tracked uppercase text-[11px]">ตั้งค่า</span>
+          <span className="hidden xl:inline font-display tracked uppercase text-[11px]">ตั้งค่า</span>
         </button>
       </div>
 
@@ -173,7 +182,8 @@ export default function SidebarNav() {
           เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar) แทนวงกลมทึบ bg-surface2 เดิม */}
       <Link
         href="/profile"
-        className="relative flex items-center gap-2.5 px-4 py-3 hover:bg-white/5 transition"
+        title={name}
+        className="relative flex items-center justify-center xl:justify-start gap-2.5 px-2 xl:px-4 py-3 hover:bg-white/5 transition"
         style={{ borderTop: '1px solid rgba(255,255,255,.06)' }}
       >
         <span
@@ -189,7 +199,7 @@ export default function SidebarNav() {
         >
           {initial}
         </span>
-        <span className="min-w-0">
+        <span className="hidden xl:block min-w-0">
           <p className="text-sm text-ink truncate">{name}</p>
           <p className="text-[10px] text-muted truncate">ดูโปรไฟล์</p>
         </span>
