@@ -33,9 +33,14 @@
     background: #E8A33D;
     color: #14161A;
   }
+  /* v59: ฟีดแบ็ก (เอกสาร handoff P0.3/AC02) "Contrast และ interaction state — ต้องมี visible focus ทุก
+     interactive control" — เช็กจริงแล้ว rule นี้มีอยู่แล้ว แต่ outline-offset เดิมเป็นค่าบวก (2px, วาดออก
+     นอกขอบ element) ซึ่งโดน overflow-hidden ของ PremiumCard (การ์ดเกือบทุกใบทั่วแอป — rounded-card
+     overflow-hidden ใน PremiumCard.tsx) "ตัด" จนมองไม่เห็นเวลา keyboard focus ปุ่ม/ลิงก์ที่อยู่ในการ์ด —
+     เปลี่ยนเป็นค่าลบ (วาดเข้าด้านใน) ให้ยังเห็นวงแหวน focus ได้เสมอไม่ว่าจะอยู่ในการ์ดที่ตัดขอบหรือไม่ */
   :focus-visible {
     outline: 2px solid #E8A33D;
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 }
 
