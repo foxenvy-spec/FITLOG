@@ -40,15 +40,18 @@ export default function InsightCard({
   // (ต้องแก้) ให้ใบนั้นเด่นขึ้นจริงเมื่อวางเทียบกับใบอื่น ไม่แตะ watch/good (ยังคงพื้นเรียบเหมือนเดิม) —
   // ผลเฉพาะ insight ที่มี tier (ตอนนี้มีแค่ computeHealthTrendInsights) การ์ด Dashboard/Coach ไม่กระทบ
   const attentionBg = insight.tier === 'attention' ? 'bg-rustdim/25' : 'bg-surface'
+  // v56: ฟีดแบ็ก "Health Score + Body Insights อยู่ติดกันแน่นไป ลดความหนาแน่นของ Body Insights ~10-15%
+  // โดยเฉพาะข้อความรอง" — ลด padding การ์ด (px-4 py-3 → px-3.5 py-2.5), ไอคอน chip (8→7), และ margin
+  // ระหว่างบรรทัดข้อความรอง (mt-1/mt-0.5 → mt-0.5/mt-px) เล็กน้อย ไม่กระทบ hierarchy/สีที่เพิ่งทำรอบก่อน
   return (
-    <div className={`rounded-lg ${attentionBg} border border-line shadow-elevated border-l-[3px] ${style.border} px-4 py-3 flex items-start gap-3`}>
+    <div className={`rounded-lg ${attentionBg} border border-line shadow-elevated border-l-[3px] ${style.border} px-3.5 py-2.5 flex items-start gap-2.5`}>
       {imageSrc ? (
-        <span className="w-8 h-8 shrink-0 inline-block" aria-hidden="true">
-          <Image src={imageSrc} alt="" width={32} height={32} className="w-full h-full object-contain" />
+        <span className="w-7 h-7 shrink-0 inline-block" aria-hidden="true">
+          <Image src={imageSrc} alt="" width={28} height={28} className="w-full h-full object-contain" />
         </span>
       ) : metricIcon ? (
         <span
-          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
           style={{ backgroundColor: style.chipBg }}
           aria-hidden="true"
         >
@@ -56,7 +59,7 @@ export default function InsightCard({
         </span>
       ) : (
         <span
-          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-base leading-none"
+          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm leading-none"
           style={{ backgroundColor: style.chipBg }}
           aria-hidden="true"
         >
@@ -72,10 +75,10 @@ export default function InsightCard({
             Dashboard/Coach) fallback ไป detail แบบเดิมเป๊ะ ไม่กระทบจุดใช้ร่วม */}
         {insight.deltaLabel ? (
           <>
-            <p className="text-xs font-mono font-semibold mt-1" style={{ color: style.chipColor }}>
+            <p className="text-xs font-mono font-semibold mt-0.5" style={{ color: style.chipColor }}>
               {insight.deltaLabel}
             </p>
-            {insight.actionLabel && <p className="text-[11px] text-muted mt-0.5">{insight.actionLabel}</p>}
+            {insight.actionLabel && <p className="text-[10.5px] text-muted mt-px">{insight.actionLabel}</p>}
           </>
         ) : (
           <p className="text-xs text-muted mt-0.5">{insight.detail}</p>

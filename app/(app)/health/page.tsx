@@ -1190,14 +1190,17 @@ export default function HealthPage() {
               (#E8A33D) ตามระบบสีความหมายที่ผู้ใช้เสนอเอง (Gold = Brand/Highlight) ให้สอดคล้องกับกรอบ steel
               (#6C8CA8, detail tier) ของการ์ด Analysis ด้านล่าง */}
           {healthInsights.length > 0 && (
-            <PremiumCard className="p-4 border-l-2" style={{ borderLeftColor: '#E8A33D' }}>
-              <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
+            // v56: ฟีดแบ็ก "Health Score + Body Insights อยู่ติดกันแน่นไป ลดความหนาแน่น ~10-15%" — p-4→p-3.5,
+            // mb-3→mb-2.5, grid gap-3→gap-2.5 (ดูคอมเมนต์เพิ่มเติมที่ InsightCard.tsx เรื่อง padding/font
+            // ภายในการ์ดแต่ละใบ)
+            <PremiumCard className="p-3.5 border-l-2" style={{ borderLeftColor: '#E8A33D' }}>
+              <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-2.5">
                 Body Insights
                 <span className="text-muted">
                   <InfoIcon />
                 </span>
               </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {healthInsights.slice(0, 4).map((insight) => (
                   <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]} />
                 ))}
@@ -1246,7 +1249,13 @@ export default function HealthPage() {
               ส่วนเทรนด์เป็นหน้าที่ของ Body Progress (Level 2) เพียงจุดเดียว ไม่ซ้ำข้อมูลกันอีก */}
           <div>
             <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Key Metrics</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 items-stretch">
+            {/* v56: ฟีดแบ็ก (2 รอบติดกัน) "น้ำหนัก/ไขมัน/มวลกล้ามเนื้อ เป็นข้อมูลหลัก BMI/น้ำในร่างกายเป็นข้อมูล
+                รอง อยากให้สายตารู้ทันทีว่า 3 ตัวไหนสำคัญที่สุด" — เดิมทั้ง 5 การ์ดอยู่ grid เดียวกัน (แค่ลด
+                opacity/texture ตาม tier ซึ่งยังไม่พอ) ตอนนี้แยกเป็น 2 grid จริงๆ: Primary (น้ำหนัก/ไขมัน/
+                มวลกล้ามเนื้อ — 3 การ์ดพอดี ให้การ์ดน้ำหนัก primary span 2x2 เหลือพื้นที่ 1 คอลัมน์ 2 แถวให้อีก
+                2 ใบพอดี ไม่มีช่องว่างเหลือแบบตอนแบ่ง 5 การ์ดใน grid เดียว) + Secondary (BMI/น้ำในร่างกาย) แยก
+                คนละ block มี label กำกับ เหมือนที่ Additional Metrics มีอยู่แล้ว */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 items-stretch">
             <IconStatCard
               label="น้ำหนัก"
               subLabel="WEIGHT"
@@ -1298,6 +1307,13 @@ export default function HealthPage() {
               direction="higherBetter"
               infoText="มวลกล้ามเนื้อ (Muscle Mass) คือน้ำหนักกล้ามเนื้อรวมทั้งหมด ส่วน Skeletal Muscle ในหมวด Additional Metrics ด้านล่างนับเฉพาะกล้ามเนื้อลายที่บังคับได้ — เป็นคนละตัวเลขกัน ไม่ใช่พิมพ์ผิดหรือขัดแย้งกัน"
             />
+            </div>
+            {/* ฟีดแบ็ก "จัด Priority การ์ด: ⭐ Weight/Body Fat/Muscle Mass, ◉ BMI/Fat Mass/Skeletal Muscle/
+                Visceral Fat, ○ Body Water/Protein/Bone Mass/Body Age/BMR (ข้อมูลประกอบ)" — เดิม Body Water
+                อยู่ tier 2 (◉ สำคัญรอง) ย้ายไป tier 3 (○ ข้อมูลประกอบ) ตามลำดับใหม่ ตัวอื่นใน tier 2/3 ตรงกับ
+                ที่ขอไว้แล้วจากรอบก่อนๆ ไม่ต้องแก้ */}
+            <p className="text-[10px] tracked uppercase mt-3 mb-2" style={{ color: '#6E7178' }}>Secondary</p>
+            <div className="grid grid-cols-2 gap-2.5 items-stretch">
             <IconStatCard
               label="ดัชนีมวลกาย"
               subLabel="BMI"
@@ -1314,10 +1330,6 @@ export default function HealthPage() {
               tier={2}
               forceZonePill
             />
-            {/* ฟีดแบ็ก "จัด Priority การ์ด: ⭐ Weight/Body Fat/Muscle Mass, ◉ BMI/Fat Mass/Skeletal Muscle/
-                Visceral Fat, ○ Body Water/Protein/Bone Mass/Body Age/BMR (ข้อมูลประกอบ)" — เดิม Body Water
-                อยู่ tier 2 (◉ สำคัญรอง) ย้ายไป tier 3 (○ ข้อมูลประกอบ) ตามลำดับใหม่ ตัวอื่นใน tier 2/3 ตรงกับ
-                ที่ขอไว้แล้วจากรอบก่อนๆ ไม่ต้องแก้ */}
             <IconStatCard
               label="น้ำในร่างกาย"
               subLabel="BODY WATER"
@@ -2511,7 +2523,10 @@ function OverviewTrendChart({
               โดยเฉพาะ — ลด opacity ตรงนั้นลง" — ไม่แตะ texture ของ PremiumCard เอง (ใช้ทั่วทั้งแอป เปลี่ยน
               ตรงนั้นจะกระทบทุกการ์ด ไม่ใช่แค่กราฟนี้) แต่ซ้อน overlay สีพื้นเข้มโปร่งแสงเฉพาะบริเวณกราฟแทน ทำให้
               texture ที่ทะลุมาจากพื้น PremiumCard จางลงเฉพาะจุดนี้เท่านั้น */}
-          <div className="h-56 rounded-xl" style={{ background: 'rgba(10,11,13,0.28)' }}>
+          {/* v56: ฟีดแบ็ก "Graph กินพื้นที่เยอะเทียบกับจำนวนจุดข้อมูลจริง — ลดความสูงลง ~15-20% ให้ Key
+              Metrics ขึ้นมาเร็วขึ้น" — h-56 (224px) → h-48 (192px), ลดลง ~14% ไม่แตะ margin/yDomain/label
+              logic อื่นที่จูนมาละเอียดแล้ว (yTicks ยัง generic ตาม yDomain เดิม ไม่ผูกกับความสูงพิกเซล) */}
+          <div className="h-48 rounded-xl" style={{ background: 'rgba(10,11,13,0.28)' }}>
             <ResponsiveContainer width="100%" height="100%">
               {/* v37: ฟีดแบ็ก (จากสกรีนช็อตจริง) "ตัวเลขแกน Y โดนตัดเหลือแค่หลักเดียว (69→9 ทำนองนี้)" —
                   margin.left เดิม -20 ดึงทั้งกราฟ (รวมแกน Y) ล้นไปทางซ้ายเกินขอบการ์ดที่เป็น overflow-hidden
