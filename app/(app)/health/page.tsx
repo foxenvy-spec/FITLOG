@@ -2840,13 +2840,16 @@ function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toD
 
 // วงแหวนสรุป + สัดส่วน ดีมาก/มาตรฐาน/ควรปรับปรุง จากตัวชี้วัดล่าสุดที่มีช่วงอ้างอิงให้เทียบ
 // ระดับคะแนนสุขภาพรวม → label + สี ring — แยกเป็นฟังก์ชันกลางให้ HealthScoreCard (แท็บ "แนวโน้ม") และ
-// OverviewHealthScoreHeader (แท็บ "ภาพรวม") ใช้สูตรเดียวกันเป๊ะ (ไล่ตามคะแนนจริง: แดง/ส้ม/เขียว) แทนสีคงที่
+// OverviewHealthScoreHeader (แท็บ "ภาพรวม") ใช้สูตรเดียวกันเป๊ะ (ไล่ตามคะแนนจริง: แดง/น้ำเงิน/เขียว) แทนสีคงที่
 // ตายตัวสีเดียว — กันไม่ให้สองแท็บพูดภาษาสีคนละชุดกัน และกันชนกับความหมายสีที่จองไว้แล้วที่อื่นในแอป (เช่น
 // cyan = Recovery ring บน Dashboard)
+// v52: ฟีดแบ็ก "P4 ใช้ระบบสีความหมายให้ครบ (Gold = Brand/Highlight เท่านั้น)" — เดิมระดับ "มาตรฐาน" ใช้สีทอง
+// (#E8A33D) เป็นสีบอกระดับ ชนกับบทบาท Brand ของ Gold ที่เพิ่งกำหนดให้การ์ด Insight & Recommendation —
+// เปลี่ยนเป็น steel/blue (#6C8CA8, Neutral tier) ตามระบบสีที่เสนอเอง ให้ Gold เหลือความหมายเดียวจริงๆ ในแอปนี้
 function healthScoreTier(pct: number): { label: string; color: string } {
   if (pct >= 85) return { label: 'ดีมาก', color: '#7A9B57' }
   if (pct >= 65) return { label: 'ดี', color: '#7A9B57' }
-  if (pct >= 40) return { label: 'มาตรฐาน', color: '#E8A33D' }
+  if (pct >= 40) return { label: 'มาตรฐาน', color: '#6C8CA8' }
   return { label: 'ควรปรับปรุง', color: '#C1503A' }
 }
 
