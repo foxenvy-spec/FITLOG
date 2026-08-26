@@ -166,6 +166,12 @@ export default function HealthPage() {
   const [trendMetric, setTrendMetric] = useState<number | 'all'>('all')
   const [trendPeriodDays, setTrendPeriodDays] = useState<7 | 30 | 90>(90)
   const [showAllMetrics, setShowAllMetrics] = useState(false)
+  // v59: ฟีดแบ็ก (เอกสาร handoff P1) "แยกเกณฑ์ที่อ้างอิงทั่วไป (BMI/Body Fat/Visceral Fat) ออกจากเป้าหมาย
+  // ส่วนบุคคล (Weight/Muscle/Body Fat target) ให้ชัด" — สองอย่างนี้แยกตำแหน่งอยู่แล้วจริงๆ (zone pill บนการ์ด
+  // = อ้างอิงทั่วไป, คอลัมน์ "เป้าหมายร่างกาย" ใน Health Score banner = เป้าหมายส่วนตัว) แต่ไม่เคยระบุ
+  // ความสัมพันธ์นี้ตรงๆ ที่ไหนเลย — เพิ่มปุ่ม ⓘ toggle ข้างหัวข้อ Key Metrics (กลไกเดียวกับที่การ์ด Body Age
+  // มีอยู่แล้ว) แทนข้อความถาวร กันเพิ่มความสูงหน้าแบบไม่จำเป็น (ฟีดแบ็กหลายรอบก่อนขอให้ลด density)
+  const [showRangeVsGoalInfo, setShowRangeVsGoalInfo] = useState(false)
   const [goals, setGoals] = useState<Goal[]>([])
   // เวลาที่โหลดข้อมูลหน้านี้สำเร็จจริงล่าสุด (ไม่ใช่วันที่ "วัดร่างกาย" ซึ่งเป็นคนละความหมาย — measured_at
   // เป็นวันที่ไม่มีเวลา ส่วนอันนี้คือเวลาจริงที่ดึงข้อมูลจาก Supabase สำเร็จ) ใช้โชว์ "อัปเดตล่าสุด Xนาทีที่แล้ว"
@@ -1263,7 +1269,22 @@ export default function HealthPage() {
               ที่ไม่มีจุดใช้อื่นแล้วออกไปด้วย) ให้การ์ด Key Metrics โฟกัสแค่ "ค่าปัจจุบัน + เดลต้า" (Level 1)
               ส่วนเทรนด์เป็นหน้าที่ของ Body Progress (Level 2) เพียงจุดเดียว ไม่ซ้ำข้อมูลกันอีก */}
           <div>
-            <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Key Metrics</p>
+            <p className="text-[10px] tracked uppercase mb-2 flex items-center gap-1" style={{ color: '#B8BBC2' }}>
+              Key Metrics
+              <button
+                type="button"
+                onClick={() => setShowRangeVsGoalInfo((v) => !v)}
+                className="text-muted shrink-0 transition hover:text-ink"
+                aria-label="ความแตกต่างระหว่างช่วงอ้างอิงกับเป้าหมายส่วนตัว"
+              >
+                <InfoIcon />
+              </button>
+            </p>
+            {showRangeVsGoalInfo && (
+              <p className="text-[11px] text-muted mb-2 -mt-1">
+                ป้ายสถานะ (เช่น &quot;ปกติ&quot;) บนการ์ดคือช่วงอ้างอิงทั่วไป ไม่ใช่เป้าหมายส่วนตัวของคุณ — เป้าหมายที่ตั้งไว้ดูได้ที่คอลัมน์ &quot;เป้าหมายร่างกาย&quot; ในคะแนนสุขภาพด้านบน
+              </p>
+            )}
             {/* v56: ฟีดแบ็ก (2 รอบติดกัน) "น้ำหนัก/ไขมัน/มวลกล้ามเนื้อ เป็นข้อมูลหลัก BMI/น้ำในร่างกายเป็นข้อมูล
                 รอง อยากให้สายตารู้ทันทีว่า 3 ตัวไหนสำคัญที่สุด" — เดิมทั้ง 5 การ์ดอยู่ grid เดียวกัน (แค่ลด
                 opacity/texture ตาม tier ซึ่งยังไม่พอ) ตอนนี้แยกเป็น 2 grid จริงๆ: Primary (น้ำหนัก/ไขมัน/
@@ -1803,29 +1824,44 @@ type AdditionalMetricRow = {
 // interpretation line ที่เพิ่งเพิ่มใน Analysis ด้านล่าง — สีวงกลมอิง classifyMetric เดียวกับ ZoneBadge หลัง
 // แก้ปัญหาสีเขียวใช้เยอะเกินไป (🔵 ปกติ, 🟢 เฉพาะ favorable จริง, 🔴 needsWork) ไม่มี zone = โชว์เดลต้าแทน
 // เหมือนเดิม (ไม่เดา zone ที่ไม่มีข้อมูลรองรับ)
+// v59: ฟีดแบ็ก (เอกสาร handoff P1) "Metric card ต้องใช้ anatomy เดียวกันทุกใบ — ลดการตีความต่างกันระหว่าง
+// key และ secondary metric" — เดิมแถวนี้โชว์ zone-status "หรือ" delta อย่างใดอย่างหนึ่งเท่านั้น (zone ตัด
+// delta ทิ้งถ้ามีทั้งคู่) ทั้งที่การ์ด Key Metrics (IconStatCard) โชว์ทั้ง zone pill และ delta พร้อมกันเสมอถ้า
+// มีข้อมูลทั้งคู่ — เปลี่ยนให้แถวนี้แสดงทั้งสองอย่างพร้อมกันเมื่อมีข้อมูลจริง ให้ anatomy ตรงกับ Key Metrics
 function AdditionalMetricStatus({ zone, direction, delta, deltaUnit, decimals }: Pick<AdditionalMetricRow, 'zone' | 'direction' | 'delta' | 'deltaUnit' | 'decimals'>) {
-  if (zone) {
-    const status = classifyMetric(zone, direction)
-    const dot = status === 'needsWork' ? '🔴' : status === 'good' ? '🟢' : '🔵'
-    const color = status === 'needsWork' ? '#CF715F' : status === 'good' ? '#8CB264' : '#9DA0A8'
-    return (
-      <span className="text-[11px] whitespace-nowrap" style={{ color }}>
-        {dot} {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
-        {ZONE_LABEL_TH[zone]}
-      </span>
-    )
-  }
-  if (delta !== null) {
-    const good = direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
-    const bad = direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
-    const cls = good ? 'text-moss' : bad ? 'text-rusttext' : 'text-muted'
-    return (
-      <span className={`text-[11px] font-mono whitespace-nowrap ${cls}`}>
-        {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)} {deltaUnit}
-      </span>
-    )
-  }
-  return <span className="text-[11px] text-muted">—</span>
+  const zoneNode = zone
+    ? (() => {
+        const status = classifyMetric(zone, direction)
+        const dot = status === 'needsWork' ? '🔴' : status === 'good' ? '🟢' : '🔵'
+        const color = status === 'needsWork' ? '#CF715F' : status === 'good' ? '#8CB264' : '#9DA0A8'
+        return (
+          <span className="text-[11px] whitespace-nowrap" style={{ color }}>
+            {dot} {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
+            {ZONE_LABEL_TH[zone]}
+          </span>
+        )
+      })()
+    : null
+  const deltaNode =
+    delta !== null
+      ? (() => {
+          const good = direction !== 'neutral' && (direction === 'higherBetter' ? delta > 0 : delta < 0)
+          const bad = direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
+          const cls = good ? 'text-moss' : bad ? 'text-rusttext' : 'text-muted'
+          return (
+            <span className={`text-[11px] font-mono whitespace-nowrap ${cls}`}>
+              {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)} {deltaUnit}
+            </span>
+          )
+        })()
+      : null
+  if (!zoneNode && !deltaNode) return <span className="text-[11px] text-muted">—</span>
+  return (
+    <span className="flex items-center gap-2 flex-wrap justify-end">
+      {deltaNode}
+      {zoneNode}
+    </span>
+  )
 }
 
 // ฟีดแบ็ก "ลด Information Density...ยุบ Additional Metrics เป็นตาราง Metric/Value/Status + View all
