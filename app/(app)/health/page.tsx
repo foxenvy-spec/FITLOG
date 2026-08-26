@@ -1096,6 +1096,10 @@ export default function HealthPage() {
       delta: fieldDelta('protein_kg', toDisplay),
       deltaUnit: unit,
       decimals: 1,
+      // v64: ฟีดแบ็ก "เอา 🔴 ออกจาก Protein ก่อน — 'สูงกว่าเกณฑ์' ต้องมั่นใจทิศทางจริงๆ" — proteinPctZone
+      // มีเกณฑ์จริง (ไม่ใช่เดา) แต่ไม่มีข้อมูลยืนยันว่าสูง/ต่ำกว่าเกณฑ์นี้ "ดี" หรือ "ไม่ดี" ต่างจาก Skeletal
+      // Muscle ที่รู้ชัดว่า higherBetter — บังคับสีกลาง ไม่ตัดสิน แทนการฟันธงแดง/เขียว
+      neutralStatus: true,
     },
     {
       key: 'visceralFat',
@@ -1860,6 +1864,12 @@ type AdditionalMetricRow = {
   delta: number | null
   deltaUnit: string
   decimals: number
+  // v64: ฟีดแบ็ก "Protein 🔴 สูงกว่าเกณฑ์ — คำว่า 'สูงกว่าเกณฑ์' ต้องมี reference range ที่มั่นใจจริงๆ ว่า
+  // ทิศทางไหนดี ไม่งั้นไม่ควรตัดสินว่าสูง=ผิดปกติ" — proteinPctZone มีเกณฑ์จริง (ไม่ใช่เดา, verify แล้วรอบก่อน)
+  // แต่ไม่มีข้อมูลยืนยันว่า "สูง" ดีหรือไม่ดี (direction ไม่ชัดพอจะ higherBetter/lowerBetter) — ตัวเลือกนี้
+  // ให้แถวยังโชว์ zone label ได้ (ยังมีประโยชน์เชิงข้อมูล) แต่บังคับสีเป็นกลาง (steel, เหมือน Standard) เสมอ
+  // ไม่ตัดสินว่าดี/ไม่ดี แทนการเอา zone ออกทั้งหมด (เสียข้อมูลบริบท) หรือฟันธงเขียว/แดง (มั่นใจเกินจริง)
+  neutralStatus?: boolean
 }
 
 // v30: ฟีดแบ็ก "Additional Metrics ยังดูแบนกว่าส่วนอื่น...visual hierarchy ยังดูเหมือน table ขณะที่ส่วนอื่น
@@ -1872,10 +1882,17 @@ type AdditionalMetricRow = {
 // key และ secondary metric" — เดิมแถวนี้โชว์ zone-status "หรือ" delta อย่างใดอย่างหนึ่งเท่านั้น (zone ตัด
 // delta ทิ้งถ้ามีทั้งคู่) ทั้งที่การ์ด Key Metrics (IconStatCard) โชว์ทั้ง zone pill และ delta พร้อมกันเสมอถ้า
 // มีข้อมูลทั้งคู่ — เปลี่ยนให้แถวนี้แสดงทั้งสองอย่างพร้อมกันเมื่อมีข้อมูลจริง ให้ anatomy ตรงกับ Key Metrics
-function AdditionalMetricStatus({ zone, direction, delta, deltaUnit, decimals }: Pick<AdditionalMetricRow, 'zone' | 'direction' | 'delta' | 'deltaUnit' | 'decimals'>) {
+function AdditionalMetricStatus({
+  zone,
+  direction,
+  delta,
+  deltaUnit,
+  decimals,
+  neutralStatus,
+}: Pick<AdditionalMetricRow, 'zone' | 'direction' | 'delta' | 'deltaUnit' | 'decimals' | 'neutralStatus'>) {
   const zoneNode = zone
     ? (() => {
-        const status = classifyMetric(zone, direction)
+        const status = neutralStatus ? 'standard' : classifyMetric(zone, direction)
         const dot = status === 'needsWork' ? '🔴' : status === 'good' ? '🟢' : '🔵'
         const color = status === 'needsWork' ? '#CF715F' : status === 'good' ? '#8CB264' : '#9DA0A8'
         return (
@@ -1930,7 +1947,14 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
                 <span className="font-mono text-xs tabular text-ink whitespace-nowrap">{r.value}</span>
               </div>
               <div className="flex justify-end mt-0.5">
-                <AdditionalMetricStatus zone={r.zone} direction={r.direction} delta={r.delta} deltaUnit={r.deltaUnit} decimals={r.decimals} />
+                <AdditionalMetricStatus
+                  zone={r.zone}
+                  direction={r.direction}
+                  delta={r.delta}
+                  deltaUnit={r.deltaUnit}
+                  decimals={r.decimals}
+                  neutralStatus={r.neutralStatus}
+                />
               </div>
             </div>
           ))}
@@ -3820,11 +3844,22 @@ function MuscleFatBarRow({
           </span>
         </span>
       </div>
+      {/* v64: ฟีดแบ็ก "28.1 kg บอกว่า 'อยู่ในเกณฑ์ดี ✓' (ถูกแล้ว, higherBetter) แต่แถบยังลงสีแดง (rust) ที่
+          โซนเกิน 28.0 เหมือนโซนอันตรายตายตัว ทำให้ขอบบนดูเหมือน hard limit ที่ขัดกับ badge สีเขียว" — เดิมแถบ
+          3 ช่วง (steel/moss/rust) ใช้สีตายตัวไม่สนทิศทาง เปลี่ยนให้ช่วง Low/High ใช้สีเขียว (moss) แทนถ้าฝั่ง
+          นั้น favorable จริง (ตรงกับ meta.direction เดียวกับที่ ZoneBadge ใช้ตัดสิน) แถบกับ badge จะพูดเรื่อง
+          เดียวกันเสมอ ไม่ขัดกันอีก */}
       <p className="text-[11px] text-muted mb-1.5 ml-12">{interpretation}</p>
       <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
-        <div className="absolute inset-y-0 bg-steel/70" style={{ left: 0, width: `${lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-moss/70" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }} />
-        <div className="absolute inset-y-0 bg-rust/70" style={{ left: `${highPct}%`, right: 0 }} />
+        <div
+          className="absolute inset-y-0"
+          style={{ left: 0, width: `${lowPct}%`, backgroundColor: `${meta.direction === 'lowerBetter' ? '#7A9B57' : '#6C8CA8'}B3` }}
+        />
+        <div className="absolute inset-y-0" style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%`, backgroundColor: '#7A9B57B3' }} />
+        <div
+          className="absolute inset-y-0"
+          style={{ left: `${highPct}%`, right: 0, backgroundColor: `${meta.direction === 'higherBetter' ? '#7A9B57' : '#C1503A'}B3` }}
+        />
         <div
           className="absolute top-1/2 w-3 h-3 rounded-full bg-bg border-[3px] border-ink"
           style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
