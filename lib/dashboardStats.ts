@@ -527,6 +527,12 @@ export interface Insight {
   // เฉพาะ computeHealthTrendInsights (lib/healthInsights.ts) ตอนนี้ ตัวสร้าง insight อื่น (เช่น
   // computeVolumeTrendInsights ด้านล่าง) ไม่ใส่ก็ได้ ไม่บังคับ (optional) เพื่อไม่กระทบจุดใช้เดิม
   tier?: 'attention' | 'watch' | 'good'
+  // v54: ฟีดแบ็ก "การ์ด Insight อ่านเหมือนรายงาน ไม่ใช่ Dashboard — detail เป็น paragraph ยาว อยากได้
+  // ↑3.7% · 90 วัน แบบ chip สั้นๆ แยกจากคำแนะนำ" — optional เหมือน tier: มีเฉพาะ computeHealthTrendInsights
+  // ตัวสร้าง insight อื่น (เช่น computeVolumeTrendInsights) ไม่ใส่ = undefined = InsightCard fallback ไปโชว์
+  // detail แบบเดิมเป๊ะ ไม่กระทบจุดใช้ร่วม (Dashboard/Coach)
+  deltaLabel?: string
+  actionLabel?: string
 }
 
 // เทียบเซ็ตต่อกลุ่มกล้ามเนื้อของสัปดาห์นี้กับสัปดาห์ที่แล้ว แจ้งเฉพาะกลุ่มที่วอลุ่มเพิ่มขึ้นชัดเจน (>=15%)

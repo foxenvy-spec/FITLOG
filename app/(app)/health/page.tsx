@@ -847,6 +847,7 @@ export default function HealthPage() {
       muscleMass: firstLast(muscleTrend),
       bodyAge: firstLast(bodyAgeTrend),
       periodLabel: `ในช่วง ${trendPeriodDays} วันที่ผ่านมา`,
+      periodShortLabel: `${trendPeriodDays} วัน`,
     })
   }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays])
 
@@ -1190,7 +1191,7 @@ export default function HealthPage() {
           {healthInsights.length > 0 && (
             <PremiumCard className="p-4 border-l-2" style={{ borderLeftColor: '#E8A33D' }}>
               <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
-                Insight &amp; Recommendation
+                Body Insights
                 <span className="text-muted">
                   <InfoIcon />
                 </span>
@@ -1280,6 +1281,9 @@ export default function HealthPage() {
               zoneScheme="lowerOk"
               insight={bodyFatInsight}
             />
+            {/* v54: ฟีดแบ็ก "Muscle Mass 46.9kg กับ Skeletal Muscle 28.1kg ผู้ใช้อาจสงสัยว่ากล้ามเนื้อจริงๆ
+                คือตัวไหน — terminology ต้องชัด" — ใช้กลไก ⓘ infoText เดียวกับที่การ์ด Body Age มีอยู่แล้ว
+                (ปุ่มเล็กข้าง label, toggle ข้อความอธิบายใต้การ์ด) แทนการเพิ่มกลไกใหม่ */}
             <IconStatCard
               label="มวลกล้ามเนื้อ"
               subLabel="MUSCLE MASS"
@@ -1291,6 +1295,7 @@ export default function HealthPage() {
               delta={fieldDelta('muscle_kg', toDisplay)}
               deltaUnit={unit}
               direction="higherBetter"
+              infoText="มวลกล้ามเนื้อ (Muscle Mass) คือน้ำหนักกล้ามเนื้อรวมทั้งหมด ส่วน Skeletal Muscle ในหมวด Additional Metrics ด้านล่างนับเฉพาะกล้ามเนื้อลายที่บังคับได้ — เป็นคนละตัวเลขกัน ไม่ใช่พิมพ์ผิดหรือขัดแย้งกัน"
             />
             <IconStatCard
               label="ดัชนีมวลกาย"
@@ -1551,7 +1556,7 @@ export default function HealthPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h2 className="font-display text-sm tracked uppercase text-muted flex items-center gap-1.5">
-                    Insight &amp; วิเคราะห์
+                    Body Insights
                     <span className="text-muted">
                       <InfoIcon />
                     </span>
@@ -2271,15 +2276,12 @@ function OverviewTrendChart({
     return ticks
   }, [yDomain])
 
-  // v36: จุดที่มี label ค้างอยู่บนกราฟ (ไม่ใช่แค่ hover) — จุดแรก/ต่ำสุด/ล่าสุดเท่านั้น ตามที่เห็นใน mockup
-  // (ไม่ใส่ label ทุกจุดจนรก) — ต่ำสุดหาแบบ index แรกที่เจอค่าต่ำสุด กันชนกับจุดแรก/ล่าสุดถ้าเป็นจุดเดียวกัน
+  // v54: ฟีดแบ็ก "ตัวเลขบน Graph เยอะไปนิด (66.3/65.8/67.1 พร้อมกัน) ถ้ามี 30 จุดจริงจะรก — จุดล่าสุดควร
+  // แสดง label จุดอื่นดูจาก tooltip แทน" — เดิม (v36) ค้าง label จุดแรก/ต่ำสุด/ล่าสุดพร้อมกันเสมอ 3 ป้าย
+  // ตอนนี้เหลือแค่จุดล่าสุด จุดอื่นยังกดดู tooltip ได้ปกติ (ChartPointTooltip ด้านล่าง ไม่ได้ถูกตัดออก)
   const labelIndices = useMemo(() => {
     if (data.length === 0) return new Set<number>()
-    let minIdx = 0
-    data.forEach((d, i) => {
-      if (d.value < data[minIdx].value) minIdx = i
-    })
-    return new Set([0, minIdx, data.length - 1])
+    return new Set([data.length - 1])
   }, [data])
 
   // v38: ฟีดแบ็ก "จุดล่าสุดควรเด่นที่สุด — ● 67.1 kg พร้อม glow เล็กๆ แบบ floating titanium pill" — จุด

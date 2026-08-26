@@ -60,7 +60,20 @@ export default function InsightCard({
       <div className="min-w-0 flex-1">
         <p className="text-[10px] tracked uppercase text-muted">{tierStyle ? tierStyle.label : 'Insight'}</p>
         <p className={`font-display text-sm tracked uppercase mt-0.5 ${style.accent}`}>{insight.title}</p>
-        <p className="text-xs text-muted mt-0.5">{insight.detail}</p>
+        {/* v54: ฟีดแบ็ก "อ่านเหมือนรายงาน ไม่ใช่ Dashboard — อยากได้ ↑3.7% · 90 วัน แบบ chip สั้นๆ แยกจาก
+            คำแนะนำ แทน paragraph ยาว" — deltaLabel/actionLabel เป็น optional field ใหม่ใน Insight (มีเฉพาะ
+            computeHealthTrendInsights) มีค่าก็ใช้ compact 2 บรรทัดนี้แทน ไม่มีค่า (insight จากที่อื่น เช่น
+            Dashboard/Coach) fallback ไป detail แบบเดิมเป๊ะ ไม่กระทบจุดใช้ร่วม */}
+        {insight.deltaLabel ? (
+          <>
+            <p className="text-xs font-mono font-semibold mt-1" style={{ color: style.chipColor }}>
+              {insight.deltaLabel}
+            </p>
+            {insight.actionLabel && <p className="text-[11px] text-muted mt-0.5">{insight.actionLabel}</p>}
+          </>
+        ) : (
+          <p className="text-xs text-muted mt-0.5">{insight.detail}</p>
+        )}
       </div>
       {showChevron && (
         <svg

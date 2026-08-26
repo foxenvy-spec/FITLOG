@@ -44,6 +44,10 @@ const TIER_ORDER: Record<'attention' | 'watch' | 'good', number> = { attention: 
 // เช่น มวลกล้ามเนื้อ) — เพิ่ม periodLabel บังคับให้ทุก detail ต้องระบุช่วงเวลาจริงชัดเจน (เช่น "ในช่วง 90
 // วันที่ผ่านมา") ผู้ใช้จะเห็นทันทีว่าสองตัวเลขนี้คนละช่วงเวลากัน ไม่ใช่ขัดแย้งกัน — จุดเรียกใช้ (health/page.tsx)
 // ส่ง `ในช่วง ${trendPeriodDays} วันที่ผ่านมา` เข้ามา
+// v54: ฟีดแบ็ก "การ์ด Insight อ่านเหมือนรายงาน — อยากได้ ↑3.7% · 90 วัน แบบ chip สั้นๆ แยกจากคำแนะนำ" —
+// เพิ่ม periodShortLabel (เช่น "90 วัน" ไม่มี "ในช่วง...ที่ผ่านมา") มาประกอบ deltaLabel/actionLabel แยกจาก
+// detail (detail ยังคงข้อความเต็มไว้เหมือนเดิมเผื่อจุดใช้อื่น) — InsightCard จะเลือกโชว์ deltaLabel/
+// actionLabel แทน detail อัตโนมัติถ้ามีค่า (ดูคอมเมนต์ที่ Insight interface ใน dashboardStats.ts)
 // สร้าง insight จากการเปลี่ยนแปลงของค่าล่าสุดเทียบกับค่าแรกในช่วงที่เลือกดู (7/30/90 วัน)
 // ใช้เกณฑ์ %เปลี่ยนแปลงขั้นต่ำกันสัญญาณรบกวนจากความคลาดเคลื่อนเล็กน้อยของเครื่องชั่ง
 export function computeHealthTrendInsights(params: {
@@ -55,9 +59,11 @@ export function computeHealthTrendInsights(params: {
   bodyAge?: { first: number; last: number }
   minPct?: number
   periodLabel: string
+  periodShortLabel: string
 }): Insight[] {
   const minPct = params.minPct ?? 1.5
   const periodLabel = params.periodLabel
+  const periodShort = params.periodShortLabel
   const insights: Insight[] = []
 
   const pctChange = (first: number, last: number) => (first !== 0 ? ((last - first) / Math.abs(first)) * 100 : 0)
@@ -77,6 +83,7 @@ export function computeHealthTrendInsights(params: {
         icon: '🔥',
         title: 'แนวโน้มดีขึ้น',
         detail: `ไขมันในร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
+        deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -86,6 +93,8 @@ export function computeHealthTrendInsights(params: {
         icon: '⚠️',
         title: 'ไขมันในร่างกายเพิ่มขึ้น',
         detail: `เพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนอาหารและการฝึก`,
+        deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
+        actionLabel: 'ลองทบทวนอาหารและการฝึก',
       })
     }
   }
@@ -100,6 +109,8 @@ export function computeHealthTrendInsights(params: {
         icon: '💪',
         title: 'กล้ามเนื้อเพิ่มขึ้น',
         detail: `กล้ามเนื้อโครงร่างเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+        deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
+        actionLabel: 'รักษาโปรแกรมแบบนี้ต่อเนื่อง',
       })
     } else if (pct <= -minPct) {
       insights.push({
@@ -109,6 +120,8 @@ export function computeHealthTrendInsights(params: {
         icon: '⚠️',
         title: 'กล้ามเนื้อลดลง',
         detail: `กล้ามเนื้อโครงร่างลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel} ลองเพิ่มการฝึกแรงต้าน`,
+        deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
+        actionLabel: 'ลองเพิ่มการฝึกแรงต้าน',
       })
     }
   }
@@ -123,6 +136,7 @@ export function computeHealthTrendInsights(params: {
         icon: pct < 0 ? '📉' : '📈',
         title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% ${periodLabel}`,
+        deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
       })
     }
   }
@@ -137,6 +151,8 @@ export function computeHealthTrendInsights(params: {
         icon: '💪',
         title: 'มวลกล้ามเนื้อเพิ่มขึ้น',
         detail: `มวลกล้ามเนื้อเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+        deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
+        actionLabel: 'รักษาโปรแกรมแบบนี้ต่อเนื่อง',
       })
     } else if (pct <= -minPct) {
       insights.push({
@@ -146,6 +162,8 @@ export function computeHealthTrendInsights(params: {
         icon: '⚠️',
         title: 'มวลกล้ามเนื้อลดลง',
         detail: `มวลกล้ามเนื้อลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel} ลองเพิ่มการฝึกแรงต้าน`,
+        deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
+        actionLabel: 'ลองเพิ่มการฝึกแรงต้าน',
       })
     }
   }
@@ -160,6 +178,7 @@ export function computeHealthTrendInsights(params: {
         icon: '❤️',
         title: 'อายุร่างกายดีขึ้น',
         detail: `อายุร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
+        deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -169,6 +188,8 @@ export function computeHealthTrendInsights(params: {
         icon: '⚠️',
         title: 'อายุร่างกายเพิ่มขึ้น',
         detail: `อายุร่างกายเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนการนอนและการฝึก`,
+        deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
+        actionLabel: 'ลองทบทวนการนอนและการฝึก',
       })
     }
   }
