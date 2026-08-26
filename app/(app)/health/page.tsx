@@ -1182,6 +1182,36 @@ export default function HealthPage() {
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
 
+          {/* v51: ฟีดแบ็ก "Insight & Recommendation มี Potential สูงมาก ควรเป็นสมองของ FITLOG ที่เข้าใจได้ใน
+              3-5 วินาที" (Priority 3) — เดิมอยู่เกือบท้ายสุดของแท็บ Overview (หลัง BMR estimate) ผู้ใช้ต้อง
+              เลื่อนผ่านทุกอย่างก่อนถึงจะเห็น ย้ายมาไว้ต่อจาก Health Score ทันที (ก่อนกราฟเทรนด์) พร้อมกรอบสี Gold
+              (#E8A33D) ตามระบบสีความหมายที่ผู้ใช้เสนอเอง (Gold = Brand/Highlight) ให้สอดคล้องกับกรอบ steel
+              (#6C8CA8, detail tier) ของการ์ด Analysis ด้านล่าง */}
+          {healthInsights.length > 0 && (
+            <PremiumCard className="p-4 border-l-2" style={{ borderLeftColor: '#E8A33D' }}>
+              <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
+                Insight &amp; Recommendation
+                <span className="text-muted">
+                  <InfoIcon />
+                </span>
+              </h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {healthInsights.slice(0, 4).map((insight) => (
+                  <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]} />
+                ))}
+              </div>
+              {healthInsights.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setTab('trends')}
+                  className="mt-3 w-full text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
+                >
+                  ดูคำแนะนำเพิ่มเติม
+                </button>
+              )}
+            </PremiumCard>
+          )}
+
           <OverviewTrendChart
             metrics={metrics}
             unit={unit}
@@ -1338,31 +1368,6 @@ export default function HealthPage() {
           {/* BMR ที่วัดจากเครื่องชั่งจริง (latest.bmr_kcal, การ์ด IconStatCard ด้านบน) แม่นกว่าค่าประมาณ
               จากสูตรเสมอ — โชว์การ์ดนี้เฉพาะตอนยังไม่มีค่าจากเครื่องชั่ง กันข้อมูลสองชุดขัดกันจนงง */}
           {!latest?.bmr_kcal && <BmrEstimateCard profile={profile} weightKg={latest?.weight_kg ?? null} />}
-
-          {healthInsights.length > 0 && (
-            <PremiumCard className="p-4">
-              <h2 className="flex items-center gap-2 font-display text-sm tracked uppercase text-ink mb-3">
-                Insight &amp; Recommendation
-                <span className="text-muted">
-                  <InfoIcon />
-                </span>
-              </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {healthInsights.slice(0, 4).map((insight) => (
-                  <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]} />
-                ))}
-              </div>
-              {healthInsights.length > 4 && (
-                <button
-                  type="button"
-                  onClick={() => setTab('trends')}
-                  className="mt-3 w-full text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
-                >
-                  ดูคำแนะนำเพิ่มเติม
-                </button>
-              )}
-            </PremiumCard>
-          )}
         </div>
       )}
 
