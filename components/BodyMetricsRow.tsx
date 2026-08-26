@@ -174,13 +174,18 @@ export default function BodyMetricsRow({
   // เป้าหมาย active ล่าสุดต่อประเภท (ตาราง goals รองรับแค่ weight/body_fat — เหมือนหน้า /health)
   const weightGoal = goals.find((g) => g.goal_type === 'weight')
   const bodyFatGoal = goals.find((g) => g.goal_type === 'body_fat')
+  // v62: ฟีดแบ็ก "ทำ progress % เป็นเรียลไทม์ตลอดการบันทึก แทนที่จะแช่แข็งตอนตั้งเป้าหมาย" (จาก /health) —
+  // หาค่าเก่าที่สุดที่มีบันทึกจริงจาก chronological (เรียงเก่า→ใหม่อยู่แล้ว) ส่งเข้า goalProgressPct แทนการ
+  // ปล่อยให้ใช้ starting_value ที่แช่แข็งไว้ตอนสร้างเป้าหมายเสมอ — ให้ตรงกับพฤติกรรมหน้า /health เป๊ะ
+  const earliestWeight = chronological.find((m) => m.weight_kg != null)?.weight_kg ?? null
+  const earliestBodyFat = chronological.find((m) => m.body_fat_pct != null)?.body_fat_pct ?? null
   const weightGoalDetail =
     weightGoal?.target_value != null
-      ? { targetText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`, progressPct: goalProgressPct(weightGoal, summary.weight.value) }
+      ? { targetText: `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`, progressPct: goalProgressPct(weightGoal, summary.weight.value, earliestWeight) }
       : null
   const bodyFatGoalDetail =
     bodyFatGoal?.target_value != null
-      ? { targetText: `${bodyFatGoal.target_value.toFixed(1)} %`, progressPct: goalProgressPct(bodyFatGoal, summary.bodyFatPct.value) }
+      ? { targetText: `${bodyFatGoal.target_value.toFixed(1)} %`, progressPct: goalProgressPct(bodyFatGoal, summary.bodyFatPct.value, earliestBodyFat) }
       : null
 
   const cards: CardDef[] = [

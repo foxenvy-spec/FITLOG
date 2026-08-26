@@ -25,6 +25,7 @@ import type { Insight } from '@/lib/dashboardStats'
 import { zoneOf, classifyMetric, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
 import { computeHealthScore, type HealthScoreRanges, type HealthScoreResult, type ScoreDirection } from '@/lib/healthScore'
 import { periodLabelOf } from '@/lib/bodyMetricsSummary'
+import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import { saveAge } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -870,36 +871,30 @@ export default function HealthPage() {
     return null
   }
 
-  // v60: ฟีดแบ็ก "คืบหน้าสู่เป้าหมาย 0% ทั้งที่น้ำหนัก/ไขมันลดมาใกล้เป้าหมายแล้ว" — บั๊กจริง ไม่ใช่แค่ UX: เดิม
-  // start = goal.starting_value ?? current — ถ้าเป้าหมายไม่มี starting_value บันทึกไว้ (พบบ่อย — ตั้งเป้า
-  // หลังมีข้อมูลอยู่แล้ว หรือ field นี้เพิ่งเพิ่มทีหลัง) start จะเท่ากับ current เสมอ ทำให้ตัวตั้ง (current -
-  // start) เป็น 0 เสมอ progress เลยค้างที่ 0% แม้ค่าจริงจะขยับใกล้เป้าหมายแค่ไหนก็ตาม — แก้โดยหาค่าจริงที่
-  // เก่าที่สุดที่มีบันทึกไว้ (metrics เรียงล่าสุด→เก่าสุดอยู่แล้ว) มาใช้แทนแทนที่จะเดา ถ้าไม่มีข้อมูลเก่าเลยจริงๆ
-  // (มีแค่เอนทรีเดียว) คืน null ให้ UI บอกตรงๆ ว่ายังไม่มี baseline แทนที่จะโชว์ 0% ที่หลอกตา
-  function goalProgressPct(goal: Goal): number | null {
-    const current = goalCurrentValue(goal)
-    if (current === null || goal.target_value === null) return null
-    let start = goal.starting_value ?? null
-    if (start === null) {
-      if (goal.goal_type === 'weight') {
-        for (let i = metrics.length - 1; i >= 0; i--) {
-          if (metrics[i].weight_kg != null) {
-            start = metrics[i].weight_kg
-            break
-          }
-        }
-      } else if (goal.goal_type === 'body_fat') {
-        for (let i = metrics.length - 1; i >= 0; i--) {
-          if (metrics[i].body_fat_pct != null) {
-            start = metrics[i].body_fat_pct
-            break
-          }
-        }
+  // v60: ฟีดแบ็ก "คืบหน้าสู่เป้าหมาย 0% ทั้งที่น้ำหนัก/ไขมันลดมาใกล้เป้าหมายแล้ว" — เจอสาเหตุจริง: starting_value
+  // ถูกบันทึกครั้งเดียวตอน "สร้างเป้าหมาย" (calendar/page.tsx currentBaseline() = ค่าล่าสุด ณ วันนั้น) นับ
+  // ความคืบหน้าตั้งแต่วันตั้งเป้าเท่านั้น ถ้ายังไม่ได้บันทึกค่าใหม่หลังตั้งเป้าเลยจะติด 0% แม้ประวัติทั้งหมด
+  // (ก่อนตั้งเป้า) จะใกล้เป้าหมายไปมากแล้ว
+  // v62: ฟีดแบ็ก "ทำให้เรียลไทม์ตลอดการบันทึก" — เปลี่ยนจากใช้ starting_value เป็น fallback (ตอน null) มาใช้
+  // earliestTrackedValue (ค่าเก่าที่สุดที่มีบันทึกจริงใน metrics ทั้งหมด ไม่ใช่แค่ตอนตั้งเป้า) แทนเสมอ ผ่าน
+  // goalProgressPct กลางใน lib/goalProgress.ts (ตัวเดียวกับที่ BodyMetricsRow.tsx ใช้ในแดชบอร์ดมือถือ — เดิม
+  // มีสูตรซ้ำกันคนละไฟล์ 2 ชุด รวมเป็นจุดเดียวกันความไม่ตรงกันในอนาคตด้วย) ทุกครั้งที่บันทึกข้อมูลใหม่ ทั้ง
+  // current และ (ถ้าเป็นเอนทรีเก่าสุด) earliestTrackedValue ขยับตามอัตโนมัติ ไม่ต้อง refresh อะไรเพิ่ม
+  function goalEarliestTrackedValue(goal: Goal): number | null {
+    if (goal.goal_type === 'weight') {
+      for (let i = metrics.length - 1; i >= 0; i--) {
+        if (metrics[i].weight_kg != null) return metrics[i].weight_kg
+      }
+    } else if (goal.goal_type === 'body_fat') {
+      for (let i = metrics.length - 1; i >= 0; i--) {
+        if (metrics[i].body_fat_pct != null) return metrics[i].body_fat_pct
       }
     }
-    if (start === null) return null
-    if (goal.target_value === start) return current >= goal.target_value ? 100 : 0
-    return Math.min(100, Math.max(0, ((current - start) / (goal.target_value - start)) * 100))
+    return null
+  }
+
+  function goalProgressPct(goal: Goal): number | null {
+    return sharedGoalProgressPct(goal, goalCurrentValue(goal), goalEarliestTrackedValue(goal))
   }
 
   const activeTrendList = trendGroup === 'comp' ? compTrends : measureTrends
