@@ -3234,9 +3234,11 @@ function OverviewHealthScoreHeader({
                       ปุ่ม CTA) พร้อมข้อความเปอร์เซ็นต์กำกับใต้แถบ (คำเดียวกับที่ใช้ทั่วแอป "ความคืบหน้า") */}
                   {/* v60: ฟีดแบ็ก "0% ทำให้งงว่าทำไมยัง 0% ทั้งที่ค่าจริงเข้าใกล้เป้าหมายแล้ว — ถ้าหมายถึงยัง
                       ไม่มี baseline ควรเขียนให้ชัด" — progressPct === null ตอนนี้แปลว่า "ไม่มีข้อมูลเก่าพอ
-                      คำนวณ" จริงๆ (ดูคอมเมนต์ goalProgressPct) ไม่ใช่แค่ 0% ที่ปัดตก — บอกตรงๆ แทนการซ่อนเงียบ */}
+                      คำนวณ" จริงๆ (ดูคอมเมนต์ goalProgressPct) ไม่ใช่แค่ 0% ที่ปัดตก — บอกตรงๆ แทนการซ่อนเงียบ
+                      v61: ฟีดแบ็ก "'ยังไม่มีข้อมูลเริ่มต้นสำหรับคำนวณความคืบหน้า' ยังยาว/เทคนิคไปนิด" — สั้นลง
+                      ตามคำที่เสนอตรงๆ */}
                   {g.progressPct === null ? (
-                    <p className="text-[10px] text-muted mt-1.5">ยังไม่มีข้อมูลเริ่มต้นสำหรับคำนวณความคืบหน้า</p>
+                    <p className="text-[10px] text-muted mt-1.5">ยังไม่มีข้อมูลความคืบหน้า</p>
                   ) : (
                     <div className="mt-1.5">
                       <div className="h-1.5 w-28 rounded-full bg-white/10 overflow-hidden">
@@ -3298,15 +3300,14 @@ function OverviewHealthScoreHeader({
                       {row.pct}%
                     </span>
                   </div>
-                  {row.title === 'PROGRESS' && (
-                    <p className="normal-case tracking-normal text-muted/60 mt-1">
-                      คะแนนแนวโน้มล่าสุด ไม่ใช่ % ถึงเป้าหมาย (ดู &quot;คืบหน้าสู่เป้าหมาย&quot; ด้านล่าง)
-                    </p>
-                  )}
                 </div>
               )
             })}
           </div>
+          {/* v61: ฟีดแบ็ก "'คะแนนแนวโน้มล่าสุด' อยู่ใต้ PROGRESS อาจทำให้เข้าใจว่า Health Score ทั้งก้อนเป็นแค่
+              Trend Score — ควรเป็นข้อความปิดท้ายทั้ง breakdown แทน บอกว่า Health Score คือคะแนนสุขภาพโดยรวม
+              ไม่ใช่ % ความสำเร็จเป้าหมาย" — ย้ายจาก caption เฉพาะแถว PROGRESS มาเป็นบรรทัดปิดท้ายทั้ง 4 หมวด */}
+          <p className="text-[11px] text-muted mt-3">Health Score เป็นคะแนนสุขภาพโดยรวม ไม่ใช่ % ความสำเร็จของเป้าหมาย</p>
         </div>
       )}
     </div>
