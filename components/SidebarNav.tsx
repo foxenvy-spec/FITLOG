@@ -147,11 +147,14 @@ export default function SidebarNav() {
               href={href}
               title={label}
               className={`relative flex items-center justify-center xl:justify-start gap-2.5 rounded-md px-2.5 py-2 text-sm transition ${active ? '' : 'hover:bg-white/5'}`}
+              // v55: ฟีดแบ็ก "Active State ควรเด่นกว่านี้อีกนิด" — เดิม inset border 2px + gradient wash
+              // 11% (hex alpha 1c) จางไปหน่อย เพิ่มความกว้าง inset เป็น 3px + gradient เข้มขึ้น (2b ≈ 17%)
+              // + glow บางๆ รอบตัวหนังสือ/ไอคอนให้เห็นชัดว่าอยู่หน้าไหนอยู่ แม้ตอน rail โหมด (มีแค่ไอคอน)
               style={
                 active
                   ? {
-                      backgroundImage: `linear-gradient(90deg, ${withAlpha(COLORS.amber, '1c')}, transparent 85%)`,
-                      boxShadow: `inset 2px 0 0 0 ${COLORS.amber}`,
+                      backgroundImage: `linear-gradient(90deg, ${withAlpha(COLORS.amber, '2b')}, transparent 85%)`,
+                      boxShadow: `inset 3px 0 0 0 ${COLORS.amber}, 0 0 12px -4px ${withAlpha(COLORS.amber, '55')}`,
                     }
                   : undefined
               }

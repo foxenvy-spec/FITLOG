@@ -34,8 +34,14 @@ export default function InsightCard({
 }) {
   const tierStyle = insight.tier ? TIER_STYLE[insight.tier] : null
   const style = tierStyle ?? KIND_STYLE[insight.kind]
+  // v55: ฟีดแบ็ก "การ์ด Body Insights ทุกใบมีน้ำหนักทางสายตาใกล้เคียงกัน ต้องอ่านทีละใบถึงจะรู้ว่าอะไรสำคัญ
+  // ที่สุด — อยากให้ระดับความสำคัญบอกด้วยน้ำหนักภาพ ไม่ใช่แค่สี" — เดิมทั้ง 3 tier ใช้พื้นหลัง bg-surface
+  // เรียบเหมือนกันหมด ต่างกันแค่เส้นซ้าย/ไอคอน/label — เพิ่มพื้นหลังโทนแดงจางๆ เฉพาะ tier 'attention'
+  // (ต้องแก้) ให้ใบนั้นเด่นขึ้นจริงเมื่อวางเทียบกับใบอื่น ไม่แตะ watch/good (ยังคงพื้นเรียบเหมือนเดิม) —
+  // ผลเฉพาะ insight ที่มี tier (ตอนนี้มีแค่ computeHealthTrendInsights) การ์ด Dashboard/Coach ไม่กระทบ
+  const attentionBg = insight.tier === 'attention' ? 'bg-rustdim/25' : 'bg-surface'
   return (
-    <div className={`rounded-lg bg-surface border border-line shadow-elevated border-l-[3px] ${style.border} px-4 py-3 flex items-start gap-3`}>
+    <div className={`rounded-lg ${attentionBg} border border-line shadow-elevated border-l-[3px] ${style.border} px-4 py-3 flex items-start gap-3`}>
       {imageSrc ? (
         <span className="w-8 h-8 shrink-0 inline-block" aria-hidden="true">
           <Image src={imageSrc} alt="" width={32} height={32} className="w-full h-full object-contain" />

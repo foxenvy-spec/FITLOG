@@ -60,6 +60,12 @@ export function computeHealthTrendInsights(params: {
   minPct?: number
   periodLabel: string
   periodShortLabel: string
+  // v55: ฟีดแบ็ก "การ์ด Insight 'น้ำหนักเปลี่ยนแปลง' ติด tier ทำได้ดี (เขียว) เสมอไม่ว่าน้ำหนักขึ้นหรือลง —
+  // ขัดกับหลัก 'น้ำหนักเป็น Neutral เสมอ' ที่ตกลงกันไว้หลายรอบก่อนหน้า" — เดิม trend-weight ใช้ kind: 'positive'
+  // ตายตัว (มาจากตอนที่ insight ระบบยังไม่มี concept เป้าหมายเทียบทิศทาง) ผู้ใช้ยืนยันให้เทียบกับทิศทางเป้าหมาย
+  // เหมือนที่ override ไปแล้วกับลูกศร min/max บนกราฟ (OverviewTrendChart) — ไม่ระบุ (ไม่มีเป้าหมายตั้งไว้) =
+  // ไม่รู้ทิศทางที่ดีจริง ให้ tier เป็น 'watch' (ควรติดตาม เฉยๆ) แทนที่จะเดาว่า "ทำได้ดี"
+  weightDirection?: Direction
 }): Insight[] {
   const minPct = params.minPct ?? 1.5
   const periodLabel = params.periodLabel
@@ -129,10 +135,13 @@ export function computeHealthTrendInsights(params: {
   if (params.weight) {
     const pct = pctChange(params.weight.first, params.weight.last)
     if (Math.abs(pct) >= minPct) {
+      const dir = params.weightDirection ?? 'neutral'
+      const isGoodDirection = dir === 'neutral' ? null : dir === 'lowerBetter' ? pct < 0 : pct > 0
+      const kind: 'positive' | 'warning' = isGoodDirection === false ? 'warning' : 'positive'
       insights.push({
         id: 'trend-weight',
-        kind: 'positive',
-        tier: tierFor('positive', pct),
+        kind,
+        tier: isGoodDirection === null ? 'watch' : tierFor(kind, pct),
         icon: pct < 0 ? '📉' : '📈',
         title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% ${periodLabel}`,

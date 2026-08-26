@@ -19,6 +19,11 @@ import { hapticTap } from '@/lib/haptics'
 interface PremiumCardOwnProps {
   children: ReactNode
   className?: string
+  // v55: ฟีดแบ็ก "Texture (grain+mesh) ใช้ทุก Section เกิด Visual Noise — Hero/Important ได้ texture เต็มที่
+  // ส่วน Secondary Cards ควรลดลง 30-50%" — ดีฟอลต์ false = พฤติกรรมเดิมทุกจุดที่ใช้ PremiumCard อยู่แล้วเป๊ะ
+  // (ไม่กระทบจุดใช้อื่นทั้งแอปที่ไม่ได้ระบุ prop นี้) true = ลด opacity ของทั้งชั้น noise grain และชั้น mesh
+  // ลงครึ่งหนึ่ง — ใช้กับการ์ดที่ถือว่า "รอง" เท่านั้น (จุดเรียกใช้ตัดสินเอง ไม่ใช่ default กลาง)
+  reducedTexture?: boolean
 }
 
 type PremiumCardProps<T extends ElementType = 'div'> = PremiumCardOwnProps & {
@@ -36,6 +41,7 @@ export default function PremiumCard<T extends ElementType = 'div'>({
   as,
   onPointerDown,
   style,
+  reducedTexture = false,
   ...rest
 }: PremiumCardProps<T>) {
   const Comp = (as || 'div') as ElementType
@@ -131,16 +137,17 @@ export default function PremiumCard<T extends ElementType = 'div'>({
           // v22: ฟีดแบ็ก "Tiny Noise/Fine Brushed Texture เบามาก แทบมองไม่เห็น แต่เวลาถือมือถือจะรู้สึกว่า
           // เป็นวัสดุจริง" — ขยับจาก 0.02 (2%) เป็น 0.03 (3%) เล็กน้อย ยังอยู่ในเพดาน "แทบมองไม่เห็น" ตาม
           // ที่ขอ ไม่ใช่เพิ่มจนเห็นชัดเป็นลายกราฟิก
-          style={{ display: 'block', backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }}
+          style={{ display: 'block', backgroundImage: NOISE_BG, opacity: reducedTexture ? 0.015 : 0.03, mixBlendMode: 'overlay' }}
           aria-hidden="true"
         />
         {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (12px, ~2%) แยกชั้นจาก noise ด้านบน (คนละเทคนิค:
             grain = feTurbulence สุ่ม, mesh = เส้นเรขาคณิตไขว้จริง) จำลองผิวโลหะกัด CNC เป็นตารางละเอียด
-            v48b: hidden + display override เหตุผลเดียวกับ div เกรนด้านบน */}
+            v48b: hidden + display override เหตุผลเดียวกับ div เกรนด้านบน
+            v55: reducedTexture ลด opacity ชั้นนี้ลงครึ่งหนึ่งด้วย (ดูคอมเมนต์ที่ prop) */}
         <div
           hidden
           className="absolute inset-0 pointer-events-none"
-          style={{ display: 'block', backgroundImage: TITANIUM_MESH_CSS }}
+          style={{ display: 'block', backgroundImage: TITANIUM_MESH_CSS, opacity: reducedTexture ? 0.5 : 1 }}
           aria-hidden="true"
         />
         {children}

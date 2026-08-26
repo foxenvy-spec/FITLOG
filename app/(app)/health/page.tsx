@@ -848,8 +848,9 @@ export default function HealthPage() {
       bodyAge: firstLast(bodyAgeTrend),
       periodLabel: `ในช่วง ${trendPeriodDays} วันที่ผ่านมา`,
       periodShortLabel: `${trendPeriodDays} วัน`,
+      weightDirection: scoreWeightDirection,
     })
-  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays])
+  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays, scoreWeightDirection])
 
   function goalCurrentValue(goal: Goal): number | null {
     if (goal.goal_type === 'weight') return latest?.weight_kg ?? null
@@ -1809,7 +1810,8 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
   return (
     <div>
       <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Additional Metrics</p>
-      <PremiumCard className="px-4 py-1">
+      {/* v55: การ์ดรอง (ชื่อก็บอกอยู่แล้วว่า "Additional") ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 ของ Key Metrics */}
+      <PremiumCard className="px-4 py-1" reducedTexture>
         <div className="divide-y divide-line/60">
           {visible.map((r) => (
             <div key={r.key} className="py-2.5">
@@ -3417,7 +3419,8 @@ function ObesityAnalysisChart({
           บอกไว้ตรงๆ ว่าต่างกันตรงไหน กันความรู้สึกว่าเห็นตัวเลขเดิมซ้ำโดยไม่มีเหตุผล พร้อมเปลี่ยนกรอบการ์ด
           ด้านล่างเป็น steel accent (สีเดียวกับที่ BMI card ใช้อยู่แล้ว) ให้แยกจาก Key Metrics ด้วยสายตา */}
       <p className="text-[11px] text-muted mb-3">ตัวเลขเดียวกับ Key Metrics ด้านบน แต่เห็นตำแหน่งเทียบช่วงมาตรฐานชัดกว่า</p>
-      <PremiumCard className="p-4 space-y-5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }}>
+      {/* v55: "detail tier" (steel accent ด้านบน) = การ์ดรอง ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 อื่นๆ */}
+      <PremiumCard className="p-4 space-y-5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }} reducedTexture>
         {bmi !== null && (
           <ZoneBarRow
             label="BMI (kg/m²)"
@@ -3591,7 +3594,8 @@ function MuscleFatAnalysisChart({
       {/* v50: ฟีดแบ็ก "น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน ซ้ำกับ Key Metrics/Additional Metrics ด้านบน — คง
           ไว้ทั้งสองที่ได้ แต่ทำให้ดูเป็นคนละเลเวลชัดขึ้น" — ดูคอมเมนต์เดียวกันที่ ObesityAnalysisChart */}
       <p className="text-[11px] text-muted mb-3">ตัวเลขเดียวกับด้านบน แต่เห็นตำแหน่งเทียบช่วงมาตรฐานชัดกว่า</p>
-      <PremiumCard className="divide-y divide-white/5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }}>
+      {/* v55: "detail tier" (steel accent ด้านบน) = การ์ดรอง ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 อื่นๆ */}
+      <PremiumCard className="divide-y divide-white/5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }} reducedTexture>
         {items.map((it) => (
           <div key={it.label} className="p-4">
             <MuscleFatBarRow {...it} unit={unit} periodLabel={periodLabel} />
@@ -3848,9 +3852,13 @@ function IconStatCard({
       // การ์ดทั้งสองขนาด (primary py-4→py-3.5, ปกติ py-3.5→py-3) เพราะการ์ด primary สูงเท่ากับ 2 แถวของ
       // การ์ดเล็กที่มันคร่อมอยู่ (md:row-span-2) ไม่ได้ตั้ง height ตายตัว — ลด padding การ์ดเล็กจึงลดความสูง
       // ทั้งแถวและลาม primary ไปด้วยอัตโนมัติ ไม่ต้องคำนวณความสูง primary แยก
+      // v55: ฟีดแบ็ก "Weight/Body Fat/Muscle Mass ควรมี Visual Weight สูงกว่า BMI/Body Water ชัดกว่านี้ —
+      // ตอนนี้ดูสำคัญเท่ากันหมด" — เดิม tier 2/3 ลด opacity แค่ 95%/80% (จางเกินไปจนแทบไม่ต่างจาก tier 1
+      // ที่ 100%) เพิ่มช่องว่างให้ห่างชัดขึ้น (90%/72%) โดยไม่ถึงขั้นแยก grid ใหม่ (เสี่ยงพังเลย์เอาต์ primary
+      // card ที่ md:row-span-2 คร่อมอยู่ ซึ่งผ่านการจูนมาหลายรอบแล้ว)
       className={`h-full flex flex-col metric-card-hover ${
         primary ? 'md:col-span-2 md:row-span-2 px-5 py-3.5' : 'justify-between px-4 py-3'
-      } ${tier === 3 ? 'opacity-80' : tier === 2 ? 'opacity-95' : ''}`}
+      } ${tier === 3 ? 'opacity-[0.72]' : tier === 2 ? 'opacity-90' : ''}`}
       // primary ใช้ boxShadow override คงที่ (ไม่ใช่ผ่าน CSS class) เพราะ PremiumCard เซ็ต boxShadow ผ่าน
       // inline style ของตัวเองอยู่แล้ว — prop `style` ที่ส่งเข้ามาจะถูก spread ทับท้ายสุดใน PremiumCard.tsx
       // (`...style` วางหลัง boxShadow ดีฟอลต์) จึงชนะได้จริง ต่างจากการพยายามใช้ class ธรรมดามาชน inline
@@ -3859,6 +3867,10 @@ function IconStatCard({
           ? { boxShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 40px -8px rgba(0,0,0,.55), 0 0 0 1px rgba(232,163,61,.14)' }
           : undefined
       }
+      // v55: ฟีดแบ็ก "Texture เยอะไปทุก Section — Secondary Cards ควรลด texture 30-50%" — tier 1 (Weight/
+      // Body Fat/Muscle Mass, การ์ด Primary ในสายตาผู้ใช้ตามคอมเมนต์ v26 ด้านล่าง) คงเต็ม ส่วน tier 2/3
+      // (BMI/Body Water) ลด texture ลงครึ่งหนึ่ง
+      reducedTexture={tier !== 1}
     >
       {/* v26: ฟีดแบ็ก "ทำ Secondary Cards ให้เรียบกว่า Primary Cards...ตัวเลขควรเป็น visual anchor มากกว่า
           icon" (Priority 4) — tier 1 (Weight/Body Fat/Muscle Mass) คือ Primary การ์ดในสายตาผู้ใช้ตอนนี้
