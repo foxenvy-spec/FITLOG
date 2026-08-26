@@ -3392,7 +3392,7 @@ function ObesityAnalysisChart({
           secondary label เล็กๆ" — สลับลำดับ: ไทยเด่น (ขนาด/สีเดิมของหัวข้อ section) + อังกฤษเดิมเป็นคำเล็กจาง
           ต่อท้าย ไม่ใช่ตัวเดียวกับ subLabel การ์ด (นั่นคือ Thai label + English caption แนวตั้ง) อันนี้เป็น
           หัวข้อ section เดี่ยว เลยทำเป็นแนวนอนคำเดียวกันแทน */}
-      <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-3">
+      <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-1">
         <ScaleIcon />
         <span>
           น้ำหนักเทียบเกณฑ์
@@ -3402,7 +3402,12 @@ function ObesityAnalysisChart({
           <InfoIcon />
         </span>
       </h2>
-      <PremiumCard className="p-4 space-y-5">
+      {/* v50: ฟีดแบ็ก "BMI/ไขมัน% ซ้ำกับ Key Metrics ด้านบน — คงไว้ทั้งสองที่ได้ แต่ทำให้ดูเป็นคนละเลเวลชัดขึ้น"
+          — Key Metrics = สรุปด่วน (ตัวเลข+เดลต้าเฉยๆ) ส่วนนี้คือรายละเอียด (ตำแหน่งเทียบช่วงมาตรฐานเป็นแถบ) —
+          บอกไว้ตรงๆ ว่าต่างกันตรงไหน กันความรู้สึกว่าเห็นตัวเลขเดิมซ้ำโดยไม่มีเหตุผล พร้อมเปลี่ยนกรอบการ์ด
+          ด้านล่างเป็น steel accent (สีเดียวกับที่ BMI card ใช้อยู่แล้ว) ให้แยกจาก Key Metrics ด้วยสายตา */}
+      <p className="text-[11px] text-muted mb-3">ตัวเลขเดียวกับ Key Metrics ด้านบน แต่เห็นตำแหน่งเทียบช่วงมาตรฐานชัดกว่า</p>
+      <PremiumCard className="p-4 space-y-5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }}>
         {bmi !== null && (
           <ZoneBarRow
             label="BMI (kg/m²)"
@@ -3563,7 +3568,7 @@ function MuscleFatAnalysisChart({
 }) {
   return (
     <section>
-      <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-3">
+      <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-1">
         <MuscleIcon />
         <span>
           กล้ามเนื้อและไขมัน
@@ -3573,7 +3578,10 @@ function MuscleFatAnalysisChart({
           <InfoIcon />
         </span>
       </h2>
-      <PremiumCard className="divide-y divide-white/5">
+      {/* v50: ฟีดแบ็ก "น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน ซ้ำกับ Key Metrics/Additional Metrics ด้านบน — คง
+          ไว้ทั้งสองที่ได้ แต่ทำให้ดูเป็นคนละเลเวลชัดขึ้น" — ดูคอมเมนต์เดียวกันที่ ObesityAnalysisChart */}
+      <p className="text-[11px] text-muted mb-3">ตัวเลขเดียวกับด้านบน แต่เห็นตำแหน่งเทียบช่วงมาตรฐานชัดกว่า</p>
+      <PremiumCard className="divide-y divide-white/5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }}>
         {items.map((it) => (
           <div key={it.label} className="p-4">
             <MuscleFatBarRow {...it} unit={unit} periodLabel={periodLabel} />
