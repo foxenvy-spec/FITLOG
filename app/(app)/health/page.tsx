@@ -1197,14 +1197,6 @@ export default function HealthPage() {
             <SexPrompt profile={profile} onSaved={(p) => setProfile(p)} />
           )}
 
-          {/* v59: ฟีดแบ็ก (เอกสาร handoff P0.1) "หนึ่ง action ที่เด่นที่สุด ให้ผู้ใช้เห็นสิ่งที่ควรทำต่อก่อน
-              insight และรายละเอียดอื่น ไม่ต้อง scroll" — เดิมมี RecommendationsCard ที่ทำแบบนี้อยู่แล้วจริงๆ
-              (เลือก insight ที่มี actionLabel ที่สำคัญที่สุด + ปุ่ม CTA) แต่ไปอยู่แท็บ "แนวโน้ม" เท่านั้น ไม่เห็น
-              ในแท็บ Overview เลยนอกจากจะกดเปลี่ยนแท็บ+เลื่อนลง — ไม่สร้าง logic คำแนะนำใหม่ (กันข้อมูลลอย/เดา)
-              แค่หยิบ insight แรกใน healthInsights (เรียง attention → watch → good ให้แล้ว) ที่มี actionLabel
-              จริงมาโชว์เป็น hero action เดียว ตำแหน่งบนสุดของแท็บ Overview ตามที่เอกสารระบุ */}
-          <NextBestActionCard insight={healthInsights.find((i) => i.actionLabel)} />
-
           {/* v51: ฟีดแบ็ก "Insight & Recommendation มี Potential สูงมาก ควรเป็นสมองของ FITLOG ที่เข้าใจได้ใน
               3-5 วินาที" (Priority 3) — เดิมอยู่เกือบท้ายสุดของแท็บ Overview (หลัง BMR estimate) ผู้ใช้ต้อง
               เลื่อนผ่านทุกอย่างก่อนถึงจะเห็น ย้ายมาไว้ต่อจาก Health Score ทันที (ก่อนกราฟเทรนด์) พร้อมกรอบสี Gold
@@ -3390,41 +3382,6 @@ function MoonIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" />
     </svg>
-  )
-}
-
-// v59: การ์ด "สิ่งที่ควรทำต่อ" — hero action เดียว บนสุดของแท็บ Overview (เอกสาร handoff P0.1/AC01: เห็น
-// action ต่อไปได้ภายใน 5 วินาทีโดยไม่ต้อง scroll) — ไม่คำนวณคำแนะนำใหม่ รับ insight ที่มี actionLabel มาแสดง
-// ตรงๆ (คัดมาจาก healthInsights ที่จุดเรียกใช้แล้ว) ไม่มี insight ที่เข้าเกณฑ์ = ไม่แสดงการ์ดนี้เลย (ไม่เดา
-// action จากข้อมูลที่ไม่มี) — โทนสี: attention/watch (kind warning) ใช้แดง, good ใช้เขียว ตามระบบสีที่มีอยู่แล้ว
-function NextBestActionCard({ insight }: { insight: Insight | undefined }) {
-  if (!insight || !insight.actionLabel) return null
-  const isWarning = insight.kind === 'warning'
-  return (
-    <PremiumCard className="p-4 border-l-2" style={{ borderLeftColor: isWarning ? '#C1503A' : '#7A9B57' }}>
-      <p className="text-[10px] tracked uppercase text-muted mb-2">สิ่งที่ควรทำต่อ</p>
-      <div className="flex items-start gap-3">
-        <span className="w-9 h-9 shrink-0 inline-block" aria-hidden="true">
-          <Image
-            src={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`] ?? '/icons/increase-training.png'}
-            alt=""
-            width={36}
-            height={36}
-            className="w-full h-full object-contain"
-          />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-sm tracked uppercase text-ink">{insight.title}</p>
-          <p className="text-xs text-muted mt-1">{insight.actionLabel}</p>
-        </div>
-        <a
-          href="/program"
-          className="shrink-0 self-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-full px-3.5 py-2 whitespace-nowrap transition active:scale-[0.99] hover:opacity-90"
-        >
-          ดูแผนที่แนะนำ →
-        </a>
-      </div>
-    </PremiumCard>
   )
 }
 
