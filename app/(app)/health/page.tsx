@@ -3887,6 +3887,28 @@ function IconStatCard({
   // กฎซ่อน "ปกติ" ข้างบนได้ (การ์ดอื่นที่ไม่ส่ง prop นี้มายังทำงานเหมือนเดิมทุกประการ)
   const showZonePill = zone !== null && (forceZonePill || !(zone === 'Standard' && secondary !== null))
 
+  // v58: caption label ที่ย้ายมาอยู่ท้ายค่า/เดลต้าแล้ว (ดูคอมเมนต์ v58 ที่แถวไอคอนด้านบน) — แยกเป็นตัวแปร
+  // เดียวใช้ร่วมกันทั้งสาขา primary/ไม่ primary กันโค้ดซ้ำ
+  const labelCaption = (
+    <p className={`text-ink font-medium leading-tight flex items-center gap-1 mt-1.5 ${primary ? 'text-sm' : 'text-xs'}`}>
+      {label}
+      <span className={`tracked uppercase text-muted/70 leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</span>
+      {infoText && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowInfo((v) => !v)
+          }}
+          className="text-muted shrink-0 transition hover:text-ink"
+          aria-label={`ข้อมูลเพิ่มเติมเกี่ยวกับ ${label}`}
+        >
+          <InfoIcon />
+        </button>
+      )}
+    </p>
+  )
+
   return (
     <PremiumCard
       // ฟีดแบ็ก "Weight Card สูง ~405px อยากได้ ~360-370px เพื่อดึง Analysis ขึ้นมาในจอเดียว" — ลด padding
@@ -3913,42 +3935,13 @@ function IconStatCard({
       // (BMI/Body Water) ลด texture ลงครึ่งหนึ่ง
       reducedTexture={tier !== 1}
     >
-      {/* v26: ฟีดแบ็ก "ทำ Secondary Cards ให้เรียบกว่า Primary Cards...ตัวเลขควรเป็น visual anchor มากกว่า
-          icon" (Priority 4) — tier 1 (Weight/Body Fat/Muscle Mass) คือ Primary การ์ดในสายตาผู้ใช้ตอนนี้
-          (แม้ไม่ได้ใช้ primary prop ที่เป็นเลย์เอาต์ 2x2 แล้วก็ตาม — ดูคอมเมนต์จุดที่ตัด series ออกด้านบน)
-          เก็บไอคอน/ตัวเลขขนาดเดิมไว้ ส่วน tier 2/3 (BMI/Body Water — การ์ดรองที่เหลือใน Key Metrics) ลด
-          ขนาดไอคอนลง ให้ตัวเลขเด่นกว่าไอคอนตามที่ขอ ไม่กระทบการ์ด tier 1 หรือการ์ดอื่นนอกหน้านี้เลย */}
+      {/* v58: ฟีดแบ็ก "ตัวเลขควรเป็นพระเอก ไม่ใช่ label — สลับลำดับเป็นตัวเลข/เดลต้าก่อน แล้วค่อย label ไทย/
+          English" — เดิม label+subLabel อยู่ในแถวเดียวกับไอคอน (บนสุด, อ่านก่อนตัวเลขเสมอ) ย้าย label+
+          subLabel (พร้อมปุ่ม ⓘ infoText เดิม) ไปเป็น caption ท้ายค่า/เดลต้า/insight แทน (ดูจุดใช้ด้านล่าง
+          ทั้งสองสาขา primary/ไม่ primary) เหลือแค่ไอคอน + zone pill ในแถวบนสุด (ทั้งสองยังเป็นสัญญาณที่มี
+          ประโยชน์ให้เห็นทันที ไม่ใช่ label ข้อความที่แข่งกับตัวเลข) v26 เดิม (ลดขนาดไอคอน tier 2/3) ไม่กระทบ */}
       <div className={`flex items-start gap-2 ${primary ? 'mb-2.5' : 'mb-2'}`}>
         <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : tier >= 2 ? 22 : 32} />
-        <div className="min-w-0">
-          {/* ฟีดแบ็ก "ชื่อไทยบาง Card ขึ้น 2-3 บรรทัด (โปรตีนในร่างกาย, ดัชนีมวลกาย) พื้นที่การ์ดแคบไป —
-              ควรลด font size แทนปล่อยให้ตัดคำรก" — ลดจาก text-xs (12px) เหลือ 11px เฉพาะการ์ดไม่ใช่ primary
-              (primary กว้างพอ ชื่อสั้น "น้ำหนัก" ไม่มีปัญหานี้อยู่แล้ว ไม่ต้องแตะ)
-              v21: ฟีดแบ็ก "ตัวหนังสือ Metric Cards ยังเล็กและจางไปนิด (ไขมันในร่างกาย/มวลกล้ามเนื้อ/ดัชนี
-              มวลกาย/น้ำในร่างกาย)...ไม่ต้องเพิ่มขนาดมาก" — ขยับกลับขึ้นเล็กน้อยจาก 11px เป็น text-xs (12px)
-              ยังพอสมดุลกับความกว้างการ์ด ไม่ตัดคำรกแบบที่ฟีดแบ็กรอบก่อนกังวล */}
-          <p className={`text-ink font-medium leading-tight flex items-center gap-1 ${primary ? 'text-sm' : 'text-xs'}`}>
-            {label}
-            {infoText && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowInfo((v) => !v)
-                }}
-                className="text-muted shrink-0 transition hover:text-ink"
-                aria-label={`ข้อมูลเพิ่มเติมเกี่ยวกับ ${label}`}
-              >
-                <InfoIcon />
-              </button>
-            )}
-          </p>
-          {/* ฟีดแบ็ก "หัวข้อไทย+English แน่นเกินไป ให้ English เล็กลงและจางกว่าอย่างชัดเจน ไม่ควรให้สองภาษา
-              แข่งขันกัน" — เดิม subLabel (English) ใช้ text-muted เดียวกับหลายจุด "รายละเอียด" อื่นในหน้านี้
-              อยู่แล้ว แต่ยังไม่ชัดพอว่าเป็นระดับรองของ label ไทยด้านบน — ลด opacity ลงอีกขั้น (text-muted/70)
-              ให้เห็นชัดว่าเป็นแค่ label กำกับภาษาอังกฤษ ไม่ใช่ข้อมูลคู่ขนานที่ต้องอ่านเท่าๆ กัน */}
-          <p className={`tracked uppercase text-muted/70 leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</p>
-        </div>
         {showZonePill && zoneLabel && (
           <span
             className={`ml-auto shrink-0 font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${zonePillClass} ${primary ? 'text-[11px]' : 'text-[9px]'}`}
@@ -3993,6 +3986,7 @@ function IconStatCard({
               {insight}
             </p>
           )}
+          {labelCaption}
           {/* ฟีดแบ็ก "Weight Card พื้นที่ 2-3 เท่าของปกติ แต่มีข้อมูลจริงแค่เลขเดียว" — flex-1 ดันเนื้อหาลงไปกิน
               พื้นที่ว่างด้านล่างแทนที่จะปล่อยโล่ง (การ์ดปกติไม่มีปัญหานี้ เพราะ justify-between เดิมพอแล้ว
               สำหรับความสูงปกติ ดูสาขา else ด้านล่าง) — v5: เดิมถ้า series มีข้อมูลไม่พอ (< 2 จุด, เช่น
@@ -4052,6 +4046,7 @@ function IconStatCard({
           {/* v21: ฟีดแบ็ก "คำอธิบายด้านล่าง...เพิ่มความสว่างของตัวอักษรประมาณ 10-15%" — เหมือนบรรทัด insight
               ของ primary card ด้านบน เปลี่ยนจาก text-muted เป็น #A8ACB4 (สว่างกว่า ~12%) */}
           {insight && <p className="truncate text-[10px] mt-1" style={{ color: '#A8ACB4' }}>{insight}</p>}
+          {labelCaption}
           {series && series.length >= 2 && (
             <div className="mt-1.5">
               <Sparkline series={series} color={sparklineColor} height={18} width={200} stretch />
