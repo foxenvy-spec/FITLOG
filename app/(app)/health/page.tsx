@@ -855,8 +855,14 @@ export default function HealthPage() {
       periodLabel: `ในช่วง ${trendPeriodDays} วันที่ผ่านมา`,
       periodShortLabel: `${trendPeriodDays} วัน`,
       weightDirection: scoreWeightDirection,
+      // v60: ฟีดแบ็ก "Top Summary/Body Insights ขัดกันในสายตา (คนละช่วงเวลา) — บอกแนวโน้มล่าสุดด้วย" — เรียก
+      // fieldDelta/periodLabelOf ตรงๆ แทนตัวแปร bodyFatDeltaForCard/changePeriodLabel ที่ถูก declare "หลัง"
+      // useMemo นี้ในไฟล์ (const ปกติอ่านก่อนประกาศไม่ได้ — TDZ) ทั้งสองฟังก์ชันนี้ประกาศไว้ก่อนหน้าแล้วเรียกได้
+      // ปลอดภัย เป็นค่าเดียวกันเป๊ะกับที่ Top Summary ใช้จริง
+      recentBodyFatDelta: fieldDelta('body_fat_pct'),
+      recentPeriodLabel: periodLabelOf(latest, metrics[1] ?? null) ?? undefined,
     })
-  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays, scoreWeightDirection])
+  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays, scoreWeightDirection, latest, metrics])
 
   function goalCurrentValue(goal: Goal): number | null {
     if (goal.goal_type === 'weight') return latest?.weight_kg ?? null
@@ -864,10 +870,34 @@ export default function HealthPage() {
     return null
   }
 
+  // v60: ฟีดแบ็ก "คืบหน้าสู่เป้าหมาย 0% ทั้งที่น้ำหนัก/ไขมันลดมาใกล้เป้าหมายแล้ว" — บั๊กจริง ไม่ใช่แค่ UX: เดิม
+  // start = goal.starting_value ?? current — ถ้าเป้าหมายไม่มี starting_value บันทึกไว้ (พบบ่อย — ตั้งเป้า
+  // หลังมีข้อมูลอยู่แล้ว หรือ field นี้เพิ่งเพิ่มทีหลัง) start จะเท่ากับ current เสมอ ทำให้ตัวตั้ง (current -
+  // start) เป็น 0 เสมอ progress เลยค้างที่ 0% แม้ค่าจริงจะขยับใกล้เป้าหมายแค่ไหนก็ตาม — แก้โดยหาค่าจริงที่
+  // เก่าที่สุดที่มีบันทึกไว้ (metrics เรียงล่าสุด→เก่าสุดอยู่แล้ว) มาใช้แทนแทนที่จะเดา ถ้าไม่มีข้อมูลเก่าเลยจริงๆ
+  // (มีแค่เอนทรีเดียว) คืน null ให้ UI บอกตรงๆ ว่ายังไม่มี baseline แทนที่จะโชว์ 0% ที่หลอกตา
   function goalProgressPct(goal: Goal): number | null {
     const current = goalCurrentValue(goal)
     if (current === null || goal.target_value === null) return null
-    const start = goal.starting_value ?? current
+    let start = goal.starting_value ?? null
+    if (start === null) {
+      if (goal.goal_type === 'weight') {
+        for (let i = metrics.length - 1; i >= 0; i--) {
+          if (metrics[i].weight_kg != null) {
+            start = metrics[i].weight_kg
+            break
+          }
+        }
+      } else if (goal.goal_type === 'body_fat') {
+        for (let i = metrics.length - 1; i >= 0; i--) {
+          if (metrics[i].body_fat_pct != null) {
+            start = metrics[i].body_fat_pct
+            break
+          }
+        }
+      }
+    }
+    if (start === null) return null
     if (goal.target_value === start) return current >= goal.target_value ? 100 : 0
     return Math.min(100, Math.max(0, ((current - start) / (goal.target_value - start)) * 100))
   }
@@ -1029,10 +1059,11 @@ export default function HealthPage() {
       // เดียวกันทั้งสองทิศทาง (ระยะห่างจากเป้าหมายยังสื่อความหมายเดิม ไม่ว่าจะต้องลดหรือเพิ่ม) ต่อท้ายด้วย
       // "Body Fat" ให้อ่านคู่กับ "เหลือ X kg" ของน้ำหนักได้โดยไม่ต้องมี label แยกบรรทัดข้างบนอีกต่อไป
       // v27: ฟีดแบ็ก "25.1 → 20.0 คือ 5.1 percentage points ไม่ใช่ลดลง 5.1% เชิง relative — 'เหลืออีก 5.1%
-      // Body Fat' อ่านกำกวม" — เติม "เพื่อถึงเป้าหมาย" ต่อท้าย (ทางเลือกที่ขอไว้สำหรับผู้ใช้ทั่วไป แทนศัพท์
-      // เทคนิค "จุดเปอร์เซ็นต์" ที่ไม่คุ้นในภาษาพูดทั่วไป) ให้ชัดว่า 5.1% นี้คือ "ระยะห่างจากเป้าหมาย" ไม่ใช่
-      // "ลดลง 5.1% ของค่าเดิม" — ไม่กระทบตัวเลขหรือการคำนวณใดๆ แค่ข้อความ
-      subText: bodyFatDiff === null || bodyFatDiff === 0 ? null : `เหลืออีก ${Math.abs(bodyFatDiff).toFixed(1)}% เพื่อถึงเป้าหมาย`,
+      // Body Fat' อ่านกำกวม" — เดิมเติม "เพื่อถึงเป้าหมาย" ต่อท้ายแทน (หลีกเลี่ยงศัพท์ "จุดเปอร์เซ็นต์")
+      // v60: ฟีดแบ็ก "25.1 → 20.0 คือลดลง 5.1 percentage points ไม่ใช่ลด 5.1% เชิงสัมพัทธ์ — ควรเขียนว่า
+      // 'เหลือ 5.1 จุดเปอร์เซ็นต์' ตรงๆ" — ยืนยันขอศัพท์นี้ตรงๆ รอบนี้ (กลับคำตัดสินใจ v27 ที่เคยเลี่ยงคำนี้)
+      // เปลี่ยนจาก "เหลืออีก X% เพื่อถึงเป้าหมาย" เป็น "เหลือ X จุดเปอร์เซ็นต์" ไม่กระทบตัวเลขหรือการคำนวณใดๆ
+      subText: bodyFatDiff === null || bodyFatDiff === 0 ? null : `เหลือ ${Math.abs(bodyFatDiff).toFixed(1)} จุดเปอร์เซ็นต์`,
       progressPct: goalProgressPct(bodyFatGoalForBanner),
     })
   }
@@ -1865,16 +1896,19 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
   return (
     <div>
       <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Additional Metrics</p>
-      {/* v55: การ์ดรอง (ชื่อก็บอกอยู่แล้วว่า "Additional") ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 ของ Key Metrics */}
-      <PremiumCard className="px-4 py-1" reducedTexture>
+      {/* v55: การ์ดรอง (ชื่อก็บอกอยู่แล้วว่า "Additional") ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 ของ Key Metrics
+          v60: ฟีดแบ็ก "Card ใหญ่เกินข้อมูล ลดความสูงประมาณ 30-40%" — ลด padding รอบการ์ด (py-1→py-0.5) และ
+          ต่อแถว (py-2.5→py-1.5, ช่องว่างระหว่างบรรทัดค่า/สถานะ mt-1→mt-0.5) ไม่ลดฟอนต์/ตัดข้อมูลใดออก แค่ลด
+          ช่องว่างล้วนๆ (ไม่รวมเป็นแถวเดียวเพราะบางแถวมีทั้ง delta+zone พร้อมกันแล้ว อาจล้นความกว้างมือถือแคบ) */}
+      <PremiumCard className="px-4 py-0.5" reducedTexture>
         <div className="divide-y divide-line/60">
           {visible.map((r) => (
-            <div key={r.key} className="py-2.5">
+            <div key={r.key} className="py-1.5">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-ink">{r.label}</span>
                 <span className="font-mono text-xs tabular text-ink whitespace-nowrap">{r.value}</span>
               </div>
-              <div className="flex justify-end mt-1">
+              <div className="flex justify-end mt-0.5">
                 <AdditionalMetricStatus zone={r.zone} direction={r.direction} delta={r.delta} deltaUnit={r.deltaUnit} decimals={r.decimals} />
               </div>
             </div>
@@ -2403,20 +2437,27 @@ function OverviewTrendChart({
   // คือทิศทางไขมัน (bodyFatDelta) เพราะเป็นตัวชี้วัดที่ Health Score ใช้ตัดสิน "ดี/ควรปรับ" อยู่แล้ว (เดียวกับ
   // bodyCompositionSummary) ลดลง = แนวโน้มดี (เขียว, 💡) เพิ่มขึ้น = ควรติดตาม (อำพัน ไม่ใช่แดง — ไม่ใช่การเตือน
   // แบบระบบ) พ่วงมวลกล้ามเนื้อเข้าไปด้วยเฉพาะตอนเป็นสัญญาณดีและมีข้อมูลจริงว่าเพิ่มขึ้น ไม่เดาถ้าไม่มีข้อมูล
+  // v60: ฟีดแบ็ก "ประโยคนี้ควรเป็น Interpretation (ทำไม) ส่วนตัวเลข +0.6kg/−0.4%/+0.6kg เป็น Evidence
+  // (breakdown chip ที่เพิ่มไปรอบก่อนหน้าอยู่แล้วใต้ประโยคนี้) — ไม่ต้องพูดตัวเลขซ้ำในประโยคเดิม" — เดิมประโยค
+  // นี้พูดตัวเลขเองด้วย (ซ้ำกับ chip ด้านล่าง) เปลี่ยนให้เหลือแค่ "ทำไม" (เช่น น้ำหนักขึ้นเพราะกล้ามเนื้อ ไม่ใช่
+  // ไขมัน) ไม่ fabricate เหตุผลใหม่ — ยังคงใช้เงื่อนไขจริงเดิมทั้งหมด (bodyFatDelta/weightDelta/muscleDelta)
   const combinedInsight = (() => {
     if (weightDelta === null || bodyFatDelta === null) return null
     if (Math.abs(weightDelta) < 0.1 && Math.abs(bodyFatDelta) < 0.1) return null
-    const weightDir = weightDelta > 0 ? 'เพิ่มขึ้น' : weightDelta < 0 ? 'ลดลง' : 'คงที่'
-    const weightText = `น้ำหนัก${weightDir} ${Math.abs(weightDelta).toFixed(1)} ${unit}`
-    const periodSuffix = changePeriodLabel ? ` ${changePeriodLabel}` : ''
     if (bodyFatDelta < 0) {
-      const muscleClause = muscleDelta !== null && muscleDelta > 0 ? ' และมวลกล้ามเนื้อเพิ่มขึ้น' : ''
-      return { icon: '💡', tag: 'แนวโน้มดี', tagColor: '#8CB264', text: `${weightText} แต่ไขมันลดลง ${Math.abs(bodyFatDelta).toFixed(1)}%${muscleClause}` }
+      const muscleDriven = weightDelta > 0.1 && muscleDelta !== null && muscleDelta > 0
+      const text = muscleDriven
+        ? 'น้ำหนักที่เพิ่มขึ้นมาจากมวลกล้ามเนื้อเป็นหลัก ขณะที่ไขมันลดลง'
+        : weightDelta < -0.1
+          ? 'น้ำหนักและไขมันลดลงไปพร้อมกัน'
+          : 'ไขมันลดลงต่อเนื่อง'
+      return { icon: '💡', tag: 'แนวโน้มดีขึ้น', tagColor: '#8CB264', text }
     }
     if (bodyFatDelta > 0) {
-      return { icon: '⚠️', tag: 'ควรติดตาม', tagColor: '#D8A34A', text: `${weightText} และ Body Fat เพิ่มขึ้น ${Math.abs(bodyFatDelta).toFixed(1)}%${periodSuffix}` }
+      const text = weightDelta > 0.1 ? 'น้ำหนักและไขมันเพิ่มขึ้นไปพร้อมกัน' : 'ไขมันเพิ่มขึ้น แม้น้ำหนักจะไม่ค่อยเปลี่ยน'
+      return { icon: '⚠️', tag: 'ควรติดตาม', tagColor: '#D8A34A', text }
     }
-    return { icon: '💡', tag: null, tagColor: '', text: `${weightText} · ไขมันไม่เปลี่ยนแปลง${periodSuffix}` }
+    return { icon: '💡', tag: null, tagColor: '', text: 'น้ำหนักเปลี่ยนแปลง ไขมันไม่ค่อยเปลี่ยน' }
   })()
 
   return (
@@ -3191,7 +3232,12 @@ function OverviewHealthScoreHeader({
                   {/* v25: ฟีดแบ็ก "อยากให้ progress เป็น visual มากขึ้น เช่นแถบยาว + '41% toward goal' ชัดๆ
                       ไม่ใช่แค่เส้นบางๆ" — ขยายแถบจาก 3px เป็น 6px (ยังเป็นสไตล์ progress bar เดิม ไม่ใช่
                       ปุ่ม CTA) พร้อมข้อความเปอร์เซ็นต์กำกับใต้แถบ (คำเดียวกับที่ใช้ทั่วแอป "ความคืบหน้า") */}
-                  {g.progressPct !== null && (
+                  {/* v60: ฟีดแบ็ก "0% ทำให้งงว่าทำไมยัง 0% ทั้งที่ค่าจริงเข้าใกล้เป้าหมายแล้ว — ถ้าหมายถึงยัง
+                      ไม่มี baseline ควรเขียนให้ชัด" — progressPct === null ตอนนี้แปลว่า "ไม่มีข้อมูลเก่าพอ
+                      คำนวณ" จริงๆ (ดูคอมเมนต์ goalProgressPct) ไม่ใช่แค่ 0% ที่ปัดตก — บอกตรงๆ แทนการซ่อนเงียบ */}
+                  {g.progressPct === null ? (
+                    <p className="text-[10px] text-muted mt-1.5">ยังไม่มีข้อมูลเริ่มต้นสำหรับคำนวณความคืบหน้า</p>
+                  ) : (
                     <div className="mt-1.5">
                       <div className="h-1.5 w-28 rounded-full bg-white/10 overflow-hidden">
                         <div className="h-full rounded-full bg-amber" style={{ width: `${g.progressPct}%` }} />
@@ -3218,47 +3264,49 @@ function OverviewHealthScoreHeader({
       </div>
 
       {showBreakdown && categoryRows.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-line space-y-2.5">
+        <div className="mt-3 pt-3 border-t border-line">
           {/* ฟีดแบ็ก "HEALTH SCORE ยังไม่บอกว่า 90% มาจากอะไร — เพิ่ม ⓘ แล้วกดดูรายละเอียดได้ พร้อมคำอธิบาย
               สั้นๆ ว่าคะแนนประเมินจากอะไรบ้าง" — ใส่ไว้บรรทัดแรกสุดของ breakdown ก่อนแจกแจงเป็นหมวด
               v34: ฟีดแบ็ก "breakdown มี 4 หมวดจริง (Body Composition/Muscle/Metabolic Health/Progress) ควรพูด
               ให้ตรงกับ 4 หมวดนั้น" — เดิมพูดถึง "แนวโน้มไขมัน มวลกล้ามเนื้อ BMI" (คำละคำจากตัว metric ไม่ใช่
               ชื่อหมวด) เปลี่ยนให้ใช้ชื่อ 4 หมวดจริงตามลำดับที่แสดงผลด้านล่าง */}
-          <p className="text-[11px] text-muted">คะแนนนี้ประเมินจากองค์ประกอบร่างกาย มวลกล้ามเนื้อ สุขภาพเมตาบอลิก และความคืบหน้าโดยรวม</p>
+          <p className="text-[11px] text-muted mb-2.5">คะแนนนี้ประเมินจากองค์ประกอบร่างกาย มวลกล้ามเนื้อ สุขภาพเมตาบอลิก และความคืบหน้าโดยรวม</p>
           {/* v31: ฟีดแบ็ก "ควรเป็น Health Score → เปิดดู breakdown ของสูตรที่มีอยู่แล้ว ไม่ใช่สร้าง sub-score
               ใหม่ — UI ควรสะท้อนสูตรจริง 1:1" — categoryRows เป็นข้อมูลจริงที่มีอยู่แล้ว (ไม่เปลี่ยน scoring
-              model เลย) แค่เปลี่ยนการแสดงผลจากตัวเลข % เฉยๆ เป็นจุดไล่ระดับ (Math.round(pct/20) จุดเต็มจาก 5
-              จุด) ตามตัวอย่างที่ให้มาเป๊ะ — สีอิง healthScoreTier เดิมที่มีอยู่แล้ว ไม่ใช้เกณฑ์สีใหม่
+              model เลย)
               v34: ฟีดแบ็ก "96/100/100/71 เฉลี่ยเท่ากันได้ 91.75 ไม่ใช่ 94 — ถ้าน้ำหนักไม่เท่ากัน UI ต้องโชว์
               น้ำหนักจริง อย่าให้ดูสัมพันธ์กันด้วยสายตาอย่างเดียว" — เพิ่ม row.weight (คำนวณจริงใน
               lib/healthScore.ts, normalize จากน้ำหนักที่ยังมีข้อมูลเท่านั้น) ต่อท้ายชื่อหมวด และเพิ่มคำอธิบาย
               สั้นๆ ใต้ PROGRESS โดยเฉพาะ (จุดที่ผู้ใช้สับสนกับ Goal Progress ด้านล่างสุด — ไม่ใช่ % ถึงเป้าหมาย
-              แต่เป็นคะแนนแนวโน้ม) กันตีความผิดว่า "ทำเป้าหมายสำเร็จแล้ว 71%" */}
-          {categoryRows.map((row) => {
-            const filled = Math.max(0, Math.min(5, Math.round(row.pct / 20)))
-            const dots = '●'.repeat(filled) + '○'.repeat(5 - filled)
-            const color = healthScoreTier(row.pct).color
-            return (
-              <div key={row.title} className="text-[11px]">
-                <span className="tracked uppercase text-muted">
-                  {row.title} <span className="normal-case tracking-normal text-muted/60">· น้ำหนัก {row.weight}%</span>
-                </span>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="font-mono tracking-[3px]" style={{ color }}>
-                    {dots}
-                  </span>
-                  <span className="font-mono font-medium" style={{ color }}>
-                    {row.pct}%
-                  </span>
+              แต่เป็นคะแนนแนวโน้ม) กันตีความผิดว่า "ทำเป้าหมายสำเร็จแล้ว 71%"
+              v60: ฟีดแบ็ก "จุด 5 จุดสื่อได้แค่ ~20%/จุด ไม่พอสำหรับค่าละเอียดแบบ 94%/98%/100%/71% — เปลี่ยนเป็น
+              progress bar ต่อเนื่อง" + "จากแนวตั้ง → แนวนอน 4 columns" — เลิกปัดเป็น 5 ระดับ (Math.round(pct/20))
+              ใช้ row.pct ตรงๆ เป็นความกว้างแถบ (แม่นยำ 100%) และเปลี่ยน layout จาก space-y (สแตกแนวตั้ง) เป็น
+              grid 2 คอลัมน์บนมือถือ/4 คอลัมน์ตั้งแต่ sm ขึ้นไป (พอดีกับ 4 หมวดพอดี ไม่ล้นความกว้าง panel เดิม) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2.5">
+            {categoryRows.map((row) => {
+              const color = healthScoreTier(row.pct).color
+              return (
+                <div key={row.title} className="text-[11px] min-w-0">
+                  <p className="tracked uppercase text-muted truncate">{row.title}</p>
+                  <p className="normal-case tracking-normal text-muted/60">น้ำหนัก {row.weight}%</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${row.pct}%`, backgroundColor: color }} />
+                    </div>
+                    <span className="font-mono font-medium shrink-0" style={{ color }}>
+                      {row.pct}%
+                    </span>
+                  </div>
+                  {row.title === 'PROGRESS' && (
+                    <p className="normal-case tracking-normal text-muted/60 mt-1">
+                      คะแนนแนวโน้มล่าสุด ไม่ใช่ % ถึงเป้าหมาย (ดู &quot;คืบหน้าสู่เป้าหมาย&quot; ด้านล่าง)
+                    </p>
+                  )}
                 </div>
-                {row.title === 'PROGRESS' && (
-                  <p className="normal-case tracking-normal text-muted/60 mt-0.5">
-                    คะแนนแนวโน้มไขมัน/กล้ามเนื้อ/น้ำหนักช่วงล่าสุด ไม่ใช่ % ที่ไปถึงเป้าหมายแล้ว (ดู "คืบหน้าสู่เป้าหมาย" ด้านล่าง)
-                  </p>
-                )}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

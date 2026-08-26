@@ -79,6 +79,10 @@ export default function InsightCard({
               {insight.deltaLabel}
             </p>
             {insight.actionLabel && <p className="text-[10.5px] text-muted mt-px">{insight.actionLabel}</p>}
+            {/* v60: ฟีดแบ็ก "Top Summary กับ Body Insights ขัดกันในสายตา (คนละช่วงเวลา) — บอกแนวโน้มล่าสุด
+                ด้วยจะกลายเป็น insight ที่ฉลาดขึ้น" — optional เหมือน deltaLabel มีเฉพาะตอนทิศทางล่าสุดสวนทาง
+                ทิศทางระยะยาวของ insight นี้จริงๆ */}
+            {insight.recentNote && <p className="text-[10.5px] text-steel mt-0.5">{insight.recentNote}</p>}
           </>
         ) : (
           <p className="text-xs text-muted mt-0.5">{insight.detail}</p>

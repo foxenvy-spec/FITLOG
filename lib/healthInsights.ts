@@ -66,11 +66,19 @@ export function computeHealthTrendInsights(params: {
   // เหมือนที่ override ไปแล้วกับลูกศร min/max บนกราฟ (OverviewTrendChart) — ไม่ระบุ (ไม่มีเป้าหมายตั้งไว้) =
   // ไม่รู้ทิศทางที่ดีจริง ให้ tier เป็น 'watch' (ควรติดตาม เฉยๆ) แทนที่จะเดาว่า "ทำได้ดี"
   weightDirection?: Direction
+  // v60: ฟีดแบ็ก "Top Summary (↓0.4% ไขมัน จากสัปดาห์ที่แล้ว) กับ Body Insights (เพิ่มขึ้น 3.7% · 90 วัน)
+  // ขัดกันในสายตา ทั้งที่ถูกทั้งคู่คนละช่วงเวลา — อยากให้บอกว่าแนวโน้มล่าสุดกำลังดีขึ้น/แย่ลงกว่าที่การ์ดบอก"
+  // — เดลต้าล่าสุด (latest vs เอนทรีก่อนหน้า, เดียวกับที่ Top Summary ใช้) ส่งเข้ามาเทียบทิศทางกับเดลต้าระยะยาว
+  // ของ insight นี้เท่านั้น (ไม่คำนวณ insight ใหม่จากมัน) มีค่าก็ใช้ ไม่มีก็ข้าม ไม่ fabricate
+  recentBodyFatDelta?: number | null
+  recentPeriodLabel?: string
 }): Insight[] {
   const minPct = params.minPct ?? 1.5
   const periodLabel = params.periodLabel
   const periodShort = params.periodShortLabel
   const insights: Insight[] = []
+  const recentBodyFat = params.recentBodyFatDelta ?? null
+  const recentPeriod = params.recentPeriodLabel ?? 'ล่าสุด'
 
   const pctChange = (first: number, last: number) => (first !== 0 ? ((last - first) / Math.abs(first)) * 100 : 0)
   // ฟีดแบ็ก "แยก 3 ระดับ ไม่ใช่แค่ positive/warning" — warning ที่เปลี่ยนแปลงมาก (>= 2 เท่าของเกณฑ์ขั้นต่ำ
@@ -81,6 +89,10 @@ export function computeHealthTrendInsights(params: {
 
   if (params.bodyFatPct) {
     const pct = pctChange(params.bodyFatPct.first, params.bodyFatPct.last)
+    // ทิศทางล่าสุดสวนทางทิศทางระยะยาวจริงๆ เท่านั้นถึงจะพูดถึง (เกณฑ์ 0.1 จุด กันสัญญาณรบกวนเล็กน้อยจาก
+    // ความคลาดเคลื่อนของเครื่องชั่ง เหมือน minPct ที่ใช้ตัดสิน insight หลักอยู่แล้ว)
+    const recentConflictsDown = recentBodyFat !== null && recentBodyFat >= 0.1
+    const recentConflictsUp = recentBodyFat !== null && recentBodyFat <= -0.1
     if (pct <= -minPct) {
       insights.push({
         id: 'trend-bodyfat-down',
@@ -90,6 +102,7 @@ export function computeHealthTrendInsights(params: {
         title: 'แนวโน้มดีขึ้น',
         detail: `ไขมันในร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
         deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
+        recentNote: recentConflictsDown ? `แต่${recentPeriod}เพิ่มขึ้น ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -101,6 +114,7 @@ export function computeHealthTrendInsights(params: {
         detail: `เพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนอาหารและการฝึก`,
         deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
         actionLabel: 'ลองทบทวนอาหารและการฝึก',
+        recentNote: recentConflictsUp ? `แต่${recentPeriod}ลดลง ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
       })
     }
   }
