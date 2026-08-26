@@ -37,6 +37,13 @@ export function summarizeHealthScore(items: ScoredMetric[]) {
 // ลำดับการแสดงผล ไม่ใช่แค่การเรียงตามลำดับที่ตรวจพบ (bodyFat -> muscle -> weight -> bodyAge เดิม)
 const TIER_ORDER: Record<'attention' | 'watch' | 'good', number> = { attention: 0, watch: 1, good: 2 }
 
+// v49: ฟีดแบ็ก "Top Summary บอก ↓0.4% ไขมัน จากสัปดาห์ที่แล้ว แต่ Insight ด้านล่างบอก ไขมันเพิ่มขึ้น 3.7%
+// ทำให้ผู้ใช้สงสัยว่าตัวเลขไหนถูก — สาเหตุจริงคือคนละฐานเวลากันเลย: Top Summary ใช้ fieldDelta (ล่าสุด vs
+// เอนทรีก่อนหน้าล่าสุด อาจห่างกันแค่ไม่กี่วัน) ส่วน Insight นี้ใช้ periodMetrics/trendPeriodDays (ค่าเริ่มต้น
+// 90 วัน) แต่ detail เดิมบอกแค่ 'จากช่วงที่แล้ว' ลอยๆ ไม่บอกว่ากี่วัน (บาง template ไม่บอกช่วงเวลาเลยด้วยซ้ำ
+// เช่น มวลกล้ามเนื้อ) — เพิ่ม periodLabel บังคับให้ทุก detail ต้องระบุช่วงเวลาจริงชัดเจน (เช่น "ในช่วง 90
+// วันที่ผ่านมา") ผู้ใช้จะเห็นทันทีว่าสองตัวเลขนี้คนละช่วงเวลากัน ไม่ใช่ขัดแย้งกัน — จุดเรียกใช้ (health/page.tsx)
+// ส่ง `ในช่วง ${trendPeriodDays} วันที่ผ่านมา` เข้ามา
 // สร้าง insight จากการเปลี่ยนแปลงของค่าล่าสุดเทียบกับค่าแรกในช่วงที่เลือกดู (7/30/90 วัน)
 // ใช้เกณฑ์ %เปลี่ยนแปลงขั้นต่ำกันสัญญาณรบกวนจากความคลาดเคลื่อนเล็กน้อยของเครื่องชั่ง
 export function computeHealthTrendInsights(params: {
@@ -47,8 +54,10 @@ export function computeHealthTrendInsights(params: {
   muscleMass?: { first: number; last: number }
   bodyAge?: { first: number; last: number }
   minPct?: number
+  periodLabel: string
 }): Insight[] {
   const minPct = params.minPct ?? 1.5
+  const periodLabel = params.periodLabel
   const insights: Insight[] = []
 
   const pctChange = (first: number, last: number) => (first !== 0 ? ((last - first) / Math.abs(first)) * 100 : 0)
@@ -67,7 +76,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '🔥',
         title: 'แนวโน้มดีขึ้น',
-        detail: `ไขมันในร่างกายลดลง ${Math.abs(pct).toFixed(1)}% จากช่วงที่แล้ว`,
+        detail: `ไขมันในร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -76,7 +85,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('warning', pct),
         icon: '⚠️',
         title: 'ไขมันในร่างกายเพิ่มขึ้น',
-        detail: `เพิ่มขึ้น ${pct.toFixed(1)}% จากช่วงที่แล้ว ลองทบทวนอาหารและการฝึก`,
+        detail: `เพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนอาหารและการฝึก`,
       })
     }
   }
@@ -90,7 +99,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '💪',
         title: 'กล้ามเนื้อเพิ่มขึ้น',
-        detail: `กล้ามเนื้อโครงร่างเพิ่มขึ้น ${pct.toFixed(1)}% รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+        detail: `กล้ามเนื้อโครงร่างเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
       })
     } else if (pct <= -minPct) {
       insights.push({
@@ -99,7 +108,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('warning', pct),
         icon: '⚠️',
         title: 'กล้ามเนื้อลดลง',
-        detail: `กล้ามเนื้อโครงร่างลดลง ${Math.abs(pct).toFixed(1)}% ลองเพิ่มการฝึกแรงต้าน`,
+        detail: `กล้ามเนื้อโครงร่างลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel} ลองเพิ่มการฝึกแรงต้าน`,
       })
     }
   }
@@ -113,7 +122,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: pct < 0 ? '📉' : '📈',
         title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
-        detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% จากช่วงที่แล้ว`,
+        detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% ${periodLabel}`,
       })
     }
   }
@@ -127,7 +136,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '💪',
         title: 'มวลกล้ามเนื้อเพิ่มขึ้น',
-        detail: `มวลกล้ามเนื้อเพิ่มขึ้น ${pct.toFixed(1)}% รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+        detail: `มวลกล้ามเนื้อเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
       })
     } else if (pct <= -minPct) {
       insights.push({
@@ -136,7 +145,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('warning', pct),
         icon: '⚠️',
         title: 'มวลกล้ามเนื้อลดลง',
-        detail: `มวลกล้ามเนื้อลดลง ${Math.abs(pct).toFixed(1)}% ลองเพิ่มการฝึกแรงต้าน`,
+        detail: `มวลกล้ามเนื้อลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel} ลองเพิ่มการฝึกแรงต้าน`,
       })
     }
   }
@@ -150,7 +159,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '❤️',
         title: 'อายุร่างกายดีขึ้น',
-        detail: `อายุร่างกายลดลง ${Math.abs(pct).toFixed(1)}% จากช่วงที่แล้ว`,
+        detail: `อายุร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -159,7 +168,7 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('warning', pct),
         icon: '⚠️',
         title: 'อายุร่างกายเพิ่มขึ้น',
-        detail: `อายุร่างกายเพิ่มขึ้น ${pct.toFixed(1)}% จากช่วงที่แล้ว ลองทบทวนการนอนและการฝึก`,
+        detail: `อายุร่างกายเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนการนอนและการฝึก`,
       })
     }
   }

@@ -832,6 +832,11 @@ export default function HealthPage() {
   }, [metrics, profile?.height_cm, profile?.sex, profile?.age, healthScoreResult, healthScoreRanges, scoreWeightDirection])
 
   // Insight ที่คำนวณจากการเปลี่ยนแปลงจริงในช่วงเวลาที่เลือกดู (ไม่ใช่คำแนะนำทั่วไปที่ไม่มีข้อมูลรองรับ)
+  // v49: ฟีดแบ็ก "Top Summary บอกไขมันลด แต่ Insight ด้านล่างบอกไขมันเพิ่ม — คนละฐานเวลากันแต่ไม่บอกให้ชัด"
+  // — insight นี้อิง periodMetrics/trendPeriodDays (ค่าเริ่มต้น 90 วัน) ต่างจาก Top Summary ที่อิง fieldDelta
+  // (ล่าสุด vs ก่อนหน้าล่าสุด) — ส่ง periodLabel ที่ระบุจำนวนวันจริงเข้าไปให้ทุก insight พูดชัดว่าเทียบช่วงไหน
+  // (การ์ดนี้ใช้ทั้งในแท็บ Overview และแท็บ แนวโน้ม — แท็บแนวโน้มมี picker 7/30/90 ให้เห็นอยู่แล้ว แต่ Overview
+  // ไม่มี ข้อความเลยต้องบอกในตัวเองให้ครบ ไม่พึ่ง UI context ข้างนอก)
   const healthInsights: Insight[] = useMemo(() => {
     const firstLast = (data: { value: number }[]) => (data.length > 1 ? { first: data[0].value, last: data[data.length - 1].value } : undefined)
     return computeHealthTrendInsights({
@@ -841,8 +846,9 @@ export default function HealthPage() {
       bodyFatKg: firstLast(bodyFatKgTrend),
       muscleMass: firstLast(muscleTrend),
       bodyAge: firstLast(bodyAgeTrend),
+      periodLabel: `ในช่วง ${trendPeriodDays} วันที่ผ่านมา`,
     })
-  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend])
+  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays])
 
   function goalCurrentValue(goal: Goal): number | null {
     if (goal.goal_type === 'weight') return latest?.weight_kg ?? null
