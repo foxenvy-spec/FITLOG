@@ -172,7 +172,10 @@ export function computeHealthTrendInsights(params: {
         kind,
         tier: isGoodDirection === null ? 'watch' : tierFor(kind, pct),
         icon: pct < 0 ? '📉' : '📈',
-        actionLabel: muscleAlsoUp ? 'สอดคล้องกับมวลกล้ามเนื้อที่เพิ่มขึ้น' : undefined,
+        // v67: ฟีดแบ็ก "'สอดคล้องกับมวลกล้ามเนื้อที่เพิ่มขึ้น' อ่านแปลกๆ กับ tier 🟡 ควรติดตาม — เป็นวลีบอก
+        // ความสัมพันธ์ระหว่างตัวเลข ไม่ใช่คำแนะนำ" — เปลี่ยนเป็นกรอบคำแนะนำที่ตรงกับ tier ควรติดตาม (ติดตาม
+        // แนวโน้มต่อเนื่อง) แล้วต่อท้ายข้อเท็จจริงเดิม (มวลกล้ามเนื้อก็เพิ่มขึ้นเช่นกัน) เงื่อนไข muscleAlsoUp เดิมไม่เปลี่ยน
+        actionLabel: muscleAlsoUp ? 'ติดตามแนวโน้มต่อเนื่อง โดยมวลกล้ามเนื้อก็เพิ่มขึ้นเช่นกัน' : undefined,
         title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% ${periodLabel}`,
         deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,

@@ -1371,7 +1371,7 @@ export default function HealthPage() {
               value={latest?.body_fat_pct ?? null}
               unit="%"
               delta={bodyFatDeltaForCard}
-              deltaUnit="%"
+              deltaUnit="จุดเปอร์เซ็นต์"
               direction="lowerBetter"
               zone={bodyFatZone}
               zoneScheme="lowerOk"
@@ -3657,7 +3657,7 @@ function ObesityAnalysisChart({
             iconKey="fat"
             direction="lowerBetter"
             delta={bodyFatDelta}
-            deltaUnit="%"
+            deltaUnit="จุดเปอร์เซ็นต์"
             periodLabel={periodLabel}
           />
         )}
@@ -3713,7 +3713,7 @@ function ZoneBarRow({
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
   const interpretation =
     delta !== null && delta !== undefined && Math.abs(delta) >= 0.1
-      ? `${delta < 0 ? 'ลดลง' : 'เพิ่มขึ้น'} ${Math.abs(delta).toFixed(decimals)}${deltaUnit}${periodLabel ? ` ${periodLabel}` : ''}`
+      ? `${delta < 0 ? 'ลดลง' : 'เพิ่มขึ้น'} ${Math.abs(delta).toFixed(decimals)}${deltaUnit ? ` ${deltaUnit}` : ''}${periodLabel ? ` ${periodLabel}` : ''}`
       : zone === 'Standard'
         ? 'อยู่ในช่วงมาตรฐาน'
         : zone === 'Low'
