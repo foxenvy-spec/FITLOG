@@ -9,6 +9,7 @@ import type { ExerciseDef } from '@/lib/exercises'
 import { WEEKDAYS, WEEKDAYS_SHORT, todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { parseRangeToNumber, rirToRpe } from '@/lib/importWorkoutExcel'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
+import { getErrorMessage } from '@/lib/errors'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -195,7 +196,7 @@ export default function ProgramPage() {
       setCompletedIds(new Set(currentExercises.map((ex) => ex.id)))
       setLogMessage(`บันทึก ${payload.length} ท่าเข้า Log ของวันนี้แล้ว`)
     } catch (err) {
-      setError(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
     } finally {
       setLogging(false)
     }

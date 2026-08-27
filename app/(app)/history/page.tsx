@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutSet } from '@/lib/types'
+import { getErrorMessage } from '@/lib/errors'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
@@ -167,7 +168,7 @@ function HistoryPageInner() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      setActionError(`Export ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setActionError(`Export ไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
       setExporting(false)
     }

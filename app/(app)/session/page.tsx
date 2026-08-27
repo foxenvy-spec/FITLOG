@@ -8,6 +8,7 @@ import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { findExerciseByName } from '@/lib/exercises'
+import { getErrorMessage } from '@/lib/errors'
 import {
   COLORS,
   NEUTRAL,
@@ -553,7 +554,7 @@ export default function SessionPage() {
       if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
       if (setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
     } catch (err) {
-      setErrorMsg(`บันทึกเซ็ตไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setErrorMsg(`บันทึกเซ็ตไม่สำเร็จ: ${getErrorMessage(err)}`)
     }
   }
 
@@ -591,7 +592,7 @@ export default function SessionPage() {
           workoutId = result.workoutId
           if (result.setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
         } catch (err) {
-          setErrorMsg(`บันทึกไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+          setErrorMsg(`บันทึกไม่สำเร็จ: ${getErrorMessage(err)}`)
           return
         }
 
@@ -613,7 +614,7 @@ export default function SessionPage() {
 
       goNext()
     } catch (err) {
-      setErrorMsg(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
+      setErrorMsg(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
     } finally {
       setSaving(false)
     }
@@ -686,7 +687,7 @@ export default function SessionPage() {
       setSwapDef(null)
       setShowSwapExercise(false)
     } catch (err) {
-      setSwapError(`เปลี่ยนท่าไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setSwapError(`เปลี่ยนท่าไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
       setSwapping(false)
     }

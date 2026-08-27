@@ -7,6 +7,7 @@ import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
 import { WEEKDAYS, WEEKDAYS_SHORT, todayStr } from '@/lib/weekdays'
 import { parseRangeToNumber, rirToRpe, parseWorkoutExcel } from '@/lib/importWorkoutExcel'
 import { getExerciseLibrary } from '@/lib/exerciseLibrary'
+import { getErrorMessage } from '@/lib/errors'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
@@ -267,7 +268,7 @@ export default function TemplatesPage() {
         await handleImportJson(file)
       }
     } catch (err) {
-      setError(`นำเข้าไฟล์ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`นำเข้าไฟล์ไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
       setImporting(false)
     }
@@ -494,7 +495,7 @@ export default function TemplatesPage() {
       (e) => ({ error: e })
     )
     if (err) {
-      setError(`เรียงลำดับท่าไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`เรียงลำดับท่าไม่สำเร็จ: ${getErrorMessage(err)}`)
     }
   }
 
@@ -538,7 +539,7 @@ export default function TemplatesPage() {
 
       setStartMessage(`บันทึก "${template.title}" (${payload.length} ท่า) เข้า Log วันนี้แล้ว`)
     } catch (err) {
-      setError(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
     } finally {
       setStartingId(null)
     }
@@ -626,7 +627,7 @@ export default function TemplatesPage() {
       setApplyMessage(`เพิ่ม ${payload.length} ท่าจาก "${template.title}" เข้าโปรแกรมวัน${WEEKDAYS[dow]}แล้ว`)
       setApplyPickerId(null)
     } catch (err) {
-      setError(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
     } finally {
       setApplyingId(null)
     }

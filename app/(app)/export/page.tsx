@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, BodyMetric, Goal } from '@/lib/types'
 import PremiumCard from '@/components/ui/PremiumCard'
+import { getErrorMessage } from '@/lib/errors'
 
 function downloadBlob(content: BlobPart, filename: string, type: string) {
   const blob = new Blob([content], { type })
@@ -57,7 +58,7 @@ export default function ExportPage() {
       XLSX.writeFile(wb, `fitlog-export-${timestamp()}.xlsx`)
       setMessage('ดาวน์โหลดไฟล์ Excel แล้ว')
     } catch (err) {
-      setError(`Export ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`Export ไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
       setBusy(null)
     }
@@ -74,7 +75,7 @@ export default function ExportPage() {
       downloadBlob('\uFEFF' + csv, `fitlog-workouts-${timestamp()}.csv`, 'text/csv;charset=utf-8')
       setMessage('ดาวน์โหลดไฟล์ CSV แล้ว (เฉพาะรายการออกกำลังกาย)')
     } catch (err) {
-      setError(`Export ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`Export ไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
       setBusy(null)
     }
@@ -90,7 +91,7 @@ export default function ExportPage() {
       downloadBlob(JSON.stringify(payload, null, 2), `fitlog-backup-${timestamp()}.json`, 'application/json')
       setMessage('ดาวน์โหลดไฟล์ Backup แล้ว เก็บไว้ในที่ปลอดภัย')
     } catch (err) {
-      setError(`Backup ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`Backup ไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
       setBusy(null)
     }
@@ -149,7 +150,7 @@ export default function ExportPage() {
         `กู้คืนสำเร็จ: ออกกำลังกาย ${restoredWorkouts} รายการ · ข้อมูลร่างกาย ${restoredMetrics} รายการ · เป้าหมาย ${restoredGoals} รายการ`
       )
     } catch (err) {
-      setError(`Restore ไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)} — ตรวจสอบว่าไฟล์เป็น Backup JSON ของ FitLog`)
+      setError(`Restore ไม่สำเร็จ: ${getErrorMessage(err)} — ตรวจสอบว่าไฟล์เป็น Backup JSON ของ FitLog`)
     } finally {
       setBusy(null)
       if (fileInputRef.current) fileInputRef.current.value = ''

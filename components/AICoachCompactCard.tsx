@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { todayStr } from '@/lib/weekdays'
 import { parseRangeToNumber, rirToRpe } from '@/lib/importWorkoutExcel'
 import type { WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
+import { getErrorMessage } from '@/lib/errors'
 import {
   COLORS,
   TEXT,
@@ -233,7 +234,7 @@ export default function AICoachCompactCard({
       setStartedMessage(`บันทึก "${startLabel}" (${payload.length} ท่า) เข้า Log วันนี้แล้ว`)
       queryClient.invalidateQueries()
     } catch (err) {
-      setErrorMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`)
+      setErrorMessage(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
     } finally {
       setStarting(false)
     }

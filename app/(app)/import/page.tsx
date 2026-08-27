@@ -6,6 +6,7 @@ import type { Workout, WorkoutType } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
 import { WEEKDAYS, defaultWeekdayForIndex } from '@/lib/weekdays'
 import { getExerciseLibrary } from '@/lib/exerciseLibrary'
+import { getErrorMessage } from '@/lib/errors'
 import {
   parseWorkoutExcel,
   type ParsedWorkbook,
@@ -248,7 +249,7 @@ export default function ImportPage() {
 
       setResult({ workouts: workoutCount, bodyMetrics: bodyCount, programDays: programDayCount })
     } catch (err) {
-      setError(`เกิดข้อผิดพลาดที่ไม่คาดคิด: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`เกิดข้อผิดพลาดที่ไม่คาดคิด: ${getErrorMessage(err)}`)
     } finally {
       setSaving(false)
     }
