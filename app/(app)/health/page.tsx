@@ -771,13 +771,24 @@ export default function HealthPage() {
   )
 
   // แถวข้อมูลที่ใกล้เคียง "1 เดือนก่อน" มากที่สุด (ล่าสุดที่บันทึกไว้ ณ หรือก่อนวันนั้น) — ใช้เทียบคะแนนสุขภาพย้อนหลัง
+  // ฟีดแบ็ก "จะแนะนำให้ทำ month-over-month trend ไหม" — เตือนไว้เองว่าถ้า log ไม่สม่ำเสมอ เอนทรีที่ใกล้ 30 วัน
+  // ที่สุดอาจห่างจริงเกินไป (เช่น 90 วัน) แล้วป้าย "จากเดือนที่แล้ว" จะโกหก — เดิม findIndex ไม่มีขอบเขตเลย รับ
+  // เอนทรีไหนก็ได้ที่ <= cutoff ไม่ว่าจะห่างแค่ไหน เพิ่มการเช็คระยะห่างจริงจาก latest.measured_at ถ้าห่างเกิน
+  // 45 วัน (เผื่อ ±15 วันรอบเป้า 30 วัน) ถือว่าไม่ใช่ "เดือนที่แล้ว" จริงๆ แล้ว ไม่โชว์ trend แทนที่จะโชว์ผิดๆ
   const oneMonthAgoIndex = useMemo(() => {
+    if (!latest) return -1
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 30)
     const offset = cutoff.getTimezoneOffset()
     const cutoffStr = new Date(cutoff.getTime() - offset * 60000).toISOString().slice(0, 10)
-    return metrics.findIndex((m) => m.measured_at <= cutoffStr && m.id !== latest?.id)
-  }, [metrics, latest?.id])
+    const idx = metrics.findIndex((m) => m.measured_at <= cutoffStr && m.id !== latest.id)
+    if (idx < 0) return -1
+    const daysGap = Math.abs(
+      (new Date(latest.measured_at + 'T00:00:00').getTime() - new Date(metrics[idx].measured_at + 'T00:00:00').getTime()) /
+        (1000 * 60 * 60 * 24)
+    )
+    return daysGap <= 45 ? idx : -1
+  }, [metrics, latest])
   const oneMonthAgoMetric = oneMonthAgoIndex >= 0 ? metrics[oneMonthAgoIndex] : null
   const previousBmiForScore = bmiOf(oneMonthAgoMetric?.weight_kg ?? null, profile?.height_cm ?? null)
 
