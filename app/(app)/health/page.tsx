@@ -959,8 +959,12 @@ export default function HealthPage() {
   const bmiCardDirection: Direction = weightGainLooksLikeMuscle ? 'neutral' : weightDirection
 
   // ฟีดแบ็ก "ข้อความอธิบายดีมากแล้ว แต่ปรับให้ Premium ขึ้นอีกนิด" — เปลี่ยนจากวลีสั้นห้วนๆ เป็นประโยคสมบูรณ์
+  // v65: ฟีดแบ็ก "'มาจากมวลกล้ามเนื้อเป็นหลัก' ฟันธงเกินไป — ค่าจากเครื่องวัดองค์ประกอบร่างกายมีความผันผวนได้"
+  // — เปลี่ยนจากประโยคเชิงสาเหตุ (อ้างว่าน้ำหนักที่ขึ้น "มาจาก" กล้ามเนื้อ) เป็นประโยคเชิงบรรยายสถานะคู่ขนาน
+  // (น้ำหนักขึ้น + สัดส่วนร่างกายดีขึ้น) ไม่ฟันธงความเป็นเหตุเป็นผล เงื่อนไขการเข้าเงื่อนไข (weightGainLooksLikeMuscle)
+  // ไม่เปลี่ยน ยังคงคำนวณจากไขมันไม่เพิ่ม+กล้ามเนื้อเพิ่มเหมือนเดิม แค่เปลี่ยนคำพูดให้ตรงกับสิ่งที่ข้อมูลยืนยันได้จริง
   const weightInsight = weightGainLooksLikeMuscle
-    ? 'น้ำหนักเพิ่มจากมวลกล้ามเนื้อเป็นหลัก'
+    ? 'น้ำหนักเพิ่มขึ้น แต่สัดส่วนร่างกายมีแนวโน้มดีขึ้น'
     : weightDeltaForCard === null
       ? null
       : Math.abs(weightDeltaForCard) < 0.5
@@ -1837,6 +1841,10 @@ const ZONE_ARROW: Record<'Low' | 'Standard' | 'High', string> = { Low: '↓', St
 // ZONE_LABEL_TH ("สูงกว่าเกณฑ์"/"ต่ำกว่าเกณฑ์") ตรงๆ ทุกกรณีไม่ว่าจะ favorable หรือไม่ (ต่างจาก IconStatCard ที่
 // มีกลไก "favorable → เพียงพอ ✓/อยู่ในเกณฑ์ดี ✓" อยู่แล้วตั้งแต่ v55) — เอากลไกเดียวกันมาใช้กับ ZoneBadge ด้วย
 // ให้สอดคล้องกันทั้งแอป ไม่ต้องคิดคำใหม่
+// v65: ฟีดแบ็ก "28.1 kg สูงกว่า ideal range บน (28.0) จริง แต่ badge บอก 'อยู่ในเกณฑ์ดี' ซึ่งแปลว่า 'อยู่ใน
+// ช่วง' — สับสนเพราะจริงๆ อยู่นอกช่วง แค่เป็นทิศทางที่ดี" — เดิม ZoneBadge ใช้ข้อความ "อยู่ในเกณฑ์ดี ✓" คงที่
+// ทุก favorable zone ไม่ว่า High/Low (ต่างจาก IconStatCard ที่แยก High="เพียงพอ ✓" อยู่แล้ว) แก้ให้ตรงกับ
+// IconStatCard: High ใช้ "เพียงพอ ✓" (ไม่อ้างว่า "อยู่ในช่วง") เหลือ "อยู่ในเกณฑ์ดี ✓" ไว้เฉพาะ Low favorable
 function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' | 'High'; direction?: Direction }) {
   const status = classifyMetric(zone, direction)
   const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : status === 'good' ? 'bg-mossdim text-moss' : 'bg-steeldim text-steel'
@@ -1844,7 +1852,7 @@ function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' |
   return (
     <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
       {zoneIsFavorable ? (
-        'อยู่ในเกณฑ์ดี ✓'
+        zone === 'High' ? 'เพียงพอ ✓' : 'อยู่ในเกณฑ์ดี ✓'
       ) : (
         <>
           {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
