@@ -394,6 +394,12 @@ create policy "Users can delete their own program completions"
   on public.program_completions for delete
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own program completions" on public.program_completions;
+create policy "Users can update their own program completions"
+  on public.program_completions for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
 -- ============================================================
 -- 9. workout_templates (เทมเพลตพร้อมเริ่มได้ทุกเมื่อ ไม่ผูกกับวันในสัปดาห์)
 -- ============================================================
