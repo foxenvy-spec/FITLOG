@@ -102,7 +102,11 @@ export function computeHealthTrendInsights(params: {
         title: 'แนวโน้มดีขึ้น',
         detail: `ไขมันในร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
         deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
-        recentNote: recentConflictsDown ? `แต่${recentPeriod}เพิ่มขึ้น ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
+        // v66: ฟีดแบ็ก "คำว่า 'แต่' ทำให้เหมือนระบบกำลังแก้ตัวให้ข้อมูลตัวเอง" — เดิม "แต่{period}เพิ่มขึ้น..."
+        // ฟังดูเหมือนขัดแย้งกับ insight หลักด้านบน (แนวโน้มดีขึ้น) ทั้งที่จริงเป็นคนละช่วงเวลากัน — เปลี่ยนเป็น
+        // กรอบ "ระยะยาว vs ระยะสั้น" ตรงๆ (แนวโน้มระยะสั้นแย่ลง — {period}เพิ่มขึ้น...) ให้อ่านแล้วเข้าใจทันทีว่า
+        // สองตัวเลขนี้คนละกรอบเวลา ไม่ใช่ระบบขัดแย้งกันเอง
+        recentNote: recentConflictsDown ? `แนวโน้มระยะสั้นแย่ลง — ${recentPeriod}เพิ่มขึ้น ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -114,7 +118,7 @@ export function computeHealthTrendInsights(params: {
         detail: `เพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนอาหารและการฝึก`,
         deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
         actionLabel: 'ลองทบทวนอาหารและการฝึก',
-        recentNote: recentConflictsUp ? `แต่${recentPeriod}ลดลง ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
+        recentNote: recentConflictsUp ? `แนวโน้มระยะสั้นดีขึ้น — ${recentPeriod}ลดลง ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
       })
     }
   }

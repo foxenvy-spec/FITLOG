@@ -1856,6 +1856,10 @@ const ZONE_ARROW: Record<'Low' | 'Standard' | 'High', string> = { Low: '↓', St
 // ช่วง' — สับสนเพราะจริงๆ อยู่นอกช่วง แค่เป็นทิศทางที่ดี" — เดิม ZoneBadge ใช้ข้อความ "อยู่ในเกณฑ์ดี ✓" คงที่
 // ทุก favorable zone ไม่ว่า High/Low (ต่างจาก IconStatCard ที่แยก High="เพียงพอ ✓" อยู่แล้ว) แก้ให้ตรงกับ
 // IconStatCard: High ใช้ "เพียงพอ ✓" (ไม่อ้างว่า "อยู่ในช่วง") เหลือ "อยู่ในเกณฑ์ดี ✓" ไว้เฉพาะ Low favorable
+// v66: ฟีดแบ็ก "'เพียงพอ' ดีกว่า 'อยู่ในเกณฑ์ดี' แล้ว แต่ยังไม่ค่อยสัมพันธ์กับแถบ Ideal Range ที่โชว์คู่กันอยู่ —
+// ถ้าอยากเป็นมิตร ไม่จำเป็นต้องพูดเรื่องเกิน/ไม่เกินช่วงเลยด้วยซ้ำ (28.1 vs 28.0 ต่างกันแค่ 0.1 kg)" — เปลี่ยน
+// เป็นคำเดียวกลางๆ "ดี ✓" ทั้ง High/Low favorable (ไม่อ้างตำแหน่งเทียบช่วงเลย ตัดปัญหา "อยู่ใน/นอกช่วง" ทั้งสองด้าน
+// ไปพร้อมกัน ไม่ใช่แค่ฝั่ง High ที่เจอฟีดแบ็ก — ฝั่ง Low เดิมก็มีปัญหาความหมายเดียวกันแฝงอยู่ เพียงแต่ยังไม่มีคนทัก)
 function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' | 'High'; direction?: Direction }) {
   const status = classifyMetric(zone, direction)
   const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : status === 'good' ? 'bg-mossdim text-moss' : 'bg-steeldim text-steel'
@@ -1863,7 +1867,7 @@ function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' |
   return (
     <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
       {zoneIsFavorable ? (
-        zone === 'High' ? 'เพียงพอ ✓' : 'อยู่ในเกณฑ์ดี ✓'
+        'ดี ✓'
       ) : (
         <>
           {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
@@ -2505,13 +2509,16 @@ function OverviewTrendChart({
   // (breakdown chip ที่เพิ่มไปรอบก่อนหน้าอยู่แล้วใต้ประโยคนี้) — ไม่ต้องพูดตัวเลขซ้ำในประโยคเดิม" — เดิมประโยค
   // นี้พูดตัวเลขเองด้วย (ซ้ำกับ chip ด้านล่าง) เปลี่ยนให้เหลือแค่ "ทำไม" (เช่น น้ำหนักขึ้นเพราะกล้ามเนื้อ ไม่ใช่
   // ไขมัน) ไม่ fabricate เหตุผลใหม่ — ยังคงใช้เงื่อนไขจริงเดิมทั้งหมด (bodyFatDelta/weightDelta/muscleDelta)
+  // v66: ฟีดแบ็ก "'มาจากมวลกล้ามเนื้อเป็นหลัก' ฟันธงเกินข้อมูล — ควรเป็น 'น้ำหนักเพิ่มขึ้น ขณะที่มวลกล้ามเนื้อ
+  // เพิ่มและมวลไขมันลดลง' สั้นกว่า ไม่อ้างเหตุ-ผล แค่บรรยายสิ่งที่เกิดขึ้นพร้อมกัน" — เดียวกับที่แก้ weightInsight
+  // (การ์ดน้ำหนัก) ไปแล้วก่อนหน้า ตอนนี้ผู้ใช้ยืนยันให้แก้ประโยคนี้ (กราฟ) ด้วยเช่นกัน เงื่อนไข muscleDriven ไม่เปลี่ยน
   const combinedInsight = (() => {
     if (weightDelta === null || bodyFatDelta === null) return null
     if (Math.abs(weightDelta) < 0.1 && Math.abs(bodyFatDelta) < 0.1) return null
     if (bodyFatDelta < 0) {
       const muscleDriven = weightDelta > 0.1 && muscleDelta !== null && muscleDelta > 0
       const text = muscleDriven
-        ? 'น้ำหนักที่เพิ่มขึ้นมาจากมวลกล้ามเนื้อเป็นหลัก ขณะที่ไขมันลดลง'
+        ? 'น้ำหนักเพิ่มขึ้น ขณะที่มวลกล้ามเนื้อเพิ่มและมวลไขมันลดลง'
         : weightDelta < -0.1
           ? 'น้ำหนักและไขมันลดลงไปพร้อมกัน'
           : 'ไขมันลดลงต่อเนื่อง'
@@ -2809,7 +2816,7 @@ function OverviewTrendChart({
                 {bodyFatDelta !== null && Math.abs(bodyFatDelta) >= 0.05 && (
                   <span className="text-[10.5px] font-mono whitespace-nowrap" style={{ color: '#9DA0A8' }}>
                     {bodyFatDelta > 0 ? '+' : ''}
-                    {bodyFatDelta.toFixed(1)}% <span style={{ color: '#6E7178' }}>ไขมัน</span>
+                    {bodyFatDelta.toFixed(1)} จุดเปอร์เซ็นต์ <span style={{ color: '#6E7178' }}>ไขมัน</span>
                   </span>
                 )}
                 {muscleDelta !== null && Math.abs(muscleDelta) >= 0.05 && (
@@ -3133,7 +3140,7 @@ function OverviewHealthScoreHeader({
       label: 'ไขมัน',
       dir: bodyFatDeltaPct < 0 ? 'down' : 'up',
       good: bodyFatDeltaPct < 0,
-      valueText: `${Math.abs(bodyFatDeltaPct).toFixed(1)}%`,
+      valueText: `${Math.abs(bodyFatDeltaPct).toFixed(1)} จุดเปอร์เซ็นต์`,
       periodOverride: changePeriodLabel ?? undefined,
     })
   }
@@ -4009,11 +4016,14 @@ function IconStatCard({
   // ฟีดแบ็ก "↑ เพียงพอ — ลูกศรตรงนี้ไม่ได้บอกว่าดีขึ้นหรือแย่ลง แต่บอกตำแหน่งเทียบเกณฑ์ ซึ่งอาจสับสนกับลูกศร
   // เดลต้าที่มีอยู่แล้วในบรรทัดแยก" — โซนที่ "ดี" (favorable) ใช้เครื่องหมาย ✓ ต่อท้ายแทนลูกศรนำหน้า (เพียงพอ ✓)
   // ส่วนโซนที่ยังเป็นคำเตือนจริงๆ (ไม่ favorable) ยังคงลูกศรนำหน้าไว้เหมือนเดิม เพราะช่วยบอกทิศทางที่หลุดเกณฑ์จริง
+  // v66: ฟีดแบ็ก "'เพียงพอ'/'อยู่ในเกณฑ์ดี' ยังไม่ค่อยสัมพันธ์กับแถบ Ideal Range ที่โชว์คู่กัน (28.1 สูงกว่า 28.0
+  // จริง แค่ต่างกัน 0.1 kg ไม่จำเป็นต้องพูดเรื่องอยู่ใน/นอกช่วงเลย)" — เปลี่ยนเป็น "ดี ✓" กลางๆ ทั้ง High/Low
+  // ให้ตรงกับ ZoneBadge ที่เพิ่งแก้ไปพร้อมกัน (จุดเรียกใช้อื่นของแอป)
   const zoneLabel = zone
     ? zone === 'Standard'
       ? ZONE_LABEL_TH.Standard
       : zoneIsFavorable
-        ? `${zone === 'High' ? 'เพียงพอ' : 'อยู่ในเกณฑ์ดี'} ✓`
+        ? 'ดี ✓'
         : `${ZONE_ARROW[zone]} ${ZONE_LABEL_TH[zone]}`
     : null
   // v28: ฟีดแบ็ก "สีเขียวถูกใช้เยอะเกินไป — ปกติ/เพิ่มขึ้นดี/ผ่านเกณฑ์/เป้าหมาย ใช้เขียวหมด จนเขียวกลาย
