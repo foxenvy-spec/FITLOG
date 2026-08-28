@@ -1273,7 +1273,12 @@ export default function HealthPage() {
               </h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {healthInsights.slice(0, 4).map((insight) => (
-                  <InsightCard key={insight.id} insight={insight} imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]} />
+                  <InsightCard
+                    key={insight.id}
+                    insight={insight}
+                    imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]}
+                    recommendationsHref="#recommendations"
+                  />
                 ))}
               </div>
               {healthInsights.length > 4 && (
@@ -2613,10 +2618,19 @@ function OverviewTrendChart({
                   </span>
                 )}
               </div>
-              {/* v36: badge เป้าหมาย — โผล่เฉพาะน้ำหนัก/Body Fat ที่มีเป้าหมาย active อยู่ (ดู goalTarget ด้านบน) */}
+              {/* v36: badge เป้าหมาย — โผล่เฉพาะน้ำหนัก/Body Fat ที่มีเป้าหมาย active อยู่ (ดู goalTarget ด้านบน)
+                  v71: ฟีดแบ็ก "เส้น target อยู่ไกลด้านล่าง ทำให้รู้สึกว่ายังไกลมาก — เพิ่ม 'เหลือ X' ให้ progress
+                  มีความหมายขึ้น" — ต่อท้าย badge เดิมด้วยระยะห่างจริง (latestVal ที่มีอยู่แล้วในกราฟนี้ ไม่ใช่
+                  ตัวเลขใหม่) Body Fat ใช้ "จุดเปอร์เซ็นต์" ให้ตรงกับ convention เดียวกับจุดอื่นของหน้า ไม่ใช่ % */}
               {goalTarget !== null && (
                 <p className="inline-flex items-center gap-1 text-[11px] mt-1.5 px-2 py-0.5 rounded-full bg-surface border border-line text-muted">
                   <span aria-hidden="true">🎯</span> เป้าหมาย {goalTarget.toFixed(1)} {valueUnit}
+                  {latestVal !== null && (
+                    <span>
+                      {' '}
+                      · เหลือ {Math.abs(latestVal - goalTarget).toFixed(1)} {metricKey === 'bodyFat' ? 'จุดเปอร์เซ็นต์' : valueUnit}
+                    </span>
+                  )}
                 </p>
               )}
             </div>
@@ -3540,8 +3554,10 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
   // สูตรทั่วไปที่แอปสุขภาพใช้ประมาณปริมาณน้ำที่ควรดื่ม ~35 มล./น้ำหนักตัว 1 กก.
   const waterLiters = latestWeightKg != null ? Math.round((latestWeightKg * 0.035) * 10) / 10 : null
 
+  // v71: id ให้ InsightCard ในแท็บภาพรวม scroll มาหาได้ (ปุ่ม "ดูคำแนะนำ →") — การ์ดนี้ render แค่จุดเดียว
+  // ต่อครั้ง (คนละแท็บ ไม่ได้ mount พร้อมกัน) จึงไม่ชน id ซ้ำ
   return (
-    <PremiumCard className="p-4">
+    <PremiumCard id="recommendations" className="p-4">
       <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คำแนะนำสำหรับคุณ</h2>
       <div className="space-y-2">
         {highlight && (

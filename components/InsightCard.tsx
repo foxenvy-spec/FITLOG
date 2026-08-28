@@ -29,6 +29,7 @@ export default function InsightCard({
   showChevron = false,
   imageSrc,
   metricIcon,
+  recommendationsHref,
 }: {
   insight: Insight
   showChevron?: boolean
@@ -38,6 +39,12 @@ export default function InsightCard({
   // ที่เป็นเทรนด์สัดส่วนร่างกาย แทน emoji เดิม ให้ภาพลักษณ์ตรงกับการ์ดสรุปด้านบนสุดของหน้า
   // ลำดับความสำคัญ: imageSrc > metricIcon > emoji ของ insight เดิม
   metricIcon?: MetricIconName
+  // v71: ฟีดแบ็ก "Insight card ควรมีทาง 'ดูคำแนะนำ →' ต่อไปยังการ์ดคำแนะนำ ไม่ใช่แค่บอกปัญหาเฉยๆ" —
+  // ไม่บังคับ (undefined = ไม่โชว์ลิงก์ เหมือนพฤติกรรมเดิมทุกจุดที่ใช้ InsightCard อยู่แล้ว เช่น Coach/
+  // Dashboard/แท็บแนวโน้มที่มี Recommendations การ์ดอยู่ติดกันด้านล่างอยู่แล้วไม่ต้องมีลิงก์) จุดเรียกใช้
+  // (health/page.tsx แท็บภาพรวม) ส่ง "#recommendations" เข้ามาเท่านั้น — โชว์เฉพาะตอนมี actionLabel จริง
+  // (ตัว insight ที่มีคำแนะนำให้ตามไปดูจริง ไม่ใช่ insight เฉยๆ ที่ไม่มีอะไรให้แนะนำต่อ)
+  recommendationsHref?: string
 }) {
   const tierStyle = insight.tier ? TIER_STYLE[insight.tier] : null
   const style = tierStyle ?? KIND_STYLE[insight.kind]
@@ -90,6 +97,11 @@ export default function InsightCard({
                 ด้วยจะกลายเป็น insight ที่ฉลาดขึ้น" — optional เหมือน deltaLabel มีเฉพาะตอนทิศทางล่าสุดสวนทาง
                 ทิศทางระยะยาวของ insight นี้จริงๆ */}
             {insight.recentNote && <p className="text-[10.5px] text-steel mt-0.5">{insight.recentNote}</p>}
+            {recommendationsHref && insight.actionLabel && (
+              <a href={recommendationsHref} className="inline-block text-[10.5px] font-medium mt-1" style={{ color: style.chipColor }}>
+                ดูคำแนะนำ →
+              </a>
+            )}
           </>
         ) : (
           <p className="text-xs text-muted mt-0.5">{insight.detail}</p>
