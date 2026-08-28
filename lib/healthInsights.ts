@@ -116,14 +116,11 @@ export function computeHealthTrendInsights(params: {
         detail: `ไขมันในร่างกายลดลง ${Math.abs(pointDelta).toFixed(1)} จุดเปอร์เซ็นต์ ${periodLabel}`,
         deltaLabel: `↓ ${Math.abs(pointDelta).toFixed(1)} จุดเปอร์เซ็นต์ · ${periodShort}`,
         // v66: ฟีดแบ็ก "คำว่า 'แต่' ทำให้เหมือนระบบกำลังแก้ตัวให้ข้อมูลตัวเอง" — เดิม "แต่{period}เพิ่มขึ้น..."
-        // ฟังดูเหมือนขัดแย้งกับ insight หลักด้านบน (แนวโน้มดีขึ้น) ทั้งที่จริงเป็นคนละช่วงเวลากัน — เปลี่ยนเป็น
-        // กรอบ "ระยะยาว vs ระยะสั้น" ตรงๆ (แนวโน้มระยะสั้นแย่ลง — {period}เพิ่มขึ้น...) ให้อ่านแล้วเข้าใจทันทีว่า
-        // สองตัวเลขนี้คนละกรอบเวลา ไม่ใช่ระบบขัดแย้งกันเอง
-        // v75: ฟีดแบ็ก "คำว่า 'แต่' สำคัญมาก มันทำหน้าที่เป็น bridge ระหว่างสอง timeframe" — ผู้ใช้ยืนยันขอให้
-        // เติม "แต่" กลับมา (คนละเหตุผลจาก v66 — ตอนนั้นมองว่า "แต่" ฟังดูเหมือนแก้ตัว ตอนนี้มองว่า "แต่" ช่วย
-        // เชื่อมสอง timeframe ให้ผู้ใช้ scan เร็วๆ ไม่เข้าใจผิดว่าระบบขัดแย้งกันเอง) เติมนำหน้าประโยคเดิมจาก v66
-        // ที่โครงสร้าง "ระยะสั้น vs ระยะยาว" ยังคงไว้เหมือนเดิม
-        recentNote: recentConflictsDown ? `แต่แนวโน้มระยะสั้นแย่ลง — ${recentPeriod}เพิ่มขึ้น ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
+        // v75: ฟีดแบ็ก "คำว่า 'แต่' สำคัญมาก มันทำหน้าที่เป็น bridge" — เติม "แต่" กลับมา
+        // v76: ฟีดแบ็ก "ตอนนี้ title เปลี่ยนไปพูดถึง 'ระยะยาว' ตรงๆ แล้ว (ดู trend-bodyfat-up) ไม่ต้องพึ่ง 'แต่'
+        // เป็น bridge อีกต่อไป — เอาออก ให้สั้นตรงประเด็นกว่า" — เอา "แต่" ออกอีกครั้ง (รอบนี้เพราะ title ทำหน้าที่
+        // แยก timeframe ให้แล้วตั้งแต่ต้นประโยค ไม่ใช่กลับไปกังวลเรื่อง "ฟังดูเหมือนแก้ตัว" แบบ v66)
+        recentNote: recentConflictsDown ? `แนวโน้มล่าสุดแย่ลง ↑ ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์ ${recentPeriod}` : undefined,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -131,13 +128,15 @@ export function computeHealthTrendInsights(params: {
         kind: 'warning',
         tier: tierFor('warning', pct),
         icon: '⚠️',
-        title: 'ไขมันในร่างกายเพิ่มขึ้น',
+        // v76: ฟีดแบ็ก "ผู้ใช้เห็น 🔴 แล้วตามด้วย 'ดีขึ้น' รู้สึกขัดกัน — title ควรบอกกรอบเวลาตรงๆ" — เปลี่ยนจาก
+        // "ไขมันในร่างกายเพิ่มขึ้น" (ไม่บอกกรอบเวลา) เป็น "...สูงขึ้นในระยะยาว" ให้ผู้ใช้รู้ทันทีว่า tier 🔴 นี้
+        // ตัดสินจาก 90 วัน ส่วน recentNote ด้านล่างเป็นแนวโน้มล่าสุด (7 วัน) คนละกรอบเวลากัน ไม่ใช่ระบบขัดแย้งกัน
+        title: 'ไขมันในร่างกายสูงขึ้นในระยะยาว',
         detail: `เพิ่มขึ้น ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ ${periodLabel} ลองทบทวนอาหารและการฝึก`,
         deltaLabel: `↑ ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ · ${periodShort}`,
         actionLabel: 'ลองทบทวนอาหารและการฝึก',
-        // v75: ฟีดแบ็ก "'แต่' สำคัญมาก เป็น bridge ระหว่าง timeframe" — เติมนำหน้ากลับมา (ดูคอมเมนต์เดียวกันที่
-        // trend-bodyfat-down ด้านบน)
-        recentNote: recentConflictsUp ? `แต่แนวโน้มระยะสั้นดีขึ้น — ${recentPeriod}ลดลง ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
+        // v76: เอา "แต่" ออก (ดูคอมเมนต์เดียวกันที่ trend-bodyfat-down ด้านบน) — title พูดกรอบเวลาแทนแล้ว
+        recentNote: recentConflictsUp ? `แนวโน้มล่าสุดดีขึ้น ↓ ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์ ${recentPeriod}` : undefined,
       })
     }
   }
@@ -151,9 +150,9 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '💪',
         title: 'กล้ามเนื้อเพิ่มขึ้น',
-        detail: `กล้ามเนื้อโครงร่างเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+        detail: `กล้ามเนื้อโครงร่างเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาแนวทางปัจจุบันต่อเนื่อง`,
         deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
-        actionLabel: 'รักษาโปรแกรมแบบนี้ต่อเนื่อง',
+        actionLabel: 'รักษาแนวทางปัจจุบันต่อเนื่อง',
       })
     } else if (pct <= -minPct) {
       insights.push({
@@ -196,13 +195,6 @@ export function computeHealthTrendInsights(params: {
           ? params.bodyFatKg.last <= params.bodyFatKg.first
           : false
       const compositionImproving = muscleUp && fatNotUp
-      // v75: ฟีดแบ็ก "มวลไขมันลดลง" เฉพาะตอนลดลงจริง (ไม่ใช่แค่ไม่เพิ่ม) — เช็คแยกจาก fatNotUp (ซึ่งรวมกรณี
-      // "เท่าเดิม" ด้วย ไม่ควรพูดว่า "ลดลง" ถ้าจริงๆ ไม่ได้ขยับเลย)
-      const fatStrictlyDown = params.bodyFatPct
-        ? params.bodyFatPct.last < params.bodyFatPct.first
-        : params.bodyFatKg
-          ? params.bodyFatKg.last < params.bodyFatKg.first
-          : false
       // v75: ฟีดแบ็ก "↑ 2.6% ของน้ำหนัก อยากได้ ↑ 1.7 kg แทน เพราะน้ำหนักเป็น kg อยู่แล้วทุกจุดอื่น" — pct
       // (relative % change) ยังใช้ตัดสิน trigger/tier เหมือนเดิม แต่สิ่งที่แสดงเปลี่ยนเป็นส่วนต่างจริงหน่วย kg/lb
       const pointDelta = params.weight.last - params.weight.first
@@ -214,16 +206,15 @@ export function computeHealthTrendInsights(params: {
         // watch ที่สงวนไว้สำหรับกรณีที่รู้ทิศทางแล้วและกำลังไปผิดทาง
         tier: isGoodDirection === null ? 'tracking' : tierFor(kind, pct),
         icon: pct < 0 ? '📉' : '📈',
-        // v67/v74/v75: title เปลี่ยนเป็น "แต่สัดส่วนดีขึ้น" เฉพาะตอน compositionImproving จริง (มั่นใจทั้ง
-        // กล้ามเนื้อเพิ่ม+ไขมันไม่เพิ่ม) actionLabel อธิบายหลักฐานที่มาของ headline นั้น ไม่พูดซ้ำ — ใช้ "ลดลง"
-        // เฉพาะตอนไขมันลดลงจริง (ไม่ใช่แค่ไม่เพิ่ม) กันคำพูดเกินข้อมูลจริง
+        // v67/v74/v75: title เคยเปลี่ยนเป็น "แต่สัดส่วนดีขึ้น" ตอน compositionImproving — v76: ฟีดแบ็ก
+        // "ผมว่าควรเพิ่ม context กลับมาอีกนิด แต่ title เป็น 'น้ำหนักเพิ่มขึ้น' เฉยๆ พอ" — ย้อน title กลับเป็นข้อเท็จ
+        // จริงล้วนๆ ("น้ำหนักเพิ่มขึ้น") แล้วย้าย claim "สัดส่วนดีขึ้น" ไปไว้ที่ actionLabel แทน (ยังใช้เงื่อนไข
+        // compositionImproving เดิม ไม่เปลี่ยน — ยังต้องมั่นใจทั้งกล้ามเนื้อเพิ่ม+ไขมันไม่เพิ่มก่อนพูดแบบนี้)
         // v75: ฟีดแบ็ก "ไม่ต้องมี 'ดูคำแนะนำ' ก็ได้ เพราะไม่ได้มีปัญหาเฉพาะที่ต้องแก้" — compositionImproving เป็น
         // ข่าวดี ไม่ใช่คำเตือน ไม่ควรชวนกดไปหาคำแนะนำที่ไม่มีอยู่จริงสำหรับกรณีนี้
         hideRecommendationLink: compositionImproving,
-        actionLabel: compositionImproving
-          ? `มวลกล้ามเนื้อเพิ่มขึ้น ขณะที่มวลไขมัน${fatStrictlyDown ? 'ลดลง' : 'ไม่เพิ่มขึ้น'}`
-          : undefined,
-        title: pct < 0 ? 'น้ำหนักลดลง' : compositionImproving ? 'น้ำหนักเพิ่มขึ้น แต่สัดส่วนดีขึ้น' : 'น้ำหนักเพิ่มขึ้น',
+        actionLabel: compositionImproving ? 'แต่อัตราส่วนกล้ามเนื้อและไขมันมีแนวโน้มดีขึ้น' : undefined,
+        title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${Math.abs(pointDelta).toFixed(1)} ${weightUnit} ${periodLabel}`,
         deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pointDelta).toFixed(1)} ${weightUnit} · ${periodShort}`,
       })
@@ -239,9 +230,9 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '💪',
         title: 'มวลกล้ามเนื้อเพิ่มขึ้น',
-        detail: `มวลกล้ามเนื้อเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาโปรแกรมแบบนี้ต่อเนื่อง`,
+        detail: `มวลกล้ามเนื้อเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} รักษาแนวทางปัจจุบันต่อเนื่อง`,
         deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
-        actionLabel: 'รักษาโปรแกรมแบบนี้ต่อเนื่อง',
+        actionLabel: 'รักษาแนวทางปัจจุบันต่อเนื่อง',
       })
     } else if (pct <= -minPct) {
       insights.push({
@@ -274,7 +265,7 @@ export function computeHealthTrendInsights(params: {
         deltaLabel: `↓ ${Math.abs(yearsDelta).toFixed(1)} ปี · ${periodShort}`,
         // v73: ฟีดแบ็ก "อายุร่างกาย +3.1% ไม่ชัดว่าคืออะไร" — ไม่มีจุดไหนในหน้านี้อธิบายค่านี้จริงๆ อยู่แล้ว
         // (กลไก ⓘ ที่ทำไว้ตั้งแต่ v7 ไม่มี IconStatCard ไหนใช้จริง) เพิ่มคำอธิบายสั้นๆ ตรงนี้แทน
-        noteText: 'อายุร่างกาย (Body Age) ประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริงตามบัตร',
+        noteText: 'อายุร่างกายเป็นค่าประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริง',
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -286,7 +277,7 @@ export function computeHealthTrendInsights(params: {
         detail: `อายุร่างกายเพิ่มขึ้น ${yearsDelta.toFixed(1)} ปี ${periodLabel} ลองทบทวนการนอนและการฝึก`,
         deltaLabel: `↑ ${yearsDelta.toFixed(1)} ปี · ${periodShort}`,
         actionLabel: 'ลองทบทวนการนอนและการฝึก',
-        noteText: 'อายุร่างกาย (Body Age) ประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริงตามบัตร',
+        noteText: 'อายุร่างกายเป็นค่าประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริง',
       })
     }
   }
