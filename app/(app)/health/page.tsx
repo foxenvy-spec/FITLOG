@@ -3551,7 +3551,10 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
   const highlight = topWarning
     ? {
         title: isMuscleWarning ? 'เพิ่มการฝึกแรงต้าน' : 'เพิ่มการเผาผลาญไขมัน',
-        detail: isMuscleWarning ? 'ฝึกเวทหรือเวทเทรนนิ่งอย่างน้อย 2-3 ครั้ง/สัปดาห์ เน้นกล้ามเนื้อมัดใหญ่' : 'คาร์ดิโอ HIIT 2-3 ครั้ง/สัปดาห์ ช่วยเผาผลาญไขมันได้มากขึ้น 15-20%',
+        // v73: ฟีดแบ็ก "HIIT ...15-20% ควรเอาตัวเลขออกถ้าไม่มี calculation/reference ที่ชัดเจน" — ตัวเลขนี้
+        // hardcode ไว้เฉยๆ ไม่มีการคำนวณจากข้อมูลผู้ใช้หรืออ้างอิงงานวิจัยใดๆ ในระบบรองรับ ตัดตัวเลขที่ไม่มี
+        // ที่มาจริงออก เหลือคำแนะนำเชิงพฤติกรรมล้วนๆ
+        detail: isMuscleWarning ? 'ฝึกเวทหรือเวทเทรนนิ่งอย่างน้อย 2-3 ครั้ง/สัปดาห์ เน้นกล้ามเนื้อมัดใหญ่' : 'คาร์ดิโอ HIIT 2-3 ครั้ง/สัปดาห์ ช่วยเผาผลาญไขมันได้มากขึ้น',
         imageSrc: isMuscleWarning ? '/icons/increase-muscle-training.png' : '/icons/increase-training.png',
       }
     : null
@@ -3649,11 +3652,13 @@ function ObesityAnalysisChart({
           secondary label เล็กๆ" — สลับลำดับ: ไทยเด่น (ขนาด/สีเดิมของหัวข้อ section) + อังกฤษเดิมเป็นคำเล็กจาง
           ต่อท้าย ไม่ใช่ตัวเดียวกับ subLabel การ์ด (นั่นคือ Thai label + English caption แนวตั้ง) อันนี้เป็น
           หัวข้อ section เดี่ยว เลยทำเป็นแนวนอนคำเดียวกันแทน */}
+      {/* v73: ฟีดแบ็ก "'Obesity Analysis' ฟังดูเป็นคำวินิจฉัยทางคลินิกเกินไปสำหรับแอป fitness ทั่วไป" — เปลี่ยน
+          เป็น 'Health Range Analysis' (ยังเป็นอังกฤษรอง ไม่ได้ย้อนการตัดสินใจ v28 ที่ยืนยันให้ไทยนำ) */}
       <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-1">
         <ScaleIcon />
         <span>
           น้ำหนักเทียบเกณฑ์
-          <span className="text-[10px] uppercase tracked text-muted/70 ml-1.5">Obesity Analysis</span>
+          <span className="text-[10px] uppercase tracked text-muted/70 ml-1.5">Health Range Analysis</span>
         </span>
         <span className="text-muted">
           <InfoIcon />

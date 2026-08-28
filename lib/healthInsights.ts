@@ -226,6 +226,9 @@ export function computeHealthTrendInsights(params: {
         title: 'อายุร่างกายดีขึ้น',
         detail: `อายุร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
         deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
+        // v73: ฟีดแบ็ก "อายุร่างกาย +3.1% ไม่ชัดว่าคืออะไร" — ไม่มีจุดไหนในหน้านี้อธิบายค่านี้จริงๆ อยู่แล้ว
+        // (กลไก ⓘ ที่ทำไว้ตั้งแต่ v7 ไม่มี IconStatCard ไหนใช้จริง) เพิ่มคำอธิบายสั้นๆ ตรงนี้แทน
+        noteText: 'อายุร่างกาย (Body Age) ประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริงตามบัตร',
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -237,6 +240,7 @@ export function computeHealthTrendInsights(params: {
         detail: `อายุร่างกายเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนการนอนและการฝึก`,
         deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
         actionLabel: 'ลองทบทวนการนอนและการฝึก',
+        noteText: 'อายุร่างกาย (Body Age) ประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริงตามบัตร',
       })
     }
   }

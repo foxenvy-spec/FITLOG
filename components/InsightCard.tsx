@@ -92,6 +92,9 @@ export default function InsightCard({
       <div className="min-w-0 flex-1">
         <p className="text-[10px] tracked uppercase text-muted">{tierStyle ? tierStyle.label : 'Insight'}</p>
         <p className={`font-display text-sm tracked uppercase mt-0.5 ${style.accent}`}>{insight.title}</p>
+        {/* v73: ฟีดแบ็ก "อายุร่างกาย +3.1% ไม่ชัดว่าคืออะไร" — noteText เป็นคำอธิบายสั้นๆ ของตัวชี้วัดเอง
+            (คนละความหมายกับ recentNote ที่บอกแนวโน้มล่าสุดสวนทาง) ไม่บังคับ มีเฉพาะ trend-bodyage-* ตอนนี้ */}
+        {insight.noteText && <p className="text-[10px] text-muted/70 italic mt-0.5">{insight.noteText}</p>}
         {/* v54: ฟีดแบ็ก "อ่านเหมือนรายงาน ไม่ใช่ Dashboard — อยากได้ ↑3.7% · 90 วัน แบบ chip สั้นๆ แยกจาก
             คำแนะนำ แทน paragraph ยาว" — deltaLabel/actionLabel เป็น optional field ใหม่ใน Insight (มีเฉพาะ
             computeHealthTrendInsights) มีค่าก็ใช้ compact 2 บรรทัดนี้แทน ไม่มีค่า (insight จากที่อื่น เช่น
