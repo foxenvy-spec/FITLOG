@@ -1997,12 +1997,22 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="w-full flex items-center justify-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-lg py-2 mt-2 active:scale-[0.99] transition"
+          className="w-full flex flex-col items-center justify-center gap-0.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-lg py-2 mt-2 active:scale-[0.99] transition"
         >
-          {expanded ? 'แสดงน้อยลง' : 'ดูตัวชี้วัดเพิ่มเติม'}
-          <span className={`transition-transform ${expanded ? '-rotate-90' : 'rotate-90'}`}>
-            <ChevronRightIcon />
+          <span className="flex items-center gap-1.5">
+            {expanded ? 'แสดงน้อยลง' : 'ดูตัวชี้วัดเพิ่มเติม'}
+            <span className={`transition-transform ${expanded ? '-rotate-90' : 'rotate-90'}`}>
+              <ChevronRightIcon />
+            </span>
           </span>
+          {/* v70: ฟีดแบ็ก "ปุ่มพับไม่บอกว่าข้างในมีอะไรบ้าง — เพิ่ม preview เช่น 'BMI • Visceral Fat • ...'" —
+              ใช้ label จริงของแถวที่ถูกซ่อนอยู่ (rows.slice(4)) ไม่ fabricate ชื่อใหม่ ไม่ใช่ตัวช่วยลดความสูงหน้า
+              (section นี้พับอยู่แล้วตั้งแต่ก่อนหน้า) แค่ทำให้ปุ่มสื่อสารได้ตรงว่ากดแล้วจะเจออะไร */}
+          {!expanded && (
+            <span className="normal-case tracking-normal text-[10px] text-muted/70 truncate max-w-full px-2">
+              {rows.slice(4).map((r) => r.label).join(' • ')}
+            </span>
+          )}
         </button>
       )}
     </div>
