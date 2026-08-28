@@ -109,7 +109,10 @@ export default function InsightCard({
                 ด้วยจะกลายเป็น insight ที่ฉลาดขึ้น" — optional เหมือน deltaLabel มีเฉพาะตอนทิศทางล่าสุดสวนทาง
                 ทิศทางระยะยาวของ insight นี้จริงๆ */}
             {insight.recentNote && <p className="text-[10.5px] text-steel mt-0.5">{insight.recentNote}</p>}
-            {recommendationsHref && insight.actionLabel && (
+            {/* v75: ฟีดแบ็ก "ไม่ต้องมีดูคำแนะนำ ก็ได้ ถ้าไม่ได้มีปัญหาเฉพาะที่ต้องแก้" — เพิ่มเช็ค
+                hideRecommendationLink (เช่น trend-weight ตอนสัดส่วนดีขึ้น actionLabel เป็นแค่คำอธิบาย
+                ไม่ใช่คำแนะนำที่ต้องตามไปดูจริง) */}
+            {recommendationsHref && insight.actionLabel && !insight.hideRecommendationLink && (
               <a href={recommendationsHref} className="inline-block text-[10.5px] font-medium mt-1" style={{ color: style.chipColor }}>
                 ดูคำแนะนำ →
               </a>

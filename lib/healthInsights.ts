@@ -74,6 +74,10 @@ export function computeHealthTrendInsights(params: {
   // ของ insight นี้เท่านั้น (ไม่คำนวณ insight ใหม่จากมัน) มีค่าก็ใช้ ไม่มีก็ข้าม ไม่ fabricate
   recentBodyFatDelta?: number | null
   recentPeriodLabel?: string
+  // v75: ฟีดแบ็ก "↑ 2.6% ของน้ำหนัก — ถ้าอยากให้ User สนใจน้ำหนักจริงมากกว่า percentage ควรโชว์ ↑ 1.7 kg
+  // แทน เพราะน้ำหนักเป็น kg อยู่แล้วทุกจุดอื่นในหน้านี้" — หน่วยแสดงผลของน้ำหนัก (kg/lb ตาม toDisplay ที่จุด
+  // เรียกใช้แปลงมาให้แล้วใน weight.first/last) ไม่ระบุ = 'kg' (พฤติกรรมเดิม ไม่กระทบจุดเรียกใช้ที่ไม่ได้ส่งมา)
+  weightUnit?: string
 }): Insight[] {
   const minPct = params.minPct ?? 1.5
   const periodLabel = params.periodLabel
@@ -81,6 +85,7 @@ export function computeHealthTrendInsights(params: {
   const insights: Insight[] = []
   const recentBodyFat = params.recentBodyFatDelta ?? null
   const recentPeriod = params.recentPeriodLabel ?? 'ล่าสุด'
+  const weightUnit = params.weightUnit ?? 'kg'
 
   const pctChange = (first: number, last: number) => (first !== 0 ? ((last - first) / Math.abs(first)) * 100 : 0)
   // ฟีดแบ็ก "แยก 3 ระดับ ไม่ใช่แค่ positive/warning" — warning ที่เปลี่ยนแปลงมาก (>= 2 เท่าของเกณฑ์ขั้นต่ำ
@@ -114,7 +119,11 @@ export function computeHealthTrendInsights(params: {
         // ฟังดูเหมือนขัดแย้งกับ insight หลักด้านบน (แนวโน้มดีขึ้น) ทั้งที่จริงเป็นคนละช่วงเวลากัน — เปลี่ยนเป็น
         // กรอบ "ระยะยาว vs ระยะสั้น" ตรงๆ (แนวโน้มระยะสั้นแย่ลง — {period}เพิ่มขึ้น...) ให้อ่านแล้วเข้าใจทันทีว่า
         // สองตัวเลขนี้คนละกรอบเวลา ไม่ใช่ระบบขัดแย้งกันเอง
-        recentNote: recentConflictsDown ? `แนวโน้มระยะสั้นแย่ลง — ${recentPeriod}เพิ่มขึ้น ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
+        // v75: ฟีดแบ็ก "คำว่า 'แต่' สำคัญมาก มันทำหน้าที่เป็น bridge ระหว่างสอง timeframe" — ผู้ใช้ยืนยันขอให้
+        // เติม "แต่" กลับมา (คนละเหตุผลจาก v66 — ตอนนั้นมองว่า "แต่" ฟังดูเหมือนแก้ตัว ตอนนี้มองว่า "แต่" ช่วย
+        // เชื่อมสอง timeframe ให้ผู้ใช้ scan เร็วๆ ไม่เข้าใจผิดว่าระบบขัดแย้งกันเอง) เติมนำหน้าประโยคเดิมจาก v66
+        // ที่โครงสร้าง "ระยะสั้น vs ระยะยาว" ยังคงไว้เหมือนเดิม
+        recentNote: recentConflictsDown ? `แต่แนวโน้มระยะสั้นแย่ลง — ${recentPeriod}เพิ่มขึ้น ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -126,7 +135,9 @@ export function computeHealthTrendInsights(params: {
         detail: `เพิ่มขึ้น ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ ${periodLabel} ลองทบทวนอาหารและการฝึก`,
         deltaLabel: `↑ ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ · ${periodShort}`,
         actionLabel: 'ลองทบทวนอาหารและการฝึก',
-        recentNote: recentConflictsUp ? `แนวโน้มระยะสั้นดีขึ้น — ${recentPeriod}ลดลง ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
+        // v75: ฟีดแบ็ก "'แต่' สำคัญมาก เป็น bridge ระหว่าง timeframe" — เติมนำหน้ากลับมา (ดูคอมเมนต์เดียวกันที่
+        // trend-bodyfat-down ด้านบน)
+        recentNote: recentConflictsUp ? `แต่แนวโน้มระยะสั้นดีขึ้น — ${recentPeriod}ลดลง ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
       })
     }
   }
@@ -185,6 +196,16 @@ export function computeHealthTrendInsights(params: {
           ? params.bodyFatKg.last <= params.bodyFatKg.first
           : false
       const compositionImproving = muscleUp && fatNotUp
+      // v75: ฟีดแบ็ก "มวลไขมันลดลง" เฉพาะตอนลดลงจริง (ไม่ใช่แค่ไม่เพิ่ม) — เช็คแยกจาก fatNotUp (ซึ่งรวมกรณี
+      // "เท่าเดิม" ด้วย ไม่ควรพูดว่า "ลดลง" ถ้าจริงๆ ไม่ได้ขยับเลย)
+      const fatStrictlyDown = params.bodyFatPct
+        ? params.bodyFatPct.last < params.bodyFatPct.first
+        : params.bodyFatKg
+          ? params.bodyFatKg.last < params.bodyFatKg.first
+          : false
+      // v75: ฟีดแบ็ก "↑ 2.6% ของน้ำหนัก อยากได้ ↑ 1.7 kg แทน เพราะน้ำหนักเป็น kg อยู่แล้วทุกจุดอื่น" — pct
+      // (relative % change) ยังใช้ตัดสิน trigger/tier เหมือนเดิม แต่สิ่งที่แสดงเปลี่ยนเป็นส่วนต่างจริงหน่วย kg/lb
+      const pointDelta = params.weight.last - params.weight.first
       insights.push({
         id: 'trend-weight',
         kind,
@@ -193,12 +214,18 @@ export function computeHealthTrendInsights(params: {
         // watch ที่สงวนไว้สำหรับกรณีที่รู้ทิศทางแล้วและกำลังไปผิดทาง
         tier: isGoodDirection === null ? 'tracking' : tierFor(kind, pct),
         icon: pct < 0 ? '📉' : '📈',
-        // v67/v74: title เปลี่ยนเป็น "แต่สัดส่วนดีขึ้น" เฉพาะตอน compositionImproving จริง (มั่นใจทั้งกล้ามเนื้อ
-        // เพิ่ม+ไขมันไม่เพิ่ม) actionLabel อธิบายหลักฐานที่มาของ headline นั้น ไม่พูดซ้ำ
-        actionLabel: compositionImproving ? 'มวลกล้ามเนื้อเพิ่มขึ้น ขณะที่มวลไขมันไม่เพิ่มขึ้น' : undefined,
+        // v67/v74/v75: title เปลี่ยนเป็น "แต่สัดส่วนดีขึ้น" เฉพาะตอน compositionImproving จริง (มั่นใจทั้ง
+        // กล้ามเนื้อเพิ่ม+ไขมันไม่เพิ่ม) actionLabel อธิบายหลักฐานที่มาของ headline นั้น ไม่พูดซ้ำ — ใช้ "ลดลง"
+        // เฉพาะตอนไขมันลดลงจริง (ไม่ใช่แค่ไม่เพิ่ม) กันคำพูดเกินข้อมูลจริง
+        // v75: ฟีดแบ็ก "ไม่ต้องมี 'ดูคำแนะนำ' ก็ได้ เพราะไม่ได้มีปัญหาเฉพาะที่ต้องแก้" — compositionImproving เป็น
+        // ข่าวดี ไม่ใช่คำเตือน ไม่ควรชวนกดไปหาคำแนะนำที่ไม่มีอยู่จริงสำหรับกรณีนี้
+        hideRecommendationLink: compositionImproving,
+        actionLabel: compositionImproving
+          ? `มวลกล้ามเนื้อเพิ่มขึ้น ขณะที่มวลไขมัน${fatStrictlyDown ? 'ลดลง' : 'ไม่เพิ่มขึ้น'}`
+          : undefined,
         title: pct < 0 ? 'น้ำหนักลดลง' : compositionImproving ? 'น้ำหนักเพิ่มขึ้น แต่สัดส่วนดีขึ้น' : 'น้ำหนักเพิ่มขึ้น',
-        detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% ${periodLabel}`,
-        deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
+        detail: `น้ำหนักเปลี่ยนแปลง ${Math.abs(pointDelta).toFixed(1)} ${weightUnit} ${periodLabel}`,
+        deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pointDelta).toFixed(1)} ${weightUnit} · ${periodShort}`,
       })
     }
   }

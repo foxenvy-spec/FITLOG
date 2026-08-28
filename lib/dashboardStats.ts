@@ -549,6 +549,11 @@ export interface Insight {
   // ที่ผู้ใช้เห็นค่านี้จริง — เพิ่ม noteText (คำอธิบายสั้นๆ อยู่ตัวเดียวกับ insight ไม่ผูกกับ direction ของ
   // เดลต้าเหมือน recentNote) มีเฉพาะ trend-bodyage-* เท่านั้น
   noteText?: string
+  // v75: ฟีดแบ็ก "ไม่ต้องมี 'ดูคำแนะนำ' ก็ได้ เพราะไม่ได้มีปัญหาเฉพาะที่ต้องแก้" — InsightCard ปกติโชว์ลิงก์
+  // "ดูคำแนะนำ →" เมื่อมี actionLabel (health/page.tsx แท็บภาพรวมเท่านั้น ดู recommendationsHref) แต่บาง
+  // insight ใช้ actionLabel เป็นแค่คำอธิบายหลักฐาน ไม่ใช่คำเตือนที่ต้องมีคำแนะนำจริง (เช่น trend-weight ตอน
+  // compositionImproving) — true = ซ่อนลิงก์แม้มี actionLabel, ไม่ระบุ/false = พฤติกรรมเดิม
+  hideRecommendationLink?: boolean
 }
 
 // เทียบเซ็ตต่อกลุ่มกล้ามเนื้อของสัปดาห์นี้กับสัปดาห์ที่แล้ว แจ้งเฉพาะกลุ่มที่วอลุ่มเพิ่มขึ้นชัดเจน (>=15%)

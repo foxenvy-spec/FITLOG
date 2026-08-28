@@ -873,8 +873,11 @@ export default function HealthPage() {
       // ปลอดภัย เป็นค่าเดียวกันเป๊ะกับที่ Top Summary ใช้จริง
       recentBodyFatDelta: fieldDelta('body_fat_pct'),
       recentPeriodLabel: periodLabelOf(latest, metrics[1] ?? null) ?? undefined,
+      // v75: weightTrend เป็นค่าที่ toDisplay แปลงหน่วยมาแล้ว (kg/lb ตามที่ผู้ใช้ตั้งไว้) ส่ง unit จริงเข้าไป
+      // ให้ deltaLabel ของน้ำหนักแสดงหน่วยถูกต้อง (ไม่ใช่ hardcode 'kg' เสมอ)
+      weightUnit: unit,
     })
-  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays, scoreWeightDirection, latest, metrics])
+  }, [weightTrend, bodyFatTrend, skeletalMuscleTrend, bodyFatKgTrend, muscleTrend, bodyAgeTrend, trendPeriodDays, scoreWeightDirection, latest, metrics, unit])
 
   function goalCurrentValue(goal: Goal): number | null {
     if (goal.goal_type === 'weight') return latest?.weight_kg ?? null
@@ -3554,7 +3557,9 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
         // v73: ฟีดแบ็ก "HIIT ...15-20% ควรเอาตัวเลขออกถ้าไม่มี calculation/reference ที่ชัดเจน" — ตัวเลขนี้
         // hardcode ไว้เฉยๆ ไม่มีการคำนวณจากข้อมูลผู้ใช้หรืออ้างอิงงานวิจัยใดๆ ในระบบรองรับ ตัดตัวเลขที่ไม่มี
         // ที่มาจริงออก เหลือคำแนะนำเชิงพฤติกรรมล้วนๆ
-        detail: isMuscleWarning ? 'ฝึกเวทหรือเวทเทรนนิ่งอย่างน้อย 2-3 ครั้ง/สัปดาห์ เน้นกล้ามเนื้อมัดใหญ่' : 'คาร์ดิโอ HIIT 2-3 ครั้ง/สัปดาห์ ช่วยเผาผลาญไขมันได้มากขึ้น',
+        // v75: ฟีดแบ็ก "'ช่วยเผาผลาญไขมันได้มากขึ้น' ฟังดูเหมือนผลโดยตรงและ absolute เกินไป" — เปลี่ยนเป็น
+        // "ช่วยเพิ่มการใช้พลังงานและสนับสนุนการลดไขมัน" อธิบายกลไก (เผาผลาญพลังงานมากขึ้น) แทนการฟันธงผลลัพธ์ตรงๆ
+        detail: isMuscleWarning ? 'ฝึกเวทหรือเวทเทรนนิ่งอย่างน้อย 2-3 ครั้ง/สัปดาห์ เน้นกล้ามเนื้อมัดใหญ่' : 'คาร์ดิโอ HIIT 2-3 ครั้ง/สัปดาห์ ช่วยเพิ่มการใช้พลังงานและสนับสนุนการลดไขมัน',
         imageSrc: isMuscleWarning ? '/icons/increase-muscle-training.png' : '/icons/increase-training.png',
       }
     : null
