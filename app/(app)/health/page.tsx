@@ -3653,11 +3653,13 @@ function ObesityAnalysisChart({
           ต่อท้าย ไม่ใช่ตัวเดียวกับ subLabel การ์ด (นั่นคือ Thai label + English caption แนวตั้ง) อันนี้เป็น
           หัวข้อ section เดี่ยว เลยทำเป็นแนวนอนคำเดียวกันแทน */}
       {/* v73: ฟีดแบ็ก "'Obesity Analysis' ฟังดูเป็นคำวินิจฉัยทางคลินิกเกินไปสำหรับแอป fitness ทั่วไป" — เปลี่ยน
-          เป็น 'Health Range Analysis' (ยังเป็นอังกฤษรอง ไม่ได้ย้อนการตัดสินใจ v28 ที่ยืนยันให้ไทยนำ) */}
+          เป็น 'Health Range Analysis' (ยังเป็นอังกฤษรอง ไม่ได้ย้อนการตัดสินใจ v28 ที่ยืนยันให้ไทยนำ)
+          v74: ฟีดแบ็ก "'น้ำหนักเทียบเกณฑ์' ไม่ตรงกับเนื้อหาจริง (มี BMI + Body Fat ไม่ใช่แค่น้ำหนัก)" — เปลี่ยน
+          เป็น "องค์ประกอบร่างกายเทียบเกณฑ์" ให้ครอบคลุมทั้ง 2 metric ที่อยู่ในการ์ดนี้จริง */}
       <h2 className="flex items-center gap-2 font-display text-sm tracked text-ink mb-1">
         <ScaleIcon />
         <span>
-          น้ำหนักเทียบเกณฑ์
+          องค์ประกอบร่างกายเทียบเกณฑ์
           <span className="text-[10px] uppercase tracked text-muted/70 ml-1.5">Health Range Analysis</span>
         </span>
         <span className="text-muted">
@@ -3937,9 +3939,14 @@ function MuscleFatBarRow({
           style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
         />
       </div>
+      {/* v74: ฟีดแบ็ก "Skeletal Muscle 28.1 vs 28.0 — 'ช่วงที่เหมาะสม' ทำให้ 28.1 ดูเหมือนเกิน range ทั้งที่
+          badge บอกว่า 'ดี ✓' ห้ามปล่อยก่อน production" — ไม่แก้ด้วยการขยายตัวเลข range เอง (ไม่มีข้อมูลรองรับ
+          ว่าควรขยายไปเท่าไหร่ เสี่ยง fabricate ค่าใหม่) เปลี่ยนคำแทน: "ช่วงที่เหมาะสม" (ฟังดูเหมือนขอบเขตต้องอยู่
+          ใน) → "ค่าอ้างอิง" (reference — สื่อว่าเป็นแนวเทียบ ไม่ใช่กฎตายตัวที่ต้องอยู่ในเป๊ะๆ) ใช้ร่วมกันทั้ง 3
+          แถว (Weight/Skeletal Muscle/Fat Mass) เพื่อความสม่ำเสมอ ไม่ใช่แก้แค่แถวเดียว */}
       <div className="flex justify-between text-[10px] text-muted mt-1.5">
         <span>{low.toFixed(1)}</span>
-        <span className="italic">(ช่วงที่เหมาะสม)</span>
+        <span className="italic">(ค่าอ้างอิง)</span>
         <span>{high.toFixed(1)}</span>
       </div>
     </div>

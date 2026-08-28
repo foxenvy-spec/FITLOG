@@ -91,6 +91,12 @@ export function computeHealthTrendInsights(params: {
 
   if (params.bodyFatPct) {
     const pct = pctChange(params.bodyFatPct.first, params.bodyFatPct.last)
+    // v74: ฟีดแบ็ก "3.7% กับ 0.4 จุดเปอร์เซ็นต์ (Top Summary) ต่างกันยังไง? — Body Fat เป็น percentage อยู่แล้ว
+    // ควรแสดงเป็นจุดเปอร์เซ็นต์" — pct (relative % change ของค่า % เอง) ยังใช้ตัดสิน trigger/tier เหมือนเดิม
+    // (ไม่แตะ threshold system ที่ minPct ใช้ร่วมกับตัวชี้วัดอื่น) แต่สิ่งที่ "แสดง" ให้ผู้ใช้เห็นเปลี่ยนเป็น
+    // ส่วนต่างจริง (point delta, last-first) ในหน่วยจุดเปอร์เซ็นต์ ให้ตรงกับทุกจุดอื่นของหน้านี้ที่ใช้
+    // จุดเปอร์เซ็นต์กับ body_fat_pct เสมอ (Top Summary/Goal/Key Metrics) ไม่ใช่ % สัมพัทธ์ที่สับสน
+    const pointDelta = params.bodyFatPct.last - params.bodyFatPct.first
     // ทิศทางล่าสุดสวนทางทิศทางระยะยาวจริงๆ เท่านั้นถึงจะพูดถึง (เกณฑ์ 0.1 จุด กันสัญญาณรบกวนเล็กน้อยจาก
     // ความคลาดเคลื่อนของเครื่องชั่ง เหมือน minPct ที่ใช้ตัดสิน insight หลักอยู่แล้ว)
     const recentConflictsDown = recentBodyFat !== null && recentBodyFat >= 0.1
@@ -102,8 +108,8 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '🔥',
         title: 'แนวโน้มดีขึ้น',
-        detail: `ไขมันในร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
-        deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
+        detail: `ไขมันในร่างกายลดลง ${Math.abs(pointDelta).toFixed(1)} จุดเปอร์เซ็นต์ ${periodLabel}`,
+        deltaLabel: `↓ ${Math.abs(pointDelta).toFixed(1)} จุดเปอร์เซ็นต์ · ${periodShort}`,
         // v66: ฟีดแบ็ก "คำว่า 'แต่' ทำให้เหมือนระบบกำลังแก้ตัวให้ข้อมูลตัวเอง" — เดิม "แต่{period}เพิ่มขึ้น..."
         // ฟังดูเหมือนขัดแย้งกับ insight หลักด้านบน (แนวโน้มดีขึ้น) ทั้งที่จริงเป็นคนละช่วงเวลากัน — เปลี่ยนเป็น
         // กรอบ "ระยะยาว vs ระยะสั้น" ตรงๆ (แนวโน้มระยะสั้นแย่ลง — {period}เพิ่มขึ้น...) ให้อ่านแล้วเข้าใจทันทีว่า
@@ -117,8 +123,8 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('warning', pct),
         icon: '⚠️',
         title: 'ไขมันในร่างกายเพิ่มขึ้น',
-        detail: `เพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนอาหารและการฝึก`,
-        deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
+        detail: `เพิ่มขึ้น ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ ${periodLabel} ลองทบทวนอาหารและการฝึก`,
+        deltaLabel: `↑ ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ · ${periodShort}`,
         actionLabel: 'ลองทบทวนอาหารและการฝึก',
         recentNote: recentConflictsUp ? `แนวโน้มระยะสั้นดีขึ้น — ${recentPeriod}ลดลง ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์` : undefined,
       })
@@ -162,13 +168,23 @@ export function computeHealthTrendInsights(params: {
       // กราฟดูขัดกันเล็กน้อย ทั้งที่จริงสองอย่างสอดคล้องกัน" — เพิ่ม actionLabel เฉพาะตอนน้ำหนักเพิ่มขึ้นจริง
       // (pct > 0) และมวลกล้ามเนื้อ (skeletal หรือ mass ช่วงเวลาเดียวกัน) ก็เพิ่มขึ้นด้วยจริง ไม่เดา — ใช้
       // skeletalMuscle ก่อน (ตัวชี้วัดหลักที่ใช้เทียบในจุดอื่นของหน้านี้) ถ้าไม่มีข้อมูล fallback ไป muscleMass
-      const muscleAlsoUp =
+      // v74: ฟีดแบ็ก "อยากให้ headline บอกตรงๆ ว่า 'แต่สัดส่วนดีขึ้น' ไม่ใช่แค่บรรทัดรอง" — ก่อนขึ้น title แบบ
+      // ฟันธงว่า "สัดส่วนดีขึ้น" ต้องมั่นใจว่าไขมันไม่ได้เพิ่มด้วย ไม่ใช่แค่กล้ามเนื้อเพิ่มอย่างเดียว (เดิมเช็คแค่
+      // กล้ามเนื้อ ไม่เช็คไขมันเลย ต่างจาก weightGainLooksLikeMuscle ที่การ์ดน้ำหนักใช้ ซึ่งเช็คทั้งคู่) — เพิ่ม
+      // เงื่อนไขไขมันไม่เพิ่ม (bodyFatPct ก่อน ถ้าไม่มีข้อมูล fallback bodyFatKg) ให้เข้มงวดเท่ากับจุดอื่น
+      const muscleUp =
         pct > 0 &&
         (params.skeletalMuscle
           ? pctChange(params.skeletalMuscle.first, params.skeletalMuscle.last) > 0
           : params.muscleMass
             ? pctChange(params.muscleMass.first, params.muscleMass.last) > 0
             : false)
+      const fatNotUp = params.bodyFatPct
+        ? params.bodyFatPct.last <= params.bodyFatPct.first
+        : params.bodyFatKg
+          ? params.bodyFatKg.last <= params.bodyFatKg.first
+          : false
+      const compositionImproving = muscleUp && fatNotUp
       insights.push({
         id: 'trend-weight',
         kind,
@@ -177,11 +193,10 @@ export function computeHealthTrendInsights(params: {
         // watch ที่สงวนไว้สำหรับกรณีที่รู้ทิศทางแล้วและกำลังไปผิดทาง
         tier: isGoodDirection === null ? 'tracking' : tierFor(kind, pct),
         icon: pct < 0 ? '📉' : '📈',
-        // v67: ฟีดแบ็ก "'สอดคล้องกับมวลกล้ามเนื้อที่เพิ่มขึ้น' อ่านแปลกๆ กับ tier 🟡 ควรติดตาม — เป็นวลีบอก
-        // ความสัมพันธ์ระหว่างตัวเลข ไม่ใช่คำแนะนำ" — เปลี่ยนเป็นกรอบคำแนะนำที่ตรงกับ tier ควรติดตาม (ติดตาม
-        // แนวโน้มต่อเนื่อง) แล้วต่อท้ายข้อเท็จจริงเดิม (มวลกล้ามเนื้อก็เพิ่มขึ้นเช่นกัน) เงื่อนไข muscleAlsoUp เดิมไม่เปลี่ยน
-        actionLabel: muscleAlsoUp ? 'ติดตามแนวโน้มต่อเนื่อง โดยมวลกล้ามเนื้อก็เพิ่มขึ้นเช่นกัน' : undefined,
-        title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
+        // v67/v74: title เปลี่ยนเป็น "แต่สัดส่วนดีขึ้น" เฉพาะตอน compositionImproving จริง (มั่นใจทั้งกล้ามเนื้อ
+        // เพิ่ม+ไขมันไม่เพิ่ม) actionLabel อธิบายหลักฐานที่มาของ headline นั้น ไม่พูดซ้ำ
+        actionLabel: compositionImproving ? 'มวลกล้ามเนื้อเพิ่มขึ้น ขณะที่มวลไขมันไม่เพิ่มขึ้น' : undefined,
+        title: pct < 0 ? 'น้ำหนักลดลง' : compositionImproving ? 'น้ำหนักเพิ่มขึ้น แต่สัดส่วนดีขึ้น' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${pct.toFixed(1)}% ${periodLabel}`,
         deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
       })
@@ -217,6 +232,10 @@ export function computeHealthTrendInsights(params: {
 
   if (params.bodyAge) {
     const pct = pctChange(params.bodyAge.first, params.bodyAge.last)
+    // v74: ฟีดแบ็ก "อายุร่างกาย +3.1% แปลกอยู่ — ถ้าคือ 38→39 ปี ควรแสดง ↑ 1 ปี ไม่ใช่ %" — pct (relative %
+    // change) ยังใช้ตัดสิน trigger/tier เหมือนเดิม แต่สิ่งที่แสดงเปลี่ยนเป็นส่วนต่างปีจริง (ปีเป็นหน่วยที่เข้าใจ
+    // ทันทีอยู่แล้ว ไม่ต้องแปลงเป็น % ให้ตีความยากขึ้น)
+    const yearsDelta = params.bodyAge.last - params.bodyAge.first
     if (pct <= -minPct) {
       insights.push({
         id: 'trend-bodyage-down',
@@ -224,8 +243,8 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('positive', pct),
         icon: '❤️',
         title: 'อายุร่างกายดีขึ้น',
-        detail: `อายุร่างกายลดลง ${Math.abs(pct).toFixed(1)}% ${periodLabel}`,
-        deltaLabel: `↓ ${Math.abs(pct).toFixed(1)}% · ${periodShort}`,
+        detail: `อายุร่างกายลดลง ${Math.abs(yearsDelta).toFixed(1)} ปี ${periodLabel}`,
+        deltaLabel: `↓ ${Math.abs(yearsDelta).toFixed(1)} ปี · ${periodShort}`,
         // v73: ฟีดแบ็ก "อายุร่างกาย +3.1% ไม่ชัดว่าคืออะไร" — ไม่มีจุดไหนในหน้านี้อธิบายค่านี้จริงๆ อยู่แล้ว
         // (กลไก ⓘ ที่ทำไว้ตั้งแต่ v7 ไม่มี IconStatCard ไหนใช้จริง) เพิ่มคำอธิบายสั้นๆ ตรงนี้แทน
         noteText: 'อายุร่างกาย (Body Age) ประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริงตามบัตร',
@@ -237,8 +256,8 @@ export function computeHealthTrendInsights(params: {
         tier: tierFor('warning', pct),
         icon: '⚠️',
         title: 'อายุร่างกายเพิ่มขึ้น',
-        detail: `อายุร่างกายเพิ่มขึ้น ${pct.toFixed(1)}% ${periodLabel} ลองทบทวนการนอนและการฝึก`,
-        deltaLabel: `↑ ${pct.toFixed(1)}% · ${periodShort}`,
+        detail: `อายุร่างกายเพิ่มขึ้น ${yearsDelta.toFixed(1)} ปี ${periodLabel} ลองทบทวนการนอนและการฝึก`,
+        deltaLabel: `↑ ${yearsDelta.toFixed(1)} ปี · ${periodShort}`,
         actionLabel: 'ลองทบทวนการนอนและการฝึก',
         noteText: 'อายุร่างกาย (Body Age) ประเมินจากองค์ประกอบร่างกาย ไม่ใช่อายุจริงตามบัตร',
       })
