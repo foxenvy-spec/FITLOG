@@ -1288,6 +1288,16 @@ export default function HealthPage() {
             </PremiumCard>
           )}
 
+          {/* v69: ฟีดแบ็ก "ควรมีชั้น 'What should I do' ต่อจาก Body Insights (why) — ไม่ใช่แค่ Data/Interpretation
+              แต่ต้องมี Action ด้วย" — RecommendationsCard มีอยู่แล้ว (การ์ดเดิมชื่อ 'คำแนะนำสำหรับคุณ' ที่แนะนำ
+              โปรแกรมฝึก/น้ำ/นอน ตาม insight ที่มี priority สูงสุด) แต่เดิมอยู่แค่แท็บ "แนวโน้ม" เท่านั้น — แท็บ
+              "ภาพรวม" (ที่เห็นเป็นค่าเริ่มต้นเสมอ) ไม่มีชั้น "What to do" เลย ย้ายมาแสดงตรงนี้ด้วย (โค้ด/ตรรกะเดิม
+              ทั้งหมด ไม่ได้สร้าง insight หรือคำแนะนำใหม่ที่ไม่มีข้อมูลรองรับ) ให้ flow ครบ Data → Why → Action
+              โดยไม่ต้องรื้อโครงสร้างหน้าใหม่ */}
+          {healthInsights.length > 0 && (
+            <RecommendationsCard insights={healthInsights} latestWeightKg={latest?.weight_kg ?? null} />
+          )}
+
           <OverviewTrendChart
             metrics={metrics}
             unit={unit}
