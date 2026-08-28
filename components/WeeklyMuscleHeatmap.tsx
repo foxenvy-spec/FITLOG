@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange } from '@/lib/dashboardStats'
+import { getWeekRange, computeMuscleBalance, balanceStatusTier, BALANCE_STATUS_LABEL } from '@/lib/dashboardStats'
 import { VOLUME_MUSCLES, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
@@ -37,11 +37,10 @@ const BALANCE_COLOR: Record<BalanceTier, string> = {
 }
 
 // ป้ายข้อความ + ลูกศรของ balance tier — ใช้ในแถบสรุปด้านล่างการ์ด (แทนที่ข้อความ AI Coach เดิม)
-const BALANCE_TIER_LABEL: Record<BalanceTier, string> = {
-  good: 'ดีเยี่ยม',
-  ok: 'ปานกลาง',
-  poor: 'ควรปรับปรุง',
-}
+// หมายเหตุ: label ใช้ BALANCE_STATUS_LABEL จาก lib/dashboardStats.ts (ตัวเดียวกับการ์ด WeeklyVolume)
+// เพื่อให้ตัวเลข/คำอธิบาย Balance ตรงกันทั้งสองการ์ด — เดิมการ์ดนี้คำนวณ Balance ด้วยสูตรของตัวเอง
+// (average deviation จากค่าอุดมคติ) ซึ่งให้ผลต่างจากสูตร coefficient-of-variation ที่ WeeklyVolume ใช้
+// ทำให้สองการ์ดโชว์ Balance % คนละค่ากับข้อมูลชุดเดียวกัน — เปลี่ยนมาใช้ computeMuscleBalance ร่วมกัน
 const BALANCE_TIER_ARROW: Record<BalanceTier, string> = {
   good: '↑',
   ok: '→',
@@ -128,10 +127,8 @@ export default function WeeklyMuscleHeatmap() {
   // ยิ่งกลุ่มไหนเบี่ยงจากค่านี้มาก (ฝึกหนักไปทางเดียว หรือไม่ฝึกเลย) คะแนนยิ่งลด
   const balance = useMemo(() => {
     if (!hasAnyData) return null
-    const idealPct = 100 / VOLUME_MUSCLES.length
-    const avgDeviation = stats.reduce((sum, s) => sum + Math.abs(s.pct - idealPct), 0) / stats.length
-    const pct = Math.max(0, Math.min(100, Math.round(100 - (avgDeviation / idealPct) * 100)))
-    return { pct, tier: balanceTier(pct) }
+    const pct = computeMuscleBalance(stats.map((s) => s.pct))
+    return { pct, tier: balanceStatusTier(pct) }
   }, [stats, hasAnyData])
 
   // กลุ่มเด่น/ด้อย — จัดอันดับตาม % ส่วนแบ่งเซ็ตของสัปดาห์นี้ (สมมติฐาน: เด่น = 3 อันดับบนสุด,
@@ -289,13 +286,13 @@ export default function WeeklyMuscleHeatmap() {
       {!isLoading && hasAnyData && balance && (
         <div className="border-t border-line px-2 py-3 grid grid-cols-[1fr_1fr_1.6fr_1fr_1fr] gap-1">
           <div className="text-center px-1">
-            <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
+            <p className="text-[10px] text-muted">จำนวนเซ็ต</p>
             <p className="font-mono font-bold text-lg text-ink leading-tight mt-0.5">
               {totalSets} <span className="text-xs font-sans font-normal text-muted">เซ็ต</span>
             </p>
           </div>
           <div className="text-center border-l border-line px-1">
-            <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
+            <p className="text-[10px] text-muted">จำนวนท่า</p>
             <p className="font-mono font-bold text-lg text-ink leading-tight mt-0.5">
               {totalExercises} <span className="text-xs font-sans font-normal text-muted">ท่า</span>
             </p>
@@ -308,7 +305,7 @@ export default function WeeklyMuscleHeatmap() {
                 style={{ backgroundColor: `${BALANCE_COLOR[balance.tier]}26` }}
               >
                 <span className="font-bold">{BALANCE_TIER_ARROW[balance.tier]}</span>
-                {BALANCE_TIER_LABEL[balance.tier]}
+                {BALANCE_STATUS_LABEL[balance.tier]}
               </span>
             </p>
           </div>
