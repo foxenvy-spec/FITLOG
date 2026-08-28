@@ -3953,11 +3953,12 @@ function MuscleFatBarRow({
           ว่าควรขยายไปเท่าไหร่ เสี่ยง fabricate ค่าใหม่) เปลี่ยนคำแทน: "ช่วงที่เหมาะสม" (ฟังดูเหมือนขอบเขตต้องอยู่
           ใน) → "ค่าอ้างอิง" (reference — สื่อว่าเป็นแนวเทียบ ไม่ใช่กฎตายตัวที่ต้องอยู่ในเป๊ะๆ) ใช้ร่วมกันทั้ง 3
           แถว (Weight/Skeletal Muscle/Fat Mass) เพื่อความสม่ำเสมอ ไม่ใช่แก้แค่แถวเดียว */}
-      <div className="flex justify-between text-[10px] text-muted mt-1.5">
-        <span>{low.toFixed(1)}</span>
-        <span className="italic">(ค่าอ้างอิง)</span>
-        <span>{high.toFixed(1)}</span>
-      </div>
+      {/* v78: ฟีดแบ็ก "อยากให้รวมเป็นบรรทัดเดียว 'ค่าอ้างอิง 22.9–28.0 kg' แทนเลข 2 ฝั่ง + label กลาง แยกกัน 3
+          จุด" — เปลี่ยนจาก 3-column spread (low ซ้าย / (ค่าอ้างอิง) กลาง / high ขวา) เป็นบรรทัดเดียวรวมกัน
+          กึ่งกลาง อ่านเป็นประโยคเดียวชัดเจนกว่า (เนื้อหาเดียวกันเป๊ะ ไม่ได้เปลี่ยนตัวเลข low/high) */}
+      <p className="text-center text-[10px] text-muted mt-1.5">
+        ค่าอ้างอิง {low.toFixed(1)}–{high.toFixed(1)} {unit}
+      </p>
     </div>
   )
 }
