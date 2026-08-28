@@ -3895,14 +3895,25 @@ function MuscleFatBarRow({
   const valuePct = pct(value)
   const zone = value < low ? 'Low' : value > high ? 'High' : 'Standard'
   const meta = MUSCLE_FAT_META[label] ?? { Icon: ScaleIcon, bg: 'bg-steel/15', fg: 'text-steel', color: '#6C8CA8', iconKey: 'ruler', direction: 'neutral' as Direction }
-  const interpretation =
+  // v79: ฟีดแบ็ก "28.1 kg · ดี ✓ ข้าง 22.9-28.0 kg — เห็น 28.1 > 28.0 แต่ status เป็น 'ดี' ขัดกันทางสายตา" —
+  // ค่า low/high มาจาก skeletal_muscle_range_low/high ที่ผู้ใช้กรอกตรงจากเครื่องชั่ง (ค่าเดียวกับที่เครื่องพิมพ์
+  // เป็น "Standard range" บนใบผล) — 28.0 จึงเป็นขอบบนของช่วง Standard จริง ไม่ใช่แค่ reference point ลอยๆ — เดิม
+  // interpretation แสดงแค่ "เพิ่มขึ้น X kg" (เดลต้า) เมื่อมีข้อมูลเดลต้า ซึ่งบังจุดสำคัญไป: ไม่บอกเลยว่าค่าอยู่นอก
+  // ช่วงอ้างอิง ผู้ใช้เลยเห็นแค่ badge "ดี ✓" ลอยๆ ข้างตัวเลขที่เกิน 28.0 — เปลี่ยนให้แสดงทั้งเดลต้า "และ" ตำแหน่ง
+  // เทียบค่าอ้างอิง (ต่อกันด้วย " · ") เมื่อไม่ใช่ Standard เสมอ ไม่ใช่แค่ตอนไม่มีเดลต้า — ฝั่ง favorable ใช้คำว่า
+  // "เล็กน้อย" (แทน "สูงกว่าช่วงมาตรฐาน" เดิมที่มีคำว่า "ช่วง" ด้วย — เอาออกให้ตรงกับ "ค่าอ้างอิง" ด้านล่างบรรทัดถัดไป)
+  const zoneIsFavorable = zone === 'High' ? meta.direction === 'higherBetter' : zone === 'Low' ? meta.direction === 'lowerBetter' : false
+  const zoneText =
+    zone === 'Standard'
+      ? null
+      : zoneIsFavorable
+        ? `${zone === 'High' ? 'สูงกว่า' : 'ต่ำกว่า'}ค่าอ้างอิงเล็กน้อย`
+        : `${zone === 'High' ? 'สูงกว่า' : 'ต่ำกว่า'}ค่าอ้างอิง`
+  const deltaText =
     delta !== null && delta !== undefined && Math.abs(delta) >= 0.1
       ? `${delta < 0 ? 'ลดลง' : 'เพิ่มขึ้น'} ${Math.abs(delta).toFixed(1)} ${unit}${periodLabel ? ` ${periodLabel}` : ''}`
-      : zone === 'Standard'
-        ? 'อยู่ในช่วงมาตรฐาน'
-        : zone === 'Low'
-          ? 'ต่ำกว่าช่วงมาตรฐาน'
-          : 'สูงกว่าช่วงมาตรฐาน'
+      : null
+  const interpretation = [deltaText, zoneText].filter((s): s is string => s !== null).join(' · ') || 'อยู่ในเกณฑ์มาตรฐาน'
 
   return (
     <div className={primary ? '' : 'opacity-90'}>

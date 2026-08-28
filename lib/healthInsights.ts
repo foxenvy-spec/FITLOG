@@ -138,7 +138,10 @@ export function computeHealthTrendInsights(params: {
         title: 'ไขมันในร่างกายสูงขึ้นในระยะยาว',
         detail: `เพิ่มขึ้น ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ ${periodLabel} ลองทบทวนอาหารและการฝึก`,
         deltaLabel: `↑ ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ · ${periodShort}`,
-        actionLabel: 'ลองทบทวนอาหารและการฝึก',
+        // v79: ฟีดแบ็ก "Insight ควรบอกว่าเกิดอะไรขึ้น ส่วน Recommendation บอกว่าควรทำอะไร — 'ลองทบทวนอาหารและ
+        // การฝึก' ซ้ำกับคำแนะนำ 'เพิ่มการใช้พลังงาน' ด้านล่างอยู่แล้ว ไม่จำเป็นต้องพูดซ้ำใน Insight" — เอา
+        // actionLabel ออก (ยังมีลิงก์ "ดูคำแนะนำ →" อยู่ — ดู InsightCard.tsx ที่แก้เงื่อนไขไม่ให้ผูกกับ
+        // actionLabel อีกต่อไป เปลี่ยนไปผูกกับ kind === 'warning' แทน)
         // v76: เอา "แต่" ออก — title พูดกรอบเวลาแทนแล้ว
         // v77: recentTrendLabel/Value คู่กัน แทน recentNote ประโยคเดียว (ดูคอมเมนต์เดียวกันด้านบน)
         recentTrendLabel: recentConflictsUp ? 'แนวโน้มล่าสุดดีขึ้น' : undefined,
@@ -219,8 +222,18 @@ export function computeHealthTrendInsights(params: {
         // compositionImproving เดิม ไม่เปลี่ยน — ยังต้องมั่นใจทั้งกล้ามเนื้อเพิ่ม+ไขมันไม่เพิ่มก่อนพูดแบบนี้)
         // v75: ฟีดแบ็ก "ไม่ต้องมี 'ดูคำแนะนำ' ก็ได้ เพราะไม่ได้มีปัญหาเฉพาะที่ต้องแก้" — compositionImproving เป็น
         // ข่าวดี ไม่ใช่คำเตือน ไม่ควรชวนกดไปหาคำแนะนำที่ไม่มีอยู่จริงสำหรับกรณีนี้
+        // v79: ฟีดแบ็ก "ขาด context — มวลกล้ามเนื้อเพิ่มขึ้น ขณะที่มวลไขมันลดลง" ขอกลับมาอีกครั้ง แต่ตรวจข้อมูลจริง
+        // แล้วพบว่าในช่วง 90 วันเดียวกันนี้ไขมันไม่ได้ลดลงจริง (compositionImproving = false เพราะ fatNotUp เป็น
+        // false) — ผู้ใช้เองยืนยันไปแล้วในรอบก่อนว่าให้ใช้ข้อมูล 90 วันเดียวกัน ไม่ผสมกับแนวโน้ม 7 วันล่าสุด —
+        // จุดกึ่งกลางที่ยังพูดความจริงได้: "กล้ามเนื้อเพิ่มขึ้น" เป็นจริงในช่วง 90 วันเดียวกัน (muscleUp) แม้ไขมัน
+        // จะไม่ได้ลดลงพร้อมกันก็ตาม — โชว์ข้อเท็จจริงส่วนกล้ามเนื้ออย่างเดียว ไม่พูดถึงไขมันเลยถ้าไม่ใช่ fatNotUp
+        // (ไม่ fabricate ว่าไขมันลดลงทั้งที่ไม่จริงในกรอบเวลาเดียวกัน)
         hideRecommendationLink: compositionImproving,
-        actionLabel: compositionImproving ? 'แต่อัตราส่วนกล้ามเนื้อและไขมันมีแนวโน้มดีขึ้น' : undefined,
+        actionLabel: compositionImproving
+          ? 'แต่อัตราส่วนกล้ามเนื้อและไขมันมีแนวโน้มดีขึ้น'
+          : muscleUp
+            ? 'มวลกล้ามเนื้อก็เพิ่มขึ้นในช่วงเดียวกัน'
+            : undefined,
         title: pct < 0 ? 'น้ำหนักลดลง' : 'น้ำหนักเพิ่มขึ้น',
         detail: `น้ำหนักเปลี่ยนแปลง ${Math.abs(pointDelta).toFixed(1)} ${weightUnit} ${periodLabel}`,
         deltaLabel: `${pct < 0 ? '↓' : '↑'} ${Math.abs(pointDelta).toFixed(1)} ${weightUnit} · ${periodShort}`,

@@ -126,8 +126,13 @@ export default function InsightCard({
             )}
             {/* v75: ฟีดแบ็ก "ไม่ต้องมีดูคำแนะนำ ก็ได้ ถ้าไม่ได้มีปัญหาเฉพาะที่ต้องแก้" — เพิ่มเช็ค
                 hideRecommendationLink (เช่น trend-weight ตอนสัดส่วนดีขึ้น actionLabel เป็นแค่คำอธิบาย
-                ไม่ใช่คำแนะนำที่ต้องตามไปดูจริง) */}
-            {recommendationsHref && insight.actionLabel && !insight.hideRecommendationLink && (
+                ไม่ใช่คำแนะนำที่ต้องตามไปดูจริง)
+                v79: ฟีดแบ็ก "Insight บอกว่าเกิดอะไรขึ้น ไม่ต้องพูดซ้ำกับ Recommendation ด้านล่าง — เอา actionLabel
+                ของ Body Fat ออกไปแล้ว" — เดิมลิงก์นี้โชว์ตามมี insight.actionLabel เท่านั้น พอเอา actionLabel ออก
+                ลิงก์ก็หายไปด้วยทั้งที่ยังอยากให้กดไปหาคำแนะนำได้ — เปลี่ยนเงื่อนไขเป็น insight.kind === 'warning'
+                แทน (ยังมี actionLabel ก็โชว์ได้เหมือนเดิม เพราะ warning-kind insight ทุกใบตอนนี้มี actionLabel
+                อยู่แล้วยกเว้น bodyfat-up ที่เพิ่งเอาออก) ไม่ผูกกับข้อความในการ์ดอีกต่อไป */}
+            {recommendationsHref && insight.kind === 'warning' && !insight.hideRecommendationLink && (
               <a href={recommendationsHref} className="inline-block text-[10.5px] font-medium mt-1" style={{ color: style.chipColor }}>
                 ดูคำแนะนำ →
               </a>
