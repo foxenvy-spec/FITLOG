@@ -154,8 +154,11 @@ export default function WeeklyMuscleHeatmap() {
     return balanceTier(score)
   }
 
+  // v1: ฟีดแบ็ก "User ต้องการตอบคำถามเดียว: สัปดาห์นี้เล่นกล้ามเนื้อส่วนไหนมากที่สุด?" — แท็บ "ปริมาณ" เดิม
+  // ใช้ DISPLAY_ORDER (ลำดับกายวิภาคคงที่ อก→หลัง→ไหล่→...) ไม่ได้เรียงตามปริมาณเลย ทั้งที่ชื่อแท็บคือ "ปริมาณ"
+  // — เปลี่ยนให้เรียงจากเซ็ตเยอะสุดไปน้อยสุดจริงๆ ตรงกับชื่อแท็บและคำถามที่ผู้ใช้ต้องการคำตอบ
   const displayGroups = useMemo(() => {
-    if (view === 'volume') return DISPLAY_ORDER
+    if (view === 'volume') return [...stats].sort((a, b) => b.pct - a.pct).map((s) => s.group)
     return [...stats].sort((a, b) => Math.abs(b.pct - idealPct) - Math.abs(a.pct - idealPct)).map((s) => s.group)
   }, [view, stats, idealPct])
 
