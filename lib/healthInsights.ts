@@ -120,7 +120,11 @@ export function computeHealthTrendInsights(params: {
         // v76: ฟีดแบ็ก "ตอนนี้ title เปลี่ยนไปพูดถึง 'ระยะยาว' ตรงๆ แล้ว (ดู trend-bodyfat-up) ไม่ต้องพึ่ง 'แต่'
         // เป็น bridge อีกต่อไป — เอาออก ให้สั้นตรงประเด็นกว่า" — เอา "แต่" ออกอีกครั้ง (รอบนี้เพราะ title ทำหน้าที่
         // แยก timeframe ให้แล้วตั้งแต่ต้นประโยค ไม่ใช่กลับไปกังวลเรื่อง "ฟังดูเหมือนแก้ตัว" แบบ v66)
-        recentNote: recentConflictsDown ? `แนวโน้มล่าสุดแย่ลง ↑ ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์ ${recentPeriod}` : undefined,
+        // v77: ฟีดแบ็ก "Card ยาวกว่าใบอื่น — แยก label กับตัวเลขเป็น mini-block เหมือน deltaLabel หลัก" — เปลี่ยน
+        // จาก recentNote ประโยคเดียวเป็น recentTrendLabel/Value คู่กัน (ดู InsightCard.tsx)
+        recentTrendLabel: recentConflictsDown ? 'แนวโน้มล่าสุดแย่ลง' : undefined,
+        recentTrendValue: recentConflictsDown ? `↑ ${recentBodyFat!.toFixed(1)} จุดเปอร์เซ็นต์ ${recentPeriod}` : undefined,
+        recentTrendGood: recentConflictsDown ? false : undefined,
       })
     } else if (pct >= minPct) {
       insights.push({
@@ -130,13 +134,16 @@ export function computeHealthTrendInsights(params: {
         icon: '⚠️',
         // v76: ฟีดแบ็ก "ผู้ใช้เห็น 🔴 แล้วตามด้วย 'ดีขึ้น' รู้สึกขัดกัน — title ควรบอกกรอบเวลาตรงๆ" — เปลี่ยนจาก
         // "ไขมันในร่างกายเพิ่มขึ้น" (ไม่บอกกรอบเวลา) เป็น "...สูงขึ้นในระยะยาว" ให้ผู้ใช้รู้ทันทีว่า tier 🔴 นี้
-        // ตัดสินจาก 90 วัน ส่วน recentNote ด้านล่างเป็นแนวโน้มล่าสุด (7 วัน) คนละกรอบเวลากัน ไม่ใช่ระบบขัดแย้งกัน
+        // ตัดสินจาก 90 วัน ส่วน recentTrend ด้านล่างเป็นแนวโน้มล่าสุด (7 วัน) คนละกรอบเวลากัน ไม่ใช่ระบบขัดแย้งกัน
         title: 'ไขมันในร่างกายสูงขึ้นในระยะยาว',
         detail: `เพิ่มขึ้น ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ ${periodLabel} ลองทบทวนอาหารและการฝึก`,
         deltaLabel: `↑ ${pointDelta.toFixed(1)} จุดเปอร์เซ็นต์ · ${periodShort}`,
         actionLabel: 'ลองทบทวนอาหารและการฝึก',
-        // v76: เอา "แต่" ออก (ดูคอมเมนต์เดียวกันที่ trend-bodyfat-down ด้านบน) — title พูดกรอบเวลาแทนแล้ว
-        recentNote: recentConflictsUp ? `แนวโน้มล่าสุดดีขึ้น ↓ ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์ ${recentPeriod}` : undefined,
+        // v76: เอา "แต่" ออก — title พูดกรอบเวลาแทนแล้ว
+        // v77: recentTrendLabel/Value คู่กัน แทน recentNote ประโยคเดียว (ดูคอมเมนต์เดียวกันด้านบน)
+        recentTrendLabel: recentConflictsUp ? 'แนวโน้มล่าสุดดีขึ้น' : undefined,
+        recentTrendValue: recentConflictsUp ? `↓ ${Math.abs(recentBodyFat!).toFixed(1)} จุดเปอร์เซ็นต์ ${recentPeriod}` : undefined,
+        recentTrendGood: recentConflictsUp ? true : undefined,
       })
     }
   }

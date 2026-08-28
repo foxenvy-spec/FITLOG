@@ -107,8 +107,23 @@ export default function InsightCard({
             {insight.actionLabel && <p className="text-[10.5px] text-muted mt-px">{insight.actionLabel}</p>}
             {/* v60: ฟีดแบ็ก "Top Summary กับ Body Insights ขัดกันในสายตา (คนละช่วงเวลา) — บอกแนวโน้มล่าสุด
                 ด้วยจะกลายเป็น insight ที่ฉลาดขึ้น" — optional เหมือน deltaLabel มีเฉพาะตอนทิศทางล่าสุดสวนทาง
-                ทิศทางระยะยาวของ insight นี้จริงๆ */}
-            {insight.recentNote && <p className="text-[10.5px] text-steel mt-0.5">{insight.recentNote}</p>}
+                ทิศทางระยะยาวของ insight นี้จริงๆ
+                v77: ฟีดแบ็ก "Card นี้ยาวกว่าใบอื่น อยากได้ hierarchy ชัดกว่า scan ง่ายกว่า paragraph ยาวๆ" —
+                recentTrendLabel/Value (ถ้ามี) แสดงเป็น mini-block แยก label+ตัวเลข เหมือน deltaLabel หลัก
+                แทน recentNote ประโยคเดียว — recentNote ยังใช้ fallback ได้ถ้าจุดเรียกใช้อื่นยังส่งมาแบบเดิม */}
+            {insight.recentTrendLabel && insight.recentTrendValue ? (
+              <div className="mt-1.5 pt-1.5 border-t border-line/40">
+                <p className="text-[10px] text-muted">{insight.recentTrendLabel}</p>
+                <p
+                  className="text-xs font-mono font-semibold mt-0.5"
+                  style={{ color: insight.recentTrendGood === false ? '#C1503A' : insight.recentTrendGood ? '#8CB264' : style.chipColor }}
+                >
+                  {insight.recentTrendValue}
+                </p>
+              </div>
+            ) : (
+              insight.recentNote && <p className="text-[10.5px] text-steel mt-0.5">{insight.recentNote}</p>
+            )}
             {/* v75: ฟีดแบ็ก "ไม่ต้องมีดูคำแนะนำ ก็ได้ ถ้าไม่ได้มีปัญหาเฉพาะที่ต้องแก้" — เพิ่มเช็ค
                 hideRecommendationLink (เช่น trend-weight ตอนสัดส่วนดีขึ้น actionLabel เป็นแค่คำอธิบาย
                 ไม่ใช่คำแนะนำที่ต้องตามไปดูจริง) */}

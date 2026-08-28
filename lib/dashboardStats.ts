@@ -554,6 +554,15 @@ export interface Insight {
   // insight ใช้ actionLabel เป็นแค่คำอธิบายหลักฐาน ไม่ใช่คำเตือนที่ต้องมีคำแนะนำจริง (เช่น trend-weight ตอน
   // compositionImproving) — true = ซ่อนลิงก์แม้มี actionLabel, ไม่ระบุ/false = พฤติกรรมเดิม
   hideRecommendationLink?: boolean
+  // v77: ฟีดแบ็ก "Body Fat card ยาวกว่าใบอื่นมาก อยากได้ hierarchy ชัดกว่า — แนวโน้มล่าสุดดีขึ้น เป็นบรรทัด
+  // label แยกจากตัวเลข ↓0.4 จุดเปอร์เซ็นต์ · 7 วัน แบบเดียวกับ deltaLabel หลัก" — แยก recentNote (ประโยคเดียว
+  // รวมกัน) เป็น 2 ฟิลด์: recentTrendLabel (แนวโน้มล่าสุดดีขึ้น/แย่ลง) + recentTrendValue (↓0.4 จุดเปอร์เซ็นต์ ·
+  // 7 วัน — สไตล์ chip ตัวหนา สีตามทิศทางดี/แย่ เหมือน deltaLabel) แทนประโยคยาวบรรทัดเดียว — recentNote
+  // (string เดิม) ยังอยู่ในระบบเผื่อจุดใช้อื่นในอนาคต แต่ไม่มีจุดไหนตั้งค่าแล้วตอนนี้ (bodyFatPct ทั้ง 2 กรณี
+  // เปลี่ยนมาใช้ 2 ฟิลด์ใหม่นี้แทน)
+  recentTrendLabel?: string
+  recentTrendValue?: string
+  recentTrendGood?: boolean
 }
 
 // เทียบเซ็ตต่อกลุ่มกล้ามเนื้อของสัปดาห์นี้กับสัปดาห์ที่แล้ว แจ้งเฉพาะกลุ่มที่วอลุ่มเพิ่มขึ้นชัดเจน (>=15%)
