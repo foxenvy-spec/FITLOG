@@ -526,7 +526,11 @@ export interface Insight {
   // v29: ฟีดแบ็ก "Insight ควรเรียงจาก ต้องแก้ → ควรรู้ → ทำได้ดี ไม่ใช่แค่ positive/warning 2 ระดับ" — ใช้
   // เฉพาะ computeHealthTrendInsights (lib/healthInsights.ts) ตอนนี้ ตัวสร้าง insight อื่น (เช่น
   // computeVolumeTrendInsights ด้านล่าง) ไม่ใส่ก็ได้ ไม่บังคับ (optional) เพื่อไม่กระทบจุดใช้เดิม
-  tier?: 'attention' | 'watch' | 'good'
+  // v68: ฟีดแบ็ก "แยก ℹ️ Tracking ออกจาก 🟡 ควรติดตาม — ตอนนี้ทั้งคู่ใช้ tier 'watch' รวมกัน ทั้งที่ 'ควรติดตาม'
+  // ควรมีสัญญาณเตือนจริง (เช่น ไขมัน 90 วันขึ้นแตะเกณฑ์) ส่วนน้ำหนักที่ไม่มีเป้าหมายกำกับทิศทาง (isGoodDirection
+  // === null ใน computeHealthTrendInsights) เป็นแค่ข้อมูลติดตามเฉยๆ ไม่ได้เตือนอะไร" — เพิ่ม 'tracking' เป็น
+  // tier ที่ 4 ต่อท้าย watch ใน priority order (attention > watch > tracking > good)
+  tier?: 'attention' | 'watch' | 'tracking' | 'good'
   // v54: ฟีดแบ็ก "การ์ด Insight อ่านเหมือนรายงาน ไม่ใช่ Dashboard — detail เป็น paragraph ยาว อยากได้
   // ↑3.7% · 90 วัน แบบ chip สั้นๆ แยกจากคำแนะนำ" — optional เหมือน tier: มีเฉพาะ computeHealthTrendInsights
   // ตัวสร้าง insight อื่น (เช่น computeVolumeTrendInsights) ไม่ใส่ = undefined = InsightCard fallback ไปโชว์

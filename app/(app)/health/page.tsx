@@ -3893,7 +3893,7 @@ function MuscleFatBarRow({
       </div>
       <div className="flex justify-between text-[10px] text-muted mt-1.5">
         <span>{low.toFixed(1)}</span>
-        <span className="italic">(ideal range)</span>
+        <span className="italic">(ช่วงที่เหมาะสม)</span>
         <span>{high.toFixed(1)}</span>
       </div>
     </div>

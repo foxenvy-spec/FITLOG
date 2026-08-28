@@ -35,7 +35,9 @@ export function summarizeHealthScore(items: ScoredMetric[]) {
 
 // v29: ฟีดแบ็ก "Insight 4 การ์ดควรเรียงจาก ต้องแก้ → ควรรู้ → ทำได้ดี ให้เป็น Coach ไม่ใช่แค่ Report" —
 // ลำดับการแสดงผล ไม่ใช่แค่การเรียงตามลำดับที่ตรวจพบ (bodyFat -> muscle -> weight -> bodyAge เดิม)
-const TIER_ORDER: Record<'attention' | 'watch' | 'good', number> = { attention: 0, watch: 1, good: 2 }
+// v68: ฟีดแบ็ก "แยก ℹ️ Tracking ออกจาก 🟡 ควรติดตาม" — เพิ่ม tracking แทรกระหว่าง watch กับ good (สัญญาณเตือน
+// จริง > ข้อมูลติดตามเฉยๆ > ทำได้ดี)
+const TIER_ORDER: Record<'attention' | 'watch' | 'tracking' | 'good', number> = { attention: 0, watch: 1, tracking: 2, good: 3 }
 
 // v49: ฟีดแบ็ก "Top Summary บอก ↓0.4% ไขมัน จากสัปดาห์ที่แล้ว แต่ Insight ด้านล่างบอก ไขมันเพิ่มขึ้น 3.7%
 // ทำให้ผู้ใช้สงสัยว่าตัวเลขไหนถูก — สาเหตุจริงคือคนละฐานเวลากันเลย: Top Summary ใช้ fieldDelta (ล่าสุด vs
@@ -170,7 +172,10 @@ export function computeHealthTrendInsights(params: {
       insights.push({
         id: 'trend-weight',
         kind,
-        tier: isGoodDirection === null ? 'watch' : tierFor(kind, pct),
+        // v68: ฟีดแบ็ก "แยก ℹ️ Tracking ออกจาก 🟡 ควรติดตาม" — น้ำหนักที่ไม่มีเป้าหมายกำกับทิศทาง (isGoodDirection
+        // === null) ไม่ได้มีสัญญาณเตือนอะไรจริง แค่ยังไม่รู้ว่าทิศไหนดี ควรเป็น tier กลาง (tracking) แยกจาก
+        // watch ที่สงวนไว้สำหรับกรณีที่รู้ทิศทางแล้วและกำลังไปผิดทาง
+        tier: isGoodDirection === null ? 'tracking' : tierFor(kind, pct),
         icon: pct < 0 ? '📉' : '📈',
         // v67: ฟีดแบ็ก "'สอดคล้องกับมวลกล้ามเนื้อที่เพิ่มขึ้น' อ่านแปลกๆ กับ tier 🟡 ควรติดตาม — เป็นวลีบอก
         // ความสัมพันธ์ระหว่างตัวเลข ไม่ใช่คำแนะนำ" — เปลี่ยนเป็นกรอบคำแนะนำที่ตรงกับ tier ควรติดตาม (ติดตาม

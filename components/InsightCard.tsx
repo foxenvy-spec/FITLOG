@@ -14,9 +14,13 @@ const KIND_STYLE: Record<Insight['kind'], { border: string; accent: string; chip
 // v63: ฟีดแบ็ก "Body Fat 25.1% ถูกจัดว่า 'ปกติ' (ตามเกณฑ์สุขภาพทั่วไป) แต่ Insight บอก 'ควรแก้' — คำว่า
 // 'แก้' แรงไปเมื่อเทียบกับสถานะปกติ ทำให้ดูขัดกัน ทั้งที่ 'ควรแก้' ในที่นี้หมายถึงเทียบกับเป้าหมายส่วนตัว ไม่ใช่
 // ผิดปกติทางสุขภาพ" — เปลี่ยนจาก "ควรแก้" เป็น "ควรปรับปรุง" (นุ่มกว่า สื่อว่ายังห่างจากเป้าหมาย ไม่ใช่ผิดปกติ)
-const TIER_STYLE: Record<'attention' | 'watch' | 'good', { border: string; accent: string; chipBg: string; chipColor: string; label: string }> = {
+// v68: ฟีดแบ็ก "อยากได้ tier ที่ 4 แยกจาก 🟡 ควรติดตาม สำหรับ insight ที่เป็นแค่ข้อมูลติดตามเฉยๆ ไม่มีสัญญาณ
+// เตือนจริง (เช่น น้ำหนักเพิ่มที่ไม่มีเป้าหมายกำกับทิศทาง)" — เพิ่ม tracking ใช้สี steel (neutral tier ตามระบบสี
+// ที่ตกลงกันไว้) แยกจาก amber ของ watch ที่ยังสงวนไว้สำหรับสัญญาณเตือนจริงเท่านั้น
+const TIER_STYLE: Record<'attention' | 'watch' | 'tracking' | 'good', { border: string; accent: string; chipBg: string; chipColor: string; label: string }> = {
   attention: { border: 'border-l-rust', accent: 'text-rusttext', chipBg: '#C1503A22', chipColor: '#C1503A', label: '🔴 ควรปรับปรุง' },
   watch: { border: 'border-l-amber', accent: 'text-amber', chipBg: '#E8A33D22', chipColor: '#E8A33D', label: '🟡 ควรติดตาม' },
+  tracking: { border: 'border-l-steel', accent: 'text-steel', chipBg: '#6C8CA822', chipColor: '#6C8CA8', label: 'ℹ️ ติดตามข้อมูล' },
   good: { border: 'border-l-moss', accent: 'text-moss', chipBg: '#7A9B5722', chipColor: '#7A9B57', label: '🟢 ทำได้ดี' },
 }
 
