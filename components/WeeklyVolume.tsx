@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, volumeStatus, type VolumeStatus, computeMuscleBalance, balanceStatusTier, BALANCE_STATUS_LABEL } from '@/lib/dashboardStats'
+import { getWeekRange, volumeStatus, type VolumeStatus } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
@@ -21,14 +21,6 @@ const STATUS_COLOR: Record<VolumeStatus, string> = {
   onTrack: '#E8A33D', // amber — กำลังไปได้ดี
   met: '#7A9B57', // moss — ถึงเป้าหมายแล้ว (รวมถึงทำเกินเป้าด้วย)
 }
-
-// สีของแถบสรุป Balance Score ด้านล่างการ์ด (มาแทนที่การ์ด MuscleShareCard เดิมที่ถูกลบไปเพราะ
-// ซ้ำซ้อนกัน — ใช้โทนสีเดียวกับ STATUS_COLOR ด้านบนเพื่อความสม่ำเสมอ)
-const BALANCE_TIER_COLOR = {
-  good: '#7A9B57', // moss
-  ok: '#E8A33D', // amber
-  poor: '#C1503A', // rust
-} as const
 
 export default function WeeklyVolume() {
   const supabase = createClient()
@@ -81,12 +73,12 @@ export default function WeeklyVolume() {
       })
     : []
 
-  // สรุปท้ายการ์ด (แทนที่การ์ด MuscleShareCard เดิม ซึ่งซ้ำซ้อนกับการ์ดนี้ — ทั้งคู่คำนวณจาก
-  // เซ็ตต่อกลุ่มกล้ามเนื้อสัปดาห์นี้ชุดเดียวกัน) — รวมเซ็ตทั้งหมด + Balance Score
+  // สรุปท้ายการ์ด — รวมเซ็ตทั้งหมด + จำนวนกลุ่มที่ถึงเป้าหมายแล้ว (เดิมมี Balance Score ตรงนี้ด้วย
+  // แต่ซ้ำกับ Balance % ในการ์ด Graphic Muscle Heatmap ที่คำนวณจากเซ็ตต่อกลุ่มชุดเดียวกัน จนบางสัปดาห์
+  // ตัวเลขไม่ตรงกัน (ใช้คนละสูตร) — เอาออกจากการ์ดนี้ ให้ Balance เป็นของ Muscle Heatmap อย่างเดียว
+  // ส่วนการ์ดนี้เน้นความคืบหน้าเทียบเป้าหมายส่วนตัวแทน ซึ่งเป็นข้อมูลเฉพาะของการ์ดนี้ ไม่ซ้ำที่ไหน)
   const totalSets = rows.reduce((sum, r) => sum + r.sets, 0)
-  const balanceScore = totalSets > 0 ? computeMuscleBalance(rows.map((r) => (r.sets / totalSets) * 100)) : 0
-  const balanceTier = balanceStatusTier(balanceScore)
-  const balanceColor = BALANCE_TIER_COLOR[balanceTier]
+  const metCount = rows.filter((r) => r.status === 'met').length
 
   return (
     <PremiumCard className="overflow-hidden">
@@ -175,7 +167,7 @@ export default function WeeklyVolume() {
 
       {!loading && (
         <div className="px-4 pb-3.5">
-          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
+          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/5">
             <div className="text-center">
               <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
               <p className="font-mono text-sm text-ink mt-0.5">
@@ -183,15 +175,9 @@ export default function WeeklyVolume() {
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] text-muted">Balance Score</p>
+              <p className="text-[10px] text-muted">ถึงเป้าหมายแล้ว</p>
               <p className="font-mono text-sm text-ink mt-0.5">
-                {balanceScore} <span className="text-[10px] text-muted font-sans">/100</span>
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-[10px] text-muted">สถานะ</p>
-              <p className="font-display text-xs tracked uppercase mt-0.5" style={{ color: balanceColor }}>
-                {BALANCE_STATUS_LABEL[balanceTier]}
+                {metCount} <span className="text-[10px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
               </p>
             </div>
           </div>
