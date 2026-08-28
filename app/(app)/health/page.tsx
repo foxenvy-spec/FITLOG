@@ -1047,6 +1047,16 @@ export default function HealthPage() {
           ? 'มวลกล้ามเนื้อเพิ่มขึ้นต่อเนื่อง'
           : null
 
+  // v80: ฟีดแบ็ก "93% ดีมาก ข้างบน กับ 🔴 ควรปรับปรุง 2 ใบด้านล่าง — user อาจสงสัยว่าตกลงสุขภาพดีหรือไม่ดี" —
+  // เพิ่มบรรทัดเชื่อมสั้นๆ ใต้ summary เดิม บอกจำนวนจุดที่เป็น tier attention จริง (นับจาก healthInsights ที่
+  // คำนวณอยู่แล้ว ไม่ fabricate ตัวเลข) ไม่โชว์เลยถ้าไม่มีจุดที่ต้องติดตาม (attentionCount === 0) — คำนำหน้า
+  // "ภาพรวมดีขึ้น"/"ภาพรวมทรงตัว" อิงจาก healthScoreMonthDeltaPct จริง ไม่เดา (null/0 = ใช้ "ภาพรวม" เฉยๆ)
+  const attentionCount = healthInsights.filter((i) => i.tier === 'attention').length
+  const healthScoreCaveat =
+    attentionCount > 0
+      ? `${healthScoreMonthDeltaPct !== null && healthScoreMonthDeltaPct !== undefined ? (healthScoreMonthDeltaPct > 0 ? 'ภาพรวมดีขึ้น' : healthScoreMonthDeltaPct < 0 ? 'ภาพรวมยังต้องระวัง' : 'ภาพรวมทรงตัว') : 'ภาพรวม'} แต่ยังมี ${attentionCount} ด้านที่ควรติดตาม`
+      : null
+
   // ฟีดแบ็ก "เป้าหมายควรเป็นข้อมูลที่ actionable — แทนที่จะเขียนแค่ 65.0 kg / น้ำหนักเป้าหมาย อยากได้
   // 65.0 kg / เป้าหมาย · เหลือ 1.3 kg ผู้ใช้เห็นแล้วรู้ทันทีว่าต้องไปทางไหน"
   // v17: ฟีดแบ็ก "แสดง 2 เป้าหมายพร้อมกัน (น้ำหนัก + Body Fat) ไม่ใช่แค่ตัวเดียวแบบ fallback — ข้อมูลใน
@@ -1252,6 +1262,7 @@ export default function HealthPage() {
             updatedTimeLabel={latestDateTime?.time ?? null}
             unit={unit}
             summary={bodyCompositionSummary}
+            caveat={healthScoreCaveat}
             changePeriodLabel={periodLabelOf(latest, metrics[1] ?? null)}
           />
           {profile && !profile.sex && (
@@ -3109,6 +3120,7 @@ function OverviewHealthScoreHeader({
   updatedTimeLabel,
   unit,
   summary,
+  caveat,
   changePeriodLabel,
 }: {
   // v32: แทนที่ score/items/trendScorePct เดิม (pass/fail summarizeHealthScore) ด้วยผลลัพธ์จาก
@@ -3131,6 +3143,10 @@ function OverviewHealthScoreHeader({
   // จะทำให้ Health Score กลายเป็น Insight ไม่ใช่แค่คะแนน" — คำนวณที่จุดเรียกใช้ (มีข้อมูล delta/เป้าหมาย
   // ครบอยู่แล้ว) ส่งมาเป็นประโยคสำเร็จรูป ไม่ต้องคำนวณซ้ำในนี้
   summary: string | null
+  // v80: ฟีดแบ็ก "93% ดีมาก กับ 🔴 ควรปรับปรุง 2 ใบด้านล่าง — user อาจสงสัยว่าตกลงสุขภาพดีหรือไม่ดี" — บรรทัด
+  // เชื่อมสั้นๆ ต่อจาก summary บอกจำนวนจุดที่เป็น tier attention จริง (คำนวณที่จุดเรียกใช้จาก healthInsights ที่
+  // มีอยู่แล้ว ไม่ fabricate) null = ไม่มีจุดที่ต้องติดตาม ไม่โชว์บรรทัดนี้เลย
+  caveat: string | null
   // v24: ฟีดแบ็ก "การเปลี่ยนแปลง ควรบอกว่าเทียบกับช่วงไหน ไม่งั้นดูลอยๆ" — ระยะห่างจริงระหว่างการวัดล่าสุด
   // 2 ครั้ง (periodLabelOf จาก lib/bodyMetricsSummary — คืนวลีเต็ม "จาก X ก่อน" พร้อมใช้) ไม่ใช่ "1 สัปดาห์"
   // ตายตัว เพราะผู้ใช้บางคนอาจ log ทุกวัน บางคน 2 สัปดาห์ครั้ง — ไม่ระบุ = ไม่โชว์ (ข้อมูลไม่พอเทียบ)
@@ -3250,6 +3266,7 @@ function OverviewHealthScoreHeader({
               {label}
             </span>
             {summary && <p className="text-sm text-ink/65 mt-1.5 max-w-[190px]">{summary}</p>}
+            {caveat && <p className="text-xs text-muted mt-1 max-w-[190px]">{caveat}</p>}
             {/* v28: ฟีดแบ็ก "90% มาจากอะไร? ไม่จำเป็นต้องเพิ่มข้อมูลเยอะ แค่ทำให้รู้ว่าคะแนนนี้มีเหตุผล —
                 อาจมีปุ่ม 'ดูรายละเอียดคะแนน ›'" — breakdown (หมวด+% ต่อหมวด) มีอยู่แล้วหลัง ⓘ (ไม่ทำถาวรเพิ่ม
                 เพราะจะย้อนกลับไปหนาแน่นแบบที่เพิ่งลดไป) แค่เพิ่ม affordance ให้เห็นชัดว่ากดดูรายละเอียดได้
@@ -3555,7 +3572,9 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
     ? {
         // v76: ฟีดแบ็ก "'เพิ่มการเผาผลาญไขมัน' เป็น title ที่ฟันธงผลลัพธ์เกินไป — ใช้ 'เพิ่มการใช้พลังงาน' แทน
         // (อธิบายกลไก ตรงกับ detail ด้านล่างที่แก้ไปแล้ว)"
-        title: isMuscleWarning ? 'เพิ่มการฝึกแรงต้าน' : 'เพิ่มการใช้พลังงาน',
+        // v80: ฟีดแบ็ก "'เพิ่มการใช้พลังงาน' ฟังดูเป็นคำแนะนำทั่วไป ไม่ผูกกับเป้าหมายของหน้านี้ (ลด Body Fat +
+        // รักษา Muscle) ตรงๆ" — เปลี่ยนเป็น "เพิ่มกิจกรรมเพื่อสนับสนุนการลดไขมัน" ให้ผูกกับเป้าหมายชัดเจนขึ้น
+        title: isMuscleWarning ? 'เพิ่มการฝึกแรงต้าน' : 'เพิ่มกิจกรรมเพื่อสนับสนุนการลดไขมัน',
         // v73: ฟีดแบ็ก "HIIT ...15-20% ควรเอาตัวเลขออกถ้าไม่มี calculation/reference ที่ชัดเจน" — ตัวเลขนี้
         // hardcode ไว้เฉยๆ ไม่มีการคำนวณจากข้อมูลผู้ใช้หรืออ้างอิงงานวิจัยใดๆ ในระบบรองรับ ตัดตัวเลขที่ไม่มี
         // ที่มาจริงออก เหลือคำแนะนำเชิงพฤติกรรมล้วนๆ
