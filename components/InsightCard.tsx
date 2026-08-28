@@ -30,6 +30,7 @@ export default function InsightCard({
   imageSrc,
   metricIcon,
   recommendationsHref,
+  minHeightClassName = '',
 }: {
   insight: Insight
   showChevron?: boolean
@@ -45,6 +46,12 @@ export default function InsightCard({
   // (health/page.tsx แท็บภาพรวม) ส่ง "#recommendations" เข้ามาเท่านั้น — โชว์เฉพาะตอนมี actionLabel จริง
   // (ตัว insight ที่มีคำแนะนำให้ตามไปดูจริง ไม่ใช่ insight เฉยๆ ที่ไม่มีอะไรให้แนะนำต่อ)
   recommendationsHref?: string
+  // v72: ฟีดแบ็ก "4 การ์ด Body Insights สูงไม่เท่ากันบนมือถือ (stack แนวตั้ง คนละแถว grid เลยไม่ stretch
+  // ให้อัตโนมัติ) เพราะเนื้อหายาว/สั้นไม่เท่ากันจริง (การ์ดที่มี recentNote ยาวกว่าที่ไม่มี)" — ไม่บังคับ
+  // (undefined = ไม่มีผล เหมือนเดิมทุกจุดที่ใช้อยู่ เช่น Coach/Dashboard/InsightCarousel) จุดเรียกใช้ที่
+  // อยากให้สูงเท่ากัน (health/page.tsx แท็บภาพรวม) ส่งค่ามาเอง แทนที่จะบังคับ min-height ตายตัวในนี้ที่
+  // อาจไปกระทบจุดใช้อื่นที่ไม่ได้ขอ (เช่น carousel ที่มีขนาดการ์ดของตัวเองอยู่แล้ว)
+  minHeightClassName?: string
 }) {
   const tierStyle = insight.tier ? TIER_STYLE[insight.tier] : null
   const style = tierStyle ?? KIND_STYLE[insight.kind]
@@ -58,7 +65,9 @@ export default function InsightCard({
   // โดยเฉพาะข้อความรอง" — ลด padding การ์ด (px-4 py-3 → px-3.5 py-2.5), ไอคอน chip (8→7), และ margin
   // ระหว่างบรรทัดข้อความรอง (mt-1/mt-0.5 → mt-0.5/mt-px) เล็กน้อย ไม่กระทบ hierarchy/สีที่เพิ่งทำรอบก่อน
   return (
-    <div className={`rounded-lg ${attentionBg} border border-line shadow-elevated border-l-[3px] ${style.border} px-3.5 py-2.5 flex items-start gap-2.5`}>
+    <div
+      className={`rounded-lg ${attentionBg} border border-line shadow-elevated border-l-[3px] ${style.border} px-3.5 py-2.5 flex items-start gap-2.5 ${minHeightClassName}`}
+    >
       {imageSrc ? (
         <span className="w-7 h-7 shrink-0 inline-block" aria-hidden="true">
           <Image src={imageSrc} alt="" width={28} height={28} className="w-full h-full object-contain" />

@@ -1278,6 +1278,7 @@ export default function HealthPage() {
                     insight={insight}
                     imageSrc={INSIGHT_ICON_IMAGES[`${insight.id}|${insight.icon}`]}
                     recommendationsHref="#recommendations"
+                    minHeightClassName="min-h-[108px]"
                   />
                 ))}
               </div>
@@ -3324,13 +3325,17 @@ function OverviewHealthScoreHeader({
             <div className="flex flex-col gap-2">
               {goalRows.map((g) => (
                 <div key={g.label}>
-                  <p className="font-mono font-semibold text-sm text-ink leading-none whitespace-nowrap">{g.valueText}</p>
+                  <p className="font-mono text-xs whitespace-nowrap" style={{ color: '#9DA0A8' }}>{g.valueText}</p>
                   {/* v28: ฟีดแบ็ก "สีเขียวถูกใช้เยอะเกินไป — Orange ควรใช้กับ Primary metric/progress/active
                       แทน" — "เหลือ X kg" เป็นข้อความความคืบหน้า (ยังไปไม่ถึงเป้า) ไม่ใช่ผลสำเร็จ เดิมใช้เขียว
                       (#8CB264) ตายตัวเหมือนเป็นเรื่องดีเสร็จสมบูรณ์แล้ว — เปลี่ยนเป็นอำพัน (#D8A34A) ให้เข้าคู่
-                      กับแถบ progress bar (bg-amber) ด้านล่างที่เป็นสีเดียวกันอยู่แล้ว */}
+                      กับแถบ progress bar (bg-amber) ด้านล่างที่เป็นสีเดียวกันอยู่แล้ว
+                      v72: ฟีดแบ็ก "เหลือ 7.1 kg ควรเด่นกว่า 67.1 → 60.0 kg เพราะเป็นตัวเลขที่ actionable จริง
+                      (บอกว่าต้องไปอีกเท่าไหร่) ส่วน A → B เป็นแค่ context" — สลับน้ำหนักภาพ: valueText (A → B)
+                      ลดจาก text-sm/semibold/ink เป็น text-xs/สีจาง, subText (เหลือ X) ขยับขึ้นมาเป็น
+                      text-sm/font-semibold แทน ไม่เปลี่ยนลำดับการวาง (A → B ยังอยู่บนเหมือนเดิม) */}
                   {g.subText && (
-                    <p className="text-xs whitespace-nowrap mt-1" style={{ color: '#D8A34A' }}>
+                    <p className="font-mono font-semibold text-sm whitespace-nowrap mt-0.5" style={{ color: '#D8A34A' }}>
                       {g.subText}
                     </p>
                   )}
