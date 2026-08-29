@@ -31,7 +31,10 @@ interface AICoachCompactCardProps {
   /** กลุ่มกล้ามเนื้อที่แนะนำวันนี้ + % ฟื้นตัว (ชุดเดียวกับที่ TodaysFocusCard ใช้อยู่แล้ว จาก
    * data.muscleRecommendation) — มีแล้วโชว์ headline + recovery bar + stat chip + จับคู่เทมเพลตให้เริ่ม
    * ได้เลย ไม่มี (ยังไม่เคยฝึกกลุ่มไหนเลย) fallback กลับไปโชว์ message เฉยๆ แบบเดิม */
-  muscleRecommendation: { muscleGroup: string; pct: number } | null
+  /** setsRemaining: เซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ของ muscleGroup นี้ (จาก Weekly Volume Engine,
+   * computeTodaysRecommendation ใน lib/dashboardStats.ts) — ติดลบได้ถ้าเกินเป้าแล้ว ใช้ต่อท้าย
+   * advice line ด้านล่างเมื่อยังเหลือโควตาจริง (ดู comment ที่จุดโชว์ adviceTh) */
+  muscleRecommendation: { muscleGroup: string; pct: number; setsRemaining: number } | null
   /** true เมื่อวันนี้เป็น Rest Day จริง (workoutCardVariant==='restDay' ใน MobileDashboardView.tsx —
    * ค่าเดียวกับที่ TodaysWorkoutEmptyCard/TodaysFocusCard ใช้) — muscleRecommendation คำนวณจาก recovery %
    * ล้วนๆ ไม่รู้จัก concept "วันนี้พัก" เลย เดิมการ์ดนี้เลยยังโชว์ "UPPER BODY" + ปุ่ม "เริ่ม DAY 4" ต่อไป
@@ -345,6 +348,11 @@ export default function AICoachCompactCard({
               {!isRestDay && (
                 <p className="truncate mt-1" style={{ fontSize: 10, color: barColor }}>
                   {recoveryTier(displayPct).adviceTh}
+                  {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำนี้ — เฉพาะตอนยังเหลือโควตาจริง
+                      (setsRemaining > 0) เหมือน desktop's Recovery banner ไม่โชว์ตอนเกินเป้าแล้ว */}
+                  {muscleRecommendation && muscleRecommendation.setsRemaining > 0 && (
+                    <span style={{ color: '#CFD4DE' }}> · เหลืออีก {muscleRecommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
+                  )}
                 </p>
               )}
             </>

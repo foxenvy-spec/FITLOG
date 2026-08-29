@@ -143,9 +143,11 @@ export default function MobileDashboardView() {
     return map
   }, [data])
 
-  // muscleRecommendation คำนวณมาแล้วใน fetchDashboardData (ชุดเดียวกับเดสก์ท็อป) — ใช้ตรงจาก
-  // data ได้เลย ไม่ต้องคำนวณซ้ำฝั่ง client
-  const muscleRecommendation = data?.muscleRecommendation ?? null
+  // todaysRecommendation คำนวณมาแล้วใน fetchDashboardData (ชุดเดียวกับเดสก์ท็อป) — ใช้ตรงจาก
+  // data ได้เลย ไม่ต้องคำนวณซ้ำฝั่ง client — เหมือน muscleRecommendation เดิมทุกฟิลด์ (muscleGroup/pct)
+  // บวก setsRemaining (เซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ จาก Weekly Volume Engine) ให้ AICoachCompactCard
+  // ต่อคำแนะนำได้ครบเหมือนฝั่งเดสก์ท็อป
+  const muscleRecommendation = data?.todaysRecommendation ?? null
 
   // MobileDashboardSkeleton (แทน DashboardSkeleton ตัวกลางเดิม) — mirror ความสูง/gap จาก
   // dashboardSpec ตัวเดียวกับที่โครงจริงของหน้านี้ใช้ กันไม่ให้เนื้อหา "กระโดด" ตอนโหลดข้อมูลเสร็จ

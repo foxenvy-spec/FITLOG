@@ -1715,7 +1715,7 @@ export default function DashboardPage() {
         >
           <AICoachCompactCard
             message={data.aiDailySummary}
-            muscleRecommendation={data.muscleRecommendation}
+            muscleRecommendation={data.todaysRecommendation}
             href="/coach"
             lastUpdatedAt={dataUpdatedAt}
             recoveryDates={data.recoveryDates}
