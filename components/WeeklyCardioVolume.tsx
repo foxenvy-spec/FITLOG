@@ -159,8 +159,12 @@ export default function WeeklyCardioVolume() {
               <MetricTile label="Distance" value={volume.totalDistanceKm.toLocaleString('th-TH')} unit="กม." />
             </div>
 
-            {(volume.avgCadenceSpm !== null || volume.avgCadenceRpm !== null || vo2max !== null) && (
+            {(volume.avgHeartRate !== null || volume.avgCadenceSpm !== null || volume.avgCadenceRpm !== null || vo2max !== null) && (
               <div className="grid grid-cols-2 gap-2 mt-2">
+                {/* Priority 12 (Cardio Dashboard) — mockup ขอ "Heart Rate: Avg 138 bpm" เป็น tile
+                    สรุปเดียวกัน ระดับเดียวกับ Total Minutes/Sessions/Calories/Distance — เดิมมีแค่
+                    VO2Max ซึ่งคำนวณจาก HR สูงสุด/พัก ไม่ใช่ค่าเฉลี่ยจริงที่วัดได้ระหว่างเซสชัน */}
+                {volume.avgHeartRate !== null && <MetricTile label="Avg Heart Rate" value={String(volume.avgHeartRate)} unit="bpm" />}
                 {volume.avgCadenceSpm !== null && (
                   <MetricTile label="Avg Cadence" value={String(volume.avgCadenceSpm)} unit="spm" />
                 )}
@@ -208,27 +212,32 @@ export default function WeeklyCardioVolume() {
                 </p>
               ) : (
                 <>
-                  <div className="flex h-2.5 rounded-full overflow-hidden bg-surface2">
-                    {HR_ZONES.map((z) => {
-                      const mins = volume.hrZones.minutesByZone[z.key] ?? 0
-                      const pct = volume.totalMinutes > 0 ? (mins / volume.totalMinutes) * 100 : 0
-                      if (pct <= 0) return null
-                      return <div key={z.key} style={{ width: `${pct}%`, backgroundColor: z.color }} title={`${z.label}: ${mins} นาที`} />
-                    })}
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-                    {HR_ZONES.map((z) => {
-                      const mins = volume.hrZones.minutesByZone[z.key] ?? 0
-                      if (mins <= 0) return null
-                      return (
-                        <p key={z.key} className="text-[10px] text-muted flex items-center gap-1">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: z.color }} />
-                          {z.label} · {mins} นาที
-                        </p>
-                      )
-                    })}
-                  </div>
-                  <p className="text-[10px] text-muted/70 mt-1">
+                  {/* v: mockup ขอแท่งแยกตามโซน (Zone 1 ███ / Zone 2 ███████████ / ...) ให้เทียบความยาว
+                      สัปดาห์นี้เห็นภาพชัดกว่าแท่งเดียวไล่สี — เปลี่ยนจาก stacked bar เดิมเป็น 5 แถวแยก
+                      เทียบกับโซนที่ใช้เวลามากสุด (ไม่ใช่ totalMinutes) ให้แท่งที่ยาวสุดเต็มความกว้างจริง */}
+                  {(() => {
+                    const maxZoneMinutes = Math.max(1, ...HR_ZONES.map((z) => volume.hrZones.minutesByZone[z.key] ?? 0))
+                    return (
+                      <div className="space-y-1.5">
+                        {HR_ZONES.map((z) => {
+                          const mins = volume.hrZones.minutesByZone[z.key] ?? 0
+                          const pct = (mins / maxZoneMinutes) * 100
+                          return (
+                            <div key={z.key} className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted w-24 shrink-0 truncate">{z.label}</span>
+                              <span className="relative flex-1 h-2 rounded-full bg-surface2 overflow-hidden">
+                                {mins > 0 && (
+                                  <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, backgroundColor: z.color }} />
+                                )}
+                              </span>
+                              <span className="text-[10px] font-mono text-muted w-14 text-right shrink-0">{mins} นาที</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                  <p className="text-[10px] text-muted/70 mt-1.5">
                     * ประมาณจากชีพจรเฉลี่ยต่อเซสชัน ไม่ใช่ค่าต่อเนื่องระหว่างออกกำลังกาย
                   </p>
                 </>

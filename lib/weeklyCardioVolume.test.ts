@@ -92,4 +92,20 @@ describe('computeWeeklyCardioVolume', () => {
     expect(result.avgCadenceSpm).toBeNull()
     expect(result.avgCadenceRpm).toBeNull()
   })
+
+  it('averages avg_heart_rate across sessions that have it', () => {
+    const workouts = [
+      makeCardio({ avg_heart_rate: 130 }),
+      makeCardio({ avg_heart_rate: 146 }),
+      makeCardio({ avg_heart_rate: null }),
+    ]
+    const result = computeWeeklyCardioVolume(workouts, 70, 190)
+    expect(result.avgHeartRate).toBe(138)
+  })
+
+  it('returns null avgHeartRate when no sessions have heart rate data', () => {
+    const workouts = [makeCardio({ avg_heart_rate: null })]
+    const result = computeWeeklyCardioVolume(workouts, 70, 190)
+    expect(result.avgHeartRate).toBeNull()
+  })
 })

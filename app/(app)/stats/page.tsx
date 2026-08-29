@@ -397,9 +397,15 @@ export default function StatsPage() {
       )}
 
       <section>
-        <h2 className="font-display text-sm tracked uppercase text-muted mb-3">
-          ระยะทางคาร์ดิโอ (กม. ต่อวัน, 28 วันล่าสุด)
-        </h2>
+        {/* v: mockup Priority 12 (Cardio Dashboard) ขอสรุปคาร์ดิโอที่ครบกว่าแค่กราฟระยะทาง (เวลา/เซสชัน/
+            แคลอรี่/ชีพจร/HR Zone) — ข้อมูลนั้นคำนวณไว้ครบแล้วที่ /cardio (ใช้ engine เดียวกับการ์ด
+            WeeklyCardioVolume บน Dashboard เดสก์ท็อป) ลิงก์ตรงนี้แทนการย้ำข้อมูลซ้ำในหน้านี้อีกที */}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display text-sm tracked uppercase text-muted">ระยะทางคาร์ดิโอ (กม. ต่อวัน, 28 วันล่าสุด)</h2>
+          <a href="/cardio" className="text-[11px] text-amber hover:underline shrink-0">
+            ดู Cardio Dashboard →
+          </a>
+        </div>
         <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distanceByDay} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
