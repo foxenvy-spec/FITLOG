@@ -26,6 +26,8 @@ import {
   computeMissedMuscleInsights,
   suggestMuscleToTrain,
   computeTodaysRecommendation,
+  computeTrainingBalance,
+  trainingBalanceInsight,
   recoveryRecommendationLabel,
   computeBestVolumeIncrease,
   computeGreetingContext,
@@ -260,9 +262,14 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   const volumeInsights = computeVolumeTrendInsights(thisWeekSets, lastWeekSets)
   const imbalanceInsights = computeImbalanceInsights(thisWeekSets, VOLUME_MUSCLES)
   const missedInsights = computeMissedMuscleInsights(recoveryDates)
+  // Training Balance Engine — imbalanceInsights ด้านบนเตือนทีละกลุ่มที่ต่ำกว่าค่าเฉลี่ย ส่วนอันนี้มองภาพรวม
+  // กว่านั้น: ฝั่งบน/ล่างลำตัวเอียงผิดสัดส่วนไหม (เทียบกับอุดมคติตามจำนวนกลุ่มกล้ามเนื้อจริงของแต่ละฝั่ง ไม่ใช่
+  // 50/50) พร้อมคะแนน Balance + 2 กลุ่มที่ควรเพิ่มสัปดาห์นี้ในใบเดียว — null เมื่อสมดุลดีอยู่แล้ว
+  const trainingBalance = computeTrainingBalance(thisWeekSets, VOLUME_MUSCLES)
+  const trainingBalanceInsights = [trainingBalanceInsight(trainingBalance)].filter((i): i is Insight => i !== null)
   // ไม่ slice ที่นี่แล้ว — คอมโพเนนต์เป็นคนรวมกับ body-composition/workout-frequency insight
   // (ที่ต้อง useWeightUnit() ซึ่งเป็น hook เรียกในนี้ไม่ได้) แล้วค่อย slice ทีเดียวตอน render
-  const insights = [...imbalanceInsights, ...volumeInsights, ...missedInsights]
+  const insights = [...imbalanceInsights, ...volumeInsights, ...missedInsights, ...trainingBalanceInsights]
 
   // เทรนด์สัดส่วนร่างกายล่าสุด — ใช้ทำ insight เพิ่มเติมในการ์ด AI Coach (ดู bodyFatTrendInsight/
   // muscleMassTrendInsight ใน lib/aiCoach.ts) ไม่ต้องใช้ heightCm เพราะ insight พวกนี้ไม่ได้ใช้ BMI

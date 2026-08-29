@@ -25,6 +25,8 @@ import {
   computeGreetingContext,
   computeWorkoutMotivationLabel,
   computeTodaysRecommendation,
+  computeTrainingBalance,
+  trainingBalanceInsight,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   computeLatestPR,
@@ -598,6 +600,66 @@ describe('computeTodaysRecommendation', () => {
 
   it('returns null when there is no base recommendation', () => {
     expect(computeTodaysRecommendation(null, { ขา: 12 }, { ขา: 29 })).toBeNull()
+  })
+})
+
+const ALL_MUSCLES = ['อก', 'หลัง', 'ขา', 'น่อง', 'ไหล่', 'แขน', 'แกนกลางลำตัว']
+
+describe('computeTrainingBalance', () => {
+  it('returns null when there is no volume data at all', () => {
+    expect(computeTrainingBalance({}, ALL_MUSCLES)).toBeNull()
+  })
+
+  it('reports no region warning when sets are evenly split across all 7 groups', () => {
+    const even = { อก: 10, หลัง: 10, ขา: 10, น่อง: 10, ไหล่: 10, แขน: 10, แกนกลางลำตัว: 10 }
+    const result = computeTrainingBalance(even, ALL_MUSCLES)
+    expect(result?.score).toBe(100)
+    expect(result?.tier).toBe('good')
+    expect(result?.regionWarning).toBeNull()
+  })
+
+  it('flags lower-body skew when legs/calves take a much bigger share than their ideal (2/7)', () => {
+    // ขา+น่อง กิน 60% ของเซ็ตทั้งหมด ทั้งที่อุดมคติ (2 ใน 7 กลุ่ม) ควรอยู่แค่ ~28.6%
+    const legHeavy = { อก: 5, หลัง: 5, ขา: 30, น่อง: 30, ไหล่: 5, แขน: 5, แกนกลางลำตัว: 20 }
+    const result = computeTrainingBalance(legHeavy, ALL_MUSCLES)
+    expect(result?.regionWarning).toBe('สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว')
+  })
+
+  it('flags upper-body skew when chest/back/shoulders/arms/core dominate far beyond their ideal (5/7)', () => {
+    const upperHeavy = { อก: 20, หลัง: 20, ขา: 2, น่อง: 2, ไหล่: 20, แขน: 18, แกนกลางลำตัว: 18 }
+    const result = computeTrainingBalance(upperHeavy, ALL_MUSCLES)
+    expect(result?.regionWarning).toBe('สัดส่วนกล้ามเนื้อฝั่งบนลำตัวสูงกว่าขา/น่อง')
+  })
+
+  it('recommends the 2 groups furthest below the ideal per-group share', () => {
+    const result = computeTrainingBalance({ อก: 30, หลัง: 25, ขา: 20, น่อง: 15, ไหล่: 5, แขน: 3, แกนกลางลำตัว: 2 }, ALL_MUSCLES)
+    expect(result?.recommendedMuscles).toEqual(['แกนกลางลำตัว', 'แขน'])
+  })
+})
+
+describe('trainingBalanceInsight', () => {
+  it('returns null when balance is null', () => {
+    expect(trainingBalanceInsight(null)).toBeNull()
+  })
+
+  it('returns null when balance is fine (no regionWarning)', () => {
+    expect(trainingBalanceInsight({ score: 90, tier: 'good', regionWarning: null, recommendedMuscles: [] })).toBeNull()
+  })
+
+  it('turns a region warning into an actionable Insight card', () => {
+    const insight = trainingBalanceInsight({
+      score: 58,
+      tier: 'ok',
+      regionWarning: 'สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว',
+      recommendedMuscles: ['อก', 'หลัง'],
+    })
+    expect(insight).toEqual({
+      id: 'training-balance-region',
+      kind: 'warning',
+      icon: '⚖️',
+      title: 'สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว',
+      detail: 'Training Balance 58% (ปานกลาง) — แนะนำเพิ่ม อก + หลัง สัปดาห์นี้',
+    })
   })
 })
 

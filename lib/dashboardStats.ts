@@ -702,6 +702,80 @@ export function balanceStatusTier(score: number): BalanceStatusTier {
   return 'poor'
 }
 
+// "บนลำตัว" vs "ล่างลำตัว" — ใช้ตรวจว่าเซ็ตสัปดาห์นี้เอียงไปทางกลุ่มบนหรือล่างผิดปกติไหม เทียบชื่อกลุ่ม
+// เดียวกับที่ VOLUME_MUSCLES ใน lib/muscle-groups.ts ใช้ (แยกไว้เป็น const ในไฟล์นี้แทนการ import ตรงๆ
+// ตามรูปแบบเดียวกับ PUSH_MUSCLES/PULL_MUSCLES ใน lib/aiCoach.ts — กันปัญหา circular import)
+const UPPER_BODY_MUSCLES = ['อก', 'หลัง', 'ไหล่', 'แขน', 'แกนกลางลำตัว']
+const LOWER_BODY_MUSCLES = ['ขา', 'น่อง']
+
+export interface TrainingBalance {
+  score: number
+  tier: BalanceStatusTier
+  // ไม่ null เฉพาะตอนสัดส่วนบน/ล่างลำตัวเอียงเกิน regionSkewThreshold จริง — คือ "เหตุผล" ของคะแนน balance
+  regionWarning: string | null
+  // 2 กลุ่มที่ % ส่วนแบ่งเซ็ตต่ำกว่าสัดส่วนอุดมคติ (100/จำนวนกลุ่ม%) มากสุด — ใช้เป็นคำแนะนำ "ควรเพิ่ม"
+  recommendedMuscles: string[]
+}
+
+// รวม Weekly Volume (ข้อมูลดิบ) -> Distribution (% ต่อกลุ่ม, computeMuscleBalance ตัวเดียวกับที่การ์ด
+// Muscle Heatmap/Weekly Volume ใช้อยู่แล้ว) -> Target (สัดส่วนอุดมคติต่อกลุ่ม 100/N%) เป็นสรุปเดียว
+// "Training Balance": คะแนน+tier บวกเหตุผลเจาะจง (บน/ล่างลำตัวเอียงไปทางไหน ถ้าเอียงเกินเกณฑ์) บวก
+// กลุ่มที่ควรเพิ่มสัปดาห์นี้ (2 กลุ่มที่ขาดมากสุด) — เทียบสัดส่วนบน/ล่างกับ "อุดมคติ" ที่คำนวณจากจำนวนกลุ่ม
+// กล้ามเนื้อจริงของแต่ละฝั่ง (บน 5 กลุ่ม/ล่าง 2 กลุ่มใน VOLUME_MUSCLES) ไม่ใช่ 50/50 ตรงๆ เพราะฝั่งบนมี
+// กลุ่มกล้ามเนื้อมากกว่าฝั่งล่างโดยธรรมชาติ ถ้าเทียบกับ 50/50 จะฟ้องเตือน "บนเยอะไป" ทุกครั้งแม้ฝึกสมดุลจริง
+export function computeTrainingBalance(
+  setsByMuscle: Record<string, number>,
+  muscles: readonly string[],
+  regionSkewThreshold = 15
+): TrainingBalance | null {
+  const totalSets = muscles.reduce((sum, mg) => sum + (setsByMuscle[mg] ?? 0), 0)
+  if (totalSets <= 0) return null
+
+  const idealPct = 100 / muscles.length
+  const shares = muscles.map((mg) => ((setsByMuscle[mg] ?? 0) / totalSets) * 100)
+  const score = computeMuscleBalance(shares)
+  const tier = balanceStatusTier(score)
+
+  const upperInSet = UPPER_BODY_MUSCLES.filter((mg) => muscles.includes(mg))
+  const lowerInSet = LOWER_BODY_MUSCLES.filter((mg) => muscles.includes(mg))
+  const upperActualPct = (upperInSet.reduce((sum, mg) => sum + (setsByMuscle[mg] ?? 0), 0) / totalSets) * 100
+  const lowerActualPct = (lowerInSet.reduce((sum, mg) => sum + (setsByMuscle[mg] ?? 0), 0) / totalSets) * 100
+  const upperIdealPct = (upperInSet.length / muscles.length) * 100
+  const lowerIdealPct = (lowerInSet.length / muscles.length) * 100
+
+  let regionWarning: string | null = null
+  if (lowerInSet.length > 0 && lowerActualPct - lowerIdealPct >= regionSkewThreshold) {
+    regionWarning = 'สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว'
+  } else if (upperInSet.length > 0 && upperActualPct - upperIdealPct >= regionSkewThreshold) {
+    regionWarning = 'สัดส่วนกล้ามเนื้อฝั่งบนลำตัวสูงกว่าขา/น่อง'
+  }
+
+  const recommendedMuscles = muscles
+    .map((mg) => ({ mg, pct: ((setsByMuscle[mg] ?? 0) / totalSets) * 100 }))
+    .sort((a, b) => a.pct - b.pct)
+    .slice(0, 2)
+    .map((s) => s.mg)
+
+  return { score, tier, regionWarning, recommendedMuscles }
+}
+
+// แปลง TrainingBalance เป็น Insight การ์ดเดียวกับที่ dashboard ใช้อยู่แล้ว (ชุดเดียวกับ
+// computeImbalanceInsights/pushPullInsight) — คืนค่า null เมื่อไม่มี regionWarning (สมดุลดีอยู่แล้ว
+// หรือเอียงไม่ถึงเกณฑ์) กันไม่ให้เตือนเปล่าๆ ตอนไม่มีปัญหาจริง
+export function trainingBalanceInsight(balance: TrainingBalance | null): Insight | null {
+  if (!balance || !balance.regionWarning) return null
+  return {
+    id: 'training-balance-region',
+    kind: 'warning',
+    icon: '⚖️',
+    title: balance.regionWarning,
+    detail:
+      balance.recommendedMuscles.length > 0
+        ? `Training Balance ${balance.score}% (${BALANCE_STATUS_LABEL[balance.tier]}) — แนะนำเพิ่ม ${balance.recommendedMuscles.join(' + ')} สัปดาห์นี้`
+        : `Training Balance ${balance.score}% (${BALANCE_STATUS_LABEL[balance.tier]})`,
+  }
+}
+
 export function relativeDayLabel(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   const today = new Date(todayStr() + 'T00:00:00')
