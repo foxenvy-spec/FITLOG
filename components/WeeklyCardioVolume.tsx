@@ -19,7 +19,9 @@ import ErrorState from './ErrorState'
 const STATUS_COLOR: Record<VolumeStatus, string> = {
   behind: '#C1503A', // rust — ตามหลัง
   onTrack: '#E8A33D', // amber — กำลังไปได้ดี
-  met: '#7A9B57', // moss — ถึงเป้าหมายแล้ว (รวมถึงทำเกินเป้าด้วย)
+  met: '#7A9B57', // moss — ถึงเป้าหมายพอดี
+  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-120%)
+  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>120%)
 }
 
 function MetricTile({ label, value, unit }: { label: string; value: string; unit?: string }) {
@@ -56,7 +58,11 @@ function TargetProgressRow({ label, done, target, unit }: { label: string; done:
         <AnimatedBarFill pct={pct} color={color} />
       </div>
       <p className="mt-1 text-[11px] font-mono" style={{ color }}>
-        {status === 'met' ? (diff > 0 ? `+${diff} ${unit}` : 'ถึงเป้าหมายพอดี') : `อีก ${target - done} ${unit} ถึงเป้าหมาย`}
+        {status === 'met'
+          ? 'ถึงเป้าหมายพอดี'
+          : status === 'high' || status === 'veryHigh'
+            ? `+${diff} ${unit}`
+            : `อีก ${target - done} ${unit} ถึงเป้าหมาย`}
       </p>
     </div>
   )

@@ -774,10 +774,19 @@ export function computeMissedMuscleInsights(
   return insights.sort((a, b) => (a.detail < b.detail ? 1 : -1))
 }
 
-export type VolumeStatus = 'behind' | 'onTrack' | 'met'
+// เดิมมี 3 ระดับ (behind/onTrack/met) — "met" ครอบคลุมตั้งแต่พอดีเป้าไปจนถึงเกินเป้าไปเท่าไรก็ได้เหมือนกัน
+// หมด ทำให้ทำเกินเป้า 20% กับเกินเป้า 200% (สุ่มเสี่ยง overtraining) หน้าตาเหมือนกันทุกอย่าง — เพิ่ม 2
+// ระดับข้างบน (high/veryHigh) แยกความต่างนั้นออกมา โดยไม่แตะความหมาย/รอยต่อของ 3 ระดับเดิมเลย (behind/
+// onTrack ยังเทียบกับเป้าหมายที่ปรับตามสัดส่วนวันในสัปดาห์เหมือนเดิมทุกประการ กันไม่ให้เตือน "ตามหลัง"
+// เท็จๆ ตั้งแต่ต้นสัปดาห์) รอยต่อ high/veryHigh อิงจาก % ของเป้าหมายเต็มสัปดาห์ (ไม่ใช่ prorated) เพราะ
+// "ทำเกินเป้าไปแล้ว" ไม่ต้องรอถึงสิ้นสัปดาห์ถึงจะมีความหมาย — ตัวเลข 120% เป็น product heuristic
+// ไม่ใช่เกณฑ์ทางการแพทย์/สรีรวิทยา
+export type VolumeStatus = 'behind' | 'onTrack' | 'met' | 'high' | 'veryHigh'
 
 // เทียบเซ็ตที่ทำแล้วกับเป้าหมายที่ปรับตามสัดส่วนวันที่ผ่านไปแล้วของสัปดาห์ (ไม่รอถึงวันอาทิตย์ถึงจะเตือน)
 export function volumeStatus(setsDone: number, weeklyTarget: number, dayOfWeek1to7: number): VolumeStatus {
+  if (weeklyTarget > 0 && setsDone > weeklyTarget * 1.2) return 'veryHigh'
+  if (weeklyTarget > 0 && setsDone > weeklyTarget) return 'high'
   if (setsDone >= weeklyTarget) return 'met'
   const proratedTarget = (weeklyTarget * dayOfWeek1to7) / 7
   if (setsDone >= proratedTarget * 0.8) return 'onTrack'

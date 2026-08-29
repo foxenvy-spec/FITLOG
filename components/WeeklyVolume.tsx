@@ -19,7 +19,13 @@ const DISPLAY_ORDER = ['อก', 'หลัง', 'ไหล่', 'แขน', '�
 const STATUS_COLOR: Record<VolumeStatus, string> = {
   behind: '#C1503A', // rust — ตามหลัง
   onTrack: '#E8A33D', // amber — กำลังไปได้ดี
-  met: '#7A9B57', // moss — ถึงเป้าหมายแล้ว (รวมถึงทำเกินเป้าด้วย)
+  met: '#7A9B57', // moss — ถึงเป้าหมายพอดี
+  // v: เดิม "met" ครอบตั้งแต่พอดีเป้าไปจนถึงเกินเป้าเท่าไรก็ได้เหมือนกันหมด (สีเดียวกันหมด) — แยก high/
+  // veryHigh ออกมาให้เห็นว่าเกินเป้าไปมากน้อยแค่ไหน (ฟีดแบ็ก "ขา Recovery 100% แต่ Volume 29/12 เกินเป้า
+  // ไปมาก ควรมีสัญญาณเตือน ไม่ใช่แค่ +diff สีเขียวเหมือนเกินนิดเดียว") — high ยังใช้อำพันเดียวกับ onTrack
+  // (ยังโอเค แค่เกินนิดหน่อย) veryHigh ใช้สนิม (rust) เดียวกับ behind (สุดโต่งทั้งสองทาง = ควรสนใจเหมือนกัน)
+  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-120%) ยังไม่น่ากังวล
+  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>120%) อาจเสี่ยง overtraining
 }
 
 export default function WeeklyVolume() {
@@ -78,7 +84,9 @@ export default function WeeklyVolume() {
   // ตัวเลขไม่ตรงกัน (ใช้คนละสูตร) — เอาออกจากการ์ดนี้ ให้ Balance เป็นของ Muscle Heatmap อย่างเดียว
   // ส่วนการ์ดนี้เน้นความคืบหน้าเทียบเป้าหมายส่วนตัวแทน ซึ่งเป็นข้อมูลเฉพาะของการ์ดนี้ ไม่ซ้ำที่ไหน)
   const totalSets = rows.reduce((sum, r) => sum + r.sets, 0)
-  const metCount = rows.filter((r) => r.status === 'met').length
+  // "ถึงเป้าหมายแล้ว" = met/high/veryHigh ทั้งหมด (ทุกระดับที่ >= เป้าหมาย) ไม่ใช่แค่ 'met' เป๊ะๆ
+  // (ซึ่งตอนนี้แคบลงเหลือแค่กรณีเซ็ตพอดีเป้าเป๊ะเท่านั้น หลังแยก high/veryHigh ออกมา)
+  const metCount = rows.filter((r) => r.status === 'met' || r.status === 'high' || r.status === 'veryHigh').length
 
   return (
     <PremiumCard className="overflow-hidden">
@@ -118,13 +126,15 @@ export default function WeeklyVolume() {
             // ซ่อนอยู่หลัง "ดูรายละเอียดทั้งหมด" อ่านเป็น list ตัวเลขล้วนๆ ก่อน ตอนนี้ยาวตาม % ให้เห็นเลย
             // ทุกแถว (ฟีดแบ็ก "แท่งสีควรยาวตาม % จะอ่านง่ายกว่า") ส่วนคำอธิบายท้ายแถว ("อีก X เซ็ตถึง
             // เป้าหมาย") ยังคงซ่อนอยู่หลัง toggle เหมือนเดิม (เป็นรายละเอียดเสริม ไม่ใช่ตัวข้อมูลหลัก)
-            // ไฮไลต์พื้นหลังเขียวจาง ๆ เฉพาะแถวที่ทำถึง/เกินเป้าหมายแล้ว (status === 'met') ให้เด่น
-            // ส่วนแถวอื่นไม่มีพื้นหลัง (ตามการ์ดต้นแบบ) เพื่อไม่ให้แน่นเกินไป
+            // ไฮไลต์พื้นหลังจาง ๆ เฉพาะแถวที่ทำถึง/เกินเป้าหมายแล้ว (met/high/veryHigh) ให้เด่น — สีพื้นหลัง
+            // ไล่ตาม color ของแต่ละ status เอง (moss/amber/rust) ไม่ใช่เขียวตายตัวเหมือนเดิม เพราะ veryHigh
+            // ควรดูต่างจาก met ธรรมดาแม้จะ "ถึงเป้าแล้ว" เหมือนกัน ส่วนแถวอื่นไม่มีพื้นหลัง (ตามการ์ดต้นแบบ)
+            const reachedTarget = status === 'met' || status === 'high' || status === 'veryHigh'
             return (
               <div
                 key={mg}
-                className={status === 'met' ? 'rounded-md' : 'rounded-md bg-surface2'}
-                style={status === 'met' ? { backgroundColor: `${color}1A` } : undefined}
+                className={reachedTarget ? 'rounded-md' : 'rounded-md bg-surface2'}
+                style={reachedTarget ? { backgroundColor: `${color}1A` } : undefined}
               >
                 <div className="flex items-center gap-2 px-2.5 pt-2">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -135,7 +145,11 @@ export default function WeeklyVolume() {
                   </span>
                   <span className="w-px h-4 bg-line shrink-0" />
                   <span className="text-[11px] font-mono font-bold shrink-0 w-14 text-right" style={{ color }}>
-                    {status === 'behind' ? `${diff} เซ็ต` : status === 'met' && diff > 0 ? `+${diff} เซ็ต` : `${pct}%`}
+                    {status === 'behind'
+                      ? `${diff} เซ็ต`
+                      : status === 'high' || status === 'veryHigh'
+                        ? `+${diff} เซ็ต`
+                        : `${pct}%`}
                   </span>
                 </div>
                 <div className="px-2.5 pt-1.5 pb-2">
@@ -152,10 +166,12 @@ export default function WeeklyVolume() {
                   <div className="px-2.5 pb-2 -mt-1">
                     <p className="text-[11px]" style={{ color }}>
                       {status === 'met'
-                        ? diff > 0
-                          ? 'ยอดเยี่ยม'
-                          : 'ถึงเป้าหมายพอดี'
-                        : `อีก ${target - sets} เซ็ตถึงเป้าหมาย`}
+                        ? 'ถึงเป้าหมายพอดี'
+                        : status === 'high'
+                          ? `เกินเป้าหมายไปแล้ว +${diff} เซ็ต`
+                          : status === 'veryHigh'
+                            ? `เกินเป้าหมายไปมาก +${diff} เซ็ต — ลองพักกลุ่มนี้บ้าง`
+                            : `อีก ${target - sets} เซ็ตถึงเป้าหมาย`}
                     </p>
                   </div>
                 )}

@@ -441,6 +441,20 @@ describe('volumeStatus', () => {
     // day 1 of 7, target 14 -> prorated = 2, 80% = 1.6
     expect(volumeStatus(2, 14, 1)).toBe('onTrack')
   })
+
+  it('is "high" once past the weekly target but under 120% of it', () => {
+    expect(volumeStatus(11, 10, 7)).toBe('high')
+    expect(volumeStatus(12, 10, 7)).toBe('high') // exactly 120% is still "high", not "veryHigh"
+  })
+
+  it('is "veryHigh" once past 120% of the weekly target', () => {
+    expect(volumeStatus(13, 10, 7)).toBe('veryHigh')
+    expect(volumeStatus(29, 12, 7)).toBe('veryHigh') // ตัวอย่างจาก feedback: ขา 29/12 เซ็ต
+  })
+
+  it('does not misclassify a zero target as high/veryHigh (falls through to the pre-existing "met" behavior)', () => {
+    expect(volumeStatus(0, 0, 3)).toBe('met')
+  })
 })
 
 describe('findNextProgramDay', () => {
