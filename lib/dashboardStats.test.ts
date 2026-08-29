@@ -523,6 +523,46 @@ describe('suggestMuscleToTrain', () => {
     const rec = suggestMuscleToTrain({ อก: 95, ขา: 20 }, null)
     expect(rec?.muscleGroup).toBe('อก')
   })
+
+  it('redirects away from the highest-recovery muscle when it is already over its weekly volume target', () => {
+    // ขา Recovery 100% (สูงสุด) แต่ Volume 29/12 เกินเป้าไปแล้ว 17 เซ็ต — อก Recovery 80% ("ดี") ยังไม่ถึงเป้า
+    // ควรแนะนำอกแทน ไม่ใช่ขาซ้ำ
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, null, { ขา: 29, อก: 8 }, { ขา: 12, อก: 10 })
+    expect(rec?.muscleGroup).toBe('อก')
+  })
+
+  it('still picks the highest-recovery under-target muscle among several ready candidates', () => {
+    const rec = suggestMuscleToTrain(
+      { ขา: 100, อก: 80, หลัง: 90 },
+      null,
+      { ขา: 29, อก: 8, หลัง: 5 },
+      { ขา: 12, อก: 10, หลัง: 10 }
+    )
+    expect(rec?.muscleGroup).toBe('หลัง') // ทั้งอกและหลังยังไม่ถึงเป้า แต่หลัง recovery สูงกว่า
+  })
+
+  it('falls back to highest recovery overall when every ready muscle is already over target', () => {
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, null, { ขา: 29, อก: 15 }, { ขา: 12, อก: 10 })
+    expect(rec?.muscleGroup).toBe('ขา')
+  })
+
+  it('excludes muscles below the "Good" recovery tier from the volume-aware redirect', () => {
+    // น่อง recovery 40% ("กำลังฟื้นตัว" ไม่ใช่ "ดี") แม้ Volume ยังไม่ถึงเป้า ก็ไม่ควรถูกแนะนำ
+    const rec = suggestMuscleToTrain({ ขา: 100, น่อง: 40 }, null, { ขา: 29, น่อง: 0 }, { ขา: 12, น่อง: 6 })
+    expect(rec?.muscleGroup).toBe('ขา')
+  })
+
+  it('still respects the scheduled muscle even when it is over its weekly volume target', () => {
+    // ตารางบังคับวันนี้ = ขา แม้ Volume เกินเป้าแล้วก็ต้องเลือกขาตามเดิม ไม่ใช่หน้าที่ของฟังก์ชันนี้ที่จะ
+    // สวนทางกับแผนที่ผู้ใช้ตั้งเอง
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, 'ขา', { ขา: 29, อก: 8 }, { ขา: 12, อก: 10 })
+    expect(rec?.muscleGroup).toBe('ขา')
+  })
+
+  it('ignores volume data entirely when setsByMuscle/targetsByMuscle are not provided (backward compatible)', () => {
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, null)
+    expect(rec?.muscleGroup).toBe('ขา')
+  })
 })
 
 describe('computeTodaysRecommendation', () => {

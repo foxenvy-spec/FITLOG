@@ -394,7 +394,10 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   const scheduledMuscle = preferTodayMuscle
     ? todayScheduledMuscle
     : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
-  const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary, scheduledMuscle)
+  // thisWeekSets/weeklyVolumeTargets ส่งเข้าไปด้วย (เดิมไม่มี) เพื่อให้กรณี "เลือกอิสระ" (ไม่มีตารางบังคับ
+  // — วันพัก/ยังไม่ได้ตั้งโปรแกรม) ไม่แนะนำกลุ่มที่ Volume สัปดาห์นี้เกินเป้าหมายไปแล้วซ้ำๆ (ดู comment เต็ม
+  // ที่ suggestMuscleToTrain) — ไม่กระทบกรณีมีตารางบังคับเลย เพราะ engine เช็ค scheduledMuscle ก่อนเสมอ
+  const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary, scheduledMuscle, thisWeekSets, weeklyVolumeTargets)
   // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีอยู่ใน
   // recoveryPctByMuscle (เช่น วันนี้ตั้งชื่อวันเป็น "ทั้งตัว"/"อื่นๆ" ซึ่งไม่อยู่ใน RECOVERY_MUSCLES) —
   // เช็คว่าผลลัพธ์จริงตรงกับ todayScheduledMuscle เป๊ะๆ ก่อน ไม่ใช่เชื่อแค่ preferTodayMuscle เฉยๆ กัน

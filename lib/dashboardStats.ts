@@ -363,15 +363,41 @@ export interface MuscleRecommendation {
 // scheduledMuscle: ถ้ามีตารางโปรแกรมประจำสัปดาห์ระบุไว้ (เช่น พฤหัส = "ขา") ให้ยึดตามตารางก่อนเสมอ
 // แทนที่จะเลือกจาก recovery % สูงสุดล้วนๆ — ป้องกันกรณีแนะนำสวนทางตาราง (เช่น ตารางบอกขา แต่ recovery
 // อกดันสูงกว่าเลยแนะนำอกแทน) ถ้า scheduledMuscle ไม่มีข้อมูล recovery ให้ตกกลับไปใช้ recovery สูงสุดตามเดิม
+//
+// setsByMuscle/targetsByMuscle (optional — ไม่ระบุ = พฤติกรรมเดิมทุกประการ ไม่กระทบจุดเรียกที่ยังไม่มี
+// ข้อมูล volume ให้): ใช้เฉพาะตอน "เลือกอิสระ" เท่านั้น (ไม่มีตารางบังคับ) — เดิมเลือกจาก recovery % สูงสุด
+// ล้วนๆ ไม่สนใจว่ากลุ่มนั้น Volume สัปดาห์นี้เกินเป้าหมายไปแล้วหรือยัง ทำให้แนะนำซ้ำกลุ่มเดิมที่ฟื้นตัวเร็ว
+// (เช่น ขา Recovery 100% แต่ Volume 29/12 เซ็ต เกินไปแล้ว 17 เซ็ต) ทั้งที่กลุ่มอื่นที่พร้อมฝึกเหมือนกัน
+// (recovery tier "ดี" ขึ้นไป) แต่ Volume ยังไม่ถึงเป้า ควรได้รับการแนะนำมากกว่า — ไม่แตะกรณีมีตารางบังคับ
+// (ทั้งวันนี้/วันถัดไป) เพราะนั่นคือแผนที่ผู้ใช้ตั้งเองแล้ว ไม่ควรมีอะไรมาสวนทาง (ดู isRecommendationForToday
+// ที่ DashboardView.tsx ซึ่งแก้ปัญหาป้ายข้อความขัดกับตารางไปแล้วอีกทาง)
 export function suggestMuscleToTrain(
   recoveryPctByMuscle: Record<string, number>,
-  scheduledMuscle?: string | null
+  scheduledMuscle?: string | null,
+  setsByMuscle?: Record<string, number>,
+  targetsByMuscle?: Record<string, number>
 ): MuscleRecommendation | null {
   const entries = Object.entries(recoveryPctByMuscle)
   if (entries.length === 0) return null
 
   if (scheduledMuscle && scheduledMuscle in recoveryPctByMuscle) {
     return { muscleGroup: scheduledMuscle, pct: recoveryPctByMuscle[scheduledMuscle] }
+  }
+
+  if (setsByMuscle && targetsByMuscle) {
+    const readyAndUnderTarget = entries
+      .filter(([mg, pct]) => {
+        const tier = recoveryTier(pct).labelEn
+        const isReady = tier === 'Good' || tier === 'Excellent'
+        const target = targetsByMuscle[mg] ?? 0
+        const current = setsByMuscle[mg] ?? 0
+        return isReady && target > 0 && current < target
+      })
+      .sort((a, b) => b[1] - a[1])
+    if (readyAndUnderTarget.length > 0) {
+      const [muscleGroup, pct] = readyAndUnderTarget[0]
+      return { muscleGroup, pct }
+    }
   }
 
   const [muscleGroup, pct] = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])
