@@ -10,7 +10,6 @@ import {
   recoveryTier,
   computeRecoveryReadyInHours,
   estimateCaloriesToday,
-  suggestProgressiveOverload,
   computeVolumeTrendInsights,
   computeImbalanceInsights,
   computeMissedMuscleInsights,
@@ -364,86 +363,6 @@ describe('computeRecoveryReadyInHours', () => {
 
   it('returns null once fully past the recovery window', () => {
     expect(computeRecoveryReadyInHours('2026-07-01', 'อก')).toBeNull()
-  })
-})
-
-describe('suggestProgressiveOverload', () => {
-  it('returns null when there is no history for the exercise', () => {
-    expect(suggestProgressiveOverload('Bench Press', [])).toBeNull()
-  })
-
-  it('ignores entries with no recorded weight or reps', () => {
-    const history = [makeWorkout({ exercise_name: 'Bench Press', weight_kg: null, reps: 8 })]
-    expect(suggestProgressiveOverload('Bench Press', history)).toBeNull()
-  })
-
-  it('ignores cardio entries even if they share an exercise_name', () => {
-    const history = [makeWorkout({ type: 'cardio', exercise_name: 'Bench Press', weight_kg: 999, reps: 5 })]
-    expect(suggestProgressiveOverload('Bench Press', history)).toBeNull()
-  })
-
-  it('uses the most recent session as the baseline, not the all-time heaviest', () => {
-    const history = [
-      makeWorkout({ performed_at: '2026-06-01', exercise_name: 'Bench Press', weight_kg: 70, reps: 5, sets: 3 }),
-      makeWorkout({ performed_at: '2026-07-18', exercise_name: 'Bench Press', weight_kg: 60, reps: 10, sets: 3 }),
-    ]
-    const s = suggestProgressiveOverload('Bench Press', history)
-    expect(s?.lastWeight).toBe(60)
-    expect(s?.lastReps).toBe(10)
-    expect(s?.lastSets).toBe(3)
-  })
-
-  it('recommends increasing weight once reps hit the top of the target range (default 8-12)', () => {
-    const history = [makeWorkout({ exercise_name: 'Bench Press', weight_kg: 60, reps: 12, sets: 3 })]
-    const s = suggestProgressiveOverload('Bench Press', history)
-    expect(s?.action).toBe('increaseWeight')
-    expect(s?.targetWeight).toBe(62.5)
-    expect(s?.targetRepsLow).toBe(8)
-    expect(s?.targetRepsHigh).toBe(10)
-  })
-
-  it('recommends adding reps (same weight) when still below the top of the target range', () => {
-    const history = [makeWorkout({ exercise_name: 'Bench Press', weight_kg: 60, reps: 9, sets: 3 })]
-    const s = suggestProgressiveOverload('Bench Press', history)
-    expect(s?.action).toBe('addReps')
-    expect(s?.targetWeight).toBe(60)
-    expect(s?.targetRepsLow).toBe(10)
-    expect(s?.targetRepsHigh).toBe(11)
-  })
-
-  it('caps the addReps target at the top of the range instead of suggesting reps beyond it', () => {
-    const history = [makeWorkout({ exercise_name: 'Bench Press', weight_kg: 60, reps: 11, sets: 3 })]
-    const s = suggestProgressiveOverload('Bench Press', history)
-    expect(s?.action).toBe('addReps')
-    expect(s?.targetRepsLow).toBe(12)
-    expect(s?.targetRepsHigh).toBe(12)
-  })
-
-  it('suggests a smaller +1kg jump for dumbbell exercises', () => {
-    const history = [makeWorkout({ exercise_name: 'Dumbbell Bench Press', weight_kg: 20, reps: 12, sets: 3 })]
-    const exercises = [
-      {
-        id: 'dumbbell-bench-press',
-        name: 'Dumbbell Bench Press',
-        nameTh: 'ดัมเบลเบนช์เพรส',
-        muscleGroup: 'อก' as const,
-        secondaryMuscles: [],
-        equipment: 'ดัมเบล' as const,
-        icon: '🏋️',
-        aliases: [],
-        instructions: [],
-      },
-    ]
-    const s = suggestProgressiveOverload('Dumbbell Bench Press', history, exercises)
-    expect(s?.targetWeight).toBe(21)
-  })
-
-  it('respects a custom target rep range (e.g. from a program exercise)', () => {
-    const history = [makeWorkout({ exercise_name: 'Squat', weight_kg: 80, reps: 6, sets: 5 })]
-    const s = suggestProgressiveOverload('Squat', history, [], { low: 4, high: 6 })
-    expect(s?.action).toBe('increaseWeight')
-    expect(s?.targetRepsLow).toBe(4)
-    expect(s?.targetRepsHigh).toBe(4)
   })
 })
 

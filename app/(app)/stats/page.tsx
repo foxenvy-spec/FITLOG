@@ -16,12 +16,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { Workout } from '@/lib/types'
 import { MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
 import { todayStr } from '@/lib/weekdays'
-import {
-  computeTodayTotals,
-  estimateCaloriesToday,
-  suggestProgressiveOverload,
-  type ProgressiveOverloadSuggestion,
-} from '@/lib/dashboardStats'
+import { computeTodayTotals, estimateCaloriesToday } from '@/lib/dashboardStats'
+import { computeProgressiveOverload, type OverloadPlan } from '@/lib/aiCoach'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
@@ -80,8 +76,10 @@ export default function StatsPage() {
   // น้ำหนักตัวล่าสุด — ใช้ประมาณแคลอรี่ (ดู estimateCaloriesToday) ถ้ายังไม่เคยบันทึกน้ำหนักตัว
   // เลย ให้ fallback เป็น DEFAULT_BODYWEIGHT_KG เหมือนที่ dashboardStats.ts ใช้ที่อื่น
   const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null)
-  // คำแนะนำเป้าหมายครั้งถัดไปของท่าที่ฝึกล่าสุด (ย้ายมาจาก dashboard)
-  const [overloadSuggestion, setOverloadSuggestion] = useState<ProgressiveOverloadSuggestion | null>(null)
+  // คำแนะนำเป้าหมายครั้งถัดไปของท่าที่ฝึกล่าสุด — ใช้ computeProgressiveOverload ตัวเดียวกับหน้า /coach
+  // (อิง RPE เฉลี่ยของ 3 เซสชันล่าสุดจริง) เดิมหน้านี้เคยมี engine ของตัวเองแยกต่างหาก (ไม่ดูค่า RPE เลย)
+  // ซึ่งซ้ำซ้อนและให้คำแนะนำคนละแบบกับ /coach โดยไม่ตั้งใจ — รวมเป็นตัวเดียวกันแทน
+  const [overloadSuggestion, setOverloadSuggestion] = useState<OverloadPlan | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -178,7 +176,7 @@ export default function StatsPage() {
         .select('*')
         .eq('type', 'strength')
         .eq('exercise_name', lastExerciseName)
-      setOverloadSuggestion(suggestProgressiveOverload(lastExerciseName, (history as Workout[]) ?? [], exercises))
+      setOverloadSuggestion(computeProgressiveOverload(lastExerciseName, (history as Workout[]) ?? [], exercises))
     }
     loadNextPR()
   }, [supabase, exercises])
@@ -490,29 +488,22 @@ export default function StatsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[10px] tracked uppercase text-muted">Last</p>
+                <p className="text-[10px] tracked uppercase text-muted">Current</p>
                 <p className="font-mono text-base text-muted">
-                  {format(overloadSuggestion.lastWeight)} × {overloadSuggestion.lastReps} × {overloadSuggestion.lastSets}
+                  {format(overloadSuggestion.currentWeight)} × {overloadSuggestion.currentReps}
                 </p>
               </div>
               <div>
                 <p className="text-[10px] tracked uppercase text-muted">Target</p>
                 <p className="font-mono text-base text-violet">
-                  {format(overloadSuggestion.targetWeight)} ×{' '}
-                  {overloadSuggestion.targetRepsLow === overloadSuggestion.targetRepsHigh
-                    ? overloadSuggestion.targetRepsLow
-                    : `${overloadSuggestion.targetRepsLow}–${overloadSuggestion.targetRepsHigh}`}
+                  {format(overloadSuggestion.targetWeight)} × {overloadSuggestion.targetReps}
                 </p>
               </div>
             </div>
-            {/* บอกเหตุผล/สิ่งที่ต้องทำต่างกันตาม action — increaseWeight = ขึ้นน้ำหนักได้แล้ว, addReps =
-                คงน้ำหนักเดิมไว้ก่อน ไล่เพิ่ม reps จนกว่าจะถึงบนสุดของช่วงเป้าหมาย ตรงกับ roadmap Priority 7
+            {/* เหตุผลของคำแนะนำ (อิง RPE เฉลี่ย 3 เซสชันล่าสุด) — engine เดียวกับหน้า /coach
+                (computeProgressiveOverload ใน lib/aiCoach.ts) ตรงกับ roadmap Priority 7
                 ("ครั้งหน้าควรเล่นเท่าไหร่?") */}
-            <p className="text-[11px] text-muted mt-2">
-              {overloadSuggestion.action === 'increaseWeight'
-                ? `ทำ ${overloadSuggestion.lastReps} reps ที่น้ำหนักเดิมได้แล้ว — ลองขึ้นน้ำหนัก`
-                : `คงน้ำหนักเดิม ${format(overloadSuggestion.lastWeight)} ไว้ก่อน — พยายามเพิ่ม reps`}
-            </p>
+            <p className="text-[11px] text-muted mt-2">{overloadSuggestion.rationale}</p>
           </a>
         </section>
       )}

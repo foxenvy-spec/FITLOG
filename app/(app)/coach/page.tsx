@@ -20,6 +20,7 @@ import {
   computeRecoveryPct,
   suggestMuscleToTrain,
   computeImbalanceInsights,
+  computeTrainingBalance,
   getWeekRange,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
@@ -220,7 +221,10 @@ export default function CoachPage() {
           : getNextScheduledMuscle(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
 
       const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
-      const dailySummary = computeAIDailySummary(recommendation, balance, todayProgressPct)
+      // Training Balance Engine (Priority 2) — เดิม dailySummary เห็นแค่ recovery + push/pull ไม่รู้เรื่อง
+      // สัดส่วนบน/ล่างลำตัวเทียบเป้าหมายเลย ทั้งที่ thisWeekSets ด้านบนมีพร้อมใช้อยู่แล้ว
+      const trainingBalance = computeTrainingBalance(thisWeekSets, VOLUME_MUSCLES)
+      const dailySummary = computeAIDailySummary(recommendation, balance, todayProgressPct, trainingBalance)
 
       // --- ท่าที่ข้ามไปในเซสชันโปรแกรมล่าสุด ---
       let skippedInsight: Insight | null = null

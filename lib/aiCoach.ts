@@ -1,6 +1,6 @@
 import type { Workout } from './types'
 import type { ExerciseDef } from './exerciseLibrary'
-import type { Insight, MuscleRecommendation } from './dashboardStats'
+import type { Insight, MuscleRecommendation, TrainingBalance } from './dashboardStats'
 import { recoveryRecommendationLabel, relativeDayLabel } from './dashboardStats'
 import type { MetricDelta } from './bodyMetricsSummary'
 
@@ -170,10 +170,16 @@ export function computeProgressiveOverload(exerciseName: string, allEntries: Wor
 // ==================== สรุปคำแนะนำประจำวันแบบประโยคเดียว ====================
 // รวม recovery recommendation (จาก dashboardStats) เข้ากับสถานะ push/pull balance
 // ให้ออกมาเป็นประโยคเดียวอ่านง่าย ใช้เป็น hero message ของหน้า AI Coach
+// trainingBalance: ผลจาก computeTrainingBalance (lib/dashboardStats.ts, Priority 2 Training Balance
+// Engine) — เดิม AI Coach เห็นแค่ recovery + push/pull ไม่รู้เรื่องสัดส่วนบน/ล่างลำตัวเทียบเป้าหมายเลย
+// ทั้งที่ engine คำนวณไว้พร้อมใช้แล้ว (ใช้สร้าง Insight card แยกอยู่แล้วผ่าน trainingBalanceInsight —
+// ตรงนี้แค่ให้ AI Coach "อ่าน" ข้อมูลเดียวกันมาพูดเป็นคำแนะนำของตัวเองด้วย ไม่ใช่คำนวณซ้ำ) optional +
+// default null กันไม่กระทบจุดเรียกเดิมที่ยังไม่ได้ส่งค่านี้มา
 export function computeAIDailySummary(
   muscleRecommendation: MuscleRecommendation | null,
   balance: PushPullBalance,
-  progressPct: number | null = null
+  progressPct: number | null = null,
+  trainingBalance: TrainingBalance | null = null
 ): string {
   if (!muscleRecommendation) {
     return 'ยังไม่มีข้อมูลพอให้วิเคราะห์ — ลองบันทึกการฝึกสัก 2-3 ครั้งก่อน'
@@ -185,6 +191,10 @@ export function computeAIDailySummary(
     msg += ' — และควรแทรกท่าดึง (หลัง) เพิ่ม เพราะสัปดาห์นี้ฝั่งดันเยอะกว่า'
   } else if (balance.status === 'pull_dominant') {
     msg += ' — และควรแทรกท่าดัน (อก/ไหล่) เพิ่ม เพราะสัปดาห์นี้ฝั่งดึงเยอะกว่า'
+  }
+
+  if (trainingBalance?.regionWarning && trainingBalance.recommendedMuscles.length > 0) {
+    msg += ` — ${trainingBalance.regionWarning} ลองเพิ่ม ${trainingBalance.recommendedMuscles.join(' + ')} ในเซสชันถัดไป`
   }
 
   return msg

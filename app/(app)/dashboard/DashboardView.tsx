@@ -400,7 +400,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // ให้คำแนะนำ "วันนี้ควรเล่นอะไร" ตอบทั้งความพร้อม (recovery) และโควตาที่เหลือ (volume) ในคำตอบเดียว
   const todaysRecommendation = computeTodaysRecommendation(muscleRecommendation, thisWeekSets, weeklyVolumeTargets)
 
-  const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel)
+  const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel, trainingBalance)
 
   // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) — ใช้สำหรับ Fitness Score เท่านั้น ใช้ distinctDates
   // ชุดเดียวกับที่คำนวณ streak ด้านบน ไม่ต้อง query ซ้ำ

@@ -203,6 +203,27 @@ describe('computeAIDailySummary', () => {
     )
     expect(msg).toContain('🟢 วันนี้ทำได้ 43% ของเป้าหมายแล้ว\n🎯 ครั้งหน้าแนะนำเล่น หลัง')
   })
+
+  it('appends the Training Balance region warning + recommended muscles when provided', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'ขา', pct: 80 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' },
+      null,
+      { score: 58, tier: 'ok', regionWarning: 'สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว', recommendedMuscles: ['อก', 'หลัง'] }
+    )
+    expect(msg).toContain('สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว')
+    expect(msg).toContain('อก + หลัง')
+  })
+
+  it('omits the Training Balance clause when there is no region warning', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'ขา', pct: 80 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' },
+      null,
+      { score: 90, tier: 'good', regionWarning: null, recommendedMuscles: [] }
+    )
+    expect(msg).not.toContain('สัดส่วนกล้ามเนื้อ')
+  })
 })
 
 describe('buildSkippedExerciseInsight', () => {
