@@ -869,7 +869,7 @@ export interface GreetingContext {
   detail: string | null
 }
 
-const FULLY_RECOVERED_PCT = 90
+export const FULLY_RECOVERED_PCT = 90
 
 export function computeGreetingContext(
   scheduledDayTitle: string | null,

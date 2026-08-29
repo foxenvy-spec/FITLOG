@@ -18,6 +18,7 @@ import {
   computeRecoveryPct,
   recoveryStatusColor,
   recoveryTier,
+  FULLY_RECOVERED_PCT,
   findNextProgramDay,
   getWeekRange,
   getPreviousWeekRange,
@@ -469,6 +470,10 @@ export default function DashboardPage() {
   // กลุ่มกล้ามเนื้อที่ hover อยู่ตอนนี้ในการ์ด Recovery — ใช้ไฮไลต์แท่งของกลุ่มนั้นในลิสต์ (v48d: เดิม
   // sync กับ RecoveryBodyDiagram ด้วย แต่ตัดรูปตัวคนออกแล้วตามฟีดแบ็ก เหลือแค่ highlight แท่งตัวเอง)
   const [hoveredRecoveryGroup, setHoveredRecoveryGroup] = useState<MuscleGroup | null>(null)
+  // Priority 8 (Recovery Score -> Decision): เดิมลิสต์ Recovery โชว์ครบ 7 กลุ่มเสมอ ต่อให้ทุกกลุ่ม
+  // ฟื้นตัวเต็มที่พร้อมกันหมด (badge "EXCELLENT" ซ้ำ 7 ครั้ง ไม่มีข้อมูลใหม่ให้อ่านเลย) — ดีฟอลต์ย่อเหลือ
+  // เฉพาะกลุ่มที่ยังไม่พร้อม (< FULLY_RECOVERED_PCT) ให้เห็นแต่สิ่งที่ต้องตัดสินใจ พร้อม toggle ดูครบทั้งหมด
+  const [showAllRecovery, setShowAllRecovery] = useState(false)
 
   // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
   // Card (การ์ดเดียวที่ควรมี effect ใหม่ตามกฎ "Hero มีแค่ใบเดียว") จำลองแสงสะท้อนผิวโลหะเปลี่ยนมุมตามที่
@@ -1392,9 +1397,7 @@ export default function DashboardPage() {
                       // 2 จุดนี้ — จุดสีเขียว/เหลือง/แดงในลิสต์รายกลุ่มกล้ามเนื้อด้านล่างยังคงไว้ เพราะเป็น
                       // สัญญาณข้อมูลจริงว่ากลุ่มไหนพร้อม/ไม่พร้อม ไม่ใช่แค่สีตกแต่ง)
                       const recColor = COLORS.cyan
-                      // 90 mirrors FULLY_RECOVERED_PCT in lib/dashboardStats.ts (not exported,
-                      // so re-checked here purely for the badge — doesn't change any computed pct)
-                      const isFullyReady = recommendation.pct >= 90
+                      const isFullyReady = recommendation.pct >= FULLY_RECOVERED_PCT
                       return (
                         // v49: ฟีดแบ็ก "แถบ Notification สูงเกิน กินพื้นที่เกือบ 20% ทั้งที่ข้อความสั้น
                         // อยากลดความสูงประมาณ 20%" — py-2 (8px) -> py-1.5 (6px) และไอคอน 💪 text-sm (14px)
@@ -1515,7 +1518,13 @@ export default function DashboardPage() {
                         ทั้งหมด เหลือแค่ลิสต์แท่งยาวตาม % hover ยังไฮไลต์แท่งตัวเองได้เหมือนเดิม แค่ไม่มีคู่
                         ตัวคนให้ sync ด้วยแล้ว */}
                     <div className="flex-1 min-w-0 space-y-1.5">
-                    {RECOVERY_MUSCLES.map((mg) => {
+                    {(() => {
+                      const notReadyMuscles = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT)
+                      const displayedMuscles = showAllRecovery ? RECOVERY_MUSCLES : notReadyMuscles
+                      if (displayedMuscles.length === 0) {
+                        return <p className="text-[11px] text-muted text-center py-2">ทุกกลุ่มกล้ามเนื้อพร้อมฝึกแล้ว ✅</p>
+                      }
+                      return displayedMuscles.map((mg) => {
                       const pct = recoveryPctMap[mg]
                       const color = recoveryStatusColor(pct)
                       const isHovered = mg === hoveredRecoveryGroup
@@ -1596,9 +1605,30 @@ export default function DashboardPage() {
                           </span>
                         </div>
                       )
-                    })}
+                      })
+                    })()}
                     </div>
                   </div>
+                  {/* toggle ระหว่างลิสต์ย่อ (เฉพาะกลุ่มที่ยังไม่พร้อม) กับลิสต์เต็ม 7 กลุ่ม — โชว์เฉพาะตอน
+                      มีอะไรให้สลับจริง (บางกลุ่มถูกซ่อนอยู่) กันปุ่มลอยอยู่เฉยๆ ตอนทุกกลุ่มพร้อมหรือทุกกลุ่ม
+                      ยังไม่พร้อมพร้อมกันหมด (ซึ่งลิสต์สั้น/ยาวจะเท่ากันอยู่แล้วในสองเคสนั้น) */}
+                  {(() => {
+                    const notReadyCount = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT).length
+                    if (notReadyCount === 0 || notReadyCount === RECOVERY_MUSCLES.length) return null
+                    return (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowAllRecovery((v) => !v)
+                        }}
+                        className="mt-2 text-[10px] text-muted hover:text-ink transition"
+                      >
+                        {showAllRecovery ? 'แสดงเฉพาะที่ยังไม่พร้อม' : `แสดงทั้งหมด (${RECOVERY_MUSCLES.length}) →`}
+                      </button>
+                    )
+                  })()}
                   {/* v49: ฟีดแบ็ก "View Detail เล็กไปนิด ลองทำเป็นเส้นคั่นด้านบน + View Recovery Detail →
                       จะดูเป็น Apple มากกว่า" — เพิ่มเส้นคั่นบาง (border-t) แยกจากลิสต์ด้านบนชัดเจน แล้ว
                       ขยายข้อความจาก "View Detail" เป็น "View Recovery Detail" ตามตัวอย่างแรกที่ให้มา
