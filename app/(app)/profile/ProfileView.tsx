@@ -7,6 +7,7 @@ import { saveAge, saveSex } from '@/lib/profile'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import SignOutButton from '@/components/SignOutButton'
 import PremiumCard from '@/components/ui/PremiumCard'
+import ErrorState from '@/components/ErrorState'
 import { COLORS, CARD_GRADIENT_CSS, withAlpha } from '@/lib/theme'
 
 function emailDisplayName(email: string | null | undefined) {
@@ -28,25 +29,35 @@ export default function ProfileView() {
   const [email, setEmail] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [reloadToken, setReloadToken] = useState(0)
 
   useEffect(() => {
     let active = true
 
     async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!active || !user) return
-      setEmail(user.email ?? null)
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (active) {
+      setProfileError(null)
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (!active || !user) return
+        setEmail(user.email ?? null)
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        if (!active) return
+        if (error) {
+          setProfileError(error.message)
+          return
+        }
         const row = data as (Profile & { display_name: string | null }) | null
         setDisplayName(row?.display_name ?? null)
         setProfile(row)
+      } catch (err) {
+        if (active) setProfileError(err instanceof Error ? err.message : 'โหลดโปรไฟล์ไม่สำเร็จ')
       }
     }
 
@@ -55,7 +66,7 @@ export default function ProfileView() {
     return () => {
       active = false
     }
-  }, [supabase])
+  }, [supabase, reloadToken])
 
   const name = displayName || emailDisplayName(email) || 'นักกีฬา'
 
@@ -82,7 +93,15 @@ export default function ProfileView() {
         </div>
       </div>
 
-      <PersonalInfoCard profile={profile} onSaved={(p) => setProfile(p)} />
+      {profileError ? (
+        <ErrorState
+          title="โหลดข้อมูลส่วนตัวไม่สำเร็จ"
+          message={profileError}
+          onRetry={() => setReloadToken((n) => n + 1)}
+        />
+      ) : (
+        <PersonalInfoCard profile={profile} onSaved={(p) => setProfile(p)} />
+      )}
 
       <PremiumCard className="divide-y divide-white/5">
         {LINKS.map((item) => (

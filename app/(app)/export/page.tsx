@@ -38,6 +38,12 @@ export default function ExportPage() {
       supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }),
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
     ])
+    // ต้องเช็ค error ของทั้ง 3 ตารางก่อน ไม่งั้นถ้าตารางไหน query พังจะได้ data เป็น null เงียบๆ
+    // แล้วไฟล์ export/backup ออกมาเป็น "ชีตว่าง" ทั้งที่จริงข้อมูลมีอยู่ — ผู้ใช้เข้าใจผิดว่าไม่มีข้อมูล
+    // หรือแย่กว่านั้นคือ backup ไฟล์ที่ดูเหมือนสมบูรณ์แต่ขาดข้อมูลไปเงียบๆ
+    if (wRes.error) throw new Error(`workouts: ${wRes.error.message}`)
+    if (bRes.error) throw new Error(`body_metrics: ${bRes.error.message}`)
+    if (gRes.error) throw new Error(`goals: ${gRes.error.message}`)
     return {
       workouts: (wRes.data as Workout[]) ?? [],
       bodyMetrics: (bRes.data as BodyMetric[]) ?? [],

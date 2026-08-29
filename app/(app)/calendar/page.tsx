@@ -47,6 +47,7 @@ export default function CalendarPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const [goals, setGoals] = useState<Goal[]>([])
+  const [goalsError, setGoalsError] = useState<string | null>(null)
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([])
   const [latestMetric, setLatestMetric] = useState<BodyMetric | null>(null)
   const [showGoalForm, setShowGoalForm] = useState(false)
@@ -80,7 +81,8 @@ export default function CalendarPage() {
       supabase.from('workouts').select('*').gte('performed_at', toIsoDate(since)),
       supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(1),
     ])
-    setGoals((goalsRes.data as Goal[]) ?? [])
+    setGoalsError(goalsRes.error ? goalsRes.error.message : null)
+    setGoals(goalsRes.error ? [] : (goalsRes.data as Goal[]) ?? [])
     setAllWorkouts((workoutsRes.data as Workout[]) ?? [])
     setLatestMetric(((metricRes.data as BodyMetric[]) ?? [])[0] ?? null)
   }, [supabase])
@@ -427,7 +429,9 @@ export default function CalendarPage() {
           />
         )}
 
-        {goals.length === 0 ? (
+        {goalsError ? (
+          <ErrorState title="โหลดเป้าหมายไม่สำเร็จ" message={goalsError} onRetry={loadGoalsData} />
+        ) : goals.length === 0 ? (
           <PremiumCard className="text-sm text-muted px-4 py-6 text-center">ยังไม่มีเป้าหมาย ลองตั้งเป้าหมายแรกดู</PremiumCard>
         ) : (
           <ul className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-3 md:items-start">

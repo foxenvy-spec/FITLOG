@@ -14,6 +14,7 @@ import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import HeartRateSettings from './HeartRateSettings'
 import CardioTargetsSettings from './CardioTargetsSettings'
+import ErrorState from './ErrorState'
 
 const STATUS_COLOR: Record<VolumeStatus, string> = {
   behind: '#C1503A', // rust — ตามหลัง
@@ -68,7 +69,7 @@ export default function WeeklyCardioVolume() {
   const [hrSettingsOpen, setHrSettingsOpen] = useState(false)
   const [targetsOpen, setTargetsOpen] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['weekly-cardio-volume', start, end],
     queryFn: async () => {
       const {
@@ -107,11 +108,16 @@ export default function WeeklyCardioVolume() {
 
   // เป้าหมายของผู้ใช้เอง (ตั้งได้ต่อคนใน weekly_volume_targets) — ถ้ายังไม่เคยตั้ง จะได้ค่า
   // default กลับมาแทน (ดู lib/weeklyCardioTargets.ts)
-  const { data: targets, isLoading: loadingTargets } = useQuery({
+  const { data: targets, isLoading: loadingTargets, isError: targetsError } = useQuery({
     queryKey: ['weekly-cardio-targets'],
     queryFn: () => fetchWeeklyCardioTargets(supabase),
     staleTime: 60_000,
   })
+
+  function retry() {
+    queryClient.invalidateQueries({ queryKey: ['weekly-cardio-volume'] })
+    queryClient.invalidateQueries({ queryKey: ['weekly-cardio-targets'] })
+  }
 
   const volume = data?.volume
   const vo2max = data ? computeVO2Max(data.maxHeartRate, data.restingHeartRate) : null
@@ -144,7 +150,9 @@ export default function WeeklyCardioVolume() {
       </div>
 
       <div className="px-4 pb-4">
-        {isLoading || !volume ? (
+        {isError ? (
+          <ErrorState title="โหลดข้อมูลคาร์ดิโอไม่สำเร็จ" message="ไม่สามารถโหลดข้อมูลคาร์ดิโอสัปดาห์นี้ได้ ตรวจสอบการเชื่อมต่อแล้วลองใหม่" onRetry={retry} />
+        ) : isLoading || !volume ? (
           <div className="grid grid-cols-2 gap-2">
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-14 w-full rounded-md" />
@@ -183,7 +191,14 @@ export default function WeeklyCardioVolume() {
 
             <div className="mt-3 space-y-2.5">
               <p className="text-[10px] tracked uppercase text-muted">เป้าหมายสัปดาห์นี้</p>
-              {loadingTargets || !targets ? (
+              {targetsError ? (
+                <p className="text-[11px] text-rustdim">
+                  โหลดเป้าหมายไม่สำเร็จ —{' '}
+                  <button type="button" onClick={retry} className="underline hover:text-ink">
+                    ลองอีกครั้ง
+                  </button>
+                </p>
+              ) : loadingTargets || !targets ? (
                 <>
                   <Skeleton className="h-9 w-full rounded-md" />
                   <Skeleton className="h-9 w-full rounded-md" />
