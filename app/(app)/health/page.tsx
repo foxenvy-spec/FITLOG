@@ -29,6 +29,7 @@ import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import { saveAge } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
 import PremiumCard from '@/components/ui/PremiumCard'
+import ProgressTimelineCard from '@/components/ProgressTimelineCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
 import Sparkline from '@/components/dashboard/Sparkline'
 
@@ -1716,6 +1717,8 @@ export default function HealthPage() {
               />
             </div>
           </div>
+
+          <ProgressTimelineCard heightCm={profile?.height_cm ?? null} />
         </div>
       )}
 
