@@ -19,8 +19,8 @@ import { todayStr } from '@/lib/weekdays'
 import {
   computeTodayTotals,
   estimateCaloriesToday,
-  suggestNextPR,
-  type PRSuggestion,
+  suggestProgressiveOverload,
+  type ProgressiveOverloadSuggestion,
 } from '@/lib/dashboardStats'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
@@ -81,7 +81,7 @@ export default function StatsPage() {
   // เลย ให้ fallback เป็น DEFAULT_BODYWEIGHT_KG เหมือนที่ dashboardStats.ts ใช้ที่อื่น
   const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null)
   // คำแนะนำเป้าหมายครั้งถัดไปของท่าที่ฝึกล่าสุด (ย้ายมาจาก dashboard)
-  const [nextPR, setNextPR] = useState<PRSuggestion | null>(null)
+  const [overloadSuggestion, setOverloadSuggestion] = useState<ProgressiveOverloadSuggestion | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -170,7 +170,7 @@ export default function StatsPage() {
         .limit(1)
       const lastExerciseName = (data?.[0] as { exercise_name: string | null } | undefined)?.exercise_name ?? null
       if (!lastExerciseName) {
-        setNextPR(null)
+        setOverloadSuggestion(null)
         return
       }
       const { data: history } = await supabase
@@ -178,7 +178,7 @@ export default function StatsPage() {
         .select('*')
         .eq('type', 'strength')
         .eq('exercise_name', lastExerciseName)
-      setNextPR(suggestNextPR(lastExerciseName, (history as Workout[]) ?? [], exercises))
+      setOverloadSuggestion(suggestProgressiveOverload(lastExerciseName, (history as Workout[]) ?? [], exercises))
     }
     loadNextPR()
   }, [supabase, exercises])
@@ -467,11 +467,11 @@ export default function StatsPage() {
         </section>
       )}
 
-      {nextPR && (
+      {overloadSuggestion && (
         <section>
-          <h2 className="font-display text-sm tracked uppercase text-muted mb-3">🎯 Next PR แนะนำ</h2>
+          <h2 className="font-display text-sm tracked uppercase text-muted mb-3">🎯 Progressive Overload แนะนำ</h2>
           <a
-            href={`/exercises/${encodeURIComponent(nextPR.exerciseName)}`}
+            href={`/exercises/${encodeURIComponent(overloadSuggestion.exerciseName)}`}
             // v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — rounded-lg (8px) -> rounded-card (24px,
             // token เดียวกับ PremiumCard) + เพิ่ม hover:bg-surface2 คู่กับ active:bg-surface2 เดิม (เดิมมีแค่
             // active ซึ่งรองรับแตะบนมือถือ แต่ไม่มี feedback ตอน hover ด้วยเมาส์บนเดสก์ท็อป)
@@ -485,23 +485,34 @@ export default function StatsPage() {
             }
           >
             <div className="flex items-center justify-between mb-2">
-              <p className="font-display text-base tracked uppercase text-ink">{nextPR.exerciseName}</p>
+              <p className="font-display text-base tracked uppercase text-ink">{overloadSuggestion.exerciseName}</p>
               <span className="text-muted text-xs">โปรไฟล์ท่า →</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[10px] tracked uppercase text-muted">Last</p>
                 <p className="font-mono text-base text-muted">
-                  {format(nextPR.lastWeight)} × {nextPR.lastReps}
+                  {format(overloadSuggestion.lastWeight)} × {overloadSuggestion.lastReps} × {overloadSuggestion.lastSets}
                 </p>
               </div>
               <div>
                 <p className="text-[10px] tracked uppercase text-muted">Target</p>
                 <p className="font-mono text-base text-violet">
-                  {format(nextPR.targetWeight)} × {nextPR.targetReps}
+                  {format(overloadSuggestion.targetWeight)} ×{' '}
+                  {overloadSuggestion.targetRepsLow === overloadSuggestion.targetRepsHigh
+                    ? overloadSuggestion.targetRepsLow
+                    : `${overloadSuggestion.targetRepsLow}–${overloadSuggestion.targetRepsHigh}`}
                 </p>
               </div>
             </div>
+            {/* บอกเหตุผล/สิ่งที่ต้องทำต่างกันตาม action — increaseWeight = ขึ้นน้ำหนักได้แล้ว, addReps =
+                คงน้ำหนักเดิมไว้ก่อน ไล่เพิ่ม reps จนกว่าจะถึงบนสุดของช่วงเป้าหมาย ตรงกับ roadmap Priority 7
+                ("ครั้งหน้าควรเล่นเท่าไหร่?") */}
+            <p className="text-[11px] text-muted mt-2">
+              {overloadSuggestion.action === 'increaseWeight'
+                ? `ทำ ${overloadSuggestion.lastReps} reps ที่น้ำหนักเดิมได้แล้ว — ลองขึ้นน้ำหนัก`
+                : `คงน้ำหนักเดิม ${format(overloadSuggestion.lastWeight)} ไว้ก่อน — พยายามเพิ่ม reps`}
+            </p>
           </a>
         </section>
       )}
