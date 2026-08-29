@@ -1707,7 +1707,13 @@ export default function HealthPage() {
 
               <RecommendationsCard insights={healthInsights} latestWeightKg={latest?.weight_kg ?? null} />
 
-              <GoalsCard goals={goals} unit={unit} goalCurrentValue={goalCurrentValue} goalProgressPct={goalProgressPct} />
+              <GoalsCard
+                goals={goals}
+                unit={unit}
+                goalCurrentValue={goalCurrentValue}
+                goalProgressPct={goalProgressPct}
+                goalStartValue={(g) => goalEarliestTrackedValue(g) ?? g.starting_value ?? null}
+              />
             </div>
           </div>
         </div>
@@ -3508,11 +3514,16 @@ function GoalsCard({
   unit,
   goalCurrentValue,
   goalProgressPct,
+  goalStartValue,
 }: {
   goals: Goal[]
   unit: string
   goalCurrentValue: (g: Goal) => number | null
   goalProgressPct: (g: Goal) => number | null
+  // ค่าเริ่มต้นที่ goalProgressPct ใช้จริง (earliestTrackedValue ?? starting_value — ดูคอมเมนต์ v62
+  // ที่จุดคำนวณ) เอาไว้ทำเป็นปลายซ้ายของเส้น slider ให้ตรงกับตัวเลขที่ % ก้าวหน้าคำนวณจากจริง แทนที่จะ
+  // เดา/ใช้ starting_value เฉยๆ ซึ่งอาจไม่ตรงกับสิ่งที่ % จริงอ้างอิงอยู่
+  goalStartValue: (g: Goal) => number | null
 }) {
   return (
     <PremiumCard className="p-4">
@@ -3525,22 +3536,53 @@ function GoalsCard({
       {goals.length === 0 ? (
         <p className="text-[11px] text-muted">ยังไม่ได้ตั้งเป้าหมาย ไปตั้งเป้าหมายน้ำหนักหรือ Body Fat ได้ที่หน้าปฏิทิน</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-5">
           {goals.map((g) => {
             const current = goalCurrentValue(g)
             const pct = goalProgressPct(g)
+            const start = goalStartValue(g)
             const label = g.goal_type === 'weight' ? `น้ำหนัก (${unit})` : 'Body Fat (%)'
+            const fmt = (n: number) => (g.goal_type === 'weight' ? n.toFixed(1) : `${n.toFixed(1)}%`)
+            const remaining =
+              current !== null && g.target_value !== null ? Math.abs(current - g.target_value) : null
+            // v: mockup "Current -> Goal ระยะทาง" ขอภาพเส้นสไลเดอร์ (start...goal, ลูกศรปัจจุบันตาม %)
+            // แทนแถบเติมสีธรรมดาเดิม — ต้องมีทั้ง start/target/pct ครบถึงวาดเส้นได้ (ไม่งั้น fallback เป็น
+            // แถบธรรมดาแบบเดิม เช่น ยังไม่เคยบันทึกค่าเลยสักครั้ง)
+            const canShowSlider = start !== null && g.target_value !== null && pct !== null
             return (
               <div key={g.id}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="text-ink">{label}</span>
                   <span className="font-mono text-muted">
                     {current !== null ? current.toFixed(1) : '—'} / {g.target_value?.toFixed(1) ?? '—'}
+                    {remaining !== null && (
+                      <span className="text-amber"> · เหลือ {fmt(remaining)}</span>
+                    )}
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-surface2 overflow-hidden">
-                  <div className="h-full bg-amber rounded-full" style={{ width: `${pct ?? 0}%` }} />
-                </div>
+                {canShowSlider ? (
+                  <div className="relative pt-5 pb-4">
+                    {/* ลูกศร + ค่าปัจจุบัน ลอยอยู่เหนือเส้นตรงตำแหน่ง % ความคืบหน้าจริง */}
+                    <div
+                      className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
+                      style={{ left: `${Math.min(100, Math.max(0, pct))}%` }}
+                    >
+                      <span className="text-[10px] font-mono text-ink whitespace-nowrap">{fmt(current!)}</span>
+                      <span className="text-amber leading-none" aria-hidden="true">▲</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-surface2 overflow-hidden">
+                      <div className="h-full bg-amber rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] text-muted">{fmt(start!)}</span>
+                      <span className="text-[10px] text-muted">{fmt(g.target_value!)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-2 rounded-full bg-surface2 overflow-hidden">
+                    <div className="h-full bg-amber rounded-full" style={{ width: `${pct ?? 0}%` }} />
+                  </div>
+                )}
               </div>
             )
           })}
