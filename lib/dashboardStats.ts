@@ -399,6 +399,92 @@ export function computeTodaysRecommendation(
   return { ...recommendation, setsCurrent, setsTarget, setsRemaining: setsTarget - setsCurrent }
 }
 
+// ==================== Notifications (Priority 14) ====================
+// เดิมกระดิ่งแจ้งเตือนโชว์แค่ "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" (NotificationButton.tsx) ซึ่งเป็นสรุป
+// สถิติเฉยๆ ไม่ได้บอกว่า "ควรทำอะไรต่อ" และกดแล้วก็ไปไหนไม่ได้ — เปลี่ยนเป็น 4 หมวดที่ actionable จริง
+// (Workout/Recovery/Progress/Goal) แต่ละรายการมี href พาไปหน้าที่เกี่ยวข้องได้ — สูงสุด 4 รายการเสมอ
+// (1 ต่อหมวด) กันไม่ให้กลายเป็น noise เยอะๆ ตามที่ขอ "อย่าให้กลายเป็น notification ทั่วไปเยอะๆ"
+export interface DashboardNotification {
+  id: string
+  category: 'workout' | 'recovery' | 'progress' | 'goal'
+  icon: string
+  title: string
+  detail: string
+  href: string
+}
+
+export function computeDashboardNotifications(params: {
+  // Workout: ชื่อวันตามตารางของวันนี้ (ถ้ามี) — ไม่โชว์ถ้าฝึกวันนี้ไปแล้ว (ไม่มีอะไรให้ "ต้องทำ" แล้ว)
+  scheduledWorkoutTitle: string | null
+  todayCompleted: boolean
+  // Recovery: กล้ามเนื้อที่แนะนำวันนี้ — โชว์เฉพาะตอนพร้อมเต็มที่แล้วจริงๆ (>= FULLY_RECOVERED_PCT)
+  recommendation: { muscleGroup: string; pct: number } | null
+  // Progress: เทรนด์ body fat ล่าสุด (จาก computeBodyMetricsSummary)
+  bodyFatDelta: number | null
+  bodyFatIsGood: boolean | null
+  // Goal: เหลือเท่าไหร่ถึงเป้าหมาย — ใช้ตัวแรกที่มีข้อมูลจริง (น้ำหนักก่อน ถ้าไม่มีค่อย body fat)
+  weightRemaining: { value: number; unit: string } | null
+  bodyFatRemaining: number | null
+}): DashboardNotification[] {
+  const items: DashboardNotification[] = []
+
+  if (params.scheduledWorkoutTitle && !params.todayCompleted) {
+    items.push({
+      id: 'notif-workout',
+      category: 'workout',
+      icon: '🏋️',
+      title: 'Workout',
+      detail: `วันนี้ถึงวัน ${params.scheduledWorkoutTitle}`,
+      href: '/session',
+    })
+  }
+
+  if (params.recommendation && params.recommendation.pct >= FULLY_RECOVERED_PCT) {
+    items.push({
+      id: 'notif-recovery',
+      category: 'recovery',
+      icon: '💪',
+      title: 'Recovery',
+      detail: `${params.recommendation.muscleGroup}พร้อมฝึกแล้ว`,
+      href: '/recovery',
+    })
+  }
+
+  if (params.bodyFatDelta != null && params.bodyFatIsGood != null) {
+    const absDelta = Math.abs(params.bodyFatDelta).toFixed(1)
+    items.push({
+      id: 'notif-progress',
+      category: 'progress',
+      icon: params.bodyFatIsGood ? '📉' : '📈',
+      title: 'Progress',
+      detail: `Body Fat ${params.bodyFatIsGood ? 'ลดลง' : 'เพิ่มขึ้น'} ${absDelta}%`,
+      href: '/health',
+    })
+  }
+
+  if (params.weightRemaining) {
+    items.push({
+      id: 'notif-goal',
+      category: 'goal',
+      icon: '🎯',
+      title: 'Goal',
+      detail: `เหลือ ${params.weightRemaining.value.toFixed(1)} ${params.weightRemaining.unit} ถึงเป้าหมาย`,
+      href: '/health',
+    })
+  } else if (params.bodyFatRemaining != null) {
+    items.push({
+      id: 'notif-goal',
+      category: 'goal',
+      icon: '🎯',
+      title: 'Goal',
+      detail: `เหลือ ${params.bodyFatRemaining.toFixed(1)}% Body Fat ถึงเป้าหมาย`,
+      href: '/health',
+    })
+  }
+
+  return items
+}
+
 // ==================== หากล้ามเนื้อที่ตารางโปรแกรมประจำสัปดาห์กำหนดไว้ ====================
 // เดิมใช้ title ของวันนั้นเป็นชื่อกลุ่มกล้ามเนื้อโดยตรง เฉพาะกรณีที่ title ตรงกับ MUSCLE_GROUPS พอดี
 // (เช่น "ขา", "อก") — ปัญหา: ผู้ใช้จริงมักตั้งชื่อวันแบบบรรยาย (เช่น "Day 5 — Lower", "Push Day") ไม่ใช่

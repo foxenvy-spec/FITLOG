@@ -24,6 +24,7 @@ import {
   computeGreetingContext,
   computeWorkoutMotivationLabel,
   computeTodaysRecommendation,
+  computeDashboardNotifications,
   computeTrainingBalance,
   trainingBalanceInsight,
   getScheduledMuscleForDay,
@@ -540,6 +541,77 @@ describe('computeTodaysRecommendation', () => {
 
   it('returns null when there is no base recommendation', () => {
     expect(computeTodaysRecommendation(null, { ขา: 12 }, { ขา: 29 })).toBeNull()
+  })
+})
+
+const baseNotificationParams = {
+  scheduledWorkoutTitle: null as string | null,
+  todayCompleted: false,
+  recommendation: null as { muscleGroup: string; pct: number } | null,
+  bodyFatDelta: null as number | null,
+  bodyFatIsGood: null as boolean | null,
+  weightRemaining: null as { value: number; unit: string } | null,
+  bodyFatRemaining: null as number | null,
+}
+
+describe('computeDashboardNotifications', () => {
+  it('returns an empty list when nothing is actionable', () => {
+    expect(computeDashboardNotifications(baseNotificationParams)).toEqual([])
+  })
+
+  it('shows a workout notification when today has a scheduled day not yet completed', () => {
+    const items = computeDashboardNotifications({ ...baseNotificationParams, scheduledWorkoutTitle: 'Lower Body', todayCompleted: false })
+    expect(items).toHaveLength(1)
+    expect(items[0]).toMatchObject({ category: 'workout', detail: 'วันนี้ถึงวัน Lower Body', href: '/session' })
+  })
+
+  it('hides the workout notification once today is already completed', () => {
+    const items = computeDashboardNotifications({ ...baseNotificationParams, scheduledWorkoutTitle: 'Lower Body', todayCompleted: true })
+    expect(items).toHaveLength(0)
+  })
+
+  it('shows a recovery notification only once the recommended muscle is fully recovered (>= 90%)', () => {
+    const ready = computeDashboardNotifications({ ...baseNotificationParams, recommendation: { muscleGroup: 'ขา', pct: 95 } })
+    expect(ready[0]).toMatchObject({ category: 'recovery', detail: 'ขาพร้อมฝึกแล้ว', href: '/recovery' })
+
+    const notReady = computeDashboardNotifications({ ...baseNotificationParams, recommendation: { muscleGroup: 'ขา', pct: 70 } })
+    expect(notReady).toHaveLength(0)
+  })
+
+  it('shows a progress notification worded by direction', () => {
+    const improving = computeDashboardNotifications({ ...baseNotificationParams, bodyFatDelta: -0.4, bodyFatIsGood: true })
+    expect(improving[0]).toMatchObject({ category: 'progress', icon: '📉', detail: 'Body Fat ลดลง 0.4%', href: '/health' })
+
+    const worsening = computeDashboardNotifications({ ...baseNotificationParams, bodyFatDelta: 0.4, bodyFatIsGood: false })
+    expect(worsening[0]).toMatchObject({ category: 'progress', icon: '📈', detail: 'Body Fat เพิ่มขึ้น 0.4%' })
+  })
+
+  it('prefers weightRemaining over bodyFatRemaining for the goal notification', () => {
+    const items = computeDashboardNotifications({
+      ...baseNotificationParams,
+      weightRemaining: { value: 7.1, unit: 'kg' },
+      bodyFatRemaining: 5.1,
+    })
+    expect(items[0]).toMatchObject({ category: 'goal', detail: 'เหลือ 7.1 kg ถึงเป้าหมาย', href: '/health' })
+  })
+
+  it('falls back to bodyFatRemaining when there is no weight goal', () => {
+    const items = computeDashboardNotifications({ ...baseNotificationParams, bodyFatRemaining: 5.1 })
+    expect(items[0]).toMatchObject({ category: 'goal', detail: 'เหลือ 5.1% Body Fat ถึงเป้าหมาย' })
+  })
+
+  it('caps at 4 items, one per category, when everything is actionable at once', () => {
+    const items = computeDashboardNotifications({
+      scheduledWorkoutTitle: 'Lower Body',
+      todayCompleted: false,
+      recommendation: { muscleGroup: 'ขา', pct: 95 },
+      bodyFatDelta: -0.4,
+      bodyFatIsGood: true,
+      weightRemaining: { value: 7.1, unit: 'kg' },
+      bodyFatRemaining: null,
+    })
+    expect(items).toHaveLength(4)
+    expect(items.map((i) => i.category)).toEqual(['workout', 'recovery', 'progress', 'goal'])
   })
 })
 

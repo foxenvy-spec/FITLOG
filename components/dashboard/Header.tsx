@@ -1,7 +1,7 @@
 'use client'
 
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
-import type { LatestPR, TopMuscle } from '@/lib/dashboardStats'
+import type { DashboardNotification } from '@/lib/dashboardStats'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import {
   NOISE_BG,
@@ -19,8 +19,7 @@ import SubtitleAccent from './SubtitleAccent'
 
 interface HeaderProps {
   greetingText: string
-  latestPR: LatestPR | null
-  topMuscleThisWeek: TopMuscle | null
+  notifications: DashboardNotification[]
   displayName: string
   fitnessScore: FitnessScoreResult
   /** true เมื่อวันนี้เป็น Rest Day จริง (workoutCardVariant==='restDay' ใน MobileDashboardView.tsx) —
@@ -34,7 +33,7 @@ interface HeaderProps {
 // ยังอยู่ในโฟลว์) ทำให้วง (เริ่มที่ y=8) ทับซ้อนกับกระดิ่ง (y=0-44) จริง — แก้เป็น marginTop 52
 // (=ความสูงกระดิ่ง 44px + ช่องไฟ 8px) ให้วงเริ่มหลังกระดิ่งจริงๆ ไม่ทับกันอีก — font ชื่อ/ระยะห่าง
 // บรรทัดฝั่งซ้ายคงค่าจาก v18 ไว้ทั้งหมด (ผู้ใช้ระบุว่ารอบนี้ไม่ลด font เพิ่ม เน้นความสูง/padding/gap)
-export default function Header({ greetingText, latestPR, topMuscleThisWeek, displayName, fitnessScore, isRestDay = false }: HeaderProps) {
+export default function Header({ greetingText, notifications, displayName, fitnessScore, isRestDay = false }: HeaderProps) {
   return (
     <div className="relative flex items-start justify-between gap-3 animate-rise">
       {/* Ambient light เฉพาะโซน Header — เดิมพื้นหลังทั้งหน้าตัดแสงส้มออกหมดแล้ว (เทาเย็นล้วน) แต่
@@ -222,7 +221,7 @@ export default function Header({ greetingText, latestPR, topMuscleThisWeek, disp
 
       {/* กระดิ่งแจ้งเตือน — ลอยมุมขวาบนอิสระ ไม่กินพื้นที่ในโฟลว์แนวตั้งของคอลัมน์ขวาอีกต่อไป */}
       <div className="absolute top-0 right-0">
-        <NotificationButton latestPR={latestPR} topMuscleThisWeek={topMuscleThisWeek} />
+        <NotificationButton notifications={notifications} />
       </div>
 
       {/* v60: ฟีดแบ็ก "Header สูงไป 5-8% — ไม่ใช่เพราะ BANK ใหญ่ แต่เพราะช่องว่างตรงกลางระหว่าง BANK →

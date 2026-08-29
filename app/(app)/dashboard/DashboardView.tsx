@@ -27,6 +27,7 @@ import {
   computeMissedMuscleInsights,
   suggestMuscleToTrain,
   computeTodaysRecommendation,
+  computeDashboardNotifications,
   computeTrainingBalance,
   trainingBalanceInsight,
   recoveryRecommendationLabel,
@@ -35,15 +36,11 @@ import {
   computeWorkoutMotivationLabel,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
-  computeLatestPR,
-  computeTopMuscleThisWeek,
   estimateCaloriesToday,
   type Insight,
   type MuscleRecommendation,
   type TodaysRecommendation,
   type VolumeIncrease,
-  type LatestPR,
-  type TopMuscle,
   type ScheduledDay,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
@@ -133,6 +130,10 @@ export interface DashboardData {
   // muscleRecommendation ต่อยอดด้วยเซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ของกลุ่มนั้น (จาก Weekly Volume
   // Engine) — ใช้ในป้ายแนะนำของการ์ด Recovery ให้ตอบทั้ง "พร้อมฝึกไหม" และ "เหลืออีกเท่าไหร่" พร้อมกัน
   todaysRecommendation: TodaysRecommendation | null
+  // เป้าหมายน้ำหนัก/Body Fat ที่ตั้งไว้ (ดิบเป็น kg เสมอ) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" สำหรับ
+  // การแจ้งเตือนหมวด Goal (computeDashboardNotifications) null = ยังไม่ได้ตั้งเป้าหมายประเภทนั้น
+  weightGoalTarget: number | null
+  bodyFatGoalTarget: number | null
   // true เมื่อ muscleRecommendation ข้างบนคือกล้ามเนื้อของ "วันนี้" จริงๆ (ยังทำไม่ครบ/ยังไม่ได้เริ่ม) —
   // false เมื่อเป็นคำแนะนำของเซสชัน "ถัดไป" (วันนี้ทำครบแล้ว/เป็นวันพัก) ใช้ตัดสินป้าย "AI Coach · Today"
   // vs "· Next" ให้ตรงกับความเป็นจริง (ดู comment เต็มที่จุดคำนวณ scheduledMuscle ด้านล่าง)
@@ -144,10 +145,6 @@ export interface DashboardData {
   weeklyWorkoutGoal: number
   // แถวติ๊กถูกรายวัน (จ-อา) ของสัปดาห์นี้ — ใช้โชว์ในการ์ด Weekly Goal
   weekDayTicks: { iso: string; trained: boolean; isFuture: boolean; inStreak: boolean }[]
-  // สองตัวนี้ตอบคำถาม "PR ล่าสุด" และ "กล้ามเนื้อที่ฝึกมากที่สุดสัปดาห์นี้" — โชว์เป็น quick-glance
-  // strip ใต้คำทักทาย ให้เห็นครบภายในไม่กี่วินาทีโดยไม่ต้องเลื่อนหรือกดเข้าไปดูหน้าอื่น
-  latestPR: LatestPR | null
-  topMuscleThisWeek: TopMuscle | null
   // ผู้ใช้ใหม่จริงๆ = ไม่เคยบันทึกอะไรเลย (400 วันย้อนหลัง) และยังไม่ได้ตั้งโปรแกรมเลยด้วย —
   // ใช้ตัดสินว่าควรโชว์ first-run banner (OnboardingBanner) หรือไม่
   hasAnyHistory: boolean
@@ -181,6 +178,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     weeklyVolumeTargets,
     { data: profileRow },
     { data: bodyMetricRows },
+    { data: goalRows },
   ] = await Promise.all([
     supabase.from('workouts').select('*').eq('performed_at', today).order('created_at'),
     supabase
@@ -210,6 +208,10 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     // เอนทรีล่าสุด 2 รายการพอสำหรับคำนวณ delta (เทียบกับ BodyMetricsRow ที่ดึง 30 รายการ
     // เพราะการ์ดนั้นโชว์ค่าปัจจุบันด้วย ส่วนตรงนี้ใช้แค่เทรนด์ล่าสุดไปทำ insight)
     supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(2),
+    // เป้าหมายน้ำหนัก/Body Fat ที่ตั้งไว้ (ถ้ามี) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" สำหรับ
+    // การแจ้งเตือนหมวด Goal (ดู computeDashboardNotifications) ตารางเดียวกับที่ /health และ
+    // BodyMetricsRow.tsx ใช้อยู่แล้ว
+    supabase.from('goals').select('goal_type, target_value').in('goal_type', ['weight', 'body_fat']).eq('status', 'active'),
   ])
 
   const todayList = (todayRows as Workout[]) ?? []
@@ -241,7 +243,6 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     const match = strengthRows.find((r) => r.muscle_group === mg)
     recoveryDates[mg] = match?.performed_at ?? null
   })
-  const latestPR = computeLatestPR(strengthRows)
 
   const twoWeeksRows =
     (twoWeeksStrength as { muscle_group: string | null; sets: number | null; performed_at: string }[]) ?? []
@@ -282,7 +283,6 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   })
   const pushPullBalance = computePushPullBalance(thisWeekSets)
   const bestVolumeIncrease = computeBestVolumeIncrease(thisWeekSets, lastWeekSets)
-  const topMuscleThisWeek = computeTopMuscleThisWeek(thisWeekSets)
 
   // จำนวนครั้งที่ฝึกแล้วสัปดาห์นี้ (นับวันที่ต่างกัน ไม่ใช่จำนวนแถว) — ใช้ distinctDates ที่ดึงมาแล้ว
   // สำหรับคำนวณ streak ด้านบน (ย้อนหลัง 400 วัน ครอบคลุมสัปดาห์นี้แน่นอน) ไม่ต้อง query ซ้ำ
@@ -402,6 +402,12 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
 
   const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel, trainingBalance)
 
+  // เป้าหมายน้ำหนัก/Body Fat (ถ้ามี) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" ของการแจ้งเตือนหมวด Goal
+  // ดิบเป็น kg เสมอ (แปลงหน่วยแสดงผล kg/lb ทำที่ฝั่ง render ผ่าน useWeightUnit ซึ่งเป็น hook เรียกในนี้ไม่ได้)
+  const typedGoals = (goalRows as { goal_type: string; target_value: number | null }[]) ?? []
+  const weightGoalTarget = typedGoals.find((g) => g.goal_type === 'weight')?.target_value ?? null
+  const bodyFatGoalTarget = typedGoals.find((g) => g.goal_type === 'body_fat')?.target_value ?? null
+
   // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) — ใช้สำหรับ Fitness Score เท่านั้น ใช้ distinctDates
   // ชุดเดียวกับที่คำนวณ streak ด้านบน ไม่ต้อง query ซ้ำ
   const sevenDaysAgo = daysAgoStr(6)
@@ -425,13 +431,13 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     weeklyGoalPct,
     muscleRecommendation,
     todaysRecommendation,
+    weightGoalTarget,
+    bodyFatGoalTarget,
     isRecommendationForToday,
     bestVolumeIncrease,
     thisWeekWorkoutDays,
     weeklyWorkoutGoal,
     weekDayTicks,
-    latestPR,
-    topMuscleThisWeek,
     hasAnyHistory: distinctDates.length > 0 || typedDays.length > 0,
     last7DaysTrainedCount,
   }
@@ -625,6 +631,30 @@ export default function DashboardPage() {
   // ของ ring ด้านบน แต่ถ้าวันนี้ไม่มีแผนกำหนดไว้ (บันทึกอิสระ) ให้ถือว่า 100% เมื่อมี log อย่างน้อย 1 รายการ
   const recoveryLabelPct =
     progressPct !== null ? progressPct : (data?.todayWorkouts.length ?? 0) > 0 ? 100 : null
+
+  // Priority 14 (Notifications Actionable) — รวม 4 สัญญาณที่คำนวณไว้แล้วทั่วหน้านี้ (ตารางวันนี้/
+  // recovery/เทรนด์ body fat/เป้าหมาย) เป็นรายการแจ้งเตือนที่กดแล้วไปหน้าที่เกี่ยวข้องได้จริง แทนที่
+  // "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" เดิมซึ่งเป็นสรุปสถิติเฉยๆ กดแล้วไปไหนไม่ได้
+  const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && (data?.todayWorkouts.length ?? 0) > 0)
+  const weightRemaining =
+    data?.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+      ? { value: Math.abs(toDisplay(data.bodyMetricsSummary.weight.value) - toDisplay(data.weightGoalTarget)), unit }
+      : null
+  const bodyFatRemaining =
+    data?.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+      ? Math.abs(data.bodyMetricsSummary.bodyFatPct.value - data.bodyFatGoalTarget)
+      : null
+  const notifications = data
+    ? computeDashboardNotifications({
+        scheduledWorkoutTitle: scheduledDay?.title ?? null,
+        todayCompleted,
+        recommendation: data.todaysRecommendation,
+        bodyFatDelta: data.bodyMetricsSummary.bodyFatPct.delta,
+        bodyFatIsGood: data.bodyMetricsSummary.bodyFatPct.isGood,
+        weightRemaining,
+        bodyFatRemaining,
+      })
+    : []
 
   // v45: ฟีดแบ็ก "Header ยังโล่งเกินไป มีพื้นที่ว่างเกือบ 40%" — เพิ่ม Fitness Score (สูตรจริงเดียวกับที่
   // มือถือใช้อยู่แล้ว ดู MobileDashboardView.tsx, ไม่ใช่เลขสมมติใหม่) ลงไปเติมช่องว่างระหว่างชื่อกับ
@@ -844,7 +874,7 @@ export default function DashboardPage() {
           >
             📅 {new Date(today + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
-          <NotificationButton latestPR={data.latestPR} topMuscleThisWeek={data.topMuscleThisWeek} />
+          <NotificationButton notifications={notifications} />
         </div>
       </div>
 

@@ -8,7 +8,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
-import { computeTodayTotals, computeRecoveryPct } from '@/lib/dashboardStats'
+import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications } from '@/lib/dashboardStats'
+import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
 import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
@@ -84,6 +85,7 @@ export default function MobileDashboardView() {
   const searchParams = useSearchParams()
   const [greetingText, setGreetingText] = useState('สวัสดี')
   const [bannerDismissed, setBannerDismissed] = useState(true)
+  const { toDisplay, unit } = useWeightUnit()
 
   useEffect(() => {
     setPrefs(loadDashboardPrefs())
@@ -205,6 +207,27 @@ export default function MobileDashboardView() {
   const workoutCardVariant: 'active' | 'restDay' | 'noProgram' =
     hasTodayPlan || hasLoggedToday ? 'active' : hasAnyProgram ? 'restDay' : 'noProgram'
 
+  // Priority 14 (Notifications Actionable) — เหมือนฝั่งเดสก์ท็อป (DashboardView.tsx) ทุกประการ:
+  // รวม 4 สัญญาณที่มีอยู่แล้วในหน้านี้เป็นรายการแจ้งเตือนที่กดแล้วไปหน้าที่เกี่ยวข้องได้
+  const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && data.todayWorkouts.length > 0)
+  const weightRemaining =
+    data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+      ? { value: Math.abs(toDisplay(data.bodyMetricsSummary.weight.value) - toDisplay(data.weightGoalTarget)), unit }
+      : null
+  const bodyFatRemaining =
+    data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+      ? Math.abs(data.bodyMetricsSummary.bodyFatPct.value - data.bodyFatGoalTarget)
+      : null
+  const notifications = computeDashboardNotifications({
+    scheduledWorkoutTitle: scheduledDay?.title ?? null,
+    todayCompleted,
+    recommendation: data.todaysRecommendation,
+    bodyFatDelta: data.bodyMetricsSummary.bodyFatPct.delta,
+    bodyFatIsGood: data.bodyMetricsSummary.bodyFatPct.isGood,
+    weightRemaining,
+    bodyFatRemaining,
+  })
+
   return (
     <>
       {/* พื้นหลังหน้า — v3: ตัดจุดแสงสีอุ่นฟุ้งใหญ่ (amber/rust/moss blur blob) ที่เคยกระจายเกือบเต็ม
@@ -311,8 +334,7 @@ export default function MobileDashboardView() {
         >
           <Header
             greetingText={greetingText}
-            latestPR={data.latestPR}
-            topMuscleThisWeek={data.topMuscleThisWeek}
+            notifications={notifications}
             displayName={data.profileDisplayName || emailDisplayName(data.email)}
             fitnessScore={fitnessScore}
             isRestDay={workoutCardVariant === 'restDay'}
