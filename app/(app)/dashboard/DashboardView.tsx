@@ -406,7 +406,13 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // ให้คำแนะนำ "วันนี้ควรเล่นอะไร" ตอบทั้งความพร้อม (recovery) และโควตาที่เหลือ (volume) ในคำตอบเดียว
   const todaysRecommendation = computeTodaysRecommendation(muscleRecommendation, thisWeekSets, weeklyVolumeTargets)
 
-  const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel, trainingBalance)
+  const aiDailySummary = computeAIDailySummary(
+    muscleRecommendation,
+    pushPullBalance,
+    progressPctForLabel,
+    trainingBalance,
+    isRecommendationForToday
+  )
 
   // เป้าหมายน้ำหนัก/Body Fat (ถ้ามี) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" ของการแจ้งเตือนหมวด Goal
   // ดิบเป็น kg เสมอ (แปลงหน่วยแสดงผล kg/lb ทำที่ฝั่ง render ผ่าน useWeightUnit ซึ่งเป็น hook เรียกในนี้ไม่ได้)
@@ -1461,7 +1467,7 @@ export default function DashboardPage() {
                           <span className="flex items-center gap-2 min-w-0">
                             <span className="text-xs shrink-0" aria-hidden="true">💪</span>
                             <p className="text-xs text-ink whitespace-pre-line">
-                              {recoveryRecommendationLabel(recoveryLabelPct)}{' '}
+                              {recoveryRecommendationLabel(recoveryLabelPct, data.isRecommendationForToday)}{' '}
                               <span className="font-display tracked uppercase" style={{ color: recColor }}>
                                 {recommendation.muscleGroup}
                               </span>{' '}

@@ -215,16 +215,21 @@ export default function CoachPage() {
       // ถ้าวันนี้ทำครบแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางที่ระบุไว้
       // ถ้าไม่มีตารางเลย (ผู้ใช้ยังไม่ได้ตั้งโปรแกรม) ตกกลับไปใช้ recovery % สูงสุดเหมือนเดิมทั้งหมด
       const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
-      const scheduledMuscle =
-        todayScheduledMuscle && (todayProgressPct === null || todayProgressPct < 100)
-          ? todayScheduledMuscle
-          : getNextScheduledMuscle(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
+      const preferToday = !!todayScheduledMuscle && (todayProgressPct === null || todayProgressPct < 100)
+      const scheduledMuscle = preferToday
+        ? todayScheduledMuscle
+        : getNextScheduledMuscle(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
 
       const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
+      // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีข้อมูล
+      // recovery — เช็คผลลัพธ์จริงตรงกับ todayScheduledMuscle เป๊ะๆ ก่อน (เหมือน DashboardView.tsx
+      // isRecommendationForToday) ส่งต่อให้ computeAIDailySummary กันข้อความพูดว่า "วันนี้ควรเล่น"
+      // ทั้งที่จริงๆ กำลังแนะนำของครั้งถัดไป
+      const isRecommendationForToday = preferToday && recommendation?.muscleGroup === todayScheduledMuscle
       // Training Balance Engine (Priority 2) — เดิม dailySummary เห็นแค่ recovery + push/pull ไม่รู้เรื่อง
       // สัดส่วนบน/ล่างลำตัวเทียบเป้าหมายเลย ทั้งที่ thisWeekSets ด้านบนมีพร้อมใช้อยู่แล้ว
       const trainingBalance = computeTrainingBalance(thisWeekSets, VOLUME_MUSCLES)
-      const dailySummary = computeAIDailySummary(recommendation, balance, todayProgressPct, trainingBalance)
+      const dailySummary = computeAIDailySummary(recommendation, balance, todayProgressPct, trainingBalance, isRecommendationForToday)
 
       // --- ท่าที่ข้ามไปในเซสชันโปรแกรมล่าสุด ---
       let skippedInsight: Insight | null = null

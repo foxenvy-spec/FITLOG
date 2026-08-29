@@ -755,6 +755,13 @@ describe('recoveryRecommendationLabel', () => {
   it('reframes as a next-session suggestion once today\'s plan is fully complete', () => {
     expect(recoveryRecommendationLabel(100)).toBe('ฝึกวันนี้ไปแล้ว ✅\nครั้งหน้าแนะนำเล่น')
   })
+
+  it('says "next time" instead of "today" when the recommendation is not actually for today', () => {
+    // เช่น วันนี้ตารางกำหนดไว้แต่ยังไม่มีท่าเลย (dominantMuscleGroup = null) ระบบตกกลับไปแนะนำกล้ามเนื้อ
+    // ของวันถัดไป — progressPct เป็น null เหมือนเดิม (ยังไม่ได้ทำอะไรวันนี้) แต่ isForToday=false ต้องชนะ
+    expect(recoveryRecommendationLabel(null, false)).toBe('ครั้งหน้าแนะนำเล่น')
+    expect(recoveryRecommendationLabel(43, false)).toBe('ครั้งหน้าแนะนำเล่น')
+  })
 })
 
 describe('computeBestVolumeIncrease', () => {

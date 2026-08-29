@@ -535,7 +535,14 @@ export function getNextScheduledMuscle(
 // เพราะเป็นคนละเรื่องกัน (progressPct คือความคืบหน้าของแผนวันนี้ ส่วนกล้ามเนื้อที่ต่อท้ายคือคำแนะนำ
 // จาก recovery score แยกกันไปเลย) — แยกเป็นคนละบรรทัด (\n) พร้อม emoji ต่างกัน ให้เห็นชัดว่าเป็นคนละเรื่อง
 // progressPct: null = ไม่มีแผนวันนี้ (บันทึกอิสระ ยังไม่ได้ล็อกอะไรเลย)
-export function recoveryRecommendationLabel(progressPct: number | null): string {
+// isForToday: กลุ่มกล้ามเนื้อที่แนะนำคือของ "วันนี้" จริงๆ ไหม (มาจาก isRecommendationForToday ของผู้เรียก
+// — ดูจุดคำนวณเต็มที่ DashboardView.tsx/recovery/page.tsx/coach/page.tsx) — เดิมฟังก์ชันนี้ตัดสินคำว่า
+// "วันนี้ควรเล่น" จาก progressPct อย่างเดียว ไม่เช็คว่ากลุ่มที่แนะนำจริงๆ ตรงกับตารางวันนี้หรือเปล่า ทำให้
+// วันที่ตารางกำหนดไว้แต่ไม่มีท่าเลย (เช่น "Core/Abs" ที่ยังไม่ได้ใส่ท่า — dominantMuscleGroup([]) = null)
+// ระบบตกกลับไปแนะนำกล้ามเนื้อของวันถัดไปหรือ recovery สูงสุดแทน แต่ป้ายยังพูดว่า "วันนี้ควรเล่น [กล้ามเนื้อนั้น]"
+// ทั้งที่ "Today's Workout" การ์ดข้างๆ ยังโชว์ชื่อวันเดิม (Core/Abs) อยู่ — ขัดกันเองกลางหน้าเดียว
+export function recoveryRecommendationLabel(progressPct: number | null, isForToday = true): string {
+  if (!isForToday) return 'ครั้งหน้าแนะนำเล่น'
   if (progressPct === null) return 'วันนี้ควรเล่น'
   if (progressPct >= 100) return 'ฝึกวันนี้ไปแล้ว ✅\nครั้งหน้าแนะนำเล่น'
   return `🟢 วันนี้ทำได้ ${progressPct}% ของเป้าหมายแล้ว\n🎯 ครั้งหน้าแนะนำเล่น`

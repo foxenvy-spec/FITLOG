@@ -58,6 +58,10 @@ export default function RecoveryPage() {
   const [progressPct, setProgressPct] = useState<number | null>(null)
   // กล้ามเนื้อที่ตารางโปรแกรมประจำสัปดาห์ระบุไว้ (ถ้ามี) — ใช้ยึดคำแนะนำให้ตรงตารางแทน recovery % ล้วนๆ
   const [scheduledMuscle, setScheduledMuscle] = useState<string | null>(null)
+  // true เมื่อ scheduledMuscle ข้างบนคือของ "วันนี้" จริงๆ (ไม่ใช่ตกกลับไปดูวันถัดไปเพราะวันนี้ทำครบแล้ว/
+  // เป็นวันพัก/ตั้งไว้แต่ไม่มีท่าเลย) — ใช้คู่กับการเช็ค recommendation.muscleGroup === scheduledMuscle
+  // ตอน render เพื่อไม่ให้ป้าย "วันนี้ควรเล่น" ขึ้นทั้งที่คำแนะนำจริงๆ เป็นของครั้งถัดไป
+  const [isTodayScheduled, setIsTodayScheduled] = useState(false)
   // เก็บ log เวทเทรนนิ่งดิบ (muscle_group + performed_at) ไว้ใช้สร้างกราฟ Recovery Score ย้อนหลัง
   const [strengthLogs, setStrengthLogs] = useState<{ muscle_group: string | null; performed_at: string }[]>([])
   const [historyRangeDays, setHistoryRangeDays] = useState<30 | 90>(30)
@@ -139,11 +143,9 @@ export default function RecoveryPage() {
       // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) — ถ้าวันนี้ทำครบแล้วหรือเป็น
       // วันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางแทน ไม่มีตารางเลยจึงตกกลับไปใช้ recovery % ล้วนๆ
       const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
-      setScheduledMuscle(
-        todayScheduledMuscle && (currentProgressPct === null || currentProgressPct < 100)
-          ? todayScheduledMuscle
-          : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
-      )
+      const preferToday = !!todayScheduledMuscle && (currentProgressPct === null || currentProgressPct < 100)
+      setScheduledMuscle(preferToday ? todayScheduledMuscle : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS))
+      setIsTodayScheduled(preferToday)
 
       const lastTrainedByMuscle: Record<string, string> = {}
       strengthRows.forEach((r) => {
@@ -191,6 +193,10 @@ export default function RecoveryPage() {
         })
         const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
         if (!recommendation) return null
+        // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีข้อมูล
+        // recovery — เช็คว่าผลลัพธ์จริงตรงกับ scheduledMuscle ที่มาจากตารางวันนี้เป๊ะๆ ก่อน (เหมือน
+        // DashboardView.tsx isRecommendationForToday) กันป้าย "วันนี้ควรเล่น" ผิดพลาดในเคสขอบนี้
+        const isRecommendationForToday = isTodayScheduled && recommendation.muscleGroup === scheduledMuscle
         const recColor = recoveryStatusColor(recommendation.pct)
         return (
           <div
@@ -199,7 +205,7 @@ export default function RecoveryPage() {
           >
             <span className="text-lg">💪</span>
             <p className="text-sm text-ink whitespace-pre-line">
-              {recoveryRecommendationLabel(progressPct)}{' '}
+              {recoveryRecommendationLabel(progressPct, isRecommendationForToday)}{' '}
               <span className="font-display tracked uppercase" style={{ color: recColor }}>
                 {recommendation.muscleGroup}
               </span>{' '}

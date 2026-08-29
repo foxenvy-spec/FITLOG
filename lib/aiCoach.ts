@@ -179,13 +179,17 @@ export function computeAIDailySummary(
   muscleRecommendation: MuscleRecommendation | null,
   balance: PushPullBalance,
   progressPct: number | null = null,
-  trainingBalance: TrainingBalance | null = null
+  trainingBalance: TrainingBalance | null = null,
+  // true เมื่อ muscleRecommendation คือกล้ามเนื้อของ "วันนี้" จริงๆ (ไม่ใช่ตกกลับไปแนะนำวันถัดไป/
+  // recovery สูงสุดเฉยๆ) — ส่งต่อให้ recoveryRecommendationLabel เพื่อไม่ให้ประโยคพูดว่า "วันนี้ควรเล่น"
+  // ทั้งที่จริงๆ กำลังแนะนำของครั้งถัดไป (ดู comment เต็มที่ recoveryRecommendationLabel)
+  isForToday = true
 ): string {
   if (!muscleRecommendation) {
     return 'ยังไม่มีข้อมูลพอให้วิเคราะห์ — ลองบันทึกการฝึกสัก 2-3 ครั้งก่อน'
   }
 
-  let msg = `${recoveryRecommendationLabel(progressPct)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
+  let msg = `${recoveryRecommendationLabel(progressPct, isForToday)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
 
   if (balance.status === 'push_dominant') {
     msg += ' — และควรแทรกท่าดึง (หลัง) เพิ่ม เพราะสัปดาห์นี้ฝั่งดันเยอะกว่า'

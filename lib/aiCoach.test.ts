@@ -224,6 +224,19 @@ describe('computeAIDailySummary', () => {
     )
     expect(msg).not.toContain('สัดส่วนกล้ามเนื้อ')
   })
+
+  it('says "next time" instead of "today" when isForToday is false, even with progressPct null', () => {
+    // เช่น วันนี้ตารางกำหนดไว้แต่ยังไม่มีท่าเลย ระบบตกกลับไปแนะนำกล้ามเนื้อของวันถัดไปแทน
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'ขา', pct: 100 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' },
+      null,
+      null,
+      false
+    )
+    expect(msg).toContain('ครั้งหน้าแนะนำเล่น ขา')
+    expect(msg).not.toContain('วันนี้ควรเล่น')
+  })
 })
 
 describe('buildSkippedExerciseInsight', () => {
