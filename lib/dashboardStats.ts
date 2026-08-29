@@ -427,12 +427,17 @@ export function computeTodaysRecommendation(
 
 // ==================== Notifications (Priority 14) ====================
 // เดิมกระดิ่งแจ้งเตือนโชว์แค่ "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" (NotificationButton.tsx) ซึ่งเป็นสรุป
-// สถิติเฉยๆ ไม่ได้บอกว่า "ควรทำอะไรต่อ" และกดแล้วก็ไปไหนไม่ได้ — เปลี่ยนเป็น 4 หมวดที่ actionable จริง
-// (Workout/Recovery/Progress/Goal) แต่ละรายการมี href พาไปหน้าที่เกี่ยวข้องได้ — สูงสุด 4 รายการเสมอ
-// (1 ต่อหมวด) กันไม่ให้กลายเป็น noise เยอะๆ ตามที่ขอ "อย่าให้กลายเป็น notification ทั่วไปเยอะๆ"
+// สถิติเฉยๆ ไม่ได้บอกว่า "ควรทำอะไรต่อ" และกดแล้วก็ไปไหนไม่ได้ — เปลี่ยนเป็นหมวดที่ actionable จริง
+// (Workout/Recovery/Progress/Goal) แต่ละรายการมี href พาไปหน้าที่เกี่ยวข้องได้ — สูงสุด 1 รายการต่อหมวด
+// กันไม่ให้กลายเป็น noise เยอะๆ ตามที่ขอ "อย่าให้กลายเป็น notification ทั่วไปเยอะๆ"
+//
+// v: เพิ่มหมวด "pr" กลับมา (ฟีดแบ็ก "เอา Personal Best กลับมาที่ Dashboard") — ตอนย้าย "PR ล่าสุด" ออก
+// จากเนื้อหาหลักตอนสร้างระบบนี้ครั้งแรก ตัวการ์ดเดิมไม่มี href (แค่โชว์เฉยๆ ไม่ actionable) เลยไม่ได้ย้าย
+// เข้ามาด้วย — รอบนี้ให้ href ไปหน้า /exercises/[name] จริง ทำให้เข้าเกณฑ์ actionable ของระบบนี้แล้ว และ
+// จำกัดเฉพาะ PR ที่เพิ่งทำ (ผู้เรียกกรองมาก่อนแล้วว่าไม่เกิน ~7 วัน กันโชว์ PR เก่าเป็นเดือนราวกับเพิ่งเกิด)
 export interface DashboardNotification {
   id: string
-  category: 'workout' | 'recovery' | 'progress' | 'goal'
+  category: 'workout' | 'recovery' | 'progress' | 'goal' | 'pr'
   icon: string
   title: string
   detail: string
@@ -451,6 +456,9 @@ export function computeDashboardNotifications(params: {
   // Goal: เหลือเท่าไหร่ถึงเป้าหมาย — ใช้ตัวแรกที่มีข้อมูลจริง (น้ำหนักก่อน ถ้าไม่มีค่อย body fat)
   weightRemaining: { value: number; unit: string } | null
   bodyFatRemaining: number | null
+  // PR: สถิติใหม่ล่าสุด (ผู้เรียกกรองมาแล้วว่าต้องเพิ่งทำไม่นาน — ดู comment เต็มด้านบน) น้ำหนักเป็นหน่วย
+  // แสดงผลที่แปลงมาแล้ว (kg/lb ตามที่ผู้ใช้ตั้งไว้) ไม่ใช่ kg ดิบเสมอเหมือน weightRemaining
+  latestPR: { exerciseName: string; weight: number; unit: string } | null
 }): DashboardNotification[] {
   const items: DashboardNotification[] = []
 
@@ -505,6 +513,17 @@ export function computeDashboardNotifications(params: {
       title: 'Goal',
       detail: `เหลือ ${params.bodyFatRemaining.toFixed(1)}% Body Fat ถึงเป้าหมาย`,
       href: '/health',
+    })
+  }
+
+  if (params.latestPR) {
+    items.push({
+      id: 'notif-pr',
+      category: 'pr',
+      icon: '🏆',
+      title: 'PR ใหม่',
+      detail: `${params.latestPR.exerciseName} ${params.latestPR.weight}${params.latestPR.unit}`,
+      href: `/exercises/${encodeURIComponent(params.latestPR.exerciseName)}`,
     })
   }
 

@@ -37,11 +37,13 @@ import {
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   estimateCaloriesToday,
+  computeLatestPR,
   type Insight,
   type MuscleRecommendation,
   type TodaysRecommendation,
   type VolumeIncrease,
   type ScheduledDay,
+  type LatestPR,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { goalProgressPct } from '@/lib/goalProgress'
@@ -84,6 +86,11 @@ const DashboardSettings = dynamic(() => import('@/components/DashboardSettings')
 // จ-อา (เริ่มจันทร์) ใช้กับแถวติ๊กถูกในการ์ด Weekly Goal — ตรงกับลำดับของ data.weekDayTicks
 // ที่คำนวณจาก getWeekRange() (สัปดาห์เริ่มวันจันทร์) ใน fetchDashboardData ด้านล่าง
 export const WEEKDAY_LABELS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
+
+// PR ที่จะขึ้นแจ้งเตือน (computeDashboardNotifications) ต้องทำไว้ไม่เกินกี่วัน — กัน PR เก่าเป็นเดือน
+// ขึ้นราวกับเพิ่งเกิด (data.latestPR เป็น PR ล่าสุด "ทุกช่วงเวลา" ไม่ใช่แค่ล่าสุดที่ทำไปไม่นาน) — export
+// ให้ MobileDashboardView.tsx ใช้ค่าเดียวกัน
+export const FITLOG_PR_RECENT_DAYS = 7
 
 export function greeting() {
   const h = new Date().getHours()
@@ -140,6 +147,10 @@ export interface DashboardData {
   // ไม่งั้นการแจ้งเตือน Goal จะโชว์ "เหลือ X kg" ค้างตลอดแม้ผู้ใช้ทำถึงเป้าหมายไปแล้ว (Math.abs เฉยๆ ไม่รู้ทิศทาง)
   weightGoalStart: number | null
   bodyFatGoalStart: number | null
+  // สถิติใหม่ล่าสุด (ทุกช่วงเวลา ไม่ใช่แค่วันนี้) — กลับมาใช้อีกครั้งหลัง Priority 14 เอาออกไปตอนย้าย
+  // การ์ดนี้เข้ากระดิ่งแจ้งเตือน (ตอนนั้นการ์ดเดิมไม่มี href เลยไม่เข้าเกณฑ์ actionable ของระบบใหม่ —
+  // ผู้เรียก (DashboardView.tsx) กรองความเก่าก่อนส่งเข้า computeDashboardNotifications)
+  latestPR: LatestPR | null
   // true เมื่อ muscleRecommendation ข้างบนคือกล้ามเนื้อของ "วันนี้" จริงๆ (ยังทำไม่ครบ/ยังไม่ได้เริ่ม) —
   // false เมื่อเป็นคำแนะนำของเซสชัน "ถัดไป" (วันนี้ทำครบแล้ว/เป็นวันพัก) ใช้ตัดสินป้าย "AI Coach · Today"
   // vs "· Next" ให้ตรงกับความเป็นจริง (ดู comment เต็มที่จุดคำนวณ scheduledMuscle ด้านล่าง)
@@ -249,6 +260,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     const match = strengthRows.find((r) => r.muscle_group === mg)
     recoveryDates[mg] = match?.performed_at ?? null
   })
+  const latestPR = computeLatestPR(strengthRows)
 
   const twoWeeksRows =
     (twoWeeksStrength as { muscle_group: string | null; sets: number | null; performed_at: string }[]) ?? []
@@ -442,6 +454,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     adhocCompletedCount,
     completedExerciseIds,
     recoveryDates,
+    latestPR,
     insights,
     aiDailySummary,
     bodyMetricsSummary,
@@ -674,6 +687,12 @@ export default function DashboardPage() {
     data?.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null && !bodyFatGoalReached
       ? Math.abs(data.bodyMetricsSummary.bodyFatPct.value - data.bodyFatGoalTarget)
       : null
+  // PR ย้อนหลัง "ทุกช่วงเวลา" ไม่ควรขึ้นแจ้งเตือนราวกับเพิ่งเกิด — จำกัดเฉพาะที่ทำไว้ใน 7 วันล่าสุดเท่านั้น
+  // (ตัวเลขเดียวกับ FITLOG_PR_RECENT_DAYS ด้านล่าง กัน magic number ซ้ำ 2 จุด)
+  const latestPRForNotif =
+    data?.latestPR && data.latestPR.performedAt >= daysAgoStr(FITLOG_PR_RECENT_DAYS)
+      ? { exerciseName: data.latestPR.exerciseName, weight: Math.round(toDisplay(data.latestPR.weightKg) * 10) / 10, unit }
+      : null
   const notifications = data
     ? computeDashboardNotifications({
         scheduledWorkoutTitle: scheduledDay?.title ?? null,
@@ -683,6 +702,7 @@ export default function DashboardPage() {
         bodyFatIsGood: data.bodyMetricsSummary.bodyFatPct.isGood,
         weightRemaining,
         bodyFatRemaining,
+        latestPR: latestPRForNotif,
       })
     : []
 

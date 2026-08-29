@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
-import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
+import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications } from '@/lib/dashboardStats'
 import { goalProgressPct } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
@@ -19,6 +19,7 @@ import {
   fetchDashboardData,
   greeting,
   emailDisplayName,
+  FITLOG_PR_RECENT_DAYS,
   type DashboardData,
 } from './DashboardView'
 import { computeFitnessScore } from '@/lib/fitnessScore'
@@ -230,6 +231,11 @@ export default function MobileDashboardView() {
     data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null && !bodyFatGoalReached
       ? Math.abs(data.bodyMetricsSummary.bodyFatPct.value - data.bodyFatGoalTarget)
       : null
+  // เหมือนฝั่งเดสก์ท็อป — จำกัดเฉพาะ PR ที่ทำไว้ไม่เกิน FITLOG_PR_RECENT_DAYS วันล่าสุด
+  const latestPRForNotif =
+    data.latestPR && data.latestPR.performedAt >= daysAgoStr(FITLOG_PR_RECENT_DAYS)
+      ? { exerciseName: data.latestPR.exerciseName, weight: Math.round(toDisplay(data.latestPR.weightKg) * 10) / 10, unit }
+      : null
   const notifications = computeDashboardNotifications({
     scheduledWorkoutTitle: scheduledDay?.title ?? null,
     todayCompleted,
@@ -238,6 +244,7 @@ export default function MobileDashboardView() {
     bodyFatIsGood: data.bodyMetricsSummary.bodyFatPct.isGood,
     weightRemaining,
     bodyFatRemaining,
+    latestPR: latestPRForNotif,
   })
 
   return (

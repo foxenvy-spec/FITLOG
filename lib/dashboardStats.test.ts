@@ -594,6 +594,7 @@ const baseNotificationParams = {
   bodyFatIsGood: null as boolean | null,
   weightRemaining: null as { value: number; unit: string } | null,
   bodyFatRemaining: null as number | null,
+  latestPR: null as { exerciseName: string; weight: number; unit: string } | null,
 }
 
 describe('computeDashboardNotifications', () => {
@@ -642,7 +643,20 @@ describe('computeDashboardNotifications', () => {
     expect(items[0]).toMatchObject({ category: 'goal', detail: 'เหลือ 5.1% Body Fat ถึงเป้าหมาย' })
   })
 
-  it('caps at 4 items, one per category, when everything is actionable at once', () => {
+  it('shows a PR notification linking to the exercise page', () => {
+    const items = computeDashboardNotifications({
+      ...baseNotificationParams,
+      latestPR: { exerciseName: 'Bench Press', weight: 65, unit: 'kg' },
+    })
+    expect(items[0]).toMatchObject({
+      category: 'pr',
+      icon: '🏆',
+      detail: 'Bench Press 65kg',
+      href: '/exercises/Bench%20Press',
+    })
+  })
+
+  it('caps at 4 items, one per category, when everything except PR is actionable at once', () => {
     const items = computeDashboardNotifications({
       scheduledWorkoutTitle: 'Lower Body',
       todayCompleted: false,
@@ -651,9 +665,25 @@ describe('computeDashboardNotifications', () => {
       bodyFatIsGood: true,
       weightRemaining: { value: 7.1, unit: 'kg' },
       bodyFatRemaining: null,
+      latestPR: null,
     })
     expect(items).toHaveLength(4)
     expect(items.map((i) => i.category)).toEqual(['workout', 'recovery', 'progress', 'goal'])
+  })
+
+  it('caps at 5 items, one per category, when everything including PR is actionable at once', () => {
+    const items = computeDashboardNotifications({
+      scheduledWorkoutTitle: 'Lower Body',
+      todayCompleted: false,
+      recommendation: { muscleGroup: 'ขา', pct: 95 },
+      bodyFatDelta: -0.4,
+      bodyFatIsGood: true,
+      weightRemaining: { value: 7.1, unit: 'kg' },
+      bodyFatRemaining: null,
+      latestPR: { exerciseName: 'Bench Press', weight: 65, unit: 'kg' },
+    })
+    expect(items).toHaveLength(5)
+    expect(items.map((i) => i.category)).toEqual(['workout', 'recovery', 'progress', 'goal', 'pr'])
   })
 })
 
