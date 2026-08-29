@@ -21,6 +21,7 @@ import {
 import PremiumCard from '@/components/ui/PremiumCard'
 import Button from '@/components/ui/Button'
 import ProgressRing from '@/components/ui/ProgressRing'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   parseRestSeconds,
   initSessionSet,
@@ -33,6 +34,8 @@ import {
   findExtraLoggedExercises,
   makeAdhocExercise,
   isAdhocExercise,
+  computeSessionAvgRpe,
+  computeWorkoutScore,
   type SessionSetState,
   type LoggedWorkoutRow,
   type LoggedSetRow,
@@ -40,7 +43,7 @@ import {
 } from '@/lib/workoutSession'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
-import { estimateCaloriesToday } from '@/lib/dashboardStats'
+import { estimateCaloriesToday, getWeekRange, getPreviousWeekRange, computeBestVolumeIncrease, type VolumeIncrease } from '@/lib/dashboardStats'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { dropSetWeightKg } from '@/lib/weightUnit'
 import { useToast } from '@/components/Toast'
@@ -110,10 +113,14 @@ interface SummaryExtras {
   calories: number
   prs: PRHit[]
   recovery: { overall: number; byMuscle: MuscleRecoveryScore[] }
+  // Priority 5 — เดิม "หน้า Complete" ไม่มีคะแนนสรุปเซสชันหรือบรรทัด insight เทียบกับสัปดาห์ที่แล้วเลย
+  workoutScore: number
+  volumeIncrease: VolumeIncrease | null
 }
 
 export default function SessionPage() {
   const supabase = createClient()
+  const queryClient = useQueryClient()
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const { showToast } = useToast()
   const { data: exerciseLibrary = [] } = useExerciseLibrary()
@@ -727,8 +734,10 @@ export default function SessionPage() {
         .filter((e) => e.state?.logged)
 
       const durationMin = Math.round(totalElapsedMs / 60000)
+      const { start: thisWeekStart, end: thisWeekEnd } = getWeekRange()
+      const { start: lastWeekStart } = getPreviousWeekRange()
 
-      const [{ data: latestMetric }, { data: priorRows }, { data: recentMuscleRows }] = await Promise.all([
+      const [{ data: latestMetric }, { data: priorRows }, { data: recentMuscleRows }, { data: twoWeeksRows }] = await Promise.all([
         supabase.from('body_metrics').select('weight_kg').order('measured_at', { ascending: false }).limit(1).maybeSingle(),
         loggedList.length > 0
           ? supabase
@@ -748,6 +757,15 @@ export default function SessionPage() {
           .lt('performed_at', todayStr())
           .order('performed_at', { ascending: false })
           .limit(500),
+        // สัปดาห์นี้เทียบสัปดาห์ที่แล้ว ต่อกลุ่มกล้ามเนื้อ — รูปแบบเดียวกับ fetchDashboardData ใน
+        // DashboardView.tsx ทุกประการ (query เดียว ช่วง lastWeekStart..thisWeekEnd แล้วแยกด้วย
+        // performed_at >= thisWeekStart) ให้ผลลัพธ์ volumeIncrease ตรงกับที่ Dashboard คำนวณเป๊ะ
+        supabase
+          .from('workouts')
+          .select('muscle_group, sets, performed_at')
+          .eq('type', 'strength')
+          .gte('performed_at', lastWeekStart)
+          .lte('performed_at', thisWeekEnd),
       ])
 
       const bodyWeightKg = (latestMetric as { weight_kg: number | null } | null)?.weight_kg ?? null
@@ -779,7 +797,24 @@ export default function SessionPage() {
       })
       const recovery = computeSessionMuscleRecovery(trainedToday, priorLastTrainedDate)
 
-      setSummaryExtras({ calories, prs, recovery })
+      const thisWeekSets: Record<string, number> = {}
+      const lastWeekSets: Record<string, number> = {}
+      ;((twoWeeksRows as { muscle_group: string | null; sets: number | null; performed_at: string }[]) ?? []).forEach((r) => {
+        if (!r.muscle_group) return
+        const bucket = r.performed_at >= thisWeekStart ? thisWeekSets : lastWeekSets
+        bucket[r.muscle_group] = (bucket[r.muscle_group] ?? 0) + (r.sets ?? 0)
+      })
+      const volumeIncrease = computeBestVolumeIncrease(thisWeekSets, lastWeekSets)
+
+      const avgRpe = computeSessionAvgRpe(loggedList.map((e) => ({ sets: e.state.setsLog.length, rpe: e.state.rpe })))
+      const workoutScore = computeWorkoutScore({
+        exerciseCount: loggedList.length,
+        totalExercises: exercises.length,
+        avgRpe,
+        prCount: prs.length,
+      })
+
+      setSummaryExtras({ calories, prs, recovery, workoutScore, volumeIncrease })
     } catch {
       // สรุปเสริมพวกนี้เป็นของแถม — ถ้าโหลดไม่สำเร็จก็ยังโชว์ตัวเลขหลัก (เวลา/วอลุ่ม/เซ็ต) ได้ตามปกติ
     } finally {
@@ -791,6 +826,17 @@ export default function SessionPage() {
   useEffect(() => {
     if (phase === 'done' && !summaryExtras && !summaryLoading) {
       loadSummaryExtras()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase])
+
+  // Priority 5 — "Update Analytics": เดิม Dashboard เห็นเซสชันที่เพิ่งจบเป็นเพราะปุ่ม "กลับหน้าแรก" ใช้
+  // <a href> ธรรมดา (hard reload บังเอิญล้าง QueryClient ทั้งก้อน) ไม่ใช่ความตั้งใจ — ถ้าผู้ใช้กด "แชร์"
+  // แล้วย้อนกลับ หรือกดลิงก์ "ดูประวัติทั้งหมด" แทน ก็จะไม่มีอะไรสั่ง refetch เลย ทำให้ Dashboard
+  // ค้างข้อมูลเก่าถ้ากลับไปดูใน 30s (staleTime) โดยไม่รีเฟรชเต็มหน้า — invalidate ตรงๆ ทันทีที่เซสชันจบ
+  useEffect(() => {
+    if (phase === 'done') {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
@@ -893,6 +939,25 @@ export default function SessionPage() {
             label="แคลอรี่ (ประมาณ)"
           />
         </div>
+
+        {/* Priority 5 — เดิมหน้านี้ไม่มีคะแนนสรุปเซสชันหรือบรรทัดเทียบกับสัปดาห์ที่แล้วเลย มีแค่ตัวเลขดิบ
+            (เวลา/ท่า/เซ็ต/วอลุ่ม/แคลอรี่) — เพิ่ม Workout Score (lib/workoutSession.ts) และ volume-trend
+            ของกลุ่มกล้ามเนื้อที่เพิ่มขึ้นเด่นสุดสัปดาห์นี้ (เอนจินเดิม computeBestVolumeIncrease ที่ใช้ทำ
+            greeting บน Dashboard อยู่แล้ว ไม่ได้สร้างสูตรใหม่) */}
+        {summaryExtras && (
+          <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
+            <p className="text-[10px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
+            <p className="text-xs text-ink">
+              ⭐ Workout Score <span className="font-mono text-amber">{summaryExtras.workoutScore}</span>
+            </p>
+            {summaryExtras.volumeIncrease && (
+              <p className="text-xs text-ink">
+                🔥 {summaryExtras.volumeIncrease.muscleGroup} Volume{' '}
+                <span className="font-mono text-moss">+{summaryExtras.volumeIncrease.pct}%</span>
+              </p>
+            )}
+          </div>
+        )}
 
         {skipped.length > 0 && (
           <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">

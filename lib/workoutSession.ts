@@ -298,3 +298,38 @@ export function aggregateMuscleLoads(
     ])
   )
 }
+
+// ==================== Workout Score (Priority 5) ====================
+// RPE เฉลี่ยของทั้งเซสชัน (ถ่วงน้ำหนักด้วยจำนวนเซ็ตต่อท่า) — ท่าที่ไม่มี RPE (ไม่ได้กรอก) หรือไม่มีเซ็ตเลย
+// (ท่าที่ข้าม) ไม่ถูกนับ ต่างจาก aggregateMuscleLoads ตรงที่ตัวนี้รวมทั้งเซสชันเป็นตัวเลขเดียว ไม่แยกตามกลุ่มกล้ามเนื้อ
+export function computeSessionAvgRpe(entries: { sets: number; rpe: number | null }[]): number | null {
+  let weighted = 0
+  let totalSets = 0
+  entries.forEach(({ sets, rpe }) => {
+    if (sets <= 0 || rpe === null) return
+    weighted += rpe * sets
+    totalSets += sets
+  })
+  return totalSets > 0 ? Math.round((weighted / totalSets) * 10) / 10 : null
+}
+
+export interface WorkoutScoreInput {
+  exerciseCount: number
+  totalExercises: number
+  avgRpe: number | null
+  prCount: number
+}
+
+// คะแนนสรุป "เซสชันนี้ทำได้ดีแค่ไหน" (0-100) — ยังไม่เคยมีตัวชี้วัดนี้มาก่อน ต่างจาก Fitness Score
+// (lib/fitnessScore.ts) ซึ่งเป็นคะแนนภาพรวมรายวัน/สัปดาห์ทั้งบัญชี ไม่ใช่ต่อเซสชันเดียว ผสม 2 มิติ:
+// ทำครบตามแผนไหม (65%, exerciseCount/totalExercises) และความหนักอยู่ในโซนฝึกจริงจังไหม (35%, ให้คะแนน
+// สูงสุดที่ RPE ~7.5 ซึ่งเป็นโซนหนักพอแต่ยังไม่ over-reach — ห่างจากจุดนี้ทั้งสองทาง ทั้งเบาไปและหนักไป
+// คะแนนลดลงเท่ากัน) ไม่มี RPE เลยไม่หักคะแนน (neutral 70) เพราะผู้ใช้จำนวนมากไม่ได้กรอก RPE ทุกท่า
+// บวกโบนัสเล็กน้อย +15 ถ้าทำสถิติใหม่ (PR) อย่างน้อย 1 ท่า (ไม่ทบเกิน 1 ครั้ง กันโบนัสเฟ้อ)
+export function computeWorkoutScore(input: WorkoutScoreInput): number {
+  const completionPct = input.totalExercises > 0 ? Math.min(100, (input.exerciseCount / input.totalExercises) * 100) : 0
+  const intensityScore = input.avgRpe === null ? 70 : Math.max(0, 100 - Math.abs(input.avgRpe - 7.5) * 20)
+  const base = completionPct * 0.65 + intensityScore * 0.35
+  const prBonus = input.prCount > 0 ? 15 : 0
+  return Math.max(0, Math.min(100, Math.round(base + prBonus)))
+}

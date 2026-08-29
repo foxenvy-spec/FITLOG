@@ -10,6 +10,8 @@ import {
   isAdhocExercise,
   computeSessionSummary,
   aggregateMuscleLoads,
+  computeSessionAvgRpe,
+  computeWorkoutScore,
 } from './workoutSession'
 import type { ProgramExercise } from './types'
 
@@ -281,5 +283,65 @@ describe('aggregateMuscleLoads', () => {
       { muscleGroup: 'อก', sets: 0, rpe: 8 },
     ])
     expect(result).toEqual({})
+  })
+})
+
+describe('computeSessionAvgRpe', () => {
+  it('weights the average by sets across exercises', () => {
+    expect(
+      computeSessionAvgRpe([
+        { sets: 4, rpe: 8 },
+        { sets: 2, rpe: 9 },
+      ])
+    ).toBe(8.3) // (4*8 + 2*9) / 6 = 8.33 -> rounded to 1dp
+  })
+
+  it('ignores exercises with no rpe or zero sets', () => {
+    expect(
+      computeSessionAvgRpe([
+        { sets: 3, rpe: null },
+        { sets: 0, rpe: 9 },
+      ])
+    ).toBeNull()
+  })
+
+  it('returns null for an empty session', () => {
+    expect(computeSessionAvgRpe([])).toBeNull()
+  })
+})
+
+describe('computeWorkoutScore', () => {
+  it('scores full completion at RPE 7.5 (the intensity sweet spot) as near-perfect', () => {
+    const score = computeWorkoutScore({ exerciseCount: 5, totalExercises: 5, avgRpe: 7.5, prCount: 0 })
+    expect(score).toBe(100) // 100*0.65 + 100*0.35 = 100
+  })
+
+  it('penalizes incomplete sessions proportionally', () => {
+    const score = computeWorkoutScore({ exerciseCount: 3, totalExercises: 6, avgRpe: 7.5, prCount: 0 })
+    // completionPct=50 -> 50*0.65 + 100*0.35 = 67.5 -> rounds to 68
+    expect(score).toBe(68)
+  })
+
+  it('penalizes RPE far from the 7.5 sweet spot in both directions', () => {
+    const tooEasy = computeWorkoutScore({ exerciseCount: 4, totalExercises: 4, avgRpe: 4, prCount: 0 })
+    const tooHard = computeWorkoutScore({ exerciseCount: 4, totalExercises: 4, avgRpe: 10, prCount: 0 })
+    expect(tooEasy).toBeLessThan(100)
+    expect(tooHard).toBeLessThan(100)
+  })
+
+  it('treats missing rpe data as neutral, not a penalty', () => {
+    const score = computeWorkoutScore({ exerciseCount: 4, totalExercises: 4, avgRpe: null, prCount: 0 })
+    expect(score).toBe(90) // 100*0.65 + 70*0.35 = 89.5 -> rounds to 90
+  })
+
+  it('adds a flat PR bonus capped at one bonus regardless of PR count', () => {
+    const onePr = computeWorkoutScore({ exerciseCount: 4, totalExercises: 4, avgRpe: 7.5, prCount: 1 })
+    const threePrs = computeWorkoutScore({ exerciseCount: 4, totalExercises: 4, avgRpe: 7.5, prCount: 3 })
+    expect(onePr).toBe(100) // would be 115 uncapped, clamped to 100
+    expect(threePrs).toBe(onePr)
+  })
+
+  it('clamps the score to 0-100', () => {
+    expect(computeWorkoutScore({ exerciseCount: 0, totalExercises: 5, avgRpe: null, prCount: 0 })).toBeGreaterThanOrEqual(0)
   })
 })
