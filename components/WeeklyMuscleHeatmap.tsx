@@ -11,7 +11,11 @@ import {
   computeRecoveryPct,
   recoveryTier,
   aggregateMuscleTrainingQuality,
+  volumeStatus,
+  type VolumeStatus,
 } from '@/lib/dashboardStats'
+import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
+import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
 import { useWeightUnit } from './WeightUnitProvider'
 import AnimatedBarFill from './AnimatedBarFill'
@@ -37,6 +41,28 @@ interface GroupStat {
   sessions: number
   avgRpe: number | null
   recoveryPct: number
+  // Priority 5 (Training Balance อธิบายได้) — เดิมการ์ดนี้บอกแค่ "กล้ามเนื้อเด่น/ด้อย" จาก % ส่วนแบ่งเซ็ต
+  // (top 3/bottom 2) ซึ่งเป็นค่าสัมพัทธ์ล้วนๆ ไม่บอกว่าเทียบกับเป้าหมายจริงของกลุ่มนั้นแล้วเกิน/ขาดแค่ไหน —
+  // เพิ่มสถานะเทียบเป้าหมายรายสัปดาห์ (เอนจินเดียวกับการ์ด WeeklyVolume: volumeStatus) เข้ามาในแถวขยาย
+  // ของทุกกลุ่ม (ไม่ใช่แค่ top/bottom) ให้ผู้ใช้อธิบายได้เองว่า Balance % นี้มาจากอะไรจริงๆ
+  targetSets: number
+  targetStatus: VolumeStatus
+}
+
+const TARGET_STATUS_COLOR: Record<VolumeStatus, string> = {
+  behind: '#C1503A',
+  onTrack: '#E8A33D',
+  met: '#7A9B57',
+  high: '#E8A33D',
+  veryHigh: '#C1503A',
+}
+
+const TARGET_STATUS_LABEL: Record<VolumeStatus, string> = {
+  behind: 'ต่ำกว่าเป้า',
+  onTrack: 'กำลังไปได้ดี',
+  met: 'ถึงเป้าพอดี',
+  high: 'เกินเป้า',
+  veryHigh: 'เกินเป้ามาก',
 }
 
 // กลุ่มที่ปรากฏในไดอะแกรมของแต่ละมุมมอง — ด้านหน้าไม่มี "หลัง", ด้านหลังไม่มี "อก"/"แกนกลางลำตัว"
@@ -142,6 +168,16 @@ export default function WeeklyMuscleHeatmap() {
     staleTime: 60_000,
   })
 
+  // ใช้ query key เดียวกับการ์ด WeeklyVolume (fetchWeeklyVolumeTargets) — react-query แชร์ cache ให้
+  // อัตโนมัติเมื่อทั้งสองการ์ดแสดงพร้อมกันบน Dashboard ไม่ต้อง fetch ซ้ำ และเป้าหมายที่โชว์ตรงนี้จะตรงกับ
+  // การ์ด WeeklyVolume เป๊ะเสมอ (ค่าเดียวกัน ไม่ใช่คำนวณ/ดึงแยกกันจนเพี้ยนกันได้)
+  const { data: targets } = useQuery({
+    queryKey: ['weekly-volume-targets'],
+    queryFn: () => fetchWeeklyVolumeTargets(supabase),
+    staleTime: 60_000,
+  })
+  const dayOfWeek1to7 = ((todayDayOfWeek() + 6) % 7) + 1
+
   const stats: GroupStat[] = useMemo(() => {
     const exercisesByGroup = data?.exercisesByGroup ?? {}
     const qualityByGroup = data?.qualityByGroup ?? {}
@@ -155,18 +191,22 @@ export default function WeeklyMuscleHeatmap() {
         .slice(0, 4)
         .map(([name, exSets]) => ({ name, sets: exSets }))
       const recoveryPct = computeRecoveryPct(lastTrainedByMuscle?.[group] ?? null, group)
+      const targetSets = targets?.[group] ?? 0
+      const targetStatus = volumeStatus(sets, targetSets, dayOfWeek1to7)
       return {
         group,
         sets,
         pct,
         topExercises,
+        targetSets,
+        targetStatus,
         volumeKg: quality?.volumeKg ?? 0,
         sessions: quality?.sessions ?? 0,
         avgRpe: quality?.avgRpe ?? null,
         recoveryPct,
       }
     })
-  }, [data, lastTrainedByMuscle])
+  }, [data, lastTrainedByMuscle, targets, dayOfWeek1to7])
 
   const statByGroup = useMemo(() => {
     const map = new Map<MuscleGroup, GroupStat>()
@@ -347,6 +387,15 @@ export default function WeeklyMuscleHeatmap() {
                             Recovery <span className="font-mono">{s.recoveryPct}%</span>
                           </span>
                         </div>
+                        {/* Priority 5 (Training Balance อธิบายได้) — เดิม "กล้ามเนื้อเด่น/ด้อย" ท้ายการ์ด
+                            บอกแค่ % ส่วนแบ่งเซ็ตของ top 3/bottom 2 กลุ่ม ไม่รู้ว่าเทียบกับเป้าหมายรายสัปดาห์
+                            ของกลุ่มนั้นแล้วเกิน/ขาดแค่ไหน — เพิ่มบรรทัดนี้ให้ทุกกลุ่ม (ไม่ใช่แค่ top/bottom)
+                            เอนจินเดียวกับการ์ด WeeklyVolume (volumeStatus) ให้ตัวเลข/สถานะตรงกันทั้งสองการ์ด */}
+                        {s.targetSets > 0 && (
+                          <p className="pl-[18px] text-[11px]" style={{ color: TARGET_STATUS_COLOR[s.targetStatus] }}>
+                            เป้าหมาย {s.sets}/{s.targetSets} เซ็ต — {TARGET_STATUS_LABEL[s.targetStatus]}
+                          </p>
+                        )}
                         {s.topExercises.length > 0 && (
                           <ul className="space-y-1">
                             {s.topExercises.map((ex) => (
