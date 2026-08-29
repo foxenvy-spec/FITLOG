@@ -283,15 +283,21 @@ export default function BodyMetricsRow({
               compact={compact}
             />
           )
+          // เพิ่ม hierarchy ให้ "น้ำหนัก" เป็นการ์ดหลัก โดยไม่แตะขนาด/font/glow ของ MetricCard.tsx เอง
+          // (component ที่ tuned มาหลายสิบรอบ และใช้ร่วมกับหน้า /health ด้วย) — ลดน้ำหนักภาพของการ์ดรอง
+          // ทั้ง 4 ใบแทน (opacity 88%, ~12% ตามช่วงที่เคยแนะนำ "10-15%") ผ่าน wrapper เฉยๆ แทนที่จะเพิ่ม
+          // ความเข้มให้การ์ดน้ำหนัก
+          const secondaryStyle = c.key === 'weight' ? undefined : { opacity: 0.88 }
           // แตะเปิด MetricDetailSheet ได้เฉพาะ compact (มือถือ) — เดสก์ท็อปมี Goal Progress ของตัวเอง
           // อยู่แล้วที่หน้า /health (Health Score banner) ไม่ต้องซ้ำจุดนี้
-          if (!compact) return <div key={c.key}>{card}</div>
+          if (!compact) return <div key={c.key} style={secondaryStyle}>{card}</div>
           return (
             <button
               key={c.key}
               type="button"
               onClick={() => setOpenKey(c.key)}
               className="w-full text-left"
+              style={secondaryStyle}
               aria-haspopup="dialog"
             >
               {card}
