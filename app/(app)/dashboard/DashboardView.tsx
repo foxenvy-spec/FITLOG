@@ -25,6 +25,7 @@ import {
   computeImbalanceInsights,
   computeMissedMuscleInsights,
   suggestMuscleToTrain,
+  computeTodaysRecommendation,
   recoveryRecommendationLabel,
   computeBestVolumeIncrease,
   computeGreetingContext,
@@ -36,6 +37,7 @@ import {
   estimateCaloriesToday,
   type Insight,
   type MuscleRecommendation,
+  type TodaysRecommendation,
   type VolumeIncrease,
   type LatestPR,
   type TopMuscle,
@@ -125,6 +127,9 @@ export interface DashboardData {
   // ใช้ประกอบ dynamic greeting ด้านบนสุด — กล้ามเนื้อที่ฟื้นตัวมากที่สุด (สำหรับ "X ฟื้นตัวเต็มที่แล้ว")
   // และกลุ่มที่วอลุ่มเพิ่มขึ้นเด่นที่สุดสัปดาห์นี้ (สำหรับ "วอลุ่มเพิ่มขึ้น X%")
   muscleRecommendation: MuscleRecommendation | null
+  // muscleRecommendation ต่อยอดด้วยเซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ของกลุ่มนั้น (จาก Weekly Volume
+  // Engine) — ใช้ในป้ายแนะนำของการ์ด Recovery ให้ตอบทั้ง "พร้อมฝึกไหม" และ "เหลืออีกเท่าไหร่" พร้อมกัน
+  todaysRecommendation: TodaysRecommendation | null
   // true เมื่อ muscleRecommendation ข้างบนคือกล้ามเนื้อของ "วันนี้" จริงๆ (ยังทำไม่ครบ/ยังไม่ได้เริ่ม) —
   // false เมื่อเป็นคำแนะนำของเซสชัน "ถัดไป" (วันนี้ทำครบแล้ว/เป็นวันพัก) ใช้ตัดสินป้าย "AI Coach · Today"
   // vs "· Next" ให้ตรงกับความเป็นจริง (ดู comment เต็มที่จุดคำนวณ scheduledMuscle ด้านล่าง)
@@ -382,6 +387,11 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // ป้าย "· Today" ผิดพลาดในเคสขอบนี้
   const isRecommendationForToday = preferTodayMuscle && muscleRecommendation?.muscleGroup === todayScheduledMuscle
 
+  // ต่อยอด muscleRecommendation (recovery ล้วนๆ) ด้วยเซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ของกลุ่มนั้น
+  // (thisWeekSets/weeklyVolumeTargets คำนวณไว้แล้วด้านบนสำหรับการ์ด Weekly Goal/Weekly Volume อยู่แล้ว)
+  // ให้คำแนะนำ "วันนี้ควรเล่นอะไร" ตอบทั้งความพร้อม (recovery) และโควตาที่เหลือ (volume) ในคำตอบเดียว
+  const todaysRecommendation = computeTodaysRecommendation(muscleRecommendation, thisWeekSets, weeklyVolumeTargets)
+
   const aiDailySummary = computeAIDailySummary(muscleRecommendation, pushPullBalance, progressPctForLabel)
 
   // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) — ใช้สำหรับ Fitness Score เท่านั้น ใช้ distinctDates
@@ -406,6 +416,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     bodyMetricsSummary,
     weeklyGoalPct,
     muscleRecommendation,
+    todaysRecommendation,
     isRecommendationForToday,
     bestVolumeIncrease,
     thisWeekWorkoutDays,
@@ -1358,7 +1369,11 @@ export default function DashboardPage() {
               // ไม่ต้องคำนวณซ้ำในนี้อีกรอบ
               // ใช้ตัวที่คำนวณไว้แล้วฝั่งบน (ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน ถ้ามี) แทนที่จะคำนวณใหม่
               // จาก recovery % ล้วนๆ ตรงนี้ กันไม่ให้การ์ดนี้แนะนำสวนทางกับ hero message ด้านบน
-              const recommendation = data.muscleRecommendation
+              // v: เดิมใช้ data.muscleRecommendation (recovery % ล้วนๆ) — เปลี่ยนมาใช้
+              // data.todaysRecommendation แทน ซึ่งมีฟิลด์เดียวกันครบ (muscleGroup/pct) บวก
+              // setsRemaining (เซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ของกลุ่มนั้น จาก Weekly Volume Engine)
+              // ให้ป้ายแนะนำตอบทั้ง "พร้อมฝึกไหม" และ "ยังขาดอีกเท่าไหร่" ในข้อความเดียว
+              const recommendation = data.todaysRecommendation
               return (
                 <>
                   {recommendation &&
@@ -1390,6 +1405,12 @@ export default function DashboardPage() {
                                 {recommendation.muscleGroup}
                               </span>{' '}
                               <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
+                              {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำวันนี้ — โชว์เฉพาะตอนยังเหลือ
+                                  โควตาจริง (setsRemaining > 0) ไม่โชว์ตอนเกินเป้าแล้วเพื่อไม่ให้ป้ายนี้ดู
+                                  เหมือนตักเตือน (มีสัญญาณ "เกินเป้า" อยู่แล้วที่การ์ด Weekly Volume) */}
+                              {recommendation.setsRemaining > 0 && (
+                                <span className="text-muted"> · เหลืออีก {recommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
+                              )}
                             </p>
                           </span>
                           {isFullyReady && (

@@ -378,6 +378,27 @@ export function suggestMuscleToTrain(
   return { muscleGroup, pct }
 }
 
+export interface TodaysRecommendation extends MuscleRecommendation {
+  setsCurrent: number
+  setsTarget: number
+  // เป้าหมาย - ทำไปแล้วของสัปดาห์นี้ สำหรับกล้ามเนื้อที่แนะนำ — ติดลบได้ (แปลว่าเกินเป้าหมายแล้ว)
+  setsRemaining: number
+}
+
+// รวมคำแนะนำจาก suggestMuscleToTrain (recovery ล้วนๆ) เข้ากับ Weekly Volume Engine (เป้าหมายเซ็ต/
+// สัปดาห์ต่อกลุ่ม) ให้คำแนะนำตอบทั้ง "พร้อมฝึกไหม" และ "ยังขาดอีกเท่าไหร่ถึงเป้าหมาย" ในคำแนะนำเดียว
+// แทนที่จะให้ผู้ใช้เปิดดูการ์ด Weekly Volume แยกเองว่ากลุ่มที่แนะนำเหลือโควตาอีกเท่าไหร่
+export function computeTodaysRecommendation(
+  recommendation: MuscleRecommendation | null,
+  setsByMuscle: Record<string, number>,
+  targetsByMuscle: Record<string, number>
+): TodaysRecommendation | null {
+  if (!recommendation) return null
+  const setsCurrent = setsByMuscle[recommendation.muscleGroup] ?? 0
+  const setsTarget = targetsByMuscle[recommendation.muscleGroup] ?? 0
+  return { ...recommendation, setsCurrent, setsTarget, setsRemaining: setsTarget - setsCurrent }
+}
+
 // ==================== หากล้ามเนื้อที่ตารางโปรแกรมประจำสัปดาห์กำหนดไว้ ====================
 // เดิมใช้ title ของวันนั้นเป็นชื่อกลุ่มกล้ามเนื้อโดยตรง เฉพาะกรณีที่ title ตรงกับ MUSCLE_GROUPS พอดี
 // (เช่น "ขา", "อก") — ปัญหา: ผู้ใช้จริงมักตั้งชื่อวันแบบบรรยาย (เช่น "Day 5 — Lower", "Push Day") ไม่ใช่

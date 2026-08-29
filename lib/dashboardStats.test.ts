@@ -24,6 +24,7 @@ import {
   computeBestVolumeIncrease,
   computeGreetingContext,
   computeWorkoutMotivationLabel,
+  computeTodaysRecommendation,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   computeLatestPR,
@@ -576,6 +577,27 @@ describe('suggestMuscleToTrain', () => {
   it('falls back to highest recovery % when no scheduledMuscle is given', () => {
     const rec = suggestMuscleToTrain({ อก: 95, ขา: 20 }, null)
     expect(rec?.muscleGroup).toBe('อก')
+  })
+})
+
+describe('computeTodaysRecommendation', () => {
+  it('combines the recovery recommendation with weekly volume remaining for that muscle', () => {
+    const rec = computeTodaysRecommendation({ muscleGroup: 'ขา', pct: 100 }, { ขา: 12 }, { ขา: 29 })
+    expect(rec).toEqual({ muscleGroup: 'ขา', pct: 100, setsCurrent: 12, setsTarget: 29, setsRemaining: 17 })
+  })
+
+  it('returns a negative setsRemaining when the muscle already exceeded its weekly target', () => {
+    const rec = computeTodaysRecommendation({ muscleGroup: 'อก', pct: 90 }, { อก: 15 }, { อก: 10 })
+    expect(rec?.setsRemaining).toBe(-5)
+  })
+
+  it('treats missing sets/target data as zero instead of throwing', () => {
+    const rec = computeTodaysRecommendation({ muscleGroup: 'หลัง', pct: 80 }, {}, {})
+    expect(rec).toEqual({ muscleGroup: 'หลัง', pct: 80, setsCurrent: 0, setsTarget: 0, setsRemaining: 0 })
+  })
+
+  it('returns null when there is no base recommendation', () => {
+    expect(computeTodaysRecommendation(null, { ขา: 12 }, { ขา: 29 })).toBeNull()
   })
 })
 
