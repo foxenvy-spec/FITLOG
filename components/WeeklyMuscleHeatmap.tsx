@@ -3,8 +3,17 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, computeMuscleBalance, balanceStatusTier, BALANCE_STATUS_LABEL } from '@/lib/dashboardStats'
+import {
+  getWeekRange,
+  computeMuscleBalance,
+  balanceStatusTier,
+  BALANCE_STATUS_LABEL,
+  computeRecoveryPct,
+  recoveryTier,
+  aggregateMuscleTrainingQuality,
+} from '@/lib/dashboardStats'
 import { VOLUME_MUSCLES, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
+import { useWeightUnit } from './WeightUnitProvider'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import MuscleBodyDiagram from './MuscleBodyDiagram'
@@ -19,6 +28,15 @@ interface GroupStat {
   sets: number
   pct: number
   topExercises: { name: string; sets: number }[]
+  // Priority 4 (Training Quality ต่อกล้ามเนื้อ) — ขยายจากเดิมที่มีแค่ "สัดส่วนเซ็ต" เพียงอย่างเดียว
+  // ให้เห็นภาพครบ: ปริมาณจริง (kg), ความถี่ (ครั้ง/สัปดาห์), ความหนัก (RPE เฉลี่ย — ตัวเดียวกับที่
+  // computeProgressiveOverload/computeSessionMuscleRecovery ใช้เป็นตัวแทนความหนักอยู่แล้ว ไม่ใช้
+  // น้ำหนักดิบเฉลี่ยเพราะเทียบข้ามท่า/กลุ่มกล้ามเนื้อกันไม่ได้), และการฟื้นตัว (นำมาจากเอนจิน
+  // computeRecoveryPct ตัวเดียวกับหน้า Recovery เพื่อให้ตัวเลขตรงกันทั้งแอป)
+  volumeKg: number
+  sessions: number
+  avgRpe: number | null
+  recoveryPct: number
 }
 
 // กลุ่มที่ปรากฏในไดอะแกรมของแต่ละมุมมอง — ด้านหน้าไม่มี "หลัง", ด้านหลังไม่มี "อก"/"แกนกลางลำตัว"
@@ -63,6 +81,7 @@ function intensityOpacity(pct: number): number {
 export default function WeeklyMuscleHeatmap() {
   const supabase = createClient()
   const { start, end } = getWeekRange()
+  const { toDisplay, unit } = useWeightUnit()
   const [expanded, setExpanded] = useState<MuscleGroup | null>(null)
   const [view, setView] = useState<'volume' | 'balance'>('volume')
 
@@ -71,41 +90,83 @@ export default function WeeklyMuscleHeatmap() {
     queryFn: async () => {
       const { data } = await supabase
         .from('workouts')
-        .select('muscle_group, sets, exercise_name')
+        .select('muscle_group, sets, exercise_name, performed_at, reps, weight_kg, total_volume_kg, rpe')
         .eq('type', 'strength')
         .gte('performed_at', start)
         .lte('performed_at', end)
 
-      const rows = (data as { muscle_group: string | null; sets: number | null; exercise_name: string | null }[]) ?? []
-      const setsByGroup: Record<string, number> = {}
+      const rows =
+        (data as {
+          muscle_group: string | null
+          sets: number | null
+          exercise_name: string | null
+          performed_at: string
+          reps: number | null
+          weight_kg: number | null
+          total_volume_kg: number | null
+          rpe: number | null
+        }[]) ?? []
       const exercisesByGroup: Record<string, Record<string, number>> = {}
       rows.forEach((r) => {
         if (!r.muscle_group) return
-        const sets = r.sets ?? 0
-        setsByGroup[r.muscle_group] = (setsByGroup[r.muscle_group] ?? 0) + sets
         const exMap = (exercisesByGroup[r.muscle_group] ??= {})
         const name = r.exercise_name ?? 'ไม่ระบุชื่อท่า'
-        exMap[name] = (exMap[name] ?? 0) + sets
+        exMap[name] = (exMap[name] ?? 0) + (r.sets ?? 0)
       })
-      return { setsByGroup, exercisesByGroup }
+      const qualityByGroup = aggregateMuscleTrainingQuality(rows)
+      return { exercisesByGroup, qualityByGroup }
+    },
+    staleTime: 60_000,
+  })
+
+  // Recovery ต่อกลุ่ม ต้องรู้วันที่ฝึกล่าสุด "จริง" (อาจเก่ากว่าสัปดาห์นี้) จึงต้อง query แยกจากด้านบน
+  // (ซึ่งจำกัดแค่ start..end ของสัปดาห์นี้) — รูปแบบเดียวกับ app/(app)/recovery/page.tsx ทุกประการ
+  // เพื่อให้ Recovery % ที่โชว์ตรงนี้ตรงกับหน้า Recovery เป๊ะ ไม่ใช่คำนวณใหม่ด้วยเกณฑ์ต่างกัน
+  const { data: lastTrainedByMuscle } = useQuery({
+    queryKey: ['weekly-muscle-heatmap-last-trained'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('workouts')
+        .select('muscle_group, performed_at')
+        .eq('type', 'strength')
+        .order('performed_at', { ascending: false })
+        .limit(500)
+      const rows = (data as { muscle_group: string | null; performed_at: string }[]) ?? []
+      const map: Record<string, string> = {}
+      rows.forEach((r) => {
+        if (!r.muscle_group) return
+        if (!map[r.muscle_group]) map[r.muscle_group] = r.performed_at
+      })
+      return map
     },
     staleTime: 60_000,
   })
 
   const stats: GroupStat[] = useMemo(() => {
-    const setsByGroup = data?.setsByGroup ?? {}
     const exercisesByGroup = data?.exercisesByGroup ?? {}
-    const totalSets = VOLUME_MUSCLES.reduce((sum, g) => sum + (setsByGroup[g] ?? 0), 0)
+    const qualityByGroup = data?.qualityByGroup ?? {}
+    const totalSets = VOLUME_MUSCLES.reduce((sum, g) => sum + (qualityByGroup[g]?.sets ?? 0), 0)
     return VOLUME_MUSCLES.map((group) => {
-      const sets = setsByGroup[group] ?? 0
+      const quality = qualityByGroup[group]
+      const sets = quality?.sets ?? 0
       const pct = totalSets > 0 ? (sets / totalSets) * 100 : 0
       const topExercises = Object.entries(exercisesByGroup[group] ?? {})
         .sort((a, b) => b[1] - a[1])
         .slice(0, 4)
         .map(([name, exSets]) => ({ name, sets: exSets }))
-      return { group, sets, pct, topExercises }
+      const recoveryPct = computeRecoveryPct(lastTrainedByMuscle?.[group] ?? null, group)
+      return {
+        group,
+        sets,
+        pct,
+        topExercises,
+        volumeKg: quality?.volumeKg ?? 0,
+        sessions: quality?.sessions ?? 0,
+        avgRpe: quality?.avgRpe ?? null,
+        recoveryPct,
+      }
     })
-  }, [data])
+  }, [data, lastTrainedByMuscle])
 
   const statByGroup = useMemo(() => {
     const map = new Map<MuscleGroup, GroupStat>()
@@ -259,21 +320,44 @@ export default function WeeklyMuscleHeatmap() {
                           {Math.round(s.pct)}%
                         </span>
                         <span className="text-[10px] font-mono text-muted shrink-0">{s.sets} เซ็ต</span>
-                        {s.topExercises.length > 0 && <span className="text-muted text-[10px] shrink-0">{isOpen ? '▲' : '▼'}</span>}
+                        <span className="text-muted text-[10px] shrink-0">{isOpen ? '▲' : '▼'}</span>
                       </span>
                       <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
                         <AnimatedBarFill pct={s.pct} color={color} />
                       </span>
                     </button>
-                    {isOpen && s.topExercises.length > 0 && (
-                      <ul className="px-2.5 pb-2 space-y-1">
-                        {s.topExercises.map((ex) => (
-                          <li key={ex.name} className="flex items-center justify-between text-[11px] text-muted pl-[18px]">
-                            <span className="truncate">{ex.name}</span>
-                            <span className="font-mono shrink-0 ml-2">{ex.sets} เซ็ต</span>
-                          </li>
-                        ))}
-                      </ul>
+                    {isOpen && (
+                      <div className="px-2.5 pb-2 space-y-2">
+                        {/* Priority 4 — Training Quality: Sets/Sessions ก็มีอยู่แล้วเป็น pct/sets ด้านบน
+                            แถวนี้เพิ่ม Volume(kg)/ความถี่/ความหนัก(RPE)/Recovery ที่ไม่เคยรวมไว้ที่เดียวกัน
+                            มาก่อน — ใช้ pl-[18px] ให้ชิดกับจุดสีด้านบน (ระยะเดียวกับลิสต์ท่าด้านล่าง) */}
+                        <div className="pl-[18px] flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                          <span className="text-muted">
+                            <span className="font-mono text-ink">{s.sessions}</span> ครั้ง/สัปดาห์
+                          </span>
+                          <span className="text-muted">
+                            Volume <span className="font-mono text-ink">{Math.round(toDisplay(s.volumeKg)).toLocaleString('th-TH')}</span> {unit}
+                          </span>
+                          {s.avgRpe !== null && (
+                            <span className="text-muted">
+                              RPE เฉลี่ย <span className="font-mono text-ink">{s.avgRpe}</span>
+                            </span>
+                          )}
+                          <span style={{ color: recoveryTier(s.recoveryPct).color }}>
+                            Recovery <span className="font-mono">{s.recoveryPct}%</span>
+                          </span>
+                        </div>
+                        {s.topExercises.length > 0 && (
+                          <ul className="space-y-1">
+                            {s.topExercises.map((ex) => (
+                              <li key={ex.name} className="flex items-center justify-between text-[11px] text-muted pl-[18px]">
+                                <span className="truncate">{ex.name}</span>
+                                <span className="font-mono shrink-0 ml-2">{ex.sets} เซ็ต</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     )}
                   </div>
                 )

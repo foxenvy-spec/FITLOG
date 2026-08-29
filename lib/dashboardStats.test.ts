@@ -31,6 +31,8 @@ import {
   getNextScheduledMuscle,
   computeLatestPR,
   computeTopMuscleThisWeek,
+  aggregateMuscleTrainingQuality,
+  type MuscleTrainingQualityRow,
 } from './dashboardStats'
 import { MUSCLE_GROUPS } from './muscle-groups'
 
@@ -862,5 +864,65 @@ describe('computeTopMuscleThisWeek', () => {
   it('returns null when nothing has been trained this week', () => {
     expect(computeTopMuscleThisWeek({})).toBeNull()
     expect(computeTopMuscleThisWeek({ อก: 0 })).toBeNull()
+  })
+})
+
+describe('aggregateMuscleTrainingQuality', () => {
+  function makeRow(overrides: Partial<MuscleTrainingQualityRow>): MuscleTrainingQualityRow {
+    return {
+      muscle_group: 'อก',
+      sets: 3,
+      reps: 10,
+      weight_kg: 20,
+      total_volume_kg: null,
+      rpe: null,
+      performed_at: '2026-07-14',
+      ...overrides,
+    }
+  }
+
+  it('sums sets and prefers total_volume_kg over sets*reps*weight_kg when present', () => {
+    const result = aggregateMuscleTrainingQuality([makeRow({ total_volume_kg: 700 }), makeRow({ total_volume_kg: 500 })])
+    expect(result['อก'].sets).toBe(6)
+    expect(result['อก'].volumeKg).toBe(1200)
+  })
+
+  it('falls back to sets*reps*weight_kg when total_volume_kg is missing', () => {
+    const result = aggregateMuscleTrainingQuality([makeRow({ sets: 3, reps: 10, weight_kg: 20, total_volume_kg: null })])
+    expect(result['อก'].volumeKg).toBe(600)
+  })
+
+  it('counts sessions as the number of distinct performed_at dates', () => {
+    const result = aggregateMuscleTrainingQuality([
+      makeRow({ performed_at: '2026-07-14' }),
+      makeRow({ performed_at: '2026-07-14' }),
+      makeRow({ performed_at: '2026-07-16' }),
+    ])
+    expect(result['อก'].sessions).toBe(2)
+  })
+
+  it('averages rpe only across rows that have it, rounded to 1 decimal', () => {
+    const result = aggregateMuscleTrainingQuality([makeRow({ rpe: 7 }), makeRow({ rpe: 8 }), makeRow({ rpe: null })])
+    expect(result['อก'].avgRpe).toBe(7.5)
+  })
+
+  it('returns null avgRpe when no rows have rpe', () => {
+    const result = aggregateMuscleTrainingQuality([makeRow({ rpe: null })])
+    expect(result['อก'].avgRpe).toBeNull()
+  })
+
+  it('keeps groups separate and ignores rows without a muscle_group', () => {
+    const result = aggregateMuscleTrainingQuality([
+      makeRow({ muscle_group: 'อก', sets: 3 }),
+      makeRow({ muscle_group: 'ขา', sets: 5 }),
+      makeRow({ muscle_group: null, sets: 99 }),
+    ])
+    expect(result['อก'].sets).toBe(3)
+    expect(result['ขา'].sets).toBe(5)
+    expect(Object.keys(result)).toEqual(['อก', 'ขา'])
+  })
+
+  it('returns an empty object for no rows', () => {
+    expect(aggregateMuscleTrainingQuality([])).toEqual({})
   })
 })

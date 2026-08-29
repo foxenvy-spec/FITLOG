@@ -965,3 +965,62 @@ export function computeWorkoutMotivationLabel(workoutsThisWeek: number, weeklyWo
   if (remaining === weeklyWorkoutGoal) return `อีก ${remaining} ครั้งถึงเป้าหมาย`
   return `อีกแค่ ${remaining} ครั้งถึงเป้าหมาย`
 }
+
+// ==================== Training Quality ต่อกล้ามเนื้อ (Priority 4) ====================
+// เดิม FitLog ใช้ "จำนวนเซ็ต" เป็นแกนหลักตัวเดียวของ Training Volume ต่อกล้ามเนื้อ (WeeklyMuscleHeatmap,
+// WeeklyVolume ฯลฯ) ซึ่งไม่บอกว่า Volume หนักแค่ไหนจริง (12 เซ็ตน้ำหนักเบา ≠ 12 เซ็ตน้ำหนักหนัก), ฝึกกี่ครั้ง/
+// สัปดาห์ (12 เซ็ตในวันเดียว ≠ 12 เซ็ตกระจาย 3 วัน), หรือความหนักเฉลี่ยเป็นอย่างไร — ฟังก์ชันนี้รวบรวม 3
+// มิติที่ยังไม่เคยคำนวณต่อกลุ่มกล้ามเนื้อมาก่อน (Volume กก. จริง/Frequency/Intensity) จากแถว workouts ดิบ
+// ของสัปดาห์นั้น ให้เรียกครั้งเดียวได้ครบ ไม่ต้องคำนวณซ้ำที่ผู้เรียกแต่ละจุด — recovery % ไม่ได้รวมไว้ในนี้
+// เพราะต้องใช้ประวัติย้อนหลังนอกช่วงสัปดาห์ (ดู computeRecoveryPct ด้านบน) ผู้เรียกค่อยประกอบเพิ่มเอง
+export interface MuscleTrainingQualityRow {
+  muscle_group: string | null
+  sets: number | null
+  reps: number | null
+  weight_kg: number | null
+  total_volume_kg: number | null
+  rpe: number | null
+  performed_at: string
+}
+
+export interface MuscleTrainingQuality {
+  sets: number
+  volumeKg: number
+  sessions: number
+  avgRpe: number | null
+}
+
+export function aggregateMuscleTrainingQuality(rows: MuscleTrainingQualityRow[]): Record<string, MuscleTrainingQuality> {
+  const setsByGroup: Record<string, number> = {}
+  const volumeByGroup: Record<string, number> = {}
+  const sessionDaysByGroup: Record<string, Set<string>> = {}
+  const rpeSumByGroup: Record<string, number> = {}
+  const rpeCountByGroup: Record<string, number> = {}
+
+  rows.forEach((r) => {
+    if (!r.muscle_group) return
+    const sets = r.sets ?? 0
+    setsByGroup[r.muscle_group] = (setsByGroup[r.muscle_group] ?? 0) + sets
+    // total_volume_kg ถ้ามี (แม่นยำกว่าเพราะรวมจากทีละเซ็ตจริง) ไม่งั้น fallback sets*reps*weight_kg —
+    // สูตรเดียวกับ lib/workoutDisplay.ts: workoutVolumeKg() แค่ทำงานกับแถวบางส่วนที่ query มา ไม่ใช่ Workout เต็ม
+    volumeByGroup[r.muscle_group] =
+      (volumeByGroup[r.muscle_group] ?? 0) + (r.total_volume_kg ?? sets * (r.reps ?? 0) * (r.weight_kg ?? 0))
+    ;(sessionDaysByGroup[r.muscle_group] ??= new Set()).add(r.performed_at)
+    if (r.rpe !== null && r.rpe !== undefined) {
+      rpeSumByGroup[r.muscle_group] = (rpeSumByGroup[r.muscle_group] ?? 0) + r.rpe
+      rpeCountByGroup[r.muscle_group] = (rpeCountByGroup[r.muscle_group] ?? 0) + 1
+    }
+  })
+
+  const result: Record<string, MuscleTrainingQuality> = {}
+  Object.keys(setsByGroup).forEach((group) => {
+    const rpeCount = rpeCountByGroup[group] ?? 0
+    result[group] = {
+      sets: setsByGroup[group],
+      volumeKg: volumeByGroup[group] ?? 0,
+      sessions: sessionDaysByGroup[group]?.size ?? 0,
+      avgRpe: rpeCount > 0 ? Math.round((rpeSumByGroup[group] / rpeCount) * 10) / 10 : null,
+    }
+  })
+  return result
+}
