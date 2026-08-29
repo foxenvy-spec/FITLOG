@@ -804,9 +804,12 @@ export function computeGreetingContext(
 // ==================== ข้อความให้กำลังใจแทนตัวเลขล้วนๆ (Motivation) ====================
 // ใช้กับการ์ด Weekly Goal — เปลี่ยนจาก "% เฉยๆ" เป็นประโยคที่บอกว่าเหลืออีกกี่ครั้งถึงเป้าหมาย
 // weeklyWorkoutGoal นับจากจำนวนวันที่ผู้ใช้ตั้งโปรแกรมไว้เอง (program_days) — ถ้ายังไม่ตั้งเลย ใช้ 3 เป็นค่าเริ่มต้นทั่วไป
+// v: ตัดคำว่า "รายสัปดาห์แล้ว" ออกจากปลายประโยค — เดิมข้อความนี้อยู่ใต้การ์ดที่หัวการ์ดเขียนว่า
+// "Weekly Goal" อยู่แล้ว และอยู่ข้าง ring ที่โชว์ % ความคืบหน้าไปเป้าหมายเดียวกันอยู่แล้ว การพูดซ้ำว่า
+// "เป้าหมายรายสัปดาห์" อีกครั้งในประโยคนี้จึงซ้ำซ้อนกับบริบทรอบข้าง — เหลือแค่ข้อมูลใหม่ (จำนวนครั้งที่เหลือ)
 export function computeWorkoutMotivationLabel(workoutsThisWeek: number, weeklyWorkoutGoal: number): string {
   const remaining = weeklyWorkoutGoal - workoutsThisWeek
-  if (remaining <= 0) return 'ถึงเป้าหมายรายสัปดาห์แล้ว เก่งมาก 🎉'
-  if (remaining === weeklyWorkoutGoal) return `อีก ${remaining} ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว`
-  return `อีกแค่ ${remaining} ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว`
+  if (remaining <= 0) return 'ถึงเป้าหมายแล้ว เก่งมาก 🎉'
+  if (remaining === weeklyWorkoutGoal) return `อีก ${remaining} ครั้งถึงเป้าหมาย`
+  return `อีกแค่ ${remaining} ครั้งถึงเป้าหมาย`
 }

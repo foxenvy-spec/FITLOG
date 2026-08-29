@@ -713,19 +713,19 @@ describe('computeGreetingContext', () => {
 
 describe('computeWorkoutMotivationLabel', () => {
   it('counts down the remaining workouts needed to hit the weekly goal', () => {
-    expect(computeWorkoutMotivationLabel(2, 3)).toBe('อีกแค่ 1 ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว')
+    expect(computeWorkoutMotivationLabel(2, 3)).toBe('อีกแค่ 1 ครั้งถึงเป้าหมาย')
   })
 
   it('celebrates once the goal is met', () => {
-    expect(computeWorkoutMotivationLabel(3, 3)).toBe('ถึงเป้าหมายรายสัปดาห์แล้ว เก่งมาก 🎉')
+    expect(computeWorkoutMotivationLabel(3, 3)).toBe('ถึงเป้าหมายแล้ว เก่งมาก 🎉')
   })
 
   it('celebrates when the goal is exceeded', () => {
-    expect(computeWorkoutMotivationLabel(4, 3)).toBe('ถึงเป้าหมายรายสัปดาห์แล้ว เก่งมาก 🎉')
+    expect(computeWorkoutMotivationLabel(4, 3)).toBe('ถึงเป้าหมายแล้ว เก่งมาก 🎉')
   })
 
   it('phrases the very first workout of the week without "แค่" since nothing has been done yet', () => {
-    expect(computeWorkoutMotivationLabel(0, 3)).toBe('อีก 3 ครั้ง ก็ถึงเป้าหมายรายสัปดาห์แล้ว')
+    expect(computeWorkoutMotivationLabel(0, 3)).toBe('อีก 3 ครั้งถึงเป้าหมาย')
   })
 })
 
