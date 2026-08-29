@@ -44,6 +44,7 @@ import {
   type ScheduledDay,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
+import { goalProgressPct } from '@/lib/goalProgress'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
@@ -134,6 +135,11 @@ export interface DashboardData {
   // การแจ้งเตือนหมวด Goal (computeDashboardNotifications) null = ยังไม่ได้ตั้งเป้าหมายประเภทนั้น
   weightGoalTarget: number | null
   bodyFatGoalTarget: number | null
+  // ค่าตั้งต้นตอนสร้างเป้าหมาย — คู่กับ target ด้านบน ใช้ผ่าน goalProgressPct (lib/goalProgress.ts,
+  // ตัวเดียวกับหน้า Health) เพื่อรู้ทิศทางเป้าหมาย (ลด/เพิ่ม) แล้วเช็คว่าถึง/เกินเป้าหมายแล้วหรือยัง —
+  // ไม่งั้นการแจ้งเตือน Goal จะโชว์ "เหลือ X kg" ค้างตลอดแม้ผู้ใช้ทำถึงเป้าหมายไปแล้ว (Math.abs เฉยๆ ไม่รู้ทิศทาง)
+  weightGoalStart: number | null
+  bodyFatGoalStart: number | null
   // true เมื่อ muscleRecommendation ข้างบนคือกล้ามเนื้อของ "วันนี้" จริงๆ (ยังทำไม่ครบ/ยังไม่ได้เริ่ม) —
   // false เมื่อเป็นคำแนะนำของเซสชัน "ถัดไป" (วันนี้ทำครบแล้ว/เป็นวันพัก) ใช้ตัดสินป้าย "AI Coach · Today"
   // vs "· Next" ให้ตรงกับความเป็นจริง (ดู comment เต็มที่จุดคำนวณ scheduledMuscle ด้านล่าง)
@@ -211,7 +217,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     // เป้าหมายน้ำหนัก/Body Fat ที่ตั้งไว้ (ถ้ามี) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" สำหรับ
     // การแจ้งเตือนหมวด Goal (ดู computeDashboardNotifications) ตารางเดียวกับที่ /health และ
     // BodyMetricsRow.tsx ใช้อยู่แล้ว
-    supabase.from('goals').select('goal_type, target_value').in('goal_type', ['weight', 'body_fat']).eq('status', 'active'),
+    supabase.from('goals').select('goal_type, target_value, starting_value').in('goal_type', ['weight', 'body_fat']).eq('status', 'active'),
   ])
 
   const todayList = (todayRows as Workout[]) ?? []
@@ -404,9 +410,11 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
 
   // เป้าหมายน้ำหนัก/Body Fat (ถ้ามี) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" ของการแจ้งเตือนหมวด Goal
   // ดิบเป็น kg เสมอ (แปลงหน่วยแสดงผล kg/lb ทำที่ฝั่ง render ผ่าน useWeightUnit ซึ่งเป็น hook เรียกในนี้ไม่ได้)
-  const typedGoals = (goalRows as { goal_type: string; target_value: number | null }[]) ?? []
+  const typedGoals = (goalRows as { goal_type: string; target_value: number | null; starting_value: number | null }[]) ?? []
   const weightGoalTarget = typedGoals.find((g) => g.goal_type === 'weight')?.target_value ?? null
   const bodyFatGoalTarget = typedGoals.find((g) => g.goal_type === 'body_fat')?.target_value ?? null
+  const weightGoalStart = typedGoals.find((g) => g.goal_type === 'weight')?.starting_value ?? null
+  const bodyFatGoalStart = typedGoals.find((g) => g.goal_type === 'body_fat')?.starting_value ?? null
 
   // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) — ใช้สำหรับ Fitness Score เท่านั้น ใช้ distinctDates
   // ชุดเดียวกับที่คำนวณ streak ด้านบน ไม่ต้อง query ซ้ำ
@@ -433,6 +441,8 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     todaysRecommendation,
     weightGoalTarget,
     bodyFatGoalTarget,
+    weightGoalStart,
+    bodyFatGoalStart,
     isRecommendationForToday,
     bestVolumeIncrease,
     thisWeekWorkoutDays,
@@ -636,12 +646,23 @@ export default function DashboardPage() {
   // recovery/เทรนด์ body fat/เป้าหมาย) เป็นรายการแจ้งเตือนที่กดแล้วไปหน้าที่เกี่ยวข้องได้จริง แทนที่
   // "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" เดิมซึ่งเป็นสรุปสถิติเฉยๆ กดแล้วไปไหนไม่ได้
   const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && (data?.todayWorkouts.length ?? 0) > 0)
-  const weightRemaining =
+  // goalProgressPct (lib/goalProgress.ts, ตัวเดียวกับหน้า Health) รู้ทิศทางเป้าหมาย (ลด/เพิ่ม) จาก
+  // starting_value เทียบ target — ใช้เช็คว่าถึง/เกินเป้าหมายแล้วหรือยัง ก่อนเดิม Math.abs(current-target)
+  // เฉยๆ ไม่รู้ทิศทาง ทำให้แจ้งเตือน "เหลือ X kg" ค้างอยู่แม้ทำถึงเป้าหมาย (หรือเกิน) ไปแล้วจริงๆ
+  const weightGoalReached =
     data?.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+      ? (goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value) ?? 0) >= 100
+      : false
+  const bodyFatGoalReached =
+    data?.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+      ? (goalProgressPct({ target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart }, data.bodyMetricsSummary.bodyFatPct.value) ?? 0) >= 100
+      : false
+  const weightRemaining =
+    data?.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null && !weightGoalReached
       ? { value: Math.abs(toDisplay(data.bodyMetricsSummary.weight.value) - toDisplay(data.weightGoalTarget)), unit }
       : null
   const bodyFatRemaining =
-    data?.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+    data?.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null && !bodyFatGoalReached
       ? Math.abs(data.bodyMetricsSummary.bodyFatPct.value - data.bodyFatGoalTarget)
       : null
   const notifications = data

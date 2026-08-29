@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
 import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications } from '@/lib/dashboardStats'
+import { goalProgressPct } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
 import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
@@ -210,12 +211,23 @@ export default function MobileDashboardView() {
   // Priority 14 (Notifications Actionable) — เหมือนฝั่งเดสก์ท็อป (DashboardView.tsx) ทุกประการ:
   // รวม 4 สัญญาณที่มีอยู่แล้วในหน้านี้เป็นรายการแจ้งเตือนที่กดแล้วไปหน้าที่เกี่ยวข้องได้
   const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && data.todayWorkouts.length > 0)
-  const weightRemaining =
+  // goalProgressPct (lib/goalProgress.ts, ตัวเดียวกับหน้า Health) รู้ทิศทางเป้าหมาย (ลด/เพิ่ม) จาก
+  // starting_value เทียบ target — เหมือนฝั่งเดสก์ท็อป (DashboardView.tsx) ทุกประการ ป้องกันแจ้งเตือน
+  // "เหลือ X kg" ค้างอยู่ทั้งที่ทำถึง/เกินเป้าหมายไปแล้วจริงๆ
+  const weightGoalReached =
     data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+      ? (goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value) ?? 0) >= 100
+      : false
+  const bodyFatGoalReached =
+    data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+      ? (goalProgressPct({ target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart }, data.bodyMetricsSummary.bodyFatPct.value) ?? 0) >= 100
+      : false
+  const weightRemaining =
+    data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null && !weightGoalReached
       ? { value: Math.abs(toDisplay(data.bodyMetricsSummary.weight.value) - toDisplay(data.weightGoalTarget)), unit }
       : null
   const bodyFatRemaining =
-    data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+    data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null && !bodyFatGoalReached
       ? Math.abs(data.bodyMetricsSummary.bodyFatPct.value - data.bodyFatGoalTarget)
       : null
   const notifications = computeDashboardNotifications({

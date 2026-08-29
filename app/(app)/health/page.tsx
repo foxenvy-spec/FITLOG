@@ -3558,8 +3558,14 @@ function GoalsCard({
                   <span className="text-ink">{label}</span>
                   <span className="font-mono text-muted">
                     {current !== null ? current.toFixed(1) : '—'} / {g.target_value?.toFixed(1) ?? '—'}
-                    {remaining !== null && (
-                      <span className="text-amber"> · เหลือ {fmt(remaining)}</span>
+                    {/* pct มาจาก sharedGoalProgressPct ซึ่ง clamp 0-100 เสมอ — ถ้าถึง/เกินเป้าหมายแล้ว pct
+                        จะเป็น 100 พอดี แต่ remaining (Math.abs ตรงๆ) ยังเป็นค่าไม่เป็นศูนย์ได้ถ้าเกินเป้าไปแล้ว
+                        (เช่น เป้าลดน้ำหนักเหลือ 70kg แต่ตอนนี้ 68kg) ทำให้ขึ้น "เหลือ 2.0kg" ทั้งที่แถบข้างล่าง
+                        โชว์ 100% ไปแล้ว ขัดกันเอง — ถึงเป้าแล้วโชว์ป้ายสำเร็จแทนตัวเลขที่เหลือ */}
+                    {pct !== null && pct >= 100 ? (
+                      <span className="text-moss"> · ถึงเป้าหมายแล้ว</span>
+                    ) : (
+                      remaining !== null && <span className="text-amber"> · เหลือ {fmt(remaining)}</span>
                     )}
                   </span>
                 </div>
