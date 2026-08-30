@@ -1713,18 +1713,20 @@ export default function DashboardPage() {
                         >
                           <span className="flex items-center gap-2 min-w-0">
                             <span className="text-xs shrink-0" aria-hidden="true">💪</span>
+                            {/* ฟีดแบ็ก "MINT Coach/Recovery/Insights มี AI recommendation ซ้ำกันเยอะ" — ตัด
+                                "— ฟื้นตัวแล้ว {pct}% · เหลืออีก N เซ็ตถึงเป้าหมาย" ท้ายป้ายนี้ออก ตัวเลขชุดนี้
+                                ซ้ำถึง 2 ที่อยู่แล้ว: (1) การ์ด MINT Coach ข้างๆ กัน (Muscle Recovery bar +
+                                "เหลืออีก N เซ็ต") และ (2) แถวรายกลุ่มกล้ามเนื้อในลิสต์ด้านล่างของการ์ดนี้เอง
+                                (ถ้ากลุ่มนี้ยังไม่ฟื้นตัวเต็มที่ ก็จะโผล่ในลิสต์ default อยู่แล้วพร้อม % ของมัน)
+                                ป้ายนี้เหลือแค่ "แนะนำกลุ่มไหน" ให้ MINT Coach เป็นเจ้าของ "ทำไม"/ตัวเลขไปเลย
+                                ตามการแบ่งหน้าที่ที่ตั้งใจไว้แล้ว (ดู comment v69 ใน TodaysWorkoutCompactCard.tsx) —
+                                scheduleOverriddenFrom/lowRecoveryCaution ด้านล่างยังคงไว้ เพราะเป็นข้อมูลที่
+                                ไม่มีที่ไหนอื่นพูดถึง ไม่ใช่การซ้ำ */}
                             <p className="text-xs text-ink whitespace-pre-line">
                               {recoveryRecommendationLabel(recoveryLabelPct, data.isRecommendationForToday)}{' '}
                               <span className="font-display tracked uppercase" style={{ color: recColor }}>
                                 {recommendation.muscleGroup}
-                              </span>{' '}
-                              <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
-                              {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำวันนี้ — โชว์เฉพาะตอนยังเหลือ
-                                  โควตาจริง (setsRemaining > 0) ไม่โชว์ตอนเกินเป้าแล้วเพื่อไม่ให้ป้ายนี้ดู
-                                  เหมือนตักเตือน (มีสัญญาณ "เกินเป้า" อยู่แล้วที่การ์ด Weekly Volume) */}
-                              {recommendation.setsRemaining > 0 && (
-                                <span className="text-muted"> · เหลืออีก {recommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
-                              )}
+                              </span>
                             </p>
                             {/* ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — บอกเหตุผลตรงๆ เมื่อ suggestMuscleToTrain
                                 แนะนำกลุ่มนี้แทนกลุ่มตามตารางเพราะ Volume ของกลุ่มตามตารางเกินเป้าไปแล้ว */}
