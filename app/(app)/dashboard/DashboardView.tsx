@@ -1167,6 +1167,14 @@ export default function DashboardPage() {
               ].join(', '),
             }}
           />
+          {/* ฟีดแบ็ก "Today's Workout ใหญ่เกินไปตอนยังไม่มีโปรแกรม — Visual Weight > Information Value"
+              (ยืนยันจากสกรีนช็อตจริง — รูปดัมเบลยังเด่นมากแม้เนื้อหาจริงมีแค่ '0 Exercises') — ไม่แตะสูตรภาพ/
+              filter/glow ที่ผ่านการปรับละเอียดมาหลายรอบเลย (เสี่ยงทำลายงานที่ verify แล้ว) แต่เพิ่ม scrim มืด
+              อีกชั้นทับเฉพาะ State B (ยังไม่มีโปรแกรม + ยังไม่ได้เทรนวันนี้) ให้รูปถอยเป็นพื้นหลังมากขึ้นตอนที่
+              เนื้อหาจริงมีน้อย — State A/C (มีโปรแกรม/เทรนเสร็จแล้ว) ไม่โดนกฎนี้ ยังเห็นรูปเต็มที่เหมือนเดิม */}
+          {!scheduledDay && !todayCompleted && (
+            <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.38)' }} />
+          )}
           {/* v48: ฟีดแบ็ก "โซน Dumbbell (~35% ของการ์ด) มีแค่รูปดัมเบลอย่างเดียว อยากเพิ่ม Glow/Particle
               เบาๆ ให้ดูมีชีวิต" — จุดกระพริบเล็กๆ กระจายรอบไอคอน (เทคนิคเดียวกับ "Particles" ใน
               TodaysWorkoutCompactCard.tsx ขนาด/ตำแหน่งไม่เท่ากันจำลองประกายลอยในอากาศ ไม่ใช่ pattern
