@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications } from '@/lib/dashboardStats'
-import { goalProgressPct } from '@/lib/goalProgress'
+import { goalProgressPct, goalProgressLabel } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
 import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
@@ -441,7 +441,7 @@ export default function MobileDashboardView() {
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
                       </div>
-                      <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, weightPct)))}% Progress</p>
+                      <p className="text-[10px] text-muted mt-1">{goalProgressLabel(weightPct)}</p>
                     </div>
                   )}
                   {bodyFatPct !== null && (
@@ -455,7 +455,7 @@ export default function MobileDashboardView() {
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                       </div>
-                      <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, bodyFatPct)))}% Progress</p>
+                      <p className="text-[10px] text-muted mt-1">{goalProgressLabel(bodyFatPct)}</p>
                     </div>
                   )}
                 </div>

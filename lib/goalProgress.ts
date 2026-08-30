@@ -19,3 +19,12 @@ export function goalProgressPct(
   if (goal.target_value === start) return currentValue >= goal.target_value ? 100 : 0
   return Math.min(100, Math.max(0, ((currentValue - start) / (goal.target_value - start)) * 100))
 }
+
+// ฟีดแบ็ก "Body Goal โชว์ '0% Progress' ดูเหมือนยังไม่ก้าวหน้าเลย ทั้งที่จริงๆ อาจเพิ่งตั้งเป้าหมายวันนี้ —
+// ควรเขียนว่า 'เริ่มต้นเป้าหมาย' แทน" — goalProgressPct คืน 0 ทั้งกรณี "เพิ่งเริ่ม ยังไม่มีข้อมูลขยับ" และ
+// "ขยับผิดทาง" (ค่าปัจจุบันแย่กว่าจุดเริ่มต้น ถูก clamp ไว้ที่ 0) แยกกันไม่ได้จากตัวเลขเฉยๆ แต่ทั้งสองกรณีก็
+// ไม่ควรใช้คำว่า "0% Progress" เหมือนกัน (สื่อว่า "ยังไม่ได้ทำอะไรเลย" ซึ่งให้ความรู้สึกลบเกินจริง)
+export function goalProgressLabel(pct: number): string {
+  const rounded = Math.round(Math.max(0, Math.min(100, pct)))
+  return rounded <= 0 ? 'เริ่มต้นเป้าหมาย' : `${rounded}% Progress`
+}

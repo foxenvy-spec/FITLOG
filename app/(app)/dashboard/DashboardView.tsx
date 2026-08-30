@@ -49,7 +49,7 @@ import {
   type SessionVolumeChange,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
-import { goalProgressPct } from '@/lib/goalProgress'
+import { goalProgressPct, goalProgressLabel } from '@/lib/goalProgress'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
@@ -996,7 +996,7 @@ export default function DashboardPage() {
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
                     </div>
-                    <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, weightPct)))}% Progress</p>
+                    <p className="text-[10px] text-muted mt-1">{goalProgressLabel(weightPct)}</p>
                   </div>
                 )}
                 {bodyFatPct !== null && (
@@ -1010,7 +1010,7 @@ export default function DashboardPage() {
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                     </div>
-                    <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, bodyFatPct)))}% Progress</p>
+                    <p className="text-[10px] text-muted mt-1">{goalProgressLabel(bodyFatPct)}</p>
                   </div>
                 )}
               </div>
@@ -1333,7 +1333,11 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="relative z-10 px-5 py-6">
+        {/* ฟีดแบ็ก "Today's Workout ใหญ่เกินไปตอนยังไม่มีโปรแกรม — Visual Weight > Information Value"
+            — เดิม padding คงที่ py-6 ทุกสถานะ ทั้งที่ State B (ไม่มีโปรแกรม) มีข้อมูลจริงให้แสดงน้อยกว่า
+            State A/C มาก ลด padding แนวตั้งลงเฉพาะตอนไม่มีโปรแกรม (py-6 -> py-5) ให้สัดส่วนภาพ/ข้อมูล
+            สมดุลขึ้นโดยไม่แตะขนาด/เลย์เอาต์ตอนมีข้อมูลจริงให้แสดง (ซึ่งผ่านการปรับละเอียดมาหลายรอบแล้ว) */}
+        <div className={`relative z-10 px-5 ${scheduledDay || todayCompleted ? 'py-6' : 'py-5'}`}>
           {/* ฟีดแบ็ก "Today's Workout ควรเป็นระบบสถานะของวัน ไม่ใช่แค่รูป workout" — State C: เสร็จแล้ว
               วันนี้ เปลี่ยนป้ายหัวการ์ดเป็น "Workout Complete" แทน "Today's Workout" เดิม (ยังโชว์ต่อไป
               ทั้งวันแม้เทรนเสร็จแล้ว ทำให้ดูเหมือนยังไม่ได้เริ่ม) ใช้ todayCompleted ตัวเดียวกับที่คำนวณ
@@ -1746,6 +1750,12 @@ export default function DashboardPage() {
                         // กลับไปเหลือ 2 บรรทัดเหมือน v56 ("Recovery" + สถานะ) — glow ก็เบาลง ~10% ตามฟีดแบ็ก
                         // "วงแหวนดูดีแล้ว แต่ถ้า Glow เบาลงอีก 10% จะดูแพงขึ้น แบบ Apple" alpha '2D' (17.6%)
                         // -> '28' (15.7%)
+                        // ฟีดแบ็ก "ข้อมูลซ้ำ — Header บอก Recovery Excellent, Card ก็บอก Recovery Excellent
+                        // ซ้ำอีกใน Ring" — หัวการ์ด "Recovery" อยู่เหนือ ring นี้แค่ ~2 บรรทัดอยู่แล้ว (ดู
+                        // <p>Recovery</p> ด้านบน) ตัดคำว่า "Recovery" ในป้าย ring ออก เหลือแค่คำสถานะ
+                        // (Excellent/Good/...) ไม่ต้องพูดชื่อการ์ดซ้ำสองรอบติดกัน — ไม่แตะ header pill
+                        // บนสุดของหน้า (fitnessScoreRecoveryPct) เพราะมีจุดประสงค์ต่างกัน (เห็นได้โดยไม่ต้อง
+                        // เลื่อนมาถึงการ์ดนี้) เป็นการตัดสินใจแยกต่างหากที่มีคอมเมนต์ของตัวเองอยู่แล้ว
                         <div className="shrink-0 ml-3" style={{ filter: `drop-shadow(0 0 3px ${withAlpha(COLORS.cyan, '28')})` }}>
                           <GoalRing
                             pct={overallRecoveryPct}
@@ -1753,11 +1763,8 @@ export default function DashboardPage() {
                             strokeWidth={10}
                             color={COLORS.cyan}
                             label={
-                              <span className="flex flex-col items-center leading-tight">
-                                <span className="text-muted">Recovery</span>
-                                <span style={{ color: recoveryStatusColor(overallRecoveryPct) }}>
-                                  {recoveryTier(overallRecoveryPct).labelEn}
-                                </span>
+                              <span style={{ color: recoveryStatusColor(overallRecoveryPct) }}>
+                                {recoveryTier(overallRecoveryPct).labelEn}
                               </span>
                             }
                             ariaLabel="ฟื้นตัวรวมทุกกลุ่มกล้ามเนื้อ"
