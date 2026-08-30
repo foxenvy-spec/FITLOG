@@ -154,12 +154,20 @@ function buildCalendarGrid(windowStartIso: string, setsByDay: Record<string, num
     d.setDate(d.getDate() + i)
     const iso = toIso(d)
     const sets = setsByDay[iso] ?? 0
+    const dayWorkouts = workoutsByDay[iso] ?? []
     let level: Level = 'none'
     if (sets > 0) {
       const ratio = sets / maxSets
       level = ratio > 2 / 3 ? 'high' : ratio > 1 / 3 ? 'mid' : 'low'
+    } else if (dayWorkouts.length > 0) {
+      // บั๊ก: วันที่มีแต่คาร์ดิโอ (ไม่มี strength sets เลย) setsByDay[iso] เป็น 0 ตกไปที่ level='none'
+      // เดียวกับวันพักจริงๆ — สีเซลล์/นับ "วันออกกำลังกาย"/"สัปดาห์ติด" มองข้ามวันนั้นไปหมด ทั้งที่กดดูราย
+      // ละเอียด (DayDetail) กลับเห็นรายการคาร์ดิโอปกติ ขัดกันเอง — ให้วันที่มีคาร์ดิโออย่างน้อย 1 รายการนับ
+      // เป็น 'low' (ระดับต่ำสุดที่ยังไม่ใช่ none) แทน — ไม่ได้จัดระดับความหนักของคาร์ดิโอเทียบกับ maxSets
+      // (คนละหน่วยกัน วัดจากจำนวนเซ็ต strength ล้วนๆ) แค่ทำให้นับว่า "มีกิจกรรมวันนั้น" ถูกต้อง
+      level = 'low'
     }
-    days.push({ iso, level, workouts: workoutsByDay[iso] ?? [] })
+    days.push({ iso, level, workouts: dayWorkouts })
   }
   const firstDow = (new Date(days[0].iso + 'T00:00:00').getDay() + 6) % 7 // 0=จันทร์
   const padded: (typeof days[number] | null)[] = Array(firstDow).fill(null)
@@ -216,9 +224,12 @@ export default function ConsistencyStrip() {
   // ระหว่างเช็คบัค: สลับ weekOffset ทำให้ queryKey เปลี่ยน react-query เลยดรอปข้อมูลเก่าทันทีเป็นค่าเริ่มต้น
   // (data=undefined จนกว่าจะโหลดช่วงใหม่เสร็จ) กระพริบเป็น skeleton ทุกครั้งที่กดปุ่มลูกศร ทั้งที่กริดเก่า
   // ยังโชว์ต่อได้ระหว่างรอ — placeholderData: keepPreviousData (v5 API) ให้คงข้อมูลของช่วงก่อนหน้าไว้โชว์
-  // จนกว่าช่วงใหม่จะโหลดเสร็จแทน ลด flicker โดยไม่กระทบความถูกต้อง (isLoading ยังคง true ระหว่างนั้นตามจริง
-  // — ใช้แค่ isFetching ถ้าต้องการแยก แต่ที่นี่ activeWindowLoading เดิมพอแล้ว ไม่ต้องแก้เพิ่ม)
-  const { data: offsetWindow, isLoading: offsetLoading } = useQuery({
+  // จนกว่าช่วงใหม่จะโหลดเสร็จแทน — แต่ query นี้ enabled:false อยู่ตอน weekOffset===0 (ไม่เคย fetch มาก่อน
+  // เลย) ทำให้ปุ่ม ‹ ครั้งแรกจากช่วงปัจจุบัน ยังไม่มี placeholder ให้ keepPreviousData ใช้ ยังกระพริบอยู่ดี
+  // (บั๊กที่เจอตอน re-review) — แก้ด้วย activeWindow fallback ด้านล่างแทน: ถ้ายังไม่มี offsetWindow เลย
+  // (ครั้งแรกจริงๆ) ให้ใช้กริดของช่วงปัจจุบัน (data) ไปพลางๆ ก่อน ดีกว่าโชว์ skeleton ว่างเปล่า — ครั้งต่อๆ
+  // ไปจะมี placeholder จาก keepPreviousData ให้ใช้เองแล้วไม่ต้องพึ่ง fallback นี้อีก
+  const { data: offsetWindow } = useQuery({
     queryKey: ['consistency-strip-window', weekOffset],
     queryFn: () => fetchWindowRows(supabase, weekOffset),
     enabled: weekOffset !== 0,
@@ -226,13 +237,10 @@ export default function ConsistencyStrip() {
     placeholderData: keepPreviousData,
   })
 
-  const activeWindow =
-    weekOffset === 0
-      ? data
-        ? { setsByDay: data.setsByDay, workoutsByDay: data.workoutsByDay, windowStartIso: data.windowStartIso, windowEndIso: data.todayIso }
-        : null
-      : offsetWindow ?? null
-  const activeWindowLoading = weekOffset === 0 ? isLoading : offsetLoading
+  const currentLiveWindow = data
+    ? { setsByDay: data.setsByDay, workoutsByDay: data.workoutsByDay, windowStartIso: data.windowStartIso, windowEndIso: data.todayIso }
+    : null
+  const activeWindow = weekOffset === 0 ? currentLiveWindow : offsetWindow ?? currentLiveWindow
 
   function goToOffset(next: number) {
     setSelectedDayIso(null)
@@ -356,7 +364,7 @@ export default function ConsistencyStrip() {
                 </p>
               ))}
             </div>
-            {activeWindowLoading || !displayGrid ? (
+            {!displayGrid ? (
               <div className="grid grid-cols-7 gap-1.5">
                 {Array.from({ length: 21 }).map((_, i) => (
                   <div key={i} className="aspect-square rounded-md bg-surface2 animate-pulse" />
