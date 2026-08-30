@@ -53,8 +53,9 @@ interface GroupStat {
   targetStatus: VolumeStatus
 }
 
+// ฟีดแบ็ก "สีแดงเยอะไป — ยังไม่ถึงเป้าไม่ใช่ปัญหา ควรเป็นเทากลาง ไม่ใช่แดง" (ตัวเดียวกับ WeeklyVolume.tsx)
 const TARGET_STATUS_COLOR: Record<VolumeStatus, string> = {
-  behind: '#C1503A',
+  behind: '#9498A0',
   onTrack: '#E8A33D',
   met: '#7A9B57',
   high: '#E8A33D',
@@ -456,8 +457,12 @@ export default function WeeklyMuscleHeatmap() {
         </div>
       )}
 
+      {/* ฟีดแบ็ก "ข้อมูลเยอะเกินไปใน Card เดียว (97 sets, 24 exercises, Balance 58%, กล้ามเนื้อเด่น,
+          กล้ามเนื้อด้อย พร้อมกันหมด) — เหลือ Hero Insight (Balance %) แล้วซ่อนรายละเอียดไว้หลังปุ่ม" —
+          เดิม 5 คอลัมน์โชว์พร้อมกันหมด ลดเหลือ 3 (เซ็ต/ท่า/Balance) ย้าย "กล้ามเนื้อเด่น/ด้อย" ไปอยู่ใน
+          ส่วน "ดูรายละเอียด Balance" ด้านล่างแทน (ปุ่มเดียวกับที่ใช้เปิด Upper/Lower, Push/Pull) */}
       {!isLoading && hasAnyData && balance && (
-        <div className="border-t border-line px-2 py-3 grid grid-cols-[1fr_1fr_1.6fr_1fr_1fr] gap-1">
+        <div className="border-t border-line px-2 py-3 grid grid-cols-3 gap-1">
           <div className="text-center px-1">
             <p className="text-[10px] text-muted">จำนวนเซ็ต</p>
             <p className="font-mono font-bold text-lg text-ink leading-tight mt-0.5">
@@ -482,18 +487,6 @@ export default function WeeklyMuscleHeatmap() {
               </span>
             </p>
           </div>
-          <div className="text-center border-l border-line px-1">
-            <p className="text-[11px] font-medium" style={{ color: BALANCE_COLOR.good }}>
-              กล้ามเนื้อเด่น
-            </p>
-            <p className="text-[10px] text-muted mt-0.5">{topGroups.join(', ')}</p>
-          </div>
-          <div className="text-center border-l border-line px-1">
-            <p className="text-[11px] font-medium" style={{ color: BALANCE_COLOR.poor }}>
-              กล้ามเนื้อด้อย
-            </p>
-            <p className="text-[10px] text-muted mt-0.5">{bottomGroups.join(', ')}</p>
-          </div>
         </div>
       )}
 
@@ -513,6 +506,22 @@ export default function WeeklyMuscleHeatmap() {
 
           {balanceDetailsOpen && (
             <div className="mt-3 space-y-3">
+              {/* กล้ามเนื้อเด่น/ด้อย — ย้ายมาจากแถวสรุปด้านบน (เดิมโชว์เสมอ ทำให้ Card แน่นเกินไปตอนไม่ได้
+                  ต้องการรายละเอียด) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[10px] tracked uppercase text-muted mb-1" style={{ color: BALANCE_COLOR.good }}>
+                    กล้ามเนื้อเด่น
+                  </p>
+                  <p className="text-[11px] text-muted">{topGroups.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] tracked uppercase text-muted mb-1" style={{ color: BALANCE_COLOR.poor }}>
+                    กล้ามเนื้อด้อย
+                  </p>
+                  <p className="text-[11px] text-muted">{bottomGroups.join(', ')}</p>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10px] tracked uppercase text-muted mb-1">Upper / Lower</p>

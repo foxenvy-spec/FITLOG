@@ -17,8 +17,9 @@ import HeartRateSettings from './HeartRateSettings'
 import CardioTargetsSettings from './CardioTargetsSettings'
 import ErrorState from './ErrorState'
 
+// ฟีดแบ็ก "สีแดงเยอะไป — ยังไม่ถึงเป้าไม่ใช่ปัญหา ควรเป็นเทากลาง ไม่ใช่แดง" (ตัวเดียวกับ WeeklyVolume.tsx)
 const STATUS_COLOR: Record<VolumeStatus, string> = {
-  behind: '#C1503A', // rust — ตามหลัง
+  behind: '#9498A0', // เทากลาง — ยังไม่ถึงเป้า (เป็นกลาง ไม่ใช่ปัญหา)
   onTrack: '#E8A33D', // amber — กำลังไปได้ดี
   met: '#7A9B57', // moss — ถึงเป้าหมายพอดี
   high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-120%)
