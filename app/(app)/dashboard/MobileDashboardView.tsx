@@ -490,6 +490,7 @@ export default function MobileDashboardView() {
             // ให้ใช้ได้อย่างปลอดภัย การเดาจะเสี่ยงโชว์ผิดยิ่งกว่าเดิม เช่น 7/7 ทั้งที่ท่าที่ 7 ทำไปครึ่งเดียว)
             total={Math.max(data.todayExercises.length, totals.entryCount, 1)}
             href={scheduledDay ? '/session' : '/log'}
+            volumeChangePct={todayCompleted ? data.sessionVolumeChange?.changePct ?? null : null}
           />
         ) : (
           <TodaysWorkoutEmptyCard variant={workoutCardVariant} />

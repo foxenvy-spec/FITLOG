@@ -24,6 +24,11 @@ interface TodaysWorkoutCompactCardProps {
   completed: number
   total: number
   href: string
+  // ฟีดแบ็ก "Volume +X% จากครั้งก่อน มีแค่เดสก์ท็อป อยากให้มือถือมีด้วย" — ใช้ data.sessionVolumeChange
+  // ตัวเดียวกับที่เดสก์ท็อป (DashboardView.tsx) ใช้อยู่แล้ว (ไม่คำนวณซ้ำ) ส่งเป็น prop เข้ามาแทน — เดิม
+  // เคยประเมินว่าเสี่ยงล้นกรอบความสูงตายตัว 106px แต่วัดจริงแล้วคอลัมน์ข้อความ (~51px: label+ตัวเลข+bar)
+  // สั้นกว่า ring badge ซ้าย (76px) อยู่มาก มีที่ว่างพอสำหรับอีก 1 บรรทัดเล็กโดยไม่ดันความสูงแถวเกิน ring
+  volumeChangePct?: number | null
 }
 
 // การ์ด "Today's Workout" — v10: 3 การปรับตามฟีดแบ็กหลังขึ้น production —
@@ -49,7 +54,7 @@ interface TodaysWorkoutCompactCardProps {
 // FitnessRing component เดียวกับ Fitness Score บน Header) แทนไอคอนแบนเดิม — การ์ดสูงขึ้น 92 -> 112px
 // เพื่อให้มีที่พอ ปุ่มลูกศรวงกลมย้ายจากคอลัมน์ซ้ายไปลอยทับมุมล่างขวาของรูปแทน (ยกเลิกสเปกเดิม "Button
 // should NOT overlap image" ของ v5 โดยตั้งใจ ยืนยันจากผู้ใช้แล้ว)
-export default function TodaysWorkoutCompactCard({ completed, total, href }: TodaysWorkoutCompactCardProps) {
+export default function TodaysWorkoutCompactCard({ completed, total, href, volumeChangePct }: TodaysWorkoutCompactCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
   // v53: ฟีดแบ็ก "Card ควรมี state ต่างกันชัดเจน — เสร็จแล้วควรบอกว่า COMPLETED ไม่ใช่แค่โชว์ N/N เฉยๆ,
   // '0/1 Exercise' เอกพจน์ไม่ใช่พหูพจน์" — ใช้ช่องป้ายเดิม ("Exercises") สลับข้อความแทนที่จะเพิ่มบรรทัดใหม่
@@ -336,6 +341,15 @@ export default function TodaysWorkoutCompactCard({ completed, total, href }: Tod
           >
             <AnimatedBarFill pct={pct} color={COLORS.amber} background={FIRE_GRADIENT_CSS} />
           </div>
+
+          {/* เฉพาะตอนเทรนเสร็จแล้ว + มีข้อมูลพอเทียบ (ตัวเดียวกับเงื่อนไข State C บนเดสก์ท็อป) —
+              ไม่เดา/ไม่โชว์เลขลอยๆ ถ้า changePct เป็น null */}
+          {isCompleted && volumeChangePct != null && (
+            <p className="text-[9px] leading-none mt-1" style={{ color: volumeChangePct >= 0 ? COLORS.moss : COLORS.amber }}>
+              Volume {volumeChangePct >= 0 ? '+' : ''}
+              {volumeChangePct}% จากครั้งก่อน
+            </p>
+          )}
         </div>
       </div>
 
