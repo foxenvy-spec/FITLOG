@@ -41,6 +41,8 @@ import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
+import AnimatedBarFill from '@/components/AnimatedBarFill'
+import { COLORS } from '@/lib/theme'
 import Header from '@/components/dashboard/Header'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
 import TodaysFocusCard from '@/components/TodaysFocusCard'
@@ -407,6 +409,60 @@ export default function MobileDashboardView() {
               เดสก์ท็อปก็ใช้ชุดเดียวกันนี้ตั้งแต่ v41 ไม่ต้องส่ง prop แยกอีกต่อไป */}
           <BodyMetricsRow maxCards={4} compact />
         </div>
+
+        {/* ฟีดแบ็ก "Body Composition ควรมี Goal Progress อยู่ใน Dashboard" — ใช้ goalProgressPct ตัวเดียว
+            กับหน้า /health และเดสก์ท็อป (DashboardView.tsx) ไม่คำนวณสูตรแยกใหม่ */}
+        {(() => {
+          const weightPct =
+            data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+              ? goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value)
+              : null
+          const bodyFatPct =
+            data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+              ? goalProgressPct(
+                  { target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart },
+                  data.bodyMetricsSummary.bodyFatPct.value
+                )
+              : null
+          if (weightPct === null && bodyFatPct === null) return null
+          return (
+            <div className="animate-rise" style={{ animationDelay: '18ms', marginTop: 10 }}>
+              <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3.5">
+                <p className="text-[10px] tracked uppercase text-muted mb-3">Body Goal</p>
+                <div className="space-y-3">
+                  {weightPct !== null && (
+                    <div>
+                      <div className="flex items-baseline justify-between">
+                        <p className="text-xs text-ink">น้ำหนัก</p>
+                        <p className="text-[11px] font-mono text-muted">
+                          {toDisplay(data.bodyMetricsSummary.weight.value as number).toFixed(1)} → {toDisplay(data.weightGoalTarget as number).toFixed(1)} {unit}
+                        </p>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
+                        <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
+                      </div>
+                      <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, weightPct)))}% Progress</p>
+                    </div>
+                  )}
+                  {bodyFatPct !== null && (
+                    <div>
+                      <div className="flex items-baseline justify-between">
+                        <p className="text-xs text-ink">Body Fat</p>
+                        <p className="text-[11px] font-mono text-muted">
+                          {(data.bodyMetricsSummary.bodyFatPct.value as number).toFixed(1)}% → {(data.bodyFatGoalTarget as number).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
+                        <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
+                      </div>
+                      <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, bodyFatPct)))}% Progress</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {workoutCardVariant === 'active' ? (
           <TodaysWorkoutCompactCard

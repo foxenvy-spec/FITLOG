@@ -964,6 +964,61 @@ export default function DashboardPage() {
         <BodyMetricsRow />
       </div>
 
+      {/* ฟีดแบ็ก "Body Composition ควรมี 'Goal Progress' อยู่ใน Dashboard — User ที่มี Goal ต้องตอบได้ว่า
+          กำลังไปถึงเป้าหมายหรือยัง" — ใช้ goalProgressPct ตัวเดียวกับหน้า /health (ไม่คำนวณสูตรแยกใหม่)
+          โชว์เฉพาะเป้าหมายที่ตั้งไว้จริง+มีข้อมูลปัจจุบันให้เทียบ ไม่โชว์การ์ดเปล่าถ้าไม่มี Goal เลย */}
+      {(() => {
+        const weightPct =
+          data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+            ? goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value)
+            : null
+        const bodyFatPct =
+          data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+            ? goalProgressPct(
+                { target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart },
+                data.bodyMetricsSummary.bodyFatPct.value
+              )
+            : null
+        if (weightPct === null && bodyFatPct === null) return null
+        return (
+          <div className="lg:col-span-12 lg:order-4 animate-rise" style={{ animationDelay: '18ms' }}>
+            <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3.5">
+              <p className="text-[10px] tracked uppercase text-muted mb-3">Body Goal</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {weightPct !== null && (
+                  <div>
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-xs text-ink">น้ำหนัก</p>
+                      <p className="text-[11px] font-mono text-muted">
+                        {toDisplay(data.bodyMetricsSummary.weight.value as number).toFixed(1)} → {toDisplay(data.weightGoalTarget as number).toFixed(1)} {unit}
+                      </p>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
+                      <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
+                    </div>
+                    <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, weightPct)))}% Progress</p>
+                  </div>
+                )}
+                {bodyFatPct !== null && (
+                  <div>
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-xs text-ink">Body Fat</p>
+                      <p className="text-[11px] font-mono text-muted">
+                        {(data.bodyMetricsSummary.bodyFatPct.value as number).toFixed(1)}% → {(data.bodyFatGoalTarget as number).toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
+                      <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
+                    </div>
+                    <p className="text-[10px] text-muted mt-1">{Math.round(Math.max(0, Math.min(100, bodyFatPct)))}% Progress</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* PR ล่าสุด / ฝึกมากสุดสัปดาห์นี้ ย้ายไปอยู่ในกระดิ่งแจ้งเตือนที่ header แล้ว (ดู NotificationButton)
           แทนที่จะกินพื้นที่แถวเต็มความกว้างตรงนี้ */}
 
@@ -1523,9 +1578,9 @@ export default function DashboardPage() {
         className={`grid gap-2 animate-rise lg:hidden ${data.hasAnyHistory ? 'grid-cols-2 min-[380px]:grid-cols-3' : 'grid-cols-2'}`}
         style={{ animationDelay: '120ms' }}
       >
-        <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" />
+        <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
-        {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />}
+        {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" weight="tertiary" />}
       </div>
 
       </div>
@@ -1977,11 +2032,11 @@ export default function DashboardPage() {
       <div
         className={`hidden lg:grid lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
       >
-        <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" />
+        <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
         <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
         <QuickAction href="/health" label="วิเคราะห์ร่างกาย" icon="🔍" accent="amber" />
-        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" />
-        {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" />}
+        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" weight="tertiary" />
+        {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" weight="tertiary" />}
       </div>
 
       {/* full width (lg+): below-the-fold charts, insights, quick actions
@@ -2033,10 +2088,10 @@ export default function DashboardPage() {
 
       {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-9 above */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:hidden">
-        <QuickAction href="/log" label="บันทึกสถิติ" icon="✚" accent="moss" />
+        <QuickAction href="/log" label="บันทึกสถิติ" icon="✚" accent="moss" weight="primary" />
         <QuickAction href="/templates" label="เทมเพลต" icon="📋" accent="steel" />
         <QuickAction href="/health" label="วิเคราะห์" icon="🔍" accent="amber" />
-        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" />
+        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" weight="tertiary" />
       </div>
       </div>
 
@@ -2066,13 +2121,20 @@ function QuickAction({
   label,
   icon,
   accent = 'amber',
+  weight = 'secondary',
 }: {
   href: string
   label: string
   icon: string
   accent?: QuickActionAccent
+  // ฟีดแบ็ก "Quick Actions ไม่จำเป็นต้องมี visual weight เท่ากันทุกปุ่ม — User Journey ควรเป็น Primary
+  // (บันทึก Workout) / Secondary (เลือกโปรแกรม, วิเคราะห์ร่างกาย) / Tertiary (Statistics, AI Coach)" —
+  // ต่างจาก glow/gradient/animation ใหม่ (ฟีดแบ็กข้อ 12 บอกให้ "หยุดเพิ่ม Effect แล้ว") ใช้แค่ font-weight/
+  // สีตัวหนังสือ/ความเข้มพื้นไอคอนที่มีอยู่แล้วสร้างลำดับความสำคัญ ไม่แตะ layout/ขนาดปุ่ม/เพิ่มเลเยอร์ใหม่เลย
+  weight?: 'primary' | 'secondary' | 'tertiary'
 }) {
   const hex = COLORS[accent]
+  const iconBgAlpha = weight === 'primary' ? '2E' : weight === 'tertiary' ? '16' : '22'
   return (
     <>
       {/* v45: ฟีดแบ็ก "Quick Action ยังเรียบไป อยากได้ Glass Button + Glow ตอน Hover" — เดิมพื้นทึบ
@@ -2094,12 +2156,16 @@ function QuickAction({
       >
         <span
           className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base"
-          style={{ backgroundColor: `${hex}22` }}
+          style={{ backgroundColor: `${hex}${iconBgAlpha}` }}
           aria-hidden="true"
         >
           {icon}
         </span>
-        <span className="text-[11px] font-display tracked uppercase text-ink truncate">{label}</span>
+        <span
+          className={`text-[11px] font-display tracked uppercase truncate ${weight === 'primary' ? 'font-semibold text-ink' : weight === 'tertiary' ? 'text-muted' : 'text-ink'}`}
+        >
+          {label}
+        </span>
       </Link>
       <style jsx>{`
         .quick-action {
