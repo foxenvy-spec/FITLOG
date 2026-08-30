@@ -116,6 +116,66 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   }
 }
 
+// ฟีดแบ็ก "ปฏิทิน 21 วันมีพื้นที่ว่างเยอะบนจอกว้าง — ทำปุ่มลูกศร < > เลื่อนดูช่วงก่อนหน้าได้ จะเห็นภาพรวม
+// ระยะยาวดีขึ้น" — เลือกทำ pagination (ไม่ขยาย WINDOW_DAYS ตายตัว) เพราะขยายจะเพิ่มความสูงการ์ดบนมือถือ
+// ที่เพิ่งผ่านการลดความสูงมาหลายรอบก่อนหน้า — ดึงเฉพาะแถวดิบของ "ช่วง WINDOW_DAYS วัน ที่ weekOffset ช่วง
+// ก่อนช่วงปัจจุบัน" (weekOffset=0 ไม่เรียกฟังก์ชันนี้เลย ใช้ data จาก fetchConsistencyData ตรงๆ ซ้อนกันพอดี
+// อยู่แล้ว ไม่ query ซ้ำ) — Consistency%/สัปดาห์ติด (StatTile) ยังคงอิงจาก fetchConsistencyData (วันนี้)
+// เสมอ ไม่เปลี่ยนตามช่วงที่กำลังเลื่อนดู เพราะเป็น "สถานะตอนนี้" ไม่ใช่สถิติของช่วงย้อนหลังที่กำลังดู
+async function fetchWindowRows(supabase: ReturnType<typeof createClient>, weekOffset: number) {
+  const refEnd = new Date()
+  refEnd.setDate(refEnd.getDate() - weekOffset * WINDOW_DAYS)
+  const refStart = new Date(refEnd)
+  refStart.setDate(refStart.getDate() - (WINDOW_DAYS - 1))
+  const { data: rows } = await supabase
+    .from('workouts')
+    .select(WINDOW_ROW_SELECT)
+    .gte('performed_at', toIso(refStart))
+    .lte('performed_at', toIso(refEnd))
+  const windowWorkouts = (rows as Workout[]) ?? []
+  const setsByDay: Record<string, number> = {}
+  const workoutsByDay: Record<string, Workout[]> = {}
+  windowWorkouts.forEach((r) => {
+    if (r.type === 'strength') setsByDay[r.performed_at] = (setsByDay[r.performed_at] ?? 0) + (r.sets ?? 0)
+    ;(workoutsByDay[r.performed_at] ??= []).push(r)
+  })
+  return { setsByDay, workoutsByDay, windowStartIso: toIso(refStart), windowEndIso: toIso(refEnd) }
+}
+
+// คำนวณกริดปฏิทิน (padded/workoutDays/consecutiveWeeks) จากชุด setsByDay/workoutsByDay ของ "ช่วงใดก็ได้"
+// แยกออกมาจาก consistencyPct (ซึ่งต้องอิงวันนี้เสมอ ไม่ผูกกับช่วงที่กริดนี้กำลังแสดง — ดู liveStats/
+// displayGrid ในคอมโพเนนต์หลัก) ให้ใช้ร่วมกันได้ทั้งช่วงปัจจุบันและช่วงย้อนหลังที่เลื่อนดู
+function buildCalendarGrid(windowStartIso: string, setsByDay: Record<string, number>, workoutsByDay: Record<string, Workout[]>) {
+  const maxSets = Math.max(1, ...Object.values(setsByDay))
+  const days: { iso: string; level: Level; workouts: Workout[] }[] = []
+  const start = new Date(windowStartIso + 'T00:00:00')
+  for (let i = 0; i < WINDOW_DAYS; i++) {
+    const d = new Date(start)
+    d.setDate(d.getDate() + i)
+    const iso = toIso(d)
+    const sets = setsByDay[iso] ?? 0
+    let level: Level = 'none'
+    if (sets > 0) {
+      const ratio = sets / maxSets
+      level = ratio > 2 / 3 ? 'high' : ratio > 1 / 3 ? 'mid' : 'low'
+    }
+    days.push({ iso, level, workouts: workoutsByDay[iso] ?? [] })
+  }
+  const firstDow = (new Date(days[0].iso + 'T00:00:00').getDay() + 6) % 7 // 0=จันทร์
+  const padded: (typeof days[number] | null)[] = Array(firstDow).fill(null)
+  padded.push(...days)
+  while (padded.length % 7 !== 0) padded.push(null)
+  const workoutDays = days.filter((d) => d.level !== 'none').length
+  const weeks: Level[][] = []
+  for (let i = 0; i < padded.length; i += 7) weeks.push(padded.slice(i, i + 7).map((d) => d?.level ?? 'none'))
+  let consecutiveWeeks = 0
+  for (let i = weeks.length - 1; i >= 0; i--) {
+    if (weeks[i].some((l) => l !== 'none')) consecutiveWeeks++
+    else break
+  }
+  return { padded, workoutDays, consecutiveWeeks }
+}
+
 // สรุปแถวเดียวเป็นข้อความสั้นๆ ใช้ทั้งใน title (hover) และแผงรายละเอียด
 function describeWorkout(w: Workout): string {
   if (w.type === 'strength') {
@@ -141,12 +201,37 @@ export default function ConsistencyStrip() {
   const [selectedDayIso, setSelectedDayIso] = useState<string | null>(null)
   const [showMoreStats, setShowMoreStats] = useState(false)
   const [celebrateStreak, setCelebrateStreak] = useState(false)
+  // ฟีดแบ็ก "ทำปุ่มลูกศร < > เลื่อนดูสัปดาห์ก่อนหน้า" — 0 = ช่วงปัจจุบัน (WINDOW_DAYS วันล่าสุด), 1 = ช่วง
+  // WINDOW_DAYS วันก่อนหน้านั้น, ฯลฯ ย้อนไปได้ไม่จำกัด (แอปส่วนตัว ไม่ต้อง cap)
+  const [weekOffset, setWeekOffset] = useState(0)
 
   const { data, isLoading } = useQuery({
     queryKey: ['consistency-strip'],
     queryFn: () => fetchConsistencyData(supabase),
     staleTime: 60_000,
   })
+
+  // เฉพาะตอนเลื่อนดูช่วงอื่นที่ไม่ใช่ปัจจุบัน (weekOffset !== 0) ถึงจะ query เพิ่ม — ช่วงปัจจุบันใช้ data
+  // จาก fetchConsistencyData ข้างบนตรงๆ อยู่แล้ว (ดู activeWindow ด้านล่าง) ไม่ต้อง fetch ซ้ำ
+  const { data: offsetWindow, isLoading: offsetLoading } = useQuery({
+    queryKey: ['consistency-strip-window', weekOffset],
+    queryFn: () => fetchWindowRows(supabase, weekOffset),
+    enabled: weekOffset !== 0,
+    staleTime: 60_000,
+  })
+
+  const activeWindow =
+    weekOffset === 0
+      ? data
+        ? { setsByDay: data.setsByDay, workoutsByDay: data.workoutsByDay, windowStartIso: data.windowStartIso, windowEndIso: data.todayIso }
+        : null
+      : offsetWindow ?? null
+  const activeWindowLoading = weekOffset === 0 ? isLoading : offsetLoading
+
+  function goToOffset(next: number) {
+    setSelectedDayIso(null)
+    setWeekOffset(Math.max(0, next))
+  }
 
   useEffect(() => {
     if (!data) return
@@ -176,57 +261,38 @@ export default function ConsistencyStrip() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.currentStreak])
 
-  const selectedDayWorkouts = selectedDayIso ? data?.workoutsByDay[selectedDayIso] ?? [] : null
+  const selectedDayWorkouts = selectedDayIso ? activeWindow?.workoutsByDay[selectedDayIso] ?? [] : null
 
-  const grid = useMemo(() => {
+  // ฟีดแบ็ก "ปุ่มเลื่อนดูสัปดาห์ก่อนหน้าไม่ควรทำให้ Consistency%/สัปดาห์ติด เปลี่ยนไปด้วย — ทั้งคู่สื่อ
+  // 'สถานะตอนนี้' ไม่ใช่สถิติของช่วงที่กำลังเลื่อนดู" — คำนวณจาก data (ช่วง WINDOW_DAYS วันล่าสุดจริง)
+  // เสมอ ไม่ขึ้นกับ weekOffset เลย
+  const liveStats = useMemo(() => {
     if (!data) return null
-    const { setsByDay, workoutsByDay, windowStartIso, plannedWeekdays } = data
-    const maxSets = Math.max(1, ...Object.values(setsByDay))
-
-    const days: { iso: string; level: Level; workouts: Workout[] }[] = []
-    const start = new Date(windowStartIso + 'T00:00:00')
+    const dayEntries: { dayOfWeek: number; hasWorkout: boolean }[] = []
+    const start = new Date(data.windowStartIso + 'T00:00:00')
     for (let i = 0; i < WINDOW_DAYS; i++) {
       const d = new Date(start)
       d.setDate(d.getDate() + i)
-      const iso = toIso(d)
-      const sets = setsByDay[iso] ?? 0
-      let level: Level = 'none'
-      if (sets > 0) {
-        const ratio = sets / maxSets
-        level = ratio > 2 / 3 ? 'high' : ratio > 1 / 3 ? 'mid' : 'low'
-      }
-      days.push({ iso, level, workouts: workoutsByDay[iso] ?? [] })
+      dayEntries.push({ dayOfWeek: d.getDay(), hasWorkout: (data.workoutsByDay[toIso(d)] ?? []).length > 0 })
     }
-
-    // เรียงเป็นแถวตามสัปดาห์ (จ-อา) — วันแรกของช่วงอาจไม่ใช่วันจันทร์ จึงเติมช่องว่างข้างหน้าแถวแรก
-    const firstDow = (new Date(days[0].iso + 'T00:00:00').getDay() + 6) % 7 // 0=จันทร์
-    const padded: (typeof days[number] | null)[] = Array(firstDow).fill(null)
-    padded.push(...days)
-    while (padded.length % 7 !== 0) padded.push(null)
-
-    const workoutDays = days.filter((d) => d.level !== 'none').length
-
-    // "สัปดาห์ติด" ในช่วงที่แสดง — นับสัปดาห์ล่าสุดถอยหลัง ที่มีอย่างน้อย 1 วันออกกำลังกาย
-    // ต่อเนื่องกัน (ไม่ใช่สถิติสูงสุดตลอดกาล แค่ภายในหน้าต่าง 3 สัปดาห์นี้)
-    const weeks: Level[][] = []
-    for (let i = 0; i < padded.length; i += 7) weeks.push(padded.slice(i, i + 7).map((d) => d?.level ?? 'none'))
-    let consecutiveWeeks = 0
-    for (let i = weeks.length - 1; i >= 0; i--) {
-      if (weeks[i].some((l) => l !== 'none')) consecutiveWeeks++
-      else break
-    }
-
     // ฟีดแบ็ก "Training Consistency ควรวัดกับ Plan ไม่ใช่ปฏิทินดิบ" — เดิม workoutDays (นับวันที่มี log
     // เทียบกับ WINDOW_DAYS ทั้งหมด) ทำให้โปรแกรมที่ตั้งไว้ 3 วัน/สัปดาห์แล้วทำครบทุกวันที่กำหนดจริง ยังโชว์
     // "7/21 วัน" (33%) ทั้งที่ Consistency จริงคือ 100% — computePlannedConsistency (lib/dashboardStats.ts)
     // นับเฉพาะวันที่ "ตั้งโปรแกรมไว้จริง" (day_of_week ตรงกับ program_days) เป็นตัวส่วนแทน
     const { plannedCount, completedCount: completedPlannedCount, pct: consistencyPct } = computePlannedConsistency(
-      days.map((day) => ({ dayOfWeek: new Date(day.iso + 'T00:00:00').getDay(), hasWorkout: day.workouts.length > 0 })),
-      plannedWeekdays
+      dayEntries,
+      data.plannedWeekdays
     )
-
-    return { padded, workoutDays, consecutiveWeeks, consistencyPct, plannedCount, completedPlannedCount }
+    // "สัปดาห์ติด"/"วันออกกำลังกาย" ของช่วงปัจจุบัน (ไม่ใช่ของช่วงที่กำลังเลื่อนดู)
+    const { consecutiveWeeks, workoutDays } = buildCalendarGrid(data.windowStartIso, data.setsByDay, data.workoutsByDay)
+    return { consistencyPct, plannedCount, completedPlannedCount, consecutiveWeeks, workoutDays }
   }, [data])
+
+  // กริดปฏิทินที่ "เห็นจริง" บนจอ — เปลี่ยนตาม weekOffset (ตัวเดียวที่ pagination มีผล)
+  const displayGrid = useMemo(() => {
+    if (!activeWindow) return null
+    return buildCalendarGrid(activeWindow.windowStartIso, activeWindow.setsByDay, activeWindow.workoutsByDay)
+  }, [activeWindow])
 
   return (
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden lg:grid lg:grid-cols-3">
@@ -239,15 +305,40 @@ export default function ConsistencyStrip() {
         <div className="px-4 pt-3 pb-2 flex items-start justify-between gap-2">
           <div>
             <p className="text-[10px] tracked uppercase text-muted">Consistency</p>
-            {data && (
+            {activeWindow && (
               <p className="text-[11px] text-muted mt-0.5">
-                ย้อนหลัง {WINDOW_DAYS} วัน • {shortThaiDate(data.windowStartIso)} - {shortThaiDate(data.todayIso)}
+                {weekOffset === 0 ? `ย้อนหลัง ${WINDOW_DAYS} วัน` : `ย้อนหลัง ${WINDOW_DAYS} วัน (${weekOffset} ช่วงก่อนหน้า)`} •{' '}
+                {shortThaiDate(activeWindow.windowStartIso)} - {shortThaiDate(activeWindow.windowEndIso)}
               </p>
             )}
           </div>
-          <a href="/calendar" className="text-[11px] text-amber shrink-0">
-            ดูปฏิทินทั้งหมด →
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* ฟีดแบ็ก "ทำปุ่มลูกศร < > เลื่อนดูสัปดาห์ก่อนหน้า จะช่วยเห็นภาพรวมระยะยาวได้ดีขึ้น" — เลื่อนทีละ
+                WINDOW_DAYS วัน (เท่ากับความกว้างกริดที่แสดง) ปุ่ม › (ไปข้างหน้า/กลับสู่ปัจจุบัน) ปิดเมื่อ
+                weekOffset=0 อยู่แล้ว (ไปข้างหน้ากว่า "ตอนนี้" ไม่ได้) */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => goToOffset(weekOffset + 1)}
+                aria-label="ดูช่วงก่อนหน้า"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink border border-line"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={() => goToOffset(weekOffset - 1)}
+                disabled={weekOffset === 0}
+                aria-label="ดูช่วงถัดไป"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink border border-line disabled:opacity-30 disabled:pointer-events-none"
+              >
+                ›
+              </button>
+            </div>
+            <a href="/calendar" className="text-[11px] text-amber shrink-0">
+              ดูปฏิทินทั้งหมด →
+            </a>
+          </div>
         </div>
 
         <div className="px-4 pb-3 flex gap-4 flex-wrap">
@@ -259,7 +350,7 @@ export default function ConsistencyStrip() {
                 </p>
               ))}
             </div>
-            {isLoading || !grid ? (
+            {activeWindowLoading || !displayGrid ? (
               <div className="grid grid-cols-7 gap-1.5">
                 {Array.from({ length: 21 }).map((_, i) => (
                   <div key={i} className="aspect-square rounded-md bg-surface2 animate-pulse" />
@@ -267,7 +358,7 @@ export default function ConsistencyStrip() {
               </div>
             ) : (
               <div className="grid grid-cols-7 gap-1.5">
-                {grid.padded.map((day, i) => {
+                {displayGrid.padded.map((day, i) => {
                   if (!day) return <div key={`pad-${i}`} className="aspect-square" />
                   const hasData = day.workouts.length > 0
                   const tooltip = hasData
@@ -320,22 +411,24 @@ export default function ConsistencyStrip() {
           โชว์พร้อมกันทั้งหมดตั้งแต่แรกเห็น) */}
       <div className="border-t border-line lg:border-t-0 lg:col-span-1">
         <div className="grid grid-cols-2 divide-x divide-line">
-          {grid?.consistencyPct !== null && grid?.consistencyPct !== undefined ? (
+          {/* ฟีดแบ็ก "ปุ่มเลื่อนดูปฏิทินไม่ควรทำให้ Consistency%/สัปดาห์ติด เปลี่ยน" — ทั้งคู่อ่านจาก
+              liveStats (คำนวณจาก data ตรงๆ เสมอ) ไม่ใช่ displayGrid ที่เปลี่ยนตาม weekOffset */}
+          {liveStats?.consistencyPct !== null && liveStats?.consistencyPct !== undefined ? (
             <StatTile
-              value={`${grid.consistencyPct}%`}
+              value={`${liveStats.consistencyPct}%`}
               label="Training Consistency"
-              caption={`${grid.completedPlannedCount}/${grid.plannedCount} ครั้งตามแผน`}
-              trend={data?.previousConsistencyPct != null ? grid.consistencyPct - data.previousConsistencyPct : null}
+              caption={`${liveStats.completedPlannedCount}/${liveStats.plannedCount} ครั้งตามแผน`}
+              trend={data?.previousConsistencyPct != null ? liveStats.consistencyPct - data.previousConsistencyPct : null}
             />
           ) : (
-            <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
+            <StatTile value={liveStats?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
           )}
           {/* ฟีดแบ็ก "'สัปดาห์ติด' + caption 'สถิติดีที่สุด' อ่านเหมือนเป็น all-time record ระบบเดียวกับ
               'สถิติเดิม X วัน' ของ Day Streak ด้านล่าง ทั้งที่จริงคนละ metric — แถมไม่มีการคำนวณ longest
               week-streak ตลอดกาลจริงๆ ด้วย (consecutiveWeeks นับแค่ย้อนหลังจากขอบเขต WINDOW_DAYS ที่แสดง
               อยู่ ไม่ได้เทียบกับสถิติสูงสุดที่เคยทำได้เลย)" — caption เดิมเป็นข้อความหลอกที่ไม่มีตัวเลขรองรับ
               จริง เปลี่ยนเป็นข้อความที่ตรงกับสิ่งที่นับจริง (ขอบเขต 3 สัปดาห์ที่เห็นในปฏิทินด้านซ้าย) */}
-          <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption={`จาก ${Math.ceil(WINDOW_DAYS / 7)} สัปดาห์ล่าสุด`} />
+          <StatTile value={liveStats?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption={`จาก ${Math.ceil(WINDOW_DAYS / 7)} สัปดาห์ล่าสุด`} />
         </div>
         <button
           type="button"
