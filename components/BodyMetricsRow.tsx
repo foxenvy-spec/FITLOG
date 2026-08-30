@@ -37,6 +37,11 @@ import { dashboardSpec } from '@/lib/dashboardSpec'
 // ความสนใจกับ Today's Workout" — ลดต่ออีกขั้นเบาๆ ~10% (12/10/8/7/8 -> 11/9/7/6/7)
 // v46: ฟีดแบ็ก "ลด Glow/Shadow ของ Metric Cards ประมาณ 5-10%" (รอบ polish สุดท้าย) — ลดอีกขั้นเบาๆ
 // ~10% (11/9/7/6/7 -> 10/8/6/5/6)
+// ฟีดแบ็ก "Hero Area ลด Metric Cards จาก 5 → 4 — Fat Mass กับ Body Fat % สัมพันธ์กันสูง ไม่จำเป็นต้อง
+// เห็นทั้งคู่ตั้งแต่ Dashboard" — Fat Mass ยังดูได้เต็มรูปแบบที่ /health (มี section ของตัวเองอยู่แล้ว,
+// ไม่ใช่ component นี้) แถวนี้ (ใช้เฉพาะ Dashboard) จึงตัดการ์ด fatMass ออกจาก cards ด้านล่าง เหลือแค่
+// Weight/Body Fat/Muscle/BMI — เก็บ entry fatMass ไว้ใน record นี้ต่อ (type ยังต้องครอบ MetricIconImageKey
+// เต็มรูปแบบ เพราะ CardDef.icon ใช้ type เดียวกัน ไม่คุ้มจะแยก type ย่อยเพื่อเอนทรีที่ไม่ได้ใช้แค่จุดเดียว)
 const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
   weight: { main: '#F59E0B', second: '#D97706', glow: 10 },
   bodyFat: { main: '#EC4899', second: '#DB2777', glow: 8 },
@@ -164,11 +169,6 @@ export default function BodyMetricsRow({
   const latestMuscleField: (m: BodyMetric) => number | null =
     metrics[0]?.skeletal_muscle_kg != null ? (m) => m.skeletal_muscle_kg : (m) => m.muscle_kg
   const muscleSeries = seriesFor(latestMuscleField)
-  const fatMassSeries = seriesFor((m) => {
-    if (m.body_fat_kg != null) return m.body_fat_kg
-    if (m.weight_kg != null && m.body_fat_pct != null) return (m.weight_kg * m.body_fat_pct) / 100
-    return null
-  })
   const bmiSeries = seriesFor((m) => bmiOf(m.weight_kg, heightCm))
 
   // เป้าหมาย active ล่าสุดต่อประเภท (ตาราง goals รองรับแค่ weight/body_fat — เหมือนหน้า /health)
@@ -229,18 +229,6 @@ export default function BodyMetricsRow({
       deltaDir:
         summary.skeletalMuscleKg.delta == null ? null : summary.skeletalMuscleKg.delta > 0 ? 'up' : summary.skeletalMuscleKg.delta < 0 ? 'down' : null,
       series: muscleSeries,
-      goal: null,
-    },
-    {
-      key: 'fatMass',
-      icon: 'fatMass',
-      label: 'มวลไขมัน',
-      valueText: summary.fatMassKg.value != null ? `${toDisplay(summary.fatMassKg.value).toFixed(1)} ${unit}` : '—',
-      deltaText:
-        summary.fatMassKg.delta != null ? `${fmtSigned(toDisplay(summary.fatMassKg.delta), 1, ` ${unit}`)} ${period}` : null,
-      deltaColor: summary.fatMassKg.isGood == null ? NEUTRAL.mutedIcon : summary.fatMassKg.isGood ? COLORS.deltaGood : COLORS.rust,
-      deltaDir: summary.fatMassKg.delta == null ? null : summary.fatMassKg.delta > 0 ? 'up' : summary.fatMassKg.delta < 0 ? 'down' : null,
-      series: fatMassSeries,
       goal: null,
     },
     {
