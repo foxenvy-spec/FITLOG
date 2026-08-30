@@ -1628,7 +1628,12 @@ export default function DashboardPage() {
               {!scheduledDay && !todayCompleted && (
                 <div className="mt-2">
                   <p className="text-[11px] text-ink">ยังไม่ได้ตั้งโปรแกรมวันนี้</p>
-                  <p className="text-[11px] text-muted mt-0.5">
+                  {/* ฟีดแบ็ก "ข้อความใต้ปุ่ม 'ให้ MINT แนะนำ' อ่านยาก (low contrast) บนพื้นรูป — ควรเข้มขึ้น
+                      ตามมาตรฐาน WCAG" — text-muted (#9498A0) เดิมวางอยู่บนพื้นรูป+scrim ของ Hero การ์ดนี้
+                      ตรงๆ ต่างจากจุดอื่นในแอปที่ text-muted ใช้บนพื้นการ์ดเรียบทึบธรรมดา ขยับเป็น #CFD4DE
+                      (ระดับ contrast เดียวกับที่ปรับจุดอื่นในการ์ดนี้ไปแล้วก่อนหน้า เช่น "/total"/"Exercises"
+                      ในการ์ดมือถือ) ให้อ่านง่ายขึ้นจริง */}
+                  <p className="text-[11px] mt-0.5" style={{ color: '#CFD4DE' }}>
                     เลือกโปรแกรมเพื่อให้ FitLog วางแผนการฝึกและติดตาม Recovery ให้คุณ
                   </p>
                   <p className="text-[11px] mt-1">
