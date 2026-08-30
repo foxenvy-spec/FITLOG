@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, computePlannedConsistency, computeCurrentStreakDates, computeLongestStreak } from '@/lib/dashboardStats'
 import { daysAgoStr } from '@/lib/weekdays'
@@ -213,11 +213,17 @@ export default function ConsistencyStrip() {
 
   // เฉพาะตอนเลื่อนดูช่วงอื่นที่ไม่ใช่ปัจจุบัน (weekOffset !== 0) ถึงจะ query เพิ่ม — ช่วงปัจจุบันใช้ data
   // จาก fetchConsistencyData ข้างบนตรงๆ อยู่แล้ว (ดู activeWindow ด้านล่าง) ไม่ต้อง fetch ซ้ำ
+  // ระหว่างเช็คบัค: สลับ weekOffset ทำให้ queryKey เปลี่ยน react-query เลยดรอปข้อมูลเก่าทันทีเป็นค่าเริ่มต้น
+  // (data=undefined จนกว่าจะโหลดช่วงใหม่เสร็จ) กระพริบเป็น skeleton ทุกครั้งที่กดปุ่มลูกศร ทั้งที่กริดเก่า
+  // ยังโชว์ต่อได้ระหว่างรอ — placeholderData: keepPreviousData (v5 API) ให้คงข้อมูลของช่วงก่อนหน้าไว้โชว์
+  // จนกว่าช่วงใหม่จะโหลดเสร็จแทน ลด flicker โดยไม่กระทบความถูกต้อง (isLoading ยังคง true ระหว่างนั้นตามจริง
+  // — ใช้แค่ isFetching ถ้าต้องการแยก แต่ที่นี่ activeWindowLoading เดิมพอแล้ว ไม่ต้องแก้เพิ่ม)
   const { data: offsetWindow, isLoading: offsetLoading } = useQuery({
     queryKey: ['consistency-strip-window', weekOffset],
     queryFn: () => fetchWindowRows(supabase, weekOffset),
     enabled: weekOffset !== 0,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   })
 
   const activeWindow =
