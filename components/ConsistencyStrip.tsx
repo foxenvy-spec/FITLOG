@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, computePlannedConsistency, computeCurrentStreakDates, computeLongestStreak } from '@/lib/dashboardStats'
@@ -129,16 +129,52 @@ function describeWorkout(w: Workout): string {
   return parts.join(' ')
 }
 
+// ฟีดแบ็ก "ตอน Streak ขยับแตะสถิติใหม่ (เช่น 2 วัน → 3 วัน) ใส่ Micro-celebration เล็กๆ เช่นไอคอนไฟสั่น
+// ดุ๊กดิ๊ก+ประกาย" — เทียบ currentStreak กับค่าล่าสุดที่เคยเห็น (เก็บใน localStorage ฝั่งเครื่อง ไม่ต้อง
+// query/ตาราง DB เพิ่ม) ถ้าเพิ่มขึ้นจริง = เพิ่งต่อ streak สำเร็จ ให้เล่น animation ครั้งเดียวแล้วจำค่าใหม่
+// ไว้ — ครั้งแรกที่ไม่เคยมีค่าเก่าเลย (localStorage ว่าง) แค่บันทึก baseline ไว้เฉยๆ ไม่เล่น animation
+// (กันกรณีเปิดแอปครั้งแรกแล้วมี streak อยู่แล้วจากประวัติเก่า ไม่ควรฉลองทันทีที่โหลดหน้า)
+const STREAK_SEEN_KEY = 'fitlog:lastSeenStreak'
+
 export default function ConsistencyStrip() {
   const supabase = createClient()
   const [selectedDayIso, setSelectedDayIso] = useState<string | null>(null)
   const [showMoreStats, setShowMoreStats] = useState(false)
+  const [celebrateStreak, setCelebrateStreak] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['consistency-strip'],
     queryFn: () => fetchConsistencyData(supabase),
     staleTime: 60_000,
   })
+
+  useEffect(() => {
+    if (!data) return
+    let stored: number | null = null
+    try {
+      const raw = window.localStorage.getItem(STREAK_SEEN_KEY)
+      stored = raw != null ? Number(raw) : null
+    } catch {
+      // localStorage ใช้ไม่ได้ (private mode/ปิดไว้) — ข้าม celebration เฉยๆ ไม่ throw
+      return
+    }
+    if (stored != null && data.currentStreak > stored) {
+      setCelebrateStreak(true)
+      const t = setTimeout(() => setCelebrateStreak(false), 1500)
+      try {
+        window.localStorage.setItem(STREAK_SEEN_KEY, String(data.currentStreak))
+      } catch {
+        // ignore
+      }
+      return () => clearTimeout(t)
+    }
+    try {
+      window.localStorage.setItem(STREAK_SEEN_KEY, String(data.currentStreak))
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.currentStreak])
 
   const selectedDayWorkouts = selectedDayIso ? data?.workoutsByDay[selectedDayIso] ?? [] : null
 
@@ -324,16 +360,48 @@ export default function ConsistencyStrip() {
         <div className="lg:col-span-3 border-t border-line px-4 py-2.5">
           {data.currentStreak >= data.bestStreakEver ? (
             <p className="text-[11px] text-center" style={{ color: '#E8A33D' }}>
-              🔥 กำลังทำสถิติต่อเนื่องที่ดีที่สุดของคุณอยู่ ({data.currentStreak} วันติด)
+              {/* ฟีดแบ็ก "ตอน Streak ขยับแตะสถิติใหม่ ใส่ Micro-celebration เล็กๆ ไอคอนไฟสั่นดุ๊กดิ๊ก+ประกาย" —
+                  celebrateStreak คำนวณจากการเทียบ localStorage ด้านบน เล่นครั้งเดียวตอน currentStreak
+                  เพิ่งขยับขึ้นจริง (ไม่ใช่ทุกครั้งที่โหลดหน้า) */}
+              <span className={celebrateStreak ? 'streak-celebrate inline-block' : 'inline-block'}>🔥</span> กำลังทำสถิติต่อเนื่องที่ดีที่สุดของคุณอยู่ ({data.currentStreak} วันติด)
             </p>
           ) : (
             <p className="text-[11px] text-center text-muted">
-              🔥 อีก <span className="text-amber font-medium">{data.bestStreakEver - data.currentStreak}</span> วัน → ทำสถิติต่อเนื่องใหม่
+              <span className={celebrateStreak ? 'streak-celebrate inline-block' : 'inline-block'}>🔥</span> อีก <span className="text-amber font-medium">{data.bestStreakEver - data.currentStreak}</span> วัน → ทำสถิติต่อเนื่องใหม่
               (สถิติเดิม {data.bestStreakEver} วัน)
             </p>
           )}
         </div>
       )}
+      <style jsx>{`
+        @keyframes streak-celebrate-shake {
+          0%,
+          100% {
+            transform: rotate(0deg) scale(1);
+          }
+          20% {
+            transform: rotate(-14deg) scale(1.15);
+          }
+          40% {
+            transform: rotate(12deg) scale(1.15);
+          }
+          60% {
+            transform: rotate(-8deg) scale(1.1);
+          }
+          80% {
+            transform: rotate(6deg) scale(1.05);
+          }
+        }
+        .streak-celebrate {
+          animation: streak-celebrate-shake 0.6s ease-in-out 2;
+          filter: drop-shadow(0 0 6px rgba(232, 163, 61, 0.7));
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .streak-celebrate {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   )
 }
