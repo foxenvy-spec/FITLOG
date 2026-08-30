@@ -33,6 +33,7 @@ import {
   computeTopMuscleThisWeek,
   aggregateMuscleTrainingQuality,
   type MuscleTrainingQualityRow,
+  computePlannedConsistency,
 } from './dashboardStats'
 import { MUSCLE_GROUPS } from './muscle-groups'
 
@@ -1035,5 +1036,56 @@ describe('aggregateMuscleTrainingQuality', () => {
 
   it('returns an empty object for no rows', () => {
     expect(aggregateMuscleTrainingQuality([])).toEqual({})
+  })
+})
+
+describe('computePlannedConsistency', () => {
+  it('returns null pct when no program is set up (no baseline to measure against)', () => {
+    const result = computePlannedConsistency([{ dayOfWeek: 1, hasWorkout: true }], new Set())
+    expect(result).toEqual({ plannedCount: 0, completedCount: 0, pct: null })
+  })
+
+  it('counts only planned weekdays as the denominator, matching a 3-day/week program at 100%', () => {
+    // โปรแกรม จ/พ/ศ (1,3,5) — สัปดาห์นี้ทำครบทั้ง 3 วันตามแผน บวกวันอื่นที่ไม่ได้วางแผนไว้อีก 2 วัน
+    // (ไม่ควรถูกนับเป็นตัวส่วน แม้จะมี log จริงก็ตาม)
+    const days = [
+      { dayOfWeek: 1, hasWorkout: true }, // จันทร์ ตามแผน ทำแล้ว
+      { dayOfWeek: 2, hasWorkout: true }, // อังคาร ไม่ได้วางแผน แต่ log อิสระ
+      { dayOfWeek: 3, hasWorkout: true }, // พุธ ตามแผน ทำแล้ว
+      { dayOfWeek: 4, hasWorkout: false }, // พฤหัส ไม่ได้วางแผน
+      { dayOfWeek: 5, hasWorkout: true }, // ศุกร์ ตามแผน ทำแล้ว
+    ]
+    const result = computePlannedConsistency(days, new Set([1, 3, 5]))
+    expect(result).toEqual({ plannedCount: 3, completedCount: 3, pct: 100 })
+  })
+
+  it('counts a missed planned day against the percentage', () => {
+    const days = [
+      { dayOfWeek: 1, hasWorkout: true },
+      { dayOfWeek: 3, hasWorkout: false },
+      { dayOfWeek: 5, hasWorkout: true },
+    ]
+    const result = computePlannedConsistency(days, new Set([1, 3, 5]))
+    expect(result).toEqual({ plannedCount: 3, completedCount: 2, pct: 67 })
+  })
+
+  it('handles a multi-week window by counting every matching weekday occurrence', () => {
+    // 3 สัปดาห์, โปรแกรมวันจันทร์เท่านั้น — ควรมี plannedCount = 3 (จันทร์ 3 ครั้งในหน้าต่าง 21 วัน)
+    const days = [
+      { dayOfWeek: 1, hasWorkout: true },
+      { dayOfWeek: 1, hasWorkout: false },
+      { dayOfWeek: 1, hasWorkout: true },
+    ]
+    const result = computePlannedConsistency(days, new Set([1]))
+    expect(result).toEqual({ plannedCount: 3, completedCount: 2, pct: 67 })
+  })
+
+  it('returns 0% when the program is set but nothing was ever trained on those days', () => {
+    const days = [
+      { dayOfWeek: 1, hasWorkout: false },
+      { dayOfWeek: 3, hasWorkout: false },
+    ]
+    const result = computePlannedConsistency(days, new Set([1, 3]))
+    expect(result).toEqual({ plannedCount: 2, completedCount: 0, pct: 0 })
   })
 })

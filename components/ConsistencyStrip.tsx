@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange } from '@/lib/dashboardStats'
+import { getWeekRange, computePlannedConsistency } from '@/lib/dashboardStats'
 import { workoutVolumeKg } from '@/lib/workoutDisplay'
 import { buildDisplaySets } from '@/components/ExerciseCard'
 import type { Workout, WorkoutSet } from '@/lib/types'
@@ -48,9 +48,13 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   windowStart.setDate(windowStart.getDate() - (WINDOW_DAYS - 1))
   const { start: weekStart, end: weekEnd } = getWeekRange()
 
-  const [{ data: windowRows }, { data: weekRows }] = await Promise.all([
+  const [{ data: windowRows }, { data: weekRows }, { data: programDayRows }] = await Promise.all([
     supabase.from('workouts').select(WINDOW_ROW_SELECT).gte('performed_at', toIso(windowStart)).lte('performed_at', toIso(today)),
     supabase.from('workouts').select('exercise_name, type, sets, reps, weight_kg, total_volume_kg').gte('performed_at', weekStart).lte('performed_at', weekEnd),
+    // ฟีดแบ็ก "Consistency ควรวัดกับ Plan ไม่ใช่ปฏิทินดิบ — โปรแกรมตั้งไว้ 3 วัน/สัปดาห์ ทำครบ 3 วันทุก
+    // สัปดาห์ควรนับ 100% ไม่ใช่ 7/21 = 33%" — ดึงวันที่ตั้งโปรแกรมไว้ (day_of_week) มาเป็นตัวส่วนแทนที่จะ
+    // นับ "วันออกกำลังกาย" เทียบกับจำนวนวันในช่วงเฉยๆ เหมือนเดิม
+    supabase.from('program_days').select('day_of_week'),
   ])
 
   const windowWorkouts = (windowRows as Workout[]) ?? []
@@ -66,6 +70,8 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   const weekVolumeKg = weekWorkouts.filter((w) => w.type === 'strength').reduce((s, w) => s + workoutVolumeKg(w), 0)
   const weekExerciseCount = new Set(weekWorkouts.map((w) => w.exercise_name).filter(Boolean)).size
 
+  const plannedWeekdays = new Set(((programDayRows as { day_of_week: number }[]) ?? []).map((d) => d.day_of_week))
+
   return {
     setsByDay,
     workoutsByDay,
@@ -73,6 +79,7 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
     todayIso: toIso(today),
     weekVolumeKg,
     weekExerciseCount,
+    plannedWeekdays,
   }
 }
 
@@ -103,7 +110,7 @@ export default function ConsistencyStrip() {
 
   const grid = useMemo(() => {
     if (!data) return null
-    const { setsByDay, workoutsByDay, windowStartIso } = data
+    const { setsByDay, workoutsByDay, windowStartIso, plannedWeekdays } = data
     const maxSets = Math.max(1, ...Object.values(setsByDay))
 
     const days: { iso: string; level: Level; workouts: Workout[] }[] = []
@@ -139,7 +146,16 @@ export default function ConsistencyStrip() {
       else break
     }
 
-    return { padded, workoutDays, consecutiveWeeks }
+    // ฟีดแบ็ก "Training Consistency ควรวัดกับ Plan ไม่ใช่ปฏิทินดิบ" — เดิม workoutDays (นับวันที่มี log
+    // เทียบกับ WINDOW_DAYS ทั้งหมด) ทำให้โปรแกรมที่ตั้งไว้ 3 วัน/สัปดาห์แล้วทำครบทุกวันที่กำหนดจริง ยังโชว์
+    // "7/21 วัน" (33%) ทั้งที่ Consistency จริงคือ 100% — computePlannedConsistency (lib/dashboardStats.ts)
+    // นับเฉพาะวันที่ "ตั้งโปรแกรมไว้จริง" (day_of_week ตรงกับ program_days) เป็นตัวส่วนแทน
+    const { plannedCount, completedCount: completedPlannedCount, pct: consistencyPct } = computePlannedConsistency(
+      days.map((day) => ({ dayOfWeek: new Date(day.iso + 'T00:00:00').getDay(), hasWorkout: day.workouts.length > 0 })),
+      plannedWeekdays
+    )
+
+    return { padded, workoutDays, consecutiveWeeks, consistencyPct, plannedCount, completedPlannedCount }
   }, [data])
 
   return (
@@ -228,7 +244,15 @@ export default function ConsistencyStrip() {
       {/* right: 4 stat tiles as a 2x2 block on lg+ (falls back to a 4-across row below the
           calendar on smaller screens, same as before) */}
       <div className="border-t border-line lg:border-t-0 grid grid-cols-2 divide-x divide-y divide-line lg:col-span-1">
-        <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
+        {grid?.consistencyPct !== null && grid?.consistencyPct !== undefined ? (
+          <StatTile
+            value={`${grid.consistencyPct}%`}
+            label="Training Consistency"
+            caption={`${grid.completedPlannedCount}/${grid.plannedCount} ครั้งตามแผน`}
+          />
+        ) : (
+          <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
+        )}
         <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
         <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
         <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />

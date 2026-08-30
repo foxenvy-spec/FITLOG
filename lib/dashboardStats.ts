@@ -1110,3 +1110,30 @@ export function aggregateMuscleTrainingQuality(rows: MuscleTrainingQualityRow[])
   })
   return result
 }
+
+// ==================== Training Consistency ตามแผน (ไม่ใช่ปฏิทินดิบ) ====================
+// เดิม ConsistencyStrip.tsx นับ "วันออกกำลังกาย" เทียบกับจำนวนวันทั้งหมดในช่วง (เช่น 7/21 วัน = 33%)
+// ทำให้โปรแกรมที่ตั้งไว้แค่ 3 วัน/สัปดาห์ แม้ทำครบทุกวันที่กำหนดจริง ก็ยังโชว์ตัวเลขต่ำอยู่ดี ทั้งที่
+// Consistency จริง (เทียบกับแผน) คือ 100% — ฟังก์ชันนี้นับเฉพาะวันที่ "ตั้งโปรแกรมไว้จริง" เป็นตัวส่วน
+// plannedWeekdays ว่างเปล่า (ยังไม่ได้ตั้งโปรแกรมเลย) คืน pct เป็น null ให้ผู้เรียกตกกลับไปใช้เมตริกเดิม
+// (ไม่มีเส้นฐาน "ตามแผน" ให้เทียบตั้งแต่แรก)
+export interface PlannedConsistency {
+  plannedCount: number
+  completedCount: number
+  pct: number | null
+}
+
+export function computePlannedConsistency(
+  days: { dayOfWeek: number; hasWorkout: boolean }[],
+  plannedWeekdays: Set<number>
+): PlannedConsistency {
+  if (plannedWeekdays.size === 0) return { plannedCount: 0, completedCount: 0, pct: null }
+  let plannedCount = 0
+  let completedCount = 0
+  days.forEach((d) => {
+    if (!plannedWeekdays.has(d.dayOfWeek)) return
+    plannedCount++
+    if (d.hasWorkout) completedCount++
+  })
+  return { plannedCount, completedCount, pct: plannedCount > 0 ? Math.round((completedCount / plannedCount) * 100) : null }
+}
