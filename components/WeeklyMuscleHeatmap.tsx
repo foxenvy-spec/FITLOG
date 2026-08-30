@@ -12,8 +12,12 @@ import {
   recoveryTier,
   aggregateMuscleTrainingQuality,
   volumeStatus,
+  optimalVolumeRange,
+  computeTrainingBalance,
   type VolumeStatus,
 } from '@/lib/dashboardStats'
+import { computePushPullBalance } from '@/lib/aiCoach'
+import { COLORS } from '@/lib/theme'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
@@ -110,6 +114,8 @@ export default function WeeklyMuscleHeatmap() {
   const { toDisplay, unit } = useWeightUnit()
   const [expanded, setExpanded] = useState<MuscleGroup | null>(null)
   const [view, setView] = useState<'volume' | 'balance'>('volume')
+  // ฟีดแบ็ก "Balance 58% ต้องอธิบายได้ — กดเข้าไปแล้วเห็น Upper/Lower, Push/Pull, จุดที่ควรปรับ"
+  const [balanceDetailsOpen, setBalanceDetailsOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['weekly-muscle-heatmap', start, end],
@@ -231,6 +237,30 @@ export default function WeeklyMuscleHeatmap() {
     const pct = computeMuscleBalance(stats.map((s) => s.pct))
     return { pct, tier: balanceStatusTier(pct) }
   }, [stats, hasAnyData])
+
+  // ฟีดแบ็ก "Balance 58% ต้องอธิบายได้ — Upper/Lower %, Push/Pull %, จุดที่ควรปรับ, แนะนำสัปดาห์หน้า" —
+  // ใช้ setsByMuscle ตัวเดียวกับที่ stats ข้างบนคำนวณไว้แล้ว (ไม่ query ซ้ำ) ผ่าน computeTrainingBalance
+  // (Upper/Lower — ตัวเดียวกับที่ trainingBalanceInsight ใช้บน Dashboard) และ computePushPullBalance
+  // (Push/Pull — ตัวเดียวกับการ์ด AI Coach) ให้ตัวเลขตรงกันทุกจุดในแอป ไม่คำนวณสูตรแยกใหม่
+  const setsByMuscle = useMemo(() => {
+    const map: Record<string, number> = {}
+    stats.forEach((s) => {
+      map[s.group] = s.sets
+    })
+    return map
+  }, [stats])
+  const trainingBalanceDetail = useMemo(
+    () => (hasAnyData ? computeTrainingBalance(setsByMuscle, VOLUME_MUSCLES) : null),
+    [setsByMuscle, hasAnyData]
+  )
+  const pushPull = useMemo(() => (hasAnyData ? computePushPullBalance(setsByMuscle) : null), [setsByMuscle, hasAnyData])
+  // "จุดที่ควรปรับ" — กลุ่มที่เกินช่วงที่เหมาะสมไปมาก (veryHigh) หรือยังห่างเป้าหมายมาก (behind) ใช้
+  // targetStatus ตัวเดียวกับที่แถวขยายรายกลุ่มด้านบนใช้อยู่แล้ว (volumeStatus, เอนจินเดียวกับ WeeklyVolume)
+  const balanceIssues = useMemo(() => {
+    const over = stats.filter((s) => s.targetStatus === 'veryHigh' && s.targetSets > 0)
+    const under = stats.filter((s) => s.targetStatus === 'behind' && s.targetSets > 0)
+    return { over, under }
+  }, [stats])
 
   // กลุ่มเด่น/ด้อย — จัดอันดับตาม % ส่วนแบ่งเซ็ตของสัปดาห์นี้ (สมมติฐาน: เด่น = 3 อันดับบนสุด,
   // ด้อย = 2 อันดับล่างสุด — ถ้าต้องการเกณฑ์อื่น เช่น เทียบกับเป้าหมายต่อกลุ่มแทน แจ้งได้)
@@ -464,6 +494,102 @@ export default function WeeklyMuscleHeatmap() {
             </p>
             <p className="text-[10px] text-muted mt-0.5">{bottomGroups.join(', ')}</p>
           </div>
+        </div>
+      )}
+
+      {/* ฟีดแบ็ก "Balance 58% ต้องอธิบายได้ — Upper/Lower, Push/Pull, Muscle Distribution, จุดที่ควรปรับ,
+          แนะนำสัปดาห์หน้า" — Muscle Distribution คือแถวรายกลุ่มด้านบนอยู่แล้ว (ไม่ทำซ้ำ) ตรงนี้เพิ่มส่วนที่
+          ยังไม่มี: Upper/Lower %, Push/Pull %, และสรุปคำแนะนำที่อ่านแล้วลงมือทำได้ทันที */}
+      {!isLoading && hasAnyData && trainingBalanceDetail && (
+        <div className="border-t border-line px-4 py-3">
+          <button
+            type="button"
+            onClick={() => setBalanceDetailsOpen((v) => !v)}
+            className="text-[11px] font-medium flex items-center gap-1"
+            style={{ color: '#E8A33D' }}
+          >
+            {balanceDetailsOpen ? 'ซ่อนรายละเอียด Balance' : 'ดูรายละเอียด Balance'} {balanceDetailsOpen ? '↑' : '→'}
+          </button>
+
+          {balanceDetailsOpen && (
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[10px] tracked uppercase text-muted mb-1">Upper / Lower</p>
+                  <div className="h-1.5 rounded-full bg-surface2 overflow-hidden flex">
+                    <div style={{ width: `${trainingBalanceDetail.upperPct}%`, backgroundColor: COLORS.steel }} />
+                    <div style={{ width: `${trainingBalanceDetail.lowerPct}%`, backgroundColor: COLORS.amber }} />
+                  </div>
+                  <p className="text-[11px] text-muted mt-1">
+                    Upper {trainingBalanceDetail.upperPct}% · Lower {trainingBalanceDetail.lowerPct}%
+                  </p>
+                </div>
+                {pushPull && pushPull.status !== 'insufficient_data' && (
+                  <div>
+                    <p className="text-[10px] tracked uppercase text-muted mb-1">Push / Pull</p>
+                    {(() => {
+                      const total = Math.max(1, pushPull.pushSets + pushPull.pullSets)
+                      const pushPct = Math.round((pushPull.pushSets / total) * 100)
+                      return (
+                        <>
+                          <div className="h-1.5 rounded-full bg-surface2 overflow-hidden flex">
+                            <div style={{ width: `${pushPct}%`, backgroundColor: COLORS.rust }} />
+                            <div style={{ width: `${100 - pushPct}%`, backgroundColor: COLORS.steel }} />
+                          </div>
+                          <p className="text-[11px] text-muted mt-1">
+                            Push {pushPct}% · Pull {100 - pushPct}%
+                          </p>
+                        </>
+                      )
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {(balanceIssues.over.length > 0 || balanceIssues.under.length > 0) && (
+                <div>
+                  <p className="text-[10px] tracked uppercase text-muted mb-1">จุดที่ควรปรับ</p>
+                  <ul className="space-y-0.5">
+                    {balanceIssues.over.map((s) => (
+                      <li key={s.group} className="text-[11px]" style={{ color: BALANCE_COLOR.poor }}>
+                        {s.group} สูงกว่าค่าเหมาะสม
+                      </li>
+                    ))}
+                    {balanceIssues.under.map((s) => (
+                      <li key={s.group} className="text-[11px]" style={{ color: BALANCE_COLOR.ok }}>
+                        {s.group} ต่ำกว่าเป้าหมาย
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(balanceIssues.over.length > 0 || balanceIssues.under.length > 0) && (
+                <div>
+                  <p className="text-[10px] tracked uppercase text-muted mb-1">แนะนำสัปดาห์หน้า</p>
+                  <ul className="space-y-0.5">
+                    {balanceIssues.over.map((s) => {
+                      const range = optimalVolumeRange(s.targetSets)
+                      return (
+                        <li key={s.group} className="text-[11px] text-muted">
+                          ลด{s.group}ให้อยู่ในช่วง {range.min}–{range.max} เซ็ต (ตอนนี้ {s.sets} เซ็ต)
+                        </li>
+                      )
+                    })}
+                    {balanceIssues.under.map((s) => {
+                      const range = optimalVolumeRange(s.targetSets)
+                      const setsNeeded = Math.max(0, range.min - s.sets)
+                      return (
+                        <li key={s.group} className="text-[11px] text-muted">
+                          เพิ่ม{s.group}อีก {setsNeeded} เซ็ต ให้ถึงช่วงที่เหมาะสม
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

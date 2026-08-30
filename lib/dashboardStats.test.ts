@@ -811,6 +811,14 @@ describe('computeTrainingBalance', () => {
     const result = computeTrainingBalance({ อก: 30, หลัง: 25, ขา: 20, น่อง: 15, ไหล่: 5, แขน: 3, แกนกลางลำตัว: 2 }, ALL_MUSCLES)
     expect(result?.recommendedMuscles).toEqual(['แกนกลางลำตัว', 'แขน'])
   })
+
+  it('exposes the actual upper/lower body % split', () => {
+    const legHeavy = { อก: 5, หลัง: 5, ขา: 30, น่อง: 30, ไหล่: 5, แขน: 5, แกนกลางลำตัว: 20 }
+    const result = computeTrainingBalance(legHeavy, ALL_MUSCLES)
+    // upper = อก+หลัง+ไหล่+แขน+แกนกลางลำตัว = 40/100, lower = ขา+น่อง = 60/100
+    expect(result?.upperPct).toBe(40)
+    expect(result?.lowerPct).toBe(60)
+  })
 })
 
 describe('trainingBalanceInsight', () => {
@@ -819,7 +827,9 @@ describe('trainingBalanceInsight', () => {
   })
 
   it('returns null when balance is fine (no regionWarning)', () => {
-    expect(trainingBalanceInsight({ score: 90, tier: 'good', regionWarning: null, recommendedMuscles: [] })).toBeNull()
+    expect(
+      trainingBalanceInsight({ score: 90, tier: 'good', regionWarning: null, recommendedMuscles: [], upperPct: 71, lowerPct: 29 })
+    ).toBeNull()
   })
 
   it('turns a region warning into an actionable Insight card', () => {
@@ -828,6 +838,8 @@ describe('trainingBalanceInsight', () => {
       tier: 'ok',
       regionWarning: 'สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว',
       recommendedMuscles: ['อก', 'หลัง'],
+      upperPct: 40,
+      lowerPct: 60,
     })
     expect(insight).toEqual({
       id: 'training-balance-region',

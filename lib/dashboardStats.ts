@@ -902,6 +902,10 @@ export interface TrainingBalance {
   regionWarning: string | null
   // 2 กลุ่มที่ % ส่วนแบ่งเซ็ตต่ำกว่าสัดส่วนอุดมคติ (100/จำนวนกลุ่ม%) มากสุด — ใช้เป็นคำแนะนำ "ควรเพิ่ม"
   recommendedMuscles: string[]
+  // ฟีดแบ็ก "Balance 58% ต้องอธิบายได้ — โชว์ Upper/Lower % จริงๆ ไม่ใช่แค่คำเตือน" — เดิมค่านี้คำนวณ
+  // ไว้ภายในฟังก์ชันอยู่แล้ว (ใช้ตัดสิน regionWarning) แต่ไม่เคย export ออกมาให้ผู้เรียกโชว์ตัวเลขจริงได้
+  upperPct: number
+  lowerPct: number
 }
 
 // รวม Weekly Volume (ข้อมูลดิบ) -> Distribution (% ต่อกลุ่ม, computeMuscleBalance ตัวเดียวกับที่การ์ด
@@ -943,7 +947,7 @@ export function computeTrainingBalance(
     .slice(0, 2)
     .map((s) => s.mg)
 
-  return { score, tier, regionWarning, recommendedMuscles }
+  return { score, tier, regionWarning, recommendedMuscles, upperPct: Math.round(upperActualPct), lowerPct: Math.round(lowerActualPct) }
 }
 
 // แปลง TrainingBalance เป็น Insight การ์ดเดียวกับที่ dashboard ใช้อยู่แล้ว (ชุดเดียวกับ
