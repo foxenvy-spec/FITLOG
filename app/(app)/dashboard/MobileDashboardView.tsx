@@ -219,11 +219,11 @@ export default function MobileDashboardView() {
   // "เหลือ X kg" ค้างอยู่ทั้งที่ทำถึง/เกินเป้าหมายไปแล้วจริงๆ
   const weightGoalReached =
     data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
-      ? (goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value) ?? 0) >= 100
+      ? (goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value, data.earliestTrackedWeight) ?? 0) >= 100
       : false
   const bodyFatGoalReached =
     data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
-      ? (goalProgressPct({ target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart }, data.bodyMetricsSummary.bodyFatPct.value) ?? 0) >= 100
+      ? (goalProgressPct({ target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart }, data.bodyMetricsSummary.bodyFatPct.value, data.earliestTrackedBodyFat) ?? 0) >= 100
       : false
   const weightRemaining =
     data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null && !weightGoalReached
@@ -415,13 +415,18 @@ export default function MobileDashboardView() {
         {(() => {
           const weightPct =
             data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
-              ? goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value)
+              ? goalProgressPct(
+                  { target_value: data.weightGoalTarget, starting_value: data.weightGoalStart },
+                  data.bodyMetricsSummary.weight.value,
+                  data.earliestTrackedWeight
+                )
               : null
           const bodyFatPct =
             data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
               ? goalProgressPct(
                   { target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart },
-                  data.bodyMetricsSummary.bodyFatPct.value
+                  data.bodyMetricsSummary.bodyFatPct.value,
+                  data.earliestTrackedBodyFat
                 )
               : null
           if (weightPct === null && bodyFatPct === null) return null

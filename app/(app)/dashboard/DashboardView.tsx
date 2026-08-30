@@ -152,6 +152,11 @@ export interface DashboardData {
   // ไม่งั้นการแจ้งเตือน Goal จะโชว์ "เหลือ X kg" ค้างตลอดแม้ผู้ใช้ทำถึงเป้าหมายไปแล้ว (Math.abs เฉยๆ ไม่รู้ทิศทาง)
   weightGoalStart: number | null
   bodyFatGoalStart: number | null
+  // ฟีดแบ็ก "Body Goal โชว์ 0% ทั้งที่ลดมาใกล้เป้าหมายมากแล้ว" — ค่าเก่าที่สุดที่มีบันทึกจริงใน body_metrics
+  // (ไม่ใช่แค่ตอนตั้งเป้า) ส่งเข้า goalProgressPct เป็น earliestTrackedValue แทน *GoalStart ด้านบนตรงๆ
+  // (ตัวเดียวกับที่ /health page ใช้อยู่แล้ว — ดู goalEarliestTrackedValue ในไฟล์นั้น)
+  earliestTrackedWeight: number | null
+  earliestTrackedBodyFat: number | null
   // สถิติใหม่ล่าสุด (ทุกช่วงเวลา ไม่ใช่แค่วันนี้) — กลับมาใช้อีกครั้งหลัง Priority 14 เอาออกไปตอนย้าย
   // การ์ดนี้เข้ากระดิ่งแจ้งเตือน (ตอนนั้นการ์ดเดิมไม่มี href เลยไม่เข้าเกณฑ์ actionable ของระบบใหม่ —
   // ผู้เรียก (DashboardView.tsx) กรองความเก่าก่อนส่งเข้า computeDashboardNotifications)
@@ -236,9 +241,14 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     user
       ? supabase.from('profiles').select('display_name').eq('user_id', user.id).maybeSingle()
       : Promise.resolve({ data: null as { display_name: string | null } | null }),
-    // เอนทรีล่าสุด 2 รายการพอสำหรับคำนวณ delta (เทียบกับ BodyMetricsRow ที่ดึง 30 รายการ
-    // เพราะการ์ดนั้นโชว์ค่าปัจจุบันด้วย ส่วนตรงนี้ใช้แค่เทรนด์ล่าสุดไปทำ insight)
-    supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(2),
+    // ฟีดแบ็ก "Body Goal โชว์ '0% Progress'/'เริ่มต้นเป้าหมาย' ทั้งที่จริงๆ ลดมาใกล้เป้าหมายมากแล้ว —
+    // ควรคำนวณจาก starting weight จริง" — /health page แก้ปัญหานี้ไปแล้วตั้งแต่ v62 (ใช้
+    // earliestTrackedValue จากประวัติทั้งหมด แทน goal.starting_value ที่แช่แข็งไว้ตอนสร้างเป้าหมายเฉยๆ)
+    // แต่ Dashboard นี้ไม่เคยพอร์ตตามมาด้วย (ยัง limit(2) เดิม ไม่พอหาค่าเก่าสุดจริง) — เพิ่ม limit เป็น 60
+    // แถวเดียวกับที่ /health ใช้ (ดู goalEarliestTrackedValue ใน app/(app)/health/page.tsx) พอสำหรับหา
+    // earliestTracked* ด้านล่าง ยังใช้แถวเดียวกันนี้คำนวณ bodyMetricsSummary/insight เทรนด์เดิมได้ปกติ
+    // (ฟังก์ชันพวกนั้นสนใจแค่ 2 แถวล่าสุดอยู่ดี ไม่กระทบจากแถวเพิ่ม)
+    supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(60),
     // เป้าหมายน้ำหนัก/Body Fat ที่ตั้งไว้ (ถ้ามี) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" สำหรับ
     // การแจ้งเตือนหมวด Goal (ดู computeDashboardNotifications) ตารางเดียวกับที่ /health และ
     // BodyMetricsRow.tsx ใช้อยู่แล้ว
@@ -334,7 +344,25 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
 
   // เทรนด์สัดส่วนร่างกายล่าสุด — ใช้ทำ insight เพิ่มเติมในการ์ด AI Coach (ดู bodyFatTrendInsight/
   // muscleMassTrendInsight ใน lib/aiCoach.ts) ไม่ต้องใช้ heightCm เพราะ insight พวกนี้ไม่ได้ใช้ BMI
-  const bodyMetricsSummary = computeBodyMetricsSummary((bodyMetricRows as BodyMetric[]) ?? [], null)
+  const typedBodyMetricRows = (bodyMetricRows as BodyMetric[]) ?? []
+  const bodyMetricsSummary = computeBodyMetricsSummary(typedBodyMetricRows, null)
+
+  // ฟีดแบ็ก "Body Goal โชว์ 0% ทั้งที่ลดมาใกล้เป้าหมายมากแล้ว" — ค่าเก่าที่สุดที่มีบันทึกจริงใน 60 แถวล่าสุด
+  // (typedBodyMetricRows เรียง measured_at ใหม่->เก่า ตัวสุดท้ายที่มีค่าไม่ null = เก่าที่สุด) ใช้แทน
+  // goal.starting_value ที่แช่แข็งไว้ตอนสร้างเป้าหมายเฉยๆ — ตรรกะเดียวกับ goalEarliestTrackedValue ใน
+  // app/(app)/health/page.tsx เป๊ะ (พอร์ตมาให้ Dashboard คำนวณ % เดียวกับหน้า Health จริงๆ)
+  const earliestTrackedWeight = (() => {
+    for (let i = typedBodyMetricRows.length - 1; i >= 0; i--) {
+      if (typedBodyMetricRows[i].weight_kg != null) return typedBodyMetricRows[i].weight_kg
+    }
+    return null
+  })()
+  const earliestTrackedBodyFat = (() => {
+    for (let i = typedBodyMetricRows.length - 1; i >= 0; i--) {
+      if (typedBodyMetricRows[i].body_fat_pct != null) return typedBodyMetricRows[i].body_fat_pct
+    }
+    return null
+  })()
 
   const recoveryPctForSummary: Record<string, number> = {}
   RECOVERY_MUSCLES.forEach((mg) => {
@@ -512,6 +540,8 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     bodyFatGoalTarget,
     weightGoalStart,
     bodyFatGoalStart,
+    earliestTrackedWeight,
+    earliestTrackedBodyFat,
     isRecommendationForToday,
     bestVolumeIncrease,
     thisWeekWorkoutDays,
@@ -728,11 +758,11 @@ export default function DashboardPage() {
   // เฉยๆ ไม่รู้ทิศทาง ทำให้แจ้งเตือน "เหลือ X kg" ค้างอยู่แม้ทำถึงเป้าหมาย (หรือเกิน) ไปแล้วจริงๆ
   const weightGoalReached =
     data?.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
-      ? (goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value) ?? 0) >= 100
+      ? (goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value, data.earliestTrackedWeight) ?? 0) >= 100
       : false
   const bodyFatGoalReached =
     data?.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
-      ? (goalProgressPct({ target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart }, data.bodyMetricsSummary.bodyFatPct.value) ?? 0) >= 100
+      ? (goalProgressPct({ target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart }, data.bodyMetricsSummary.bodyFatPct.value, data.earliestTrackedBodyFat) ?? 0) >= 100
       : false
   const weightRemaining =
     data?.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null && !weightGoalReached
@@ -1015,13 +1045,18 @@ export default function DashboardPage() {
       {(() => {
         const weightPct =
           data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
-            ? goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value)
+            ? goalProgressPct(
+                { target_value: data.weightGoalTarget, starting_value: data.weightGoalStart },
+                data.bodyMetricsSummary.weight.value,
+                data.earliestTrackedWeight
+              )
             : null
         const bodyFatPct =
           data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
             ? goalProgressPct(
                 { target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart },
-                data.bodyMetricsSummary.bodyFatPct.value
+                data.bodyMetricsSummary.bodyFatPct.value,
+                data.earliestTrackedBodyFat
               )
             : null
         if (weightPct === null && bodyFatPct === null) return null
