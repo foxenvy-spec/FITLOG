@@ -32,6 +32,7 @@ import {
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   computeLatestPR,
+  computeSessionVolumeChange,
   computeTopMuscleThisWeek,
   aggregateMuscleTrainingQuality,
   type MuscleTrainingQualityRow,
@@ -1021,6 +1022,76 @@ describe('computeLatestPR', () => {
 
   it('returns null when there is no history', () => {
     expect(computeLatestPR([])).toBeNull()
+  })
+})
+
+describe('computeSessionVolumeChange', () => {
+  const today = '2026-07-18'
+
+  it('computes the % change vs the most recent prior session of the same muscle groups', () => {
+    const rows = [
+      { muscle_group: 'ขา', total_volume_kg: 540, performed_at: today },
+      { muscle_group: 'ขา', total_volume_kg: 500, performed_at: '2026-07-14' },
+      { muscle_group: 'ขา', total_volume_kg: 400, performed_at: '2026-07-10' },
+    ]
+    expect(computeSessionVolumeChange(rows, ['ขา'], today)).toEqual({
+      currentVolumeKg: 540,
+      previousVolumeKg: 500,
+      changePct: 8,
+    })
+  })
+
+  it('sums volume across all muscle groups passed in (e.g. a multi-muscle "Upper Body" session)', () => {
+    const rows = [
+      { muscle_group: 'อก', total_volume_kg: 200, performed_at: today },
+      { muscle_group: 'ไหล่', total_volume_kg: 100, performed_at: today },
+      { muscle_group: 'อก', total_volume_kg: 150, performed_at: '2026-07-11' },
+      { muscle_group: 'ไหล่', total_volume_kg: 100, performed_at: '2026-07-11' },
+    ]
+    expect(computeSessionVolumeChange(rows, ['อก', 'ไหล่'], today)).toEqual({
+      currentVolumeKg: 300,
+      previousVolumeKg: 250,
+      changePct: 20,
+    })
+  })
+
+  it('ignores muscle groups not in the list', () => {
+    const rows = [
+      { muscle_group: 'ขา', total_volume_kg: 540, performed_at: today },
+      { muscle_group: 'อก', total_volume_kg: 999, performed_at: '2026-07-14' },
+      { muscle_group: 'ขา', total_volume_kg: 500, performed_at: '2026-07-10' },
+    ]
+    expect(computeSessionVolumeChange(rows, ['ขา'], today)?.previousVolumeKg).toBe(500)
+  })
+
+  it('returns null when there is no volume logged today for these muscle groups', () => {
+    const rows = [{ muscle_group: 'ขา', total_volume_kg: 500, performed_at: '2026-07-10' }]
+    expect(computeSessionVolumeChange(rows, ['ขา'], today)).toBeNull()
+  })
+
+  it('returns null when there is no prior session to compare against', () => {
+    const rows = [{ muscle_group: 'ขา', total_volume_kg: 540, performed_at: today }]
+    expect(computeSessionVolumeChange(rows, ['ขา'], today)).toBeNull()
+  })
+
+  it('returns a null changePct (but real volume numbers) when the previous session had zero volume', () => {
+    const rows = [
+      { muscle_group: 'ขา', total_volume_kg: 540, performed_at: today },
+      { muscle_group: 'ขา', total_volume_kg: 0, performed_at: '2026-07-10' },
+    ]
+    expect(computeSessionVolumeChange(rows, ['ขา'], today)).toEqual({
+      currentVolumeKg: 540,
+      previousVolumeKg: 0,
+      changePct: null,
+    })
+  })
+
+  it('treats missing total_volume_kg as zero instead of throwing', () => {
+    const rows = [
+      { muscle_group: 'ขา', total_volume_kg: null, performed_at: today },
+      { muscle_group: 'ขา', total_volume_kg: 500, performed_at: '2026-07-10' },
+    ]
+    expect(computeSessionVolumeChange(rows, ['ขา'], today)).toBeNull() // currentVolumeKg = 0 -> null
   })
 })
 

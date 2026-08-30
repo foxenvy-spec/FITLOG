@@ -38,6 +38,7 @@ import {
   getNextScheduledMuscle,
   estimateCaloriesToday,
   computeLatestPR,
+  computeSessionVolumeChange,
   daysSinceLastTrained,
   type Insight,
   type MuscleRecommendation,
@@ -45,6 +46,7 @@ import {
   type VolumeIncrease,
   type ScheduledDay,
   type LatestPR,
+  type SessionVolumeChange,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { goalProgressPct } from '@/lib/goalProgress'
@@ -152,6 +154,9 @@ export interface DashboardData {
   // การ์ดนี้เข้ากระดิ่งแจ้งเตือน (ตอนนั้นการ์ดเดิมไม่มี href เลยไม่เข้าเกณฑ์ actionable ของระบบใหม่ —
   // ผู้เรียก (DashboardView.tsx) กรองความเก่าก่อนส่งเข้า computeDashboardNotifications)
   latestPR: LatestPR | null
+  // ฟีดแบ็ก "State C (เทรนเสร็จแล้ว) ควรโชว์ Volume เทียบกับครั้งก่อน" — null เมื่อยังเทียบไม่ได้
+  // (ยังไม่ได้เทรนกลุ่มนี้วันนี้/ไม่มีเซสชันก่อนหน้าให้เทียบ) ดู computeSessionVolumeChange
+  sessionVolumeChange: SessionVolumeChange | null
   // true เมื่อ muscleRecommendation ข้างบนคือกล้ามเนื้อของ "วันนี้" จริงๆ (ยังทำไม่ครบ/ยังไม่ได้เริ่ม) —
   // false เมื่อเป็นคำแนะนำของเซสชัน "ถัดไป" (วันนี้ทำครบแล้ว/เป็นวันพัก) ใช้ตัดสินป้าย "AI Coach · Today"
   // vs "· Next" ให้ตรงกับความเป็นจริง (ดู comment เต็มที่จุดคำนวณ scheduledMuscle ด้านล่าง)
@@ -207,7 +212,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     supabase.from('program_days').select('*').order('day_of_week'),
     supabase
       .from('workouts')
-      .select('muscle_group, performed_at, exercise_name, type, weight_kg')
+      .select('muscle_group, performed_at, exercise_name, type, weight_kg, total_volume_kg')
       .eq('type', 'strength')
       .order('performed_at', { ascending: false })
       .limit(1000),
@@ -255,6 +260,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
       performed_at: string
       exercise_name: string | null
       weight_kg: number | null
+      total_volume_kg: number | null
     }[]) ?? []
   const recoveryDates: Record<string, string | null> = {}
   RECOVERY_MUSCLES.forEach((mg) => {
@@ -262,6 +268,11 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     recoveryDates[mg] = match?.performed_at ?? null
   })
   const latestPR = computeLatestPR(strengthRows)
+  // ฟีดแบ็ก "State C (เทรนเสร็จแล้ว) ควรโชว์ 'Volume +8% จากครั้งก่อน'" — เทียบ volume รวมของกลุ่ม
+  // กล้ามเนื้อที่เทรนจริงวันนี้ (todayList) กับเซสชันก่อนหน้าล่าสุดของกลุ่มเดียวกัน (ดู
+  // computeSessionVolumeChange) — คืน null ถ้ายังไม่มีข้อมูลพอเทียบ (วันนี้ยังไม่ได้เทรน/ไม่มีเซสชันก่อนหน้า)
+  const todayMuscleGroups = Array.from(new Set(todayList.map((w) => w.muscle_group).filter((mg): mg is string => !!mg)))
+  const sessionVolumeChange = computeSessionVolumeChange(strengthRows, todayMuscleGroups, today)
 
   const twoWeeksRows =
     (twoWeeksStrength as { muscle_group: string | null; sets: number | null; performed_at: string }[]) ?? []
@@ -461,6 +472,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     completedExerciseIds,
     recoveryDates,
     latestPR,
+    sessionVolumeChange,
     insights,
     aiDailySummary,
     bodyMetricsSummary,
@@ -1397,6 +1409,16 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+
+              {/* State C: "Volume +8% จากครั้งก่อน" — เทียบเซสชันวันนี้กับเซสชันก่อนหน้าของกล้ามเนื้อกลุ่ม
+                  เดียวกัน (ดู computeSessionVolumeChange) โชว์เฉพาะตอนเทรนเสร็จแล้ว + มีข้อมูลพอเทียบ
+                  (changePct ไม่ null) — ไม่เดา/ไม่โชว์เลขลอยๆ ถ้าเซสชันก่อนหน้ามี volume เป็น 0 */}
+              {todayCompleted && data.sessionVolumeChange?.changePct != null && (
+                <p className="text-xs mt-1.5" style={{ color: data.sessionVolumeChange.changePct >= 0 ? COLORS.moss : COLORS.amber }}>
+                  Volume {data.sessionVolumeChange.changePct >= 0 ? '+' : ''}
+                  {data.sessionVolumeChange.changePct}% จากครั้งก่อน
+                </p>
+              )}
 
               {/* กล้ามเนื้อที่เทรนวันนี้ — ฝังเป็นชิปเล็กในการ์ดนี้เลย แทนที่จะแยกเป็นการ์ดใหญ่
                   ต่างหาก (เคยซ้ำซ้อนกับการ์ด "สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)" ด้านล่าง) */}

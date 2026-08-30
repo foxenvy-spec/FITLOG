@@ -1034,6 +1034,47 @@ export function computeLatestPR(
   return latest
 }
 
+// ==================== เทียบ Volume เซสชันวันนี้กับเซสชันก่อนหน้าของกล้ามเนื้อกลุ่มเดียวกัน ====================
+// ฟีดแบ็ก "State C (เทรนเสร็จแล้ว) ควรโชว์ 'Volume +8% จากครั้งก่อน'" — ต่างจาก Weekly Volume Engine
+// (เทียบผลรวมสัปดาห์กับเป้าหมายรายสัปดาห์) ตรงนี้เทียบ "เซสชันต่อเซสชัน" ของกล้ามเนื้อกลุ่มเดียวกัน โดยใช้
+// performed_at เป็นตัวแบ่งเซสชัน (แถวที่ performed_at เดียวกัน + muscle_group อยู่ในกลุ่มที่ระบุ = เซสชัน
+// เดียวกัน) — ต้องมี volume วันนี้ > 0 (เทรนกลุ่มนี้จริงวันนี้) และมีเซสชันก่อนหน้าอย่างน้อย 1 ครั้งถึงจะ
+// เทียบได้ ไม่งั้นคืน null (ไม่เดา/ไม่โชว์ % จากข้อมูลที่ไม่มี)
+export interface SessionVolumeChange {
+  currentVolumeKg: number
+  previousVolumeKg: number
+  // null เมื่อเซสชันก่อนหน้ามี volume เป็น 0 (หารด้วยศูนย์ไม่ได้ความหมาย) — currentVolumeKg/previousVolumeKg
+  // ยังคืนค่าปกติเผื่อผู้เรียกอยากโชว์ตัวเลขดิบแทน
+  changePct: number | null
+}
+
+export function computeSessionVolumeChange(
+  rows: { muscle_group: string | null; total_volume_kg: number | null; performed_at: string }[],
+  muscleGroups: string[],
+  today: string
+): SessionVolumeChange | null {
+  const inGroup = (mg: string | null) => !!mg && muscleGroups.includes(mg)
+
+  const currentVolumeKg = rows
+    .filter((r) => r.performed_at === today && inGroup(r.muscle_group))
+    .reduce((sum, r) => sum + (r.total_volume_kg ?? 0), 0)
+  if (currentVolumeKg <= 0) return null
+
+  const previousDate = rows
+    .filter((r) => r.performed_at < today && inGroup(r.muscle_group))
+    .map((r) => r.performed_at)
+    .sort()
+    .pop()
+  if (!previousDate) return null
+
+  const previousVolumeKg = rows
+    .filter((r) => r.performed_at === previousDate && inGroup(r.muscle_group))
+    .reduce((sum, r) => sum + (r.total_volume_kg ?? 0), 0)
+
+  const changePct = previousVolumeKg > 0 ? Math.round(((currentVolumeKg - previousVolumeKg) / previousVolumeKg) * 100) : null
+  return { currentVolumeKg, previousVolumeKg, changePct }
+}
+
 // ==================== กล้ามเนื้อที่ฝึกมากที่สุดในสัปดาห์นี้ (quick glance บน Dashboard) ====================
 // ใช้ thisWeekSets ที่คำนวณไว้แล้ว (รวมเซ็ตต่อกลุ่มกล้ามเนื้อของสัปดาห์นี้) — เลือกกลุ่มที่มีเซ็ตมากที่สุด
 export interface TopMuscle {
