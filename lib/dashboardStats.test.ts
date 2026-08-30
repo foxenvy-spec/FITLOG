@@ -460,14 +460,15 @@ describe('volumeStatus', () => {
     expect(volumeStatus(2, 14, 1)).toBe('onTrack')
   })
 
-  it('is "high" once past the weekly target but under 120% of it', () => {
+  it('is "high" once past the weekly target but under 200% of it', () => {
     expect(volumeStatus(11, 10, 7)).toBe('high')
-    expect(volumeStatus(12, 10, 7)).toBe('high') // exactly 120% is still "high", not "veryHigh"
+    expect(volumeStatus(20, 10, 7)).toBe('high') // exactly 200% is still "high", not "veryHigh"
+    expect(volumeStatus(16, 10, 7)).toBe('high') // ตัวอย่างจาก feedback: หลัง 16/10 (160%) ยังควรเป็น 🟡
   })
 
-  it('is "veryHigh" once past 120% of the weekly target', () => {
-    expect(volumeStatus(13, 10, 7)).toBe('veryHigh')
-    expect(volumeStatus(29, 12, 7)).toBe('veryHigh') // ตัวอย่างจาก feedback: ขา 29/12 เซ็ต
+  it('is "veryHigh" once past 200% of the weekly target', () => {
+    expect(volumeStatus(21, 10, 7)).toBe('veryHigh')
+    expect(volumeStatus(29, 12, 7)).toBe('veryHigh') // ตัวอย่างจาก feedback: ขา 29/12 เซ็ต (241%)
   })
 
   it('does not misclassify a zero target as high/veryHigh (falls through to the pre-existing "met" behavior)', () => {
@@ -476,12 +477,12 @@ describe('volumeStatus', () => {
 })
 
 describe('optimalVolumeRange', () => {
-  it('sets min to the target and max to 120% of it (the existing high/veryHigh boundary)', () => {
-    expect(optimalVolumeRange(10)).toEqual({ min: 10, max: 12 })
+  it('sets min to the target and max to 200% of it (the existing high/veryHigh boundary)', () => {
+    expect(optimalVolumeRange(10)).toEqual({ min: 10, max: 20 })
   })
 
   it('rounds the max to the nearest whole set', () => {
-    expect(optimalVolumeRange(12)).toEqual({ min: 12, max: 14 }) // 12 * 1.2 = 14.4 -> 14
+    expect(optimalVolumeRange(13)).toEqual({ min: 13, max: 26 })
   })
 
   it('collapses to a zero-width range when the target is zero', () => {

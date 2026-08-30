@@ -22,8 +22,8 @@ const STATUS_COLOR: Record<VolumeStatus, string> = {
   behind: '#9498A0', // เทากลาง — ยังไม่ถึงเป้า (เป็นกลาง ไม่ใช่ปัญหา)
   onTrack: '#E8A33D', // amber — กำลังไปได้ดี
   met: '#7A9B57', // moss — ถึงเป้าหมายพอดี
-  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-120%)
-  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>120%)
+  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-200%)
+  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>200%)
 }
 
 function MetricTile({ label, value, unit }: { label: string; value: string; unit?: string }) {

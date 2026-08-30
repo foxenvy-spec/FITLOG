@@ -831,13 +831,19 @@ export function computeMissedMuscleInsights(
 // ระดับข้างบน (high/veryHigh) แยกความต่างนั้นออกมา โดยไม่แตะความหมาย/รอยต่อของ 3 ระดับเดิมเลย (behind/
 // onTrack ยังเทียบกับเป้าหมายที่ปรับตามสัดส่วนวันในสัปดาห์เหมือนเดิมทุกประการ กันไม่ให้เตือน "ตามหลัง"
 // เท็จๆ ตั้งแต่ต้นสัปดาห์) รอยต่อ high/veryHigh อิงจาก % ของเป้าหมายเต็มสัปดาห์ (ไม่ใช่ prorated) เพราะ
-// "ทำเกินเป้าไปแล้ว" ไม่ต้องรอถึงสิ้นสัปดาห์ถึงจะมีความหมาย — ตัวเลข 120% เป็น product heuristic
+// "ทำเกินเป้าไปแล้ว" ไม่ต้องรอถึงสิ้นสัปดาห์ถึงจะมีความหมาย — ตัวเลข 200% เป็น product heuristic
 // ไม่ใช่เกณฑ์ทางการแพทย์/สรีรวิทยา
 export type VolumeStatus = 'behind' | 'onTrack' | 'met' | 'high' | 'veryHigh'
 
 // เทียบเซ็ตที่ทำแล้วกับเป้าหมายที่ปรับตามสัดส่วนวันที่ผ่านไปแล้วของสัปดาห์ (ไม่รอถึงวันอาทิตย์ถึงจะเตือน)
+// ฟีดแบ็ก "Weekly Volume สีแดงเยอะเกินไป — ทั้ง Card ดูเหมือนรายงานความผิดพลาด ทั้งที่แค่ทำเกิน Target"
+// พร้อมตัวอย่างเจาะจง: 120-160% ของเป้าหมายยังควรเป็น 🟡 (สูงกว่าเป้า ไม่ใช่ปัญหา) มีแค่ >~200% ที่ควรเป็น
+// 🔴 (สูงเกินไปจริงๆ) — เดิมรอยต่อ high/veryHigh อยู่ที่ 120% ทำให้ 150-160% ที่ยังถือว่าปกติได้ ถูกตีเป็น
+// veryHigh (แดง) ไปแล้ว — ขยับรอยต่อเป็น 200% (2 เท่าของเป้าหมาย) ตามตัวอย่างที่ให้มา (160%/150% ยังเป็น
+// high, >200% ถึงจะเป็น veryHigh) — ตัวเลขนี้ผูกกับ optimalVolumeRange ด้านล่างด้วย (derive จากรอยต่อ
+// เดียวกันเป๊ะ) เปลี่ยนพร้อมกันทั้งคู่ให้ยังสอดคล้องกัน
 export function volumeStatus(setsDone: number, weeklyTarget: number, dayOfWeek1to7: number): VolumeStatus {
-  if (weeklyTarget > 0 && setsDone > weeklyTarget * 1.2) return 'veryHigh'
+  if (weeklyTarget > 0 && setsDone > weeklyTarget * 2) return 'veryHigh'
   if (weeklyTarget > 0 && setsDone > weeklyTarget) return 'high'
   if (setsDone >= weeklyTarget) return 'met'
   const proratedTarget = (weeklyTarget * dayOfWeek1to7) / 7
@@ -853,13 +859,13 @@ export interface VolumeRange {
 // ฟีดแบ็ก "เกินเป้า ≠ แย่เสมอ — เป้าหมายควรเป็นช่วง (Optimal Range) ไม่ใช่จุดเดียว" — เดิมมีแค่ target
 // จุดเดียวต่อกลุ่มกล้ามเนื้อ (ตั้งเองได้ใน weekly_volume_targets) แล้วให้ volumeStatus ข้างบนตัดสิน
 // met/high/veryHigh จากจุดนั้น — ตรงนี้ไม่ได้เพิ่มตัวเลขใหม่ที่ไม่มีที่มา (ไม่ใช่ค่าตายตัวจากตำรา Fitness
-// Science ที่ตรวจสอบไม่ได้) แต่ derive ช่วงจาก target ที่ผู้ใช้ตั้ง/ระบบมีอยู่แล้วเป๊ะ โดยใช้รอยต่อ 1.2 เท่า
+// Science ที่ตรวจสอบไม่ได้) แต่ derive ช่วงจาก target ที่ผู้ใช้ตั้ง/ระบบมีอยู่แล้วเป๊ะ โดยใช้รอยต่อ 2 เท่า
 // เดียวกับที่ volumeStatus ใช้แยก high/veryHigh อยู่แล้ว (max = จุดที่ status เปลี่ยนจาก "high" (ยังโอเค)
-// เป็น "veryHigh" (น่ากังวล)) — min = target เดิม (จุดที่เพิ่งถึงเป้า) ผลคือช่วง [target, target*1.2] คือ
+// เป็น "veryHigh" (น่ากังวล)) — min = target เดิม (จุดที่เพิ่งถึงเป้า) ผลคือช่วง [target, target*2] คือ
 // ช่วงที่ status เป็น met/high (สีเขียว/อำพัน "ยังโอเค") ส่วนเกิน max ไปคือ veryHigh (แดง) เท่านั้นที่ถือว่า
 // "เกินช่วงที่เหมาะสม" จริงๆ ไม่ใช่แค่เกิน target นิดเดียวก็ถือว่าแย่
 export function optimalVolumeRange(target: number): VolumeRange {
-  return { min: target, max: Math.round(target * 1.2) }
+  return { min: target, max: Math.round(target * 2) }
 }
 
 // วัดความสมดุลของการกระจายเซ็ตข้ามกลุ่มกล้ามเนื้อ — ใช้สัมประสิทธิ์การแปรผัน (coefficient of

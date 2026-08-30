@@ -29,8 +29,8 @@ const STATUS_COLOR: Record<VolumeStatus, string> = {
   // veryHigh ออกมาให้เห็นว่าเกินเป้าไปมากน้อยแค่ไหน (ฟีดแบ็ก "ขา Recovery 100% แต่ Volume 29/12 เกินเป้า
   // ไปมาก ควรมีสัญญาณเตือน ไม่ใช่แค่ +diff สีเขียวเหมือนเกินนิดเดียว") — high ยังใช้อำพันเดียวกับ onTrack
   // (ยังโอเค แค่เกินนิดหน่อย) veryHigh ใช้สนิม (rust) เดียวกับ behind (สุดโต่งทั้งสองทาง = ควรสนใจเหมือนกัน)
-  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-120%) ยังไม่น่ากังวล
-  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>120%) อาจเสี่ยง overtraining
+  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-200%) ยังไม่น่ากังวล
+  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>200%) อาจเสี่ยง overtraining
 }
 
 export default function WeeklyVolume() {
