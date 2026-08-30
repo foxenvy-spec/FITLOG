@@ -391,11 +391,21 @@ export default function WeeklyMuscleHeatmap() {
                             บอกแค่ % ส่วนแบ่งเซ็ตของ top 3/bottom 2 กลุ่ม ไม่รู้ว่าเทียบกับเป้าหมายรายสัปดาห์
                             ของกลุ่มนั้นแล้วเกิน/ขาดแค่ไหน — เพิ่มบรรทัดนี้ให้ทุกกลุ่ม (ไม่ใช่แค่ top/bottom)
                             เอนจินเดียวกับการ์ด WeeklyVolume (volumeStatus) ให้ตัวเลข/สถานะตรงกันทั้งสองการ์ด */}
-                        {s.targetSets > 0 && (
-                          <p className="pl-[18px] text-[11px]" style={{ color: TARGET_STATUS_COLOR[s.targetStatus] }}>
-                            เป้าหมาย {s.sets}/{s.targetSets} เซ็ต — {TARGET_STATUS_LABEL[s.targetStatus]}
-                          </p>
-                        )}
+                        {s.targetSets > 0 &&
+                          (() => {
+                            // ฟีดแบ็ก "เพิ่มรายละเอียด +diff เซ็ต / % ของเป้าหมาย ให้เข้าใจง่ายขึ้น" —
+                            // ต่อยอดบรรทัดเดิม (เป้าหมาย X/Y เซ็ต — สถานะ) ด้วยตัวเลขที่ผู้เรียกไม่ต้องคำนวณเอง
+                            const diff = s.sets - s.targetSets
+                            const diffLabel = diff > 0 ? `+${diff} เซ็ต` : diff < 0 ? `${diff} เซ็ต` : null
+                            const pctOfTarget = Math.round((s.sets / s.targetSets) * 100)
+                            return (
+                              <p className="pl-[18px] text-[11px]" style={{ color: TARGET_STATUS_COLOR[s.targetStatus] }}>
+                                เป้าหมาย {s.sets}/{s.targetSets} เซ็ต
+                                {diffLabel && <> · {diffLabel}</>} · {pctOfTarget}% ของเป้าหมาย —{' '}
+                                {TARGET_STATUS_LABEL[s.targetStatus]}
+                              </p>
+                            )
+                          })()}
                         {s.topExercises.length > 0 && (
                           <ul className="space-y-1">
                             {s.topExercises.map((ex) => (

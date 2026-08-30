@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, volumeStatus, type VolumeStatus } from '@/lib/dashboardStats'
@@ -163,6 +164,17 @@ export default function WeeklyCardioVolume() {
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-14 w-full rounded-md" />
             ))}
+          </div>
+        ) : volume.sessions === 0 ? (
+          // ฟีดแบ็ก "Card ยังใหญ่เกินไปสำหรับข้อมูล 0 — ทำเป็น Compact Empty State" — เดิมยังโชว์กริด 4
+          // ช่องเต็ม (0 นาที/0 ครั้ง/0 kcal/0 กม.) บวกแถบเป้าหมายรายสัปดาห์เต็มรูปแบบแม้ไม่มีข้อมูลคาร์ดิโอ
+          // เลยสักครั้งในสัปดาห์นี้ — ยุบเหลือข้อความสั้นๆ พร้อมลิงก์ ให้พื้นที่การ์ดสมส่วนกับข้อมูลที่มี
+          <div className="flex flex-col items-center gap-2 py-4 text-center">
+            <span className="text-2xl" aria-hidden="true">🫀</span>
+            <p className="text-xs text-muted">ยังไม่มีข้อมูลคาร์ดิโอสัปดาห์นี้</p>
+            <Link href="/log" className="text-[11px] font-display tracked uppercase text-amber hover:underline">
+              เพิ่ม Cardio →
+            </Link>
           </div>
         ) : (
           <>
