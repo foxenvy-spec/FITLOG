@@ -294,7 +294,12 @@ export default function ConsistencyStrip() {
           ) : (
             <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
           )}
-          <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
+          {/* ฟีดแบ็ก "'สัปดาห์ติด' + caption 'สถิติดีที่สุด' อ่านเหมือนเป็น all-time record ระบบเดียวกับ
+              'สถิติเดิม X วัน' ของ Day Streak ด้านล่าง ทั้งที่จริงคนละ metric — แถมไม่มีการคำนวณ longest
+              week-streak ตลอดกาลจริงๆ ด้วย (consecutiveWeeks นับแค่ย้อนหลังจากขอบเขต WINDOW_DAYS ที่แสดง
+              อยู่ ไม่ได้เทียบกับสถิติสูงสุดที่เคยทำได้เลย)" — caption เดิมเป็นข้อความหลอกที่ไม่มีตัวเลขรองรับ
+              จริง เปลี่ยนเป็นข้อความที่ตรงกับสิ่งที่นับจริง (ขอบเขต 3 สัปดาห์ที่เห็นในปฏิทินด้านซ้าย) */}
+          <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption={`จาก ${Math.ceil(WINDOW_DAYS / 7)} สัปดาห์ล่าสุด`} />
         </div>
         <button
           type="button"
