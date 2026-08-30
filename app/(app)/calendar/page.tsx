@@ -6,6 +6,7 @@ import type { BodyMetric, Goal, GoalStatus, GoalType, ProgramDay, ProgramExercis
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
 import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
+import { computeCurrentStreak } from '@/lib/dashboardStats'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
@@ -138,20 +139,16 @@ export default function CalendarPage() {
     return map
   }, [monthWorkouts, allWorkouts])
 
+  // บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): เดิมนับ "ทุกวันปฏิทินต้องมี workout ติดกัน" ล้วนๆ ไม่รู้จักวันพักตาม
+  // โปรแกรม ทำให้ผู้ใช้ที่มีโปรแกรม (เช่น จ/พ/ศ) เห็นเลข streak หน้านี้ต่ำกว่า Dashboard มาก (ขาดทุกวันที่
+  // ไม่ตรงตาราง ทั้งที่เป็นวันพักตามแผน ไม่ใช่วันที่ "พลาด") — เปลี่ยนมาใช้ computeCurrentStreak
+  // (lib/dashboardStats.ts) ตัวเดียวกับ DashboardView.tsx ส่ง workoutWeekdays จาก programByDow ที่มีอยู่
+  // แล้วในหน้านี้ (ไม่ query ซ้ำ)
   const streak = useMemo(() => {
-    const days = new Set(allWorkouts.map((w) => w.performed_at))
-    let count = 0
-    const cursor = new Date()
-    cursor.setHours(0, 0, 0, 0)
-    if (!days.has(toIsoDate(cursor))) {
-      cursor.setDate(cursor.getDate() - 1)
-    }
-    while (days.has(toIsoDate(cursor))) {
-      count++
-      cursor.setDate(cursor.getDate() - 1)
-    }
-    return count
-  }, [allWorkouts])
+    const days = allWorkouts.map((w) => w.performed_at)
+    const workoutWeekdays = new Set(Object.keys(programByDow).map(Number))
+    return computeCurrentStreak(days, workoutWeekdays)
+  }, [allWorkouts, programByDow])
 
   const gridDays = useMemo(() => {
     const firstWeekday = monthStart.getDay() // 0 = Sun
