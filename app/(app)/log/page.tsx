@@ -79,7 +79,14 @@ function LogPageInner() {
   const [rpe, setRpe] = useState('')
 
   // cardio fields
-  const [cardioType, setCardioType] = useState('')
+  // ฟีดแบ็ก "Cardio Quick-log Params — ?type=cardio&activity=running ให้ deep link จากปุ่มลัดใน Weekly
+  // Cardio Volume empty state ตรงเข้าประเภทที่เลือกได้เลย ไม่ต้องกดชิปเอง" — เทียบ ?activity=... กับ
+  // CARDIO_PRESETS แบบ exact match เท่านั้น (ไม่รับค่าอื่นที่พิมพ์เอง กันลิงก์ภายนอก/query แปลกๆ ตั้งค่า
+  // ข้อความไม่คาดคิดในฟอร์ม) ผู้ใช้ยังแก้ไขเองต่อได้ตามปกติถ้าต้องการเปลี่ยน (ปุ่มนี้แค่ prefill ไม่ล็อก)
+  const [cardioType, setCardioType] = useState(() => {
+    const activity = searchParams.get('activity')
+    return activity && (CARDIO_PRESETS as readonly string[]).includes(activity) ? activity : ''
+  })
   const [distance, setDistance] = useState('')
   const [duration, setDuration] = useState('')
   const [avgHeartRate, setAvgHeartRate] = useState('')

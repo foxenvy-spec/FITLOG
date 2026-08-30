@@ -179,13 +179,23 @@ export default function WeeklyCardioVolume() {
                 กะทัดรัด (ไม่ใช่ bullet 3 บรรทัดแยก) รักษาความ compact ของ empty state นี้ไว้ตามที่เคยตั้งใจ
                 ทำไว้ก่อนหน้า (ฟีดแบ็กเดิม "Card ยังใหญ่เกินไปสำหรับข้อมูล 0") แค่เพิ่มเหตุผลสั้นๆ ว่าทำไมควรเพิ่ม */}
             <p className="text-[10px] text-muted/70">เพิ่ม Cardio เพื่อดู Volume · VO₂ Max · Training Load</p>
-            {/* ฟีดแบ็ก "ลิงก์ควรพาไปบันทึก Cardio ตรงๆ" — เดิม href="/log" เปิดหน้า log ที่แท็บ strength
-                เป็นค่าเริ่มต้นเสมอ (ดู useState(type) ใน app/(app)/log/page.tsx) ทั้งที่ผู้ใช้ตั้งใจมาเพิ่ม
-                cardio จากตรงนี้ — /log รองรับ ?type=cardio อยู่แล้ว (เพิ่มไว้ให้การ์ดนำเข้าคาร์ดิโอจากรูป
-                ใช้) ใช้ query เดียวกันให้ลิงก์นี้เปิดตรงแท็บ cardio ทันที ไม่ต้องสลับแท็บเอง */}
-            <Link href="/log?type=cardio" className="text-[11px] font-display tracked uppercase text-amber hover:underline">
-              เพิ่ม Cardio →
-            </Link>
+            {/* ฟีดแบ็ก "Cardio Quick-log — เพิ่มปุ่มลัดตามชนิด เช่น + วิ่ง, + ปั่นจักรยาน แทนที่จะให้ผู้ใช้
+                กดชิปเลือกเองในฟอร์มอีกที" — ใช้ ?type=cardio&activity=<preset> ที่ /log รองรับแล้ว (ดู
+                comment ที่ useState(cardioType) ใน app/(app)/log/page.tsx) เลือก 3 ชนิดที่พบบ่อยสุดจาก
+                CARDIO_PRESETS ของหน้านั้น (ไม่ทำ preset ใหม่แยกต่างหาก กันสองจุดหลุด sync กัน) ชนิดอื่นที่
+                เหลือ (ว่ายน้ำ/กระโดดเชือก) ยังเลือกได้ปกติในฟอร์มเต็มหลังกดเข้าไป ไม่ได้หายไปไหน */}
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              {['วิ่ง', 'ปั่นจักรยาน', 'เดินเร็ว'].map((activity) => (
+                <Link
+                  key={activity}
+                  href={`/log?type=cardio&activity=${encodeURIComponent(activity)}`}
+                  className="text-[10px] font-display tracked uppercase px-2.5 py-1 rounded-full"
+                  style={{ border: `1px solid ${withAlpha(COLORS.amber, '40')}`, color: COLORS.amber }}
+                >
+                  + {activity}
+                </Link>
+              ))}
+            </div>
           </div>
         ) : (
           <>
