@@ -845,6 +845,23 @@ export function volumeStatus(setsDone: number, weeklyTarget: number, dayOfWeek1t
   return 'behind'
 }
 
+export interface VolumeRange {
+  min: number
+  max: number
+}
+
+// ฟีดแบ็ก "เกินเป้า ≠ แย่เสมอ — เป้าหมายควรเป็นช่วง (Optimal Range) ไม่ใช่จุดเดียว" — เดิมมีแค่ target
+// จุดเดียวต่อกลุ่มกล้ามเนื้อ (ตั้งเองได้ใน weekly_volume_targets) แล้วให้ volumeStatus ข้างบนตัดสิน
+// met/high/veryHigh จากจุดนั้น — ตรงนี้ไม่ได้เพิ่มตัวเลขใหม่ที่ไม่มีที่มา (ไม่ใช่ค่าตายตัวจากตำรา Fitness
+// Science ที่ตรวจสอบไม่ได้) แต่ derive ช่วงจาก target ที่ผู้ใช้ตั้ง/ระบบมีอยู่แล้วเป๊ะ โดยใช้รอยต่อ 1.2 เท่า
+// เดียวกับที่ volumeStatus ใช้แยก high/veryHigh อยู่แล้ว (max = จุดที่ status เปลี่ยนจาก "high" (ยังโอเค)
+// เป็น "veryHigh" (น่ากังวล)) — min = target เดิม (จุดที่เพิ่งถึงเป้า) ผลคือช่วง [target, target*1.2] คือ
+// ช่วงที่ status เป็น met/high (สีเขียว/อำพัน "ยังโอเค") ส่วนเกิน max ไปคือ veryHigh (แดง) เท่านั้นที่ถือว่า
+// "เกินช่วงที่เหมาะสม" จริงๆ ไม่ใช่แค่เกิน target นิดเดียวก็ถือว่าแย่
+export function optimalVolumeRange(target: number): VolumeRange {
+  return { min: target, max: Math.round(target * 1.2) }
+}
+
 // วัดความสมดุลของการกระจายเซ็ตข้ามกลุ่มกล้ามเนื้อ — ใช้สัมประสิทธิ์การแปรผัน (coefficient of
 // variation) ของสัดส่วน แล้วแปลงกลับเป็น 0-100 (100 = กระจายเท่ากันทุกกลุ่มเป๊ะ, ต่ำ = กระจุกตัว)
 // เป็นตัวชี้วัดคร่าวๆ ให้เห็นภาพรวม ไม่ใช่คำแนะนำทางการแพทย์/โภชนาการ

@@ -15,6 +15,7 @@ import {
   computeImbalanceInsights,
   computeMissedMuscleInsights,
   volumeStatus,
+  optimalVolumeRange,
   relativeDayLabel,
   findNextProgramDay,
   getWeekRange,
@@ -470,6 +471,20 @@ describe('volumeStatus', () => {
 
   it('does not misclassify a zero target as high/veryHigh (falls through to the pre-existing "met" behavior)', () => {
     expect(volumeStatus(0, 0, 3)).toBe('met')
+  })
+})
+
+describe('optimalVolumeRange', () => {
+  it('sets min to the target and max to 120% of it (the existing high/veryHigh boundary)', () => {
+    expect(optimalVolumeRange(10)).toEqual({ min: 10, max: 12 })
+  })
+
+  it('rounds the max to the nearest whole set', () => {
+    expect(optimalVolumeRange(12)).toEqual({ min: 12, max: 14 }) // 12 * 1.2 = 14.4 -> 14
+  })
+
+  it('collapses to a zero-width range when the target is zero', () => {
+    expect(optimalVolumeRange(0)).toEqual({ min: 0, max: 0 })
   })
 })
 

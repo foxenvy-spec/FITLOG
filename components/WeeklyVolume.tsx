@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, volumeStatus, type VolumeStatus } from '@/lib/dashboardStats'
+import { getWeekRange, volumeStatus, optimalVolumeRange, type VolumeStatus } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
@@ -125,6 +125,8 @@ export default function WeeklyVolume() {
             const pct = target > 0 ? Math.round((sets / target) * 100) : 0
             const diff = sets - target
             const color = STATUS_COLOR[status]
+            // ฟีดแบ็ก "เกินเป้า ≠ แย่เสมอ — ควรโชว์เป็นช่วงที่เหมาะสม ไม่ใช่จุดเดียว" — ดู optimalVolumeRange
+            const range = optimalVolumeRange(target)
             // แถวย่อ ๆ: จุดสี + ชื่อ + จำนวนเซ็ต/เป้าหมาย + เส้นคั่นบาง ๆ + ป้ายสถานะ (met -> +diff,
             // onTrack -> เปอร์เซ็นต์, behind -> -diff) ต่อด้วยแถบ progress ที่ยาวตาม % จริง — เดิมแถบนี้
             // ซ่อนอยู่หลัง "ดูรายละเอียดทั้งหมด" อ่านเป็น list ตัวเลขล้วนๆ ก่อน ตอนนี้ยาวตาม % ให้เห็นเลย
@@ -162,20 +164,18 @@ export default function WeeklyVolume() {
                     <div
                       className="absolute top-0 h-full w-px bg-ink/40"
                       style={{ left: `${targetPct}%` }}
-                      title={`เป้าหมาย ${target} เซ็ต/สัปดาห์`}
+                      title={`เหมาะสม ${range.min}–${range.max} เซ็ต/สัปดาห์`}
                     />
                   </span>
                 </div>
                 {detailsOpen && (
                   <div className="px-2.5 pb-2 -mt-1">
                     <p className="text-[11px]" style={{ color }}>
-                      {status === 'met'
-                        ? 'ถึงเป้าหมายพอดี'
-                        : status === 'high'
-                          ? `เกินเป้าหมายไปแล้ว +${diff} เซ็ต`
-                          : status === 'veryHigh'
-                            ? `เกินเป้าหมายไปมาก +${diff} เซ็ต — ลองพักกลุ่มนี้บ้าง`
-                            : `อีก ${target - sets} เซ็ตถึงเป้าหมาย`}
+                      {status === 'met' || status === 'high'
+                        ? `อยู่ในช่วงที่เหมาะสม (${range.min}–${range.max} เซ็ต)`
+                        : status === 'veryHigh'
+                          ? `เกินช่วงที่เหมาะสม (${range.min}–${range.max} เซ็ต) — ลองพักกลุ่มนี้บ้าง`
+                          : `อีก ${target - sets} เซ็ตถึงช่วงที่เหมาะสม (${range.min}–${range.max} เซ็ต)`}
                     </p>
                   </div>
                 )}
