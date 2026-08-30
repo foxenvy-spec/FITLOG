@@ -57,3 +57,28 @@ export function computeWeeklyHRZoneMinutes(
 
   return { minutesByZone, sessionsWithHR, totalCardioSessions: cardioSessions.length }
 }
+
+export type CardioLoad = 'light' | 'moderate' | 'heavy'
+
+export const CARDIO_LOAD_LABEL: Record<CardioLoad, string> = {
+  light: 'Light',
+  moderate: 'Moderate',
+  heavy: 'Heavy',
+}
+
+// ฟีดแบ็ก "Weekly Cardio ควรสรุปเป็น 'Cardio Load: Moderate' ไม่ควรดูแค่เวลาอย่างเดียว" — แปลงการกระจาย
+// เวลาต่อโซน (minutesByZone จาก computeWeeklyHRZoneMinutes) เป็นค่าเดียวสรุปภาระรวมของสัปดาห์: ถ่วงน้ำหนัก
+// แต่ละโซนตามอันดับความหนัก (Zone 1 = 1 ... Zone 5 = 5) แล้วหาค่าเฉลี่ยถ่วงเวลา — ค่าเฉลี่ยเอียงไปทางโซนสูง
+// (z4/z5) มาก ถือว่า "Heavy" เอียงไปทาง z1 มากถือว่า "Light" กลางๆ (z2/z3 ซึ่งเป็นโซนคาร์ดิโอทั่วไป) = "Moderate"
+// คืน null เมื่อไม่มีเวลาในโซนไหนเลย (ยังไม่มีข้อมูลชีพจรพอให้สรุป)
+export function classifyCardioLoad(minutesByZone: Record<string, number>): CardioLoad | null {
+  const totalMinutes = HR_ZONES.reduce((sum, z) => sum + (minutesByZone[z.key] ?? 0), 0)
+  if (totalMinutes <= 0) return null
+
+  const weightedSum = HR_ZONES.reduce((sum, z, i) => sum + (minutesByZone[z.key] ?? 0) * (i + 1), 0)
+  const avgZoneWeight = weightedSum / totalMinutes
+
+  if (avgZoneWeight <= 2) return 'light'
+  if (avgZoneWeight <= 3.5) return 'moderate'
+  return 'heavy'
+}

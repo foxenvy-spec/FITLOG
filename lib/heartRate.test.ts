@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { classifyHRZone, computeWeeklyHRZoneMinutes, HR_ZONES, DEFAULT_MAX_HEART_RATE } from './heartRate'
+import { classifyHRZone, computeWeeklyHRZoneMinutes, classifyCardioLoad, HR_ZONES, DEFAULT_MAX_HEART_RATE } from './heartRate'
 
 describe('classifyHRZone', () => {
   const maxHR = 190
@@ -62,5 +62,29 @@ describe('computeWeeklyHRZoneMinutes', () => {
     expect(result.totalCardioSessions).toBe(3)
     const totalMinutes = Object.values(result.minutesByZone).reduce((a, b) => a + b, 0)
     expect(totalMinutes).toBe(25)
+  })
+})
+
+describe('classifyCardioLoad', () => {
+  it('returns null when there is no zone time at all', () => {
+    expect(classifyCardioLoad({})).toBeNull()
+  })
+
+  it('classifies as light when time is concentrated in zone 1', () => {
+    expect(classifyCardioLoad({ z1: 60 })).toBe('light')
+  })
+
+  it('classifies as moderate when time is concentrated in zone 2-3', () => {
+    expect(classifyCardioLoad({ z2: 30, z3: 30 })).toBe('moderate')
+  })
+
+  it('classifies as heavy when time is concentrated in zone 4-5', () => {
+    expect(classifyCardioLoad({ z4: 20, z5: 10 })).toBe('heavy')
+  })
+
+  it('weighs by minutes, not just which zones have any time', () => {
+    // ส่วนใหญ่อยู่ z1 (เบา) มี z5 (หนักสุด) แค่นิดเดียว — ควรยังเอียงไปทาง light/moderate ไม่ใช่ heavy
+    const result = classifyCardioLoad({ z1: 50, z5: 2 })
+    expect(result).not.toBe('heavy')
   })
 })

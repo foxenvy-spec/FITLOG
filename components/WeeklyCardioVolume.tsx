@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, volumeStatus, type VolumeStatus } from '@/lib/dashboardStats'
 import { computeWeeklyCardioVolume } from '@/lib/weeklyCardioVolume'
 import { fetchWeeklyCardioTargets } from '@/lib/weeklyCardioTargets'
-import { HR_ZONES, DEFAULT_MAX_HEART_RATE } from '@/lib/heartRate'
+import { HR_ZONES, DEFAULT_MAX_HEART_RATE, classifyCardioLoad, CARDIO_LOAD_LABEL } from '@/lib/heartRate'
 import { computeVO2Max, classifyVO2Max } from '@/lib/vo2max'
 import type { Workout, Profile } from '@/lib/types'
 import { todayDayOfWeek } from '@/lib/weekdays'
@@ -245,6 +245,18 @@ export default function WeeklyCardioVolume() {
                 </p>
               ) : (
                 <>
+                  {/* ฟีดแบ็ก "ไม่ควรดูแค่เวลาอย่างเดียว — สรุปเป็น Cardio Load: Moderate" — สรุปการกระจาย
+                      เวลาต่อโซนเป็นค่าเดียว (ดู classifyCardioLoad, ถ่วงน้ำหนักตามอันดับความหนักของโซน) */}
+                  {(() => {
+                    const load = classifyCardioLoad(volume.hrZones.minutesByZone)
+                    if (!load) return null
+                    const loadColor = load === 'light' ? '#7A9B57' : load === 'moderate' ? '#E8A33D' : '#C1503A'
+                    return (
+                      <p className="text-[11px] mb-2" style={{ color: loadColor }}>
+                        Cardio Load: <span className="font-medium">{CARDIO_LOAD_LABEL[load]}</span>
+                      </p>
+                    )
+                  })()}
                   {/* v: mockup ขอแท่งแยกตามโซน (Zone 1 ███ / Zone 2 ███████████ / ...) ให้เทียบความยาว
                       สัปดาห์นี้เห็นภาพชัดกว่าแท่งเดียวไล่สี — เปลี่ยนจาก stacked bar เดิมเป็น 5 แถวแยก
                       เทียบกับโซนที่ใช้เวลามากสุด (ไม่ใช่ totalMinutes) ให้แท่งที่ยาวสุดเต็มความกว้างจริง */}
