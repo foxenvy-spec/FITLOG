@@ -1,5 +1,5 @@
 import type { ProgramDay, Workout } from './types'
-import { todayStr } from './weekdays'
+import { todayStr, bangkokParts } from './weekdays'
 import type { ExerciseDef } from './exerciseLibrary'
 import { COLORS, FIRE_ACCENT } from './theme'
 
@@ -667,33 +667,32 @@ export const DEFAULT_WEEKLY_VOLUME_TARGETS: Record<string, number> = {
 // lib/weeklyVolumeTargets.ts แทน
 export const WEEKLY_VOLUME_TARGETS = DEFAULT_WEEKLY_VOLUME_TARGETS
 
+// บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): เดิมใช้ reference.getDay()/timezone ของเครื่องที่รันโค้ดตรงๆ ต่างจากทุก
+// จุดอื่นในแอปที่ normalize เป็นปฏิทินไทย (Asia/Bangkok) เสมอผ่าน todayStr()/todayDayOfWeek() (lib/weekdays.ts
+// — performed_at ทุกแถวก็บันทึกด้วย todayStr() เช่นกัน) — ผู้ใช้ที่เปิดแอปจาก timezone อื่น (เช่น เดินทางไป
+// สหรัฐฯ) ใกล้ขอบสัปดาห์ อาจได้ขอบเขตจันทร์-อาทิตย์คนละวันกับที่ workouts จริงถูกบันทึกไว้ — normalize
+// reference เป็นวันที่ตามปฏิทินไทยก่อน (bangkokParts เดียวกับ todayStr()) แล้วคำนวณ Mon-Sun ด้วย UTC
+// arithmetic ล้วนๆ จากจุดนั้น ไม่พึ่ง timezone เครื่องอีกต่อไปทั้งฟังก์ชัน
 export function getWeekRange(reference: Date = new Date()): { start: string; end: string } {
-  const dow = (reference.getDay() + 6) % 7 // Mon=0..Sun=6
-  const monday = new Date(reference)
-  monday.setDate(reference.getDate() - dow)
+  const anchor = new Date(`${bangkokParts(reference)}T00:00:00Z`)
+  const dow = (anchor.getUTCDay() + 6) % 7 // Mon=0..Sun=6
+  const monday = new Date(anchor)
+  monday.setUTCDate(anchor.getUTCDate() - dow)
   const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  const toIso = (d: Date) => {
-    const offset = d.getTimezoneOffset()
-    const local = new Date(d.getTime() - offset * 60000)
-    return local.toISOString().slice(0, 10)
-  }
+  sunday.setUTCDate(monday.getUTCDate() + 6)
+  const toIso = (d: Date) => d.toISOString().slice(0, 10)
   return { start: toIso(monday), end: toIso(sunday) }
 }
 
 // สัปดาห์ก่อนหน้า ใช้เทียบวอลุ่มเพื่อดูเทรนด์ (สัปดาห์นี้ vs สัปดาห์ที่แล้ว)
 export function getPreviousWeekRange(reference: Date = new Date()): { start: string; end: string } {
   const { start } = getWeekRange(reference)
-  const monday = new Date(start + 'T00:00:00')
+  const monday = new Date(`${start}T00:00:00Z`)
   const prevMonday = new Date(monday)
-  prevMonday.setDate(monday.getDate() - 7)
+  prevMonday.setUTCDate(monday.getUTCDate() - 7)
   const prevSunday = new Date(prevMonday)
-  prevSunday.setDate(prevMonday.getDate() + 6)
-  const toIso = (d: Date) => {
-    const offset = d.getTimezoneOffset()
-    const local = new Date(d.getTime() - offset * 60000)
-    return local.toISOString().slice(0, 10)
-  }
+  prevSunday.setUTCDate(prevMonday.getUTCDate() + 6)
+  const toIso = (d: Date) => d.toISOString().slice(0, 10)
   return { start: toIso(prevMonday), end: toIso(prevSunday) }
 }
 

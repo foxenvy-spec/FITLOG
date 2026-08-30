@@ -540,6 +540,20 @@ describe('getWeekRange / getPreviousWeekRange', () => {
     expect(start).toBe('2026-07-06')
     expect(end).toBe('2026-07-12')
   })
+
+  // บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): เดิม getWeekRange คำนวณ day-of-week จาก reference.getDay() ตรงๆ ซึ่งอ่าน
+  // ตาม timezone ของเครื่องที่รันโค้ด ไม่ใช่ Asia/Bangkok เหมือนจุดอื่นทั้งหมดในแอป (performed_at ทุกแถวใช้
+  // todayStr() = ปฏิทินไทยเสมอ) — เคสนี้จำลองผู้ใช้ที่ device เป็น UTC: 2026-07-19T23:00Z คือ "อาทิตย์
+  // 23:00 UTC" (ยังอยู่สัปดาห์ 13-19) แต่เวลาไทยตอนนั้นคือ 2026-07-20 06:00 (จันทร์เช้า — เข้าสัปดาห์ใหม่
+  // 20-26 แล้ว) getWeekRange ต้องยึด "วันจริงตามปฏิทินไทย" ไม่ใช่นาฬิกาของเครื่อง
+  it('anchors the week boundary to Bangkok time, not the runtime device timezone', () => {
+    // ค่า reference นี้ parse เป็น "local time" ของเครื่องที่รันเทสต์ (ปกติเป็น UTC บน CI) — 23:00 น.
+    // วันอาทิตย์ที่ 19 ก.ค. ตามเวลาเครื่อง = 06:00 น. วันจันทร์ที่ 20 ก.ค. ตามเวลาไทย (+7)
+    const sundayLateUtc = new Date('2026-07-19T23:00:00')
+    const { start, end } = getWeekRange(sundayLateUtc)
+    expect(start).toBe('2026-07-20') // Monday (Bangkok calendar date) — not 07-13
+    expect(end).toBe('2026-07-26')
+  })
 })
 
 describe('suggestMuscleToTrain', () => {

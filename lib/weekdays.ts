@@ -8,7 +8,10 @@ export const WEEKDAYS_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', '
 // การ fix ให้เป็น Asia/Bangkok เสมอทำให้ server กับ client ได้ "วันนี้" ตรงกันทุกครั้ง
 const BANGKOK_TZ = 'Asia/Bangkok'
 
-function bangkokParts(d: Date) {
+// export ไว้ให้ dashboardStats.ts (getWeekRange/getPreviousWeekRange) ใช้ normalize reference date เป็น
+// ปฏิทินไทยก่อนคำนวณขอบเขตสัปดาห์ ด้วยตรรกะเดียวกับ todayStr()/todayDayOfWeek() ด้านล่างเป๊ะ (ไม่คำนวณ
+// แยกสูตรใหม่ กันสองจุดหลุด sync กันในอนาคต)
+export function bangkokParts(d: Date) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: BANGKOK_TZ,
     year: 'numeric',
