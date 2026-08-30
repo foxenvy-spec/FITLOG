@@ -132,6 +132,7 @@ function describeWorkout(w: Workout): string {
 export default function ConsistencyStrip() {
   const supabase = createClient()
   const [selectedDayIso, setSelectedDayIso] = useState<string | null>(null)
+  const [showMoreStats, setShowMoreStats] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['consistency-strip'],
@@ -274,22 +275,38 @@ export default function ConsistencyStrip() {
         </div>
       </div>
 
-      {/* right: 4 stat tiles as a 2x2 block on lg+ (falls back to a 4-across row below the
-          calendar on smaller screens, same as before) */}
-      <div className="border-t border-line lg:border-t-0 grid grid-cols-2 divide-x divide-y divide-line lg:col-span-1">
-        {grid?.consistencyPct !== null && grid?.consistencyPct !== undefined ? (
-          <StatTile
-            value={`${grid.consistencyPct}%`}
-            label="Training Consistency"
-            caption={`${grid.completedPlannedCount}/${grid.plannedCount} ครั้งตามแผน`}
-            trend={data?.previousConsistencyPct != null ? grid.consistencyPct - data.previousConsistencyPct : null}
-          />
-        ) : (
-          <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
+      {/* ฟีดแบ็ก "Consistency กินพื้นที่มาก — Hero ควรเหลือแค่ % + streak ส่วน กก./ท่าออกกำลังกาย ควรซ่อนไว้
+          ก่อน" — เดิมโชว์ 4 tile พร้อมกันเสมอ ลดเหลือ 2 tile หลัก (Consistency%, สัปดาห์ติด) ที่เห็นทันที
+          ส่วนน้ำหนักรวม/ท่าออกกำลังกายซ่อนหลังปุ่ม toggle แทน (ข้อมูลเดิมทุกตัวเลข ไม่มีอะไรหายไป แค่ไม่ต้อง
+          โชว์พร้อมกันทั้งหมดตั้งแต่แรกเห็น) */}
+      <div className="border-t border-line lg:border-t-0 lg:col-span-1">
+        <div className="grid grid-cols-2 divide-x divide-line">
+          {grid?.consistencyPct !== null && grid?.consistencyPct !== undefined ? (
+            <StatTile
+              value={`${grid.consistencyPct}%`}
+              label="Training Consistency"
+              caption={`${grid.completedPlannedCount}/${grid.plannedCount} ครั้งตามแผน`}
+              trend={data?.previousConsistencyPct != null ? grid.consistencyPct - data.previousConsistencyPct : null}
+            />
+          ) : (
+            <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
+          )}
+          <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowMoreStats((v) => !v)}
+          className="w-full text-center text-[11px] font-medium py-2 border-t border-line"
+          style={{ color: '#E8A33D' }}
+        >
+          {showMoreStats ? 'ซ่อนรายละเอียดเพิ่มเติม ↑' : 'ดูรายละเอียดเพิ่มเติม →'}
+        </button>
+        {showMoreStats && (
+          <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
+            <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
+            <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
+          </div>
         )}
-        <StatTile value={grid?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption="สถิติดีที่สุด" />
-        <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
-        <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
       </div>
 
       {/* ฟีดแบ็ก "เพิ่ม milestone: อีก 2 วัน → ทำสถิติใหม่ — Gamification จะทำให้ Dashboard มีแรงจูงใจมากขึ้น"
