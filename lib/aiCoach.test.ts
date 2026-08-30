@@ -254,6 +254,22 @@ describe('computeAIDailySummary', () => {
     )
     expect(msg).not.toContain('ตามตารางคือ')
   })
+
+  it('warns to ease off when the recommendation is flagged lowRecoveryCaution', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'ขา', pct: 50, lowRecoveryCaution: true },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' }
+    )
+    expect(msg).toContain('ลดความหนักหรือเลื่อนออกไปก่อน')
+  })
+
+  it('omits the caution clause when the recommendation is well recovered', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'ขา', pct: 80 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' }
+    )
+    expect(msg).not.toContain('ลดความหนัก')
+  })
 })
 
 describe('buildSkippedExerciseInsight', () => {

@@ -198,6 +198,13 @@ export function computeAIDailySummary(
     msg += ` — ตามตารางคือ${muscleRecommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายไปแล้ว จึงแนะนำเน้น${muscleRecommendation.muscleGroup}แทน`
   }
 
+  // ฟีดแบ็ก "Recovery ต่ำ + Volume ยังไม่ถึงเป้า → เตือน" (เคสที่ 3 ใน Recommendation Engine decision
+  // table) — ต่างจาก scheduleOverriddenFrom (ซึ่งสลับกลุ่มไปเลย) เคสนี้ยังแนะนำกลุ่มเดิมอยู่ แต่ร่างกาย
+  // ยังไม่พร้อมเต็มที่ ต้องเตือนให้ลดความหนักแทนที่จะพูดเหมือนแนะนำปกติ
+  if (muscleRecommendation.lowRecoveryCaution) {
+    msg += ` — แต่ยังฟื้นตัวไม่เต็มที่ (ต่ำกว่า 65%) แนะนำลดความหนักหรือเลื่อนออกไปก่อน`
+  }
+
   if (balance.status === 'push_dominant') {
     msg += ' — และควรแทรกท่าดึง (หลัง) เพิ่ม เพราะสัปดาห์นี้ฝั่งดันเยอะกว่า'
   } else if (balance.status === 'pull_dominant') {

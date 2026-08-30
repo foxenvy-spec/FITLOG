@@ -1514,6 +1514,13 @@ export default function DashboardPage() {
                                 ตามตารางคือ{recommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว
                               </p>
                             )}
+                            {/* ฟีดแบ็ก "Recovery ต่ำ + Volume ยังไม่ถึงเป้า → เตือน" — เคสที่ 3 ใน
+                                Recommendation Engine decision table (ยังแนะนำกลุ่มเดิม แต่ร่างกายยังไม่พร้อมเต็มที่) */}
+                            {recommendation.lowRecoveryCaution && (
+                              <p className="text-[11px] mt-0.5" style={{ color: COLORS.amber }}>
+                                ⚠️ ฟื้นตัวยังไม่เต็มที่ แนะนำลดความหนักหรือเลื่อนออกไปก่อน
+                              </p>
+                            )}
                           </span>
                           {isFullyReady && (
                             <span

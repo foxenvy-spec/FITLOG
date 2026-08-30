@@ -362,6 +362,17 @@ export interface MuscleRecommendation {
   // สัปดาห์นี้เกินเป้าหมายไปแล้ว (ดู comment เต็มที่ suggestMuscleToTrain) — ผู้เรียกใช้ค่านี้บอกผู้ใช้ว่า
   // "ตามตารางคือ X แต่แนะนำ Y แทนเพราะ Volume ของ X เกินเป้าแล้ว" แทนที่จะแนะนำเงียบๆ โดยไม่อธิบาย
   scheduleOverriddenFrom?: string | null
+  // true เมื่อ recovery % ของกลุ่มที่แนะนำอยู่ต่ำกว่าเกณฑ์ "ดี" (tier Recovering/Rest, <65% — ดู
+  // RECOVERY_TIERS) — เกิดได้ 2 กรณี: (1) กลุ่มตามตารางยังไม่ถึงเป้า Volume เลยไม่ถูกเช็ค/แทนที่ แต่ร่างกาย
+  // ยังไม่พร้อมเต็มที่ (2) ไม่มีกลุ่มไหนพร้อมฝึกจริงๆ เลยตกกลับไปแนะนำกลุ่ม recovery สูงสุดเท่าที่มี ทั้งที่ยัง
+  // ต่ำกว่าเกณฑ์ — ผู้เรียกใช้สัญญาณนี้แนะนำ "ลดความหนัก/เลื่อนออกไปก่อน" แทนคำแนะนำความหนักปกติเงียบๆ
+  lowRecoveryCaution?: boolean
+}
+
+function withRecoveryCaution(rec: { muscleGroup: string; pct: number; scheduleOverriddenFrom?: string | null }): MuscleRecommendation {
+  const tier = recoveryTier(rec.pct).labelEn
+  const lowRecoveryCaution = tier === 'Recovering' || tier === 'Rest'
+  return lowRecoveryCaution ? { ...rec, lowRecoveryCaution } : rec
 }
 
 // scheduledMuscle: ถ้ามีตารางโปรแกรมประจำสัปดาห์ระบุไว้ (เช่น พฤหัส = "ขา") ให้ยึดตามตารางก่อนเป็นค่าเริ่มต้น
@@ -413,20 +424,26 @@ export function suggestMuscleToTrain(
       const alt = bestReadyAndUnderTarget()
       if (alt) {
         const [muscleGroup, pct] = alt
-        return { muscleGroup, pct, scheduleOverriddenFrom: scheduledMuscle }
+        // alt มาจาก bestReadyAndUnderTarget ซึ่งกรอง tier "ดี" ขึ้นไปแล้วเสมอ — ไม่มีทาง low recovery
+        // แต่ยังห่อด้วย withRecoveryCaution เพื่อความสม่ำเสมอ (no-op ในเคสนี้จริง)
+        return withRecoveryCaution({ muscleGroup, pct, scheduleOverriddenFrom: scheduledMuscle })
       }
     }
-    return { muscleGroup: scheduledMuscle, pct: recoveryPctByMuscle[scheduledMuscle] }
+    // ยังไม่ถึงเป้า Volume เลยไม่ต้องเช็ค/แทนที่ — แต่ recovery อาจยังต่ำอยู่ (เช่น ตารางบอกขา ขา
+    // recovery 50%, Volume 8/12 ยังไม่ถึงเป้า) withRecoveryCaution เช็คให้ว่าควรเตือนลดความหนักไหม
+    return withRecoveryCaution({ muscleGroup: scheduledMuscle, pct: recoveryPctByMuscle[scheduledMuscle] })
   }
 
   const alt = bestReadyAndUnderTarget()
   if (alt) {
     const [muscleGroup, pct] = alt
-    return { muscleGroup, pct }
+    return withRecoveryCaution({ muscleGroup, pct })
   }
 
+  // ไม่มีกลุ่มไหนพร้อมฝึกจริงๆ (ทุกกลุ่ม recovery ต่ำกว่าเกณฑ์ "ดี" หรือเกินเป้า Volume ไปหมด) — ตกกลับไป
+  // แนะนำกลุ่ม recovery สูงสุดเท่าที่มี withRecoveryCaution จะติดธงเตือนถ้า pct นี้ยังต่ำกว่าเกณฑ์อยู่ดี
   const [muscleGroup, pct] = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])
-  return { muscleGroup, pct }
+  return withRecoveryCaution({ muscleGroup, pct })
 }
 
 export interface TodaysRecommendation extends MuscleRecommendation {

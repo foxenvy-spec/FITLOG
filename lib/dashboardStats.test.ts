@@ -598,6 +598,32 @@ describe('suggestMuscleToTrain', () => {
     const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, null)
     expect(rec?.muscleGroup).toBe('ขา')
   })
+
+  it('flags lowRecoveryCaution when the scheduled muscle is still under target but recovery is low', () => {
+    // Recommendation Engine decision table เคสที่ 3: ขา Recovery 50%, Volume 8/12 (ยังไม่ถึงเป้า) — ยังแนะนำ
+    // ขาตามตาราง แต่ต้องติดธงเตือนว่า recovery ยังไม่พอ
+    const rec = suggestMuscleToTrain({ ขา: 50 }, 'ขา', { ขา: 8 }, { ขา: 12 })
+    expect(rec?.muscleGroup).toBe('ขา')
+    expect(rec?.lowRecoveryCaution).toBe(true)
+  })
+
+  it('does not flag lowRecoveryCaution when the scheduled muscle is well recovered', () => {
+    const rec = suggestMuscleToTrain({ ขา: 80 }, 'ขา', { ขา: 8 }, { ขา: 12 })
+    expect(rec?.lowRecoveryCaution).toBeUndefined()
+  })
+
+  it('does not flag lowRecoveryCaution on a schedule-override pick (the alternative is always well recovered)', () => {
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, 'ขา', { ขา: 29, อก: 8 }, { ขา: 12, อก: 10 })
+    expect(rec?.scheduleOverriddenFrom).toBe('ขา')
+    expect(rec?.lowRecoveryCaution).toBeUndefined()
+  })
+
+  it('flags lowRecoveryCaution on the free-choice fallback when every muscle is still recovering', () => {
+    // ไม่มีตารางบังคับ ไม่มีกลุ่มไหน tier "ดี" ขึ้นไปเลย ตกกลับไปแนะนำ recovery สูงสุดเท่าที่มี แต่ยังต้องเตือน
+    const rec = suggestMuscleToTrain({ ขา: 50, อก: 40 }, null)
+    expect(rec?.muscleGroup).toBe('ขา')
+    expect(rec?.lowRecoveryCaution).toBe(true)
+  })
 })
 
 describe('computeTodaysRecommendation', () => {
