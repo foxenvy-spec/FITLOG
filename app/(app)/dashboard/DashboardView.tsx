@@ -2070,18 +2070,25 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* สรุป Volume/Consistency สัปดาห์นี้ — ตัวเลขเดียวกับการ์ด WeeklyVolume/ConsistencyStrip เป๊ะ
-              (คำนวณจากข้อมูลชุดเดียวกัน ดู weeklyTotalSets/weeklyConsistencyPct ใน fetchDashboardData
-              ด้านบน) รายละเอียดรายกล้ามเนื้อ/ปฏิทินเต็มยังอยู่ที่การ์ดเดิมด้านล่างเหมือนเดิม จุดนี้แค่สรุปให้
-              เห็นภาพรวมโดยไม่ต้องเลื่อนไปดูอีก 2 การ์ด */}
-          <div className="flex items-center gap-3 mt-3.5 pt-3 border-t border-white/5 text-[11px]">
-            <span className="text-muted">
-              Volume <span className="text-ink font-mono">{data.weeklyTotalSets}</span> เซ็ต
-            </span>
+          {/* ฟีดแบ็ก "Volume/Consistency อยู่ชิดด้านล่างมาก ดูเหมือนข้อมูลประกอบเล็กๆ — อยากให้เป็น
+              Secondary Metrics ที่อ่านง่ายขึ้น: ตัวเลขใหญ่ + label ใต้ตัวเลข แบบเดียวกับ 97 Sets/Weekly
+              Volume, 47%/Consistency" — เดิมเป็นบรรทัดเดียวความสูง text-[11px] ("Volume 97 เซ็ต · Consistency
+              47%") อ่านเป็น caption ประกอบ ไม่ใช่ metric จริง เปลี่ยนเป็น 2-column stat block (ตัวเลขใหญ่
+              font-mono font-bold ด้านบน + label ตัวพิมพ์เล็กจางด้านล่าง) รูปแบบเดียวกับแถว Exercises/Sets/
+              นาที ในการ์ด Today's Workout ด้านบน — ตัวเลข/สูตรคำนวณไม่เปลี่ยน (ยังเป็น weeklyTotalSets/
+              weeklyConsistencyPct ชุดเดียวกับ WeeklyVolume/ConsistencyStrip เป๊ะ) */}
+          <div className="grid grid-cols-2 gap-3 mt-3.5 pt-3 border-t border-white/5">
+            <div>
+              <p className="font-mono font-bold text-base text-ink leading-none">
+                {data.weeklyTotalSets} <span className="text-[10px] font-sans font-normal text-muted">sets</span>
+              </p>
+              <p className="text-[10px] text-muted mt-1">Weekly Volume</p>
+            </div>
             {data.weeklyConsistencyPct != null && (
-              <span className="text-muted">
-                Consistency <span className="text-ink font-mono">{data.weeklyConsistencyPct}%</span>
-              </span>
+              <div>
+                <p className="font-mono font-bold text-base text-ink leading-none">{data.weeklyConsistencyPct}%</p>
+                <p className="text-[10px] text-muted mt-1">Consistency</p>
+              </div>
             )}
           </div>
         </div>
