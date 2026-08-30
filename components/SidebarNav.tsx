@@ -159,7 +159,16 @@ export default function SidebarNav() {
                   : undefined
               }
             >
-              <Icon active={active} />
+              {/* ฟีดแบ็ก "Active Indicator ตอนนี้ใช้ Orange line + glow แล้ว ผมจะเพิ่ม icon background แบบ
+                  subtle ไม่ต้องเพิ่มสี" — เดิม active state มีแค่แถบ inset ซ้าย (3px) + gradient wash เต็ม
+                  แถวอยู่แล้ว เพิ่มพื้นหลังวงกลมจางๆ เฉพาะหลังไอคอนอีกชั้น (สีอำพันเดียวกัน ไม่เพิ่มสีใหม่)
+                  ให้ไอคอนเด่นขึ้นเป็นจุดโฟกัสชัดกว่าเดิม โดยเฉพาะตอน rail โหมด (lg) ที่มีแค่ไอคอนอย่างเดียว */}
+              <span
+                className="flex items-center justify-center rounded-md shrink-0"
+                style={active ? { backgroundColor: withAlpha(COLORS.amber, '1A'), width: 28, height: 28 } : { width: 28, height: 28 }}
+              >
+                <Icon active={active} />
+              </span>
               <span className={`hidden xl:inline font-display tracked uppercase text-[11px] ${active ? 'text-amber' : 'text-muted'}`}>{label}</span>
             </Link>
           )
