@@ -393,7 +393,7 @@ export default function AICoachCompactCard({
             // (chosen/handleStart ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ isRestDay สลับเป็น false ระหว่าง
             // เซสชัน แต่จะไม่ถูกเสนอเป็น action หลักตอนวันนี้เป็นวันพัก) เปลี่ยนเป็นลิงก์เบาๆ ไปดู
             // Recovery/AI Coach แทน ไม่ใช่ CTA เด่นแบบ "เริ่ม" เพราะ Rest Day ไม่ควรมี action ที่เด่นกว่า "พัก"
-            <Button as={Link} href={href} className="flex-1 min-w-0">
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
               ดู Recovery →
             </Button>
           ) : templatesLoading ? (
@@ -405,7 +405,11 @@ export default function AICoachCompactCard({
             // workout_templates (คนละตารางกับ program_days ที่หน้าโปรแกรมใช้) บังเอิญตั้งชื่อด้วยคำนำหน้า
             // "Day N" ชนกับเลขวันในตารางโปรแกรมจริงของผู้ใช้ ทำให้เข้าใจผิดว่าเป็นเลขเดียวกัน — เปลี่ยนไปใช้
             // startLabel (ชื่อกล้ามเนื้อหลัก) แทนทั้งหมด ตัดคำว่า "Day N" ที่ไม่มีความหมายออกไปเลย
-            <Button type="button" onClick={handleStart} disabled={starting} className="flex-1 min-w-0">
+            // ฟีดแบ็ก "ปุ่มส้มเรืองแสงหลายจุด — ควรมี Primary CTA เดียวในหน้า ที่เหลือเป็น Secondary" —
+            // Today's Workout hero (DashboardView.tsx) เป็น glow-CTA หลักของหน้าอยู่แล้ว ปุ่มนี้ (การ์ด
+            // MINT Coach ซึ่งตั้งใจให้เป็น "Assistant Layer" ไม่แข่งกับ Dashboard ตามฟีดแบ็กรอบก่อนๆ)
+            // เปลี่ยนเป็น variant="secondary" (กรอบอำพัน ไม่มี glow) แทน
+            <Button type="button" onClick={handleStart} disabled={starting} variant="secondary" className="flex-1 min-w-0">
               <span className="truncate">{starting ? '...' : `เริ่ม ${startLabel}`}</span>
               {!starting && <span aria-hidden="true">→</span>}
             </Button>
@@ -413,11 +417,11 @@ export default function AICoachCompactCard({
             // ฟีดแบ็ก "CORE กับ DAY 5 — LOWER" — กรณีมีเทมเพลตอยู่แล้วแต่ไม่มีตัวไหนมีท่าตรงกับ mg เลย
             // (bestTemplateFor คืน undefined) เดิมจะหลุดไปโชว์ "สร้างโปรแกรมแรก" ซึ่งผิด (มีเทมเพลตอยู่แล้ว)
             // และก่อนหน้านั้นยิ่งแย่กว่าคือแอบใช้เทมเพลตที่ไม่เกี่ยวข้องแทน — แยกเป็นข้อความที่ตรงความจริง
-            <Button as={Link} href="/templates" className="flex-1 min-w-0">
+            <Button as={Link} href="/templates" variant="secondary" className="flex-1 min-w-0">
               ดูเทมเพลตทั้งหมด →
             </Button>
           ) : (
-            <Button as={Link} href="/templates" className="flex-1 min-w-0">
+            <Button as={Link} href="/templates" variant="secondary" className="flex-1 min-w-0">
               สร้างโปรแกรมแรก
             </Button>
           )}

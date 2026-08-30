@@ -13,7 +13,12 @@ interface ButtonOwnProps {
   // ในแอป) — เลือกแบบ AI Coach เป็นมาตรฐาน (สมบูรณ์กว่า ใช้โทเคนที่ประกาศไว้แล้วอยู่แล้ว ไม่ใช่ค่าใหม่)
   // `icon` แยกไว้สำหรับปุ่มวงกลมขอบบาง (เช่น ลิงก์ไอคอนไปหน้า AI Coach เต็ม) ซึ่งเป็นรูปแบบที่ต่างกัน
   // จริง (secondary, ไม่ใช่ primary action) ไม่ใช่แค่สีต่าง จึงแยก variant ไม่ยุบรวมกับ primary
-  variant?: 'primary' | 'icon'
+  // ฟีดแบ็ก "ปุ่มส้มเรืองแสงหลายจุดทั่วหน้า (ให้ MINT แนะนำ, ดูเทมเพลตทั้งหมด, ...) ควรมี Primary CTA
+  // เดียวในหน้านั้น ส่วนที่เหลือเป็น Secondary/Outline" — เพิ่ม variant "secondary": กรอบอำพัน + ตัวอักษร
+  // อำพัน พื้นโปร่งใส ไม่มี glow/gradient (ต่างจาก primary ที่มีทั้งคู่) ให้การ์ดที่ไม่ใช่ action หลักของ
+  // หน้า (เช่น ปุ่มใน AICoachCompactCard.tsx) ใช้แทน — Hero CTA ของ Today's Workout (DashboardView.tsx)
+  // ยังคง variant="primary" (default) ไว้ เป็น glow-CTA เดียวของหน้า
+  variant?: 'primary' | 'secondary' | 'icon'
   // ขนาด CTA หลัก — 'sm' (เดิม: AI Coach, การ์ดรอง) ปุ่มเล็ก text-[11px]/px-4 py-2, 'md' (เดิม: Hero
   // Workout CTA เดียวในหน้า) ปุ่มใหญ่กว่า text-sm/px-5 py-2.5 — ใช้ prop แทนให้ className ไปแข่งกันเอง
   // (ลำดับ class ใน stylesheet ที่คอมไพล์แล้วไม่แน่นอน จะพึ่ง "class หลังชนะ" ไม่ได้จริง) ไม่มีผลกับ
@@ -48,6 +53,17 @@ export default function Button<T extends ElementType = 'button'>({
       <Comp
         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${className}`}
         style={{ border: `1px solid ${withAlpha(COLORS.amber, '40')}`, ...style }}
+        {...rest}
+      >
+        {children}
+      </Comp>
+    )
+  }
+  if (variant === 'secondary') {
+    return (
+      <Comp
+        className={`inline-flex items-center justify-center gap-1.5 font-display tracked uppercase rounded-full active:scale-[0.99] transition disabled:opacity-50 ${PRIMARY_SIZE_CLASS[size]} ${className}`}
+        style={{ background: 'transparent', border: `1px solid ${withAlpha(COLORS.amber, '40')}`, color: COLORS.amber, ...style }}
         {...rest}
       >
         {children}
