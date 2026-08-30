@@ -75,8 +75,9 @@ export default function WeeklyGoalMuscleCard() {
     <div className="rounded-[20px] bg-surface border border-line shadow-elevated overflow-hidden animate-rise">
       <div className="px-4 pt-4 flex items-center justify-between">
         <p className="font-display text-sm tracked uppercase text-ink">เป้าหมายรายสัปดาห์</p>
+        {/* ฟีดแบ็ก "'ดูทั้งหมด' ควรเป็น 'ดูรายละเอียดทั้งหมด' — universal กว่า" (สอดคล้องกับ WeeklyVolume.tsx) */}
         <Link href="/stats" className="text-[11px] text-amber hover:underline shrink-0">
-          ดูทั้งหมด →
+          ดูรายละเอียดทั้งหมด →
         </Link>
       </div>
       <div className="px-4 pb-4 pt-3 flex items-center gap-4">

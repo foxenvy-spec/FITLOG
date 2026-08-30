@@ -63,7 +63,8 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
             const focus = describeMuscleFocus(mg)
             return { main: focus.region, detail: focus.relatedGroups.join(' • ') }
           })()
-        : { main: 'ยังไม่ได้ตั้งโปรแกรม', detail: null }
+        // ฟีดแบ็ก "'ยังไม่ได้ตั้งโปรแกรม' อ่านยากกว่า 'ยังไม่มี Workout วันนี้'" (ตัวเดียวกับ DashboardView.tsx)
+        : { main: 'ยังไม่มี Workout วันนี้', detail: null }
 
   // เติม "หมวดร่างกาย" นำหน้ารายละเอียดในวงเล็บของ workoutTitle เท่านั้น (rawDetail ที่มาจาก splitTitleDetail)
   // ไม่แตะ path ของ Rest Day/muscleRecommendation fallback ด้านบน (มี region ของตัวเองอยู่แล้วในตัว)

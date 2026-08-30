@@ -1379,7 +1379,10 @@ export default function DashboardPage() {
               />
               <div className="relative">
               {(() => {
-                const title = workoutTitle ?? 'ยังไม่ได้ตั้งโปรแกรม'
+                // ฟีดแบ็ก "'ยังไม่ได้ตั้งโปรแกรม' อ่านยากกว่า 'ยังไม่มี Workout วันนี้'" — เปลี่ยนหัวข้อใหญ่
+                // ตรงนี้ ส่วนย่อหน้าอธิบายด้านล่าง ("ยังไม่ได้ตั้งโปรแกรมวันนี้ — เลือกโปรแกรมเพื่อ...")
+                // ยังคงคำเดิมไว้ตามจุดประสงค์ของมัน (อธิบายเหตุผล ไม่ใช่หัวข้อ) ไม่ซ้ำคำเป๊ะกันอีกต่อไป
+                const title = workoutTitle ?? 'ยังไม่มี Workout วันนี้'
                 const splitAt = title.search(/\s[—-]\s/)
                 const dayLabel = splitAt >= 0 ? title.slice(0, splitAt) : null
                 const restLabel = splitAt >= 0 ? title.slice(splitAt + 3) : title
@@ -1958,8 +1961,10 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
+              {/* ฟีดแบ็ก "'0 Day Streak' อ่านแปลกๆ ตอนไม่มี Streak — ควรเป็น 'Streak: 0 วัน' หรือ '0 วัน
+                  ต่อเนื่อง'" — สลับลำดับคำให้อ่านเป็นภาษาไทยธรรมชาติแทนแปลตรงตัวจากอังกฤษ */}
               <p className="text-[11px] text-muted mt-2.5">
-                <span className="text-ink font-mono">{data.streak}</span> Day Streak
+                <span className="text-ink font-mono">{data.streak}</span> วันต่อเนื่อง
               </p>
             </div>
           </div>
