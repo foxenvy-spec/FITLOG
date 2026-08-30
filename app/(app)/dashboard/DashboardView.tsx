@@ -40,6 +40,7 @@ import {
   computeLatestPR,
   computeSessionVolumeChange,
   daysSinceLastTrained,
+  computePlannedConsistency,
   type Insight,
   type MuscleRecommendation,
   type TodaysRecommendation,
@@ -174,6 +175,12 @@ export interface DashboardData {
   hasAnyHistory: boolean
   // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) 0-7 — ใช้คำนวณ Fitness Score เท่านั้น
   last7DaysTrainedCount: number
+  // ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — สรุปเลข Volume/Consistency
+  // ของสัปดาห์นี้มาไว้ในการ์ด Weekly Goal ด้วย (คำนวณจากข้อมูลที่ query มาแล้วในฟังก์ชันนี้ ไม่ query ซ้ำ
+  // กับ WeeklyVolume.tsx/ConsistencyStrip.tsx — สูตรเดียวกันเป๊ะ กันตัวเลขไม่ตรงกันข้ามการ์ด) รายละเอียด
+  // เต็มยังคงอยู่ที่การ์ดเดิมเหมือนเดิม จุดนี้แค่เพิ่มสรุปสั้นๆ ให้เชื่อมกัน
+  weeklyTotalSets: number
+  weeklyConsistencyPct: number | null
 }
 
 export async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
@@ -291,6 +298,27 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
       return sum + pct
     }, 0) / VOLUME_MUSCLES.length
   )
+
+  // ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — สรุป Volume รวมสัปดาห์นี้
+  // (ผลรวมเดียวกับ totalSets ใน WeeklyVolume.tsx เป๊ะ — thisWeekSets มาจาก query เดียวกัน กรอง type
+  // strength + performed_at ในสัปดาห์นี้เหมือนกัน) มาแสดงในการ์ด Weekly Goal ด้วย
+  const weeklyTotalSets = VOLUME_MUSCLES.reduce((sum, mg) => sum + (thisWeekSets[mg] ?? 0), 0)
+
+  // Consistency % ย้อนหลัง 21 วัน — สูตรเดียวกับ ConsistencyStrip.tsx (computePlannedConsistency) ทุก
+  // ประการ ใช้ distinctDates/workoutWeekdays ชุดเดียวกับที่คำนวณ streak ด้านบนอยู่แล้ว (ครอบคลุม 400 วัน
+  // ย้อนหลัง เกินพอสำหรับ 21 วัน) ไม่ query ซ้ำ — toIso ใช้ local timezone offset เดียวกับ ConsistencyStrip
+  // เพื่อให้ตัวเลขตรงกันเป๊ะ (ทั้งคู่รันฝั่ง browser ผ่าน useQuery เหมือนกัน)
+  const distinctDateSet = new Set(distinctDates)
+  const CONSISTENCY_WINDOW_DAYS = 21
+  const consistencyWindowDays: { dayOfWeek: number; hasWorkout: boolean }[] = []
+  for (let i = 0; i < CONSISTENCY_WINDOW_DAYS; i++) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const offset = d.getTimezoneOffset()
+    const iso = new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10)
+    consistencyWindowDays.push({ dayOfWeek: d.getDay(), hasWorkout: distinctDateSet.has(iso) })
+  }
+  const weeklyConsistencyPct = computePlannedConsistency(consistencyWindowDays, workoutWeekdays).pct
 
   const volumeInsights = computeVolumeTrendInsights(thisWeekSets, lastWeekSets)
   const imbalanceInsights = computeImbalanceInsights(thisWeekSets, VOLUME_MUSCLES)
@@ -491,6 +519,8 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     weekDayTicks,
     hasAnyHistory: distinctDates.length > 0 || typedDays.length > 0,
     last7DaysTrainedCount,
+    weeklyTotalSets,
+    weeklyConsistencyPct,
   }
 }
 
@@ -1955,7 +1985,12 @@ export default function DashboardPage() {
         style={{ animationDelay: '300ms' }}
       >
         <div className="px-4 py-4">
-          <p className="text-[10px] tracked uppercase text-muted mb-3">Weekly Goal</p>
+          {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ อยากได้การ์ดเดียวชื่อ
+              'TRAINING THIS WEEK'" — เปลี่ยนป้ายหัวการ์ดจาก "Weekly Goal" (เดิมอ่านเหมือนพูดถึงแค่ % เดียว)
+              เป็น "Training This Week" ให้ตรงกับบทบาทใหม่ที่ครอบทั้ง 3 ตัวเลข ไม่ใช่รื้อการ์ดย่อยที่เหลือ
+              (WeeklyVolume/ConsistencyStrip/Heatmap) ทิ้ง — รายละเอียดเต็มยังอยู่ที่เดิมสำหรับคนที่อยากเจาะลึก
+              จุดนี้แค่สรุปเลขให้เห็นภาพรวมเชื่อมกันโดยไม่ต้องเลื่อนไปดูอีก 2 การ์ด */}
+          <p className="text-[10px] tracked uppercase text-muted mb-3">Training This Week</p>
 
           <div className="flex items-center gap-4">
             {/* v45: ฟีดแบ็ก "วงกลมชมพูโดดออกมา ไม่เข้ากับ Dark Titanium — เปลี่ยนเป็น Orange/Titanium
@@ -2033,6 +2068,21 @@ export default function DashboardPage() {
                 </span>
               </div>
             ))}
+          </div>
+
+          {/* สรุป Volume/Consistency สัปดาห์นี้ — ตัวเลขเดียวกับการ์ด WeeklyVolume/ConsistencyStrip เป๊ะ
+              (คำนวณจากข้อมูลชุดเดียวกัน ดู weeklyTotalSets/weeklyConsistencyPct ใน fetchDashboardData
+              ด้านบน) รายละเอียดรายกล้ามเนื้อ/ปฏิทินเต็มยังอยู่ที่การ์ดเดิมด้านล่างเหมือนเดิม จุดนี้แค่สรุปให้
+              เห็นภาพรวมโดยไม่ต้องเลื่อนไปดูอีก 2 การ์ด */}
+          <div className="flex items-center gap-3 mt-3.5 pt-3 border-t border-white/5 text-[11px]">
+            <span className="text-muted">
+              Volume <span className="text-ink font-mono">{data.weeklyTotalSets}</span> เซ็ต
+            </span>
+            {data.weeklyConsistencyPct != null && (
+              <span className="text-muted">
+                Consistency <span className="text-ink font-mono">{data.weeklyConsistencyPct}%</span>
+              </span>
+            )}
           </div>
         </div>
       </div>
