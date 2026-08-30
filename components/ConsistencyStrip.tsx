@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, computePlannedConsistency } from '@/lib/dashboardStats'
+import { getWeekRange, computePlannedConsistency, computeCurrentStreakDates, computeLongestStreak } from '@/lib/dashboardStats'
+import { daysAgoStr } from '@/lib/weekdays'
 import { workoutVolumeKg } from '@/lib/workoutDisplay'
 import { buildDisplaySets } from '@/components/ExerciseCard'
 import type { Workout, WorkoutSet } from '@/lib/types'
@@ -42,20 +43,33 @@ const LEVEL_LABEL: Record<Level, string> = {
 const WINDOW_ROW_SELECT =
   'performed_at, sets, reps, weight_kg, total_volume_kg, type, exercise_name, muscle_group, cardio_type, duration_min, calories_kcal'
 
+// ฟีดแบ็ก "Consistency ยังมีพื้นที่ให้พัฒนาเยอะ — เพิ่ม Trend (ดีขึ้น/แย่ลงจากช่วงก่อน) + Milestone
+// (อีกกี่วันถึงจะทำสถิติใหม่)" — ทั้งสองอย่างต้องการข้อมูลนอกช่วงหน้าต่าง 21 วันที่มีอยู่เดิม:
+// prevWindowRows (ช่วง 21 วันก่อนหน้าช่วงปัจจุบัน สำหรับ trend) และ streakRows (ประวัติย้อนหลัง 400 วัน
+// สำหรับ current/best streak ตัวเดียวกับที่ DashboardView.tsx ใช้คำนวณ streak หลักของแอปอยู่แล้ว — เรียก
+// computeCurrentStreakDates/computeLongestStreak ตัวเดียวกันเป๊ะ ไม่คำนวณสูตรแยกใหม่)
 async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   const today = new Date()
   const windowStart = new Date(today)
   windowStart.setDate(windowStart.getDate() - (WINDOW_DAYS - 1))
+  const prevWindowEnd = new Date(windowStart)
+  prevWindowEnd.setDate(prevWindowEnd.getDate() - 1)
+  const prevWindowStart = new Date(prevWindowEnd)
+  prevWindowStart.setDate(prevWindowStart.getDate() - (WINDOW_DAYS - 1))
   const { start: weekStart, end: weekEnd } = getWeekRange()
+  const streakCutoff = daysAgoStr(400)
 
-  const [{ data: windowRows }, { data: weekRows }, { data: programDayRows }] = await Promise.all([
-    supabase.from('workouts').select(WINDOW_ROW_SELECT).gte('performed_at', toIso(windowStart)).lte('performed_at', toIso(today)),
-    supabase.from('workouts').select('exercise_name, type, sets, reps, weight_kg, total_volume_kg').gte('performed_at', weekStart).lte('performed_at', weekEnd),
-    // ฟีดแบ็ก "Consistency ควรวัดกับ Plan ไม่ใช่ปฏิทินดิบ — โปรแกรมตั้งไว้ 3 วัน/สัปดาห์ ทำครบ 3 วันทุก
-    // สัปดาห์ควรนับ 100% ไม่ใช่ 7/21 = 33%" — ดึงวันที่ตั้งโปรแกรมไว้ (day_of_week) มาเป็นตัวส่วนแทนที่จะ
-    // นับ "วันออกกำลังกาย" เทียบกับจำนวนวันในช่วงเฉยๆ เหมือนเดิม
-    supabase.from('program_days').select('day_of_week'),
-  ])
+  const [{ data: windowRows }, { data: prevWindowRows }, { data: weekRows }, { data: programDayRows }, { data: streakRows }] =
+    await Promise.all([
+      supabase.from('workouts').select(WINDOW_ROW_SELECT).gte('performed_at', toIso(windowStart)).lte('performed_at', toIso(today)),
+      supabase.from('workouts').select('performed_at').gte('performed_at', toIso(prevWindowStart)).lte('performed_at', toIso(prevWindowEnd)),
+      supabase.from('workouts').select('exercise_name, type, sets, reps, weight_kg, total_volume_kg').gte('performed_at', weekStart).lte('performed_at', weekEnd),
+      // ฟีดแบ็ก "Consistency ควรวัดกับ Plan ไม่ใช่ปฏิทินดิบ — โปรแกรมตั้งไว้ 3 วัน/สัปดาห์ ทำครบ 3 วันทุก
+      // สัปดาห์ควรนับ 100% ไม่ใช่ 7/21 = 33%" — ดึงวันที่ตั้งโปรแกรมไว้ (day_of_week) มาเป็นตัวส่วนแทนที่จะ
+      // นับ "วันออกกำลังกาย" เทียบกับจำนวนวันในช่วงเฉยๆ เหมือนเดิม
+      supabase.from('program_days').select('day_of_week'),
+      supabase.from('workouts').select('performed_at').gte('performed_at', streakCutoff).order('performed_at', { ascending: false }),
+    ])
 
   const windowWorkouts = (windowRows as Workout[]) ?? []
 
@@ -72,6 +86,22 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
 
   const plannedWeekdays = new Set(((programDayRows as { day_of_week: number }[]) ?? []).map((d) => d.day_of_week))
 
+  // ช่วงก่อนหน้า (21 วันก่อน windowStart) เทียบเปอร์เซ็นต์ตาม Plan แบบเดียวกับช่วงปัจจุบัน (ใช้ plannedWeekdays
+  // เดียวกัน — โปรแกรมที่ตั้งไว้ตอนนี้ถือว่าใช้ตลอดทั้งสองช่วงเพื่อความง่าย ไม่มีประวัติ versioning ของ program_days)
+  const prevWorkoutDates = new Set(((prevWindowRows as { performed_at: string }[]) ?? []).map((r) => r.performed_at))
+  const prevDays: { dayOfWeek: number; hasWorkout: boolean }[] = []
+  for (let i = 0; i < WINDOW_DAYS; i++) {
+    const d = new Date(prevWindowStart)
+    d.setDate(d.getDate() + i)
+    prevDays.push({ dayOfWeek: d.getDay(), hasWorkout: prevWorkoutDates.has(toIso(d)) })
+  }
+  const previousConsistencyPct = computePlannedConsistency(prevDays, plannedWeekdays).pct
+
+  // Current/Best streak (นับวัน ไม่ใช่สัปดาห์ — ตัวเดียวกับ Dashboard "Workout Streak") ใช้หา milestone
+  const distinctStreakDates = Array.from(new Set(((streakRows as { performed_at: string }[]) ?? []).map((r) => r.performed_at)))
+  const currentStreak = computeCurrentStreakDates(distinctStreakDates, plannedWeekdays).size
+  const bestStreakEver = computeLongestStreak(distinctStreakDates, plannedWeekdays)
+
   return {
     setsByDay,
     workoutsByDay,
@@ -80,6 +110,9 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
     weekVolumeKg,
     weekExerciseCount,
     plannedWeekdays,
+    previousConsistencyPct,
+    currentStreak,
+    bestStreakEver,
   }
 }
 
@@ -249,6 +282,7 @@ export default function ConsistencyStrip() {
             value={`${grid.consistencyPct}%`}
             label="Training Consistency"
             caption={`${grid.completedPlannedCount}/${grid.plannedCount} ครั้งตามแผน`}
+            trend={data?.previousConsistencyPct != null ? grid.consistencyPct - data.previousConsistencyPct : null}
           />
         ) : (
           <StatTile value={grid?.workoutDays ?? 0} label="วันออกกำลังกาย" caption={`จาก ${WINDOW_DAYS} วัน`} />
@@ -257,6 +291,24 @@ export default function ConsistencyStrip() {
         <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
         <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
       </div>
+
+      {/* ฟีดแบ็ก "เพิ่ม milestone: อีก 2 วัน → ทำสถิติใหม่ — Gamification จะทำให้ Dashboard มีแรงจูงใจมากขึ้น"
+          — เทียบ current streak (นับวัน) กับสถิติสูงสุดที่เคยทำได้ ตัวเดียวกับ Dashboard "Workout Streak"
+          (ดู comment เต็มที่ fetchConsistencyData) ไม่โชว์ตอนไม่มีข้อมูลพอ (ยังไม่เคยมี streak เลย) */}
+      {data && data.bestStreakEver > 0 && (
+        <div className="lg:col-span-3 border-t border-line px-4 py-2.5">
+          {data.currentStreak >= data.bestStreakEver ? (
+            <p className="text-[11px] text-center" style={{ color: '#E8A33D' }}>
+              🔥 กำลังทำสถิติต่อเนื่องที่ดีที่สุดของคุณอยู่ ({data.currentStreak} วันติด)
+            </p>
+          ) : (
+            <p className="text-[11px] text-center text-muted">
+              🔥 อีก <span className="text-amber font-medium">{data.bestStreakEver - data.currentStreak}</span> วัน → ทำสถิติต่อเนื่องใหม่
+              (สถิติเดิม {data.bestStreakEver} วัน)
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -356,12 +408,29 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
   )
 }
 
-function StatTile({ value, label, caption }: { value: number | string; label: string; caption: string }) {
+function StatTile({
+  value,
+  label,
+  caption,
+  trend,
+}: {
+  value: number | string
+  label: string
+  caption: string
+  // ฟีดแบ็ก "Consistency ควรเห็นเทรนด์ ดีขึ้น/แย่ลง ไม่ใช่แค่เลขลอยๆ" — เทียบกับช่วง 21 วันก่อนหน้า
+  // (ตัวเลขเดียวกับ computePlannedConsistency ที่ใช้คำนวณค่าปัจจุบัน) undefined = ไม่มีข้อมูลพอเทียบ
+  trend?: number | null
+}) {
   return (
     <div className="px-3 py-3.5 text-center flex flex-col items-center justify-center">
       <p className="font-mono text-lg text-amber">{value}</p>
       <p className="text-[10px] text-ink mt-0.5">{label}</p>
       <p className="text-[9px] text-muted">{caption}</p>
+      {trend != null && trend !== 0 && (
+        <p className="text-[9px] mt-0.5" style={{ color: trend > 0 ? '#7A9B57' : '#C1503A' }}>
+          {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% จากช่วงก่อน
+        </p>
+      )}
     </div>
   )
 }
