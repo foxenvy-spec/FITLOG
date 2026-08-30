@@ -345,8 +345,12 @@ export default function AICoachCompactCard({
                   วันนี้' แทนที่จะโชว์แค่ % เฉยๆ" — ดึงจาก recoveryTier().adviceTh (เกณฑ์/รอยต่อเดียวกับสี
                   ของแท่ง Recovery ด้านบนเป๊ะ ไม่คิดเกณฑ์ใหม่แยกต่างหาก กันข้อความกับสีขัดกันเอง) ไม่โชว์ตอน
                   Rest Day (มีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่คำแนะนำระดับความหนัก) */}
+              {/* ฟีดแบ็ก "ข้อความ adviceTh ('กล้ามเนื้อกลุ่มนี้พร้อมเต็มที่ เพิ่ม...') ถูกตัดด้วย ... ทั้งที่
+                  เป็นประโยคสำคัญ" — truncate (บรรทัดเดียว) เดิมตัดประโยคที่ยาวกว่าคอลัมน์แคบของการ์ดนี้จน
+                  อ่านไม่ครบ เปลี่ยนเป็น line-clamp-2 ให้ขึ้นบรรทัดที่ 2 ได้แทนที่จะตัดทิ้งทันทีที่บรรทัดแรก
+                  เต็ม (ยัง ellipsis ถ้ายาวเกิน 2 บรรทัดจริงๆ กันการ์ดสูงขึ้นไม่จำกัด) */}
               {!isRestDay && (
-                <p className="truncate mt-1" style={{ fontSize: 10, color: barColor }}>
+                <p className="line-clamp-2 mt-1" style={{ fontSize: 10, color: barColor, lineHeight: 1.35 }}>
                   {recoveryTier(displayPct).adviceTh}
                   {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำนี้ — เฉพาะตอนยังเหลือโควตาจริง
                       (setsRemaining > 0) เหมือน desktop's Recovery banner ไม่โชว์ตอนเกินเป้าแล้ว */}
