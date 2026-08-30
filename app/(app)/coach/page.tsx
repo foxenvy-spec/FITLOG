@@ -36,6 +36,7 @@ import {
   type PushPullBalance,
   type OverloadPlan,
 } from '@/lib/aiCoach'
+import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import Skeleton from '@/components/Skeleton'
 import InsightCard from '@/components/InsightCard'
 import ErrorState from '@/components/ErrorState'
@@ -114,12 +115,18 @@ export default function CoachPage() {
     try {
       const { start: thisWeekStart, end: thisWeekEnd } = getWeekRange()
 
-      const { data: rows } = await supabase
-        .from('workouts')
-        .select('*')
-        .eq('type', 'strength')
-        .order('performed_at', { ascending: false })
-        .limit(2000)
+      const [{ data: rows }, weeklyVolumeTargets] = await Promise.all([
+        supabase
+          .from('workouts')
+          .select('*')
+          .eq('type', 'strength')
+          .order('performed_at', { ascending: false })
+          .limit(2000),
+        // เป้าหมายเซ็ต/สัปดาห์ — ให้ suggestMuscleToTrain ด้านล่างเช็ค Weekly Volume ก่อนแนะนำตามตาราง
+        // (ฟีดแบ็ก "Legs ฟื้นตัวแล้ว ≠ Legs ควรฝึก" — เดิมหน้านี้ยึดตารางเงียบๆ ไม่เคยเช็ค Volume เหมือน
+        // Dashboard ก่อนแก้ ทำให้แนะนำขัดกันได้)
+        fetchWeeklyVolumeTargets(supabase),
+      ])
 
       const allEntries = (rows as Workout[]) ?? []
 
@@ -220,12 +227,13 @@ export default function CoachPage() {
         ? todayScheduledMuscle
         : getNextScheduledMuscle(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
 
-      const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
+      const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle, thisWeekSets, weeklyVolumeTargets)
       // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีข้อมูล
       // recovery — เช็คผลลัพธ์จริงตรงกับ todayScheduledMuscle เป๊ะๆ ก่อน (เหมือน DashboardView.tsx
       // isRecommendationForToday) ส่งต่อให้ computeAIDailySummary กันข้อความพูดว่า "วันนี้ควรเล่น"
-      // ทั้งที่จริงๆ กำลังแนะนำของครั้งถัดไป
-      const isRecommendationForToday = preferToday && recommendation?.muscleGroup === todayScheduledMuscle
+      // ทั้งที่จริงๆ กำลังแนะนำของครั้งถัดไป — scheduleOverriddenFrom ก็ยังนับว่า "เรื่องของวันนี้" เหมือนกัน
+      const isRecommendationForToday =
+        preferToday && (recommendation?.muscleGroup === todayScheduledMuscle || recommendation?.scheduleOverriddenFrom === todayScheduledMuscle)
       // Training Balance Engine (Priority 2) — เดิม dailySummary เห็นแค่ recovery + push/pull ไม่รู้เรื่อง
       // สัดส่วนบน/ล่างลำตัวเทียบเป้าหมายเลย ทั้งที่ thisWeekSets ด้านบนมีพร้อมใช้อยู่แล้ว
       const trainingBalance = computeTrainingBalance(thisWeekSets, VOLUME_MUSCLES)

@@ -24,10 +24,12 @@ import {
   recoveryRecommendationLabel,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
+  getWeekRange,
   type ScheduledDay,
 } from '@/lib/dashboardStats'
 import { computeRecoveryHistory } from '@/lib/trends'
 import { todayStr } from '@/lib/weekdays'
+import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import Skeleton from '@/components/Skeleton'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import ErrorState from '@/components/ErrorState'
@@ -65,6 +67,11 @@ export default function RecoveryPage() {
   // เก็บ log เวทเทรนนิ่งดิบ (muscle_group + performed_at) ไว้ใช้สร้างกราฟ Recovery Score ย้อนหลัง
   const [strengthLogs, setStrengthLogs] = useState<{ muscle_group: string | null; performed_at: string }[]>([])
   const [historyRangeDays, setHistoryRangeDays] = useState<30 | 90>(30)
+  // เซ็ตที่ทำไปแล้วสัปดาห์นี้ + เป้าหมายเซ็ต/สัปดาห์ ต่อกลุ่มกล้ามเนื้อ — ฟีดแบ็ก "Legs ฟื้นตัวแล้ว ≠ Legs
+  // ควรฝึก" เดิมหน้านี้แนะนำตามตารางเงียบๆ ไม่เคยเช็ค Weekly Volume เลย (เหมือนที่ Dashboard เคยเป็นก่อน
+  // แก้ — ดู suggestMuscleToTrain ใน lib/dashboardStats.ts) ทำให้ Dashboard กับหน้านี้แนะนำขัดกันได้
+  const [thisWeekSets, setThisWeekSets] = useState<Record<string, number>>({})
+  const [weeklyVolumeTargets, setWeeklyVolumeTargets] = useState<Record<string, number>>({})
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -81,6 +88,26 @@ export default function RecoveryPage() {
       setStrengthLogs(strengthRows)
       const today = todayStr()
       const trainedAnyToday = strengthRows.some((r) => r.performed_at?.slice(0, 10) === today)
+
+      // เซ็ตที่ทำไปแล้วสัปดาห์นี้ + เป้าหมายเซ็ต/สัปดาห์ ต่อกลุ่มกล้ามเนื้อ (ตรรกะเดียวกับ DashboardView.tsx)
+      // — ให้ suggestMuscleToTrain ด้านล่างเช็ค Weekly Volume ก่อนแนะนำตามตาราง ไม่ใช่ยึดตารางเงียบๆ อีกต่อไป
+      const { start: thisWeekStart, end: thisWeekEnd } = getWeekRange()
+      const [{ data: thisWeekRows }, targets] = await Promise.all([
+        supabase
+          .from('workouts')
+          .select('muscle_group, sets, performed_at')
+          .eq('type', 'strength')
+          .gte('performed_at', thisWeekStart)
+          .lte('performed_at', thisWeekEnd),
+        fetchWeeklyVolumeTargets(supabase),
+      ])
+      const weekSets: Record<string, number> = {}
+      ;((thisWeekRows as { muscle_group: string | null; sets: number | null; performed_at: string }[]) ?? []).forEach((r) => {
+        if (!r.muscle_group) return
+        weekSets[r.muscle_group] = (weekSets[r.muscle_group] ?? 0) + (r.sets ?? 0)
+      })
+      setThisWeekSets(weekSets)
+      setWeeklyVolumeTargets(targets)
 
       // % ความคืบหน้าของแผนวันนี้ — เช็คแผนของวันนี้ (program_day ตาม day_of_week) แล้วเทียบจำนวนท่าที่ complete จริง
       const dow = new Date(today + 'T00:00:00').getDay()
@@ -191,12 +218,14 @@ export default function RecoveryPage() {
         rows.forEach((r) => {
           recoveryPctMap[r.mg] = r.pct
         })
-        const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle)
+        const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle, thisWeekSets, weeklyVolumeTargets)
         if (!recommendation) return null
         // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีข้อมูล
         // recovery — เช็คว่าผลลัพธ์จริงตรงกับ scheduledMuscle ที่มาจากตารางวันนี้เป๊ะๆ ก่อน (เหมือน
-        // DashboardView.tsx isRecommendationForToday) กันป้าย "วันนี้ควรเล่น" ผิดพลาดในเคสขอบนี้
-        const isRecommendationForToday = isTodayScheduled && recommendation.muscleGroup === scheduledMuscle
+        // DashboardView.tsx isRecommendationForToday) กันป้าย "วันนี้ควรเล่น" ผิดพลาดในเคสขอบนี้ —
+        // scheduleOverriddenFrom ก็ยังนับว่า "เรื่องของวันนี้" เหมือนกัน (ดู comment เต็มที่ DashboardView.tsx)
+        const isRecommendationForToday =
+          isTodayScheduled && (recommendation.muscleGroup === scheduledMuscle || recommendation.scheduleOverriddenFrom === scheduledMuscle)
         const recColor = recoveryStatusColor(recommendation.pct)
         return (
           <div
@@ -204,13 +233,27 @@ export default function RecoveryPage() {
             style={{ backgroundColor: withAlpha(recColor, '1A') }}
           >
             <span className="text-lg">💪</span>
-            <p className="text-sm text-ink whitespace-pre-line">
-              {recoveryRecommendationLabel(progressPct, isRecommendationForToday)}{' '}
-              <span className="font-display tracked uppercase" style={{ color: recColor }}>
-                {recommendation.muscleGroup}
-              </span>{' '}
-              <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
-            </p>
+            <div className="min-w-0">
+              <p className="text-sm text-ink whitespace-pre-line">
+                {recoveryRecommendationLabel(progressPct, isRecommendationForToday)}{' '}
+                <span className="font-display tracked uppercase" style={{ color: recColor }}>
+                  {recommendation.muscleGroup}
+                </span>{' '}
+                <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
+              </p>
+              {/* ฟีดแบ็ก "Legs ฟื้นตัวแล้ว ≠ Legs ควรฝึก" — บอกเหตุผลตรงๆ เหมือนที่ Dashboard ทำ แทนที่จะ
+                  แนะนำเงียบๆ โดยไม่อธิบายว่าทำไมไม่ตรงตาราง */}
+              {recommendation.scheduleOverriddenFrom && (
+                <p className="text-[11px] text-muted mt-0.5">
+                  ตามตารางคือ{recommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว
+                </p>
+              )}
+              {recommendation.lowRecoveryCaution && (
+                <p className="text-[11px] mt-0.5" style={{ color: recColor }}>
+                  ⚠️ ฟื้นตัวยังไม่เต็มที่ แนะนำลดความหนักหรือเลื่อนออกไปก่อน
+                </p>
+              )}
+            </div>
           </div>
         )
       })()}
