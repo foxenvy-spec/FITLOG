@@ -289,6 +289,16 @@ export function computeRecoveryPct(lastTrainedDate: string | null, muscleGroup: 
   return Math.max(0, Math.min(100, Math.round((daysSince / windowDays) * 100)))
 }
 
+// ใช้ตรรกะวันที่แบบเดียวกับ computeRecoveryPct ด้านบน (แยกออกมาต่างหากเพราะจุดเรียกต้องการตัวเลข "กี่วัน
+// ที่แล้ว" ดิบๆ ไปแสดงผล เช่น "ล่าสุดเมื่อ 2 วันก่อน" ไม่ใช่ % ที่คำนวณสัมพัทธ์กับ recovery window ของ
+// แต่ละกลุ่มกล้ามเนื้อ) — null เมื่อยังไม่เคยเทรนกลุ่มนี้เลย (ไม่มี lastTrainedDate)
+export function daysSinceLastTrained(lastTrainedDate: string | null): number | null {
+  if (!lastTrainedDate) return null
+  const last = new Date(lastTrainedDate + 'T00:00:00')
+  const today = new Date(todayStr() + 'T00:00:00')
+  return Math.round((today.getTime() - last.getTime()) / 86400000)
+}
+
 // v49: ฟีดแบ็ก "สีเขียว/เหลือง/แดง/ดำอยู่ติดกัน ยังดู UI Dashboard มากกว่า Luxury UI อยากได้ 4 ระดับ:
 // 100% เขียวอ่อน, 80% Amber, 50% Orange, ต่ำ Red" — เดิมมี 3 ระดับ (0-40 แดง/41-75 เหลือง/76-100 เขียว)
 // ใช้ COLORS.amber ตัวเดียวคุมทั้งช่วงกลาง ไม่มีขั้นบอก "ใกล้เต็ม" (80%) กับ "กำลังฟื้น" (50%) แยกกัน —

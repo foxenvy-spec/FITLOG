@@ -6,6 +6,7 @@ import {
   computeLongestStreak,
   computeTodayTotals,
   computeRecoveryPct,
+  daysSinceLastTrained,
   recoveryStatusColor,
   recoveryTier,
   computeRecoveryReadyInHours,
@@ -287,6 +288,20 @@ describe('computeRecoveryPct (Recovery Logic)', () => {
   it('falls back to a default window for an unknown muscle group', () => {
     // unknown group defaults to 2-day window, same math as 'อก'
     expect(computeRecoveryPct('2026-07-17', 'ไม่รู้จัก')).toBe(50)
+  })
+})
+
+describe('daysSinceLastTrained', () => {
+  it('returns null when the muscle has never been trained', () => {
+    expect(daysSinceLastTrained(null)).toBeNull()
+  })
+
+  it('returns 0 the same day it was trained', () => {
+    expect(daysSinceLastTrained('2026-07-18')).toBe(0)
+  })
+
+  it('returns the raw day count regardless of any recovery window', () => {
+    expect(daysSinceLastTrained('2026-07-15')).toBe(3)
   })
 })
 

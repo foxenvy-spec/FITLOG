@@ -38,6 +38,7 @@ import {
   getNextScheduledMuscle,
   estimateCaloriesToday,
   computeLatestPR,
+  daysSinceLastTrained,
   type Insight,
   type MuscleRecommendation,
   type TodaysRecommendation,
@@ -1314,6 +1315,40 @@ export default function DashboardPage() {
               {plannedMuscleLabel && (
                 <p className="text-xs text-amber mt-1.5 truncate">{plannedMuscleLabel}</p>
               )}
+
+              {/* "ทำไมวันนี้?" — ฟีดแบ็ก "อยากให้ Today's Workout เป็นพระเอกของ Dashboard" พร้อม mockup
+                  โชว์เหตุผลเป็น bullet (Recovery/Weekly Target/วันที่เทรนล่าสุด) แทนที่จะให้ผู้ใช้ต้องไป
+                  หาเหตุผลเองจากการ์ด Recovery ด้านล่าง — ใช้ data.todaysRecommendation ตัวเดียวกับที่การ์ด
+                  Recovery ใช้อยู่แล้ว (ไม่คำนวณซ้ำ) โชว์เฉพาะตอน isRecommendationForToday จริงๆ (กันกรณี
+                  คำแนะนำเป็นของวันอื่น/กลุ่มอื่นที่ไม่ตรงกับ workoutTitle ด้านบน จะทำให้ bullet พูดคนละเรื่อง
+                  กับหัวการ์ด) */}
+              {data.isRecommendationForToday && data.todaysRecommendation && (() => {
+                const rec = data.todaysRecommendation
+                const tier = recoveryTier(rec.pct)
+                const daysSince = daysSinceLastTrained(data.recoveryDates[rec.muscleGroup] ?? null)
+                return (
+                  <div className="mt-2.5 space-y-1">
+                    <p className="text-[9px] tracked uppercase text-muted">ทำไมวันนี้?</p>
+                    <p className="text-[11px]" style={{ color: tier.color }}>
+                      {tier.labelEn === 'Excellent' || tier.labelEn === 'Good' ? '🟢' : tier.labelEn === 'Recovering' ? '🟡' : '🔴'}{' '}
+                      {rec.muscleGroup} ฟื้นตัวแล้ว {rec.pct}%
+                    </p>
+                    {rec.setsTarget > 0 && (
+                      <p className="text-[11px]" style={{ color: rec.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}>
+                        {rec.setsRemaining > 0 ? '🟢' : '🟡'} เป้าหมายสัปดาห์นี้ {rec.setsCurrent}/{rec.setsTarget} เซ็ต
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted">
+                      🟢{' '}
+                      {daysSince === null
+                        ? `ยังไม่เคยเทรน${rec.muscleGroup}มาก่อน`
+                        : daysSince === 0
+                          ? `เทรน${rec.muscleGroup}ไปแล้ววันนี้`
+                          : `เทรน${rec.muscleGroup}ล่าสุดเมื่อ ${daysSince} วันก่อน`}
+                    </p>
+                  </div>
+                )
+              })()}
 
               {/* ฟีดแบ็ก "เพิ่มท่า/เพิ่ม Set ระหว่างเซสชัน แต่พอจบ หน้านี้ไม่แสดงตามความจริง" — เดิม Exercises
                   ใช้ data.todayExercises.length (จำนวนแผนล้วนๆ) ตรงๆ ตราบใดที่มีแผนตั้งไว้ (>0 ก็ truthy
