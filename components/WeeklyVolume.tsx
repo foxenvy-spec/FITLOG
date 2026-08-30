@@ -207,11 +207,15 @@ export default function WeeklyVolume() {
             </div>
           </div>
 
-          {/* ฟีดแบ็ก "ควรแยก On Target / Over Target / Under Target ให้เห็นชัดว่าส่วนใหญ่เกินเป้า ไม่ใช่พอดีเป้า" */}
+          {/* ฟีดแบ็ก "ควรแยก On Target / Over Target / Under Target ให้เห็นชัดว่าส่วนใหญ่เกินเป้า ไม่ใช่พอดีเป้า"
+              — เดิม "ยังไม่ถึงเป้า" ใช้ 🟡 + สี onTrack (อำพัน) แต่แถวจริงของกลุ่มที่ยังไม่ถึงเป้า (status
+              'behind') เปลี่ยนเป็นเทากลางไปแล้ว (ดู STATUS_COLOR.behind ด้านบน) ทำให้ป้ายสรุปกับสีแถวจริงไม่
+              ตรงกัน (เห็นได้จริงจากสกรีนช็อต: น่องแถวสีเทา แต่ป้ายล่างเขียนสีเหลือง) — เปลี่ยนเป็น ⚪ + สีเทา
+              เดียวกับ behind ให้ตรงกัน ตามที่ฟีดแบ็กต้นทางเสนอไว้เป๊ะ ("⚪ ต่ำกว่าเป้า") */}
           <div className="flex items-center justify-center gap-3 mt-2 text-[10px]">
             <span style={{ color: STATUS_COLOR.met }}>🟢 ในเป้า {onTargetCount}</span>
             <span style={{ color: STATUS_COLOR.veryHigh }}>🔴 เกินเป้า {overTargetCount}</span>
-            <span style={{ color: STATUS_COLOR.onTrack }}>🟡 ยังไม่ถึงเป้า {underTargetCount}</span>
+            <span style={{ color: STATUS_COLOR.behind }}>⚪ ยังไม่ถึงเป้า {underTargetCount}</span>
           </div>
 
           <div className="flex justify-end mt-2.5">
