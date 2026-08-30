@@ -61,6 +61,7 @@ import GoalRing from '@/components/GoalRing'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCarousel from '@/components/InsightCarousel'
 import TodayMuscleChips from '@/components/TodayMuscleChips'
+import { splitTitleDetail } from '@/components/TodaysFocusCard'
 import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
@@ -828,15 +829,23 @@ export default function DashboardPage() {
                   <span className="w-7 h-7 shrink-0 rounded-full border border-moss flex items-center justify-center text-sm">
                     📉
                   </span>
-                  <p className="text-sm">
-                    <span className="font-display uppercase tracked text-ink">Body Fat</span>{' '}
-                    <span className="font-mono font-semibold" style={{ color: COLORS.deltaGood }}>
-                      ↓{Math.abs(bf.delta).toFixed(1)}%
-                    </span>
-                    <span className="ml-2" style={{ color: COLORS.deltaGood }}>
+                  {/* ฟีดแบ็ก "Typography Hierarchy — MINT (Hero) / BODY FAT ↓0.4% (Primary insight) /
+                      ยอดเยี่ยม! (Secondary feedback) เด่นพร้อมกันหมด ควรแยกระดับ" — เดิมทั้ง 3 ส่วนอยู่ใน
+                      <p className="text-sm"> เดียวกัน ขนาดเท่ากันหมด แยก "ยอดเยี่ยม! 🎉" ออกมาเป็น text-xs
+                      (เล็กกว่า) ให้เห็นชัดว่าเป็นความรู้สึก/ฟีดแบ็กเสริม ไม่ใช่ข้อมูลหลักระดับเดียวกับตัวเลข
+                      ห่อทั้งคู่ใน div เดียวกัน (แทนที่จะเป็น flex sibling แยกของ icon) กันสองบรรทัดเรียง
+                      แนวนอนแทนที่จะซ้อนกันแนวตั้ง */}
+                  <div>
+                    <p className="text-sm">
+                      <span className="font-display uppercase tracked text-ink">Body Fat</span>{' '}
+                      <span className="font-mono font-semibold" style={{ color: COLORS.deltaGood }}>
+                        ↓{Math.abs(bf.delta).toFixed(1)}%
+                      </span>
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: COLORS.deltaGood }}>
                       ยอดเยี่ยม! 🎉
-                    </span>
-                  </p>
+                    </p>
+                  </div>
                 </div>
               )
             }
@@ -1966,6 +1975,16 @@ export default function DashboardPage() {
               <p className="text-[11px] text-muted mt-2.5">
                 <span className="text-ink font-mono">{data.streak}</span> วันต่อเนื่อง
               </p>
+              {/* ฟีดแบ็ก "Weekly Goal ดีมากแล้ว แต่ควรเชื่อมกับ Action ทันที เช่น 'Next → Lower Body'" —
+                  ใช้ `next` ตัวเดียวกับที่การ์ด "Next up" แยกต่างหากด้านล่างเคยใช้ (ย้ายมารวมที่นี่แทน ตัด
+                  การ์ดแยกทิ้ง — ฟีดแบ็กข้อ 17 บอกว่า Weekly Goal/Volume/Consistency "แยกกันมากจนรู้สึกเหมือน
+                  3 ระบบ" นี่คือก้าวแรกที่รวมชิ้นที่เกี่ยวข้องกันจริงๆ เข้าด้วยกัน) truncate กัน title ยาว
+                  (เช่น "Day 5 — Lower (Hamstring/Glute)") ล้นการ์ดแคบๆ นี้ */}
+              {next && (
+                <p className="text-[11px] mt-1 truncate" style={{ color: COLORS.amber }}>
+                  Next → {splitTitleDetail(next.day.title).main}
+                </p>
+              )}
             </div>
           </div>
 
@@ -2077,22 +2096,9 @@ export default function DashboardPage() {
         <ConsistencyStrip />
       </div>
 
-      {/* Next up in program — kept near the end so the top-to-bottom flow reads as
-          "what happened this week" before "what's coming up next". PR history lives
-          on the Statistics page alongside the rest of the analytics. */}
-      {next && (
-        // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
-        <div className="rounded-card bg-surface border border-line shadow-elevated overflow-hidden lg:col-span-12 lg:order-20">
-          <div className="px-4 py-3 flex items-center justify-between">
-            <p className="text-[11px] text-muted">
-              Next up: <span className="text-ink">{next.day.title}</span>
-            </p>
-            <span className="text-[11px] font-mono text-muted">
-              {next.daysAway === 1 ? 'พรุ่งนี้' : `อีก ${next.daysAway} วัน`}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — การ์ด "Next up" เดี่ยวๆ
+          ที่เคยอยู่ตรงนี้ย้ายไปรวมกับ Weekly Goal แล้ว (ดู comment "Next →" ในการ์ด Weekly Goal ด้านบน)
+          กันไม่ให้ "เซสชันถัดไป" ถูกพูดซ้ำสองที่บนหน้าเดียวกัน */}
 
       <div className="lg:col-span-12 lg:order-21">
         <WeeklyCardioVolume />
