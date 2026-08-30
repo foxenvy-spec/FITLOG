@@ -466,7 +466,20 @@ export default function MetricCard({
                       2px -> 1.7px (-15%) เฉพาะจุดนี้ (compact/มือถือ) เดสก์ท็อปและหน้าสุขภาพยังใช้ค่า
                       ดีฟอลต์ 2px เดิมทุกประการ
                       v50: ฟีดแบ็ก "ลดเส้นกราฟนิดหนึ่ง" (รอบถัดมา) — บางลงอีกขั้น 1.7px -> 1.5px */}
-                  <Sparkline series={series} color={theme.main} height={dashboardSpec.metricCard.sparklineHeight} width={200} stretch strokeWidth={1.5} />
+                  {/* ฟีดแบ็ก "ใส่ Glowing Dot ที่จุดปลายสุด + Gradient Area Fill จางๆ ใต้เส้น ให้ดู
+                      พรีเมียมแบบ Apple Health/TradingView" — เปิดเฉพาะการ์ดสถิติ 4 ใบหลักนี้ (opt-in
+                      props ใหม่ใน Sparkline.tsx เอง ไม่กระทบจุดอื่นที่ใช้ component เดียวกัน) */}
+                  <Sparkline
+                    series={series}
+                    color={theme.main}
+                    height={dashboardSpec.metricCard.sparklineHeight}
+                    width={200}
+                    stretch
+                    strokeWidth={1.5}
+                    endpointColor={theme.main}
+                    glowEndpoint
+                    areaFill
+                  />
                 </div>
               )}
             </>
@@ -488,7 +501,7 @@ export default function MetricCard({
                     ทั้งค่า+ช่วงเวลาอยู่แล้ว) — ตัดออก เหลือแค่ Sparkline เดี่ยวๆ ฝั่งขวา บรรทัดเดลต้าเต็ม
                     ด้านล่างการ์ดยังอยู่เหมือนเดิมทุกประการ ไม่กระทบ */}
                 <div className="shrink-0">
-                  <Sparkline series={series} color={theme.main} height={30} width={64} />
+                  <Sparkline series={series} color={theme.main} height={30} width={64} endpointColor={theme.main} glowEndpoint areaFill />
                 </div>
               </div>
               {deltaText && (
