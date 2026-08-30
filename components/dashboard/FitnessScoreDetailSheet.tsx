@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import PremiumCard from '@/components/ui/PremiumCard'
 import { COLORS, TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
-import type { FitnessScoreResult } from '@/lib/fitnessScore'
+import { suggestFitnessScoreImprovement, type FitnessScoreResult } from '@/lib/fitnessScore'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 
 interface FitnessScoreDetailSheetProps {
@@ -55,6 +55,9 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
 
   if (!mounted || !displayScore) return null
   const closing = !open
+  // ฟีดแบ็ก "Fitness Score ต้องบอกได้ว่า 'ทำอะไรแล้วคะแนนขึ้น'" — ดู suggestFitnessScoreImprovement
+  // ใน lib/fitnessScore.ts (จำลองผลจากค่าจริงด้วยสูตรเดียวกับ computeFitnessScore เป๊ะ ไม่ประมาณเอง)
+  const improvementTip = suggestFitnessScoreImprovement(displayScore.breakdown)
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center">
@@ -119,6 +122,19 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
               </div>
             ))}
           </div>
+
+          {improvementTip && (
+            <div
+              className="mb-4 rounded-lg px-3 py-2.5"
+              style={{ backgroundColor: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '2A')}` }}
+            >
+              <p className="text-[11px] leading-relaxed" style={{ color: TEXT.body }}>
+                💡 เพิ่ม{improvementTip.factorLabel}จาก {improvementTip.currentValue}% → {improvementTip.suggestedValue}%
+                {' — '}Fitness Score จะเพิ่มขึ้นประมาณ{' '}
+                <span style={{ color: COLORS.amber, fontWeight: 600 }}>+{improvementTip.scoreDelta}</span>
+              </p>
+            </div>
+          )}
 
           {/* v58: ฟีดแบ็ก "Training Readiness 48 vs AI Coach Recovery 100% ดูขัดกัน" — เพิ่มประโยคสั้นๆ
               แยก "Recovery (Avg)" ตรงนี้ (เฉลี่ยทุกกลุ่มกล้ามเนื้อที่เคยฝึก เป็นแค่ 1 ใน 5 ปัจจัยถ่วงน้ำหนัก)

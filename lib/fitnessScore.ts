@@ -141,6 +141,42 @@ export function fitnessScoreTierOf(score: number): (typeof TIERS)[number] {
   return TIERS.find((t) => score >= t.min) ?? TIERS[TIERS.length - 1]
 }
 
+export interface FitnessScoreImprovementTip {
+  factorLabel: string
+  currentValue: number
+  suggestedValue: number
+  scoreDelta: number
+}
+
+// ก้าวที่แนะนำให้ลองพัฒนาปัจจัยที่เลือกไว้ (จุดเปอร์เซ็นต์) — ตัวเลขคงที่ กันไม่ให้คำแนะนำแกว่งไปมาตามข้อมูล
+// (เช่น แนะนำก้าวเล็กมากตอนใกล้ 100% จนดูไม่มีความหมาย)
+const IMPROVEMENT_STEP = 10
+
+// ฟีดแบ็ก "Fitness Score ต้องบอกได้ว่า 'ทำอะไรแล้วคะแนนขึ้น' ไม่ใช่แค่บอกที่มาของคะแนนเฉยๆ" — เลือกปัจจัย
+// ที่คะแนนต่ำสุดในบรรดาปัจจัยที่มีข้อมูล+น้ำหนัก > 0 (ปัจจัยที่ไม่มีข้อมูล เช่น Sleep ไม่มีทางแนะนำให้
+// "พัฒนา" ได้ เพราะยังไม่มีตัวเลขให้ตั้งต้น) แล้วจำลองผลถ้าปัจจัยนั้นขึ้นอีก IMPROVEMENT_STEP จุด (เพดาน
+// 100) — เรียก computeFitnessScore ซ้ำสองรอบ (ค่าจริง vs ค่าจำลอง) แทนคำนวณสูตรถ่วงน้ำหนักแยกเอง กัน
+// ตัวเลขคำแนะนำเพี้ยนจากคะแนนที่โชว์จริงถ้าสูตรใน computeFitnessScore เปลี่ยนในอนาคต
+export function suggestFitnessScoreImprovement(factors: FitnessScoreFactor[]): FitnessScoreImprovementTip | null {
+  const available = factors.filter((f): f is FitnessScoreFactor & { value: number } => f.value != null && f.weight > 0)
+  if (available.length === 0) return null
+
+  const lowest = available.reduce((worst, f) => (f.value < worst.value ? f : worst), available[0])
+  if (lowest.value >= 100) return null
+
+  const suggestedValue = Math.min(100, lowest.value + IMPROVEMENT_STEP)
+  const currentScore = computeFitnessScore(factors).score
+  const improvedFactors = factors.map((f) => (f.key === lowest.key ? { ...f, value: suggestedValue } : f))
+  const improvedScore = computeFitnessScore(improvedFactors).score
+
+  return {
+    factorLabel: lowest.label,
+    currentValue: lowest.value,
+    suggestedValue,
+    scoreDelta: improvedScore - currentScore,
+  }
+}
+
 export function computeFitnessScore(factors: FitnessScoreFactor[]): FitnessScoreResult {
   const available = factors.filter((f): f is FitnessScoreFactor & { value: number } => f.value != null)
   const totalWeight = available.reduce((sum, f) => sum + f.weight, 0)
