@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout } from '@/lib/types'
-import { todayStr } from '@/lib/weekdays'
+import { computeCurrentStreak, computeLongestStreak } from '@/lib/dashboardStats'
+import { workoutVolumeKg } from '@/lib/workoutDisplay'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
@@ -20,50 +21,24 @@ interface Stats {
   currentStreak: number
 }
 
-function computeStats(workouts: Workout[]): Stats {
+// บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): ไฟล์นี้เคยคำนวณ volume/streak แยกสูตรของตัวเองจากทุกหน้าอื่นในแอป
+// 1) totalVolume ใช้ sets*reps*weight_kg ตรงๆ แทน total_volume_kg (ผลรวมจริงต่อเซ็ต) ทำให้ pyramid/drop
+//    set (น้ำหนัก/reps ไม่เท่ากันทุกเซ็ต) ได้ยอดรวมผิดเทียบกับ Stats/Dashboard — เปลี่ยนมาใช้ workoutVolumeKg
+//    (lib/workoutDisplay.ts) ตัวเดียวกับทุกหน้าอื่น
+// 2) streak (ทั้ง current/longest) เดินนับ "ทุกวันปฏิทินต้องมี workout ติดกัน" ล้วนๆ ไม่รู้จักวันพักตามโปรแกรม
+//    เลย ทำให้ผู้ใช้ที่มีโปรแกรม (เช่น จ/พ/ศ) เห็นเลข streak ที่นี่ต่ำกว่า Dashboard มาก (ขาดทุกวันที่ไม่ตรง
+//    ตาราง ทั้งที่เป็นวันพักตามแผน ไม่ใช่วันที่ "พลาด") — เปลี่ยนมาใช้ computeCurrentStreak/
+//    computeLongestStreak (lib/dashboardStats.ts) ตัวเดียวกับ DashboardView.tsx ส่ง workoutWeekdays เข้าไป
+function computeStats(workouts: Workout[], workoutWeekdays: Set<number>): Stats {
   const totalLogs = workouts.length
   const days = Array.from(new Set(workouts.map((w) => w.performed_at))).sort()
   const totalDays = days.length
-  const totalVolume = workouts.reduce((sum, w) => {
-    if (w.type === 'strength' && w.sets && w.reps && w.weight_kg) {
-      return sum + w.sets * w.reps * w.weight_kg
-    }
-    return sum
-  }, 0)
+  const totalVolume = workouts.reduce((sum, w) => (w.type === 'strength' ? sum + workoutVolumeKg(w) : sum), 0)
 
-  let longest = 0
-  let running = 0
-  let prevDate: Date | null = null
-  for (const d of days) {
-    const dateObj = new Date(d + 'T00:00:00')
-    if (prevDate) {
-      const diffDays = Math.round((dateObj.getTime() - prevDate.getTime()) / 86400000)
-      running = diffDays === 1 ? running + 1 : 1
-    } else {
-      running = 1
-    }
-    longest = Math.max(longest, running)
-    prevDate = dateObj
-  }
+  const longestStreak = computeLongestStreak(days, workoutWeekdays)
+  const currentStreak = computeCurrentStreak(days, workoutWeekdays)
 
-  let currentStreak = 0
-  if (days.length > 0) {
-    const lastDate = new Date(days[days.length - 1] + 'T00:00:00')
-    const today = new Date(todayStr() + 'T00:00:00')
-    const diffFromToday = Math.round((today.getTime() - lastDate.getTime()) / 86400000)
-    if (diffFromToday <= 1) {
-      currentStreak = 1
-      for (let i = days.length - 1; i > 0; i--) {
-        const cur = new Date(days[i] + 'T00:00:00')
-        const prev = new Date(days[i - 1] + 'T00:00:00')
-        const diff = Math.round((cur.getTime() - prev.getTime()) / 86400000)
-        if (diff === 1) currentStreak++
-        else break
-      }
-    }
-  }
-
-  return { totalLogs, totalDays, totalVolume, longestStreak: longest, currentStreak }
+  return { totalLogs, totalDays, totalVolume, longestStreak, currentStreak }
 }
 
 interface Badge {
@@ -96,19 +71,25 @@ export default function AchievementsPage() {
   const supabase = createClient()
   const { unit, toDisplay } = useWeightUnit()
   const [workouts, setWorkouts] = useState<Workout[]>([])
+  const [workoutWeekdays, setWorkoutWeekdays] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const { data, error: err } = await supabase.from('workouts').select('*').order('performed_at')
+    const [{ data, error: err }, { data: dayRows }] = await Promise.all([
+      supabase.from('workouts').select('*').order('performed_at'),
+      // วันที่ตั้งโปรแกรมไว้จริง — ให้ streak เดียวกับ Dashboard (ดู comment ที่ computeStats ด้านบน)
+      supabase.from('program_days').select('day_of_week'),
+    ])
     if (err) {
       setError(err.message)
       setLoading(false)
       return
     }
     setWorkouts((data as Workout[]) ?? [])
+    setWorkoutWeekdays(new Set(((dayRows as { day_of_week: number }[]) ?? []).map((d) => d.day_of_week)))
     setLoading(false)
   }, [supabase])
 
@@ -116,7 +97,7 @@ export default function AchievementsPage() {
     load()
   }, [load])
 
-  const stats = useMemo(() => computeStats(workouts), [workouts])
+  const stats = useMemo(() => computeStats(workouts, workoutWeekdays), [workouts, workoutWeekdays])
   const badges = useMemo(() => buildBadges(stats), [stats])
   const unlockedCount = badges.filter((b) => b.current >= b.target).length
 
