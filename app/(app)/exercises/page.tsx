@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import { searchExercises, type ExerciseDef } from '@/lib/exercises'
 import { equipmentLabel } from '@/lib/exerciseLibrary'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
@@ -13,9 +14,24 @@ import ErrorState from '@/components/ErrorState'
 import MuscleDiagram from '@/components/MuscleDiagram'
 import PremiumCard from '@/components/ui/PremiumCard'
 
+// ฟีดแบ็ก "Command Palette พิมพ์ 'chest' ควรพาไปดูท่าฝึกกลุ่มอกได้เลย" — เดิมหน้านี้ไม่มี ?muscle= รองรับ
+// (แค่ useState local ล้วนๆ) เพิ่มให้ deep link จาก Command Palette ตรงเข้ากลุ่มกล้ามเนื้อได้ — ต้องห่อ
+// ด้วย Suspense เพราะ useSearchParams ต้องการแบบนั้นใน App Router (ดู pattern เดียวกันใน app/(app)/log/page.tsx)
 export default function ExercisesPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <ExercisesPageContent />
+    </Suspense>
+  )
+}
+
+function ExercisesPageContent() {
+  const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
-  const [muscle, setMuscle] = useState<MuscleGroup | null>(null)
+  const [muscle, setMuscle] = useState<MuscleGroup | null>(() => {
+    const m = searchParams.get('muscle')
+    return m && (MUSCLE_GROUPS as readonly string[]).includes(m) ? (m as MuscleGroup) : null
+  })
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [lang, setLang] = useState<MuscleLabelLang>('th')
   const { data: exercises = [], isLoading, isError, refetch } = useExerciseLibrary()

@@ -4,6 +4,7 @@ import QueryProvider from '@/components/QueryProvider'
 import { WeightUnitProvider } from '@/components/WeightUnitProvider'
 import { ToastProvider } from '@/components/Toast'
 import { DashboardSettingsProvider } from '@/components/DashboardSettingsProvider'
+import CommandPalette from '@/components/CommandPalette'
 
 export default async function AppLayout({
   children,
@@ -46,6 +47,10 @@ export default async function AppLayout({
           </div>
           </DashboardSettingsProvider>
         </div>
+        {/* ฟีดแบ็ก "Power-User Feature — Ctrl+K/Cmd+K แถบค้นหาเร็ว" — mount ระดับ layout นี้ (ไม่ใช่แค่
+            หน้า Dashboard) ให้ shortcut ใช้ได้จากทุกหน้าในแอป ตัว component เองจัดการ event listener/
+            modal ทั้งหมดในตัว render null ตอนปิดอยู่ (ไม่มี DOM ค้างตอนไม่ได้ใช้) */}
+        <CommandPalette />
         </QueryProvider>
       </ToastProvider>
     </WeightUnitProvider>
