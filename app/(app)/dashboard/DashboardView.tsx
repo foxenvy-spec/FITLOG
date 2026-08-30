@@ -1435,17 +1435,26 @@ export default function DashboardPage() {
                 </Button>
               )}
 
+              {/* ฟีดแบ็ก "ปุ่ม 'เริ่มเทรนเลย' ยังไม่ชัดว่าเริ่มอะไร" — เดิมข้อความบรรทัดเดียว "ยังไม่มี
+                  โปรแกรมวันนี้ — ตั้งโปรแกรม หรือ เริ่มจากเทมเพลต" ไม่ได้บอกเหตุผลว่าทำไมควรตั้งโปรแกรม —
+                  แยกเป็นหัวข้อ + ประโยคอธิบายสั้นๆ ว่าทำไมควรตั้งโปรแกรม (ให้ FitLog วางแผน/ติดตาม
+                  Recovery ให้) ตามที่ขอเป๊ะ */}
               {!scheduledDay && (
-                <p className="text-[11px] text-muted mt-2">
-                  ยังไม่มีโปรแกรมวันนี้ —{' '}
-                  <Link href="/program" className="text-amber hover:underline">
-                    ตั้งโปรแกรม
-                  </Link>{' '}
-                  หรือ{' '}
-                  <Link href="/templates" className="text-amber hover:underline">
-                    เริ่มจากเทมเพลต
-                  </Link>
-                </p>
+                <div className="mt-2">
+                  <p className="text-[11px] text-ink">ยังไม่ได้ตั้งโปรแกรมวันนี้</p>
+                  <p className="text-[11px] text-muted mt-0.5">
+                    เลือกโปรแกรมเพื่อให้ FitLog วางแผนการฝึกและติดตาม Recovery ให้คุณ
+                  </p>
+                  <p className="text-[11px] mt-1">
+                    <Link href="/program" className="text-amber hover:underline">
+                      เลือกโปรแกรม →
+                    </Link>{' '}
+                    หรือ{' '}
+                    <Link href="/templates" className="text-amber hover:underline">
+                      เริ่มจาก Template
+                    </Link>
+                  </p>
+                </div>
               )}
               </div>
             </div>
