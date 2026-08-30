@@ -299,8 +299,10 @@ export default function AICoachCompactCard({
               ทุกกรณี ทั้งที่ muscleRecommendation แยกอยู่แล้วว่าเป็นคำแนะนำของวันนี้เองหรือของเซสชันถัดไป
               (isRecommendationForToday จาก DashboardView.tsx) — สลับป้ายตามจริง: วันนี้ยังไม่เริ่ม/ทำไม่
               ครบ = '· Today', ทำครบแล้ว/วันพัก = '· Next' เดิม */}
+          {/* ฟีดแบ็ก "AI Coach ยังดูเหมือนโฆษณา — ลด Visual Dominance เปลี่ยนเป็น MINT COACH" — เปลี่ยน
+              label เฉยๆ (ไม่แตะ Robot avatar ที่ยืนยันไว้แล้วว่าเป็น Brand Identity) */}
           <p className="font-display text-[10px] tracked uppercase flex items-center gap-1" style={{ color: TEXT.body }}>
-            <span aria-hidden="true">✨</span> AI Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
+            <span aria-hidden="true">✨</span> MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
           </p>
           {muscleRecommendation ? (
             <>
@@ -309,7 +311,11 @@ export default function AICoachCompactCard({
                   ได้ครบอยู่แล้ว) และตัดบรรทัด readinessLabelEn (EXCELLENT ฯลฯ) ด้านล่าง Recovery bar ออก
                   ด้วย (ซ้ำความหมายกับตัวเลข % ที่อยู่ติดกันอยู่แล้ว สีเดียวกันด้วย) เหลือแค่ region +
                   relatedGroups + Recovery bar/% ตามที่ขอ */}
-              <p className="font-display font-semibold tracked uppercase text-amber truncate mt-1" style={{ fontSize: 21, lineHeight: 1.15 }}>
+              {/* ฟีดแบ็ก "'LOWER BODY' ตัวใหญ่สีส้มมาก ดึงสายตาไปทันที แย่งความสนใจจาก Dashboard" — เดิม
+                  text-amber (สีเน้น Action/Energy) + 21px — ตัวเดียวในการ์ดนี้ที่ใช้สีส้มกับข้อความหลัก
+                  ทั้งที่การ์ดนี้ไม่ใช่ปุ่ม action เปลี่ยนเป็น text-ink (ขาว/ไทเทเนียม เหมือนป้ายชื่อการ์ดอื่น
+                  ที่ไม่ใช่ CTA) + ลดขนาดลง ~15% (21 -> 18) ให้สีส้มเหลือแค่ตรง CTA ปุ่มจริงด้านล่างเท่านั้น */}
+              <p className="font-display font-semibold tracked uppercase text-ink truncate mt-1" style={{ fontSize: 18, lineHeight: 1.15 }}>
                 {isRestDay ? 'Recovery Day' : region}
               </p>
               {/* v61: ฟีดแบ็ก "'UPPER BODY' อ่านเดี่ยวๆ เหมือนสรุปวันนี้ ไม่ใช่คำแนะนำครั้งถัดไป" — เติม
