@@ -7,6 +7,7 @@ import { getWeekRange, volumeStatus, optimalVolumeRange, type VolumeStatus } fro
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
+import { COLORS, withAlpha } from '@/lib/theme'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import VolumeTargetsSettings from './VolumeTargetsSettings'
@@ -16,21 +17,17 @@ import PremiumCard from './ui/PremiumCard'
 // แยกจาก VOLUME_MUSCLES ตัวหลัก (ซึ่งใช้ลำดับอื่นและถูกอ้างจากหลายที่ในแอป) เพื่อไม่กระทบจุดอื่น
 const DISPLAY_ORDER = ['อก', 'หลัง', 'ไหล่', 'แขน', 'แกนกลางลำตัว', 'ขา', 'น่อง'] as const
 
-// ฟีดแบ็ก "สีแดงเยอะไป ทำให้ User รู้สึกว่าทำผิดเยอะมาก ทั้งที่บางค่าแค่ยังไม่ถึงเป้า ไม่ใช่ปัญหา — ควรใช้
-// ⚪ ต่ำกว่าเป้า แทน 🔴" — เดิม behind ใช้สีเดียวกับ veryHigh (rust/แดง) ทำให้ "ยังไม่ถึงเป้า" (ปกติมาก
-// ต้นสัปดาห์ย่อมยังไม่ถึงเป้า) ดูรุนแรงเท่า "เกินเป้าไปมาก" (ที่ควรเป็นสัญญาณเตือนจริงๆ) — เปลี่ยนเป็นเทา
-// กลาง (NEUTRAL.mutedIcon เดียวกับที่ใช้กับสถานะ "ไม่มีสัญญาณ/เป็นกลาง" ทั่วแอป) เหลือแดงไว้เฉพาะ veryHigh
-// จุดเดียวที่ควรสนใจจริงๆ
+// ฟีดแบ็ก "สีเยอะไป (4-5 เฉด) รู้สึกเหมือน traffic-light dashboard — อยากได้แค่ 3 สี (steel/moss/rust)
+// ตามความหมาย 3 กลุ่ม (ยังไม่ถึงเป้า/อยู่ในช่วงเหมาะสม/สูงเกินไป) แล้วใช้ "ความเข้มของสี" สื่อระดับ
+// ความรุนแรงภายในกลุ่มเดียวกันแทนการเพิ่มเฉดใหม่" — 5 สถานะ (behind/onTrack/met/high/veryHigh) ยังคง
+// อยู่เหมือนเดิมสำหรับ logic/ข้อความ เปลี่ยนแค่สีที่ map ให้เหลือ 3 เฉดจริง: steel (behind จาง/onTrack
+// เข้ม — ยังไม่ถึงเป้า), moss (met จาง/high เข้ม — อยู่ในช่วงเหมาะสม), rust (veryHigh — สูงเกินไป)
 const STATUS_COLOR: Record<VolumeStatus, string> = {
-  behind: '#9498A0', // เทากลาง — ยังไม่ถึงเป้า (เป็นกลาง ไม่ใช่ปัญหา)
-  onTrack: '#E8A33D', // amber — กำลังไปได้ดี
-  met: '#7A9B57', // moss — ถึงเป้าหมายพอดี
-  // v: เดิม "met" ครอบตั้งแต่พอดีเป้าไปจนถึงเกินเป้าเท่าไรก็ได้เหมือนกันหมด (สีเดียวกันหมด) — แยก high/
-  // veryHigh ออกมาให้เห็นว่าเกินเป้าไปมากน้อยแค่ไหน (ฟีดแบ็ก "ขา Recovery 100% แต่ Volume 29/12 เกินเป้า
-  // ไปมาก ควรมีสัญญาณเตือน ไม่ใช่แค่ +diff สีเขียวเหมือนเกินนิดเดียว") — high ยังใช้อำพันเดียวกับ onTrack
-  // (ยังโอเค แค่เกินนิดหน่อย) veryHigh ใช้สนิม (rust) เดียวกับ behind (สุดโต่งทั้งสองทาง = ควรสนใจเหมือนกัน)
-  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-200%) ยังไม่น่ากังวล
-  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>200%) อาจเสี่ยง overtraining
+  behind: withAlpha(COLORS.steel, '99'), // steel จาง — ยังห่างเป้าอยู่มาก
+  onTrack: COLORS.steel, // steel เต็ม — ใกล้ถึงเป้าแล้ว
+  met: withAlpha(COLORS.moss, 'BF'), // moss จาง — เข้าช่วงเหมาะสมพอดี
+  high: COLORS.moss, // moss เต็ม — อยู่ในช่วงเหมาะสมแต่เริ่มเยอะ (100-200%)
+  veryHigh: COLORS.rust, // rust — เกินช่วงเหมาะสม (>200%) อาจเสี่ยง overtraining
 }
 
 export default function WeeklyVolume() {
@@ -91,10 +88,11 @@ export default function WeeklyVolume() {
   const totalSets = rows.reduce((sum, r) => sum + r.sets, 0)
   // ฟีดแบ็ก "ถึงเป้าหมายแล้ว 6/7 ทำให้เข้าใจผิดว่า Balance ดี ทั้งที่จริงมีแค่ 1 กลุ่มอยู่ในเป้าพอดี
   // ส่วนอีก 5 กลุ่มคือ 'เกินเป้า' ไม่ใช่ 'ถึงเป้า'" — เดิมนับ met/high/veryHigh รวมกันเป็น "ถึงเป้าหมายแล้ว"
-  // ก้อนเดียว ซึ่งซ่อนความจริงว่าส่วนใหญ่เกินเป้าไปมาก ไม่ใช่แค่พอดีเป้า — แยกเป็น 3 กลุ่มให้ตรงความจริง:
-  // onTarget (พอดีเป้าเป๊ะ), overTarget (เกินเป้า — high/veryHigh), underTarget (ยังไม่ถึงเป้า — behind/onTrack)
-  const onTargetCount = rows.filter((r) => r.status === 'met').length
-  const overTargetCount = rows.filter((r) => r.status === 'high' || r.status === 'veryHigh').length
+  // ก้อนเดียว ซึ่งซ่อนความจริงว่าส่วนใหญ่เกินเป้าไปมาก ไม่ใช่แค่พอดีเป้า — แยกเป็น 3 กลุ่มให้ตรงความจริง
+  // และตรงกับ STATUS_COLOR 3 เฉดด้านบนพอดี: onTarget (อยู่ในช่วงเหมาะสม — met/high, สีมอส), overTarget
+  // (สูงเกินไป — veryHigh เท่านั้น, สีสนิม), underTarget (ยังไม่ถึงเป้า — behind/onTrack, สีสตีล)
+  const onTargetCount = rows.filter((r) => r.status === 'met' || r.status === 'high').length
+  const overTargetCount = rows.filter((r) => r.status === 'veryHigh').length
   const underTargetCount = rows.filter((r) => r.status === 'behind' || r.status === 'onTrack').length
 
   return (
@@ -207,15 +205,13 @@ export default function WeeklyVolume() {
             </div>
           </div>
 
-          {/* ฟีดแบ็ก "ควรแยก On Target / Over Target / Under Target ให้เห็นชัดว่าส่วนใหญ่เกินเป้า ไม่ใช่พอดีเป้า"
-              — เดิม "ยังไม่ถึงเป้า" ใช้ 🟡 + สี onTrack (อำพัน) แต่แถวจริงของกลุ่มที่ยังไม่ถึงเป้า (status
-              'behind') เปลี่ยนเป็นเทากลางไปแล้ว (ดู STATUS_COLOR.behind ด้านบน) ทำให้ป้ายสรุปกับสีแถวจริงไม่
-              ตรงกัน (เห็นได้จริงจากสกรีนช็อต: น่องแถวสีเทา แต่ป้ายล่างเขียนสีเหลือง) — เปลี่ยนเป็น ⚪ + สีเทา
-              เดียวกับ behind ให้ตรงกัน ตามที่ฟีดแบ็กต้นทางเสนอไว้เป๊ะ ("⚪ ต่ำกว่าเป้า") */}
+          {/* ป้ายสรุปใช้สีเต็ม (ไม่ใช่เฉดจางของ STATUS_COLOR.met/behind) เพราะเป็นตัวแทนทั้งกลุ่ม ไม่ใช่แถว
+              เดี่ยว ๆ — ให้ตรงกับ 3 เฉดหลัก (steel/moss/rust) และ bucket นับด้านบนพอดี ไม่ตรงกันข้ามแบบที่
+              เคยเจอบั๊กมาก่อน (ป้ายสีหนึ่ง แถวจริงอีกสี) */}
           <div className="flex items-center justify-center gap-3 mt-2 text-[10px]">
-            <span style={{ color: STATUS_COLOR.met }}>🟢 ในเป้า {onTargetCount}</span>
-            <span style={{ color: STATUS_COLOR.veryHigh }}>🔴 เกินเป้า {overTargetCount}</span>
-            <span style={{ color: STATUS_COLOR.behind }}>⚪ ยังไม่ถึงเป้า {underTargetCount}</span>
+            <span style={{ color: COLORS.steel }}>⚪ ยังไม่ถึงเป้า {underTargetCount}</span>
+            <span style={{ color: COLORS.moss }}>🟢 ในช่วงเหมาะสม {onTargetCount}</span>
+            <span style={{ color: COLORS.rust }}>🔴 สูงเกินไป {overTargetCount}</span>
           </div>
 
           <div className="flex justify-end mt-2.5">

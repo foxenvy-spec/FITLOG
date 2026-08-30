@@ -11,19 +11,21 @@ import { HR_ZONES, DEFAULT_MAX_HEART_RATE, classifyCardioLoad, CARDIO_LOAD_LABEL
 import { computeVO2Max, classifyVO2Max } from '@/lib/vo2max'
 import type { Workout, Profile } from '@/lib/types'
 import { todayDayOfWeek } from '@/lib/weekdays'
+import { COLORS, withAlpha } from '@/lib/theme'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import HeartRateSettings from './HeartRateSettings'
 import CardioTargetsSettings from './CardioTargetsSettings'
 import ErrorState from './ErrorState'
 
-// ฟีดแบ็ก "สีแดงเยอะไป — ยังไม่ถึงเป้าไม่ใช่ปัญหา ควรเป็นเทากลาง ไม่ใช่แดง" (ตัวเดียวกับ WeeklyVolume.tsx)
+// ฟีดแบ็ก "อยากได้แค่ 3 สี (steel/moss/rust) ใช้ความเข้มสื่อระดับความรุนแรง" — ใช้ชุดสีเดียวกับ
+// WeeklyVolume.tsx ให้สองการ์ดนี้อ่านสอดคล้องกัน (steel = ยังไม่ถึงเป้า, moss = ในช่วงเหมาะสม, rust = สูงเกินไป)
 const STATUS_COLOR: Record<VolumeStatus, string> = {
-  behind: '#9498A0', // เทากลาง — ยังไม่ถึงเป้า (เป็นกลาง ไม่ใช่ปัญหา)
-  onTrack: '#E8A33D', // amber — กำลังไปได้ดี
-  met: '#7A9B57', // moss — ถึงเป้าหมายพอดี
-  high: '#E8A33D', // amber — เกินเป้าไปบ้างแล้ว (100-200%)
-  veryHigh: '#C1503A', // rust — เกินเป้าไปมาก (>200%)
+  behind: withAlpha(COLORS.steel, '99'), // steel จาง — ยังห่างเป้าอยู่มาก
+  onTrack: COLORS.steel, // steel เต็ม — ใกล้ถึงเป้าแล้ว
+  met: withAlpha(COLORS.moss, 'BF'), // moss จาง — เข้าช่วงเหมาะสมพอดี
+  high: COLORS.moss, // moss เต็ม — อยู่ในช่วงเหมาะสมแต่เริ่มเยอะ (100-200%)
+  veryHigh: COLORS.rust, // rust — เกินช่วงเหมาะสม (>200%)
 }
 
 function MetricTile({ label, value, unit }: { label: string; value: string; unit?: string }) {

@@ -17,7 +17,7 @@ import {
   type VolumeStatus,
 } from '@/lib/dashboardStats'
 import { computePushPullBalance } from '@/lib/aiCoach'
-import { COLORS } from '@/lib/theme'
+import { COLORS, withAlpha } from '@/lib/theme'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES, MUSCLE_GROUP_COLORS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
@@ -53,13 +53,14 @@ interface GroupStat {
   targetStatus: VolumeStatus
 }
 
-// ฟีดแบ็ก "สีแดงเยอะไป — ยังไม่ถึงเป้าไม่ใช่ปัญหา ควรเป็นเทากลาง ไม่ใช่แดง" (ตัวเดียวกับ WeeklyVolume.tsx)
+// ฟีดแบ็ก "อยากได้แค่ 3 สี (steel/moss/rust) ใช้ความเข้มสื่อระดับความรุนแรง" — ชุดสีเดียวกับ
+// WeeklyVolume.tsx/WeeklyCardioVolume.tsx ให้การ์ดที่เกี่ยวข้องกับ volume target ทั้งหมดอ่านสอดคล้องกัน
 const TARGET_STATUS_COLOR: Record<VolumeStatus, string> = {
-  behind: '#9498A0',
-  onTrack: '#E8A33D',
-  met: '#7A9B57',
-  high: '#E8A33D',
-  veryHigh: '#C1503A',
+  behind: withAlpha(COLORS.steel, '99'),
+  onTrack: COLORS.steel,
+  met: withAlpha(COLORS.moss, 'BF'),
+  high: COLORS.moss,
+  veryHigh: COLORS.rust,
 }
 
 const TARGET_STATUS_LABEL: Record<VolumeStatus, string> = {
@@ -262,6 +263,22 @@ export default function WeeklyMuscleHeatmap() {
     const under = stats.filter((s) => s.targetStatus === 'behind' && s.targetSets > 0)
     return { over, under }
   }, [stats])
+
+  // ฟีดแบ็ก "Balance 58% ต้องอธิบายตัวเองได้ทันที ไม่ใช่ซ่อนหลังปุ่ม 'ดูรายละเอียด Balance' อย่างเดียว" —
+  // สรุปสั้น ๆ 1 บรรทัดจาก balanceIssues ชุดเดียวกับที่ "จุดที่ควรปรับ" ในรายละเอียดใช้อยู่แล้ว (ไม่คำนวณซ้ำ
+  // ไม่มโนข้อความเพิ่ม) หยิบกลุ่มที่เกินเป้ามากสุดไม่เกิน 2 กลุ่ม + กลุ่มที่ขาดเป้ามากสุด 1 กลุ่ม
+  const balanceSummary = useMemo(() => {
+    const over = [...balanceIssues.over]
+      .sort((a, b) => b.sets - b.targetSets - (a.sets - a.targetSets))
+      .slice(0, 2)
+    const under = [...balanceIssues.under]
+      .sort((a, b) => a.sets - a.targetSets - (b.sets - b.targetSets))
+      .slice(0, 1)
+    return [
+      ...over.map((s) => `${s.group} +${s.sets - s.targetSets} เซ็ต`),
+      ...under.map((s) => `${s.group} ${s.sets - s.targetSets} เซ็ต`),
+    ].join(' · ')
+  }, [balanceIssues])
 
   // กลุ่มเด่น/ด้อย — จัดอันดับตาม % ส่วนแบ่งเซ็ตของสัปดาห์นี้ (สมมติฐาน: เด่น = 3 อันดับบนสุด,
   // ด้อย = 2 อันดับล่างสุด — ถ้าต้องการเกณฑ์อื่น เช่น เทียบกับเป้าหมายต่อกลุ่มแทน แจ้งได้)
@@ -491,6 +508,7 @@ export default function WeeklyMuscleHeatmap() {
                 {BALANCE_STATUS_LABEL[balance.tier]}
               </span>
             </p>
+            {balanceSummary && <p className="text-[9px] text-muted mt-1 leading-tight">{balanceSummary}</p>}
           </div>
         </div>
       )}
