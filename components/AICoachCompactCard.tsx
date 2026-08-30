@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { todayStr } from '@/lib/weekdays'
@@ -12,7 +11,6 @@ import { getErrorMessage } from '@/lib/errors'
 import {
   COLORS,
   TEXT,
-  withAlpha,
   CARD_GRADIENT_CSS,
   TITANIUM_MESH_CSS,
   CARD_BORDER_CSS,
@@ -42,10 +40,6 @@ interface AICoachCompactCardProps {
    * พร้อมกัน") — true แล้วสลับ headline เป็น "Recovery Day" และตัดปุ่มเริ่มเวิร์กเอาต์ออก */
   isRestDay?: boolean
   href?: string
-  /** รูป AI Coach จริง (public/icons/ai-coach-avatar.png ที่ผู้ใช้ให้มา — 1024x1024 โปร่งใสอยู่แล้ว
-   * ไม่ต้อง crop/แก้พื้นหลังเพิ่ม) ดีฟอลต์เป็นไฟล์นี้เสมอ — ส่ง avatarSrc={undefined} เพื่อกลับไปใช้
-   * ไอคอนเรขาคณิต fallback ใน AiRingAvatar แทนได้ถ้าต้องการจุดอื่นที่ยังไม่มีรูป */
-  avatarSrc?: string
   /** เวลาที่ดึงข้อมูล dashboard สำเร็จล่าสุดจริง (React Query `dataUpdatedAt` ของ query ['dashboard', ...]
    * ในหน้า Dashboard) — ใช้แสดง "อัปเดตล่าสุด Xนาทีที่แล้ว" แบบมีข้อมูลจริงรองรับ ไม่ใช่ป้ายลอยๆ ที่ไม่มี
    * ความหมาย ไม่ระบุ = ยังโชว์ป้าย "อัปเดตล่าสุด" เฉยๆ แบบเดิม (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
@@ -129,7 +123,6 @@ export default function AICoachCompactCard({
   muscleRecommendation,
   isRestDay = false,
   href = '/coach',
-  avatarSrc = '/icons/ai-coach-avatar.png',
   lastUpdatedAt,
   recoveryDates,
   isRecommendationForToday = false,
@@ -286,7 +279,7 @@ export default function AICoachCompactCard({
         {/* v56: ฟีดแบ็ก "P4 — Robot ยังหนักกว่าข้อความข้างๆ อีก 5-8% (ไม่เปลี่ยน Layout)" — ลดต่อจาก
             112/96 (v54) อีก ~7% (112->104, 96->89) สัดส่วน isRestDay ต่อวันฝึกปกติเดิมยังคงไว้ (~0.857)
             ไม่แตะ layout/gap รอบๆ (flex items-center gap-2 เดิม ปรับตัวตาม avatar อัตโนมัติอยู่แล้ว) */}
-        <AiRingAvatar src={avatarSrc} size={isRestDay ? 89 : 104} />
+        <AiRingAvatar size={isRestDay ? 89 : 104} />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
               คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body
@@ -300,7 +293,8 @@ export default function AICoachCompactCard({
               (isRecommendationForToday จาก DashboardView.tsx) — สลับป้ายตามจริง: วันนี้ยังไม่เริ่ม/ทำไม่
               ครบ = '· Today', ทำครบแล้ว/วันพัก = '· Next' เดิม */}
           {/* ฟีดแบ็ก "AI Coach ยังดูเหมือนโฆษณา — ลด Visual Dominance เปลี่ยนเป็น MINT COACH" — เปลี่ยน
-              label เฉยๆ (ไม่แตะ Robot avatar ที่ยืนยันไว้แล้วว่าเป็น Brand Identity) */}
+              label เฉยๆ (avatar ตอนนั้นยังเป็น Robot photo — ตอนนี้เปลี่ยนเป็น abstract gem แล้ว ดู
+              AiRingAvatar ด้านล่างของไฟล์) */}
           <p className="font-display text-[10px] tracked uppercase flex items-center gap-1" style={{ color: TEXT.body }}>
             <span aria-hidden="true">✨</span> MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
           </p>
@@ -436,32 +430,15 @@ export default function AICoachCompactCard({
 // Avatar วงแหวน — ใช้ภาษา "donut ring" เดียวกับ FitnessRing/GoalRing ที่ใช้ทั่วแอป (ไม่ใช่กรอบสี่เหลี่ยม
 // แยกวัสดุ) ให้ AI Coach avatar อยู่ในตระกูลเดียวกับวง progress อื่นๆ — นิ่งสนิท ไม่มี pulse/rotate ตามกฎ
 // "Hero มีแค่ใบเดียว" — รับ src ไว้เผื่อไม่มีรูป (fallback ไอคอนเรขาคณิต)
-function AiRingAvatar({ src, size = 112 }: { src?: string; size?: number }) {
-  // v45: ฟีดแบ็ก "Robot ยังเล็ก อยากให้ใหญ่ขึ้นอีกประมาณ 25%" (ราว 88 -> 110px) — รอบก่อนหน้าทำแค่ scale
-  // รูปข้างในให้เต็มวงเดิม (88px คงที่) ตามที่ขอตอนนั้น "ไม่ต้องเพิ่มขนาดวงแหวน" — รอบนี้ขอเพิ่มสัดส่วน
-  // Robot ต่อการ์ดจริง (40/60) ซึ่งต้องขยายวงเองด้วย ไม่ใช่แค่ scale รูปในวงเดิม — scale(1.55) ของรูปข้างใน
-  // (ดูด้านล่าง) เป็นค่าสัมพัทธ์กับ container นี้อยู่แล้ว จึงขยายตามไปเองโดยไม่ต้องปรับเลขนั้นซ้ำ
-  // v47: ฟีดแบ็ก "จะดี Hero มาก ถ้า Robot ใหญ่ขึ้นอีกนิด ~15%" — 110 -> 127 (110*1.15 ปัดเศษ) เหตุผลเดียวกับ
-  // ด้านบน: scale(1.55)/inset:5 ไม่ต้องแก้ตาม ขยายตาม size โดยอัตโนมัติเพียงพอ
-  // v48: "Poster Crop" — ฟีดแบ็ก "Robot ใหญ่ขึ้นอีก ~15% แล้ว Crop แบบ Apple จะดูเหมือน Poster" —
-  // (1) ขนาด 127 -> 146 (127*1.15 ปัดเศษ) เหตุผลเดียวกับรอบก่อน (2) เปลี่ยนกรอบจากวงกลมสมบูรณ์
-  // (rounded-full) เป็นมุมตัด CNC เดียวกับการ์ดอื่นทั่วแอป (CNC_CORNER_CLIP_PATH_DEFAULT) — สี่เหลี่ยม
-  // มุมตัด อ่านเป็น "ภาพโปสเตอร์ที่ถูกจัดกรอบ" มากกว่าวงเหรียญ/badge (3) scale 1.55 -> 1.72 ครอปเข้าไป
-  // อีกนิด ให้ตัวโรบอทเต็มเฟรมแบบภาพสินค้า ไม่เหลือพื้นหลังว่างรอบขอบเยอะแบบก่อนหน้า
-  // v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — Robot ใหญ่ขึ้นอีก 20%, Crop แบบ Cinematic" — 146 -> 175
-  // (146*1.2 ปัดเศษ) scale 1.72 -> 1.85 (ครอปเข้าไปอีกนิด ให้เป็น close-up มากกว่า "เห็นทั้งหัว+ไหล่"
-  // แบบเดิม สมชื่อ cinematic) — inset:5 ไม่ต้องแก้ตาม ขยายตาม size โดยอัตโนมัติเพียงพอเหมือนรอบก่อนๆ
-  // v30: ฟีดแบ็ก "AI Coach Card ใหญ่ไปนิด...เกือบกลายเป็น Dashboard ใน Dashboard ผมจะลดประมาณ 15-20%" —
-  // ย้อนทิศทาง 5 รอบก่อนหน้า (88→110→127→146→175 ไล่ใหญ่ขึ้นทุกรอบ) เป็นครั้งแรก ลดลง ~17% (175→145)
-  // scale/inset ไม่ต้องแก้ตาม (สัมพัทธ์กับ size โดยอัตโนมัติเหมือนทุกรอบที่ผ่านมา)
-  // v51: ฟีดแบ็ก "ลดความสูง Card อีก 10-15%" — avatar (145px) เป็นตัวกำหนดความสูงแถวบนของการ์ดอยู่แล้ว
-  // (สูงกว่าคอลัมน์ข้อความข้างๆ) ลดต่ออีกขั้น 145 -> 128 (-12%) ยังคง Robot ไว้เต็มรูปแบบตามที่ขอ (ไม่ตัด
-  // ออก) แค่เล็กลงพอให้การ์ดโดยรวมเตี้ยลงจริงตามเป้า — scale/inset ไม่ต้องแก้ตามเหตุผลเดิม
-  // v52: ฟีดแบ็ก "AI Coach คือพระเอก แต่ยังใหญ่ไปนิดหนึ่ง (Robot/3 กล่อง/ปุ่ม Start รวมกันอยู่ในการ์ด
-  // เดียว) ลดความสูงอีก 10-15%" — 128 -> 112 (-12.5%) ยังไม่ตัด Robot ออกตามที่ยืนยันซ้ำอีกครั้ง
-  // v54: ฟีดแบ็ก "AI Coach ยังใหญ่ไปนิดใน Rest Day — Card ควรเบาลง ~15-20%" — size กลายเป็น prop (ดีฟอลต์
-  // 112 เดิม ไม่กระทบวันฝึกปกติ) — ผู้เรียก (ด้านล่าง) ส่ง 96 ตอน isRestDay (-14%, ใกล้เคียงที่ขอ) แทนที่
-  // จะแก้ค่าคงที่ตรงนี้ตรงๆ ซึ่งจะกระทบวันฝึกปกติไปด้วย
+// ฟีดแบ็ก "AI Coach ด้านขวา 'Gaming' ไปนิด — Robot/Helmet + Glow ไปทาง Gaming/Cyberpunk มากกว่า Premium
+// Fitness ถ้าต้องการ Minimal Luxury จริงๆ ควรลดความ Sci-Fi ลง ใช้ภาพ/Avatar เล็กๆ หรือ abstract metallic
+// object แทน Robot ที่เด่นมาก" — ผู้ใช้ยืนยันชัดเจนให้เอารูป Robot จริงออก (ai-coach-avatar.png, เคย
+// confirm ไว้หลายรอบก่อนหน้าว่าเป็น "Brand Identity ห้ามเอาออก" — รอบนี้กลับคำยืนยันหลังเห็น Dashboard
+// เต็มหน้าจริง) แทนที่ด้วยไอคอนเรขาคณิตนามธรรม (faceted gem — 4 เหลี่ยมมุมตัดไล่เฉดไทเทเนียม + เหลี่ยม
+// เดียวย้อมอำพันเป็นจุดเน้นแบรนด์) เล็กกว่ารูปเดิมมาก (56% ของกรอบ vs รูปเดิมที่ scale 1.85 เกือบเต็มเฟรม
+// แบบภาพสินค้า) กรอบไทเทเนียม+มุมตัด CNC รอบนอกเดิมไม่แตะ (ยังเข้าธีมเดียวกับการ์ดอื่นทั่วแอป)
+function AiRingAvatar({ size = 112 }: { size?: number }) {
+  const gradId = useId()
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — กรอบ+glow รอบ avatar เดิมสีอำพัน เป็นแค่กรอบ
@@ -484,44 +461,46 @@ function AiRingAvatar({ src, size = 112 }: { src?: string; size?: number }) {
           clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       >
-        {src ? (
-          <>
-            <Image src={src} alt="" width={size} height={size} className="w-full h-full object-cover" style={{ transform: 'scale(1.85)' }} />
-            {/* v48b: ฟีดแบ็ก "เพิ่ม Eye Glow เบาๆ" — รูปต้นฉบับ (ai-coach-avatar.png) มีตาเรืองแสงอำพันอยู่
-                แล้วในตัวรูป แต่ที่ crop/scale ปัจจุบัน (scale 1.85 จากจุดกึ่งกลาง) ตาอยู่ที่ประมาณ (36%,
-                33%) ของกรอบที่เห็นจริง (คำนวณจากตำแหน่งตาในรูปต้นฉบับ ~42%,40% ผ่านสูตร zoom เดียวกับที่
-                transform ใช้) — วาง radial glow บางๆ ทับตำแหน่งนั้นแบบ mix-blend-mode:screen (เติมแสง
-                เข้าไปตรงๆ ไม่ทับสีเดิม) แทนที่จะเดาตำแหน่งมั่วๆ — นิ่งสนิทไม่มี pulse (งบ animation ทั้งแอป
-                เต็มแล้ว ตามที่คุยกันไว้หลายรอบ "เหลือแค่ 7 Animation ทั้งแอป") */}
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: '36%',
-                top: '33%',
-                width: '30%',
-                height: '18%',
-                transform: 'translate(-50%, -50%)',
-                background: 'radial-gradient(ellipse, rgba(255,180,70,.4), transparent 70%)',
-                mixBlendMode: 'screen',
-              }}
-              aria-hidden="true"
-            />
-          </>
-        ) : (
-          <span className="relative block" style={{ width: '58%' }}>
-            <span
-              className="absolute rounded-full"
-              style={{
-                left: 0,
-                right: 0,
-                top: '46%',
-                height: 3,
-                background: COLORS.amber,
-                boxShadow: `0 0 6px ${COLORS.amber}, 0 0 14px ${withAlpha(COLORS.amber, '88')}`,
-              }}
-            />
-          </span>
-        )}
+        <svg viewBox="0 0 100 100" style={{ width: '56%', height: '56%' }}>
+          <defs>
+            <linearGradient id={`${gradId}-light`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#EEF0F2" />
+              <stop offset="100%" stopColor="#9BA0A8" />
+            </linearGradient>
+            <linearGradient id={`${gradId}-mid`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#7A7F87" />
+              <stop offset="100%" stopColor="#4A4E56" />
+            </linearGradient>
+            <linearGradient id={`${gradId}-dark`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#3E4148" />
+              <stop offset="100%" stopColor="#25272C" />
+            </linearGradient>
+            <linearGradient id={`${gradId}-accent`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor={COLORS.amber} />
+              <stop offset="100%" stopColor="#B97A28" />
+            </linearGradient>
+          </defs>
+          {/* faceted gem — มงกุฎ 2 เหลี่ยมด้านบน (ซ้ายไทเทเนียมสว่าง รับแสง / ขวาย้อมอำพัน จุดเน้นแบรนด์)
+              + pavilion 2 เหลี่ยมด้านล่าง (กลาง/เข้ม ให้มิติความลึก) */}
+          <polygon points="50,8 15,36 50,36" fill={`url(#${gradId}-light)`} />
+          <polygon points="50,8 85,36 50,36" fill={`url(#${gradId}-accent)`} />
+          <polygon points="15,36 50,36 50,92" fill={`url(#${gradId}-mid)`} />
+          <polygon points="50,36 85,36 50,92" fill={`url(#${gradId}-dark)`} />
+          <polygon
+            points="50,8 15,36 85,36"
+            fill="none"
+            stroke="rgba(255,255,255,.35)"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+          <polygon
+            points="15,36 85,36 50,92"
+            fill="none"
+            stroke="rgba(255,255,255,.18)"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+        </svg>
       </div>
     </div>
   )
