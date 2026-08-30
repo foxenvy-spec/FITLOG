@@ -48,6 +48,10 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
     )
   }
 
+  // ฟีดแบ็ก "State B ยังไม่มีโปรแกรม ควรมี 3 ทางเลือก โดยให้ 'ให้ MINT แนะนำ' เป็นตัวเลือกเด่น เชื่อมกับ
+  // AI Coach" — เดิมปุ่มเดียว "Choose Program →" พาไป /templates ตรงๆ เปลี่ยนปุ่มเด่นให้พาไปหน้า AI Coach
+  // แทน (เลือกโปรแกรม/Template ยังกดถึงได้จาก Quick Actions แถวใต้การ์ดนี้ใน MobileDashboardView.tsx อยู่แล้ว
+  // — การ์ดนี้กะทัดรัดมาก ไม่มีที่พอสำหรับ 3 ปุ่มในตัวเอง)
   return (
     <PremiumCard className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
@@ -58,8 +62,8 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
           No Workout Planned
         </p>
       </div>
-      <Button as={Link} href="/templates" className="shrink-0">
-        Choose Program →
+      <Button as={Link} href="/coach" className="shrink-0">
+        🤖 ให้ MINT แนะนำ
       </Button>
     </PremiumCard>
   )

@@ -1267,8 +1267,20 @@ export default function DashboardPage() {
         </div>
 
         <div className="relative z-10 px-5 py-6">
+          {/* ฟีดแบ็ก "Today's Workout ควรเป็นระบบสถานะของวัน ไม่ใช่แค่รูป workout" — State C: เสร็จแล้ว
+              วันนี้ เปลี่ยนป้ายหัวการ์ดเป็น "Workout Complete" แทน "Today's Workout" เดิม (ยังโชว์ต่อไป
+              ทั้งวันแม้เทรนเสร็จแล้ว ทำให้ดูเหมือนยังไม่ได้เริ่ม) ใช้ todayCompleted ตัวเดียวกับที่คำนวณ
+              notification ด้านบนอยู่แล้ว ไม่ derive ซ้ำ */}
           <p className="text-[10px] tracked uppercase text-muted flex items-center gap-1.5">
-            <span aria-hidden="true">🔥</span> Today&apos;s Workout
+            {todayCompleted ? (
+              <>
+                <span aria-hidden="true">✅</span> Workout Complete
+              </>
+            ) : (
+              <>
+                <span aria-hidden="true">🔥</span> Today&apos;s Workout
+              </>
+            )}
           </p>
 
           <div className="mt-4">
@@ -1407,7 +1419,25 @@ export default function DashboardPage() {
                   AMBER_GLOW_SHADOW เดิมหรือ Button.tsx เลย (ฟีดแบ็กพูดถึงปุ่มนี้ปุ่มเดียว เหมือน cta-sweep
                   ด้านบน) — hover:-translate-y-0.5 (Tailwind, -2px) ยกปุ่มขึ้นตอน hover ใช้ transition
                   ที่ Button.tsx มีอยู่แล้ว (ครอบคลุม transform) ไม่ต้องเพิ่ม utility ใหม่ */}
-              {scheduledDay ? (
+              {/* ระบบ 3 สถานะของ Hero Card ตามฟีดแบ็ก "Today's Workout ต้องเป็น Hero ที่ฉลาดกว่านี้":
+                  State C (todayCompleted) เสร็จแล้ววันนี้ → ปุ่มพาไปดูสรุป ไม่ใช่ "เริ่ม/ไปต่อ" อีกต่อไป
+                  State A (มี scheduledDay) → ปุ่มเริ่ม/ไปต่อเหมือนเดิม
+                  State B (ไม่มี scheduledDay) → ปุ่มเด่น "ให้ MINT แนะนำ" แทนที่ "เริ่มเทรนเลย" → /log เดิม
+                  (เชื่อมกับ AI Coach ตามที่ขอ แทนที่จะพาไปหน้าบันทึกอิสระเฉยๆ) */}
+              {todayCompleted ? (
+                <Button
+                  as={Link}
+                  href="/session"
+                  size="md"
+                  className="mt-4 cta-sweep hover:-translate-y-0.5"
+                  style={{
+                    boxShadow:
+                      '0 0 2px rgba(255,255,255,.48), 0 0 8px rgba(255,210,120,.48), 0 0 22px rgba(255,150,20,.28), 0 0 60px rgba(255,130,0,.10), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
+                  }}
+                >
+                  ดูสรุปวันนี้ <span aria-hidden="true">▶</span>
+                </Button>
+              ) : scheduledDay ? (
                 <Button
                   as={Link}
                   href="/session"
@@ -1423,7 +1453,7 @@ export default function DashboardPage() {
               ) : (
                 <Button
                   as={Link}
-                  href="/log"
+                  href="/coach"
                   size="md"
                   className="mt-4 cta-sweep hover:-translate-y-0.5"
                   style={{
@@ -1431,15 +1461,17 @@ export default function DashboardPage() {
                       '0 0 2px rgba(255,255,255,.48), 0 0 8px rgba(255,210,120,.48), 0 0 22px rgba(255,150,20,.28), 0 0 60px rgba(255,130,0,.10), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
                   }}
                 >
-                  เริ่มเทรนเลย <span aria-hidden="true">▶</span>
+                  🤖 ให้ MINT แนะนำ <span aria-hidden="true">▶</span>
                 </Button>
               )}
 
               {/* ฟีดแบ็ก "ปุ่ม 'เริ่มเทรนเลย' ยังไม่ชัดว่าเริ่มอะไร" — เดิมข้อความบรรทัดเดียว "ยังไม่มี
                   โปรแกรมวันนี้ — ตั้งโปรแกรม หรือ เริ่มจากเทมเพลต" ไม่ได้บอกเหตุผลว่าทำไมควรตั้งโปรแกรม —
                   แยกเป็นหัวข้อ + ประโยคอธิบายสั้นๆ ว่าทำไมควรตั้งโปรแกรม (ให้ FitLog วางแผน/ติดตาม
-                  Recovery ให้) ตามที่ขอเป๊ะ */}
-              {!scheduledDay && (
+                  Recovery ให้) + ตัวเลือกรอง "เลือกโปรแกรม"/"เริ่มจาก Template" ใต้ปุ่มเด่น "ให้ MINT
+                  แนะนำ" ด้านบน (3 ทางเลือกตามที่ขอ) — ซ่อนถ้าเทรนเสร็จไปแล้ววันนี้ (todayCompleted) กัน
+                  ข้อความ "ยังไม่ได้ตั้งโปรแกรม" ค้างอยู่ทั้งที่เพิ่งบันทึกอิสระเสร็จไป */}
+              {!scheduledDay && !todayCompleted && (
                 <div className="mt-2">
                   <p className="text-[11px] text-ink">ยังไม่ได้ตั้งโปรแกรมวันนี้</p>
                   <p className="text-[11px] text-muted mt-0.5">
