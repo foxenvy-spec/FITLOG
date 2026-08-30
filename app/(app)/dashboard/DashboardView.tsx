@@ -717,6 +717,12 @@ export default function DashboardPage() {
   // recovery/เทรนด์ body fat/เป้าหมาย) เป็นรายการแจ้งเตือนที่กดแล้วไปหน้าที่เกี่ยวข้องได้จริง แทนที่
   // "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" เดิมซึ่งเป็นสรุปสถิติเฉยๆ กดแล้วไปไหนไม่ได้
   const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && (data?.todayWorkouts.length ?? 0) > 0)
+  // ฟีดแบ็ก "Today's Workout มีหลายอย่างแย่งความสนใจ (0 Exercises, 0 Sets, ~10 นาที, AI reasoning, ปุ่ม,
+  // ข้อความ) — User ไม่รู้ว่าควรกดอะไรใน 1-2 วินาทีแรก ตอนยังไม่มี Workout วันนี้เลย ให้เหลือแค่ Hero
+  // Message + CTA เดียว" — true เฉพาะตอนไม่มีทั้งโปรแกรม (scheduledDay) และยังไม่ได้ log อะไรเลยวันนี้
+  // (totals.entryCount === 0) เท่านั้น — ถ้าเริ่ม log ท่า ad-hoc ไปแล้วแม้ไม่มีโปรแกรม ตัวเลขจริงมีความหมาย
+  // แล้ว ไม่ใช่ noise อีกต่อไป จึงยังโชว์ตามปกติ ไม่ถือเป็น "ว่างเปล่า"
+  const isEmptyWorkoutState = !scheduledDay && !todayCompleted && totals.entryCount === 0
   // goalProgressPct (lib/goalProgress.ts, ตัวเดียวกับหน้า Health) รู้ทิศทางเป้าหมาย (ลด/เพิ่ม) จาก
   // starting_value เทียบ target — ใช้เช็คว่าถึง/เกินเป้าหมายแล้วหรือยัง ก่อนเดิม Math.abs(current-target)
   // เฉยๆ ไม่รู้ทิศทาง ทำให้แจ้งเตือน "เหลือ X kg" ค้างอยู่แม้ทำถึงเป้าหมาย (หรือเกิน) ไปแล้วจริงๆ
@@ -1467,7 +1473,7 @@ export default function DashboardPage() {
                   Recovery ใช้อยู่แล้ว (ไม่คำนวณซ้ำ) โชว์เฉพาะตอน isRecommendationForToday จริงๆ (กันกรณี
                   คำแนะนำเป็นของวันอื่น/กลุ่มอื่นที่ไม่ตรงกับ workoutTitle ด้านบน จะทำให้ bullet พูดคนละเรื่อง
                   กับหัวการ์ด) */}
-              {data.isRecommendationForToday && data.todaysRecommendation && (() => {
+              {!isEmptyWorkoutState && data.isRecommendationForToday && data.todaysRecommendation && (() => {
                 const rec = data.todaysRecommendation
                 const tier = recoveryTier(rec.pct)
                 const daysSince = daysSinceLastTrained(data.recoveryDates[rec.muscleGroup] ?? null)
@@ -1504,7 +1510,11 @@ export default function DashboardPage() {
                   จริง) แทน: ถ้ายังไม่เริ่ม/ทำได้ไม่ครบแผน ยังโชว์ตัวเลขแผนเหมือนเดิม (ไม่ลดฮวบกลางเซสชัน) แต่
                   ถ้าทำเกินแผน (เพิ่มท่า/เซ็ตเอง) ตัวเลขจะขยับตามจริงทันที ไม่ค้างที่แผนเดิมอีกต่อไป —
                   totals.entryCount/totals.sets มาจาก computeTodayTotals(data.todayWorkouts) ซึ่งนับจาก
-                  ข้อมูล log จริงอยู่แล้ว (ใช้ค่าเดียวกับที่ "นาที"/"kcal" สองช่องถัดไปใช้ ไม่ต้องคำนวณซ้ำ) */}
+                  ข้อมูล log จริงอยู่แล้ว (ใช้ค่าเดียวกับที่ "นาที"/"kcal" สองช่องถัดไปใช้ ไม่ต้องคำนวณซ้ำ)
+                  ฟีดแบ็ก "0 Exercises/0 Sets/~10 นาที ตอนยังไม่มี Workout วันนี้เลย เป็น noise ไม่ใช่ข้อมูล
+                  มีความหมาย — Hero Message ควรเหลือแค่ ยังไม่มี Workout วันนี้ + CTA เดียว" — ซ่อนแถวนี้ทั้ง
+                  แถวตอน isEmptyWorkoutState (ไม่มีทั้งแผนและยังไม่ได้ log อะไรเลยวันนี้) */}
+              {!isEmptyWorkoutState && (
               <div className="flex items-center gap-4 mt-3 flex-wrap">
                 <div>
                   <p className="font-mono text-lg text-ink leading-none">{Math.max(data.todayExercises.length, totals.entryCount)}</p>
@@ -1530,6 +1540,7 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* State C: "Volume +8% จากครั้งก่อน" — เทียบเซสชันวันนี้กับเซสชันก่อนหน้าของกล้ามเนื้อกลุ่ม
                   เดียวกัน (ดู computeSessionVolumeChange) โชว์เฉพาะตอนเทรนเสร็จแล้ว + มีข้อมูลพอเทียบ
