@@ -382,6 +382,11 @@ export default function WeeklyMuscleHeatmap() {
                       onClick={() => toggleExpand(s.group)}
                       className="w-full flex flex-col gap-1 px-2.5 py-1.5 text-left"
                     >
+                      {/* ฟีดแบ็ก "ตัวเลขเยอะไปนิด — % + Sets + bar ต้องอ่านพร้อมกัน ทั้งที่ bar กับ % ทำหน้าที่
+                          ซ้ำกันบางส่วน ให้ Sets เป็น secondary text เล็กๆ แทน" — เดิม "X เซ็ต" อยู่แถวเดียวกับ
+                          % (4 อย่างในแถวเดียว: จุดสี+ชื่อ, %, เซ็ต, ลูกศร) ย้ายลงไปเป็น caption เล็กๆ ใต้แท่ง
+                          progress แทน ลดแถวหัวให้เหลือแค่ชื่อ+% (สิ่งที่สำคัญที่สุด) ไม่ตัดข้อมูลออก แค่ลดลำดับ
+                          ความสำคัญให้ตรงกับที่ใช้จริง */}
                       <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color, opacity: intensityOpacity(s.pct) }} />
                         <span className="text-xs text-ink flex-1 min-w-0 truncate">
@@ -390,12 +395,12 @@ export default function WeeklyMuscleHeatmap() {
                         <span className="text-[11px] font-mono font-bold shrink-0" style={{ color }}>
                           {Math.round(s.pct)}%
                         </span>
-                        <span className="text-[10px] font-mono text-muted shrink-0">{s.sets} เซ็ต</span>
                         <span className="text-muted text-[10px] shrink-0">{isOpen ? '▲' : '▼'}</span>
                       </span>
                       <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
                         <AnimatedBarFill pct={s.pct} color={color} />
                       </span>
+                      <span className="text-[9px] text-muted pl-4">{s.sets} เซ็ต</span>
                     </button>
                     {isOpen && (
                       <div className="px-2.5 pb-2 space-y-2">
