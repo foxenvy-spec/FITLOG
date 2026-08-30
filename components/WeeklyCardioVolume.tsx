@@ -173,6 +173,10 @@ export default function WeeklyCardioVolume() {
           <div className="flex flex-col items-center gap-2 py-4 text-center">
             <span className="text-2xl" aria-hidden="true">🫀</span>
             <p className="text-xs text-muted">ยังไม่มีข้อมูลคาร์ดิโอสัปดาห์นี้</p>
+            {/* ฟีดแบ็ก "Empty State ทำให้มีประโยชน์ขึ้นได้ — บอกว่าเพิ่ม Cardio แล้วจะเห็นอะไร" — บรรทัดเดียว
+                กะทัดรัด (ไม่ใช่ bullet 3 บรรทัดแยก) รักษาความ compact ของ empty state นี้ไว้ตามที่เคยตั้งใจ
+                ทำไว้ก่อนหน้า (ฟีดแบ็กเดิม "Card ยังใหญ่เกินไปสำหรับข้อมูล 0") แค่เพิ่มเหตุผลสั้นๆ ว่าทำไมควรเพิ่ม */}
+            <p className="text-[10px] text-muted/70">เพิ่ม Cardio เพื่อดู Volume · VO₂ Max · Training Load</p>
             <Link href="/log" className="text-[11px] font-display tracked uppercase text-amber hover:underline">
               เพิ่ม Cardio →
             </Link>
