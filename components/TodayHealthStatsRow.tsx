@@ -13,7 +13,10 @@ interface TodayHealthStatsRowProps {
 const METRIC_META = {
   calories: { icon: '🔥', title: 'Calories', unit: 'kcal', color: COLORS.amber },
   steps: { icon: '👣', title: 'Steps', unit: 'ก้าว', color: COLORS.moss },
-  sleepHours: { icon: '🌙', title: 'Sleep', unit: 'ชม.', color: COLORS.purple },
+  // ฟีดแบ็ก "Pink/Purple/Blue ให้ลดลงเหลือเฉพาะ visualization" — purple เดิมใช้เป็นสีการ์ด/ไอคอนตรงนี้
+  // ไม่ใช่ visualization (แค่วงไอคอนดวงจันทร์เล็กๆ) ย้ายไปใช้ steel (โทนไทเทเนียมกลาง) แทน ลดจำนวนสี
+  // "signature" ที่แข่งความสนใจกันบน Dashboard
+  sleepHours: { icon: '🌙', title: 'Sleep', unit: 'ชม.', color: COLORS.steel },
 } as const
 
 // เส้นคลื่นจิ๋วตกแต่ง (decorative only, ไม่มีความหมายเชิงข้อมูล — เหมือน AnimatedWave)

@@ -10,9 +10,19 @@ export const COLORS = {
   rust: '#C1503A', // แย่/เตือน/ยังไม่ฟื้นตัว
   steel: '#6C8CA8', // ข้อมูลทั่วไป (เช่น กราฟแท่งวอลุ่ม)
   violet: '#9C7CC4', // AI Coach / ฟีเจอร์ผู้ช่วยอัจฉริยะ
-  pink: '#E339A6', // Weekly Goal ring
-  purple: '#8B7FC7', // นอนหลับ (ตรงกับสีกลุ่มกล้ามเนื้อ "ไหล่" ใน muscle-groups.ts พอดี)
-  cyan: '#22D3EE', // Recovery ring
+  // pink: เดิมใช้กับ Weekly Goal ring แต่เปลี่ยนไปใช้ amber แล้ว (ฟีดแบ็ก "สีม่วงชมพูนีออนไม่เข้ากับ
+  // Dark Titanium") ตอนนี้ไม่มีจุดไหนในแอปที่ยัง render จริงใช้สีนี้แล้ว (เหลือแค่ component เก่าที่ไม่ได้
+  // import ใช้งานที่ไหน) เก็บ token ไว้เผื่ออนาคต ไม่ลบเพราะไม่กระทบอะไรที่เห็นจริง
+  pink: '#E339A6',
+  purple: '#8B7FC7', // ตรงกับสีกลุ่มกล้ามเนื้อ "ไหล่" ใน muscle-groups.ts — ใช้เฉพาะจุด visualization
+  // (เช่น MUSCLE_GROUP_COLORS) ตามฟีดแบ็ก "Pink/Purple/Blue ให้ลดลงเหลือเฉพาะ visualization" — เดิมยังใช้
+  // เป็นสี "การ์ด/ไอคอน" แยกต่างหากด้วย (เช่น Sleep icon ใน TodayHealthStatsRow) ย้ายจุดนั้นไปใช้ steel แทน
+  // ไม่ให้เป็นสี "signature" คู่ที่ 8 ที่แข่งความสนใจบนหน้า Dashboard
+  //
+  // ฟีดแบ็ก "Dark Titanium + Minimal Luxury ไม่ใช่สี 7 สี + Glow + Neon พร้อมกัน — ลด saturation ของ Cyan
+  // ลงประมาณ 20-30% ให้เป็น Premium Accent แทนที่จะเป็น Neon" — ลดจาก #22D3EE (HSL S 85.7%) ลง 25%
+  // (คำนวณผ่าน colorsys ให้ Hue/Lightness เดิมเป๊ะ เปลี่ยนแค่ความจัดจ้าน) เหลือ S ~64.3%
+  cyan: '#3BC0D4', // Recovery ring — เดิม #22D3EE (neon), ลด saturation ~25%
   green: '#4ADE80', // Fitness Score ระดับ Elite (เข้มกว่า/สว่างกว่า moss ให้ต่างจากระดับ Excellent)
   yellow: '#EAB308', // Fitness Score ระดับ Good
   deltaGood: '#8CB264', // ตัวหนังสือเดลต้าที่ดีขึ้น (เฉดเขียวอ่อนกว่า moss เล็กน้อย ใช้ specifically กับข้อความ เช่น "↓2.1kg")
