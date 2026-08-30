@@ -14,7 +14,7 @@ import {
   type GeneratedWorkout,
 } from '@/lib/workoutGenerator'
 import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
-import { MUSCLE_GROUPS, VOLUME_MUSCLES, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
+import { MUSCLE_GROUPS, VOLUME_MUSCLES, dominantMuscleGroup, describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
 import { todayStr } from '@/lib/weekdays'
 import {
   computeRecoveryPct,
@@ -24,8 +24,10 @@ import {
   getWeekRange,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
+  recoveryTier,
   type Insight,
   type ScheduledDay,
+  type MuscleRecommendation,
 } from '@/lib/dashboardStats'
 import {
   computePushPullBalance,
@@ -62,11 +64,15 @@ interface CoachData {
   overloadPlans: OverloadPlan[]
   skippedInsight: Insight | null
   skippedExerciseNames: string[]
-  muscleRecommendation: { muscleGroup: string; pct: number } | null
+  muscleRecommendation: MuscleRecommendation | null
   todayProgressPct: number | null
   // ถ้าตารางโปรแกรมประจำสัปดาห์ระบุกล้ามเนื้อของวันนี้/ครั้งหน้าไว้ชัดเจน (ดู getScheduledMuscleForDay) —
   // ใช้บอก Gemini ว่าคำแนะนำนี้มาจากตาราง ไม่ใช่จาก recovery % ล้วนๆ ให้เรียบเรียงคำพูดได้ตรงบริบทขึ้น
   scheduledMuscle: string | null
+  // ฟีดแบ็ก "AI Coach ควรกลายเป็น Decision Engine ที่มีเหตุผล ไม่ใช่แค่ Widget" — recovery % ของกลุ่ม
+  // กล้ามเนื้อที่เกี่ยวข้องกับ muscleRecommendation ทั้งหมด (ไม่ใช่แค่ตัวหลักตัวเดียว) ใช้ describeMuscleFocus
+  // (ตารางเดียวกับที่ Dashboard/TodaysFocusCard ใช้อยู่แล้ว) render เป็น bullet "🟢 อก ฟื้นตัวแล้ว 100%"
+  reasoningGroups: { muscleGroup: string; pct: number }[]
 }
 
 function topExerciseNames(rows: { exercise_name: string | null }[], limit: number): string[] {
@@ -239,6 +245,15 @@ export default function CoachPage() {
       const trainingBalance = computeTrainingBalance(thisWeekSets, VOLUME_MUSCLES)
       const dailySummary = computeAIDailySummary(recommendation, balance, todayProgressPct, trainingBalance, isRecommendationForToday)
 
+      // เหตุผลเบื้องหลังคำแนะนำ — recovery % ของกลุ่มกล้ามเนื้อที่เกี่ยวข้องทั้งหมด (ไม่ใช่แค่ muscleGroup
+      // หลักตัวเดียว) ใช้ describeMuscleFocus ตัวเดียวกับ TodaysFocusCard/AICoachCompactCard
+      const reasoningGroups = recommendation
+        ? describeMuscleFocus(recommendation.muscleGroup as MuscleGroup).relatedGroups.map((mg) => ({
+            muscleGroup: mg,
+            pct: recoveryPctMap[mg] ?? 100,
+          }))
+        : []
+
       // --- ท่าที่ข้ามไปในเซสชันโปรแกรมล่าสุด ---
       let skippedInsight: Insight | null = null
       let skippedExerciseNames: string[] = []
@@ -283,6 +298,7 @@ export default function CoachPage() {
         muscleRecommendation: recommendation,
         todayProgressPct,
         scheduledMuscle,
+        reasoningGroups,
       })
     } catch (err) {
       console.error('Coach page load failed', err)
@@ -443,7 +459,31 @@ export default function CoachPage() {
           <PremiumCard className="px-4 py-3.5 space-y-3">
             <div className="flex items-start gap-2.5">
               <span className="text-lg leading-none shrink-0">✨</span>
-              <p className="text-sm text-ink whitespace-pre-line">{data.dailySummary}</p>
+              <div className="min-w-0">
+                <p className="text-sm text-ink whitespace-pre-line">{data.dailySummary}</p>
+                {/* ฟีดแบ็ก "AI Coach ควรกลายเป็น Decision Engine ที่มีเหตุผล ไม่ใช่แค่ Widget" — โชว์
+                    recovery % ของกลุ่มกล้ามเนื้อที่เกี่ยวข้องทั้งหมดเป็น bullet แทนที่จะให้ dailySummary
+                    ประโยคเดียวพูดแทนทุกอย่าง ให้ผู้ใช้เห็นเหตุผลจริงเบื้องหลังคำแนะนำ */}
+                {data.reasoningGroups.length > 0 && (
+                  <div className="mt-2 space-y-0.5">
+                    <p className="text-[9px] tracked uppercase text-muted">เหตุผล</p>
+                    {data.reasoningGroups.map((g) => {
+                      const tier = recoveryTier(g.pct)
+                      const emoji = tier.labelEn === 'Excellent' || tier.labelEn === 'Good' ? '🟢' : tier.labelEn === 'Recovering' ? '🟡' : '🔴'
+                      return (
+                        <p key={g.muscleGroup} className="text-[11px]" style={{ color: tier.color }}>
+                          {emoji} {g.muscleGroup} ฟื้นตัวแล้ว {g.pct}%
+                        </p>
+                      )
+                    })}
+                    {data.muscleRecommendation?.scheduleOverriddenFrom && (
+                      <p className="text-[11px]" style={{ color: COLORS.rust }}>
+                        🔴 {data.muscleRecommendation.scheduleOverriddenFrom} ยังมี Volume สูงกว่าเป้าหมาย
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {data.muscleRecommendation && (
