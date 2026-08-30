@@ -441,7 +441,12 @@ export default function MobileDashboardView() {
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
                       </div>
-                      <p className="text-[10px] text-muted mt-1">{goalProgressLabel(weightPct)}</p>
+                      <p className="text-[10px] text-muted mt-1">
+                        {goalProgressLabel(
+                          weightPct,
+                          `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
+                        )}
+                      </p>
                     </div>
                   )}
                   {bodyFatPct !== null && (
@@ -455,7 +460,12 @@ export default function MobileDashboardView() {
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                       </div>
-                      <p className="text-[10px] text-muted mt-1">{goalProgressLabel(bodyFatPct)}</p>
+                      <p className="text-[10px] text-muted mt-1">
+                        {goalProgressLabel(
+                          bodyFatPct,
+                          `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
+                        )}
+                      </p>
                     </div>
                   )}
                 </div>

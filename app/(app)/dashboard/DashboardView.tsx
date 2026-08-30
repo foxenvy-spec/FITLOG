@@ -1005,7 +1005,12 @@ export default function DashboardPage() {
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
                     </div>
-                    <p className="text-[10px] text-muted mt-1">{goalProgressLabel(weightPct)}</p>
+                    <p className="text-[10px] text-muted mt-1">
+                      {goalProgressLabel(
+                        weightPct,
+                        `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
+                      )}
+                    </p>
                   </div>
                 )}
                 {bodyFatPct !== null && (
@@ -1019,7 +1024,12 @@ export default function DashboardPage() {
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                     </div>
-                    <p className="text-[10px] text-muted mt-1">{goalProgressLabel(bodyFatPct)}</p>
+                    <p className="text-[10px] text-muted mt-1">
+                      {goalProgressLabel(
+                        bodyFatPct,
+                        `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
+                      )}
+                    </p>
                   </div>
                 )}
               </div>
@@ -1171,9 +1181,11 @@ export default function DashboardPage() {
               (ยืนยันจากสกรีนช็อตจริง — รูปดัมเบลยังเด่นมากแม้เนื้อหาจริงมีแค่ '0 Exercises') — ไม่แตะสูตรภาพ/
               filter/glow ที่ผ่านการปรับละเอียดมาหลายรอบเลย (เสี่ยงทำลายงานที่ verify แล้ว) แต่เพิ่ม scrim มืด
               อีกชั้นทับเฉพาะ State B (ยังไม่มีโปรแกรม + ยังไม่ได้เทรนวันนี้) ให้รูปถอยเป็นพื้นหลังมากขึ้นตอนที่
-              เนื้อหาจริงมีน้อย — State A/C (มีโปรแกรม/เทรนเสร็จแล้ว) ไม่โดนกฎนี้ ยังเห็นรูปเต็มที่เหมือนเดิม */}
+              เนื้อหาจริงมีน้อย — State A/C (มีโปรแกรม/เทรนเสร็จแล้ว) ไม่โดนกฎนี้ ยังเห็นรูปเต็มที่เหมือนเดิม
+              รอบถัดมา: ฟีดแบ็ก "ลด opacity ลงอีกประมาณ 10-20% ให้ข้อความเป็นพระเอก" (เห็นจากสกรีนช็อตจริง
+              หลังรอบแรกแล้วว่ายังไม่พอ) — เพิ่ม alpha .38 -> .50 (+~30% เชิงสัมพัทธ์ อยู่ในช่วงที่ขอ) */}
           {!scheduledDay && !todayCompleted && (
-            <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.38)' }} />
+            <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.50)' }} />
           )}
           {/* v48: ฟีดแบ็ก "โซน Dumbbell (~35% ของการ์ด) มีแค่รูปดัมเบลอย่างเดียว อยากเพิ่ม Glow/Particle
               เบาๆ ให้ดูมีชีวิต" — จุดกระพริบเล็กๆ กระจายรอบไอคอน (เทคนิคเดียวกับ "Particles" ใน

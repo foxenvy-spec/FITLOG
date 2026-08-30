@@ -24,7 +24,12 @@ export function goalProgressPct(
 // ควรเขียนว่า 'เริ่มต้นเป้าหมาย' แทน" — goalProgressPct คืน 0 ทั้งกรณี "เพิ่งเริ่ม ยังไม่มีข้อมูลขยับ" และ
 // "ขยับผิดทาง" (ค่าปัจจุบันแย่กว่าจุดเริ่มต้น ถูก clamp ไว้ที่ 0) แยกกันไม่ได้จากตัวเลขเฉยๆ แต่ทั้งสองกรณีก็
 // ไม่ควรใช้คำว่า "0% Progress" เหมือนกัน (สื่อว่า "ยังไม่ได้ทำอะไรเลย" ซึ่งให้ความรู้สึกลบเกินจริง)
-export function goalProgressLabel(pct: number): string {
+// ฟีดแบ็ก "อย่าใช้ progress bar ว่างๆ เฉยๆ — เพิ่มข้อมูลเล็กๆ เช่น 'เหลืออีก 7.1 kg'" — remainingText
+// (คำนวณไว้แล้วจากฝั่งเรียก เช่น Math.abs(target - current) ในหน่วยที่แสดงผลจริง) ต่อท้ายด้วย " · เหลืออีก
+// X" ต่อจากป้ายเดิม (เริ่มต้นเป้าหมาย/N% Progress) ให้มีตัวเลขที่มีความหมายให้ดูแม้ตอน progress ยังเป็น 0
+// ไม่ระบุ = พฤติกรรมเดิมทุกประการ (แค่ป้าย progress เฉยๆ)
+export function goalProgressLabel(pct: number, remainingText?: string | null): string {
   const rounded = Math.round(Math.max(0, Math.min(100, pct)))
-  return rounded <= 0 ? 'เริ่มต้นเป้าหมาย' : `${rounded}% Progress`
+  const base = rounded <= 0 ? 'เริ่มต้นเป้าหมาย' : `${rounded}% Progress`
+  return remainingText ? `${base} · เหลืออีก ${remainingText}` : base
 }
