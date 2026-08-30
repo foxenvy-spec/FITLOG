@@ -406,15 +406,20 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   const scheduledMuscle = preferTodayMuscle
     ? todayScheduledMuscle
     : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
-  // thisWeekSets/weeklyVolumeTargets ส่งเข้าไปด้วย (เดิมไม่มี) เพื่อให้กรณี "เลือกอิสระ" (ไม่มีตารางบังคับ
-  // — วันพัก/ยังไม่ได้ตั้งโปรแกรม) ไม่แนะนำกลุ่มที่ Volume สัปดาห์นี้เกินเป้าหมายไปแล้วซ้ำๆ (ดู comment เต็ม
-  // ที่ suggestMuscleToTrain) — ไม่กระทบกรณีมีตารางบังคับเลย เพราะ engine เช็ค scheduledMuscle ก่อนเสมอ
+  // thisWeekSets/weeklyVolumeTargets ส่งเข้าไปด้วย (เดิมไม่มี) — ให้ engine แนะนำกลุ่มอื่นแทนกลุ่มตามตาราง
+  // ได้ถ้า Volume ของกลุ่มตามตารางเกินเป้าหมายไปแล้ว (ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — ดู comment
+  // เต็มที่ suggestMuscleToTrain) และให้กรณี "เลือกอิสระ" (ไม่มีตารางบังคับ) ไม่แนะนำกลุ่มที่เกินเป้าซ้ำๆ ด้วย
   const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary, scheduledMuscle, thisWeekSets, weeklyVolumeTargets)
   // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีอยู่ใน
   // recoveryPctByMuscle (เช่น วันนี้ตั้งชื่อวันเป็น "ทั้งตัว"/"อื่นๆ" ซึ่งไม่อยู่ใน RECOVERY_MUSCLES) —
-  // เช็คว่าผลลัพธ์จริงตรงกับ todayScheduledMuscle เป๊ะๆ ก่อน ไม่ใช่เชื่อแค่ preferTodayMuscle เฉยๆ กัน
-  // ป้าย "· Today" ผิดพลาดในเคสขอบนี้
-  const isRecommendationForToday = preferTodayMuscle && muscleRecommendation?.muscleGroup === todayScheduledMuscle
+  // เช็คว่าผลลัพธ์จริงตรงกับ todayScheduledMuscle เป๊ะๆ (หรือ "แทนที่" กลุ่มตามตารางเพราะ Volume เกินเป้า —
+  // scheduleOverriddenFrom ตรงกับ todayScheduledMuscle) ก่อน ไม่ใช่เชื่อแค่ preferTodayMuscle เฉยๆ — กันป้าย
+  // "· Today" ผิดพลาดตอน fallback ไปแนะนำกลุ่มที่ไม่เกี่ยวกับตารางวันนี้เลยจริงๆ (คนละกรณีกับ Volume override
+  // ซึ่งยังนับเป็น "วันนี้" อยู่ แค่แนะนำกลุ่มอื่นแทนอย่างมีเหตุผล)
+  const isRecommendationForToday =
+    preferTodayMuscle &&
+    (muscleRecommendation?.muscleGroup === todayScheduledMuscle ||
+      muscleRecommendation?.scheduleOverriddenFrom === todayScheduledMuscle)
 
   // ต่อยอด muscleRecommendation (recovery ล้วนๆ) ด้วยเซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ของกลุ่มนั้น
   // (thisWeekSets/weeklyVolumeTargets คำนวณไว้แล้วด้านบนสำหรับการ์ด Weekly Goal/Weekly Volume อยู่แล้ว)
@@ -1502,6 +1507,13 @@ export default function DashboardPage() {
                                 <span className="text-muted"> · เหลืออีก {recommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
                               )}
                             </p>
+                            {/* ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — บอกเหตุผลตรงๆ เมื่อ suggestMuscleToTrain
+                                แนะนำกลุ่มนี้แทนกลุ่มตามตารางเพราะ Volume ของกลุ่มตามตารางเกินเป้าไปแล้ว */}
+                            {recommendation.scheduleOverriddenFrom && (
+                              <p className="text-[11px] text-muted mt-0.5">
+                                ตามตารางคือ{recommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว
+                              </p>
+                            )}
                           </span>
                           {isFullyReady && (
                             <span
@@ -1602,7 +1614,12 @@ export default function DashboardPage() {
                       const notReadyMuscles = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT)
                       const displayedMuscles = showAllRecovery ? RECOVERY_MUSCLES : notReadyMuscles
                       if (displayedMuscles.length === 0) {
-                        return <p className="text-[11px] text-muted text-center py-2">ทุกกลุ่มกล้ามเนื้อพร้อมฝึกแล้ว ✅</p>
+                        // ฟีดแบ็ก "Recovery 100% ไม่ควรแปลว่า 'ทุกกล้ามเนื้อพร้อมฝึก' — ผู้ใช้อาจตีความเป็น
+                        // 'พร้อมฝึก = ควรฝึก' ทั้งที่ Weekly Volume บางกลุ่มอาจเกินเป้าไปแล้ว" — เดิมข้อความนี้
+                        // ("พร้อมฝึกแล้ว") ฟังดูเหมือนคำแนะนำ (recommendation) ทั้งที่จริงเป็นแค่สถานะร่างกาย
+                        // (recovery) ล้วนๆ — ตัดคำว่า "พร้อมฝึก" ออก เหลือแค่สถานะการฟื้นตัวเฉยๆ ไม่ชี้นำว่า
+                        // ควรทำอะไรต่อ (ดูคำแนะนำจริงได้จากป้าย "ครั้งหน้าแนะนำ.../วันนี้ควรเล่น..." ด้านบนแทน)
+                        return <p className="text-[11px] text-muted text-center py-2">ฟื้นตัวดีทุกกลุ่มกล้ามเนื้อ ✅</p>
                       }
                       return displayedMuscles.map((mg) => {
                       const pct = recoveryPctMap[mg]

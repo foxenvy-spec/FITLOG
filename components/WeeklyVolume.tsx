@@ -84,9 +84,13 @@ export default function WeeklyVolume() {
   // ตัวเลขไม่ตรงกัน (ใช้คนละสูตร) — เอาออกจากการ์ดนี้ ให้ Balance เป็นของ Muscle Heatmap อย่างเดียว
   // ส่วนการ์ดนี้เน้นความคืบหน้าเทียบเป้าหมายส่วนตัวแทน ซึ่งเป็นข้อมูลเฉพาะของการ์ดนี้ ไม่ซ้ำที่ไหน)
   const totalSets = rows.reduce((sum, r) => sum + r.sets, 0)
-  // "ถึงเป้าหมายแล้ว" = met/high/veryHigh ทั้งหมด (ทุกระดับที่ >= เป้าหมาย) ไม่ใช่แค่ 'met' เป๊ะๆ
-  // (ซึ่งตอนนี้แคบลงเหลือแค่กรณีเซ็ตพอดีเป้าเป๊ะเท่านั้น หลังแยก high/veryHigh ออกมา)
-  const metCount = rows.filter((r) => r.status === 'met' || r.status === 'high' || r.status === 'veryHigh').length
+  // ฟีดแบ็ก "ถึงเป้าหมายแล้ว 6/7 ทำให้เข้าใจผิดว่า Balance ดี ทั้งที่จริงมีแค่ 1 กลุ่มอยู่ในเป้าพอดี
+  // ส่วนอีก 5 กลุ่มคือ 'เกินเป้า' ไม่ใช่ 'ถึงเป้า'" — เดิมนับ met/high/veryHigh รวมกันเป็น "ถึงเป้าหมายแล้ว"
+  // ก้อนเดียว ซึ่งซ่อนความจริงว่าส่วนใหญ่เกินเป้าไปมาก ไม่ใช่แค่พอดีเป้า — แยกเป็น 3 กลุ่มให้ตรงความจริง:
+  // onTarget (พอดีเป้าเป๊ะ), overTarget (เกินเป้า — high/veryHigh), underTarget (ยังไม่ถึงเป้า — behind/onTrack)
+  const onTargetCount = rows.filter((r) => r.status === 'met').length
+  const overTargetCount = rows.filter((r) => r.status === 'high' || r.status === 'veryHigh').length
+  const underTargetCount = rows.filter((r) => r.status === 'behind' || r.status === 'onTrack').length
 
   return (
     <PremiumCard className="overflow-hidden">
@@ -191,11 +195,18 @@ export default function WeeklyVolume() {
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] text-muted">ถึงเป้าหมายแล้ว</p>
+              <p className="text-[10px] text-muted">อยู่ในเป้าหมาย</p>
               <p className="font-mono text-sm text-ink mt-0.5">
-                {metCount} <span className="text-[10px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
+                {onTargetCount} <span className="text-[10px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
               </p>
             </div>
+          </div>
+
+          {/* ฟีดแบ็ก "ควรแยก On Target / Over Target / Under Target ให้เห็นชัดว่าส่วนใหญ่เกินเป้า ไม่ใช่พอดีเป้า" */}
+          <div className="flex items-center justify-center gap-3 mt-2 text-[10px]">
+            <span style={{ color: STATUS_COLOR.met }}>🟢 ในเป้า {onTargetCount}</span>
+            <span style={{ color: STATUS_COLOR.veryHigh }}>🔴 เกินเป้า {overTargetCount}</span>
+            <span style={{ color: STATUS_COLOR.onTrack }}>🟡 ยังไม่ถึงเป้า {underTargetCount}</span>
           </div>
 
           <div className="flex justify-end mt-2.5">

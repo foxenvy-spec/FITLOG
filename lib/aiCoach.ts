@@ -191,6 +191,13 @@ export function computeAIDailySummary(
 
   let msg = `${recoveryRecommendationLabel(progressPct, isForToday)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
 
+  // ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — ถ้า suggestMuscleToTrain แนะนำกลุ่มนี้แทนกลุ่มตามตารางเพราะ
+  // Volume ของกลุ่มตามตารางเกินเป้าหมายไปแล้ว (scheduleOverriddenFrom) ต้องบอกเหตุผลตรงๆ ไม่ใช่แนะนำเงียบๆ
+  // เดี๋ยวผู้ใช้จะงงว่าทำไมจู่ๆ ไม่แนะนำกลุ่มตามตารางที่คุ้นเคยแล้ว
+  if (muscleRecommendation.scheduleOverriddenFrom) {
+    msg += ` — ตามตารางคือ${muscleRecommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายไปแล้ว จึงแนะนำเน้น${muscleRecommendation.muscleGroup}แทน`
+  }
+
   if (balance.status === 'push_dominant') {
     msg += ' — และควรแทรกท่าดึง (หลัง) เพิ่ม เพราะสัปดาห์นี้ฝั่งดันเยอะกว่า'
   } else if (balance.status === 'pull_dominant') {

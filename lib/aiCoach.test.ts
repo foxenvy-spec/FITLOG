@@ -237,6 +237,23 @@ describe('computeAIDailySummary', () => {
     expect(msg).toContain('ครั้งหน้าแนะนำเล่น ขา')
     expect(msg).not.toContain('วันนี้ควรเล่น')
   })
+
+  it('explains a schedule override when the recommended muscle replaced an over-target scheduled one', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'อก', pct: 80, scheduleOverriddenFrom: 'ขา' },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' }
+    )
+    expect(msg).toContain('ตามตารางคือขา')
+    expect(msg).toContain('เน้นอกแทน')
+  })
+
+  it('omits the schedule-override clause when the recommendation matches the schedule', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'ขา', pct: 80 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' }
+    )
+    expect(msg).not.toContain('ตามตารางคือ')
+  })
 })
 
 describe('buildSkippedExerciseInsight', () => {

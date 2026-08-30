@@ -358,19 +358,27 @@ export function computeRecoveryReadyInHours(lastTrainedDate: string | null, musc
 export interface MuscleRecommendation {
   muscleGroup: string
   pct: number
+  // ถ้าไม่ null แปลว่ากลุ่มนี้ "แทนที่" กลุ่มที่ตารางกำหนดไว้จริง (ค่านี้) เพราะกลุ่มตามตาราง Volume
+  // สัปดาห์นี้เกินเป้าหมายไปแล้ว (ดู comment เต็มที่ suggestMuscleToTrain) — ผู้เรียกใช้ค่านี้บอกผู้ใช้ว่า
+  // "ตามตารางคือ X แต่แนะนำ Y แทนเพราะ Volume ของ X เกินเป้าแล้ว" แทนที่จะแนะนำเงียบๆ โดยไม่อธิบาย
+  scheduleOverriddenFrom?: string | null
 }
 
-// scheduledMuscle: ถ้ามีตารางโปรแกรมประจำสัปดาห์ระบุไว้ (เช่น พฤหัส = "ขา") ให้ยึดตามตารางก่อนเสมอ
+// scheduledMuscle: ถ้ามีตารางโปรแกรมประจำสัปดาห์ระบุไว้ (เช่น พฤหัส = "ขา") ให้ยึดตามตารางก่อนเป็นค่าเริ่มต้น
 // แทนที่จะเลือกจาก recovery % สูงสุดล้วนๆ — ป้องกันกรณีแนะนำสวนทางตาราง (เช่น ตารางบอกขา แต่ recovery
 // อกดันสูงกว่าเลยแนะนำอกแทน) ถ้า scheduledMuscle ไม่มีข้อมูล recovery ให้ตกกลับไปใช้ recovery สูงสุดตามเดิม
 //
 // setsByMuscle/targetsByMuscle (optional — ไม่ระบุ = พฤติกรรมเดิมทุกประการ ไม่กระทบจุดเรียกที่ยังไม่มี
-// ข้อมูล volume ให้): ใช้เฉพาะตอน "เลือกอิสระ" เท่านั้น (ไม่มีตารางบังคับ) — เดิมเลือกจาก recovery % สูงสุด
-// ล้วนๆ ไม่สนใจว่ากลุ่มนั้น Volume สัปดาห์นี้เกินเป้าหมายไปแล้วหรือยัง ทำให้แนะนำซ้ำกลุ่มเดิมที่ฟื้นตัวเร็ว
-// (เช่น ขา Recovery 100% แต่ Volume 29/12 เซ็ต เกินไปแล้ว 17 เซ็ต) ทั้งที่กลุ่มอื่นที่พร้อมฝึกเหมือนกัน
-// (recovery tier "ดี" ขึ้นไป) แต่ Volume ยังไม่ถึงเป้า ควรได้รับการแนะนำมากกว่า — ไม่แตะกรณีมีตารางบังคับ
-// (ทั้งวันนี้/วันถัดไป) เพราะนั่นคือแผนที่ผู้ใช้ตั้งเองแล้ว ไม่ควรมีอะไรมาสวนทาง (ดู isRecommendationForToday
-// ที่ DashboardView.tsx ซึ่งแก้ปัญหาป้ายข้อความขัดกับตารางไปแล้วอีกทาง)
+// ข้อมูล volume ให้): ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — เดิมถ้ามีตารางบังคับ (scheduledMuscle) จะ
+// ยึดตามนั้นเสมอไม่สนใจ Volume เลย ทำให้ยังแนะนำ "ขา" ต่อไปแม้ Weekly Volume ของขาเกินเป้าไปแล้ว 17 เซ็ต
+// (Recovery ฟื้นตัว ≠ ควรฝึกเพิ่ม) — ตอนนี้เช็คก่อนว่ากลุ่มตามตาราง Volume เกินเป้าหรือยัง ถ้าเกินแล้วและมี
+// กลุ่มอื่นที่พร้อมฝึก (recovery tier "ดี" ขึ้นไป) แต่ Volume ยังไม่ถึงเป้า ให้แนะนำกลุ่มนั้นแทน (บันทึกไว้ใน
+// scheduleOverriddenFrom ให้ UI อธิบายเหตุผลได้) ถ้าไม่มีทางเลือกที่ดีกว่าจริงๆ (ทุกกลุ่มที่พร้อมก็เกินเป้า
+// หมด) ตกกลับไปแนะนำตามตารางเดิม — ไม่มีทางเลือกที่ดีกว่าก็ยังดีกว่าไม่แนะนำอะไรเลย
+//
+// กรณีไม่มีตารางบังคับเลย (rest day/ยังไม่ตั้งโปรแกรม) ใช้ตรรกะเดียวกันเลือกกลุ่มพร้อมฝึก+ยังไม่ถึงเป้าก่อน
+// เสมอ (ไม่ใช่แค่ recovery สูงสุดเฉยๆ) กันแนะนำซ้ำกลุ่มเดิมที่ฟื้นตัวเร็ว (เช่น กลุ่มเล็ก) ทั้งที่ Volume เกินเป้า
+// ไปแล้ว ในขณะที่กลุ่มอื่นยังไม่ถึงเป้าเลย
 export function suggestMuscleToTrain(
   recoveryPctByMuscle: Record<string, number>,
   scheduledMuscle?: string | null,
@@ -380,12 +388,15 @@ export function suggestMuscleToTrain(
   const entries = Object.entries(recoveryPctByMuscle)
   if (entries.length === 0) return null
 
-  if (scheduledMuscle && scheduledMuscle in recoveryPctByMuscle) {
-    return { muscleGroup: scheduledMuscle, pct: recoveryPctByMuscle[scheduledMuscle] }
+  const isOverTarget = (mg: string) => {
+    if (!setsByMuscle || !targetsByMuscle) return false
+    const target = targetsByMuscle[mg] ?? 0
+    return target > 0 && (setsByMuscle[mg] ?? 0) >= target
   }
 
-  if (setsByMuscle && targetsByMuscle) {
-    const readyAndUnderTarget = entries
+  const bestReadyAndUnderTarget = (): [string, number] | null => {
+    if (!setsByMuscle || !targetsByMuscle) return null
+    const list = entries
       .filter(([mg, pct]) => {
         const tier = recoveryTier(pct).labelEn
         const isReady = tier === 'Good' || tier === 'Excellent'
@@ -394,10 +405,24 @@ export function suggestMuscleToTrain(
         return isReady && target > 0 && current < target
       })
       .sort((a, b) => b[1] - a[1])
-    if (readyAndUnderTarget.length > 0) {
-      const [muscleGroup, pct] = readyAndUnderTarget[0]
-      return { muscleGroup, pct }
+    return list.length > 0 ? list[0] : null
+  }
+
+  if (scheduledMuscle && scheduledMuscle in recoveryPctByMuscle) {
+    if (isOverTarget(scheduledMuscle)) {
+      const alt = bestReadyAndUnderTarget()
+      if (alt) {
+        const [muscleGroup, pct] = alt
+        return { muscleGroup, pct, scheduleOverriddenFrom: scheduledMuscle }
+      }
     }
+    return { muscleGroup: scheduledMuscle, pct: recoveryPctByMuscle[scheduledMuscle] }
+  }
+
+  const alt = bestReadyAndUnderTarget()
+  if (alt) {
+    const [muscleGroup, pct] = alt
+    return { muscleGroup, pct }
   }
 
   const [muscleGroup, pct] = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])

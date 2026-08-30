@@ -566,14 +566,34 @@ describe('suggestMuscleToTrain', () => {
     expect(rec?.muscleGroup).toBe('ขา')
   })
 
-  it('still respects the scheduled muscle even when it is over its weekly volume target', () => {
-    // ตารางบังคับวันนี้ = ขา แม้ Volume เกินเป้าแล้วก็ต้องเลือกขาตามเดิม ไม่ใช่หน้าที่ของฟังก์ชันนี้ที่จะ
-    // สวนทางกับแผนที่ผู้ใช้ตั้งเอง
+  it('overrides the scheduled muscle when it is over its weekly volume target and a better alternative exists', () => {
+    // ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — ตารางบังคับวันนี้ = ขา แต่ Volume ขาเกินเป้าไปแล้ว 17 เซ็ต
+    // อกยังไม่ถึงเป้าและ recovery ดีพอ ควรแนะนำอกแทน พร้อมบันทึกไว้ว่าตารางเดิมคือขา
     const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, 'ขา', { ขา: 29, อก: 8 }, { ขา: 12, อก: 10 })
-    expect(rec?.muscleGroup).toBe('ขา')
+    expect(rec?.muscleGroup).toBe('อก')
+    expect(rec?.scheduleOverriddenFrom).toBe('ขา')
   })
 
-  it('ignores volume data entirely when setsByMuscle/targetsByMuscle are not provided (backward compatible)', () => {
+  it('keeps the scheduled muscle when it is over target but no better alternative exists', () => {
+    // อกก็เกินเป้าเหมือนกัน ไม่มีทางเลือกที่ดีกว่า ต้องตกกลับไปแนะนำตามตารางเดิม (ไม่แนะนำอะไรเลยแย่กว่า)
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, 'ขา', { ขา: 29, อก: 15 }, { ขา: 12, อก: 10 })
+    expect(rec?.muscleGroup).toBe('ขา')
+    expect(rec?.scheduleOverriddenFrom).toBeUndefined()
+  })
+
+  it('does not override the scheduled muscle when it is still under its weekly volume target', () => {
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, 'ขา', { ขา: 8, อก: 8 }, { ขา: 12, อก: 10 })
+    expect(rec?.muscleGroup).toBe('ขา')
+    expect(rec?.scheduleOverriddenFrom).toBeUndefined()
+  })
+
+  it('does not check volume when setsByMuscle/targetsByMuscle are not provided (backward compatible)', () => {
+    const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, 'ขา')
+    expect(rec?.muscleGroup).toBe('ขา')
+    expect(rec?.scheduleOverriddenFrom).toBeUndefined()
+  })
+
+  it('ignores volume data entirely when no scheduledMuscle is given and it matches the top pick anyway', () => {
     const rec = suggestMuscleToTrain({ ขา: 100, อก: 80 }, null)
     expect(rec?.muscleGroup).toBe('ขา')
   })
