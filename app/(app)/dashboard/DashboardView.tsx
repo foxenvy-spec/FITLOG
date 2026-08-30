@@ -59,6 +59,7 @@ import { VOLUME_MUSCLES, RECOVERY_MUSCLES, MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, d
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
+import ShareWeeklySummaryButton from '@/components/ShareWeeklySummaryButton'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCarousel from '@/components/InsightCarousel'
 import TodayMuscleChips from '@/components/TodayMuscleChips'
@@ -2150,6 +2151,28 @@ export default function DashboardPage() {
                 <p className="text-[10px] text-muted mt-1">Consistency</p>
               </div>
             )}
+          </div>
+
+          {/* ฟีดแบ็ก "ทำปุ่ม Share สรุปประจำสัปดาห์ออกมาเป็นภาพสไตล์ Spotify Wrapped แชร์ลง IG Story ได้"
+              — วางในการ์ดนี้เพราะมีตัวเลขสรุปสัปดาห์ครบที่สุดอยู่แล้ว (Goal/Training days/Volume/
+              Consistency) ไม่ต้องดึงข้อมูลเพิ่ม */}
+          <div className="mt-3.5 pt-3 border-t border-white/5 flex justify-center">
+            <ShareWeeklySummaryButton
+              stats={{
+                dateRangeLabel:
+                  data.weekDayTicks.length > 0
+                    ? `${new Date(data.weekDayTicks[0].iso + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} - ${new Date(
+                        data.weekDayTicks[data.weekDayTicks.length - 1].iso + 'T00:00:00'
+                      ).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}`
+                    : '',
+                streak: data.streak,
+                workoutDays: data.thisWeekWorkoutDays,
+                workoutGoal: data.weeklyWorkoutGoal,
+                weeklyTotalSets: data.weeklyTotalSets,
+                weeklyConsistencyPct: data.weeklyConsistencyPct,
+                weeklyGoalPct: data.weeklyGoalPct,
+              }}
+            />
           </div>
         </div>
       </div>
