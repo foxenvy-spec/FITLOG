@@ -2003,13 +2003,20 @@ export default function DashboardPage() {
               className={data.weeklyGoalPct >= 100 ? 'rounded-full animate-pr-glow' : undefined}
               style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.amber, '40')})`, ...({ '--pr-glow': 'rgba(232,163,61,.5)' } as React.CSSProperties) }}
             >
+              {/* ฟีดแบ็ก "86% Goal ดูไม่สัมพันธ์กับข้อความข้างๆ (3 ครั้ง/อีก 2 ครั้งถึงเป้าหมาย) — 3/5 ครั้ง
+                  ควรเป็น 60% ไม่ใช่ 86%" — weeklyGoalPct (lib fetchDashboardData ด้านบน) ไม่ใช่ % จำนวนครั้ง
+                  ที่ฝึกจริงๆ แต่เป็นค่าเฉลี่ย % ของเป้าหมายเซ็ต/สัปดาห์ข้ามทุกกล้ามเนื้อ (Volume-based) คนละ
+                  metric กับ "3 ครั้งแล้ว/อีก 2 ครั้ง" (นับจำนวนวันที่ฝึก) ที่วางอยู่ข้างๆ กันพอดี — ป้าย "Goal"
+                  เดิมกำกวมทำให้ดูเหมือนเป็น metric เดียวกัน แก้ด้วยการเปลี่ยน label ให้ตรงกับสิ่งที่วัดจริง
+                  (ไม่แตะสูตรคำนวณ weeklyGoalPct เอง เพราะใช้ร่วมกับ Fitness Score weighting อยู่ด้วย
+                  เปลี่ยนความหมายตรงนั้นจะกระทบวงกว้างกว่านี้มาก) */}
               <GoalRing
                 pct={data.weeklyGoalPct}
                 size={72}
                 strokeWidth={7}
                 color={COLORS.amber}
-                label="Goal"
-                ariaLabel="Weekly Goal"
+                label="Volume"
+                ariaLabel="Weekly Volume Progress"
                 glow
               />
             </div>
