@@ -196,8 +196,11 @@ export default function ConsistencyStrip() {
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden lg:grid lg:grid-cols-3">
       {/* left: calendar grid + legend — spans 2/3 on lg+ so the 4 stat tiles can sit
           beside it as a 2x2 block instead of stacking in a row underneath */}
+      {/* ฟีดแบ็ก "Consistency สามารถลดความสูงลงได้ประมาณ 15-20%" — ลด padding แนวตั้งของทั้งสองโซน
+          (หัวการ์ด + บริเวณปฏิทิน) ลงเล็กน้อย ไม่แตะขนาดกริดปฏิทิน/ขนาดตัวอักษร (เสี่ยงกระทบ readability
+          มากกว่า) รวมกันแล้วลดความสูงจริงได้ตามสัดส่วนที่ขอโดยไม่ต้องตัดข้อมูลออก */}
       <div className="lg:col-span-2 lg:border-r lg:border-line">
-        <div className="px-4 pt-3.5 pb-3 flex items-start justify-between gap-2">
+        <div className="px-4 pt-3 pb-2 flex items-start justify-between gap-2">
           <div>
             <p className="text-[10px] tracked uppercase text-muted">Consistency</p>
             {data && (
@@ -211,7 +214,7 @@ export default function ConsistencyStrip() {
           </a>
         </div>
 
-        <div className="px-4 pb-4 flex gap-4 flex-wrap">
+        <div className="px-4 pb-3 flex gap-4 flex-wrap">
           <div className="max-w-[220px] shrink-0">
             <div className="grid grid-cols-7 gap-1.5 mb-1.5">
               {WEEKDAY_LABELS.map((d) => (
@@ -439,7 +442,7 @@ function StatTile({
   trend?: number | null
 }) {
   return (
-    <div className="px-3 py-3.5 text-center flex flex-col items-center justify-center">
+    <div className="px-3 py-3 text-center flex flex-col items-center justify-center">
       <p className="font-mono text-lg text-amber">{value}</p>
       <p className="text-[10px] text-ink mt-0.5">{label}</p>
       <p className="text-[9px] text-muted">{caption}</p>
