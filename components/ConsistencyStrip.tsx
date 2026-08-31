@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, computePlannedConsistency, computeCurrentStreakDates, computeLongestStreak } from '@/lib/dashboardStats'
-import { daysAgoStr } from '@/lib/weekdays'
+import { daysAgoStr, bangkokParts } from '@/lib/weekdays'
 import { workoutVolumeKg } from '@/lib/workoutDisplay'
 import { buildDisplaySets } from '@/components/ExerciseCard'
 import type { Workout, WorkoutSet } from '@/lib/types'
@@ -12,10 +12,20 @@ import type { Workout, WorkoutSet } from '@/lib/types'
 const WEEKDAY_LABELS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
 const WINDOW_DAYS = 21 // 3 สัปดาห์เต็ม (จ-อา) ย้อนหลัง — พอเห็นแพทเทิร์นโดยไม่ยาวเทอะทะ
 
+// บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): toIso เดิมแปลง Date -> string ผ่าน timezone ของเครื่องที่รันโค้ด (เหมือน
+// getWeekRange เดิมที่เพิ่งแก้ไปใน lib/dashboardStats.ts) ทั้งที่ "วันนี้"/หน้าต่างเวลาทั้งหมดในไฟล์นี้ควร
+// ยึดปฏิทินไทยเสมอ (ตรงกับ performed_at ที่บันทึกด้วย todayStr() จาก lib/weekdays.ts) — เปลี่ยน toIso ให้
+// เป็นแค่ตัวแปลง Date (ที่ anchor เป็น UTC midnight ของวันนั้นแล้วเสมอ) -> string ตรงๆ ไม่ยุ่งกับ timezone
+// เครื่องอีกเลย แล้วใช้ bangkokToday() ด้านล่างเป็นจุดเริ่มต้นแทน new Date() ตรงๆ ทุกจุดที่เคยพลาด
 function toIso(d: Date) {
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60000)
-  return local.toISOString().slice(0, 10)
+  return d.toISOString().slice(0, 10)
+}
+
+// "วันนี้" ตามปฏิทินไทยเสมอ คืนเป็น Date ที่ anchor ไว้ที่เที่ยงคืน UTC ของวันนั้น — เลขคณิตวันต่อจากนี้
+// (บวก/ลบวัน, หา day-of-week) ต้องใช้ .setUTCDate()/.getUTCDate()/.getUTCDay() เท่านั้น ไม่ใช่ .setDate()/
+// .getDay() ปกติ (ซึ่งจะกลับไปอ่านตาม timezone เครื่องอีกครั้งหลัง anchor เป็น UTC แล้ว)
+function bangkokToday(): Date {
+  return new Date(`${bangkokParts(new Date())}T00:00:00Z`)
 }
 
 function shortThaiDate(iso: string) {
@@ -49,13 +59,13 @@ const WINDOW_ROW_SELECT =
 // สำหรับ current/best streak ตัวเดียวกับที่ DashboardView.tsx ใช้คำนวณ streak หลักของแอปอยู่แล้ว — เรียก
 // computeCurrentStreakDates/computeLongestStreak ตัวเดียวกันเป๊ะ ไม่คำนวณสูตรแยกใหม่)
 async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
-  const today = new Date()
+  const today = bangkokToday()
   const windowStart = new Date(today)
-  windowStart.setDate(windowStart.getDate() - (WINDOW_DAYS - 1))
+  windowStart.setUTCDate(windowStart.getUTCDate() - (WINDOW_DAYS - 1))
   const prevWindowEnd = new Date(windowStart)
-  prevWindowEnd.setDate(prevWindowEnd.getDate() - 1)
+  prevWindowEnd.setUTCDate(prevWindowEnd.getUTCDate() - 1)
   const prevWindowStart = new Date(prevWindowEnd)
-  prevWindowStart.setDate(prevWindowStart.getDate() - (WINDOW_DAYS - 1))
+  prevWindowStart.setUTCDate(prevWindowStart.getUTCDate() - (WINDOW_DAYS - 1))
   const { start: weekStart, end: weekEnd } = getWeekRange()
   const streakCutoff = daysAgoStr(400)
 
@@ -92,8 +102,8 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   const prevDays: { dayOfWeek: number; hasWorkout: boolean }[] = []
   for (let i = 0; i < WINDOW_DAYS; i++) {
     const d = new Date(prevWindowStart)
-    d.setDate(d.getDate() + i)
-    prevDays.push({ dayOfWeek: d.getDay(), hasWorkout: prevWorkoutDates.has(toIso(d)) })
+    d.setUTCDate(d.getUTCDate() + i)
+    prevDays.push({ dayOfWeek: d.getUTCDay(), hasWorkout: prevWorkoutDates.has(toIso(d)) })
   }
   const previousConsistencyPct = computePlannedConsistency(prevDays, plannedWeekdays).pct
 
@@ -123,10 +133,10 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
 // อยู่แล้ว ไม่ query ซ้ำ) — Consistency%/สัปดาห์ติด (StatTile) ยังคงอิงจาก fetchConsistencyData (วันนี้)
 // เสมอ ไม่เปลี่ยนตามช่วงที่กำลังเลื่อนดู เพราะเป็น "สถานะตอนนี้" ไม่ใช่สถิติของช่วงย้อนหลังที่กำลังดู
 async function fetchWindowRows(supabase: ReturnType<typeof createClient>, weekOffset: number) {
-  const refEnd = new Date()
-  refEnd.setDate(refEnd.getDate() - weekOffset * WINDOW_DAYS)
+  const refEnd = bangkokToday()
+  refEnd.setUTCDate(refEnd.getUTCDate() - weekOffset * WINDOW_DAYS)
   const refStart = new Date(refEnd)
-  refStart.setDate(refStart.getDate() - (WINDOW_DAYS - 1))
+  refStart.setUTCDate(refStart.getUTCDate() - (WINDOW_DAYS - 1))
   const { data: rows } = await supabase
     .from('workouts')
     .select(WINDOW_ROW_SELECT)
@@ -148,10 +158,10 @@ async function fetchWindowRows(supabase: ReturnType<typeof createClient>, weekOf
 function buildCalendarGrid(windowStartIso: string, setsByDay: Record<string, number>, workoutsByDay: Record<string, Workout[]>) {
   const maxSets = Math.max(1, ...Object.values(setsByDay))
   const days: { iso: string; level: Level; workouts: Workout[] }[] = []
-  const start = new Date(windowStartIso + 'T00:00:00')
+  const start = new Date(`${windowStartIso}T00:00:00Z`)
   for (let i = 0; i < WINDOW_DAYS; i++) {
     const d = new Date(start)
-    d.setDate(d.getDate() + i)
+    d.setUTCDate(d.getUTCDate() + i)
     const iso = toIso(d)
     const sets = setsByDay[iso] ?? 0
     const dayWorkouts = workoutsByDay[iso] ?? []
@@ -169,7 +179,7 @@ function buildCalendarGrid(windowStartIso: string, setsByDay: Record<string, num
     }
     days.push({ iso, level, workouts: dayWorkouts })
   }
-  const firstDow = (new Date(days[0].iso + 'T00:00:00').getDay() + 6) % 7 // 0=จันทร์
+  const firstDow = (new Date(`${days[0].iso}T00:00:00Z`).getUTCDay() + 6) % 7 // 0=จันทร์
   const padded: (typeof days[number] | null)[] = Array(firstDow).fill(null)
   padded.push(...days)
   while (padded.length % 7 !== 0) padded.push(null)
@@ -283,11 +293,11 @@ export default function ConsistencyStrip() {
   const liveStats = useMemo(() => {
     if (!data) return null
     const dayEntries: { dayOfWeek: number; hasWorkout: boolean }[] = []
-    const start = new Date(data.windowStartIso + 'T00:00:00')
+    const start = new Date(`${data.windowStartIso}T00:00:00Z`)
     for (let i = 0; i < WINDOW_DAYS; i++) {
       const d = new Date(start)
-      d.setDate(d.getDate() + i)
-      dayEntries.push({ dayOfWeek: d.getDay(), hasWorkout: (data.workoutsByDay[toIso(d)] ?? []).length > 0 })
+      d.setUTCDate(d.getUTCDate() + i)
+      dayEntries.push({ dayOfWeek: d.getUTCDay(), hasWorkout: (data.workoutsByDay[toIso(d)] ?? []).length > 0 })
     }
     // ฟีดแบ็ก "Training Consistency ควรวัดกับ Plan ไม่ใช่ปฏิทินดิบ" — เดิม workoutDays (นับวันที่มี log
     // เทียบกับ WINDOW_DAYS ทั้งหมด) ทำให้โปรแกรมที่ตั้งไว้ 3 วัน/สัปดาห์แล้วทำครบทุกวันที่กำหนดจริง ยังโชว์
