@@ -46,6 +46,8 @@ import type { ExerciseDef } from '@/lib/exerciseLibrary'
 import { estimateCaloriesToday, getWeekRange, getPreviousWeekRange, computeBestVolumeIncrease, type VolumeIncrease } from '@/lib/dashboardStats'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { dropSetWeightKg } from '@/lib/weightUnit'
+import { suggestNextLoad } from '@/lib/progressiveOverload'
+import { calculatePlates } from '@/lib/plateCalculator'
 import { useToast } from '@/components/Toast'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import { computeSessionMuscleRecovery, tierForPct, type MuscleRecoveryScore } from '@/lib/recoveryScore'
@@ -136,6 +138,10 @@ export default function SessionPage() {
   const [summaryExtras, setSummaryExtras] = useState<SummaryExtras | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
+  // ผลงาน "ครั้งก่อน" ต่อชื่อท่า — เดิมเป็นแค่ตัวแปร local ใน load() ใช้ตั้งค่าเริ่มต้น reps/น้ำหนักเฉยๆ
+  // แล้วทิ้ง ตอนนี้เก็บไว้ใน state ด้วยเพื่อใช้คำนวณคำแนะนำ Progressive Overload (ดู suggestNextLoad)
+  // ในหน้าจอด้วย — addExercise/swapCurrentExercise อัปเดตเข้า map นี้เพิ่มตอนดึงท่าที่ไม่อยู่ในแผนด้วย
+  const [lastPerformanceByName, setLastPerformanceByName] = useState<Record<string, LastPerformance>>({})
 
   // "เพิ่มท่า" เอง ระหว่างเซสชัน — ไว้สำหรับท่านอกแผนที่อยากแทรกเข้ามาเล่นเพิ่ม
   const [showAddExercise, setShowAddExercise] = useState(false)
@@ -328,6 +334,7 @@ export default function SessionPage() {
     setDay(dayRow as ProgramDay)
     setExercises(combinedExercises)
     setStates(adjustedStates)
+    setLastPerformanceByName(lastPerformanceByName)
     setIndex(firstUnfinishedIndex(combinedExercises, adjustedStates))
 
     // ฟีดแบ็ก "กดเข้าการ์ด Today's Workout ตอนทำครบแล้ว ควรเห็นหน้าสรุปผล ไม่ใช่กลับไปหน้าทำท่า" — เดิม
@@ -378,6 +385,23 @@ export default function SessionPage() {
   const current = exercises[index] ?? null
   const currentState = current ? states[current.id] : null
   const targetSets = current?.sets ?? 3
+
+  // คำแนะนำ Progressive Overload ของท่าปัจจุบัน — โชว์เฉพาะ "ก่อน" กดเซ็ตแรกของเซสชันนี้ (setsLog ว่าง)
+  // เพราะหลังจากนั้นค่า reps/weightKg ใน currentState คือ draft ที่ผู้ใช้กำลังกรอกอยู่จริงแล้ว ไม่ใช่จุดที่
+  // ควรมาแนะนำค่าเริ่มต้นซ้ำอีก — ต้องมีผลงานครั้งก่อนของท่านี้ด้วย ไม่งั้นไม่มีฐานให้เทียบ
+  const currentLastPerf = current ? lastPerformanceByName[current.exercise_name] ?? null : null
+  const overloadSuggestion =
+    currentLastPerf && currentState?.setsLog.length === 0
+      ? suggestNextLoad(currentLastPerf, current?.target_reps ?? null, unit)
+      : null
+
+  // Plate Calculator เฉพาะท่าอุปกรณ์บาร์เบล — ดัมเบล/เครื่อง/เคเบิล/น้ำหนักตัว/คีทเทิลเบลไม่ได้ใส่แผ่น
+  // แบบ 2 ข้างบาร์แบบนี้ (ยกเว้นบางเครื่อง แต่แยกไม่ออกจากข้อมูลที่มีอยู่ เลยไม่รวมด้วยกันความชัวร์)
+  const currentEquipment = current ? findExerciseByName(exerciseLibrary, current.exercise_name)?.equipment : undefined
+  const plateBreakdown =
+    currentEquipment === 'บาร์เบล' && (currentState?.weightKg ?? 0) > 0
+      ? calculatePlates(toDisplay(currentState!.weightKg!), unit)
+      : null
 
   function updateCurrent(patch: Partial<SessionSetState>) {
     if (!current) return
@@ -440,6 +464,7 @@ export default function SessionPage() {
     })
 
     const last = await fetchLastPerformance(name)
+    if (last) setLastPerformanceByName((prev) => ({ ...prev, [name]: last }))
 
     setExercises((prev) => [...prev, newEx])
     setStates((prev) => ({ ...prev, [newEx.id]: initSessionSet(newEx, last) }))
@@ -646,6 +671,7 @@ export default function SessionPage() {
     setSwapping(true)
     try {
       const last = await fetchLastPerformance(name)
+      if (last) setLastPerformanceByName((prev) => ({ ...prev, [name]: last }))
       const newEx = makeAdhocExercise({
         id: crypto.randomUUID(),
         exerciseName: name,
@@ -1306,6 +1332,35 @@ export default function SessionPage() {
             <WeightUnitToggle />
           </div>
 
+          {/* Progressive Overload — โชว์เฉพาะก่อนกดเซ็ตแรกของท่านี้ในเซสชันนี้ (ดู overloadSuggestion
+              ด้านบน) เทียบผลงานครั้งก่อนกับช่วง reps เป้าหมาย แล้วแนะนำน้ำหนัก/reps ของวันนี้ตามหลัก
+              double progression (เต็มขอบบนของช่วง reps แล้ว = เพิ่มน้ำหนัก, ยังไม่เต็ม = เพิ่ม rep) —
+              ปุ่ม "ใช้เลย" กรอกค่าที่แนะนำเข้า draft ให้ทันที ผู้ใช้ยังปรับเองต่อได้ตามปกติ */}
+          {overloadSuggestion && currentLastPerf && (
+            <div
+              className="rounded-xl px-3 py-2 flex items-center justify-between gap-2"
+              style={{ background: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '2A')}` }}
+            >
+              <div className="min-w-0">
+                <p className="text-[9px] tracked uppercase truncate" style={{ color: '#CFD4DE' }}>
+                  ครั้งก่อน {format(currentLastPerf.weightKg)} × {currentLastPerf.reps} ·{' '}
+                  {overloadSuggestion.increasedWeight ? 'พร้อมเพิ่มน้ำหนักแล้ว' : 'ลองเพิ่มอีก 1 rep'}
+                </p>
+                <p className="font-display text-sm tracked" style={{ color: COLORS.amber }}>
+                  แนะนำวันนี้ {format(overloadSuggestion.weightKg)} × {overloadSuggestion.reps}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => updateCurrent({ weightKg: overloadSuggestion.weightKg, reps: overloadSuggestion.reps })}
+                className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-display tracked uppercase active:scale-[0.98] transition"
+                style={{ background: COLORS.amber, color: NEUTRAL.onAmberText }}
+              >
+                ใช้เลย
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-2.5">
             <NumberStepper
               label="Reps ที่ทำได้"
@@ -1323,6 +1378,35 @@ export default function SessionPage() {
               min={0}
             />
           </div>
+
+          {/* Plate Calculator — เฉพาะท่าอุปกรณ์บาร์เบล (ดู plateBreakdown ด้านบน) บอกว่าต้องใส่แผ่น
+              อะไรต่อข้างบ้างถึงจะได้น้ำหนักรวมตามที่กรอกไว้ ไม่ต้องคำนวณเลขในหัวเองระหว่างเทรน —
+              ใช้บาร์มาตรฐาน 20kg/45lb ตายตัว (ไม่มีข้อมูลบาร์เฉพาะทางต่อท่าในระบบให้ปรับ) */}
+          {plateBreakdown && (
+            <div className="rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap" style={{ background: 'rgba(255,255,255,.04)' }}>
+              <span className="text-[9px] tracked uppercase text-muted shrink-0">
+                แผ่น/ข้าง (บาร์ {plateBreakdown.barWeight}{unit})
+              </span>
+              {plateBreakdown.perSide.length === 0 ? (
+                <span className="text-[11px] font-mono" style={{ color: '#CFD4DE' }}>บาร์เปล่า</span>
+              ) : (
+                plateBreakdown.perSide.map((p) => (
+                  <span
+                    key={p.plate}
+                    className="rounded-md px-1.5 py-0.5 text-[11px] font-mono"
+                    style={{ background: withAlpha(COLORS.steel, '26'), color: COLORS.steel }}
+                  >
+                    {p.plate}×{p.count}
+                  </span>
+                ))
+              )}
+              {plateBreakdown.leftoverPerSide > 0 && (
+                <span className="text-[9px] tracked text-muted">
+                  (แบ่งแผ่นไม่ลงตัว เหลือ {plateBreakdown.leftoverPerSide}{unit}/ข้าง)
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Drop Set — ลดน้ำหนักด่วนสำหรับเซ็ตถัดไปโดยไม่ต้องกด stepper ทีละครั้ง ปัดเข้า step
               เดียวกับ NumberStepper น้ำหนักด้านบน (2.5kg / 5lb) กันได้ตัวเลขแปลกๆ เช่น 63.75kg
