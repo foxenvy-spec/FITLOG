@@ -264,14 +264,6 @@ export default function AICoachCompactCard({
           aria-hidden="true"
         />
       ))}
-      {/* v16: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ AI Coach description" — ป้าย timestamp
-          นี้ (meta text เล็กสุดในการ์ด) ยังเป็น text-muted (#9498A0) เดิม ไม่เคยถูกแตะเลยตลอดหลายรอบก่อน
-          ขยับเป็น #CFD4DE ตามระดับเดียวกับ caption อื่นในการ์ดนี้ */}
-      <span className="absolute top-3 right-3 flex items-center gap-1 text-[8px] tracked uppercase" style={{ color: '#CFD4DE' }} aria-hidden="true">
-        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
-        {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
-      </span>
-
       {/* v51: gap ระหว่าง Robot กับข้อมูลด้านขวา 12px -> 10px ตามฟีดแบ็ก "ลดช่องว่างระหว่าง Robot กับ
           ข้อมูลด้านขวา" — เล็กน้อยพอไม่ให้ดูอึดอัด แต่ช่วยเก็บพื้นที่แนวนอนกลับมาให้คอลัมน์ข้อความ
           v52: ลดอีกขั้น 10px -> 8px ตามรอบต่อมา */}
@@ -295,9 +287,19 @@ export default function AICoachCompactCard({
           {/* ฟีดแบ็ก "AI Coach ยังดูเหมือนโฆษณา — ลด Visual Dominance เปลี่ยนเป็น MINT COACH" — เปลี่ยน
               label เฉยๆ (avatar ตอนนั้นยังเป็น Robot photo — ตอนนี้เปลี่ยนเป็น abstract gem แล้ว ดู
               AiRingAvatar ด้านล่างของไฟล์) */}
-          <p className="font-display text-[10px] tracked uppercase flex items-center gap-1" style={{ color: TEXT.body }}>
-            <span aria-hidden="true">✨</span> MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
-          </p>
+          {/* ฟีดแบ็ก "ป้าย MINT COACH กับ timestamp ทับกัน" — เดิม timestamp เป็น absolute top-3 right-3
+              ลอยอยู่บนสุดของการ์ดทั้งใบ แยกขาดจาก layout ของป้ายชื่อข้างล่างนี้ (อยู่ในคอลัมน์ข้อความหลัง
+              avatar) ทำให้ทับกันได้เมื่อคอลัมน์ข้อความแคบ (การ์ดแคบ/avatar ใหญ่) — ย้าย timestamp มาอยู่ใน
+              flex row เดียวกับป้ายชื่อแทน (justify-between + shrink-0) ให้ทั้งคู่แบ่งพื้นที่กันจริง ไม่ทับ */}
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-display text-[10px] tracked uppercase flex items-center gap-1 min-w-0" style={{ color: TEXT.body }}>
+              <span aria-hidden="true">✨</span> MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
+            </p>
+            <span className="flex items-center gap-1 text-[8px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }} aria-hidden="true">
+              <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
+              {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
+            </span>
+          </div>
           {muscleRecommendation ? (
             <>
               {/* v25: ฟีดแบ็ก "④ ลดความแน่นของ AI Coach — ตัดข้อความรองบางส่วน" — ตัด "วันนี้เหมาะกับ"
