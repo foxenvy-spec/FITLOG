@@ -722,8 +722,17 @@ export default function DashboardPage() {
     }
     return ordered.length > 0 ? ordered.join(' + ') : null
   }, [data?.todayWorkouts])
+  // บั๊ก (ฟีดแบ็ก "มือถือขึ้น 8/8 COMPLETED แต่เดสก์ท็อปยังโชว์ 88% ความพร้อม + ปุ่มไปต่อ") — เดิม
+  // progressPct นับแค่ data.completedCount (ท่าตามแผนที่จบผ่าน program_exercise_id ตรงๆ) ไม่รวม
+  // data.adhocCompletedCount (ท่าที่จบผ่าน workout_id — เช่นท่าที่ "สลับ" กลางเซสชัน ดู comment เต็มที่
+  // adhocCompletedCount ด้านบนไฟล์นี้) MobileDashboardView.tsx บวกสองค่านี้รวมกันอยู่แล้ว (ดู
+  // TodaysWorkoutCompactCard's completed prop) แต่ progressPct/todayCompleted ของเดสก์ท็อปไม่เคยบวกตาม
+  // ทำให้เซสชันที่มีท่าสลับ/ad-hoc ครบแล้วจริง เดสก์ท็อปยังคิดว่ายังไม่เสร็จ — บวกให้ตรงกัน (clamp ที่ 100
+  // เผื่อกรณีท่า ad-hoc เกินจำนวนแผนเดิม)
   const progressPct =
-    data && data.todayExercises.length > 0 ? Math.round((data.completedCount / data.todayExercises.length) * 100) : null
+    data && data.todayExercises.length > 0
+      ? Math.min(100, Math.round(((data.completedCount + data.adhocCompletedCount) / data.todayExercises.length) * 100))
+      : null
   // กลุ่มกล้ามเนื้อของ "แผนวันนี้" (ไม่ใช่ที่เทรนไปแล้ว) — มาจาก program_exercises ถ้าตั้งโปรแกรมไว้,
   // ไม่งั้น fallback ไปใช้ todayMuscleLabel (กลุ่มที่เทรนจริงวันนี้ กรณีบันทึกอิสระไม่มีโปรแกรม)
   const plannedMuscleLabel = useMemo(() => {
