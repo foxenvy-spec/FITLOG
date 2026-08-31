@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, Profile } from '@/lib/types'
@@ -95,11 +96,21 @@ export default function BodyMetricsRow({
   showLastMeasuredDate = false,
   maxCards,
   compact = false,
+  title,
+  titleHref,
 }: {
   showLastMeasuredDate?: boolean
   maxCards?: number
   // เฉพาะ Mobile Dashboard v2 — ลด padding การ์ดเมตริกลงให้กระชับขึ้นใน grid 2x2 (ดู MetricCard.tsx)
   compact?: boolean
+  // ฟีดแบ็ก "แถวปุ่มเลือกช่วงเวลากินพื้นที่แค่มุมขวา ~20% เหลือพื้นที่ว่างซ้าย-กลาง 80% ก่อนถึงการ์ด" —
+  // เดิม MobileDashboardView.tsx มีหัวข้อ "ภาพรวมร่างกาย" ของตัวเองอยู่แล้วเป็นแถวแยกต่างหากเหนือ
+  // component นี้ (ทำให้เกิดแถวว่างซ้ำซ้อนอีกชั้นตอนเพิ่ม pill เข้าไป) ส่วน DashboardView.tsx (เดสก์ท็อป)
+  // ไม่เคยมีหัวข้อเลยตั้งแต่แรก — ย้ายหัวข้อมาเป็น prop ของ component นี้แทน ให้ title กับ pill อยู่แถว
+  // เดียวกันเสมอ (flex justify-between) ทั้งสองแพลตฟอร์ม — undefined = ไม่โชว่หัวข้อ (พฤติกรรมเดิม)
+  title?: string
+  // ลิงก์ "ดูทั้งหมด →" เล็กๆ ข้างหัวข้อ (มือถือเดิมมีอยู่แล้วแยกต่างหาก) — ไม่มีค่า = ไม่โชว์ลิงก์นี้
+  titleHref?: string
 } = {}) {
   const supabase = createClient()
   const { toDisplay, unit } = useWeightUnit()
@@ -263,11 +274,28 @@ export default function BodyMetricsRow({
   // ใช้ style แทน Tailwind class เพราะ JIT อ่านค่าจากตัวแปรไม่ได้ (เหมือนจุดอื่นในไฟล์ที่ใช้ token)
   return (
     <>
-      {/* ฟีดแบ็ก "อยากเลือกดูแนวโน้ม 7/30/90 วัน หรือทั้งหมด แทนที่ระบบเลือกช่วงเวลาเอง" — pill เดียวกับ
-          แพทเทิร์นที่ WeeklyMuscleHeatmap.tsx ใช้ (rounded-full border bg-surface2, active = amber tint)
-          เปลี่ยนกรอบเวลาแล้วทุกการ์ดคำนวณ delta ใหม่ทันที (ไม่ query ซ้ำ — ข้อมูลดิบ 400 แถวล่าสุดโหลด
-          มาแล้วครั้งเดียว แค่เลือกเอนทรีที่ใช้เทียบใหม่) */}
-      <div className="flex justify-end mb-2">
+      {/* ฟีดแบ็ก "แถวปุ่มเลือกช่วงเวลากินพื้นที่แค่มุมขวา ~20% เหลือพื้นที่ว่างซ้าย-กลาง 80%" — เลือก
+          แบบที่ 1 ที่ผู้ใช้แนะนำ: ใส่หัวข้อฝั่งซ้าย (title/titleHref prop) ให้แถวนี้สมดุลซ้าย-ขวา แทนที่
+          จะปล่อยว่างเปล่า — title เป็น undefined เมื่อจุดเรียกไม่ได้ส่งมา (ไม่โชว่อะไรฝั่งซ้ายเหมือนเดิม)
+          pill เดียวกับแพทเทิร์นที่ WeeklyMuscleHeatmap.tsx ใช้ (rounded-full border bg-surface2, active =
+          amber tint) เปลี่ยนกรอบเวลาแล้วทุกการ์ดคำนวณ delta ใหม่ทันที (ไม่ query ซ้ำ — ข้อมูลดิบ 400 แถว
+          ล่าสุดโหลดมาแล้วครั้งเดียว แค่เลือกเอนทรีที่ใช้เทียบใหม่) */}
+      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          {title && (
+            <p
+              className={compact ? 'font-display text-ink' : 'font-display text-sm tracked uppercase text-ink'}
+              style={compact ? { fontSize: 17, fontWeight: 700 } : undefined}
+            >
+              {title}
+            </p>
+          )}
+          {titleHref && (
+            <Link href={titleHref} className="text-[11px] text-amber hover:underline shrink-0">
+              ดูทั้งหมด →
+            </Link>
+          )}
+        </div>
         <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
           {TIMEFRAME_OPTIONS.map((opt) => (
             <button

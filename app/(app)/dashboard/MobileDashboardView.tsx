@@ -396,18 +396,15 @@ export default function MobileDashboardView() {
           {/* หัวข้อ section 18px ตาม Typography token ล่าสุด (เคยลองขยับไป 30px รอบก่อน แต่ภาพอ้างอิงจริง
               (Image A) แสดงหัวข้อเล็กกว่านั้นมาก แก้กลับมาที่ 18px ตามสเปค) — ระยะห่างหัวข้อ→กริด 20px
               v68: ฟีดแบ็ก "'ภาพรวมร่างกาย' กับ Card อยู่ห่างกันนิดหนึ่ง ควรรู้สึกเป็นกลุ่มเดียวกันมากกว่านี้
-              ลดลงประมาณ 5-8px" — 20 -> 13 (-7px, กลางช่วงที่ขอ) */}
-          <div className="flex items-center justify-between px-1" style={{ marginBottom: 13 }}>
-            {/* v60: ฟีดแบ็ก "'ภาพรวมร่างกาย' font ใหญ่ไปนิดจนเกือบเท่า Today's Focus ลดแค่ ~5%" —
-                18 -> 17 (-5.6%) */}
-            <p className="font-display text-ink" style={{ fontSize: 17, fontWeight: 700 }}>ภาพรวมร่างกาย</p>
-            <Link href="/health" className="text-[11px] text-amber hover:underline shrink-0">
-              ดูทั้งหมด →
-            </Link>
-          </div>
-          {/* v43: prop colorScheme ตัดออกแล้ว (ดู BodyMetricsRow.tsx) — ดีฟอลต์เป็นชุดสีนี้อยู่แล้ว
-              เดสก์ท็อปก็ใช้ชุดเดียวกันนี้ตั้งแต่ v41 ไม่ต้องส่ง prop แยกอีกต่อไป */}
-          <BodyMetricsRow maxCards={4} compact />
+              ลดลงประมาณ 5-8px" — 20 -> 13 (-7px, กลางช่วงที่ขอ)
+              v60: ฟีดแบ็ก "'ภาพรวมร่างกาย' font ใหญ่ไปนิดจนเกือบเท่า Today's Focus ลดแค่ ~5%" — 18 -> 17
+              ฟีดแบ็ก "แถวปุ่มเลือกช่วงเวลากินพื้นที่แค่มุมขวา เหลือพื้นที่ว่างซ้าย-กลาง" — เดิมหัวข้อ +
+              "ดูทั้งหมด →" อยู่เป็นแถวแยกเหนือ BodyMetricsRow (ทำให้เพิ่ม pill selector เข้าไปกลายเป็นแถว
+              ว่างซ้ำซ้อนอีกชั้น) — ย้ายทั้งคู่เข้าไปเป็น title/titleHref prop ของ BodyMetricsRow แทน ให้
+              หัวข้อ+ลิงก์+pill อยู่แถวเดียวกัน (flex justify-between) — v43: prop colorScheme ตัดออกแล้ว
+              (ดู BodyMetricsRow.tsx) ดีฟอลต์เป็นชุดสีนี้อยู่แล้ว เดสก์ท็อปก็ใช้ชุดเดียวกันนี้ตั้งแต่ v41
+              ไม่ต้องส่ง prop แยกอีกต่อไป */}
+          <BodyMetricsRow maxCards={4} compact title="ภาพรวมร่างกาย" titleHref="/health" />
         </div>
 
         {/* ฟีดแบ็ก "Body Composition ควรมี Goal Progress อยู่ใน Dashboard" — ใช้ goalProgressPct ตัวเดียว
