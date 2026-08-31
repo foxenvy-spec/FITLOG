@@ -377,7 +377,27 @@ export default function StatsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="font-display text-2xl tracked uppercase">สถิติ · {RANGE_DAYS} วันล่าสุด</h1>
+      {/* ฟีดแบ็ก "One-Click Export PDF Report ส่งให้เทรนเนอร์" — ปุ่มเรียก window.print() ตรงๆ (ไม่เพิ่ม
+          dependency ใหม่, เหมือนแนวทาง canvas ที่ ShareWeeklySummaryButton.tsx เลือกไว้ก่อนหน้านี้) —
+          หน้านี้มีข้อมูลสรุปครบอยู่แล้ว (Total Volume/Reps, Weekly Volume, Muscle Distribution, Cardio,
+          1RM Trend, Strength Balance, PRs) เหมาะเป็นรายงานความคืบหน้าอยู่แล้วโดยไม่ต้องสร้างหน้าใหม่
+          แยกต่างหาก — ปุ่มเองก็ print:hidden (ไม่ต้องปรากฏในรายงานที่พิมพ์ออกมา) */}
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="font-display text-2xl tracked uppercase">สถิติ · {RANGE_DAYS} วันล่าสุด</h1>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[11px] font-display tracked uppercase px-3 py-2 active:scale-[0.98] transition"
+        >
+          📄 Export PDF
+        </button>
+      </div>
+      {/* หัวรายงานที่เห็นเฉพาะตอนพิมพ์ — บนจอปกติซ่อนไว้ (hidden print:block) ให้บริบท "รายงานของใคร/
+          วันที่ไหน" ชัดเจนตอนเปิดไฟล์ PDF ย้อนหลัง (บนจอมี h1 ด้านบนอยู่แล้วไม่ต้องซ้ำ) */}
+      <p className="hidden print:block text-sm text-muted">
+        FITLOG — Progress Report ·{' '}
+        {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+      </p>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         <StatCard label="Total Volume" value={Math.round(toDisplay(totals.totalVolume))} unit={unit} accent="steel" />
@@ -507,10 +527,12 @@ export default function StatsPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display text-sm tracked uppercase text-muted">Estimated 1RM Trend</h2>
+            {/* dropdown เลือกท่าไม่มีความหมายในรายงานที่พิมพ์แล้ว (แก้ไม่ได้อยู่ดี) — ซ่อนแล้วโชว์ชื่อท่า
+                ที่เลือกไว้ ณ ตอนพิมพ์เป็นข้อความแทน ให้ยังรู้ว่ากราฟข้างล่างเป็นของท่าไหน */}
             <select
               value={selectedExercise}
               onChange={(e) => setSelectedExercise(e.target.value)}
-              className="bg-surface2 border border-line rounded-full text-xs px-3 py-1 text-ink outline-none"
+              className="print:hidden bg-surface2 border border-line rounded-full text-xs px-3 py-1 text-ink outline-none"
             >
               {exerciseNames.map((name) => (
                 <option key={name} value={name}>
@@ -518,6 +540,7 @@ export default function StatsPage() {
                 </option>
               ))}
             </select>
+            <span className="hidden print:inline text-xs text-ink">{selectedExercise}</span>
           </div>
           {oneRmTrend.length > 1 ? (
             <PremiumCard className="h-44 p-3">
@@ -639,13 +662,13 @@ export default function StatsPage() {
 
       <a
         href="/history"
-        className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
+        className="print:hidden block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
       >
         ดูประวัติทั้งหมด →
       </a>
       <a
         href="/achievements"
-        className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
+        className="print:hidden block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
       >
         🏆 ดูความสำเร็จ →
       </a>

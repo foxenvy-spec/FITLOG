@@ -33,7 +33,12 @@ export default async function AppLayout({
         <QueryProvider>
         <div className="min-h-screen flex lg:flex-row">
           <DashboardSettingsProvider>
-          <SidebarNav />
+          {/* ฟีดแบ็ก "One-Click Export PDF Report" — เมนูนำทาง (sidebar/bottom nav) ไม่มีความหมายใน
+              รายงานที่พิมพ์/บันทึกเป็น PDF เลย ซ่อนด้วย print:hidden (Tailwind print variant มาตรฐาน
+              ไม่ต้องเขียน CSS แยก) ทั้งสองส่วน ให้ report เหลือแค่เนื้อหาจริงเต็มหน้า */}
+          <div className="print:hidden contents">
+            <SidebarNav />
+          </div>
 
           <div className="flex-1 flex flex-col min-w-0">
             {/* safe-top ย้ายมาไว้ที่ main แทน (เดิมอยู่ที่ header ที่เพิ่งตัดออก) กัน status
@@ -43,7 +48,9 @@ export default async function AppLayout({
               {children}
             </main>
 
-            <BottomNav />
+            <div className="print:hidden contents">
+              <BottomNav />
+            </div>
           </div>
           </DashboardSettingsProvider>
         </div>

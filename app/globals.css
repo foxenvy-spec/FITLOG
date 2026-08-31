@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ฟีดแบ็ก "One-Click Export PDF Report ดีไซน์ Dark Theme สวยๆ" — ทำผ่าน browser print-to-PDF ล้วนๆ
+   (window.print(), ไม่เพิ่ม dependency ใหม่ เหมือนแนวทาง canvas ที่ ShareWeeklySummaryButton.tsx ใช้
+   มาก่อน) เบราว์เซอร์ปกติจะ "ลบ" สีพื้นหลัง/กราฟิกทิ้งตอนพิมพ์ (ประหยัดหมึกกระดาษจริง) ซึ่งทำลายดีไซน์
+   Dark Theme ทั้งใบ — บังคับพิมพ์สีตามที่ตั้งไว้จริงแทน (สำคัญมากสำหรับ "Save as PDF" ที่ไม่ได้ใช้กระดาษจริง) */
+@media print {
+  html, body, * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
 /* ตัวแปร gradient "ไฟ" ที่ใช้ร่วมกันทั่วแอป (Fitness Score Ring, Wave, FAB, progress bar หลัก) —
    ค่าต้องตรงกับ FIRE_GRADIENT_CSS ใน lib/theme.ts เป๊ะๆ (คนละที่แต่คนละภาษา: อันนี้ให้ปลั๊กอิน CSS/
    Tailwind arbitrary value ธรรมดาเรียกใช้ได้ ส่วนใน .tsx ที่ต้องการ stop สีแยกทีละจุด (เช่น SVG
