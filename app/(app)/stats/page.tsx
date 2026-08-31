@@ -416,7 +416,7 @@ export default function StatsPage() {
         </h2>
         <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeklyVolume.map((b) => ({ ...b, value: Math.round(toDisplay(b.value)) }))} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+            <BarChart data={weeklyVolume.map((b) => ({ ...b, value: Math.round(toDisplay(b.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
               <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
               <XAxis
                 dataKey="label"
@@ -424,7 +424,17 @@ export default function StatsPage() {
                 axisLine={{ stroke: NEUTRAL.chipInactive }}
                 tickLine={false}
               />
-              <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
+              {/* บั๊ก (ฟีดแบ็กพร้อมสกรีนช็อต) — ตัวเลขแกน Y โดนตัดขอบซ้ายเหลือแค่ "00" เมื่อวอลุ่มสะสม
+                  ขึ้นไปถึงหลักหมื่น (เช่น "40,000") margin.left ติดลบเดิม (-20) บีบพื้นที่แกนจนตัวเลข
+                  5-6 หลักไม่พอที่ใส่ — ลด margin ติดลบลง (-20 -> -4) + เพิ่ม tickFormatter ย่อเป็น "40k"
+                  แทน "40,000" กันปัญหาเดิมซ้ำอีกแม้วอลุ่มจะโตขึ้นไปอีกในอนาคต */}
+              <YAxis
+                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                width={44}
+                tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
+              />
               <Tooltip
                 cursor={{ fill: 'rgba(108,140,168,0.08)' }}
                 contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
@@ -475,7 +485,7 @@ export default function StatsPage() {
         </div>
         <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={distanceByDay} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+            <BarChart data={distanceByDay} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
               <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
               <XAxis
                 dataKey="label"
@@ -516,7 +526,12 @@ export default function StatsPage() {
               </RadarChart>
             </ResponsiveContainer>
           </PremiumCard>
-          <p className="text-[11px] text-muted mt-2">
+          {/* ฟีดแบ็ก "คำอธิบายยาวเป็นพรืดและตัวเล็ก อ่านเหมือน text หลุดกรอบ" — ใส่กรอบ info box จางๆ
+              ให้แยกจากเนื้อหาอื่นชัดเจนขึ้น ไม่แตะเนื้อหา/ความยาวข้อความเลย แค่เปลี่ยน container */}
+          <p
+            className="text-[11px] text-muted mt-2 px-3 py-2 rounded-lg border"
+            style={{ backgroundColor: 'rgba(255,255,255,.03)', borderColor: NEUTRAL.chipInactive }}
+          >
             Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว (Novice–Elite){profile?.sex ? '' : ' — ตั้งค่าเพศในโปรไฟล์เพื่อความแม่นยำขึ้น'}
             {' · '}Core จากสัดส่วนวอลุ่มฝึกจริงของกล้ามเนื้อแกนกลาง · Endurance จาก VO2max ประมาณ (ต้องตั้งค่าชีพจรในโปรไฟล์)
           </p>
@@ -545,10 +560,13 @@ export default function StatsPage() {
           {oneRmTrend.length > 1 ? (
             <PremiumCard className="h-44 p-3">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={oneRmTrend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <LineChart data={oneRmTrend} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
                   <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
                   <XAxis dataKey="label" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={{ stroke: NEUTRAL.chipInactive }} tickLine={false} />
-                  <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={['auto', 'auto']} />
+                  {/* บั๊ก (ฟีดแบ็กพร้อมสกรีนช็อต) — ตัวเลขแกน Y โดนตัดขอบซ้าย เห็นเป็น "'5"/"'0"/"i5"
+                      แทนที่จะเป็น "25"/"20"/"15" — margin.left ติดลบเดิม (-20) บีบพื้นที่แกนจนตัวเลข
+                      2 หลักไม่พอที่ใส่แล้ว (สาเหตุเดียวกับกราฟ Weekly Volume ด้านบน) */}
+                  <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={40} domain={['auto', 'auto']} />
                   <Tooltip
                     contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
                     labelStyle={{ color: NEUTRAL.mutedIcon }}
