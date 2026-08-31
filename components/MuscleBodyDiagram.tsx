@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { MUSCLE_GROUP_DIAGRAM_SLUG, type MuscleGroup } from '@/lib/muscle-groups'
 
 // ไดอะแกรมร่างกายแบบภาพจริง — โครงสร้างเป็น layer ซ้อนกัน:
@@ -13,6 +14,16 @@ import { MUSCLE_GROUP_DIAGRAM_SLUG, type MuscleGroup } from '@/lib/muscle-groups
 // <mask> element แทน ซึ่งรองรับกว้างกว่ามาก (เป็นฟีเจอร์ SVG พื้นฐาน ไม่ใช่ CSS ทดลอง) และ
 // ใช้ <image href="..."> ธรรมดาแทน next/image เพื่อตัดปัญหา image optimizer (/_next/image)
 // ล้มเหลวใน environment ที่ไม่มี sharp ไปด้วยในตัว
+//
+// บั๊ก (ฟีดแบ็ก "ชี้ตรงไหนก็เจอแต่น่อง") — แต่ละ <rect> ของแต่ละกลุ่มครอบเต็มผืนภาพเสมอ (x=0,y=0,
+// width=IMG_W,height=IMG_H) ใช้ `mask` ตัดแค่ "ภาพที่วาดออกมา" เท่านั้น ไม่ได้ตัด "พื้นที่ที่รับคลิก/hover"
+// ไปด้วย (mask ไม่มีผลกับ pointer-events ในเบราว์เซอร์หลักเลย ต่างจาก clip-path ที่มีผล) ผลคือ rect ที่
+// วาดทับบนสุด (ตัวสุดท้ายใน regions array คือ "น่อง" ทั้งสองมุมมอง) ครอบคลุมพื้นที่รับ event ทั้งผืนภาพ
+// เพียงตัวเดียว กลุ่มอื่นด้านล่างไม่มีทางรับ event ได้เลยไม่ว่าจะชี้ตรงไหน — แก้โดยเลิกผูก onClick/
+// onMouseEnter ไว้ที่ตัว <rect> รายกลุ่ม (ยังใช้วาดสีทึบเหมือนเดิม แต่ไม่รับ event แล้ว) ย้ายมาตรวจจับที่
+// SVG ระดับบนสุดแทน: โหลดภาพ mask ของทุกกลุ่มเข้า canvas ที่มองไม่เห็น (ครั้งเดียว, cache ข้าม instance)
+// แล้วอ่านค่าความสว่างที่พิกัดจริงตรงจุดที่ชี้/คลิก (แปลงพิกัดหน้าจอ -> พิกัดภาพ 500x667 ผ่าน viewBox/crop)
+// เทียบกับ mask ของแต่ละกลุ่มตรงๆ — ได้ผลลัพธ์ตรงกับรูปที่วาดจริงเป๊ะ (mask เดียวกันทั้งสองทาง)
 
 export type DiagramView = 'front' | 'back'
 
@@ -50,6 +61,42 @@ const VIEW_CROP: Record<DiagramView, { x: number; width: number }> = {
   back: { x: 61, width: 420 }, // ขอบใน (ซ้าย) ห่างช่วงไหล่/ลำตัว ~28px
 }
 
+// cache ข้าม instance/mount (mask เป็น static asset ไม่เปลี่ยน โหลดครั้งเดียวพอ) — key คือ URL ของภาพ
+// mask, value คือ ImageData หลังวาดลง canvas แล้ว (null = โหลด/อ่านไม่สำเร็จ เช่นภาพหาย)
+const maskDataCache = new Map<string, Promise<ImageData | null>>()
+
+function loadMaskImageData(url: string): Promise<ImageData | null> {
+  const cached = maskDataCache.get(url)
+  if (cached) return cached
+  const promise = new Promise<ImageData | null>((resolve) => {
+    if (typeof window === 'undefined') {
+      resolve(null)
+      return
+    }
+    const img = new window.Image()
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(null)
+          return
+        }
+        ctx.drawImage(img, 0, 0)
+        resolve(ctx.getImageData(0, 0, canvas.width, canvas.height))
+      } catch {
+        resolve(null)
+      }
+    }
+    img.onerror = () => resolve(null)
+    img.src = url
+  })
+  maskDataCache.set(url, promise)
+  return promise
+}
+
 export default function MuscleBodyDiagram({
   view,
   regions,
@@ -60,6 +107,47 @@ export default function MuscleBodyDiagram({
   width = 168,
 }: MuscleBodyDiagramProps) {
   const crop = VIEW_CROP[view]
+  const svgRef = useRef<SVGSVGElement>(null)
+  // เก็บ ImageData ของ mask แต่ละกลุ่มไว้ใช้ตรวจจับตำแหน่ง — เป็น ref (ไม่ใช่ state) เพราะใช้แค่ตอน
+  // ประมวลผล event ไม่ต้อง re-render ตอนโหลดเสร็จ
+  const maskDataRef = useRef<Partial<Record<MuscleGroup, ImageData>>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    regions.forEach((group) => {
+      const slug = MUSCLE_GROUP_DIAGRAM_SLUG[group]
+      if (!slug) return
+      loadMaskImageData(`/images/muscle-diagram/${view}-mask-${slug}.png`).then((data) => {
+        if (!cancelled && data) maskDataRef.current[group] = data
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, regions.join(',')])
+
+  // แปลงพิกัดหน้าจอ (clientX/Y) -> พิกัดภาพจริง (0-500, 0-667) ผ่าน viewBox ปัจจุบัน แล้วหากลุ่มกล้ามเนื้อ
+  // ที่ mask ของมัน "สว่าง" (เปิด) อยู่ที่จุดนั้นจริง — คืน null ถ้าไม่ตรงกลุ่มไหนเลย (พื้นที่นอกตัวคน)
+  function findGroupAtPoint(clientX: number, clientY: number): MuscleGroup | null {
+    const svg = svgRef.current
+    if (!svg) return null
+    const rect = svg.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return null
+    const px = Math.round(crop.x + ((clientX - rect.left) / rect.width) * crop.width)
+    const py = Math.round(((clientY - rect.top) / rect.height) * IMG_H)
+    for (const group of regions) {
+      const data = maskDataRef.current[group]
+      if (!data || px < 0 || px >= data.width || py < 0 || py >= data.height) continue
+      const idx = (py * data.width + px) * 4
+      // mask เป็นภาพขาว-ดำ (luminance mask ของ SVG <mask> ดีฟอลต์) — ขาว = แสดง/อยู่ในกลุ่มนี้จริง
+      if (data.data[idx] > 128) return group
+    }
+    return null
+  }
+
+  const interactive = !!(onClickGroup || onHoverGroup)
+
   return (
     <div
       className="relative rounded-lg overflow-hidden select-none w-full"
@@ -68,9 +156,27 @@ export default function MuscleBodyDiagram({
       aria-label={`ไดอะแกรมกล้ามเนื้อ ${view === 'front' ? 'ด้านหน้า' : 'ด้านหลัง'}`}
     >
       <svg
+        ref={svgRef}
         viewBox={`${crop.x} 0 ${crop.width} ${IMG_H}`}
         className="block w-full h-full"
         preserveAspectRatio="xMidYMid meet"
+        style={{ cursor: onClickGroup ? 'pointer' : undefined }}
+        onClick={
+          interactive
+            ? (e) => {
+                const group = findGroupAtPoint(e.clientX, e.clientY)
+                if (group) onClickGroup?.(group)
+              }
+            : undefined
+        }
+        onMouseMove={
+          onHoverGroup
+            ? (e) => {
+                onHoverGroup(findGroupAtPoint(e.clientX, e.clientY))
+              }
+            : undefined
+        }
+        onMouseLeave={onHoverGroup ? () => onHoverGroup(null) : undefined}
       >
         <defs>
           {regions.map((group) => {
@@ -126,10 +232,9 @@ export default function MuscleBodyDiagram({
               fill={getColor(group)}
               opacity={getOpacity(group)}
               mask={`url(#${maskId})`}
-              onClick={() => onClickGroup?.(group)}
-              onMouseEnter={() => onHoverGroup?.(group)}
-              onMouseLeave={() => onHoverGroup?.(null)}
-              style={{ cursor: onClickGroup ? 'pointer' : undefined, transition: 'opacity 300ms' }}
+              // pointer-events อยู่ที่ <svg> ระดับบนสุดแล้ว (ดู onClick/onMouseMove ด้านบน + comment
+              // "บั๊ก" หัวไฟล์) — rect พวกนี้ทำหน้าที่วาดสีอย่างเดียว ไม่รับ event ตรงๆ อีกต่อไป
+              style={{ transition: 'opacity 300ms' }}
             />
           )
         })}
