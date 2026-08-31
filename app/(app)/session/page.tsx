@@ -132,6 +132,7 @@ export default function SessionPage() {
   const [states, setStates] = useState<Record<string, SessionSetState>>({})
   const [index, setIndex] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [loggingSet, setLoggingSet] = useState(false)
   const [summaryExtras, setSummaryExtras] = useState<SummaryExtras | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
@@ -265,8 +266,6 @@ export default function SessionPage() {
       const typedPriorWorkouts =
         (priorWorkouts as { id: string; exercise_name: string | null; reps: number | null; weight_kg: number | null }[]) ??
         []
-      console.log('[fitlog-debug] planExerciseNames', planExerciseNames)
-      console.log('[fitlog-debug] typedPriorWorkouts count', typedPriorWorkouts.length, typedPriorWorkouts.slice(0, 5))
 
       const normalize = (s: string) => s.trim().toLowerCase()
       const planNamesNormalized = new Set(planExerciseNames.map(normalize))
@@ -307,7 +306,6 @@ export default function SessionPage() {
         }
       })
     }
-    console.log('[fitlog-debug] lastPerformanceByName', lastPerformanceByName)
 
     const initialStates = initSessionStates(
       combinedExercises,
@@ -542,26 +540,33 @@ export default function SessionPage() {
   // กด "เซ็ตนี้เสร็จแล้ว" — จำ reps/น้ำหนักที่กรอกอยู่ ณ ตอนนี้เป็นเซ็ตจริงเซ็ตหนึ่ง (ไม่ใช่แค่นับจำนวน)
   // ทำให้ drop set หรือเซ็ตท้ายๆ ที่ reps ตกลง ถูกเก็บค่าจริงแยกทีละเซ็ต ไม่ถูกปัดเป็นค่าเดียวซ้ำทุกเซ็ต
   async function logSet() {
+    // กันดับเบิลแท็บ/ดับเบิลคลิก: currentState.setsLog ด้านล่างอ่านจาก closure ของ render
+    // นี้ ถ้าไม่กันไว้ การกดรัวสองครั้งก่อน re-render จะคำนวณ newSetsLog จากฐานเดียวกันทั้งคู่
+    // ผลคือเซ็ตที่สองหายไปเงียบๆ (บันทึกได้แค่ 1 เซ็ตทั้งที่กด 2 ครั้ง)
+    if (loggingSet) return
     if (!current || !currentState) return
     if (!currentState.reps || currentState.reps <= 0) {
       setErrorMsg('กรุณาใส่จำนวน reps ที่ทำได้ก่อนกดเซ็ตเสร็จ')
       return
     }
     setErrorMsg(null)
+    setLoggingSet(true)
     const newSetsLog = [...currentState.setsLog, { reps: currentState.reps, weightKg: currentState.weightKg ?? 0 }]
     updateCurrent({ setsLog: newSetsLog })
     writeRestStartedAt(current.id)
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
       const { workoutId, setsError } = await persistSets(current, { ...currentState, setsLog: newSetsLog }, user.id)
       if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
       if (setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
     } catch (err) {
       setErrorMsg(`บันทึกเซ็ตไม่สำเร็จ: ${getErrorMessage(err)}`)
+    } finally {
+      setLoggingSet(false)
     }
   }
 
@@ -737,39 +742,44 @@ export default function SessionPage() {
       const { start: thisWeekStart, end: thisWeekEnd } = getWeekRange()
       const { start: lastWeekStart } = getPreviousWeekRange()
 
-      const [{ data: latestMetric }, { data: priorRows }, { data: recentMuscleRows }, { data: twoWeeksRows }] = await Promise.all([
-        supabase.from('body_metrics').select('weight_kg').order('measured_at', { ascending: false }).limit(1).maybeSingle(),
-        loggedList.length > 0
-          ? supabase
-              .from('workouts')
-              .select('exercise_name, weight_kg')
-              .eq('type', 'strength')
-              .lt('performed_at', todayStr())
-              .in(
-                'exercise_name',
-                loggedList.map((e) => e.ex.exercise_name)
-              )
-          : Promise.resolve({ data: [] as { exercise_name: string; weight_kg: number | null }[] }),
-        supabase
-          .from('workouts')
-          .select('muscle_group, performed_at')
-          .eq('type', 'strength')
-          .lt('performed_at', todayStr())
-          .order('performed_at', { ascending: false })
-          .limit(500),
-        // สัปดาห์นี้เทียบสัปดาห์ที่แล้ว ต่อกลุ่มกล้ามเนื้อ — รูปแบบเดียวกับ fetchDashboardData ใน
-        // DashboardView.tsx ทุกประการ (query เดียว ช่วง lastWeekStart..thisWeekEnd แล้วแยกด้วย
-        // performed_at >= thisWeekStart) ให้ผลลัพธ์ volumeIncrease ตรงกับที่ Dashboard คำนวณเป๊ะ
-        supabase
-          .from('workouts')
-          .select('muscle_group, sets, performed_at')
-          .eq('type', 'strength')
-          .gte('performed_at', lastWeekStart)
-          .lte('performed_at', thisWeekEnd),
-      ])
+      const [{ data: latestMetric }, { data: priorRows }, { data: recentMuscleRows }, { data: twoWeeksRows }, { data: todayCardioRows }] =
+        await Promise.all([
+          supabase.from('body_metrics').select('weight_kg').order('measured_at', { ascending: false }).limit(1).maybeSingle(),
+          loggedList.length > 0
+            ? supabase
+                .from('workouts')
+                .select('exercise_name, weight_kg')
+                .eq('type', 'strength')
+                .lt('performed_at', todayStr())
+                .in(
+                  'exercise_name',
+                  loggedList.map((e) => e.ex.exercise_name)
+                )
+            : Promise.resolve({ data: [] as { exercise_name: string; weight_kg: number | null }[] }),
+          supabase
+            .from('workouts')
+            .select('muscle_group, performed_at')
+            .eq('type', 'strength')
+            .lt('performed_at', todayStr())
+            .order('performed_at', { ascending: false })
+            .limit(500),
+          // สัปดาห์นี้เทียบสัปดาห์ที่แล้ว ต่อกลุ่มกล้ามเนื้อ — รูปแบบเดียวกับ fetchDashboardData ใน
+          // DashboardView.tsx ทุกประการ (query เดียว ช่วง lastWeekStart..thisWeekEnd แล้วแยกด้วย
+          // performed_at >= thisWeekStart) ให้ผลลัพธ์ volumeIncrease ตรงกับที่ Dashboard คำนวณเป๊ะ
+          supabase
+            .from('workouts')
+            .select('muscle_group, sets, performed_at')
+            .eq('type', 'strength')
+            .gte('performed_at', lastWeekStart)
+            .lte('performed_at', thisWeekEnd),
+          // บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): estimateCaloriesToday เดิมได้ [] แทนคาร์ดิโอวันนี้เสมอ ทำให้
+          // แคลอรี่สรุปท้ายเซสชันไม่นับคาร์ดิโอที่ log ไปก่อนหน้าในวันเดียวกันเลย (Dashboard ส่ง
+          // data.todayWorkouts ซึ่งรวมคาร์ดิโอด้วยอยู่แล้ว) — เพิ่ม query คาร์ดิโอวันนี้แยกมาให้ครบ
+          supabase.from('workouts').select('*').eq('type', 'cardio').eq('performed_at', todayStr()),
+        ])
 
       const bodyWeightKg = (latestMetric as { weight_kg: number | null } | null)?.weight_kg ?? null
-      const calories = estimateCaloriesToday([] as Workout[], durationMin, bodyWeightKg)
+      const calories = estimateCaloriesToday((todayCardioRows as Workout[]) ?? [], durationMin, bodyWeightKg)
 
       const priorBest: Record<string, number> = {}
       ;((priorRows as { exercise_name: string; weight_kg: number | null }[]) ?? []).forEach((r) => {
@@ -1340,13 +1350,14 @@ export default function SessionPage() {
           <button
             type="button"
             onClick={logSet}
+            disabled={loggingSet}
             style={{
               backgroundImage:
                 'radial-gradient(circle at 25% 20%, rgba(255,255,255,0.35), transparent 50%), linear-gradient(135deg, #4ADE80, #22C55E)',
               color: NEUTRAL.onAmberText,
               boxShadow: '0 0 24px rgba(74,222,128,0.4)',
             }}
-            className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition flex items-center justify-center gap-2"
+            className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <span
               className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0"
