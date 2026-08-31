@@ -91,33 +91,38 @@ export default function ProfileView() {
 
   const name = displayName || emailDisplayName(email) || 'นักกีฬา'
 
-  // จอใหญ่ (lg+): แบ่ง 2 คอลัมน์ ซ้าย 4/12 (โปรไฟล์+ข้อมูลสรีระ+Sign Out) ขวา 8/12 (เมนู+
-  // สำรองข้อมูล+ตั้งค่า) แทนคอลัมน์เดี่ยวกลางจอเดิมที่เหลือพื้นที่ว่างสองข้างเยอะเกินไปบนจอกว้าง —
-  // มือถือยังคงคอลัมน์เดี่ยวเหมือนเดิม (ไม่มี lg: prefix ก็ยังเป็น space-y แนวตั้ง)
+  // จอใหญ่ (lg+): แบ่ง 2 คอลัมน์ ซ้าย 4/12 (ข้อมูลสรีระ+Sign Out) ขวา 8/12 (เมนู+สำรองข้อมูล+ตั้งค่า)
+  // แทนคอลัมน์เดี่ยวกลางจอเดิมที่เหลือพื้นที่ว่างสองข้างเยอะเกินไปบนจอกว้าง — มือถือยังคงคอลัมน์เดี่ยว
+  // เหมือนเดิม (ไม่มี lg: prefix ก็ยังเป็น space-y แนวตั้ง)
+  // ฟีดแบ็ก "เลื่อนสุขภาพให้มาเท่าข้อมูลส่วนตัว" — เดิม avatar อยู่ในคอลัมน์ซ้ายด้วยกันกับการ์ดข้อมูลส่วนตัว
+  // ทำให้คอลัมน์ขวา (เมนู "Measures & สุขภาพ" ฯลฯ) ซึ่งอยู่แถวกริดเดียวกัน เริ่มชิดขอบบนพร้อม avatar
+  // (แถวเล็ก) แทนที่จะเสมอกับการ์ดข้อมูลส่วนตัว (เนื้อหาจริงของคอลัมน์ซ้าย) — ย้าย avatar ออกมาไว้เหนือกริด
+  // เต็มความกว้างแทน ทั้งสองคอลัมน์จะเริ่มเนื้อหาแถวเดียวกันพอดี
   return (
-    <div className="max-w-6xl mx-auto pb-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
-      <div className="space-y-5 lg:col-span-4">
-        <div className="flex items-center gap-3">
-          {/* วงแหวนอำพัน+พื้นไทเทเนียม เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar/การ์ดผู้ใช้ท้าย
-              SidebarNav) แทนวงกลมทึบ bg-surface2 เดิม */}
-          <div
-            className="shrink-0 rounded-full flex items-center justify-center font-display text-lg tracked uppercase text-amber"
-            style={{
-              width: 56,
-              height: 56,
-              backgroundImage: CARD_GRADIENT_CSS,
-              border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
-              boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '20')}`,
-            }}
-          >
-            {name.slice(0, 1).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="font-display text-lg tracked uppercase text-ink truncate">{name}</p>
-            <p className="text-[11px] text-muted font-mono truncate">{email}</p>
-          </div>
+    <div className="max-w-6xl mx-auto pb-4">
+      <div className="flex items-center gap-3 mb-5">
+        {/* วงแหวนอำพัน+พื้นไทเทเนียม เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar/การ์ดผู้ใช้ท้าย
+            SidebarNav) แทนวงกลมทึบ bg-surface2 เดิม */}
+        <div
+          className="shrink-0 rounded-full flex items-center justify-center font-display text-lg tracked uppercase text-amber"
+          style={{
+            width: 56,
+            height: 56,
+            backgroundImage: CARD_GRADIENT_CSS,
+            border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
+            boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '20')}`,
+          }}
+        >
+          {name.slice(0, 1).toUpperCase()}
         </div>
+        <div className="min-w-0">
+          <p className="font-display text-lg tracked uppercase text-ink truncate">{name}</p>
+          <p className="text-[11px] text-muted font-mono truncate">{email}</p>
+        </div>
+      </div>
 
+      <div className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+        <div className="space-y-5 lg:col-span-4">
         {profileError ? (
           <ErrorState
             title="โหลดข้อมูลส่วนตัวไม่สำเร็จ"
@@ -209,6 +214,7 @@ export default function ProfileView() {
             Designed for Science-Based Training
           </p>
         </div>
+      </div>
       </div>
     </div>
   )
