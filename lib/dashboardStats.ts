@@ -2,6 +2,7 @@ import type { ProgramDay, Workout } from './types'
 import { todayStr, bangkokParts } from './weekdays'
 import type { ExerciseDef } from './exerciseLibrary'
 import { COLORS, FIRE_ACCENT } from './theme'
+import { workoutVolumeKg } from './workoutDisplay'
 
 // STREAK_LOOKBACK_DAYS เดียวกับที่ DashboardView.tsx ใช้จำกัด query performedDates (400 วัน) — ใช้
 // เป็นเพดานลูปกันเผื่อกรณีขอบ (เช่น ตั้งโปรแกรมแบบไม่มี weekday ไหนเป็นวันฝึกเลย) ไม่ให้วนไม่มีที่สิ้นสุด
@@ -694,6 +695,31 @@ export function getPreviousWeekRange(reference: Date = new Date()): { start: str
   prevSunday.setUTCDate(prevMonday.getUTCDate() + 6)
   const toIso = (d: Date) => d.toISOString().slice(0, 10)
   return { start: toIso(prevMonday), end: toIso(prevSunday) }
+}
+
+// วอลุ่มเวทเทรนนิ่งรายสัปดาห์ ย้อนหลัง weeksCount สัปดาห์ (รวมสัปดาห์นี้ด้วย) เรียงจากเก่าไปใหม่ —
+// ใช้ตรวจจับสัญญาณ Deload (ดู detectDeloadSignal ใน lib/aiCoach.ts) เดินย้อนสัปดาห์ผ่าน
+// getPreviousWeekRange ต่อกันเรื่อยๆ (แทนการคำนวณ Mon-Sun เองใหม่) เพื่อใช้ boundary เดียวกันกับ
+// getWeekRange ทั้งแอปเป๊ะ (Bangkok-anchored) ไม่มีจุดคำนวณวันที่แยกซ้ำอีกจุด
+export function computeRecentWeeklyVolumes(
+  workouts: Pick<Workout, 'performed_at' | 'type' | 'total_volume_kg' | 'sets' | 'reps' | 'weight_kg'>[],
+  weeksCount: number,
+  reference: Date = new Date()
+): number[] {
+  const ranges: { start: string; end: string }[] = []
+  let range = getWeekRange(reference)
+  ranges.push(range)
+  for (let i = 1; i < weeksCount; i++) {
+    range = getPreviousWeekRange(new Date(`${range.start}T00:00:00Z`))
+    ranges.push(range)
+  }
+  ranges.reverse()
+
+  return ranges.map(({ start, end }) =>
+    workouts
+      .filter((w) => w.type === 'strength' && w.performed_at >= start && w.performed_at <= end)
+      .reduce((sum, w) => sum + workoutVolumeKg(w as Workout), 0)
+  )
 }
 
 // ==================== Insight Card ====================

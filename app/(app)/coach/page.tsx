@@ -25,6 +25,7 @@ import {
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   recoveryTier,
+  computeRecentWeeklyVolumes,
   type Insight,
   type ScheduledDay,
   type MuscleRecommendation,
@@ -35,6 +36,8 @@ import {
   computeProgressiveOverload,
   computeAIDailySummary,
   buildSkippedExerciseInsight,
+  detectDeloadSignal,
+  deloadInsight,
   type PushPullBalance,
   type OverloadPlan,
 } from '@/lib/aiCoach'
@@ -64,6 +67,7 @@ interface CoachData {
   overloadPlans: OverloadPlan[]
   skippedInsight: Insight | null
   skippedExerciseNames: string[]
+  deloadWarning: Insight | null
   muscleRecommendation: MuscleRecommendation | null
   todayProgressPct: number | null
   // ถ้าตารางโปรแกรมประจำสัปดาห์ระบุกล้ามเนื้อของวันนี้/ครั้งหน้าไว้ชัดเจน (ดู getScheduledMuscleForDay) —
@@ -160,6 +164,18 @@ export default function CoachPage() {
         ...(balanceWarning ? [balanceWarning] : []),
         ...computeImbalanceInsights(thisWeekSets, VOLUME_MUSCLES),
       ]
+
+      // --- Smart Deload Detector — Volume สูงต่อเนื่องหลายสัปดาห์ + RPE เฉลี่ยสัปดาห์นี้ ---
+      const weeklyVolumeKg = computeRecentWeeklyVolumes(allEntries, 4)
+      const thisWeekRpeValues = allEntries
+        .filter((w) => w.performed_at >= thisWeekStart && w.performed_at <= thisWeekEnd && w.rpe !== null)
+        .map((w) => w.rpe as number)
+      const avgRecentRpe =
+        thisWeekRpeValues.length > 0
+          ? Math.round((thisWeekRpeValues.reduce((a, b) => a + b, 0) / thisWeekRpeValues.length) * 10) / 10
+          : null
+      const deloadSignal = detectDeloadSignal(weeklyVolumeKg, avgRecentRpe)
+      const deloadWarning = deloadInsight(deloadSignal)
 
       // --- Progressive Overload สำหรับท่าที่ทำบ่อยที่สุด ---
       const names = topExerciseNames(allEntries, MAX_OVERLOAD_EXERCISES)
@@ -295,6 +311,7 @@ export default function CoachPage() {
         overloadPlans,
         skippedInsight,
         skippedExerciseNames,
+        deloadWarning,
         muscleRecommendation: recommendation,
         todayProgressPct,
         scheduledMuscle,
@@ -573,6 +590,7 @@ export default function CoachPage() {
             )}
           </PremiumCard>
 
+          {data.deloadWarning && <InsightCard insight={data.deloadWarning} />}
           {data.skippedInsight && <InsightCard insight={data.skippedInsight} />}
 
           <section className="space-y-2.5">

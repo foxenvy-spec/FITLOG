@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Workout } from './types'
-import { computePushPullBalance, pushPullInsight, computeProgressiveOverload, computeAIDailySummary, buildSkippedExerciseInsight, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from './aiCoach'
+import { computePushPullBalance, pushPullInsight, computeProgressiveOverload, computeAIDailySummary, buildSkippedExerciseInsight, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight, detectDeloadSignal, deloadInsight } from './aiCoach'
 
 function makeWorkout(overrides: Partial<Workout>): Workout {
   return {
@@ -377,5 +377,56 @@ describe('workoutFrequencyInsight', () => {
     expect(insight?.kind).toBe('warning')
     expect(insight?.title).toBe('ควรเพิ่มการฝึก')
     expect(insight?.detail).toContain('3 ครั้ง/สัปดาห์')
+  })
+})
+
+describe('detectDeloadSignal', () => {
+  it('flags a deload when volume has stayed elevated for 3+ consecutive weeks with no rest week', () => {
+    const signal = detectDeloadSignal([1000, 1050, 1100, 1080], null)
+    expect(signal.weeksElevated).toBe(4)
+    expect(signal.shouldDeload).toBe(true)
+    expect(signal.rationale).toContain('4 สัปดาห์')
+  })
+
+  it('does not flag a deload when a real rest week (>=30% drop) broke the streak', () => {
+    // สัปดาห์ท้าย (400) ลดลง >=30% จากสัปดาห์ก่อน (1100) — นับเป็นสัปดาห์พักไปแล้ว ตัดสาย
+    const signal = detectDeloadSignal([1000, 1050, 1100, 400], null)
+    expect(signal.weeksElevated).toBe(1)
+    expect(signal.shouldDeload).toBe(false)
+  })
+
+  it('does not flag a deload with fewer than 3 weeks of data even if all elevated', () => {
+    const signal = detectDeloadSignal([1000, 1050], null)
+    expect(signal.shouldDeload).toBe(false)
+  })
+
+  it('flags a deload from RPE alone even with insufficient volume history', () => {
+    const signal = detectDeloadSignal([1000], 9)
+    expect(signal.shouldDeload).toBe(true)
+    expect(signal.rationale).toContain('RPE เฉลี่ย')
+  })
+
+  it('combines both signals in the rationale when both fire', () => {
+    const signal = detectDeloadSignal([1000, 1050, 1100, 1080], 9)
+    expect(signal.rationale).toContain('Volume สูงต่อเนื่อง')
+    expect(signal.rationale).toContain('RPE เฉลี่ยล่าสุด')
+  })
+
+  it('returns a zeroed, non-deloading result for an empty volume history', () => {
+    expect(detectDeloadSignal([], null)).toEqual({ weeksElevated: 0, avgRecentRpe: null, shouldDeload: false, rationale: '' })
+  })
+})
+
+describe('deloadInsight', () => {
+  it('returns null when the signal does not call for a deload', () => {
+    expect(deloadInsight({ weeksElevated: 1, avgRecentRpe: null, shouldDeload: false, rationale: '' })).toBeNull()
+  })
+
+  it('builds a warning insight with the rationale folded into the detail text', () => {
+    const insight = deloadInsight({ weeksElevated: 4, avgRecentRpe: null, shouldDeload: true, rationale: 'Volume สูงต่อเนื่อง 4 สัปดาห์' })
+    expect(insight?.kind).toBe('warning')
+    expect(insight?.title).toBe('แนะนำ Deload Week')
+    expect(insight?.detail).toContain('Volume สูงต่อเนื่อง 4 สัปดาห์')
+    expect(insight?.detail).toContain('40-50%')
   })
 })

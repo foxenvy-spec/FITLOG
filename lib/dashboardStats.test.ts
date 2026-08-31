@@ -20,6 +20,7 @@ import {
   findNextProgramDay,
   getWeekRange,
   getPreviousWeekRange,
+  computeRecentWeeklyVolumes,
   suggestMuscleToTrain,
   recoveryRecommendationLabel,
   computeBestVolumeIncrease,
@@ -553,6 +554,32 @@ describe('getWeekRange / getPreviousWeekRange', () => {
     const { start, end } = getWeekRange(sundayLateUtc)
     expect(start).toBe('2026-07-20') // Monday (Bangkok calendar date) — not 07-13
     expect(end).toBe('2026-07-26')
+  })
+})
+
+describe('computeRecentWeeklyVolumes', () => {
+  // FIXED_TODAY = Sat 2026-07-18 -> this week = Mon 07-13..Sun 07-19, prev week = 07-06..07-12,
+  // week before that = 06-29..07-05
+  const workouts = [
+    makeWorkout({ id: 'a', performed_at: '2026-06-30', sets: 2, reps: 10, weight_kg: 50 }), // 1000, 2 สัปดาห์ก่อน
+    makeWorkout({ id: 'b', performed_at: '2026-07-08', sets: 3, reps: 10, weight_kg: 50 }), // 1500, สัปดาห์ก่อน
+    makeWorkout({ id: 'c', performed_at: '2026-07-15', sets: 4, reps: 10, weight_kg: 50 }), // 2000, สัปดาห์นี้
+    makeWorkout({ id: 'd', performed_at: '2026-07-15', type: 'cardio', distance_km: 5 }), // ไม่นับ (ไม่ใช่ strength)
+  ]
+
+  it('returns weekly volume totals ordered oldest to newest', () => {
+    const result = computeRecentWeeklyVolumes(workouts, 3, new Date(FIXED_TODAY))
+    expect(result).toEqual([1000, 1500, 2000])
+  })
+
+  it('excludes cardio workouts from the volume total', () => {
+    const result = computeRecentWeeklyVolumes(workouts, 1, new Date(FIXED_TODAY))
+    expect(result).toEqual([2000]) // แค่สัปดาห์นี้ ไม่รวม cardio 'd'
+  })
+
+  it('returns 0 for weeks with no logged strength workouts', () => {
+    const result = computeRecentWeeklyVolumes([], 2, new Date(FIXED_TODAY))
+    expect(result).toEqual([0, 0])
   })
 })
 

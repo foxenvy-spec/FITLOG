@@ -218,6 +218,69 @@ export function computeAIDailySummary(
   return msg
 }
 
+// ==================== Smart Deload Detector ====================
+// ตรวจจับสัญญาณ "ควร Deload" จาก 2 มิติ: (1) Volume สูงต่อเนื่องหลายสัปดาห์โดยไม่มีสัปดาห์ไหนลดโหลดลง
+// เลย (สัญญาณสะสมความเหนื่อยจากปริมาณ) และ (2) RPE เฉลี่ยของสัปดาห์ล่าสุดสูงต่อเนื่อง (สัญญาณสะสม
+// ความเหนื่อยจากความหนัก) — ทั้งสองมิติเป็นหลักการ periodization มาตรฐานที่ใช้กันทั่วไปในโปรแกรมฝึก
+// ความแข็งแรง: ฝึกหนักต่อเนื่อง 3-4 สัปดาห์แล้วค่อยลดโหลดลง (deload) 40-50% เพื่อให้ร่างกายฟื้นตัวเต็มที่
+// ป้องกัน overtraining/บาดเจ็บสะสม
+export interface DeloadSignal {
+  // จำนวนสัปดาห์ติดต่อกัน (นับจากล่าสุดย้อนกลับ) ที่ volume ยังไม่มีสัปดาห์ไหนลดลงมากพอจะนับเป็นการพัก
+  weeksElevated: number
+  avgRecentRpe: number | null
+  shouldDeload: boolean
+  rationale: string
+}
+
+const DELOAD_MIN_CONSECUTIVE_WEEKS = 3
+// สัปดาห์ที่ volume ลดลง >=30% จากสัปดาห์ก่อนหน้า นับว่าเป็นสัปดาห์พักไปแล้ว ตัดสายไม่นับต่อ
+const DELOAD_REST_DROP_RATIO = 0.3
+const DELOAD_RPE_THRESHOLD = 8.5
+
+// weeklyVolumeKg เรียงจากเก่าไปใหม่ (สัปดาห์ล่าสุดอยู่ท้าย array) — ดู computeRecentWeeklyVolumes
+// ใน lib/dashboardStats.ts สำหรับตัวสร้าง input นี้จาก workouts ดิบ
+export function detectDeloadSignal(weeklyVolumeKg: number[], avgRecentRpe: number | null): DeloadSignal {
+  if (weeklyVolumeKg.length === 0) {
+    return { weeksElevated: 0, avgRecentRpe, shouldDeload: false, rationale: '' }
+  }
+
+  let weeksElevated = 1
+  for (let i = weeklyVolumeKg.length - 1; i > 0; i--) {
+    const curr = weeklyVolumeKg[i]
+    const prev = weeklyVolumeKg[i - 1]
+    if (prev <= 0 || curr < prev * (1 - DELOAD_REST_DROP_RATIO)) break
+    weeksElevated++
+  }
+
+  const volumeSignal = weeklyVolumeKg.length >= DELOAD_MIN_CONSECUTIVE_WEEKS && weeksElevated >= DELOAD_MIN_CONSECUTIVE_WEEKS
+  const rpeSignal = avgRecentRpe !== null && avgRecentRpe >= DELOAD_RPE_THRESHOLD
+  const shouldDeload = volumeSignal || rpeSignal
+
+  let rationale = ''
+  if (volumeSignal && rpeSignal) {
+    rationale = `Volume สูงต่อเนื่อง ${weeksElevated} สัปดาห์ และ RPE เฉลี่ยล่าสุด ${avgRecentRpe} — สัญญาณเหนื่อยสะสมชัดเจนทั้งสองด้าน`
+  } else if (volumeSignal) {
+    rationale = `Volume สูงต่อเนื่อง ${weeksElevated} สัปดาห์ โดยไม่มีสัปดาห์ไหนลดโหลดลงเลย`
+  } else if (rpeSignal) {
+    rationale = `RPE เฉลี่ยสัปดาห์ล่าสุด ${avgRecentRpe} หนักต่อเนื่อง`
+  }
+
+  return { weeksElevated, avgRecentRpe, shouldDeload, rationale }
+}
+
+// แปลง DeloadSignal เป็น Insight การ์ดเดียวกับที่หน้า Coach ใช้อยู่แล้ว — คืนค่า null ถ้ายังไม่ถึง
+// เกณฑ์ (ไม่ต้องเตือนเปล่าๆ เหมือน Insight ตัวอื่นในไฟล์นี้)
+export function deloadInsight(signal: DeloadSignal): Insight | null {
+  if (!signal.shouldDeload) return null
+  return {
+    id: 'deload-recommendation',
+    kind: 'warning',
+    icon: '🪫',
+    title: 'แนะนำ Deload Week',
+    detail: `${signal.rationale} — ลอง Deload สัปดาห์นี้: ลด volume ลง 40-50% (ลดเซ็ต หรือลดน้ำหนัก ~10-20%) เพื่อให้ร่างกายฟื้นตัวเต็มที่ก่อนกลับไปหนักต่อ`,
+  }
+}
+
 // ==================== เตือนท่าที่ข้ามไปในเซสชันโปรแกรมล่าสุด ====================
 // เทียบท่าทั้งหมดที่ตั้งไว้ในแผนของวันนั้น กับท่าที่ติ๊กว่าทำแล้วจริง (program_completions)
 // เจตนาใช้กับ "เซสชันล่าสุดที่ผ่านโปรแกรม" เท่านั้น (ไม่ย้อนดูทุกวันในอดีต) กันไม่ให้เตือนซ้ำซ้อนท่วมท้น
