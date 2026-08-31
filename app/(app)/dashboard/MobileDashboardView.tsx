@@ -12,7 +12,7 @@ import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications }
 import { goalProgressPct, goalProgressLabel } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
-import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
+import { RECOVERY_MUSCLES, VOLUME_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import {
@@ -22,6 +22,9 @@ import {
   FITLOG_PR_RECENT_DAYS,
   type DashboardData,
 } from './DashboardView'
+import { computePlannedMuscleGroups } from '@/lib/dashboardStats'
+import { getWarmupMoves } from '@/lib/warmupGuide'
+import WarmupGuideSheet from '@/components/WarmupGuideSheet'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import {
@@ -136,10 +139,26 @@ export default function MobileDashboardView() {
     [data?.programDays, dow]
   )
   const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
+  // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
+  // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
+  // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน
+  const plannedMuscleGroups = useMemo(
+    () => computePlannedMuscleGroups(data?.todayExercises ?? [], data?.todayWorkouts ?? [], VOLUME_MUSCLES),
+    [data]
+  )
+  const warmupMoves = useMemo(() => getWarmupMoves(plannedMuscleGroups), [plannedMuscleGroups])
+  const [warmupOpen, setWarmupOpen] = useState(false)
 
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
+  // บั๊กเดียวกับที่แก้ใน DashboardView.tsx (เดสก์ท็อป) — เจอตอนไล่ทำฟีเจอร์ warmup guide ในไฟล์นี้ต่อ:
+  // progressPct/todayCompleted ตัวนี้ (ใช้กับ AICoachCompactCard/FitnessScore ด้านล่าง) ยังไม่บวก
+  // data.adhocCompletedCount เหมือนกัน (ต่างจาก completed/total ที่ส่งเข้า TodaysWorkoutCompactCard
+  // ด้านล่างซึ่งบวกแล้วถูกต้องอยู่ก่อนแล้ว — เลยยังไม่เคยเห็นบั๊กนี้ผ่านตัว badge 8/8 เอง แต่จุดอื่นที่ใช้
+  // progressPct/todayCompleted ตัวนี้โดยตรงยังเสี่ยงคลาดเคลื่อนแบบเดียวกันอยู่)
   const progressPct =
-    data && data.todayExercises.length > 0 ? Math.round((data.completedCount / data.todayExercises.length) * 100) : null
+    data && data.todayExercises.length > 0
+      ? Math.min(100, Math.round(((data.completedCount + data.adhocCompletedCount) / data.todayExercises.length) * 100))
+      : null
 
   const recoveryPctMap = useMemo(() => {
     const map: Record<string, number> = {}
@@ -497,6 +516,24 @@ export default function MobileDashboardView() {
         ) : (
           <TodaysWorkoutEmptyCard variant={workoutCardVariant} />
         )}
+
+        {/* ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่มเล็กๆ [ ดูท่าวอร์มอัป 3 นาที ]" — โชว์เฉพาะตอนมีแผนวันนี้จริง
+            ยังไม่เสร็จ และยังไม่เริ่มล็อกเซ็ตเลย (เหมือนเงื่อนไขฝั่งเดสก์ท็อป — DashboardView.tsx) */}
+        {workoutCardVariant === 'active' && !todayCompleted && totals.entryCount === 0 && warmupMoves.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setWarmupOpen(true)}
+            className="text-[11px] text-amber active:opacity-70 transition flex items-center gap-1 px-1"
+          >
+            <span aria-hidden="true">🔥</span> ดูท่าวอร์มอัป 3 นาที
+          </button>
+        )}
+        <WarmupGuideSheet
+          open={warmupOpen}
+          onClose={() => setWarmupOpen(false)}
+          muscleLabel={plannedMuscleGroups.length > 0 ? plannedMuscleGroups.join(' • ') : null}
+          moves={warmupMoves}
+        />
 
         <TodayHealthStatsRow health={health} />
 

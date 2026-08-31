@@ -21,6 +21,7 @@ import {
   getWeekRange,
   getPreviousWeekRange,
   computeRecentWeeklyVolumes,
+  computePlannedMuscleGroups,
   suggestMuscleToTrain,
   recoveryRecommendationLabel,
   computeBestVolumeIncrease,
@@ -1268,5 +1269,29 @@ describe('computePlannedConsistency', () => {
     ]
     const result = computePlannedConsistency(days, new Set([1, 3]))
     expect(result).toEqual({ plannedCount: 2, completedCount: 0, pct: 0 })
+  })
+})
+
+describe('computePlannedMuscleGroups', () => {
+  const validGroups = ['อก', 'หลัง', 'ขา'] as const
+
+  it('prefers muscle groups from the plan (todayExercises) over what was actually logged', () => {
+    const todayExercises = [{ muscle_group: 'อก' }, { muscle_group: 'ไหล่' }, { muscle_group: 'อก' }]
+    const todayWorkouts = [{ muscle_group: 'ขา' }]
+    expect(computePlannedMuscleGroups(todayExercises, todayWorkouts, validGroups)).toEqual(['อก'])
+  })
+
+  it('falls back to todayWorkouts when there is no plan for today', () => {
+    const todayWorkouts = [{ muscle_group: 'หลัง' }, { muscle_group: 'ขา' }, { muscle_group: 'หลัง' }]
+    expect(computePlannedMuscleGroups([], todayWorkouts, validGroups)).toEqual(['หลัง', 'ขา'])
+  })
+
+  it('filters out groups not in validGroups (e.g. "ไหล่" when only อก/หลัง/ขา are valid)', () => {
+    const todayExercises = [{ muscle_group: 'ไหล่' }, { muscle_group: 'อก' }]
+    expect(computePlannedMuscleGroups(todayExercises, [], validGroups)).toEqual(['อก'])
+  })
+
+  it('returns an empty array when there is nothing planned or logged', () => {
+    expect(computePlannedMuscleGroups([], [], validGroups)).toEqual([])
   })
 })

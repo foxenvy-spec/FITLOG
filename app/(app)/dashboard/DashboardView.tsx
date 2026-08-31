@@ -60,6 +60,8 @@ import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type D
 import { isOnboardingBannerDismissed, dismissOnboardingBanner } from '@/lib/onboarding'
 import GoalRing from '@/components/GoalRing'
 import ShareWeeklySummaryButton from '@/components/ShareWeeklySummaryButton'
+import WarmupGuideSheet from '@/components/WarmupGuideSheet'
+import { getWarmupMoves } from '@/lib/warmupGuide'
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import InsightCarousel from '@/components/InsightCarousel'
 import TodayMuscleChips from '@/components/TodayMuscleChips'
@@ -602,6 +604,8 @@ export default function DashboardPage() {
   // ฟื้นตัวเต็มที่พร้อมกันหมด (badge "EXCELLENT" ซ้ำ 7 ครั้ง ไม่มีข้อมูลใหม่ให้อ่านเลย) — ดีฟอลต์ย่อเหลือ
   // เฉพาะกลุ่มที่ยังไม่พร้อม (< FULLY_RECOVERED_PCT) ให้เห็นแต่สิ่งที่ต้องตัดสินใจ พร้อม toggle ดูครบทั้งหมด
   const [showAllRecovery, setShowAllRecovery] = useState(false)
+  // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — เปิด/ปิด WarmupGuideSheet
+  const [warmupOpen, setWarmupOpen] = useState(false)
 
   // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
   // Card (การ์ดเดียวที่ควรมี effect ใหม่ตามกฎ "Hero มีแค่ใบเดียว") จำลองแสงสะท้อนผิวโลหะเปลี่ยนมุมตามที่
@@ -741,9 +745,11 @@ export default function DashboardPage() {
       ? Math.min(100, Math.round(((data.completedCount + data.adhocCompletedCount) / data.todayExercises.length) * 100))
       : null
   // กลุ่มกล้ามเนื้อของ "แผนวันนี้" (ไม่ใช่ที่เทรนไปแล้ว) — มาจาก program_exercises ถ้าตั้งโปรแกรมไว้,
-  // ไม่งั้น fallback ไปใช้ todayMuscleLabel (กลุ่มที่เทรนจริงวันนี้ กรณีบันทึกอิสระไม่มีโปรแกรม)
-  const plannedMuscleLabel = useMemo(() => {
-    if (!data) return null
+  // ไม่งั้น fallback ไปใช้ todayMuscleLabel (กลุ่มที่เทรนจริงวันนี้ กรณีบันทึกอิสระไม่มีโปรแกรม) — แยก
+  // เป็น array ก่อน (plannedMuscleGroups) แล้วค่อย join เป็น label ให้ getWarmupMoves (lib/warmupGuide.ts)
+  // ใช้ array เดียวกันนี้ต่อได้ ไม่ต้องแกะ label string กลับเป็น array อีกที
+  const plannedMuscleGroups = useMemo(() => {
+    if (!data) return []
     const seen = new Set<string>()
     const ordered: string[] = []
     for (const e of data.todayExercises) {
@@ -752,9 +758,11 @@ export default function DashboardPage() {
         ordered.push(e.muscle_group)
       }
     }
-    if (ordered.length > 0) return ordered.join(' • ')
-    return todayMuscleLabel ? todayMuscleLabel.replace(/ \+ /g, ' • ') : null
+    if (ordered.length > 0) return ordered
+    return todayMuscleLabel ? todayMuscleLabel.split(' + ') : []
   }, [data, todayMuscleLabel])
+  const plannedMuscleLabel = plannedMuscleGroups.length > 0 ? plannedMuscleGroups.join(' • ') : null
+  const warmupMoves = useMemo(() => getWarmupMoves(plannedMuscleGroups), [plannedMuscleGroups])
   // จำนวนเซ็ตที่ตั้งเป้าไว้ทั้งหมดของวันนี้ (จากแผน) — ถ้าไม่มีแผน fallback ไปนับเซ็ตที่บันทึกจริงแล้ว
   const plannedTotalSets = useMemo(() => {
     if (!data) return 0
@@ -1683,6 +1691,25 @@ export default function DashboardPage() {
                   🤖 ให้ MINT แนะนำ <span aria-hidden="true">▶</span>
                 </Button>
               )}
+
+              {/* ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่มเล็กๆ [ ดูท่าวอร์มอัป 3 นาที ] แนะนำท่ายืดเหยียดเฉพาะ
+                  กล้ามเนื้อมัดที่จะเล่นวันนี้" — โชว์เฉพาะตอนมีแผนวันนี้จริง ยังไม่เสร็จ และยังไม่เริ่ม
+                  ล็อกเซ็ตเลย (totals.entryCount === 0 — "ก่อนเริ่มเซ็ตแรก" ตามที่ขอเป๊ะๆ ไม่ใช่ตลอดเซสชัน) */}
+              {scheduledDay && !todayCompleted && totals.entryCount === 0 && warmupMoves.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setWarmupOpen(true)}
+                  className="mt-2 text-[11px] text-amber hover:underline flex items-center gap-1"
+                >
+                  <span aria-hidden="true">🔥</span> ดูท่าวอร์มอัป 3 นาที
+                </button>
+              )}
+              <WarmupGuideSheet
+                open={warmupOpen}
+                onClose={() => setWarmupOpen(false)}
+                muscleLabel={plannedMuscleLabel}
+                moves={warmupMoves}
+              />
 
               {/* ฟีดแบ็ก "ปุ่ม 'เริ่มเทรนเลย' ยังไม่ชัดว่าเริ่มอะไร" — เดิมข้อความบรรทัดเดียว "ยังไม่มี
                   โปรแกรมวันนี้ — ตั้งโปรแกรม หรือ เริ่มจากเทมเพลต" ไม่ได้บอกเหตุผลว่าทำไมควรตั้งโปรแกรม —

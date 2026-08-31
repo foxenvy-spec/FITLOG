@@ -1257,3 +1257,31 @@ export function computePlannedConsistency(
   })
   return { plannedCount, completedCount, pct: plannedCount > 0 ? Math.round((completedCount / plannedCount) * 100) : null }
 }
+
+// กลุ่มกล้ามเนื้อที่ปรากฏใน rows เรียงตามลำดับที่เจอครั้งแรก ตัดซ้ำ กรองเฉพาะกลุ่มที่อยู่ใน validGroups —
+// helper ภายในของ computePlannedMuscleGroups ด้านล่าง
+function uniqueOrderedMuscleGroups(rows: { muscle_group: string | null }[], validGroups: readonly string[]): string[] {
+  const seen = new Set<string>()
+  const ordered: string[] = []
+  for (const r of rows) {
+    if (r.muscle_group && validGroups.includes(r.muscle_group) && !seen.has(r.muscle_group)) {
+      seen.add(r.muscle_group)
+      ordered.push(r.muscle_group)
+    }
+  }
+  return ordered
+}
+
+// กลุ่มกล้ามเนื้อของ "แผนวันนี้" — มาจาก program_exercises ถ้าตั้งโปรแกรมไว้ ไม่งั้น fallback ไปใช้
+// กลุ่มที่เทรนจริงวันนี้ (todayWorkouts กรณีบันทึกอิสระไม่มีโปรแกรม) — ใช้ร่วมกันทั้ง DashboardView.tsx
+// (เดสก์ท็อป) และ MobileDashboardView.tsx (ผ่าน getWarmupMoves ใน lib/warmupGuide.ts) กันตรรกะแยกกัน
+// สองชุดที่อาจ drift ไม่ตรงกัน
+export function computePlannedMuscleGroups(
+  todayExercises: { muscle_group: string | null }[],
+  todayWorkouts: { muscle_group: string | null }[],
+  validGroups: readonly string[]
+): string[] {
+  const fromPlan = uniqueOrderedMuscleGroups(todayExercises, validGroups)
+  if (fromPlan.length > 0) return fromPlan
+  return uniqueOrderedMuscleGroups(todayWorkouts, validGroups)
+}
