@@ -11,13 +11,19 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
 } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
-import type { Workout } from '@/lib/types'
+import type { Workout, Profile } from '@/lib/types'
 import { MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
 import { todayStr } from '@/lib/weekdays'
 import { computeTodayTotals, estimateCaloriesToday } from '@/lib/dashboardStats'
 import { computeProgressiveOverload, type OverloadPlan } from '@/lib/aiCoach'
+import { computeStrengthAxis, vo2MaxToPct, coreVolumeToPct } from '@/lib/strengthStandards'
+import { computeVO2Max } from '@/lib/vo2max'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
@@ -76,6 +82,9 @@ export default function StatsPage() {
   // น้ำหนักตัวล่าสุด — ใช้ประมาณแคลอรี่ (ดู estimateCaloriesToday) ถ้ายังไม่เคยบันทึกน้ำหนักตัว
   // เลย ให้ fallback เป็น DEFAULT_BODYWEIGHT_KG เหมือนที่ dashboardStats.ts ใช้ที่อื่น
   const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null)
+  // เพศ + ชีพจร ใช้คำนวณกราฟเรดาร์ Strength Balance ด้านล่าง (sex เลือกเกณฑ์มาตรฐาน push/pull/legs,
+  // max/resting heart rate ใช้คำนวณ VO2max ตัวเดียวกับ lib/vo2max.ts ที่หน้า Health ใช้อยู่แล้ว)
+  const [profile, setProfile] = useState<Pick<Profile, 'sex' | 'max_heart_rate' | 'resting_heart_rate'> | null>(null)
   // คำแนะนำเป้าหมายครั้งถัดไปของท่าที่ฝึกล่าสุด — ใช้ computeProgressiveOverload ตัวเดียวกับหน้า /coach
   // (อิง RPE เฉลี่ยของ 3 เซสชันล่าสุดจริง) เดิมหน้านี้เคยมี engine ของตัวเองแยกต่างหาก (ไม่ดูค่า RPE เลย)
   // ซึ่งซ้ำซ้อนและให้คำแนะนำคนละแบบกับ /coach โดยไม่ตั้งใจ — รวมเป็นตัวเดียวกันแทน
@@ -153,6 +162,14 @@ export default function StatsPage() {
       setBodyWeightKg((data as { weight_kg: number | null } | null)?.weight_kg ?? null)
     }
     loadBodyWeight()
+  }, [supabase])
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data } = await supabase.from('profiles').select('sex, max_heart_rate, resting_heart_rate').maybeSingle()
+      setProfile((data as Pick<Profile, 'sex' | 'max_heart_rate' | 'resting_heart_rate'> | null) ?? null)
+    }
+    loadProfile()
   }, [supabase])
 
   useEffect(() => {
@@ -272,6 +289,36 @@ export default function StatsPage() {
     const max = entries.length > 0 ? entries[0][1] : 0
     return entries.map(([name, value]) => ({ name, value: Math.round(value), pct: max === 0 ? 0 : value / max }))
   }, [workouts])
+
+  // Strength Balance radar — 5 แกน: Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว (ดู
+  // lib/strengthStandards.ts), Core จากสัดส่วนวอลุ่มจริงของกล้ามเนื้อแกนกลางเทียบวอลุ่มรวม (ไม่มีเกณฑ์
+  // มาตรฐานสากลแบบ 3 แกนแรก — ยืนยันแนวทางนี้แล้วว่าดีกว่าสมมติเกณฑ์ขึ้นเอง), Endurance จาก VO2max
+  // ประมาณจากชีพจร (สูตร Uth เดียวกับหน้า Health) — ทุกแกนอยู่บนสเกล 0-100 เดียวกันแม้จะมาจากคนละที่มา
+  const strengthBalance = useMemo(() => {
+    const push = computeStrengthAxis('push', workouts, bodyWeightKg, profile?.sex ?? null)
+    const pull = computeStrengthAxis('pull', workouts, bodyWeightKg, profile?.sex ?? null)
+    const legs = computeStrengthAxis('legs', workouts, bodyWeightKg, profile?.sex ?? null)
+
+    const coreVolumeKg = workouts
+      .filter((w) => w.type === 'strength' && w.muscle_group === 'แกนกลางลำตัว')
+      .reduce((sum, w) => sum + volumeOf(w), 0)
+    const core = coreVolumeToPct(coreVolumeKg, totals.totalVolume)
+
+    const vo2max = computeVO2Max(profile?.max_heart_rate ?? null, profile?.resting_heart_rate ?? null)
+    const endurance = vo2MaxToPct(vo2max)
+
+    return [
+      { axis: 'Push', pct: push.pct },
+      { axis: 'Pull', pct: pull.pct },
+      { axis: 'Legs', pct: legs.pct },
+      { axis: 'Core', pct: core },
+      { axis: 'Endurance', pct: endurance },
+    ]
+  }, [workouts, bodyWeightKg, profile, totals.totalVolume])
+
+  // มีข้อมูลจริงพอให้กราฟมีความหมายไหม — ต้องมีอย่างน้อย 1 แกนที่ไม่ใช่ 0 (ไม่งั้นกราฟจะเป็นจุดเดียวตรง
+  // กลางที่ไม่สื่อความหมายอะไร ดูเหมือนบั๊กมากกว่าข้อมูลจริง)
+  const hasStrengthBalanceData = strengthBalance.some((a) => a.pct > 0)
 
   const topExercises = useMemo(() => {
     const map = new Map<string, number>()
@@ -430,6 +477,31 @@ export default function StatsPage() {
           </ResponsiveContainer>
         </PremiumCard>
       </section>
+
+      {hasStrengthBalanceData && (
+        <section>
+          <h2 className="font-display text-sm tracked uppercase text-muted mb-3">Strength Balance</h2>
+          <PremiumCard className="h-64 p-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={strengthBalance} outerRadius="70%">
+                <PolarGrid stroke={NEUTRAL.chipInactive} />
+                <PolarAngleAxis dataKey="axis" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 11 }} />
+                <Radar dataKey="pct" stroke={COLORS.violet} fill={COLORS.violet} fillOpacity={0.35} />
+                <Tooltip
+                  contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: NEUTRAL.mutedIcon }}
+                  itemStyle={{ color: '#F3F0E8' }}
+                  formatter={(v: number) => [`${v}%`, 'ระดับ']}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </PremiumCard>
+          <p className="text-[11px] text-muted mt-2">
+            Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว (Novice–Elite){profile?.sex ? '' : ' — ตั้งค่าเพศในโปรไฟล์เพื่อความแม่นยำขึ้น'}
+            {' · '}Core จากสัดส่วนวอลุ่มฝึกจริงของกล้ามเนื้อแกนกลาง · Endurance จาก VO2max ประมาณ (ต้องตั้งค่าชีพจรในโปรไฟล์)
+          </p>
+        </section>
+      )}
 
       {exerciseNames.length > 0 && (
         <section>
