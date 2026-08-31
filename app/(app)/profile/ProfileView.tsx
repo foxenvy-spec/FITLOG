@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/types'
-import { saveAge, saveSex } from '@/lib/profile'
+import { saveAge, saveHeightCm, saveSex } from '@/lib/profile'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import SignOutButton from '@/components/SignOutButton'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -128,8 +128,13 @@ export default function ProfileView() {
         </PremiumCard>
       </div>
 
-      <div className="flex justify-center pt-1">
+      <div className="flex flex-col items-center gap-3 pt-1">
         <SignOutButton />
+        <p className="text-[10px] text-muted/60 font-mono text-center">
+          FitLog v1.0.0 (Beta)
+          <br />
+          Designed for Science-Based Training
+        </p>
       </div>
     </div>
   )
@@ -141,12 +146,18 @@ export default function ProfileView() {
 function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSaved: (p: Profile) => void }) {
   const supabase = createClient()
   const [ageInput, setAgeInput] = useState(profile?.age ? String(profile.age) : '')
+  const [heightInput, setHeightInput] = useState(profile?.height_cm ? String(profile.height_cm) : '')
   const [savingSex, setSavingSex] = useState<'male' | 'female' | null>(null)
   const [ageError, setAgeError] = useState<string | null>(null)
+  const [heightError, setHeightError] = useState<string | null>(null)
 
   useEffect(() => {
     setAgeInput(profile?.age ? String(profile.age) : '')
   }, [profile?.age])
+
+  useEffect(() => {
+    setHeightInput(profile?.height_cm ? String(profile.height_cm) : '')
+  }, [profile?.height_cm])
 
   async function handlePickSex(sex: 'male' | 'female') {
     if (!profile) return
@@ -174,6 +185,22 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
     } catch (err) {
       console.error('บันทึกอายุไม่สำเร็จ', err)
       setAgeError('บันทึกไม่สำเร็จ ลองอีกครั้ง')
+    }
+  }
+
+  async function handleHeightBlur() {
+    if (!profile) return
+    const trimmed = heightInput.trim()
+    if (!trimmed) return
+    const num = Math.round(Number(trimmed))
+    if (!Number.isFinite(num) || num === profile.height_cm) return
+    setHeightError(null)
+    try {
+      await saveHeightCm(supabase, num)
+      onSaved({ ...profile, height_cm: num })
+    } catch (err) {
+      console.error('บันทึกส่วนสูงไม่สำเร็จ', err)
+      setHeightError('บันทึกไม่สำเร็จ ลองอีกครั้ง')
     }
   }
 
@@ -234,6 +261,25 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
       </div>
 
       {ageError && <p className="text-[11px] text-rusttext">{ageError}</p>}
+
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor="profile-height" className="text-sm text-ink">
+          ส่วนสูง (ซม.)
+        </label>
+        <input
+          id="profile-height"
+          type="number"
+          inputMode="numeric"
+          disabled={!profile}
+          value={heightInput}
+          onChange={(e) => setHeightInput(e.target.value)}
+          onBlur={handleHeightBlur}
+          placeholder="เช่น 170"
+          className="w-24 shrink-0 bg-surface2 text-ink text-sm text-center font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-amber disabled:opacity-50"
+        />
+      </div>
+
+      {heightError && <p className="text-[11px] text-rusttext">{heightError}</p>}
 
       <p className="text-[10px] text-muted/70">
         ใช้คำนวณเกณฑ์มาตรฐานสุขภาพและอัตราการเผาผลาญ (BMR/TDEE) โดยประมาณในหน้า Measures & สุขภาพ

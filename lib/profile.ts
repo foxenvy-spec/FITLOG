@@ -54,6 +54,24 @@ export async function saveSex(
   if (error) throw error
 }
 
+// ส่วนสูง (ซม.) — เดิมกรอกได้เฉพาะที่หน้า Health (ผูกกับฟอร์มบันทึกวัดผล) ย้ายมาให้กรอกที่การ์ด
+// "ข้อมูลส่วนตัว" หน้าโปรไฟล์ได้ด้วย เพื่อให้ตั้งค่าที่ใช้คำนวณ BMR/TDEE (เพศ/อายุ/ส่วนสูง) ครบในที่เดียว
+// ส่ง null เพื่อล้างค่า
+export async function saveHeightCm(
+  supabase: ReturnType<typeof createClient>,
+  heightCm: number | null
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('ยังไม่ได้ล็อกอิน')
+
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ user_id: user.id, height_cm: heightCm, updated_at: new Date().toISOString() })
+  if (error) throw error
+}
+
 // ชีพจรสูงสุดโดยประมาณ (bpm) — ใช้คำนวณ Heart Rate Zone ใน Weekly Cardio Volume (ดู lib/heartRate.ts)
 // ส่ง null เพื่อล้างค่า (กลับไปใช้ค่าประมาณมาตรฐานแทน)
 export async function saveMaxHeartRate(
