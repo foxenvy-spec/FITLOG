@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Profile } from '@/lib/types'
+import type { Profile, Workout } from '@/lib/types'
 import { saveAge, saveHeightCm, saveSex } from '@/lib/profile'
+import { computeAchievementStats, buildBadges, type Badge } from '@/lib/achievements'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import SignOutButton from '@/components/SignOutButton'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -34,6 +35,7 @@ export default function ProfileView() {
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null)
+  const [highlightBadges, setHighlightBadges] = useState<Badge[]>([])
   const [profileError, setProfileError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
 
@@ -48,7 +50,7 @@ export default function ProfileView() {
         } = await supabase.auth.getUser()
         if (!active || !user) return
         setEmail(user.email ?? null)
-        const [profileRes, weightRes] = await Promise.all([
+        const [profileRes, weightRes, workoutsRes, dayRes] = await Promise.all([
           supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
           supabase
             .from('body_metrics')
@@ -56,6 +58,8 @@ export default function ProfileView() {
             .order('measured_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
+          supabase.from('workouts').select('*'),
+          supabase.from('program_days').select('day_of_week'),
         ])
         if (!active) return
         if (profileRes.error) {
@@ -66,6 +70,13 @@ export default function ProfileView() {
         setDisplayName(row?.display_name ?? null)
         setProfile(row)
         setLatestWeightKg((weightRes.data as { weight_kg: number | null } | null)?.weight_kg ?? null)
+
+        // การ์ด "ความสำเร็จล่าสุด" — ใช้เกณฑ์ปลดล็อกเหรียญชุดเดียวกับหน้า /achievements เป๊ะ (lib/achievements.ts)
+        // ไม่ใช่ตัวอย่าง/เดาเอา เอาเฉพาะเหรียญที่ปลดล็อกจริงตามข้อมูลจริง ถ้ายังไม่ปลดสักอันไม่โชว์การ์ดนี้เลย
+        const workoutWeekdays = new Set(((dayRes.data as { day_of_week: number }[]) ?? []).map((d) => d.day_of_week))
+        const stats = computeAchievementStats((workoutsRes.data as Workout[]) ?? [], workoutWeekdays)
+        const unlocked = buildBadges(stats).filter((b) => b.current >= b.target)
+        setHighlightBadges(unlocked.slice(-4))
       } catch (err) {
         if (active) setProfileError(err instanceof Error ? err.message : 'โหลดโปรไฟล์ไม่สำเร็จ')
       }
@@ -84,7 +95,7 @@ export default function ProfileView() {
   // สำรองข้อมูล+ตั้งค่า) แทนคอลัมน์เดี่ยวกลางจอเดิมที่เหลือพื้นที่ว่างสองข้างเยอะเกินไปบนจอกว้าง —
   // มือถือยังคงคอลัมน์เดี่ยวเหมือนเดิม (ไม่มี lg: prefix ก็ยังเป็น space-y แนวตั้ง)
   return (
-    <div className="max-w-5xl mx-auto pb-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+    <div className="max-w-6xl mx-auto pb-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
       <div className="space-y-5 lg:col-span-4">
         <div className="flex items-center gap-3">
           {/* วงแหวนอำพัน+พื้นไทเทเนียม เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar/การ์ดผู้ใช้ท้าย
@@ -115,6 +126,27 @@ export default function ProfileView() {
           />
         ) : (
           <PersonalInfoCard profile={profile} weightKg={latestWeightKg} onSaved={(p) => setProfile(p)} />
+        )}
+
+        {highlightBadges.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] tracked uppercase text-muted">ความสำเร็จล่าสุด</p>
+              <a href="/achievements" className="text-[10px] text-muted hover:text-amber transition">
+                ดูทั้งหมด →
+              </a>
+            </div>
+            <PremiumCard className="px-4 py-3.5">
+              <div className="grid grid-cols-4 gap-2">
+                {highlightBadges.map((b) => (
+                  <div key={b.key} className="flex flex-col items-center text-center gap-1">
+                    <span className="text-2xl">{b.icon}</span>
+                    <span className="text-[9px] text-muted leading-tight">{b.title}</span>
+                  </div>
+                ))}
+              </div>
+            </PremiumCard>
+          </div>
         )}
 
         <div className="hidden lg:flex lg:flex-col lg:items-center lg:gap-3 lg:pt-1">

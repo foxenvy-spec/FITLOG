@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout } from '@/lib/types'
-import { computeCurrentStreak, computeLongestStreak } from '@/lib/dashboardStats'
-import { workoutVolumeKg } from '@/lib/workoutDisplay'
+import { computeAchievementStats, buildBadges } from '@/lib/achievements'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
@@ -12,60 +11,6 @@ import PremiumCard from '@/components/ui/PremiumCard'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { COLORS, withAlpha } from '@/lib/theme'
 import { useCountUp } from '@/lib/useCountUp'
-
-interface Stats {
-  totalLogs: number
-  totalDays: number
-  totalVolume: number
-  longestStreak: number
-  currentStreak: number
-}
-
-// บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): ไฟล์นี้เคยคำนวณ volume/streak แยกสูตรของตัวเองจากทุกหน้าอื่นในแอป
-// 1) totalVolume ใช้ sets*reps*weight_kg ตรงๆ แทน total_volume_kg (ผลรวมจริงต่อเซ็ต) ทำให้ pyramid/drop
-//    set (น้ำหนัก/reps ไม่เท่ากันทุกเซ็ต) ได้ยอดรวมผิดเทียบกับ Stats/Dashboard — เปลี่ยนมาใช้ workoutVolumeKg
-//    (lib/workoutDisplay.ts) ตัวเดียวกับทุกหน้าอื่น
-// 2) streak (ทั้ง current/longest) เดินนับ "ทุกวันปฏิทินต้องมี workout ติดกัน" ล้วนๆ ไม่รู้จักวันพักตามโปรแกรม
-//    เลย ทำให้ผู้ใช้ที่มีโปรแกรม (เช่น จ/พ/ศ) เห็นเลข streak ที่นี่ต่ำกว่า Dashboard มาก (ขาดทุกวันที่ไม่ตรง
-//    ตาราง ทั้งที่เป็นวันพักตามแผน ไม่ใช่วันที่ "พลาด") — เปลี่ยนมาใช้ computeCurrentStreak/
-//    computeLongestStreak (lib/dashboardStats.ts) ตัวเดียวกับ DashboardView.tsx ส่ง workoutWeekdays เข้าไป
-function computeStats(workouts: Workout[], workoutWeekdays: Set<number>): Stats {
-  const totalLogs = workouts.length
-  const days = Array.from(new Set(workouts.map((w) => w.performed_at))).sort()
-  const totalDays = days.length
-  const totalVolume = workouts.reduce((sum, w) => (w.type === 'strength' ? sum + workoutVolumeKg(w) : sum), 0)
-
-  const longestStreak = computeLongestStreak(days, workoutWeekdays)
-  const currentStreak = computeCurrentStreak(days, workoutWeekdays)
-
-  return { totalLogs, totalDays, totalVolume, longestStreak, currentStreak }
-}
-
-interface Badge {
-  key: string
-  icon: string
-  title: string
-  desc: string
-  current: number
-  target: number
-  isWeight?: boolean
-}
-
-function buildBadges(stats: Stats): Badge[] {
-  return [
-    { key: 'first', icon: '🥇', title: 'ก้าวแรก', desc: 'บันทึกออกกำลังกายครั้งแรก', current: stats.totalLogs, target: 1 },
-    { key: 'logs_50', icon: '💪', title: 'มือใหม่ตั้งใจ', desc: 'บันทึกครบ 50 ครั้ง', current: stats.totalLogs, target: 50 },
-    { key: 'logs_100', icon: '🏋️', title: 'สายเหล็ก', desc: 'บันทึกครบ 100 ครั้ง', current: stats.totalLogs, target: 100 },
-    { key: 'logs_500', icon: '🔱', title: 'ตัวจริง', desc: 'บันทึกครบ 500 ครั้ง', current: stats.totalLogs, target: 500 },
-    { key: 'volume_1000', icon: '🏆', title: 'ตันแรก', desc: 'ยกรวมสะสม 1,000 กก.', current: stats.totalVolume, target: 1000, isWeight: true },
-    { key: 'volume_10000', icon: '⚡', title: 'หมื่นกิโล', desc: 'ยกรวมสะสม 10,000 กก.', current: stats.totalVolume, target: 10000, isWeight: true },
-    { key: 'volume_100000', icon: '🌋', title: 'แสนกิโล', desc: 'ยกรวมสะสม 100,000 กก.', current: stats.totalVolume, target: 100000, isWeight: true },
-    { key: 'streak_7', icon: '🔥', title: '7 วันติด', desc: 'ออกกำลังกายต่อเนื่อง 7 วัน', current: stats.longestStreak, target: 7 },
-    { key: 'streak_30', icon: '🌟', title: '30 วันติด', desc: 'ออกกำลังกายต่อเนื่อง 30 วัน', current: stats.longestStreak, target: 30 },
-    { key: 'days_50', icon: '📅', title: '50 วันฝึก', desc: 'ออกกำลังกายรวม 50 วัน', current: stats.totalDays, target: 50 },
-    { key: 'days_200', icon: '🗓️', title: '200 วันฝึก', desc: 'ออกกำลังกายรวม 200 วัน', current: stats.totalDays, target: 200 },
-  ]
-}
 
 export default function AchievementsPage() {
   const supabase = createClient()
@@ -80,7 +25,7 @@ export default function AchievementsPage() {
     setError(null)
     const [{ data, error: err }, { data: dayRows }] = await Promise.all([
       supabase.from('workouts').select('*').order('performed_at'),
-      // วันที่ตั้งโปรแกรมไว้จริง — ให้ streak เดียวกับ Dashboard (ดู comment ที่ computeStats ด้านบน)
+      // วันที่ตั้งโปรแกรมไว้จริง — ให้ streak เดียวกับ Dashboard (ดู comment ที่ computeAchievementStats ใน lib/achievements.ts)
       supabase.from('program_days').select('day_of_week'),
     ])
     if (err) {
@@ -97,7 +42,7 @@ export default function AchievementsPage() {
     load()
   }, [load])
 
-  const stats = useMemo(() => computeStats(workouts, workoutWeekdays), [workouts, workoutWeekdays])
+  const stats = useMemo(() => computeAchievementStats(workouts, workoutWeekdays), [workouts, workoutWeekdays])
   const badges = useMemo(() => buildBadges(stats), [stats])
   const unlockedCount = badges.filter((b) => b.current >= b.target).length
 
