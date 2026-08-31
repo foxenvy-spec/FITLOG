@@ -36,6 +36,25 @@ function findPreviousEntry(sortedDesc: BodyMetric[]): BodyMetric | null {
   return sortedDesc[1]
 }
 
+// ฟีดแบ็ก "อยากเลือกดูแนวโน้มย้อนหลัง 7/30/90 วัน หรือทั้งหมด แทนที่จะให้ระบบเลือกช่วงเวลาเอง" — 'all' คือ
+// เทียบกับเอนทรีเก่าสุดที่มี (การเปลี่ยนแปลงตั้งแต่เริ่มบันทึก) ตัวเลข (7/30/90) คือจำนวนวันย้อนหลังจาก
+// เอนทรีล่าสุด
+export type MetricsTimeframe = 7 | 30 | 90 | 'all'
+
+// หาเอนทรีที่ใกล้เคียงกรอบเวลาที่เลือกที่สุด — ไล่หาเอนทรีตัวแรก (ใหม่สุด) ที่ "เก่ากว่าหรือเท่ากับ"
+// จุดเป้าหมาย (latest - N วัน) ถ้าประวัติสั้นกว่ากรอบที่เลือก (ไม่มีเอนทรีเก่าขนาดนั้นเลย) ใช้เอนทรีเก่าสุด
+// ที่มีอยู่แทน (ดีกว่าไม่มีอะไรให้เทียบเลย) — sortedDesc ต้องเรียงใหม่->เก่าเสมอ (measured_at desc)
+export function findComparisonEntry(sortedDesc: BodyMetric[], timeframe: MetricsTimeframe): BodyMetric | null {
+  if (sortedDesc.length < 2) return null
+  if (timeframe === 'all') return sortedDesc[sortedDesc.length - 1]
+
+  const targetMs = new Date(sortedDesc[0].measured_at).getTime() - timeframe * 24 * 60 * 60 * 1000
+  for (let i = 1; i < sortedDesc.length; i++) {
+    if (new Date(sortedDesc[i].measured_at).getTime() <= targetMs) return sortedDesc[i]
+  }
+  return sortedDesc[sortedDesc.length - 1]
+}
+
 // แปลงระยะห่างระหว่างเอนทรีล่าสุดกับเอนทรีก่อนหน้าเป็นข้อความไทยที่อ่านเป็นธรรมชาติ
 // เช่น "จากเมื่อวาน" / "จาก 3 วันก่อน" / "จากสัปดาห์ที่แล้ว" / "จากเดือนที่แล้ว"
 export function periodLabelOf(latest: BodyMetric | null, previous: BodyMetric | null): string | null {
@@ -108,8 +127,15 @@ export interface BodyMetricsSummary {
 }
 
 // metrics ควรเรียงใหม่ -> เก่า (measured_at desc) — ตรงกับที่หน้า /health query มาอยู่แล้ว
-export function computeBodyMetricsSummary(metrics: BodyMetric[], heightCm: number | null): BodyMetricsSummary {
-  const previous = findPreviousEntry(metrics)
+// timeframe: null (ดีฟอลต์) = พฤติกรรมเดิม เทียบกับเอนทรีก่อนหน้าล่าสุดเสมอไม่ว่าจะห่างกี่วัน — ส่งค่านี้
+// เมื่อผู้ใช้เลือกกรอบเวลาเอง (BodyMetricsRow.tsx) เท่านั้น จุดเรียกอื่น (เช่น AI Coach insight ใน
+// DashboardView.tsx) ไม่ส่งค่านี้ จึงไม่ได้รับผลกระทบจากฟีเจอร์นี้เลย
+export function computeBodyMetricsSummary(
+  metrics: BodyMetric[],
+  heightCm: number | null,
+  timeframe: MetricsTimeframe | null = null
+): BodyMetricsSummary {
+  const previous = timeframe === null ? findPreviousEntry(metrics) : findComparisonEntry(metrics, timeframe)
   const latest = metrics[0] ?? null
 
   // มวลไขมัน (kg) — ใช้ body_fat_kg ถ้ามีจากเครื่องชั่ง bioimpedance, ไม่งั้นคำนวณจาก weight * body_fat_pct

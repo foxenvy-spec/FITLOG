@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, Profile } from '@/lib/types'
-import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor, bmiOf } from '@/lib/bodyMetricsSummary'
+import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor, bmiOf, type MetricsTimeframe } from '@/lib/bodyMetricsSummary'
 import { goalProgressPct } from '@/lib/goalProgress'
 import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
@@ -56,8 +56,10 @@ export const BODY_METRICS_QUERY_KEY = ['body-metrics-summary']
 
 export async function fetchBodyMetricsData(supabase: ReturnType<typeof createClient>) {
   const [{ data: metricsRows }, { data: profileRow }, { data: goalRows }] = await Promise.all([
-    // ดึงย้อนหลังพอสำหรับใช้เอนทรีก่อนหน้าล่าสุดมาเทียบ delta เสมอ ไม่ว่าจะชั่งถี่หรือห่างแค่ไหน
-    supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(30),
+    // ฟีดแบ็ก "อยากเลือกดูแนวโน้ม 7/30/90 วัน หรือทั้งหมด" — เดิม limit 30 พอแค่สำหรับ "เอนทรีก่อนหน้า
+    // ล่าสุด" (ไม่ว่าจะห่างกี่วัน) แต่ไม่พอสำหรับผู้ใช้ที่บันทึกถี่ (รายวัน) จะเทียบกรอบ 90 วัน/ทั้งหมด
+    // ได้จริง (30 แถวของคนบันทึกทุกวัน = ย้อนได้แค่ 30 วัน) — เพิ่มเป็น 400 (>1 ปีสำหรับคนบันทึกรายวัน)
+    supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(400),
     supabase.from('profiles').select('height_cm').maybeSingle(),
     // ตารางเดียวกับที่หน้า /health ใช้อยู่แล้ว (goal_type weight/body_fat) — เอาไว้แสดง Goal Progress
     // ใน MetricDetailSheet ตอนแตะการ์ด ไม่ต้องเพิ่ม field/schema ใหม่ (ดู lib/goalProgress.ts)
@@ -111,6 +113,17 @@ export default function BodyMetricsRow({
   // key ของการ์ดที่กำลังเปิด MetricDetailSheet อยู่ (compact/มือถือเท่านั้น) — null = ปิดอยู่
   const [openKey, setOpenKey] = useState<string | null>(null)
 
+  // ฟีดแบ็ก "อยากเลือกดูแนวโน้ม 7/30/90 วัน หรือทั้งหมด แทนที่ระบบเลือกช่วงเวลาเอง" — ดีฟอลต์ 30 วัน
+  // (กรอบมาตรฐานที่แอปติดตามน้ำหนัก/ฟิตเนสทั่วไปใช้เป็นค่าเริ่มต้น) ทุกการ์ดใช้กรอบเวลาเดียวกัน เพราะ
+  // ทุกเมตริกมาจากแถวเดียวกันเสมอ (บันทึกน้ำหนัก/ไขมัน/กล้ามเนื้อพร้อมกันในครั้งเดียว)
+  const [timeframe, setTimeframe] = useState<MetricsTimeframe>(30)
+  const TIMEFRAME_OPTIONS: { value: MetricsTimeframe; label: string }[] = [
+    { value: 7, label: '7D' },
+    { value: 30, label: '30D' },
+    { value: 90, label: '90D' },
+    { value: 'all', label: 'All' },
+  ]
+
   if (isLoading || !data) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -144,7 +157,7 @@ export default function BodyMetricsRow({
     )
   }
 
-  const summary = computeBodyMetricsSummary(metrics, heightCm)
+  const summary = computeBodyMetricsSummary(metrics, heightCm, timeframe)
   // label เดียวใช้ร่วมกันทุกการ์ด ปรับข้อความอัตโนมัติตามระยะเวลาจริงระหว่างสองเอนทรีล่าสุด
   // (เช่น "จากเมื่อวาน" / "จาก 3 วันก่อน" / "จากสัปดาห์ที่แล้ว" / "จากเดือนที่แล้ว") แทนคำว่า "จากสัปดาห์ที่แล้ว" ตายตัว
   const period = summary.periodLabel ?? 'จากครั้งก่อน'
@@ -250,6 +263,26 @@ export default function BodyMetricsRow({
   // ใช้ style แทน Tailwind class เพราะ JIT อ่านค่าจากตัวแปรไม่ได้ (เหมือนจุดอื่นในไฟล์ที่ใช้ token)
   return (
     <>
+      {/* ฟีดแบ็ก "อยากเลือกดูแนวโน้ม 7/30/90 วัน หรือทั้งหมด แทนที่ระบบเลือกช่วงเวลาเอง" — pill เดียวกับ
+          แพทเทิร์นที่ WeeklyMuscleHeatmap.tsx ใช้ (rounded-full border bg-surface2, active = amber tint)
+          เปลี่ยนกรอบเวลาแล้วทุกการ์ดคำนวณ delta ใหม่ทันที (ไม่ query ซ้ำ — ข้อมูลดิบ 400 แถวล่าสุดโหลด
+          มาแล้วครั้งเดียว แค่เลือกเอนทรีที่ใช้เทียบใหม่) */}
+      <div className="flex justify-end mb-2">
+        <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
+          {TIMEFRAME_OPTIONS.map((opt) => (
+            <button
+              key={String(opt.value)}
+              type="button"
+              onClick={() => setTimeframe(opt.value)}
+              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+              style={timeframe === opt.value ? { backgroundColor: '#E8A33D22', color: '#E8A33D' } : { color: '#9498A0' }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div
         className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 ${compact ? '' : 'gap-3'}`}
         style={compact ? { gap: dashboardSpec.metricCard.gridGap } : undefined}

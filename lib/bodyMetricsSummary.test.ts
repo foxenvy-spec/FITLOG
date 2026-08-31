@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { BodyMetric } from './types'
-import { computeBodyMetricsSummary } from './bodyMetricsSummary'
+import { computeBodyMetricsSummary, findComparisonEntry } from './bodyMetricsSummary'
 
 // เอนทรีเปล่า (ทุกฟิลด์ null) — ทดสอบแค่ override ฟิลด์ที่เกี่ยวข้องต่อเคส กัน object literal ยาวเป็นหน้าจอ
 function emptyMetric(overrides: Partial<BodyMetric>): BodyMetric {
@@ -77,5 +77,57 @@ describe('computeBodyMetricsSummary — skeletalMuscleKg', () => {
     const summary = computeBodyMetricsSummary([latest, previous], null)
     expect(summary.skeletalMuscleKg.value).toBe(59)
     expect(summary.skeletalMuscleKg.delta).toBe(1)
+  })
+})
+
+describe('findComparisonEntry', () => {
+  // เรียงใหม่ -> เก่า เสมอ (measured_at desc) ตรงกับที่ query จริงส่งมา
+  const entries = [
+    emptyMetric({ id: 'd0', measured_at: '2026-07-30', weight_kg: 70 }), // latest
+    emptyMetric({ id: 'd5', measured_at: '2026-07-25', weight_kg: 71 }), // -5 วัน
+    emptyMetric({ id: 'd35', measured_at: '2026-06-25', weight_kg: 73 }), // -35 วัน
+    emptyMetric({ id: 'd100', measured_at: '2026-04-21', weight_kg: 76 }), // -100 วัน (เก่าสุด)
+  ]
+
+  it('picks the newest entry at or before the target date for a 7-day window', () => {
+    // เป้าหมาย 2026-07-23 — เอนทรีที่เก่ากว่าหรือเท่ากับ คือ d35 (2026-06-25) ไม่ใช่ d5 (2026-07-25, ใหม่กว่าเป้า)
+    expect(findComparisonEntry(entries, 7)?.id).toBe('d35')
+  })
+
+  it('picks the closest match at or before the target date for a 30-day window', () => {
+    // เป้าหมาย 2026-06-30 — d35 (06-25) เก่ากว่าเป้าหมายพอดี เป็นตัวที่ใกล้สุด
+    expect(findComparisonEntry(entries, 30)?.id).toBe('d35')
+  })
+
+  it('falls back to the oldest available entry when history is shorter than the requested window', () => {
+    // เป้าหมาย 90 วันก่อน = 2026-05-01 — ไม่มีเอนทรีไหนเก่าขนาดนั้นยกเว้น d100 (04-21) ซึ่งเก่ากว่าเป้าหมายอยู่แล้ว
+    expect(findComparisonEntry(entries, 90)?.id).toBe('d100')
+  })
+
+  it('returns the oldest entry for "all"', () => {
+    expect(findComparisonEntry(entries, 'all')?.id).toBe('d100')
+  })
+
+  it('returns null when there are fewer than 2 entries', () => {
+    expect(findComparisonEntry([entries[0]], 30)).toBeNull()
+    expect(findComparisonEntry([], 'all')).toBeNull()
+  })
+})
+
+describe('computeBodyMetricsSummary — timeframe', () => {
+  const entries = [
+    emptyMetric({ id: 'latest', measured_at: '2026-07-30', weight_kg: 70 }),
+    emptyMetric({ id: 'd5', measured_at: '2026-07-25', weight_kg: 71 }),
+    emptyMetric({ id: 'd35', measured_at: '2026-06-25', weight_kg: 73 }),
+  ]
+
+  it('defaults to comparing against the literal previous entry when timeframe is omitted', () => {
+    const summary = computeBodyMetricsSummary(entries, null)
+    expect(summary.weight.delta).toBe(-1) // 70 - 71 (d5, เอนทรีก่อนหน้าจริงๆ)
+  })
+
+  it('compares against the entry closest to the selected timeframe when provided', () => {
+    const summary = computeBodyMetricsSummary(entries, null, 30)
+    expect(summary.weight.delta).toBe(-3) // 70 - 73 (d35, ใกล้ 30 วันที่สุด)
   })
 })
