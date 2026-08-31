@@ -689,6 +689,13 @@ export default function DashboardPage() {
     () => data?.programDays.find((d) => d.day_of_week === dow) ?? null,
     [data?.programDays, dow]
   )
+  // ฟีดแบ็ก "วันพักตามแผนควรมี Badge บอกว่า Streak ไม่ขาด กันผู้ใช้รู้สึกผิด" — ตรรกะ "วันพักตามแผนไม่ตัด
+  // Streak" มีอยู่แล้วจริงใน computeCurrentStreak/computeLongestStreak (lib/dashboardStats.ts, ใช้
+  // workoutWeekdays ตัวเดียวกับที่ scheduledDay ด้านบนอิงอยู่) แค่ไม่เคยมี badge ให้ผู้ใช้ "เห็น" ว่ากำลัง
+  // เกิดพฤติกรรมนี้อยู่ — true เฉพาะวันที่มีโปรแกรมตั้งไว้จริง (programDays.length > 0) แต่วันนี้ไม่ใช่
+  // วันฝึกตามตาราง (ไม่มี scheduledDay) แยกจาก "ยังไม่เคยตั้งโปรแกรมเลย" (programDays.length === 0) ซึ่ง
+  // ควรได้ข้อความชวนตั้งโปรแกรมแบบเดิม ไม่ใช่ badge นี้
+  const isScheduledRestDay = !scheduledDay && (data?.programDays.length ?? 0) > 0
   const next = useMemo(() => (data ? findNextProgramDay(data.programDays, dow) : null), [data, dow])
   // ประโยคทักทายแบบมีบริบท — ลองมีเรื่อง "วันนี้ทำอะไรต่อ" ก่อน ถ้าไม่มีค่อยลองมี "อะไรดีขึ้นบ้างสัปดาห์นี้"
   const greetingContext = useMemo(
@@ -1685,24 +1692,32 @@ export default function DashboardPage() {
                   ข้อความ "ยังไม่ได้ตั้งโปรแกรม" ค้างอยู่ทั้งที่เพิ่งบันทึกอิสระเสร็จไป */}
               {!scheduledDay && !todayCompleted && (
                 <div className="mt-2">
-                  <p className="text-[11px] text-ink">ยังไม่ได้ตั้งโปรแกรมวันนี้</p>
-                  {/* ฟีดแบ็ก "ข้อความใต้ปุ่ม 'ให้ MINT แนะนำ' อ่านยาก (low contrast) บนพื้นรูป — ควรเข้มขึ้น
-                      ตามมาตรฐาน WCAG" — text-muted (#9498A0) เดิมวางอยู่บนพื้นรูป+scrim ของ Hero การ์ดนี้
-                      ตรงๆ ต่างจากจุดอื่นในแอปที่ text-muted ใช้บนพื้นการ์ดเรียบทึบธรรมดา ขยับเป็น #CFD4DE
-                      (ระดับ contrast เดียวกับที่ปรับจุดอื่นในการ์ดนี้ไปแล้วก่อนหน้า เช่น "/total"/"Exercises"
-                      ในการ์ดมือถือ) ให้อ่านง่ายขึ้นจริง */}
-                  <p className="text-[11px] mt-0.5" style={{ color: '#CFD4DE' }}>
-                    เลือกโปรแกรมเพื่อให้ FitLog วางแผนการฝึกและติดตาม Recovery ให้คุณ
-                  </p>
-                  <p className="text-[11px] mt-1">
-                    <Link href="/program" className="text-amber hover:underline">
-                      เลือกโปรแกรม →
-                    </Link>{' '}
-                    หรือ{' '}
-                    <Link href="/templates" className="text-amber hover:underline">
-                      เริ่มจาก Template
-                    </Link>
-                  </p>
+                  {isScheduledRestDay ? (
+                    <p className="text-[11px] flex items-center gap-1.5" style={{ color: COLORS.moss }}>
+                      <span aria-hidden="true">🛌</span> วันพักผ่อนตามแผน (รักษาสถิติ Streak ✅)
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-ink">ยังไม่ได้ตั้งโปรแกรมวันนี้</p>
+                      {/* ฟีดแบ็ก "ข้อความใต้ปุ่ม 'ให้ MINT แนะนำ' อ่านยาก (low contrast) บนพื้นรูป — ควรเข้มขึ้น
+                          ตามมาตรฐาน WCAG" — text-muted (#9498A0) เดิมวางอยู่บนพื้นรูป+scrim ของ Hero การ์ดนี้
+                          ตรงๆ ต่างจากจุดอื่นในแอปที่ text-muted ใช้บนพื้นการ์ดเรียบทึบธรรมดา ขยับเป็น #CFD4DE
+                          (ระดับ contrast เดียวกับที่ปรับจุดอื่นในการ์ดนี้ไปแล้วก่อนหน้า เช่น "/total"/"Exercises"
+                          ในการ์ดมือถือ) ให้อ่านง่ายขึ้นจริง */}
+                      <p className="text-[11px] mt-0.5" style={{ color: '#CFD4DE' }}>
+                        เลือกโปรแกรมเพื่อให้ FitLog วางแผนการฝึกและติดตาม Recovery ให้คุณ
+                      </p>
+                      <p className="text-[11px] mt-1">
+                        <Link href="/program" className="text-amber hover:underline">
+                          เลือกโปรแกรม →
+                        </Link>{' '}
+                        หรือ{' '}
+                        <Link href="/templates" className="text-amber hover:underline">
+                          เริ่มจาก Template
+                        </Link>
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
               </div>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { TEXT } from '@/lib/theme'
+import { TEXT, COLORS } from '@/lib/theme'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
 
@@ -43,6 +43,11 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
             Rest Day
           </p>
           <p style={{ fontSize: 10, marginTop: 1, color: '#CFD4DE' }}>Recovery is part of progress</p>
+          {/* ฟีดแบ็ก "วันพักตามแผนควรมี Badge บอกว่า Streak ไม่ขาด กันผู้ใช้รู้สึกผิด" — ตรรกะ "วันพักตามแผน
+              ไม่ตัด Streak" มีอยู่แล้วจริงใน computeCurrentStreak (lib/dashboardStats.ts) การ์ดนี้เดิมสื่อ
+              "การพักเป็นส่วนหนึ่งของความก้าวหน้า" อยู่แล้วแต่ไม่ได้พูดถึง Streak ตรงๆ เลย — เพิ่มบรรทัดนี้
+              ให้ชัดเจนขึ้นว่า Streak ไม่ขาดจริงๆ (คำเดียวกับที่ desktop ใช้ ดู DashboardView.tsx) */}
+          <p style={{ fontSize: 10, marginTop: 1, color: COLORS.moss }}>🛌 Streak stays protected ✅</p>
         </div>
       </PremiumCard>
     )
