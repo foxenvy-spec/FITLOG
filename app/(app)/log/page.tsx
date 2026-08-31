@@ -20,15 +20,14 @@ import { computePaceSpeed, formatPace } from '@/lib/cardioPace'
 import { classifyHRZone, HR_ZONES, DEFAULT_MAX_HEART_RATE } from '@/lib/heartRate'
 import { cadenceUnitFor, cadenceUnitLabel, cadenceFieldLabel } from '@/lib/cadence'
 import PremiumCard from '@/components/ui/PremiumCard'
+// บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): เดิมหน้านี้มี todayStr() ของตัวเอง คำนวณจาก timezone เครื่อง ต่างจาก
+// todayStr() กลางใน lib/weekdays.ts ที่ยึด Asia/Bangkok เสมอ (performed_at ทุกแถวอื่นในแอปใช้ตัวนั้น) —
+// จุดนี้ร้ายแรงกว่าจุดอื่นที่เพิ่งแก้ไป (getWeekRange ฯลฯ) เพราะเป็นค่าเริ่มต้นของ "วันที่บันทึก" ตรงๆ
+// ผู้ใช้ที่ device timezone ต่างจากไทยจะได้ performed_at ผิดวันจริงๆ ไม่ใช่แค่การอ่าน/แสดงผลคลาดเคลื่อน —
+// เปลี่ยนมาใช้ตัวกลางแทน
+import { todayStr } from '@/lib/weekdays'
 
 const CARDIO_PRESETS = ['วิ่ง', 'ปั่นจักรยาน', 'ว่ายน้ำ', 'เดินเร็ว', 'กระโดดเชือก']
-
-function todayStr() {
-  const d = new Date()
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60000)
-  return local.toISOString().slice(0, 10)
-}
 
 function shortDate(iso: string) {
   const d = new Date(iso + 'T00:00:00')
