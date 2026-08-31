@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -116,6 +116,14 @@ export default function WeeklyMuscleHeatmap() {
   const { toDisplay, unit } = useWeightUnit()
   const [expanded, setExpanded] = useState<MuscleGroup | null>(null)
   const [view, setView] = useState<'volume' | 'balance'>('volume')
+  // ฟีดแบ็ก "Desktop Only — ชี้เมาส์ที่มัดกล้ามเนื้อบนไดอะแกรมให้ขึ้น Mini-Tooltip ทันที" — เช็คว่า
+  // อุปกรณ์นี้มีเมาส์จริง (ไม่ใช่ทัชสกรีน) ครั้งเดียวตอน mount กันไม่ให้มือถือ/แท็บเล็ตซึ่งบางเบราว์เซอร์
+  // ยิง mouseenter สังเคราะห์หลังแตะ (quirk ของ iOS Safari) ไปชนกับ toggleExpand (คลิก/แตะ) ที่มีอยู่แล้ว
+  const [supportsHover, setSupportsHover] = useState(false)
+  useEffect(() => {
+    setSupportsHover(window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  }, [])
+  const [hoveredGroup, setHoveredGroup] = useState<MuscleGroup | null>(null)
   // ฟีดแบ็ก "Balance 58% ต้องอธิบายได้ — กดเข้าไปแล้วเห็น Upper/Lower, Push/Pull, จุดที่ควรปรับ"
   const [balanceDetailsOpen, setBalanceDetailsOpen] = useState(false)
 
@@ -359,7 +367,7 @@ export default function WeeklyMuscleHeatmap() {
               บนจอ sm ขึ้นไป — มือถือยังคง gap-3 เพราะเรียงเป็นคอลัมน์ ไม่ใช่แถว) ตามมอกอัพที่ยืนยันแล้ว
               lg ลดอีกครั้งจาก 175px เหลือ 130px เพราะการ์ดนี้แคบลง (col-span-6 แทน col-span-9 ในหน้า
               dashboard) ทำให้คอลัมน์ลิสต์ด้านขวาแน่นและชื่อกลุ่มกล้ามเนื้อ เช่น "แกนกลางลำตัว" ตัดคำ */}
-          <div className="shrink-0 pl-1 flex items-center gap-0">
+          <div className="relative shrink-0 pl-1 flex items-center gap-0">
             <div className="w-[95px] sm:w-[150px] lg:w-[105px]">
               <MuscleBodyDiagram
                 view="front"
@@ -367,6 +375,7 @@ export default function WeeklyMuscleHeatmap() {
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
+                onHoverGroup={supportsHover ? setHoveredGroup : undefined}
                 width={250}
               />
             </div>
@@ -377,9 +386,45 @@ export default function WeeklyMuscleHeatmap() {
                 getOpacity={groupOpacity}
                 getColor={groupColor}
                 onClickGroup={toggleExpand}
+                onHoverGroup={supportsHover ? setHoveredGroup : undefined}
                 width={250}
               />
             </div>
+
+            {/* Mini-Tooltip เดสก์ท็อป — โผล่ตอน hover กลุ่มกล้ามเนื้อบนไดอะแกรม บอกจำนวนเซ็ตรวม + ท่าที่
+                เล่นไปสูงสุด 4 ท่าแรก (ข้อมูลชุดเดียวกับที่แถวขยาย "ดูรายละเอียด" ทางขวาใช้อยู่แล้ว ไม่คำนวณ
+                ซ้ำ) วางชิดขอบบนของไดอะแกรม (ไม่ใช่ bottom-full ลอยเหนือการ์ด) เพราะการ์ดแม่ (บรรทัด 333)
+                ตั้ง overflow-hidden ไว้ — ทะลุขอบบนจะโดนตัดมองไม่เห็น จึงให้ทับซ้อนกับไดอะแกรมแทน (ไม่บัง
+                การคลิกเพราะ pointer-events-none) */}
+            {hoveredGroup && statByGroup.get(hoveredGroup) && (
+              <div
+                className="absolute z-20 top-0 left-1 w-52 rounded-lg border border-line bg-surface2 px-3 py-2 shadow-elevated pointer-events-none"
+                role="tooltip"
+              >
+                {(() => {
+                  const s = statByGroup.get(hoveredGroup)!
+                  return (
+                    <>
+                      <p className="text-[11px] font-medium text-ink">
+                        {hoveredGroup} · <span className="font-mono">{s.sets}</span> เซ็ต
+                      </p>
+                      {s.topExercises.length > 0 ? (
+                        <ul className="mt-1 space-y-0.5">
+                          {s.topExercises.map((ex) => (
+                            <li key={ex.name} className="flex items-center justify-between text-[10px] text-muted gap-2">
+                              <span className="truncate">{ex.name}</span>
+                              <span className="font-mono shrink-0">{ex.sets} เซ็ต</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[10px] text-muted mt-1">ยังไม่มีท่าที่บันทึกสัปดาห์นี้</p>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+            )}
           </div>
 
           {/* รายการสัดส่วน + breakdown ท่า */}

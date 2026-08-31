@@ -22,6 +22,11 @@ interface MuscleBodyDiagramProps {
   getOpacity: (group: MuscleGroup) => number
   getColor: (group: MuscleGroup) => string
   onClickGroup?: (group: MuscleGroup) => void
+  /** ฟีดแบ็ก "Desktop Only — เอาเมาส์ไปชี้ (Hover) ที่มัดกล้ามเนื้อ ให้มี Mini-Tooltip ลอยขึ้นมาบอกทันที"
+   * — เรียกตอน pointer เข้า/ออกบริเวณกล้ามเนื้อกลุ่มนั้น (null = ไม่ได้ชี้ที่กลุ่มไหนแล้ว) ผู้เรียกใช้
+   * (WeeklyMuscleHeatmap.tsx) เป็นคนตัดสินใจว่าจะ gate เฉพาะเดสก์ท็อปจริง (matchMedia hover:hover) ก่อน
+   * ส่ง prop นี้เข้ามาหรือไม่ — ไม่ส่งมา (undefined) = ปิดพฤติกรรมนี้ทั้งหมด ไม่ผูก event listener เลย */
+  onHoverGroup?: (group: MuscleGroup | null) => void
   /** ความกว้าง (px) — ใช้เป็นค่าเริ่มต้น/ค่า fallback เท่านั้น ตัว SVG จริงๆ สเกลเต็มความกว้าง
    * ของ parent เสมอ (width: 100%) เพื่อให้ผู้เรียกใช้คุมขนาดผ่าน className ของ wrapper แทนได้
    * (เช่น กำหนด breakpoint ให้ใหญ่ขึ้นบนจอกว้าง) โดยที่สัดส่วน 500:667 ยังคงเดิมเสมอผ่าน viewBox */
@@ -51,6 +56,7 @@ export default function MuscleBodyDiagram({
   getOpacity,
   getColor,
   onClickGroup,
+  onHoverGroup,
   width = 168,
 }: MuscleBodyDiagramProps) {
   const crop = VIEW_CROP[view]
@@ -121,6 +127,8 @@ export default function MuscleBodyDiagram({
               opacity={getOpacity(group)}
               mask={`url(#${maskId})`}
               onClick={() => onClickGroup?.(group)}
+              onMouseEnter={() => onHoverGroup?.(group)}
+              onMouseLeave={() => onHoverGroup?.(null)}
               style={{ cursor: onClickGroup ? 'pointer' : undefined, transition: 'opacity 300ms' }}
             />
           )
