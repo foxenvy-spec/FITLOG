@@ -2,6 +2,7 @@
 
 import type { ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
 import { AMBER_GRADIENT_CSS, AMBER_GLOW_SHADOW, NEUTRAL, COLORS, withAlpha } from '@/lib/theme'
+import { hapticTap, hapticSuccess } from '@/lib/haptics'
 
 interface ButtonOwnProps {
   children: ReactNode
@@ -45,14 +46,24 @@ export default function Button<T extends ElementType = 'button'>({
   size = 'sm',
   as,
   style,
+  onPointerDown,
   ...rest
 }: ButtonProps<T>) {
   const Comp = (as || 'button') as ElementType
+  // Haptic Feedback — เดียวกับแพทเทิร์นที่ PremiumCard.tsx ใช้อยู่แล้ว (เรียกต่อจาก onPointerDown เดิม
+  // ที่ผู้ใช้ component ส่งมา ไม่ใช่แทนที่) primary คือ CTA หลักของหน้า (เริ่ม/ไปต่อ workout ฯลฯ) ใช้
+  // hapticSuccess (สั่นเด่นกว่า) ส่วน secondary/icon เป็น action รอง ใช้ hapticTap เบาๆ พอ
+  function handlePointerDown(e: PointerEvent) {
+    if (variant === 'primary') hapticSuccess()
+    else hapticTap()
+    ;(onPointerDown as ((e: PointerEvent) => void) | undefined)?.(e)
+  }
   if (variant === 'icon') {
     return (
       <Comp
         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${className}`}
         style={{ border: `1px solid ${withAlpha(COLORS.amber, '40')}`, ...style }}
+        onPointerDown={handlePointerDown}
         {...rest}
       >
         {children}
@@ -64,6 +75,7 @@ export default function Button<T extends ElementType = 'button'>({
       <Comp
         className={`inline-flex items-center justify-center gap-1.5 font-display tracked uppercase rounded-full active:scale-[0.99] transition disabled:opacity-50 ${PRIMARY_SIZE_CLASS[size]} ${className}`}
         style={{ background: 'transparent', border: `1px solid ${withAlpha(COLORS.amber, '40')}`, color: COLORS.amber, ...style }}
+        onPointerDown={handlePointerDown}
         {...rest}
       >
         {children}
@@ -74,6 +86,7 @@ export default function Button<T extends ElementType = 'button'>({
     <Comp
       className={`inline-flex items-center justify-center gap-1.5 font-display tracked uppercase rounded-full active:scale-[0.99] transition disabled:opacity-50 ${PRIMARY_SIZE_CLASS[size]} ${className}`}
       style={{ background: AMBER_GRADIENT_CSS, boxShadow: AMBER_GLOW_SHADOW, color: NEUTRAL.onAmberText, ...style }}
+      onPointerDown={handlePointerDown}
       {...rest}
     >
       {children}
