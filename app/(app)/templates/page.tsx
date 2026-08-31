@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { WorkoutTemplate, WorkoutTemplateExercise, ProgramDay } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
-import { WEEKDAYS, WEEKDAYS_SHORT, todayStr } from '@/lib/weekdays'
-import { parseRangeToNumber, rirToRpe, parseWorkoutExcel } from '@/lib/importWorkoutExcel'
+import { WEEKDAYS, WEEKDAYS_SHORT } from '@/lib/weekdays'
+import { parseWorkoutExcel } from '@/lib/importWorkoutExcel'
 import { getExerciseLibrary } from '@/lib/exerciseLibrary'
 import { getErrorMessage } from '@/lib/errors'
+import { startTemplateAsWorkoutLog } from '@/lib/startTemplate'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exercises'
 import ErrorState from '@/components/ErrorState'
@@ -516,28 +517,13 @@ export default function TemplatesPage() {
         return
       }
 
-      const payload = exercises.map((ex) => ({
-        user_id: user.id,
-        type: 'strength' as const,
-        performed_at: todayStr(),
-        exercise_name: ex.exercise_name,
-        muscle_group: ex.muscle_group,
-        secondary_muscles: ex.secondary_muscles,
-        exercise_library_id: ex.exercise_library_id,
-        sets: ex.sets,
-        reps: parseRangeToNumber(ex.target_reps),
-        weight_kg: ex.default_weight_kg,
-        rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
-        notes: ex.notes,
-      }))
-
-      const { error: wErr } = await supabase.from('workouts').insert(payload)
-      if (wErr) {
-        setError(`เริ่ม "${template.title}" ไม่สำเร็จ: ${wErr.message}`)
+      const { error: wErrMessage, count } = await startTemplateAsWorkoutLog(supabase, user.id, exercises)
+      if (wErrMessage) {
+        setError(`เริ่ม "${template.title}" ไม่สำเร็จ: ${wErrMessage}`)
         return
       }
 
-      setStartMessage(`บันทึก "${template.title}" (${payload.length} ท่า) เข้า Log วันนี้แล้ว`)
+      setStartMessage(`บันทึก "${template.title}" (${count} ท่า) เข้า Log วันนี้แล้ว`)
     } catch (err) {
       setError(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
     } finally {
