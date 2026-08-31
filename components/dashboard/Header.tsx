@@ -214,7 +214,11 @@ export default function Header({ greetingText, notifications, displayName, fitne
             บรรทัด compact ขึ้น" — เดิมไม่มี line-height กำหนดตรงๆ (fallback ตาม browser/base ~1.5) ทำให้
             ตอนข้อความยาวตกเป็น 2 บรรทัดบนจอแคบ มีช่องไฟระหว่างบรรทัดเผื่อไว้เกินจำเป็น ใส่ lineHeight: 1.25
             ให้แน่นขึ้นโดยไม่แตะ fontSize/ความกว้างคอลัมน์เลย */}
-        <p className="text-ink" style={{ marginTop: 3, fontSize: 13, lineHeight: 1.25 }}>
+        {/* ฟีดแบ็ก "ข้อความตัดคำหักท่อนกลางคำ ('วันนี้พร้อมสำหรับการออกกำลัง' / 'กาย 💪')" — คอลัมน์นี้แคบ
+            (ชนกับ Ring ขยายทางซ้ายไม่ได้ ดู v64 ด้านบน) ทำให้ประโยคยาวตกบรรทัดกลางคำภาษาไทย (ไม่มีช่องว่าง
+            ให้ browser ตัดคำได้ตามธรรมชาติ) — เพิ่ม text-wrap:balance ให้กระจายความยาวบรรทัดสมดุลขึ้น
+            เลือกจุดตัดที่อ่านเป็นธรรมชาติกว่าเดิมแทนที่จะปล่อยให้ล้นแล้วตัดดื้อๆ ตรงขอบ */}
+        <p className="text-ink [text-wrap:balance]" style={{ marginTop: 3, fontSize: 13, lineHeight: 1.25 }}>
           {isRestDay ? 'วันนี้เหมาะสำหรับการฟื้นตัว 🌙' : 'วันนี้พร้อมสำหรับการออกกำลังกาย 💪'}
         </p>
       </div>
