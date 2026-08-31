@@ -9,6 +9,7 @@ import SignOutButton from '@/components/SignOutButton'
 import PremiumCard from '@/components/ui/PremiumCard'
 import ErrorState from '@/components/ErrorState'
 import { COLORS, CARD_GRADIENT_CSS, withAlpha } from '@/lib/theme'
+import { computeBmr } from '@/lib/bmr'
 
 function emailDisplayName(email: string | null | undefined) {
   if (!email) return ''
@@ -20,8 +21,11 @@ const LINKS = [
   { href: '/calendar', icon: '📆', label: 'ปฏิทิน', desc: 'ดูเวิร์กเอาต์ตามวัน' },
   { href: '/achievements', icon: '🏆', label: 'Achievements', desc: 'สถิติ streak และเป้าหมายที่ทำได้' },
   { href: '/history', icon: '🗂', label: 'ประวัติเวิร์กเอาต์', desc: 'ดูย้อนหลังทั้งหมด' },
-  { href: '/export', icon: '⬇️', label: 'ส่งออกข้อมูล', desc: '' },
-  { href: '/import', icon: '⬆️', label: 'นำเข้าข้อมูล', desc: '' },
+]
+
+const BACKUP_LINKS = [
+  { href: '/export', icon: '⬇️', label: 'ส่งออก JSON' },
+  { href: '/import', icon: '⬆️', label: 'นำเข้าข้อมูล' },
 ]
 
 export default function ProfileView() {
@@ -29,6 +33,7 @@ export default function ProfileView() {
   const [email, setEmail] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
 
@@ -43,19 +48,24 @@ export default function ProfileView() {
         } = await supabase.auth.getUser()
         if (!active || !user) return
         setEmail(user.email ?? null)
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle()
+        const [profileRes, weightRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
+          supabase
+            .from('body_metrics')
+            .select('weight_kg')
+            .order('measured_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ])
         if (!active) return
-        if (error) {
-          setProfileError(error.message)
+        if (profileRes.error) {
+          setProfileError(profileRes.error.message)
           return
         }
-        const row = data as (Profile & { display_name: string | null }) | null
+        const row = profileRes.data as (Profile & { display_name: string | null }) | null
         setDisplayName(row?.display_name ?? null)
         setProfile(row)
+        setLatestWeightKg((weightRes.data as { weight_kg: number | null } | null)?.weight_kg ?? null)
       } catch (err) {
         if (active) setProfileError(err instanceof Error ? err.message : 'โหลดโปรไฟล์ไม่สำเร็จ')
       }
@@ -70,71 +80,103 @@ export default function ProfileView() {
 
   const name = displayName || emailDisplayName(email) || 'นักกีฬา'
 
+  // จอใหญ่ (lg+): แบ่ง 2 คอลัมน์ ซ้าย 4/12 (โปรไฟล์+ข้อมูลสรีระ+Sign Out) ขวา 8/12 (เมนู+
+  // สำรองข้อมูล+ตั้งค่า) แทนคอลัมน์เดี่ยวกลางจอเดิมที่เหลือพื้นที่ว่างสองข้างเยอะเกินไปบนจอกว้าง —
+  // มือถือยังคงคอลัมน์เดี่ยวเหมือนเดิม (ไม่มี lg: prefix ก็ยังเป็น space-y แนวตั้ง)
   return (
-    <div className="space-y-5 pb-4 lg:max-w-2xl lg:mx-auto">
-      <div className="flex items-center gap-3">
-        {/* วงแหวนอำพัน+พื้นไทเทเนียม เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar/การ์ดผู้ใช้ท้าย
-            SidebarNav) แทนวงกลมทึบ bg-surface2 เดิม */}
-        <div
-          className="shrink-0 rounded-full flex items-center justify-center font-display text-lg tracked uppercase text-amber"
-          style={{
-            width: 56,
-            height: 56,
-            backgroundImage: CARD_GRADIENT_CSS,
-            border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
-            boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '20')}`,
-          }}
-        >
-          {name.slice(0, 1).toUpperCase()}
-        </div>
-        <div className="min-w-0">
-          <p className="font-display text-lg tracked uppercase text-ink truncate">{name}</p>
-          <p className="text-[11px] text-muted font-mono truncate">{email}</p>
-        </div>
-      </div>
-
-      {profileError ? (
-        <ErrorState
-          title="โหลดข้อมูลส่วนตัวไม่สำเร็จ"
-          message={profileError}
-          onRetry={() => setReloadToken((n) => n + 1)}
-        />
-      ) : (
-        <PersonalInfoCard profile={profile} onSaved={(p) => setProfile(p)} />
-      )}
-
-      <PremiumCard className="divide-y divide-white/5">
-        {LINKS.map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            className="flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition"
+    <div className="max-w-5xl mx-auto pb-4 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+      <div className="space-y-5 lg:col-span-4">
+        <div className="flex items-center gap-3">
+          {/* วงแหวนอำพัน+พื้นไทเทเนียม เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar/การ์ดผู้ใช้ท้าย
+              SidebarNav) แทนวงกลมทึบ bg-surface2 เดิม */}
+          <div
+            className="shrink-0 rounded-full flex items-center justify-center font-display text-lg tracked uppercase text-amber"
+            style={{
+              width: 56,
+              height: 56,
+              backgroundImage: CARD_GRADIENT_CSS,
+              border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
+              boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '20')}`,
+            }}
           >
-            <span className="shrink-0 text-lg w-6 text-center">{item.icon}</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-ink">{item.label}</p>
-              {item.desc ? <p className="text-[11px] text-muted mt-0.5 truncate">{item.desc}</p> : null}
-            </div>
-            <span className="text-muted text-xs">→</span>
-          </a>
-        ))}
-      </PremiumCard>
+            {name.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-lg tracked uppercase text-ink truncate">{name}</p>
+            <p className="text-[11px] text-muted font-mono truncate">{email}</p>
+          </div>
+        </div>
 
-      <div>
-        <p className="text-[10px] tracked uppercase text-muted mb-2">ตั้งค่า</p>
-        <PremiumCard className="px-4 py-3.5 flex items-center justify-between">
-          <p className="text-sm text-ink">หน่วยน้ำหนัก</p>
-          <WeightUnitToggle />
-        </PremiumCard>
+        {profileError ? (
+          <ErrorState
+            title="โหลดข้อมูลส่วนตัวไม่สำเร็จ"
+            message={profileError}
+            onRetry={() => setReloadToken((n) => n + 1)}
+          />
+        ) : (
+          <PersonalInfoCard profile={profile} weightKg={latestWeightKg} onSaved={(p) => setProfile(p)} />
+        )}
+
+        <div className="hidden lg:flex lg:flex-col lg:items-center lg:gap-3 lg:pt-1">
+          <SignOutButton />
+          <p className="text-[10px] text-muted/60 font-mono text-center">
+            FitLog v1.0.0 (Beta)
+            <br />
+            Designed for Science-Based Training
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-3 pt-1">
-        <SignOutButton />
-        <p className="text-[10px] text-muted/60 font-mono text-center">
-          FitLog v1.0.0 (Beta)
-          <br />
-          Designed for Science-Based Training
-        </p>
+      <div className="space-y-5 mt-5 lg:mt-0 lg:col-span-8">
+        <PremiumCard className="divide-y divide-white/5">
+          {LINKS.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition"
+            >
+              <span className="shrink-0 text-lg w-6 text-center">{item.icon}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-ink">{item.label}</p>
+                {item.desc ? <p className="text-[11px] text-muted mt-0.5 truncate">{item.desc}</p> : null}
+              </div>
+              <span className="text-muted text-xs">→</span>
+            </a>
+          ))}
+        </PremiumCard>
+
+        <div>
+          <p className="text-[10px] tracked uppercase text-muted mb-2">ศูนย์สำรองข้อมูล</p>
+          <div className="grid grid-cols-2 gap-3">
+            {BACKUP_LINKS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-line bg-surface2/60 text-sm text-ink hover:border-amber/40 active:bg-white/5 transition"
+              >
+                <span className="shrink-0">{item.icon}</span>
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[10px] tracked uppercase text-muted mb-2">ตั้งค่า</p>
+          <PremiumCard className="px-4 py-3.5 flex items-center justify-between">
+            <p className="text-sm text-ink">หน่วยน้ำหนัก</p>
+            <WeightUnitToggle />
+          </PremiumCard>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 pt-1 lg:hidden">
+          <SignOutButton />
+          <p className="text-[10px] text-muted/60 font-mono text-center">
+            FitLog v1.0.0 (Beta)
+            <br />
+            Designed for Science-Based Training
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -143,7 +185,15 @@ export default function ProfileView() {
 // เพศ+อายุ อยู่หน้าโปรไฟล์ตรงนี้ (ไม่ใช่แค่ในฟอร์มบันทึกวัดผลที่หน้า Health) เพื่อให้ผู้ใช้กรอกได้ตั้งแต่
 // เข้าแอปครั้งแรก — สองค่านี้เป็นข้อมูลระดับโปรไฟล์ (ไม่ผูกกับวันที่วัดผลไหนโดยเฉพาะ) ใช้คำนวณเกณฑ์
 // มาตรฐานน้ำในร่างกาย/โปรตีน และ BMR/TDEE โดยประมาณ (ดู lib/bmr.ts) ที่หน้า Health
-function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSaved: (p: Profile) => void }) {
+function PersonalInfoCard({
+  profile,
+  weightKg,
+  onSaved,
+}: {
+  profile: Profile | null
+  weightKg: number | null
+  onSaved: (p: Profile) => void
+}) {
   const supabase = createClient()
   const [ageInput, setAgeInput] = useState(profile?.age ? String(profile.age) : '')
   const [heightInput, setHeightInput] = useState(profile?.height_cm ? String(profile.height_cm) : '')
@@ -203,6 +253,11 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
       setHeightError('บันทึกไม่สำเร็จ ลองอีกครั้ง')
     }
   }
+
+  const bmr =
+    profile?.age && profile?.height_cm && profile?.sex && weightKg
+      ? computeBmr(weightKg, profile.height_cm, profile.age, profile.sex)
+      : null
 
   return (
     <PremiumCard className="px-4 py-3.5 space-y-3">
@@ -281,8 +336,20 @@ function PersonalInfoCard({ profile, onSaved }: { profile: Profile | null; onSav
 
       {heightError && <p className="text-[11px] text-rusttext">{heightError}</p>}
 
+      {bmr !== null ? (
+        <div
+          className="rounded-lg px-3 py-2.5 flex items-center justify-between gap-3"
+          style={{ backgroundColor: withAlpha(COLORS.amber, '0d'), border: `1px solid ${withAlpha(COLORS.amber, '25')}` }}
+        >
+          <p className="text-[11px] text-muted">🔥 BMR โดยประมาณ</p>
+          <p className="text-sm font-display tracked text-amber">~{bmr.toLocaleString('th-TH')} kcal/วัน</p>
+        </div>
+      ) : null}
+
       <p className="text-[10px] text-muted/70">
-        ใช้คำนวณเกณฑ์มาตรฐานสุขภาพและอัตราการเผาผลาญ (BMR/TDEE) โดยประมาณในหน้า Measures & สุขภาพ
+        {bmr !== null
+          ? 'BMR คำนวณจากเพศ/อายุ/ส่วนสูง/น้ำหนักล่าสุด — ดู TDEE ตามระดับกิจกรรมและเกณฑ์มาตรฐานสุขภาพเพิ่มเติมที่หน้า Measures & สุขภาพ'
+          : 'กรอกเพศ อายุ ส่วนสูง และบันทึกน้ำหนักที่หน้า Measures & สุขภาพให้ครบ เพื่อดูค่า BMR/TDEE โดยประมาณ'}
       </p>
     </PremiumCard>
   )
