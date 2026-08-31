@@ -7,7 +7,10 @@ import { todayStr, todayDayOfWeek, daysAgoStr } from '@/lib/weekdays'
 import { computeCurrentStreak, relativeDayLabel } from '@/lib/dashboardStats'
 import { computeDaySummary } from '@/lib/workoutDisplay'
 import { startTemplateAsWorkoutLog } from '@/lib/startTemplate'
+import { calculatePlates } from '@/lib/plateCalculator'
+import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { getErrorMessage } from '@/lib/errors'
+import { COLORS, withAlpha } from '@/lib/theme'
 import PremiumCard from '@/components/ui/PremiumCard'
 import LoadingState from '@/components/LoadingState'
 import ErrorState from '@/components/ErrorState'
@@ -27,13 +30,17 @@ const SECONDARY = [
   { href: '/exercises', icon: '🏋', label: 'คลังท่าออกกำลัง' },
 ]
 
+interface RecentSession {
+  date: string
+  workouts: Workout[]
+}
+
 interface TrainData {
   currentDay: ProgramDay | null
   todayExercises: ProgramExercise[]
   completedCount: number
   streak: number
-  lastSessionDate: string | null
-  lastSessionWorkouts: Workout[]
+  recentSessions: RecentSession[]
   templates: WorkoutTemplate[]
   exercisesByTemplate: Record<string, WorkoutTemplateExercise[]>
 }
@@ -58,8 +65,8 @@ export default function TrainPage() {
   const [reloadToken, setReloadToken] = useState(0)
   const [startingTemplateId, setStartingTemplateId] = useState<string | null>(null)
   const [templateMessage, setTemplateMessage] = useState<string | null>(null)
-  const [repeating, setRepeating] = useState(false)
-  const [repeatMessage, setRepeatMessage] = useState<string | null>(null)
+  const [repeatingDate, setRepeatingDate] = useState<string | null>(null)
+  const [repeatResult, setRepeatResult] = useState<{ date: string; message: string } | null>(null)
 
   const load = useCallback(async () => {
     setLoadError(null)
@@ -126,11 +133,18 @@ export default function TrainPage() {
       const workoutWeekdays = new Set(typedDays.map((d) => d.day_of_week))
       const streak = computeCurrentStreak(distinctDates, workoutWeekdays)
 
-      // เซสชันล่าสุด "ที่ไม่ใช่วันนี้" — กันไม่ให้ซ้ำกับการ์ดโปรแกรมวันนี้ด้านบนที่คุยเรื่องวันนี้อยู่แล้ว
+      // 2 เซสชันล่าสุด "ที่ไม่ใช่วันนี้" — กันไม่ให้ซ้ำกับการ์ดโปรแกรมวันนี้ด้านบนที่คุยเรื่องวันนี้อยู่แล้ว
+      // recentWorkouts เรียง performed_at ใหม่สุดก่อนแล้ว แถวของวันเดียวกันจึงเรียงติดกันเป็นก้อนเสมอ
       const allRecent = (recentWorkouts as Workout[]) ?? []
       const pastWorkouts = allRecent.filter((w) => w.performed_at !== today)
-      const lastSessionDate = pastWorkouts[0]?.performed_at ?? null
-      const lastSessionWorkouts = lastSessionDate ? pastWorkouts.filter((w) => w.performed_at === lastSessionDate) : []
+      const recentDates: string[] = []
+      pastWorkouts.forEach((w) => {
+        if (recentDates.length < 2 && !recentDates.includes(w.performed_at)) recentDates.push(w.performed_at)
+      })
+      const recentSessions: RecentSession[] = recentDates.map((date) => ({
+        date,
+        workouts: pastWorkouts.filter((w) => w.performed_at === date),
+      }))
 
       const templates = (templateRows as WorkoutTemplate[]) ?? []
       const exercisesByTemplate: Record<string, WorkoutTemplateExercise[]> = {}
@@ -154,8 +168,7 @@ export default function TrainPage() {
         todayExercises,
         completedCount,
         streak,
-        lastSessionDate,
-        lastSessionWorkouts,
+        recentSessions,
         templates,
         exercisesByTemplate,
       })
@@ -196,19 +209,18 @@ export default function TrainPage() {
     }
   }
 
-  async function handleRepeatLastSession() {
-    if (!data || data.lastSessionWorkouts.length === 0) return
-    setRepeating(true)
-    setRepeatMessage(null)
+  async function handleRepeatSession(session: RecentSession) {
+    setRepeatingDate(session.date)
+    setRepeatResult(null)
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        setRepeatMessage('กรุณาเข้าสู่ระบบใหม่')
+        setRepeatResult({ date: session.date, message: 'กรุณาเข้าสู่ระบบใหม่' })
         return
       }
-      const payload = data.lastSessionWorkouts.map((w) => ({
+      const payload = session.workouts.map((w) => ({
         user_id: user.id,
         type: w.type,
         performed_at: todayStr(),
@@ -227,14 +239,14 @@ export default function TrainPage() {
       }))
       const { error } = await supabase.from('workouts').insert(payload)
       if (error) {
-        setRepeatMessage(`ก๊อปปี้ไม่สำเร็จ: ${error.message}`)
+        setRepeatResult({ date: session.date, message: `ก๊อปปี้ไม่สำเร็จ: ${error.message}` })
         return
       }
-      setRepeatMessage(`บันทึก ${payload.length} ท่าเข้า Log วันนี้แล้ว ✓`)
+      setRepeatResult({ date: session.date, message: `บันทึก ${payload.length} ท่าเข้า Log วันนี้แล้ว ✓` })
     } catch (err) {
-      setRepeatMessage(getErrorMessage(err))
+      setRepeatResult({ date: session.date, message: getErrorMessage(err) })
     } finally {
-      setRepeating(false)
+      setRepeatingDate(null)
     }
   }
 
@@ -254,10 +266,10 @@ export default function TrainPage() {
           data={data}
           startingTemplateId={startingTemplateId}
           templateMessage={templateMessage}
-          repeating={repeating}
-          repeatMessage={repeatMessage}
+          repeatingDate={repeatingDate}
+          repeatResult={repeatResult}
           onStartTemplate={handleStartTemplate}
-          onRepeatLastSession={handleRepeatLastSession}
+          onRepeatSession={handleRepeatSession}
         />
       )}
     </div>
@@ -268,18 +280,18 @@ function TrainBody({
   data,
   startingTemplateId,
   templateMessage,
-  repeating,
-  repeatMessage,
+  repeatingDate,
+  repeatResult,
   onStartTemplate,
-  onRepeatLastSession,
+  onRepeatSession,
 }: {
   data: TrainData
   startingTemplateId: string | null
   templateMessage: string | null
-  repeating: boolean
-  repeatMessage: string | null
+  repeatingDate: string | null
+  repeatResult: { date: string; message: string } | null
   onStartTemplate: (t: WorkoutTemplate) => void
-  onRepeatLastSession: () => void
+  onRepeatSession: (s: RecentSession) => void
 }) {
   const totalToday = data.todayExercises.length
   const doneAll = totalToday > 0 && data.completedCount >= totalToday
@@ -290,8 +302,6 @@ function TrainBody({
     .map((e) => e.exercise_name)
     .join(', ')
   const previewExtra = totalToday > 3 ? ` และอีก ${totalToday - 3} ท่า` : ''
-
-  const lastSummary = data.lastSessionWorkouts.length > 0 ? computeDaySummary(data.lastSessionWorkouts) : null
 
   return (
     <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
@@ -347,38 +357,45 @@ function TrainBody({
         </PremiumCard>
       </div>
 
-      {lastSummary && data.lastSessionDate && (
-        <div className="order-4 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-3">
-          <p className="text-[10px] tracked uppercase text-muted mb-2">เซสชันล่าสุดที่เล่นไป</p>
-          <PremiumCard className="px-4 py-3.5 space-y-3">
-            <div className="min-w-0">
-              <p className="text-sm text-ink">
-                {relativeDayLabel(data.lastSessionDate)}
-                {lastSummary.muscleGroups.length > 0 ? ` — ${lastSummary.muscleGroups.join(' · ')}` : ''}
-              </p>
-              <p className="text-[11px] text-muted mt-0.5">
-                {lastSummary.exerciseCount} ท่า · {lastSummary.totalSets} เซ็ต
-                {lastSummary.totalVolumeKg > 0 ? ` · ${Math.round(lastSummary.totalVolumeKg).toLocaleString('th-TH')} kg` : ''}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <a
-                href="/history"
-                className="flex-1 text-center text-xs text-muted border border-line rounded-lg py-2 hover:text-ink transition"
-              >
-                ดูรายละเอียด
-              </a>
-              <button
-                type="button"
-                onClick={onRepeatLastSession}
-                disabled={repeating}
-                className="flex-1 text-center text-xs text-amber border border-amber/40 rounded-lg py-2 hover:bg-amber/10 transition disabled:opacity-50"
-              >
-                {repeating ? 'กำลังบันทึก...' : 'เล่นเหมือนรอบที่แล้ว'}
-              </button>
-            </div>
-            {repeatMessage && <p className="text-[11px] text-muted">{repeatMessage}</p>}
-          </PremiumCard>
+      {data.recentSessions.length > 0 && (
+        <div className="order-4 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-3 space-y-2.5">
+          <p className="text-[10px] tracked uppercase text-muted">เซสชันล่าสุดที่เล่นไป</p>
+          {data.recentSessions.map((session) => {
+            const summary = computeDaySummary(session.workouts)
+            return (
+              <PremiumCard key={session.date} className="px-4 py-3.5 space-y-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-ink">
+                    {relativeDayLabel(session.date)}
+                    {summary.muscleGroups.length > 0 ? ` — ${summary.muscleGroups.join(' · ')}` : ''}
+                  </p>
+                  <p className="text-[11px] text-muted mt-0.5">
+                    {summary.exerciseCount} ท่า · {summary.totalSets} เซ็ต
+                    {summary.totalVolumeKg > 0 ? ` · ${Math.round(summary.totalVolumeKg).toLocaleString('th-TH')} kg` : ''}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href="/history"
+                    className="flex-1 text-center text-xs text-muted border border-line rounded-lg py-2 hover:text-ink transition"
+                  >
+                    ดูรายละเอียด
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => onRepeatSession(session)}
+                    disabled={repeatingDate !== null}
+                    className="flex-1 text-center text-xs text-amber border border-amber/40 rounded-lg py-2 hover:bg-amber/10 transition disabled:opacity-50"
+                  >
+                    {repeatingDate === session.date ? 'กำลังบันทึก...' : 'เล่นเหมือนรอบนี้'}
+                  </button>
+                </div>
+                {repeatResult && repeatResult.date === session.date && (
+                  <p className="text-[11px] text-muted">{repeatResult.message}</p>
+                )}
+              </PremiumCard>
+            )
+          })}
         </div>
       )}
 
@@ -427,6 +444,67 @@ function TrainBody({
           ))}
         </div>
       </div>
+
+      <div className="order-6 lg:order-none lg:col-start-8 lg:col-span-5 lg:row-start-3">
+        <PlateCalculatorWidget />
+      </div>
+    </div>
+  )
+}
+
+// เครื่องคิดเลขแผ่นเหล็กแบบด่วน — ใช้ calculatePlates เดิม (lib/plateCalculator.ts) ตัวเดียวกับที่โผล่ใน
+// session ระหว่างเทรนอยู่แล้ว แค่ยังไม่เคยมีที่ให้กดใช้แบบเดี่ยวๆ นอกเซสชัน (เช่น เช็คก่อนเข้ายิมว่าต้องใส่
+// แผ่นอะไรบ้างสำหรับท่าที่ตั้งใจจะเล่น)
+function PlateCalculatorWidget() {
+  const { unit } = useWeightUnit()
+  const [input, setInput] = useState('')
+  const targetWeight = Number(input)
+  const breakdown =
+    input.trim() !== '' && Number.isFinite(targetWeight) && targetWeight > 0 ? calculatePlates(targetWeight, unit) : null
+
+  return (
+    <div>
+      <p className="text-[10px] tracked uppercase text-muted mb-2">คำนวณแผ่นเหล็ก</p>
+      <PremiumCard className="px-4 py-3.5 space-y-3">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={`น้ำหนักรวมที่ต้องการ (${unit})`}
+            className="flex-1 min-w-0 bg-surface2 text-ink text-sm font-mono rounded px-3 py-2 border border-line outline-none focus:border-amber"
+          />
+          <span className="text-xs text-muted shrink-0">{unit}</span>
+        </div>
+        {breakdown && (
+          <div className="rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap" style={{ background: 'rgba(255,255,255,.04)' }}>
+            <span className="text-[9px] tracked uppercase text-muted shrink-0">
+              แผ่น/ข้าง (บาร์ {breakdown.barWeight}{unit})
+            </span>
+            {breakdown.perSide.length === 0 ? (
+              <span className="text-[11px] font-mono" style={{ color: '#CFD4DE' }}>
+                บาร์เปล่า
+              </span>
+            ) : (
+              breakdown.perSide.map((p) => (
+                <span
+                  key={p.plate}
+                  className="rounded-md px-1.5 py-0.5 text-[11px] font-mono"
+                  style={{ background: withAlpha(COLORS.steel, '26'), color: COLORS.steel }}
+                >
+                  {p.plate}×{p.count}
+                </span>
+              ))
+            )}
+            {breakdown.leftoverPerSide > 0 && (
+              <span className="text-[9px] tracked text-muted">
+                (แบ่งแผ่นไม่ลงตัว เหลือ {breakdown.leftoverPerSide}{unit}/ข้าง)
+              </span>
+            )}
+          </div>
+        )}
+      </PremiumCard>
     </div>
   )
 }
