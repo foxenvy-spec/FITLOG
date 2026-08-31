@@ -3749,7 +3749,12 @@ function ObesityAnalysisChart({
           — Key Metrics = สรุปด่วน (ตัวเลข+เดลต้าเฉยๆ) ส่วนนี้คือรายละเอียด (ตำแหน่งเทียบช่วงมาตรฐานเป็นแถบ) —
           บอกไว้ตรงๆ ว่าต่างกันตรงไหน กันความรู้สึกว่าเห็นตัวเลขเดิมซ้ำโดยไม่มีเหตุผล พร้อมเปลี่ยนกรอบการ์ด
           ด้านล่างเป็น steel accent (สีเดียวกับที่ BMI card ใช้อยู่แล้ว) ให้แยกจาก Key Metrics ด้วยสายตา */}
-      <p className="text-[11px] text-muted mb-3">ตัวเลขเดียวกับ Key Metrics ด้านบน แต่เห็นตำแหน่งเทียบช่วงมาตรฐานชัดกว่า</p>
+      {/* ฟีดแบ็ก "สำนวนข้อความยังไม่เป็นทางการระดับแอปสุขภาพ" — คงประโยคแรก (ตัวเลขเดียวกับ Key Metrics
+          ด้านบน) ไว้ตามเดิม เพราะเป็นบริบทที่มีประโยชน์จริง (กันความรู้สึกว่าเห็นตัวเลขซ้ำโดยไม่มีเหตุผล
+          ตาม v50 ด้านบน) แค่เปลี่ยนครึ่งหลังให้อ่านเป็นทางการขึ้นตามที่แนะนำ */}
+      <p className="text-[11px] text-muted mb-3">
+        ตัวเลขเดียวกับ Key Metrics ด้านบน — แสดงเป็นการประเมินตำแหน่งดัชนีร่างกายเทียบเกณฑ์มาตรฐานสุขภาพ
+      </p>
       {/* v55: "detail tier" (steel accent ด้านบน) = การ์ดรอง ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 อื่นๆ */}
       <PremiumCard className="p-4 space-y-5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }} reducedTexture>
         {bmi !== null && (
@@ -3924,7 +3929,10 @@ function MuscleFatAnalysisChart({
       </h2>
       {/* v50: ฟีดแบ็ก "น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน ซ้ำกับ Key Metrics/Additional Metrics ด้านบน — คง
           ไว้ทั้งสองที่ได้ แต่ทำให้ดูเป็นคนละเลเวลชัดขึ้น" — ดูคอมเมนต์เดียวกันที่ ObesityAnalysisChart */}
-      <p className="text-[11px] text-muted mb-3">ตัวเลขเดียวกับด้านบน แต่เห็นตำแหน่งเทียบช่วงมาตรฐานชัดกว่า</p>
+      {/* ฟีดแบ็ก "สำนวนข้อความยังไม่เป็นทางการระดับแอปสุขภาพ" — ดูคอมเมนต์เดียวกันที่ ObesityAnalysisChart */}
+      <p className="text-[11px] text-muted mb-3">
+        ตัวเลขเดียวกับด้านบน — แสดงเป็นการกระจายตัวขององค์ประกอบร่างกายเทียบเกณฑ์มาตรฐานสุขภาพ
+      </p>
       {/* v55: "detail tier" (steel accent ด้านบน) = การ์ดรอง ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 อื่นๆ */}
       <PremiumCard className="divide-y divide-white/5 border-l-2" style={{ borderLeftColor: '#6C8CA8' }} reducedTexture>
         {items.map((it) => (
