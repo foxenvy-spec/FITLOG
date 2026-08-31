@@ -472,7 +472,17 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // เพื่อไม่ให้แนะนำสวนทางกับตาราง เช่น ตารางบอกวันนี้เป็นวันขา แต่ recovery ของอกดันสูงกว่า
   // ถ้าวันนี้ทำครบตามแผนแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตาราง
   const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
-  const preferTodayMuscle = !!todayScheduledMuscle && (progressPctForLabel === null || progressPctForLabel < 100)
+  // บั๊ก (ฟีดแบ็ก "MINT Coach บอก 'ครั้งหน้าแนะนำเล่นอก' ทั้งที่เพิ่งเล่นอกไปและฟื้นตัว 0% แล้ว ทั้งที่การ์ด
+  // Training This Week บอก Next → Day 2 — Pull ถูกต้องอยู่แล้ว") — preferTodayMuscle เดิมเช็คแค่
+  // progressPctForLabel (% ท่าที่ติ๊กครบตามแผน, program_completions) ซึ่งตั้งใจไม่นับงานนอกแผน (ดู comment
+  // ด้านบน) แต่พอผู้ใช้ล็อกเซ็ตจริงของกล้ามเนื้อวันนี้ไปแล้ว (recovery ร่วงลงมาจริง) โดยยังไม่ได้ติ๊กครบทุก
+  // ท่าตามแผน (หรือเล่นแบบ ad-hoc/generated) ระบบยังคงแนะนำกลุ่มเดิมของวันนี้ซ้ำอยู่ ทั้งที่ "Training This
+  // Week"/"findNextProgramDay" มองไปข้างหน้าถูกต้องแล้ว — เพิ่มเงื่อนไข ต้องยังไม่เคย log ท่ากลุ่มนี้จริงวันนี้
+  // เลย (todayMuscleGroups จาก todayList ด้านบน) ถึงจะยังนับว่า "วันนี้ยังไม่เสร็จ" ให้แนะนำกลุ่มเดิมต่อ
+  const preferTodayMuscle =
+    !!todayScheduledMuscle &&
+    !todayMuscleGroups.includes(todayScheduledMuscle) &&
+    (progressPctForLabel === null || progressPctForLabel < 100)
   const scheduledMuscle = preferTodayMuscle
     ? todayScheduledMuscle
     : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)

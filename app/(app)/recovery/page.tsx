@@ -88,6 +88,11 @@ export default function RecoveryPage() {
       setStrengthLogs(strengthRows)
       const today = todayStr()
       const trainedAnyToday = strengthRows.some((r) => r.performed_at?.slice(0, 10) === today)
+      // ใช้เช็คว่ากลุ่มกล้ามเนื้อของวันนี้ถูกล็อกเซ็ตจริงไปแล้วหรือยัง (ดู comment เต็มที่จุดใช้ preferToday
+      // ด้านล่าง — บั๊กเดียวกับที่แก้ใน DashboardView.tsx/coach/page.tsx)
+      const todayMuscleGroups = new Set(
+        strengthRows.filter((r) => r.performed_at?.slice(0, 10) === today && r.muscle_group).map((r) => r.muscle_group as string)
+      )
 
       // เซ็ตที่ทำไปแล้วสัปดาห์นี้ + เป้าหมายเซ็ต/สัปดาห์ ต่อกลุ่มกล้ามเนื้อ (ตรรกะเดียวกับ DashboardView.tsx)
       // — ให้ suggestMuscleToTrain ด้านล่างเช็ค Weekly Volume ก่อนแนะนำตามตาราง ไม่ใช่ยึดตารางเงียบๆ อีกต่อไป
@@ -170,7 +175,12 @@ export default function RecoveryPage() {
       // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) — ถ้าวันนี้ทำครบแล้วหรือเป็น
       // วันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางแทน ไม่มีตารางเลยจึงตกกลับไปใช้ recovery % ล้วนๆ
       const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
-      const preferToday = !!todayScheduledMuscle && (currentProgressPct === null || currentProgressPct < 100)
+      // บั๊ก (ฟีดแบ็ก "MINT Coach บอกเล่นอกครั้งหน้า ทั้งที่เพิ่งเล่นอกไปและฟื้นตัว 0% แล้ว") — currentProgressPct
+      // ตั้งใจนับเฉพาะท่าที่ติ๊กครบตามแผน (program_completions) ไม่นับงานนอกแผน แต่ถ้ากล้ามเนื้อนี้ถูกล็อก
+      // เซ็ตจริงวันนี้ไปแล้ว (recovery ร่วงแล้ว) ก็ไม่ควรแนะนำซ้ำว่า "วันนี้" อีก แม้ยังติ๊กไม่ครบทุกท่าตามแผน
+      // (ดู comment เต็มที่ DashboardView.tsx จุดเดียวกัน)
+      const preferToday =
+        !!todayScheduledMuscle && !todayMuscleGroups.has(todayScheduledMuscle) && (currentProgressPct === null || currentProgressPct < 100)
       setScheduledMuscle(preferToday ? todayScheduledMuscle : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS))
       setIsTodayScheduled(preferToday)
 

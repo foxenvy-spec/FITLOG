@@ -215,6 +215,11 @@ export default function CoachPage() {
       // --- % ความคืบหน้าของแผนวันนี้ (ใช้กับ dailySummary ด้านล่าง) ---
       const today = todayStr()
       const trainedAnyToday = allEntries.some((w) => w.performed_at?.slice(0, 10) === today)
+      // ใช้เช็คว่ากลุ่มกล้ามเนื้อของวันนี้ถูกล็อกเซ็ตจริงไปแล้วหรือยัง (ดู comment เต็มที่จุดใช้ preferToday
+      // ด้านล่าง — บั๊กเดียวกับที่แก้ใน DashboardView.tsx/recovery/page.tsx)
+      const todayMuscleGroups = new Set(
+        allEntries.filter((w) => w.performed_at?.slice(0, 10) === today && w.muscle_group).map((w) => w.muscle_group as string)
+      )
       const todayDow = new Date(today + 'T00:00:00').getDay()
       const todayDayId = allProgramDays.find((d) => d.day_of_week === todayDow)?.id ?? null
 
@@ -244,7 +249,12 @@ export default function CoachPage() {
       // ถ้าวันนี้ทำครบแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตารางที่ระบุไว้
       // ถ้าไม่มีตารางเลย (ผู้ใช้ยังไม่ได้ตั้งโปรแกรม) ตกกลับไปใช้ recovery % สูงสุดเหมือนเดิมทั้งหมด
       const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
-      const preferToday = !!todayScheduledMuscle && (todayProgressPct === null || todayProgressPct < 100)
+      // บั๊ก (ฟีดแบ็ก "MINT Coach บอกเล่นอกครั้งหน้า ทั้งที่เพิ่งเล่นอกไปและฟื้นตัว 0% แล้ว") — todayProgressPct
+      // ตั้งใจนับเฉพาะท่าที่ติ๊กครบตามแผน (program_completions) ไม่นับงานนอกแผน แต่ถ้ากล้ามเนื้อนี้ถูกล็อก
+      // เซ็ตจริงวันนี้ไปแล้ว (recovery ร่วงแล้ว) ก็ไม่ควรแนะนำซ้ำว่า "วันนี้" อีก แม้ยังติ๊กไม่ครบทุกท่าตามแผน
+      // (ดู comment เต็มที่ DashboardView.tsx จุดเดียวกัน)
+      const preferToday =
+        !!todayScheduledMuscle && !todayMuscleGroups.has(todayScheduledMuscle) && (todayProgressPct === null || todayProgressPct < 100)
       const scheduledMuscle = preferToday
         ? todayScheduledMuscle
         : getNextScheduledMuscle(scheduledDaysWithMuscle, todayDow, MUSCLE_GROUPS)
