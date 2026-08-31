@@ -29,6 +29,7 @@ import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import { saveAge } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
 import PremiumCard from '@/components/ui/PremiumCard'
+import BeforeAfterSlider from '@/components/BeforeAfterSlider'
 import ProgressTimelineCard from '@/components/ProgressTimelineCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
 import Sparkline from '@/components/dashboard/Sparkline'
@@ -4879,6 +4880,19 @@ function PhotosTab({
   const [beforeId, setBeforeId] = useState('')
   const [afterId, setAfterId] = useState('')
 
+  // ฟีดแบ็ก "แนะนำ Before/After Slider — ให้เลือกรูปแรก vs รูปล่าสุดเป็นค่าเริ่มต้น ไม่กรองตามมุมถ่าย"
+  // — photos เรียง taken_at desc มาแล้ว (ใหม่สุดก่อน) จาก query ด้านบน: [0] = ล่าสุด, ตัวท้าย = แรกสุด
+  // ตั้งค่าเริ่มต้นให้อัตโนมัติทันทีที่มีรูป >= 2 (ยังเลือกเองผ่าน dropdown ทับได้ตามเดิม) และรีเซ็ตถ้ารูป
+  // ที่เคยเลือกไว้ถูกลบไปแล้ว (id ไม่อยู่ใน photos อีกต่อไป)
+  useEffect(() => {
+    if (photos.length < 2) return
+    const oldest = photos[photos.length - 1]
+    const newest = photos[0]
+    if (!beforeId || !photos.some((p) => p.id === beforeId)) setBeforeId(oldest.id)
+    if (!afterId || !photos.some((p) => p.id === afterId)) setAfterId(newest.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos])
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -4965,21 +4979,15 @@ function PhotosTab({
               ))}
             </select>
           </div>
+          {/* ฟีดแบ็ก "Interactive Slider Bar เลื่อนซ้าย-ขวาเทียบรูป" — เดิมโชว์สองรูปข้างกันเฉยๆ
+              เปลี่ยนเป็นซ้อนทับเฟรมเดียวกัน ลากเส้นแบ่งเพื่อเทียบ (ดู components/BeforeAfterSlider.tsx) */}
           {beforePhoto?.url && afterPhoto?.url && (
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="relative w-full aspect-[3/4] rounded-lg border border-line overflow-hidden">
-                  <Image src={beforePhoto.url} alt="Before" fill sizes="200px" className="object-cover" />
-                </div>
-                <p className="text-center text-[11px] text-muted mt-1">{shortLabel(beforePhoto.taken_at)}</p>
-              </div>
-              <div>
-                <div className="relative w-full aspect-[3/4] rounded-lg border border-line overflow-hidden">
-                  <Image src={afterPhoto.url} alt="After" fill sizes="200px" className="object-cover" />
-                </div>
-                <p className="text-center text-[11px] text-muted mt-1">{shortLabel(afterPhoto.taken_at)}</p>
-              </div>
-            </div>
+            <BeforeAfterSlider
+              beforeUrl={beforePhoto.url}
+              afterUrl={afterPhoto.url}
+              beforeLabel={shortLabel(beforePhoto.taken_at)}
+              afterLabel={shortLabel(afterPhoto.taken_at)}
+            />
           )}
         </section>
       )}
