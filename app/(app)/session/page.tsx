@@ -1121,6 +1121,12 @@ export default function SessionPage() {
   const currentRecoveryTier = currentRecoveryPct !== null ? recoveryTier(currentRecoveryPct) : null
   const setsRemaining = Math.max(0, targetSets - currentState.setsLog.length)
   const knownExercise = findExerciseByName(exerciseLibrary, current.exercise_name)
+  // ฟีดแบ็ก "Session Volume รวม (X/Y sets) โชว์สดข้าง timer ระหว่างเล่น ไม่ใช่แค่ตอนจบ" — เดิม
+  // totalSets (computeSessionSummary) คำนวณแค่ตอน done summary เท่านั้น ที่นี่รวมเองสดๆ จาก exercises/
+  // states ที่มีอยู่แล้วในหน้านี้ (ไม่ query เพิ่ม) — เป้าหมายรวมใช้ ex.sets ?? 3 ตัวเดียวกับ targetSets
+  // ของท่าปัจจุบันด้านบน (และ makeAdhocExercise ที่ default 3 เหมือนกัน) ไม่คิดค่า default แยกใหม่
+  const sessionTargetSets = exercises.reduce((sum, ex) => sum + (ex.sets ?? 3), 0)
+  const sessionLoggedSets = exercises.reduce((sum, ex) => sum + (states[ex.id]?.setsLog.length ?? 0), 0)
 
   return (
     <div className="lg:max-w-5xl lg:mx-auto lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
@@ -1128,6 +1134,13 @@ export default function SessionPage() {
       <div className="flex items-center justify-between">
         <p className="text-[11px] tracked uppercase text-muted">
           ท่าที่ <span className="text-ink font-mono">{index + 1}</span>/{exercises.length}
+          {/* ฟีดแบ็ก "Session Volume รวม โชว์สดระหว่างเล่น" — ต่อท้ายบรรทัดเดิมด้วย " · " คั่น ไม่เพิ่ม
+              บรรทัดใหม่ กันดันความสูงแถบบนที่ tune มาแล้ว */}
+          <span className="text-muted"> · </span>
+          <span className="font-mono">
+            {sessionLoggedSets}/{sessionTargetSets}
+          </span>{' '}
+          เซ็ต
         </p>
         <div className="flex items-center gap-3">
           <p className="text-[11px] font-mono text-muted tabular">{formatClock(totalElapsedMs)}</p>
