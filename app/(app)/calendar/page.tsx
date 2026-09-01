@@ -7,6 +7,7 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
 import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
 import { computeCurrentStreak } from '@/lib/dashboardStats'
+import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
@@ -51,6 +52,14 @@ export default function CalendarPage() {
   const [goalsError, setGoalsError] = useState<string | null>(null)
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([])
   const [latestMetric, setLatestMetric] = useState<BodyMetric | null>(null)
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): goalProgress() ด้านล่างเคยคำนวณด้วยสูตรของตัวเอง ใช้แค่
+  // goal.starting_value (แช่แข็งตอนสร้างเป้าหมาย) เป็นจุดเริ่มต้นเสมอ — คนละสูตรกับ health/page.tsx และ
+  // BodyMetricsRow.tsx (มือถือ) ที่ย้ายไปใช้ earliestTrackedValue (ค่าเก่าที่สุดที่มีบันทึกจริง ไม่ใช่แค่
+  // ตอนตั้งเป้า) ไปแล้วตั้งแต่ v62 (ดู lib/goalProgress.ts) — ผลคือเป้าหมายเดียวกัน หน้า Calendar กับหน้า
+  // Health/Dashboard โชว์ % คืบหน้าไม่ตรงกัน — ดึงประวัติ body_metrics ทั้งหมด (ไม่ใช่แค่ค่าล่าสุด) มาเก็บ
+  // ไว้ด้วย ให้หา earliestTrackedValue ได้แบบเดียวกับ health/page.tsx แล้วเรียก sharedGoalProgressPct
+  // ตัวกลางเดียวกันแทนสูตรแยกเดิม
+  const [metricsHistory, setMetricsHistory] = useState<BodyMetric[]>([])
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [programByDow, setProgramByDow] = useState<Record<number, { day: ProgramDay; exercises: ProgramExercise[] }>>({})
 
@@ -77,15 +86,19 @@ export default function CalendarPage() {
   const loadGoalsData = useCallback(async () => {
     const since = new Date()
     since.setDate(since.getDate() - 365)
-    const [goalsRes, workoutsRes, metricRes] = await Promise.all([
+    const [goalsRes, workoutsRes, metricRes, metricHistoryRes] = await Promise.all([
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
       supabase.from('workouts').select('*').gte('performed_at', toIsoDate(since)),
       supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(1),
+      // ประวัติทั้งหมด (ไม่จำกัดช่วง) เรียงเก่า -> ใหม่ ใช้หา earliestTrackedValue ต่อเป้าหมาย (ดูคอมเมนต์
+      // ที่ metricsHistory state ด้านบน) ตัวเดียวกับที่ health/page.tsx ใช้ (metrics เต็มประวัติเช่นกัน)
+      supabase.from('body_metrics').select('*').order('measured_at', { ascending: true }),
     ])
     setGoalsError(goalsRes.error ? goalsRes.error.message : null)
     setGoals(goalsRes.error ? [] : (goalsRes.data as Goal[]) ?? [])
     setAllWorkouts((workoutsRes.data as Workout[]) ?? [])
     setLatestMetric(((metricRes.data as BodyMetric[]) ?? [])[0] ?? null)
+    setMetricsHistory((metricHistoryRes.data as BodyMetric[]) ?? [])
   }, [supabase])
 
   const loadProgram = useCallback(async () => {
@@ -202,6 +215,22 @@ export default function CalendarPage() {
     setExpandedIds(new Set())
   }
 
+  // earliestTrackedValue เฉพาะ weight/body_fat (มีประวัติ metrics ให้ย้อนดูจริง) — strength_volume/
+  // cardio_distance เป็นผลรวม (ไม่ใช่ค่าที่ "ติดตาม" มีประวัติย้อนหลังแบบเดียวกัน) ยังใช้ starting_value
+  // เป็นจุดเริ่มต้นเหมือนเดิม ตรงกับที่ health/page.tsx เองก็ไม่ทำ earliestTrackedValue ให้ 2 ประเภทนี้
+  function goalEarliestTrackedValue(goal: Goal): number | null {
+    if (goal.goal_type === 'weight') {
+      for (let i = 0; i < metricsHistory.length; i++) {
+        if (metricsHistory[i].weight_kg != null) return metricsHistory[i].weight_kg
+      }
+    } else if (goal.goal_type === 'body_fat') {
+      for (let i = 0; i < metricsHistory.length; i++) {
+        if (metricsHistory[i].body_fat_pct != null) return metricsHistory[i].body_fat_pct
+      }
+    }
+    return null
+  }
+
   function goalProgress(goal: Goal): number | null {
     if (goal.target_value === null) return null
     let current: number | null = null
@@ -215,10 +244,10 @@ export default function CalendarPage() {
       current = allWorkouts.filter((w) => w.type === 'cardio').reduce((s, w) => s + (w.distance_km ?? 0), 0)
     }
     if (current === null) return null
-    const start = goal.starting_value ?? current
-    if (goal.target_value === start) return current >= goal.target_value ? 1 : 0
-    const raw = (current - start) / (goal.target_value - start)
-    return Math.min(1, Math.max(0, raw))
+    // sharedGoalProgressPct คืน 0-100 (clamp แล้ว) — หน้านี้ใช้สเกล 0-1 มาตลอด (progress * 100 ตอน render
+    // progress bar) หารด้วย 100 ให้ตรงสเกลเดิม ไม่กระทบจุดเรียกใช้อื่น
+    const pct = sharedGoalProgressPct(goal, current, goalEarliestTrackedValue(goal))
+    return pct === null ? null : pct / 100
   }
 
   async function handleDeleteGoal(id: string) {
