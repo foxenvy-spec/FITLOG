@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { fetchDashboardData } from '../dashboard/DashboardView'
@@ -9,6 +10,34 @@ import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import HeroGaugeConcept from '@/components/dashboard/HeroGaugeConcept'
 import LoadingState from '@/components/LoadingState'
 import ErrorState from '@/components/ErrorState'
+
+// ฟีดแบ็ก "อยากดูเองก่อนเลือก" (ทั้ง Body Composition แบบรูปคน กับ Highlights/Quick Action แถวใหม่) —
+// เช็คแล้ว "Body Composition แบบรูปคน" มีอยู่แล้วจริงในแอป (components/MuscleBodyDiagram.tsx ใช้อยู่ใน
+// WeeklyMuscleHeatmap.tsx อยู่แล้ว รูปหน้า/หลังจริงพร้อม mask ต่อกลุ่มกล้ามเนื้อ ไม่ใช่ไดอะแกรมนามธรรม
+// เหมือนที่คิด — ไม่ต้องสร้างใหม่ ดูได้จากการ์ด Muscle Heatmap ใน /dashboard ตอนนี้เลย) จึงทำ preview
+// เพิ่มแค่ส่วนที่ยังไม่มีจริง: แถว Highlights (สรุปเร็ว) — ทุกตัวเลขเป็นข้อมูลจริงจาก fetchDashboardData
+// ตัวเดียวกับ Dashboard จริง ไม่มีตัวไหนสมมติ (ตัด "Achievements ใหม่"/nutrition insight ออกจากมอคอัพ
+// เพราะยังไม่มีระบบคำนวณ "ใหม่ล่าสุด" หรือข้อมูลอาหารให้ใช้จริง)
+function HighlightTile({ icon, value, label }: { icon: string; value: string; label: string }) {
+  return (
+    <div className="rounded-lg bg-surface2 px-3 py-2.5 flex-1 min-w-[120px]">
+      <p className="text-lg leading-none">{icon}</p>
+      <p className="font-mono font-bold text-ink mt-1.5" style={{ fontSize: 18 }}>
+        {value}
+      </p>
+      <p className="text-[12px] text-muted mt-0.5">{label}</p>
+    </div>
+  )
+}
+
+function QuickActionLink({ icon, label, href }: { icon: string; label: string; href: string }) {
+  return (
+    <Link href={href} className="rounded-lg bg-surface2 hover:bg-surface2/70 transition px-3 py-2.5 flex-1 min-w-[100px] text-center">
+      <p className="text-lg leading-none">{icon}</p>
+      <p className="text-[12px] text-muted mt-1.5">{label}</p>
+    </Link>
+  )
+}
 
 // หน้าทดลอง (ไม่ผูกกับ navigation/sidebar ที่ไหนเลย เข้าถึงได้เฉพาะพิมพ์ URL ตรงๆ เท่านั้น) — ให้ลอง
 // แนวคิด "Twin Cyber Gauge" เชื่อมด้วยคลื่นพลังงาน จากมอคอัพที่ผู้ใช้ส่งมา โดยไม่แตะ /dashboard จริงเลย
@@ -61,6 +90,33 @@ export default function DashboardConceptPreviewPage() {
         </p>
       </div>
       <HeroGaugeConcept fitnessScore={fitnessScore} recoveryPct={recoveryPct} recoveryLabel={recoveryTier(recoveryPct).labelEn} />
+
+      <div className="rounded-lg border border-line bg-surface px-4 py-4 space-y-3">
+        <p className="text-[12px] tracked uppercase text-muted">Highlights</p>
+        <div className="flex flex-wrap gap-2.5">
+          <HighlightTile icon="🔥" value={`${data.streak} วัน`} label="Streak ต่อเนื่อง" />
+          {data.bestVolumeIncrease && (
+            <HighlightTile
+              icon="📈"
+              value={`+${data.bestVolumeIncrease.pct}%`}
+              label={`${data.bestVolumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน`}
+            />
+          )}
+          {data.weeklyConsistencyPct != null && (
+            <HighlightTile icon="✅" value={`${data.weeklyConsistencyPct}%`} label="Consistency (21 วันล่าสุด)" />
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-line bg-surface px-4 py-4 space-y-3">
+        <p className="text-[12px] tracked uppercase text-muted">Quick Action</p>
+        <div className="flex flex-wrap gap-2.5">
+          <QuickActionLink icon="▶" label="เริ่มเทรน" href="/train" />
+          <QuickActionLink icon="⏱" label="Timer" href="/timer" />
+          <QuickActionLink icon="📥" label="นำเข้าข้อมูล" href="/import" />
+          <QuickActionLink icon="🗓" label="โปรแกรม" href="/program" />
+        </div>
+      </div>
     </div>
   )
 }
