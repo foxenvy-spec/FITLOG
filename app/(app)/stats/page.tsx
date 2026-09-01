@@ -79,6 +79,10 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [prs, setPrs] = useState<{ name: string; weight: number; reps: number | null; date: string }[]>([])
+  // ฟีดแบ็ก "อยากได้ Search Box ในส่วน Personal Records — พิมพ์ 'Bench'/'Squat' แล้วกรองได้เลย" —
+  // filter ฝั่ง client ล้วนๆ (prs ทั้งหมดโหลดมาอยู่ในมือแล้ว ไม่ต้อง query ใหม่) จับคู่แบบ substring
+  // ไม่สนตัวพิมพ์เล็ก-ใหญ่ ครอบคลุมทั้งชื่อท่าไทย/อังกฤษที่ผู้ใช้อาจพิมพ์มา
+  const [prSearch, setPrSearch] = useState('')
   // น้ำหนักตัวล่าสุด — ใช้ประมาณแคลอรี่ (ดู estimateCaloriesToday) ถ้ายังไม่เคยบันทึกน้ำหนักตัว
   // เลย ให้ fallback เป็น DEFAULT_BODYWEIGHT_KG เหมือนที่ dashboardStats.ts ใช้ที่อื่น
   const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null)
@@ -375,6 +379,10 @@ export default function StatsPage() {
     )
   }
 
+  const filteredPrs = prSearch.trim()
+    ? prs.filter((p) => p.name.toLowerCase().includes(prSearch.trim().toLowerCase()))
+    : prs
+
   return (
     <div className="space-y-8">
       {/* ฟีดแบ็ก "One-Click Export PDF Report ส่งให้เทรนเนอร์" — ปุ่มเรียก window.print() ตรงๆ (ไม่เพิ่ม
@@ -629,34 +637,53 @@ export default function StatsPage() {
 
       {prs.length > 0 && (
         <section>
-          <h2 className="font-display text-sm tracked uppercase text-muted mb-3">🏆 Personal Records (น้ำหนักสูงสุด)</h2>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="font-display text-sm tracked uppercase text-muted">🏆 Personal Records (น้ำหนักสูงสุด)</h2>
+            {/* ฟีดแบ็ก "อยากได้ Search Box ในส่วน Personal Records — พิมพ์ 'Bench'/'Squat' แล้วกรองได้เลย"
+                — โชว์เฉพาะตอนมี PR เยอะพอจะรำคาญเลื่อนหา (>6 รายการ) ไม่ให้กล่องค้นหาโผล่มาเปล่าๆ ตอนมี
+                PR แค่ 2-3 ท่า ซึ่งเห็นครบในตาเดียวอยู่แล้ว */}
+            {prs.length > 6 && (
+              <input
+                type="text"
+                inputMode="search"
+                value={prSearch}
+                onChange={(e) => setPrSearch(e.target.value)}
+                placeholder="ค้นหาท่า..."
+                className="w-32 sm:w-44 shrink-0 bg-surface2 text-ink text-xs rounded-full px-3 py-1.5 border border-line outline-none focus:border-violet placeholder:text-muted"
+              />
+            )}
+          </div>
           {/* border-violet/20 เดิม เน้นการ์ดนี้ว่าเป็น Personal Records แยกจากลิสต์ทั่วไป — PremiumCard
               ตัด border สีกลางทึบออกแล้ว (v48: ใช้ contact shadow บอกขอบแทน) ยังคงสีม่วงไว้ผ่าน style
               override (ชนะ default เพราะ ...style วางท้ายสุดเสมอ) แทนที่จะเสียจุดเด่นสีนี้ไปเฉยๆ */}
-          <PremiumCard className="divide-y divide-white/5" style={{ border: `1px solid ${withAlpha(COLORS.violet, '33')}` }}>
-            {prs.map((p) => {
-              const isNewPR = p.date === todayStr()
-              return (
-                <a
-                  key={p.name}
-                  href={`/exercises/${encodeURIComponent(p.name)}`}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-surface2 active:bg-surface2 transition"
-                >
-                  <span className="text-sm text-ink flex items-center gap-1.5">
-                    {p.name}
-                    {isNewPR && (
-                      <span className="animate-pop-in text-[9px] font-display tracked uppercase text-bg bg-violet rounded-full px-1.5 py-0.5">
-                        NEW
-                      </span>
-                    )}
-                  </span>
-                  <span className="font-mono text-sm text-violet">
-                    {format(p.weight)}{p.reps ? ` × ${p.reps}` : ''}
-                  </span>
-                </a>
-              )
-            })}
-          </PremiumCard>
+          {filteredPrs.length === 0 ? (
+            <p className="text-xs text-muted text-center py-6">ไม่พบท่าที่ตรงกับ &quot;{prSearch.trim()}&quot;</p>
+          ) : (
+            <PremiumCard className="divide-y divide-white/5" style={{ border: `1px solid ${withAlpha(COLORS.violet, '33')}` }}>
+              {filteredPrs.map((p) => {
+                const isNewPR = p.date === todayStr()
+                return (
+                  <a
+                    key={p.name}
+                    href={`/exercises/${encodeURIComponent(p.name)}`}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-surface2 active:bg-surface2 transition"
+                  >
+                    <span className="text-sm text-ink flex items-center gap-1.5">
+                      {p.name}
+                      {isNewPR && (
+                        <span className="animate-pop-in text-[9px] font-display tracked uppercase text-bg bg-violet rounded-full px-1.5 py-0.5">
+                          NEW
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-mono text-sm text-violet">
+                      {format(p.weight)}{p.reps ? ` × ${p.reps}` : ''}
+                    </span>
+                  </a>
+                )
+              })}
+            </PremiumCard>
+          )}
         </section>
       )}
 
