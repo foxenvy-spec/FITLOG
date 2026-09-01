@@ -272,20 +272,22 @@ export default function WeeklyMuscleHeatmap() {
     return { over, under }
   }, [stats])
 
-  // ฟีดแบ็ก "Balance 58% ต้องอธิบายตัวเองได้ทันที ไม่ใช่ซ่อนหลังปุ่ม 'ดูรายละเอียด Balance' อย่างเดียว" —
-  // สรุปสั้น ๆ 1 บรรทัดจาก balanceIssues ชุดเดียวกับที่ "จุดที่ควรปรับ" ในรายละเอียดใช้อยู่แล้ว (ไม่คำนวณซ้ำ
-  // ไม่มโนข้อความเพิ่ม) หยิบกลุ่มที่เกินเป้ามากสุดไม่เกิน 2 กลุ่ม + กลุ่มที่ขาดเป้ามากสุด 1 กลุ่ม
+  // ฟีดแบ็ก "Hero Metric ต้องอ่านจบภายใน ~1 วินาที — ไม่ควรใส่ประโยคยาวแบบลิสต์ตัวเลข deltas (เช่น
+  // 'หลัง +6 เซ็ต · อก -4 เซ็ต') ควรเป็นคำแนะนำสั้นๆ ทางเดียว เช่น 'เพิ่ม Upper Body ในสัปดาห์นี้'" —
+  // เปลี่ยนจากลิสต์ deltas เป็นคำสั่งสั้น 1 บรรทัด: กลุ่มที่ขาดเป้าหมายมากที่สุด (ถ้ามี) ไม่งั้น fallback
+  // ไปกลุ่มที่เกินเป้ามากที่สุดแทน (เกิดเฉพาะกรณีทุกกลุ่มถึงเป้าหมด แต่ยังไม่สมดุลเพราะกระจุกตัวมากไป) —
+  // ตัวเลข deltas เต็มยังอยู่ใน balanceIssues.over/under ที่ใช้ในส่วน "ดูรายละเอียด Balance" ด้านล่าง
+  // เหมือนเดิม ไม่มีข้อมูลหายไป แค่ตัวย่อบน hero การ์ดสั้นลงให้อ่านทันที
   const balanceSummary = useMemo(() => {
-    const over = [...balanceIssues.over]
-      .sort((a, b) => b.sets - b.targetSets - (a.sets - a.targetSets))
-      .slice(0, 2)
-    const under = [...balanceIssues.under]
-      .sort((a, b) => a.sets - a.targetSets - (b.sets - b.targetSets))
-      .slice(0, 1)
-    return [
-      ...over.map((s) => `${s.group} +${s.sets - s.targetSets} เซ็ต`),
-      ...under.map((s) => `${s.group} ${s.sets - s.targetSets} เซ็ต`),
-    ].join(' · ')
+    if (balanceIssues.under.length > 0) {
+      const top = [...balanceIssues.under].sort((a, b) => a.sets - a.targetSets - (b.sets - b.targetSets))[0]
+      return `เพิ่ม ${top.group} ในสัปดาห์นี้`
+    }
+    if (balanceIssues.over.length > 0) {
+      const top = [...balanceIssues.over].sort((a, b) => b.sets - b.targetSets - (a.sets - a.targetSets))[0]
+      return `ลด ${top.group} ลงบ้าง`
+    }
+    return null
   }, [balanceIssues])
 
   // กลุ่มเด่น/ด้อย — จัดอันดับตาม % ส่วนแบ่งเซ็ตของสัปดาห์นี้ (สมมติฐาน: เด่น = 3 อันดับบนสุด,
