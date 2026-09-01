@@ -452,7 +452,16 @@ export default function ConsistencyStrip() {
               week-streak ตลอดกาลจริงๆ ด้วย (consecutiveWeeks นับแค่ย้อนหลังจากขอบเขต WINDOW_DAYS ที่แสดง
               อยู่ ไม่ได้เทียบกับสถิติสูงสุดที่เคยทำได้เลย)" — caption เดิมเป็นข้อความหลอกที่ไม่มีตัวเลขรองรับ
               จริง เปลี่ยนเป็นข้อความที่ตรงกับสิ่งที่นับจริง (ขอบเขต 3 สัปดาห์ที่เห็นในปฏิทินด้านซ้าย) */}
-          <StatTile value={liveStats?.consecutiveWeeks ?? 0} label="สัปดาห์ติด" caption={`จาก ${Math.ceil(WINDOW_DAYS / 7)} สัปดาห์ล่าสุด`} />
+          {/* ฟีดแบ็ก "Streak เป็น gamification opportunity ควรทำให้เด่นกว่าเดิม — 🔥 3 / Week Streak" —
+              เพิ่ม icon + emphasize ให้ตัวเลขนี้ใหญ่กว่า tile ข้างๆ (StatTile ตัวอื่นยังเหมือนเดิมทุกจุด
+              เพราะ props ใหม่เป็น optional ไม่ระบุ = พฤติกรรมเดิม) */}
+          <StatTile
+            value={liveStats?.consecutiveWeeks ?? 0}
+            label="Week Streak"
+            caption={`จาก ${Math.ceil(WINDOW_DAYS / 7)} สัปดาห์ล่าสุด`}
+            icon="🔥"
+            emphasize
+          />
         </div>
         <button
           type="button"
@@ -623,6 +632,8 @@ function StatTile({
   label,
   caption,
   trend,
+  icon,
+  emphasize,
 }: {
   value: number | string
   label: string
@@ -630,10 +641,21 @@ function StatTile({
   // ฟีดแบ็ก "Consistency ควรเห็นเทรนด์ ดีขึ้น/แย่ลง ไม่ใช่แค่เลขลอยๆ" — เทียบกับช่วง 21 วันก่อนหน้า
   // (ตัวเลขเดียวกับ computePlannedConsistency ที่ใช้คำนวณค่าปัจจุบัน) undefined = ไม่มีข้อมูลพอเทียบ
   trend?: number | null
+  // ไอคอนนำหน้าตัวเลข + ขนาดใหญ่กว่า tile ปกติ — ใช้กับ tile ที่อยากให้เด่นเป็นพิเศษ (เช่น Week Streak)
+  // optional ทั้งคู่ ไม่ระบุ = พฤติกรรมเดิมของ tile อื่นทุกจุดที่เรียกใช้อยู่แล้ว
+  icon?: string
+  emphasize?: boolean
 }) {
   return (
     <div className="px-3 py-3 text-center flex flex-col items-center justify-center">
-      <p className="font-mono text-lg text-amber">{value}</p>
+      <p className={`font-mono text-amber ${emphasize ? 'text-2xl' : 'text-lg'}`}>
+        {icon && (
+          <span aria-hidden="true" className="mr-1">
+            {icon}
+          </span>
+        )}
+        {value}
+      </p>
       <p className="text-[10px] text-ink mt-0.5">{label}</p>
       <p className="text-[9px] text-muted">{caption}</p>
       {trend != null && trend !== 0 && (
