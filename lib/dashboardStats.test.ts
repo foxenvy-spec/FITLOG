@@ -9,6 +9,7 @@ import {
   daysSinceLastTrained,
   recoveryStatusColor,
   recoveryTier,
+  recoveryVerdictEmoji,
   computeRecoveryReadyInHours,
   estimateCaloriesToday,
   computeVolumeTrendInsights,
@@ -368,6 +369,21 @@ describe('recoveryTier', () => {
     ;[0, 40, 70, 95].forEach((pct) => {
       expect(recoveryTier(pct).adviceTh.length).toBeGreaterThan(0)
     })
+  })
+})
+
+// ตรวจสัญลักษณ์สีทั้งแอป (จาก UX deck "เขียว=พร้อม/เหลือง=ระวัง/แดง=หยุด") — เจอ logic เดียวกันเขียนซ้ำ
+// อิสระ 3 จุดทั่วแอปก่อนรวมเป็นฟังก์ชันนี้ ทดสอบไว้กันกลับมาแยกกันอีกโดยไม่รู้ตัว
+describe('recoveryVerdictEmoji', () => {
+  it('maps Excellent and Good to 🟢', () => {
+    expect(recoveryVerdictEmoji(95)).toBe('🟢')
+    expect(recoveryVerdictEmoji(70)).toBe('🟢')
+  })
+  it('maps Recovering to 🟡', () => {
+    expect(recoveryVerdictEmoji(40)).toBe('🟡')
+  })
+  it('maps Rest to 🔴', () => {
+    expect(recoveryVerdictEmoji(0)).toBe('🔴')
   })
 })
 

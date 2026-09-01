@@ -18,6 +18,7 @@ import {
   computeRecoveryPct,
   recoveryStatusColor,
   recoveryTier,
+  recoveryVerdictEmoji,
   FULLY_RECOVERED_PCT,
   findNextProgramDay,
   getWeekRange,
@@ -1593,8 +1594,7 @@ export default function DashboardPage() {
                   <div className="mt-2.5 rounded-lg border border-white/5 bg-black/10 px-2.5 py-2 space-y-1.5">
                     <p className="text-[12px] font-bold tracked-lg uppercase text-muted">ทำไมวันนี้?</p>
                     <p className="text-[12px] leading-snug" style={{ color: tier.color }}>
-                      {tier.labelEn === 'Excellent' || tier.labelEn === 'Good' ? '🟢' : tier.labelEn === 'Recovering' ? '🟡' : '🔴'}{' '}
-                      {rec.muscleGroup} ฟื้นตัวแล้ว {rec.pct}%
+                      {recoveryVerdictEmoji(rec.pct)} {rec.muscleGroup} ฟื้นตัวแล้ว {rec.pct}%
                     </p>
                     {rec.setsTarget > 0 && (
                       <p className="text-[12px] leading-snug" style={{ color: rec.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}>

@@ -351,6 +351,20 @@ export function recoveryStatusColor(pct: number): string {
   return recoveryTier(pct).color
 }
 
+// ฟีดแบ็ก (จากการตรวจสัญลักษณ์สีทั้งแอปตาม UX deck "เขียว=พร้อม/เหลือง=ระวัง/แดง=หยุด ต้องตรงกันทุกหน้า")
+// — เจอ tier -> 🟢/🟡/🔴 emoji ตัวเดียวกันเป๊ะ (Excellent/Good -> 🟢, Recovering -> 🟡, Rest -> 🔴) ถูกเขียน
+// แยกเป็น inline ternary ซ้ำกัน 3 จุดอิสระ (DashboardView.tsx "ทำไมวันนี้?", coach/page.tsx เหตุผล,
+// AICoachCompactCard.tsx readinessVerdict) — ตอนนี้บังเอิญให้ผลตรงกันทุกที่ แต่เป็นแพทเทิร์นเดียวกับบั๊ก
+// "76% Excellent บน Header vs 78% Good ใน Recovery Card" ที่เจอมาก่อนแล้ว (สอง logic แยกกัน คำนวณจาก
+// ข้อมูลเดียวกัน วันหนึ่งแก้จุดเดียวแล้วลืมอีกจุด จะกลับมาขัดกันอีก) — รวมเป็นฟังก์ชันเดียวตรงนี้ ให้ทุกจุด
+// เรียกใช้ร่วมกันจริงๆ แทน
+export function recoveryVerdictEmoji(pct: number): string {
+  const tier = recoveryTier(pct).labelEn
+  if (tier === 'Excellent' || tier === 'Good') return '🟢'
+  if (tier === 'Recovering') return '🟡'
+  return '🔴'
+}
+
 // ประมาณจำนวนชั่วโมงที่เหลือก่อนกล้ามเนื้อกลุ่มนั้นจะฟื้นตัวเต็มที่ (100%)
 // ใช้เวลาจริง ณ ตอนนี้ (ไม่ใช่แค่ระดับวัน) เพื่อให้ตัวเลขชั่วโมงมีความหมาย เช่น "พร้อมฝึกในอีก ~18 ชม."
 // คืนค่า null ถ้าฟื้นตัวเต็มที่แล้ว หรือไม่มีประวัติการฝึกกลุ่มนี้ (ไม่ต้องโชว์ข้อความ)

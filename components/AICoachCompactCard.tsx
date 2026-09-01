@@ -17,7 +17,7 @@ import {
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
-import { recoveryStatusColor, recoveryTier, computeRecoveryPct } from '@/lib/dashboardStats'
+import { recoveryStatusColor, recoveryTier, recoveryVerdictEmoji, computeRecoveryPct } from '@/lib/dashboardStats'
 import { describeMuscleFocus, dominantMuscleGroup, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
@@ -74,11 +74,15 @@ interface AICoachCompactCardProps {
 // ยาวๆ ต้องอ่านเองว่าควรฝึกไหม" — ไม่คิดเกณฑ์ใหม่ ใช้รอยต่อ tier เดียวกับ recoveryTier() เป๊ะ (Excellent/
 // Good = พร้อม, Recovering = เบาลง, Rest = พัก) แค่แปลงเป็น verdict สั้นๆ 1 บรรทัดแยกจาก adviceTh
 // (ซึ่งยังอยู่ต่อเป็นเหตุผลบรรทัดถัดไป ไม่ได้ตัดออก)
+// ฟีดแบ็ก (ตรวจสัญลักษณ์สีทั้งแอป) — emoji ใช้ recoveryVerdictEmoji() ตัวกลางแทน inline ternary เดิม
+// (เจอ logic เดียวกันเป๊ะเขียนซ้ำอิสระ 3 จุดทั่วแอป — DashboardView.tsx/coach/page.tsx/ที่นี่ — รวมเป็น
+// ฟังก์ชันเดียวใน lib/dashboardStats.ts กันกลับมาขัดกันเองแบบเดียวกับบั๊ก Recovery label ที่เคยเจอ)
 function readinessVerdict(pct: number): { emoji: string; text: string } {
   const tier = recoveryTier(pct).labelEn
-  if (tier === 'Excellent' || tier === 'Good') return { emoji: '🟢', text: 'เหมาะสำหรับฝึกวันนี้' }
-  if (tier === 'Recovering') return { emoji: '🟡', text: 'ฝึกได้ แต่ควรลดความหนักลง' }
-  return { emoji: '🔴', text: 'ควรพักหรือฝึกเบามากๆ' }
+  const emoji = recoveryVerdictEmoji(pct)
+  if (tier === 'Excellent' || tier === 'Good') return { emoji, text: 'เหมาะสำหรับฝึกวันนี้' }
+  if (tier === 'Recovering') return { emoji, text: 'ฝึกได้ แต่ควรลดความหนักลง' }
+  return { emoji, text: 'ควรพักหรือฝึกเบามากๆ' }
 }
 
 function relativeUpdatedLabel(lastUpdatedAt: number): string {

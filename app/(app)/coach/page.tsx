@@ -25,6 +25,7 @@ import {
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   recoveryTier,
+  recoveryVerdictEmoji,
   computeRecentWeeklyVolumes,
   type Insight,
   type ScheduledDay,
@@ -496,10 +497,9 @@ export default function CoachPage() {
                     <p className="text-[9px] tracked uppercase text-muted">เหตุผล</p>
                     {data.reasoningGroups.map((g) => {
                       const tier = recoveryTier(g.pct)
-                      const emoji = tier.labelEn === 'Excellent' || tier.labelEn === 'Good' ? '🟢' : tier.labelEn === 'Recovering' ? '🟡' : '🔴'
                       return (
                         <p key={g.muscleGroup} className="text-[11px]" style={{ color: tier.color }}>
-                          {emoji} {g.muscleGroup} ฟื้นตัวแล้ว {g.pct}%
+                          {recoveryVerdictEmoji(g.pct)} {g.muscleGroup} ฟื้นตัวแล้ว {g.pct}%
                         </p>
                       )
                     })}
