@@ -170,12 +170,12 @@ export default function WeeklyVolume() {
                   <span className="w-px h-4 bg-line shrink-0" />
                   {/* ฟีดแบ็ก "ขา 24/18 sets +6 sets · OVER TARGET จะอ่านง่ายกว่าแค่ตัวเลขสีเขียว" — เดิมมี
                       แค่ตัวเลข diff/% เฉยๆ ต่อแถว (สถานะ 3 กลุ่มมีแค่ในสรุปท้ายการ์ดรวม ไม่ได้อยู่ติดแต่ละแถว)
-                      เพิ่มป้ายคำสั้นๆ กำกับใต้ตัวเลขต่อแถวเลย ไม่ใช้ emoji จุดสีเพิ่ม (ฟีดแบ็กเก่าเคยขอลดเหลือ
-                      3 สีไม่ใช่ traffic-light แล้ว — ดู comment STATUS_COLOR ด้านบน) */}
-                  {/* w-16 -> w-20: ป้ายสถานะ (ต่ำกว่าเป้า/ในเป้า/เกินเป้า) ขยับจาก text-[8px] เป็น
+                      เพิ่มป้ายคำสั้นๆ กำกับใต้ตัวเลขต่อแถวเลย */}
+                  {/* w-16 -> w-24: ป้ายสถานะ (ต่ำกว่าเป้า/ในเป้า/เกินเป้า) ขยับจาก text-[8px] เป็น
                       text-[12px] ตามพื้นล่างฟอนต์ใหม่ (ฟีดแบ็ก "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง")
-                      คอลัมน์เดิมแคบเกินจะรองรับตัวอักษรไทยที่ใหญ่ขึ้นโดยไม่ตัดคำ */}
-                  <span className="flex flex-col items-end shrink-0 w-20">
+                      คอลัมน์เดิมแคบเกินจะรองรับตัวอักษรไทยที่ใหญ่ขึ้นโดยไม่ตัดคำ ขยับอีกครั้งเป็น w-24 เพื่อรองรับ
+                      emoji นำหน้าป้าย (ฟีดแบ็ก "🔴 เกินเป้า / 🔵 ขาดเป้า / 🟢 อยู่ในเป้า" ต่อแถว) */}
+                  <span className="flex flex-col items-end shrink-0 w-24">
                     <span className="text-[12px] font-mono font-bold" style={{ color }}>
                       {status === 'behind'
                         ? `${diff} เซ็ต`
@@ -184,7 +184,11 @@ export default function WeeklyVolume() {
                           : `${pct}%`}
                     </span>
                     <span className="text-[12px] tracked uppercase" style={{ color }}>
-                      {status === 'behind' || status === 'onTrack' ? 'ต่ำกว่าเป้า' : status === 'veryHigh' ? 'เกินเป้า' : 'ในเป้า'}
+                      {status === 'behind' || status === 'onTrack'
+                        ? '🔵 ต่ำกว่าเป้า'
+                        : status === 'veryHigh'
+                          ? '🔴 เกินเป้า'
+                          : '🟢 ในเป้า'}
                     </span>
                   </span>
                 </div>
