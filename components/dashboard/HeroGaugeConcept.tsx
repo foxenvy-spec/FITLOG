@@ -216,6 +216,10 @@ export default function HeroGaugeConcept({
           aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel}${onFitnessScoreClick ? ' — กดดูรายละเอียด' : ''}`}
         >
           <GlowLayers size={fitnessRingSize} color={fitnessScore.color} />
+          {/* ฟีดแบ็ก "ตรงที่มีอะไรวิ่งอยู่ในวงกลม ไม่เอาตรงนี้ได้ไหม" — glow=true เดิมเปิดจุดสว่างที่วิ่ง
+              วนรอบวง (.animate-ring-sweep-slow) + spark กะพริบ (.animate-ring-spark-flash) ใน
+              GoalRing.tsx ตัดออก (ไม่ระบุ glow = false ดีฟอลต์) เหลือแค่เส้น progress คงที่ — ไม่กระทบ
+              ออร่า/เรืองแสงรอบวง (GlowLayers ด้านบน คนละส่วนกัน ไม่ใช่ตัวที่ทำให้เกิดจุดวิ่ง) */}
           <GoalRing
             pct={fitnessScore.score}
             size={fitnessRingSize}
@@ -223,7 +227,6 @@ export default function HeroGaugeConcept({
             color={fitnessScore.color}
             valueLabel=" "
             innerDiscColor={INNER_DISC}
-            glow
             ariaLabel={`Fitness Score ${fitnessScore.score}`}
           />
           <DialText
@@ -247,7 +250,6 @@ export default function HeroGaugeConcept({
             color={COLORS.cyan}
             valueLabel=" "
             innerDiscColor={INNER_DISC}
-            glow
             ariaLabel={`Recovery ${recoveryPct}% — ${recoveryLabel}`}
           />
           <DialText
