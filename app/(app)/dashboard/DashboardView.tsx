@@ -50,7 +50,7 @@ import {
   type SessionVolumeChange,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
-import { goalProgressPct, goalProgressLabel } from '@/lib/goalProgress'
+import { goalProgressPct, goalProgressLabel, estimateGoalEtaWeeks } from '@/lib/goalProgress'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
@@ -160,6 +160,10 @@ export interface DashboardData {
   // (ตัวเดียวกับที่ /health page ใช้อยู่แล้ว — ดู goalEarliestTrackedValue ในไฟล์นั้น)
   earliestTrackedWeight: number | null
   earliestTrackedBodyFat: number | null
+  // ฟีดแบ็ก "Body Goal ควรบอกคาดว่าจะถึงเป้าหมายเมื่อไหร่" — จำนวนสัปดาห์โดยประมาณ (estimateGoalEtaWeeks
+  // ใน lib/goalProgress.ts) null = ข้อมูลไม่พอ/แนวโน้มสวนทาง/ไม่มีเป้าหมายตั้งไว้ (ไม่โชว์อะไรเพิ่ม)
+  weightEtaWeeks: number | null
+  bodyFatEtaWeeks: number | null
   // สถิติใหม่ล่าสุด (ทุกช่วงเวลา ไม่ใช่แค่วันนี้) — กลับมาใช้อีกครั้งหลัง Priority 14 เอาออกไปตอนย้าย
   // การ์ดนี้เข้ากระดิ่งแจ้งเตือน (ตอนนั้นการ์ดเดิมไม่มี href เลยไม่เข้าเกณฑ์ actionable ของระบบใหม่ —
   // ผู้เรียก (DashboardView.tsx) กรองความเก่าก่อนส่งเข้า computeDashboardNotifications)
@@ -524,6 +528,30 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   const weightGoalStart = typedGoals.find((g) => g.goal_type === 'weight')?.starting_value ?? null
   const bodyFatGoalStart = typedGoals.find((g) => g.goal_type === 'body_fat')?.starting_value ?? null
 
+  // ฟีดแบ็ก "Body Goal ควรบอกคาดว่าจะถึงเป้าหมายเมื่อไหร่" — คำนวณจากอัตราเปลี่ยนแปลงจริงของ
+  // typedBodyMetricRows (60 แถวล่าสุด ตัวเดียวกับที่ earliestTrackedWeight/BodyFat ใช้อยู่แล้ว ไม่ query
+  // ซ้ำ) ผ่าน estimateGoalEtaWeeks (lib/goalProgress.ts) ซึ่งมีเกณฑ์ขั้นต่ำกันไม่ให้โชว์ ETA จากข้อมูล
+  // น้อย/ไม่นิ่งพอ (≥3 ครั้งบันทึก + ช่วงเวลา ≥14 วัน + ทิศทางต้องตรงกับเป้าหมาย) — คืน null (ไม่โชว์อะไร
+  // เพิ่ม) แทนการเดา ตามที่ตกลงกันไว้ตอนออกแบบฟีเจอร์นี้
+  const weightEtaWeeks =
+    weightGoalTarget != null
+      ? estimateGoalEtaWeeks(
+          typedBodyMetricRows
+            .filter((m) => m.weight_kg != null)
+            .map((m) => ({ date: m.measured_at, value: m.weight_kg as number })),
+          weightGoalTarget
+        )
+      : null
+  const bodyFatEtaWeeks =
+    bodyFatGoalTarget != null
+      ? estimateGoalEtaWeeks(
+          typedBodyMetricRows
+            .filter((m) => m.body_fat_pct != null)
+            .map((m) => ({ date: m.measured_at, value: m.body_fat_pct as number })),
+          bodyFatGoalTarget
+        )
+      : null
+
   // จำนวนวันที่ฝึกใน 7 วันล่าสุด (รวมวันนี้) — ใช้สำหรับ Fitness Score เท่านั้น ใช้ distinctDates
   // ชุดเดียวกับที่คำนวณ streak ด้านบน ไม่ต้อง query ซ้ำ
   const sevenDaysAgo = daysAgoStr(6)
@@ -555,6 +583,8 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     bodyFatGoalStart,
     earliestTrackedWeight,
     earliestTrackedBodyFat,
+    weightEtaWeeks,
+    bodyFatEtaWeeks,
     isRecommendationForToday,
     bestVolumeIncrease,
     thisWeekWorkoutDays,
@@ -1135,6 +1165,13 @@ export default function DashboardPage() {
                         `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
                       )}
                     </p>
+                    {/* ฟีดแบ็ก "อยากเห็นคาดว่าจะถึงเป้าหมายเมื่อไหร่" — โชว์เฉพาะตอนข้อมูลนิ่งพอจริงๆ
+                        (ดูเกณฑ์ใน estimateGoalEtaWeeks) null = ไม่โชว์บรรทัดนี้เลย ไม่เดา/ไม่ประมาณคร่าวๆ */}
+                    {data.weightEtaWeeks !== null && (
+                      <p className="text-[10px] mt-0.5" style={{ color: COLORS.amber }}>
+                        🎯 คาดว่าจะถึงเป้าหมายใน ~{data.weightEtaWeeks} สัปดาห์
+                      </p>
+                    )}
                   </div>
                 )}
                 {bodyFatPct !== null && (
@@ -1154,6 +1191,11 @@ export default function DashboardPage() {
                         `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
                       )}
                     </p>
+                    {data.bodyFatEtaWeeks !== null && (
+                      <p className="text-[10px] mt-0.5" style={{ color: COLORS.moss }}>
+                        🎯 คาดว่าจะถึงเป้าหมายใน ~{data.bodyFatEtaWeeks} สัปดาห์
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

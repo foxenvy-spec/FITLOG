@@ -33,3 +33,45 @@ export function goalProgressLabel(pct: number, remainingText?: string | null): s
   const base = rounded <= 0 ? 'เริ่มต้นเป้าหมาย' : `${rounded}% Progress`
   return remainingText ? `${base} · เหลืออีก ${remainingText}` : base
 }
+
+export interface GoalEtaEntry {
+  date: string // measured_at, "YYYY-MM-DD"
+  value: number
+}
+
+// เกณฑ์ความน่าเชื่อถือก่อนกล้าโชว์ ETA — ตัดสินใจร่วมกับผู้ใช้ตอนออกแบบฟีเจอร์นี้ (ไม่ใช่ค่าที่เดาเอง):
+// ข้อมูลน้อยกว่านี้/ช่วงเวลาสั้นกว่านี้ อัตราเปลี่ยนแปลง/สัปดาห์จะแกว่งเยอะเกินกว่าจะทำนายได้จริง
+// (น้ำหนักวันต่อวันแกว่งจากน้ำ/อาหารในกระเพาะได้หลาย kg โดยไม่เกี่ยวกับเทรนด์จริงเลย)
+const MIN_ENTRIES = 3
+const MIN_SPAN_DAYS = 14
+// อัตราช้ากว่านี้ (>2 ปีถึงเป้า) ถือว่าไม่ใช่ ETA ที่มีประโยชน์อีกต่อไป มีแต่จะดูมั่นใจเกินจริง
+const MAX_ETA_WEEKS = 104
+
+// คาดว่าจะถึงเป้าหมายอีกกี่สัปดาห์ — คำนวณจากอัตราเปลี่ยนแปลงจริงระหว่างค่าที่บันทึกเก่าสุด/ใหม่สุดในชุด
+// ข้อมูลที่ส่งเข้ามา (endpoint-to-endpoint ตรงกับที่ goalProgressPct ใช้อยู่แล้ว ไม่ใช่ regression แยกสูตร
+// ใหม่ ให้ % progress กับ ETA มาจากฐานข้อมูลชุดเดียวกันเป๊ะ) — คืน null (ไม่โชว์ ETA เลย ไม่ใช่โชว์ตัวเลข
+// ที่ไม่น่าเชื่อถือ) เมื่อ: ข้อมูลไม่พอ (ดู MIN_ENTRIES/MIN_SPAN_DAYS ด้านบน), ถึงเป้าหมายพอดีแล้ว,
+// แนวโน้มสวนทางเป้าหมาย (เช่น ตั้งเป้าลดน้ำหนักแต่ช่วงนี้น้ำหนักขึ้น — ฟีดแบ็ก "ซ่อน ETA ไปเลย ไม่โชว์
+// อะไรเพิ่ม" แทนที่จะโชว์ตัวเลขติดลบ/สวนทางที่สับสน), หรืออัตราช้าเกิน MAX_ETA_WEEKS
+export function estimateGoalEtaWeeks(entries: GoalEtaEntry[], target: number): number | null {
+  if (entries.length < MIN_ENTRIES) return null
+
+  const sorted = [...entries].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+  const earliest = sorted[0]
+  const latest = sorted[sorted.length - 1]
+
+  const spanDays =
+    (new Date(`${latest.date}T00:00:00`).getTime() - new Date(`${earliest.date}T00:00:00`).getTime()) / 86_400_000
+  if (spanDays < MIN_SPAN_DAYS) return null
+
+  const remaining = target - latest.value
+  if (remaining === 0) return null
+
+  const ratePerWeek = ((latest.value - earliest.value) / spanDays) * 7
+  // เครื่องหมายของ remaining กับ ratePerWeek ต้องตรงกัน = กำลังเข้าใกล้เป้าหมายจริง (ไม่ใช่ห่างออกไป)
+  if (ratePerWeek === 0 || Math.sign(ratePerWeek) !== Math.sign(remaining)) return null
+
+  const weeks = Math.round(remaining / ratePerWeek)
+  if (weeks <= 0 || weeks > MAX_ETA_WEEKS) return null
+  return weeks
+}
