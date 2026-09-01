@@ -12,7 +12,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -172,19 +171,14 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between pt-0.5 text-xs">
-                <label className="flex items-center gap-2 text-muted cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="peer sr-only"
-                  />
-                  <span className="w-4 h-4 rounded border border-line bg-surface flex items-center justify-center peer-checked:bg-amber peer-checked:border-amber peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber transition">
-                    {rememberMe && <CheckIcon />}
-                  </span>
-                  จดจำฉัน
-                </label>
+              {/* บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิมมีเช็คบ็อกซ์ "จดจำฉัน" ที่ rememberMe state ไม่เคยถูกอ่าน
+                  ที่ไหนเลย ไม่ได้ส่งเข้า signInWithPassword() หรือกระทบ storage ของ Supabase client ใดๆ
+                  (createClient() ใน lib/supabase/client.ts เป็น createBrowserClient เดิม เก็บ session แบบ
+                  persist เสมออยู่แล้วไม่ว่าจะติ๊กหรือไม่) — ผู้ใช้ที่ติ๊ก/ไม่ติ๊กได้พฤติกรรมเดียวกันเป๊ะ เป็น
+                  ปุ่มหลอก — ตัดออกแทนที่จะพยายามทำให้ "ทำงานจริง" (ต้องเปลี่ยน storage adapter ของ Supabase
+                  client เป็น per-login แบบไดนามิก เสี่ยงกระทบ middleware.ts ที่พึ่ง cookie-based session
+                  เดิมอยู่ ไม่คุ้มกับฟีเจอร์เล็กๆ นี้) */}
+              <div className="flex items-center justify-end pt-0.5 text-xs">
                 {mode === 'signin' && (
                   <button
                     type="button"
@@ -321,14 +315,6 @@ function EyeOffIcon() {
       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a17.4 17.4 0 0 1-3.19 4.16m-3.29 2.02A9.36 9.36 0 0 1 12 19c-7 0-11-7-11-7a17.5 17.5 0 0 1 4.06-5.19" />
       <path d="M9.53 9.53a3 3 0 0 0 4.24 4.24" />
       <path d="m1 1 22 22" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#14161A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6 9 17l-5-5" />
     </svg>
   )
 }
