@@ -1111,7 +1111,11 @@ export default function DashboardPage() {
         if (weightPct === null && bodyFatPct === null) return null
         return (
           <div className="lg:col-span-12 lg:order-4 animate-rise" style={{ animationDelay: '18ms' }}>
-            <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3.5">
+            {/* ฟีดแบ็ก "Level 2 (Body Goal, Recovery Details, Training This Week) ควรลด visual weight
+                ลงจาก Level 1" — Recovery/Training This Week (การ์ดข้างเคียงระดับเดียวกัน) ใช้ bg-surface2/40
+                ไม่มี shadow-elevated มาตั้งแต่ v41 ("การ์ดรอง ไม่ใช่ Hero") แต่การ์ดนี้หลุดไม่ได้ปรับตาม เลย
+                ดูหนักกว่า 2 ใบข้างๆ ที่ควรเป็นน้ำหนักภาพเท่ากัน — ปรับให้ตรงกัน */}
+            <div className="rounded-card bg-surface2/40 border border-line px-4 py-3.5">
               <p className="text-[10px] tracked uppercase text-muted mb-3">Body Goal</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {weightPct !== null && (
