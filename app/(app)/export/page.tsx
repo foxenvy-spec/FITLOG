@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import { createClient } from '@/lib/supabase/client'
-import type { Workout, BodyMetric, Goal } from '@/lib/types'
+import type { Workout, BodyMetric, Goal, WorkoutSet } from '@/lib/types'
 import PremiumCard from '@/components/ui/PremiumCard'
 import { getErrorMessage } from '@/lib/errors'
 
@@ -32,22 +32,30 @@ export default function ExportPage() {
   const [error, setError] = useState<string | null>(null)
   const [restoreSummary, setRestoreSummary] = useState<string | null>(null)
 
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิม fetchAll ไม่ดึงตาราง workout_sets เลย (ข้อมูลจริงราย "เซ็ต" เช่น
+  // drop set ที่แต่ละเซ็ตน้ำหนัก/reps ไม่เท่ากัน — workouts.sets/reps/weight_kg เก็บแค่ค่า "เซ็ตที่หนักที่สุด"
+  // เซ็ตเดียวเป็น fallback สำหรับแถวเก่า ดูคอมเมนต์ที่ Workout.total_volume_kg ใน lib/types.ts) ทำให้
+  // Export/Backup ไม่มีข้อมูลนี้ติดไปด้วยเลย พอ Restore กลับมา หน้าที่เรนเดอร์เวิร์กเอาต์ (ExerciseCard.tsx)
+  // จะ synthesize เซ็ตปลอมจากค่าเฉลี่ยแทนของจริง — ข้อมูลเสียหายเงียบๆ ตอน backup/restore — เพิ่มดึงมาด้วย
   async function fetchAll() {
-    const [wRes, bRes, gRes] = await Promise.all([
+    const [wRes, bRes, gRes, sRes] = await Promise.all([
       supabase.from('workouts').select('*').order('performed_at', { ascending: false }),
       supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }),
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
+      supabase.from('workout_sets').select('*').order('set_number', { ascending: true }),
     ])
-    // ต้องเช็ค error ของทั้ง 3 ตารางก่อน ไม่งั้นถ้าตารางไหน query พังจะได้ data เป็น null เงียบๆ
+    // ต้องเช็ค error ของทั้ง 4 ตารางก่อน ไม่งั้นถ้าตารางไหน query พังจะได้ data เป็น null เงียบๆ
     // แล้วไฟล์ export/backup ออกมาเป็น "ชีตว่าง" ทั้งที่จริงข้อมูลมีอยู่ — ผู้ใช้เข้าใจผิดว่าไม่มีข้อมูล
     // หรือแย่กว่านั้นคือ backup ไฟล์ที่ดูเหมือนสมบูรณ์แต่ขาดข้อมูลไปเงียบๆ
     if (wRes.error) throw new Error(`workouts: ${wRes.error.message}`)
     if (bRes.error) throw new Error(`body_metrics: ${bRes.error.message}`)
     if (gRes.error) throw new Error(`goals: ${gRes.error.message}`)
+    if (sRes.error) throw new Error(`workout_sets: ${sRes.error.message}`)
     return {
       workouts: (wRes.data as Workout[]) ?? [],
       bodyMetrics: (bRes.data as BodyMetric[]) ?? [],
       goals: (gRes.data as Goal[]) ?? [],
+      workoutSets: (sRes.data as WorkoutSet[]) ?? [],
     }
   }
 
@@ -56,9 +64,10 @@ export default function ExportPage() {
     setError(null)
     setMessage(null)
     try {
-      const { workouts, bodyMetrics, goals } = await fetchAll()
+      const { workouts, bodyMetrics, goals, workoutSets } = await fetchAll()
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(workouts), 'Workouts')
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(workoutSets), 'WorkoutSets')
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(bodyMetrics), 'BodyMetrics')
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(goals), 'Goals')
       XLSX.writeFile(wb, `fitlog-export-${timestamp()}.xlsx`)
@@ -93,7 +102,10 @@ export default function ExportPage() {
     setMessage(null)
     try {
       const data = await fetchAll()
-      const payload = { version: 1, exportedAt: new Date().toISOString(), ...data }
+      // version 2: เพิ่ม workoutSets เข้ามาในไฟล์ backup (ดูคอมเมนต์ที่ fetchAll ด้านบน) — handleRestoreFile
+      // เช็คแบบ optional (parsed.workoutSets?.length) อยู่แล้ว ไฟล์ backup version 1 เก่า (ไม่มีฟิลด์นี้)
+      // ยัง Restore ได้ปกติ แค่ไม่มีข้อมูลราย-เซ็ตให้กู้คืน (เพราะไฟล์เก่าไม่เคยมีข้อมูลนี้ตั้งแต่แรก)
+      const payload = { version: 2, exportedAt: new Date().toISOString(), ...data }
       downloadBlob(JSON.stringify(payload, null, 2), `fitlog-backup-${timestamp()}.json`, 'application/json')
       setMessage('ดาวน์โหลดไฟล์ Backup แล้ว เก็บไว้ในที่ปลอดภัย')
     } catch (err) {
@@ -117,6 +129,7 @@ export default function ExportPage() {
         workouts?: Partial<Workout>[]
         bodyMetrics?: Partial<BodyMetric>[]
         goals?: Partial<Goal>[]
+        workoutSets?: Partial<WorkoutSet>[]
       }
 
       const {
@@ -130,12 +143,37 @@ export default function ExportPage() {
       let restoredWorkouts = 0
       let restoredMetrics = 0
       let restoredGoals = 0
+      let restoredSets = 0
 
       if (parsed.workouts && parsed.workouts.length > 0) {
         const rows = parsed.workouts.map(({ id, created_at, ...rest }) => ({ ...rest, user_id: user.id }))
         const { error: wErr, data } = await supabase.from('workouts').insert(rows).select('id')
         if (wErr) throw new Error(`workouts: ${wErr.message}`)
         restoredWorkouts = data?.length ?? rows.length
+
+        // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิม Restore ไม่กู้คืน workout_sets เลย (ข้อมูลจริงราย-เซ็ต เช่น
+        // drop set ที่แต่ละเซ็ตน้ำหนัก/reps ไม่เท่ากัน) แถว workouts ใหม่ได้ id ใหม่จาก DB (ไม่ใช่ id เดิมใน
+        // ไฟล์ backup) จึงต้อง map "id เดิมในไฟล์ -> id ใหม่ที่เพิ่ง insert" ก่อน ถึงจะรู้ว่า workout_sets
+        // แต่ละแถวควรผูกกับ workout แถวไหนใน DB จริง — Postgres คืนแถวจาก INSERT...RETURNING เรียงตามลำดับ
+        // ที่ส่งเข้าไปเสมอ (VALUES หลายแถวในคำสั่งเดียว ไม่มี trigger สลับลำดับ) จึง zip ตาม index ได้ตรงกัน
+        if (parsed.workoutSets && parsed.workoutSets.length > 0 && data) {
+          const oldIdToNewId = new Map<string, string>()
+          parsed.workouts.forEach((w, i) => {
+            if (w.id && data[i]) oldIdToNewId.set(w.id, data[i].id)
+          })
+          const setRows = parsed.workoutSets
+            .filter((s) => s.workout_id && oldIdToNewId.has(s.workout_id))
+            .map(({ id, created_at, workout_id, ...rest }) => ({
+              ...rest,
+              workout_id: oldIdToNewId.get(workout_id as string)!,
+              user_id: user.id,
+            }))
+          if (setRows.length > 0) {
+            const { error: setErr, data: setData } = await supabase.from('workout_sets').insert(setRows).select('id')
+            if (setErr) throw new Error(`workout_sets: ${setErr.message}`)
+            restoredSets = setData?.length ?? setRows.length
+          }
+        }
       }
 
       if (parsed.bodyMetrics && parsed.bodyMetrics.length > 0) {
@@ -153,7 +191,7 @@ export default function ExportPage() {
       }
 
       setRestoreSummary(
-        `กู้คืนสำเร็จ: ออกกำลังกาย ${restoredWorkouts} รายการ · ข้อมูลร่างกาย ${restoredMetrics} รายการ · เป้าหมาย ${restoredGoals} รายการ`
+        `กู้คืนสำเร็จ: ออกกำลังกาย ${restoredWorkouts} รายการ (${restoredSets} เซ็ต) · ข้อมูลร่างกาย ${restoredMetrics} รายการ · เป้าหมาย ${restoredGoals} รายการ`
       )
     } catch (err) {
       setError(`Restore ไม่สำเร็จ: ${getErrorMessage(err)} — ตรวจสอบว่าไฟล์เป็น Backup JSON ของ FitLog`)
