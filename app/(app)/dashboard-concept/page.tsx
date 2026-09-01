@@ -56,16 +56,20 @@ export default function DashboardConceptPreviewPage() {
   RECOVERY_MUSCLES.forEach((mg) => {
     recoveryPctMap[mg] = computeRecoveryPct(data.recoveryDates[mg] ?? null, mg)
   })
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิม fallback เป็น 0 แล้วส่งเป็นค่าจริงเข้า HeroGaugeConcept (โชว์วง
+  // Recovery "0%/Rest" ปลอมๆ ตอนไม่มีข้อมูลจริง) ขัดกับ pattern "ไม่ใช้ข้อมูลสมมติ" — เปลี่ยนเป็น null
+  // แล้วปล่อยให้ HeroGaugeConcept ไม่โชว์วง Recovery เลยแทน (recoveryPct/recoveryLabel เป็น optional
+  // อยู่แล้ว ดู components/dashboard/HeroGaugeConcept.tsx)
   const recoveryPct =
     trainedRecoveryMuscles.length > 0
       ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / trainedRecoveryMuscles.length)
-      : 0
+      : null
 
   const fitnessScore = computeFitnessScore([
     { key: 'workout', label: 'Workout Completion', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
     { key: 'streak', label: 'Streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
     { key: 'sleep', label: 'Sleep', value: null, weight: 20 },
-    { key: 'recovery', label: 'Recovery', value: trainedRecoveryMuscles.length > 0 ? recoveryPct : null, weight: 15 },
+    { key: 'recovery', label: 'Recovery', value: recoveryPct, weight: 15 },
     { key: 'weeklyGoal', label: 'Weekly Goal', value: data.weeklyGoalPct, weight: 10 },
     { key: 'activityToday', label: 'Activity Today', value: data.todayExercises.length > 0 ? 100 : 0, weight: 5 },
   ])
@@ -81,7 +85,11 @@ export default function DashboardConceptPreviewPage() {
           ที่ยังไม่มีในนี้ เพราะ FITLOG ยังไม่มีระบบเก็บ snapshot คะแนนย้อนหลัง
         </p>
       </div>
-      <HeroGaugeConcept fitnessScore={fitnessScore} recoveryPct={recoveryPct} recoveryLabel={recoveryTier(recoveryPct).labelEn} />
+      <HeroGaugeConcept
+        fitnessScore={fitnessScore}
+        recoveryPct={recoveryPct ?? undefined}
+        recoveryLabel={recoveryPct != null ? recoveryTier(recoveryPct).labelEn : undefined}
+      />
 
       <HighlightsRow streak={data.streak} bestVolumeIncrease={data.bestVolumeIncrease} weeklyConsistencyPct={data.weeklyConsistencyPct} />
 
