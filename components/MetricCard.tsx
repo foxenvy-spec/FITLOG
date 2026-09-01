@@ -125,10 +125,19 @@ export default function MetricCard({
           // duration 180-220ms ตามที่ขอ — มือถือ (compact) เพิ่ม background-position เข้าไปด้วย (ให้
           // Reflection ขยับตอนแตะทำงานนุ่มๆ ไม่กระตุก) เดสก์ท็อปไม่มี transition ส่วนนี้เหมือนเดิม
           transition: `transform 200ms ease, filter 200ms ease, box-shadow 200ms ease${compact ? ', background-position 200ms ease' : ''}`,
-          // ความสูง/padding มือถือ (compact) มาจาก dashboardSpec.metricCard (160px / 16px) — ค่าคงที่
-          // (ไม่ใช่ min-height เหมือนรอบก่อน) ตาม Tailwind class แบบไดนามิกใช้ JIT ไม่ได้ (ตรวจจับตอน build
-          // ไม่เจอค่าที่มาจากตัวแปร) จึงกำหนดผ่าน style ตรงๆ แทน — เดสก์ท็อป (compact=false) ไม่กระทบ
-          height: compact ? dashboardSpec.metricCard.height : undefined,
+          // ความสูง/padding มือถือ (compact) มาจาก dashboardSpec.metricCard (91px / 8px) ตาม Tailwind
+          // class แบบไดนามิกใช้ JIT ไม่ได้ (ตรวจจับตอน build ไม่เจอค่าที่มาจากตัวแปร) จึงกำหนดผ่าน style
+          // ตรงๆ แทน — เดสก์ท็อป (compact=false) ไม่กระทบ
+          // ฟีดแบ็ก (ตรวจ Responsive mobile/tablet) — dashboardSpec.metricCard.height ถูก tune เจาะจง
+          // สำหรับ iPhone 15/16 Pro (393px) เท่านั้น (ดู comment หัวไฟล์ dashboardSpec.ts) จอที่แคบกว่านั้น
+          // (เช่น iPhone SE 375px, Android ทั่วไป 360px) ป้ายชื่อยาวๆ ("ไขมันในร่างกาย"/"กล้ามเนื้อโครงร่าง")
+          // มีโอกาสตกบรรทัดมากกว่าที่คำนวณไว้ — height ตายตัวเดิม (ไม่ใช่ minHeight) จะตัดเนื้อหาส่วนเกินทิ้ง
+          // เงียบๆ (ผ่าน overflow-hidden ของการ์ด) แทนที่จะให้การ์ดสูงขึ้นรองรับ — v2 (รอบก่อนหน้า) เคยเป็น
+          // minHeight มาก่อนแล้วเปลี่ยนมาเป็น height ตายตัว แต่ไม่มี comment อธิบายเหตุผลไว้ — สลับกลับเป็น
+          // minHeight ตามที่ยืนยันแล้วว่าต้องการ "ปลอดภัยกว่าสำหรับจอแคบ" — การ์ดทั้ง 4 ใบในแถวเดียวกันยังสูง
+          // เท่ากันเหมือนเดิม เพราะ CSS grid (BodyMetricsRow.tsx) stretch การ์ดในแถวเดียวกันให้เท่ากับใบสูง
+          // สุดโดย default (align-items: stretch) อยู่แล้ว ไม่ต้องพึ่ง height ตายตัวเพื่อความสูงเท่ากัน
+          minHeight: compact ? dashboardSpec.metricCard.height : undefined,
           padding: compact ? dashboardSpec.metricCard.padding : '16px 18px 12px',
           border: '1.5px solid transparent',
           // v27: "Titanium Geometry" — ฟีดแบ็ก "ทุก Card อยากได้มุมตัดแบบ CNC เป็นลายเซ็นเดียวกันทั้งแอป"
