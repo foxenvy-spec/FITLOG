@@ -1069,8 +1069,13 @@ export default function DashboardPage() {
                 />
                 <div className="leading-tight">
                   <p className="text-[12px] tracked uppercase text-muted">Recovery</p>
+                  {/* ฟีดแบ็ก "78% = Excellent ด้านบน แต่ 78% = Good ใน Recovery Card — Algorithm เดียวกัน
+                      ต้องแสดง Status เหมือนกันทุกที่" — เจอบั๊กจริง: ป้ายนี้เดิมเขียน threshold เองแยกต่างหาก
+                      (>=76 Excellent, >=41 Good, ต่ำกว่า Needs Rest) คนละชุดกับ RECOVERY_TIERS ที่การ์ด
+                      Recovery ใช้ (>=90 Excellent, >=65 Good, >=35 Recovering, ต่ำกว่า Rest) — เปลี่ยนมาใช้
+                      recoveryTier() ตัวเดียวกับการ์ด Recovery เป๊ะ ให้ป้ายสถานะตรงกันเสมอไม่ว่า % จะเท่าไหร่ */}
                   <p className="text-xs font-display tracked uppercase" style={{ color: COLORS.cyan }}>
-                    {fitnessScoreRecoveryPct >= 76 ? 'Excellent' : fitnessScoreRecoveryPct >= 41 ? 'Good' : 'Needs Rest'}
+                    {recoveryTier(fitnessScoreRecoveryPct).labelEn}
                   </p>
                 </div>
               </div>
