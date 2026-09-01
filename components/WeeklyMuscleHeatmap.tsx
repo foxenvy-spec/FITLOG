@@ -335,14 +335,14 @@ export default function WeeklyMuscleHeatmap() {
     <div className="rounded-card bg-surface border border-line shadow-elevated overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-center justify-between gap-2">
         <div>
-          <p className="text-[10px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
+          <p className="text-[12px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
           <p className="font-display text-sm uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
         </div>
         <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
           <button
             type="button"
             onClick={() => setView('volume')}
-            className="px-3 py-1 rounded-full text-[11px] font-medium transition-colors"
+            className="px-3 py-1 rounded-full text-[12px] font-medium transition-colors"
             style={view === 'volume' ? { backgroundColor: '#E8A33D22', color: '#E8A33D' } : { color: '#9498A0' }}
           >
             ปริมาณ
@@ -350,7 +350,7 @@ export default function WeeklyMuscleHeatmap() {
           <button
             type="button"
             onClick={() => setView('balance')}
-            className="px-3 py-1 rounded-full text-[11px] font-medium transition-colors"
+            className="px-3 py-1 rounded-full text-[12px] font-medium transition-colors"
             style={view === 'balance' ? { backgroundColor: '#E8A33D22', color: '#E8A33D' } : { color: '#9498A0' }}
           >
             ความสมดุล
@@ -366,12 +366,12 @@ export default function WeeklyMuscleHeatmap() {
       {!isLoading && hasAnyData && balance && (
         <div className="px-4 pb-3 flex items-start justify-between gap-3 border-b border-line">
           <div>
-            <p className="text-[10px] tracked uppercase text-muted">Balance</p>
+            <p className="text-[12px] tracked uppercase text-muted">Balance</p>
             <p className="font-mono font-bold text-3xl leading-none mt-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>
               {balance.pct}%
             </p>
             <span
-              className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-sans font-bold px-2 py-0.5 rounded-full"
+              className="inline-flex items-center gap-1 mt-1.5 text-[12px] font-sans font-bold px-2 py-0.5 rounded-full"
               style={{ backgroundColor: `${BALANCE_COLOR[balance.tier]}26`, color: BALANCE_COLOR[balance.tier] }}
             >
               <span className="font-bold">{BALANCE_TIER_ARROW[balance.tier]}</span>
@@ -380,11 +380,11 @@ export default function WeeklyMuscleHeatmap() {
           </div>
           <div className="text-right shrink-0 pt-0.5">
             {balanceSummary && (
-              <p className="text-[11px] font-sans font-medium leading-snug" style={{ color: BALANCE_COLOR[balance.tier] }}>
+              <p className="text-[12px] font-sans font-medium leading-snug" style={{ color: BALANCE_COLOR[balance.tier] }}>
                 ⚠️ {balanceSummary}
               </p>
             )}
-            <p className="text-[10px] text-muted mt-1">
+            <p className="text-[12px] text-muted mt-1">
               {totalSets} เซ็ต · {totalExercises} ท่า
             </p>
           </div>
@@ -440,20 +440,20 @@ export default function WeeklyMuscleHeatmap() {
                   const s = statByGroup.get(hoveredGroup)!
                   return (
                     <>
-                      <p className="text-[11px] font-medium text-ink">
+                      <p className="text-[12px] font-medium text-ink">
                         {hoveredGroup} · <span className="font-mono">{s.sets}</span> เซ็ต
                       </p>
                       {s.topExercises.length > 0 ? (
                         <ul className="mt-1 space-y-0.5">
                           {s.topExercises.map((ex) => (
-                            <li key={ex.name} className="flex items-center justify-between text-[10px] text-muted gap-2">
+                            <li key={ex.name} className="flex items-center justify-between text-[12px] text-muted gap-2">
                               <span className="truncate">{ex.name}</span>
                               <span className="font-mono shrink-0">{ex.sets} เซ็ต</span>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-[10px] text-muted mt-1">ยังไม่มีท่าที่บันทึกสัปดาห์นี้</p>
+                        <p className="text-[12px] text-muted mt-1">ยังไม่มีท่าที่บันทึกสัปดาห์นี้</p>
                       )}
                     </>
                   )
@@ -487,24 +487,24 @@ export default function WeeklyMuscleHeatmap() {
                       <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color, opacity: intensityOpacity(s.pct) }} />
                         <span className="text-xs text-ink flex-1 min-w-0 truncate">
-                          {s.group} <span className="text-muted text-[10px]">({MUSCLE_GROUP_LABELS_EN[s.group]})</span>
+                          {s.group} <span className="text-muted text-[12px]">({MUSCLE_GROUP_LABELS_EN[s.group]})</span>
                         </span>
-                        <span className="text-[11px] font-mono font-bold shrink-0" style={{ color }}>
+                        <span className="text-[12px] font-mono font-bold shrink-0" style={{ color }}>
                           {Math.round(s.pct)}%
                         </span>
-                        <span className="text-muted text-[10px] shrink-0">{isOpen ? '▲' : '▼'}</span>
+                        <span className="text-muted text-[12px] shrink-0">{isOpen ? '▲' : '▼'}</span>
                       </span>
                       <span className="relative h-1.5 rounded-full bg-bg/60 overflow-hidden">
                         <AnimatedBarFill pct={s.pct} color={color} />
                       </span>
-                      <span className="text-[9px] text-muted pl-4">{s.sets} เซ็ต</span>
+                      <span className="text-[12px] text-muted pl-4">{s.sets} เซ็ต</span>
                     </button>
                     {isOpen && (
                       <div className="px-2.5 pb-2 space-y-2">
                         {/* Priority 4 — Training Quality: Sets/Sessions ก็มีอยู่แล้วเป็น pct/sets ด้านบน
                             แถวนี้เพิ่ม Volume(kg)/ความถี่/ความหนัก(RPE)/Recovery ที่ไม่เคยรวมไว้ที่เดียวกัน
                             มาก่อน — ใช้ pl-[18px] ให้ชิดกับจุดสีด้านบน (ระยะเดียวกับลิสต์ท่าด้านล่าง) */}
-                        <div className="pl-[18px] flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                        <div className="pl-[18px] flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
                           <span className="text-muted">
                             <span className="font-mono text-ink">{s.sessions}</span> ครั้ง/สัปดาห์
                           </span>
@@ -532,7 +532,7 @@ export default function WeeklyMuscleHeatmap() {
                             const diffLabel = diff > 0 ? `+${diff} เซ็ต` : diff < 0 ? `${diff} เซ็ต` : null
                             const pctOfTarget = Math.round((s.sets / s.targetSets) * 100)
                             return (
-                              <p className="pl-[18px] text-[11px]" style={{ color: TARGET_STATUS_COLOR[s.targetStatus] }}>
+                              <p className="pl-[18px] text-[12px]" style={{ color: TARGET_STATUS_COLOR[s.targetStatus] }}>
                                 เป้าหมาย {s.sets}/{s.targetSets} เซ็ต
                                 {diffLabel && <> · {diffLabel}</>} · {pctOfTarget}% ของเป้าหมาย —{' '}
                                 {TARGET_STATUS_LABEL[s.targetStatus]}
@@ -542,7 +542,7 @@ export default function WeeklyMuscleHeatmap() {
                         {s.topExercises.length > 0 && (
                           <ul className="space-y-1">
                             {s.topExercises.map((ex) => (
-                              <li key={ex.name} className="flex items-center justify-between text-[11px] text-muted pl-[18px]">
+                              <li key={ex.name} className="flex items-center justify-between text-[12px] text-muted pl-[18px]">
                                 <span className="truncate">{ex.name}</span>
                                 <span className="font-mono shrink-0 ml-2">{ex.sets} เซ็ต</span>
                               </li>
@@ -567,7 +567,7 @@ export default function WeeklyMuscleHeatmap() {
           <button
             type="button"
             onClick={() => setBalanceDetailsOpen((v) => !v)}
-            className="text-[11px] font-medium flex items-center gap-1"
+            className="text-[12px] font-medium flex items-center gap-1"
             style={{ color: '#E8A33D' }}
           >
             {balanceDetailsOpen ? 'ซ่อนรายละเอียด Balance' : 'ดูรายละเอียด Balance'} {balanceDetailsOpen ? '↑' : '→'}
@@ -579,32 +579,32 @@ export default function WeeklyMuscleHeatmap() {
                   ต้องการรายละเอียด) */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[10px] tracked uppercase text-muted mb-1" style={{ color: BALANCE_COLOR.good }}>
+                  <p className="text-[12px] tracked uppercase text-muted mb-1" style={{ color: BALANCE_COLOR.good }}>
                     กล้ามเนื้อเด่น
                   </p>
-                  <p className="text-[11px] text-muted">{topGroups.join(', ')}</p>
+                  <p className="text-[12px] text-muted">{topGroups.join(', ')}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] tracked uppercase text-muted mb-1" style={{ color: BALANCE_COLOR.poor }}>
+                  <p className="text-[12px] tracked uppercase text-muted mb-1" style={{ color: BALANCE_COLOR.poor }}>
                     กล้ามเนื้อด้อย
                   </p>
-                  <p className="text-[11px] text-muted">{bottomGroups.join(', ')}</p>
+                  <p className="text-[12px] text-muted">{bottomGroups.join(', ')}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[10px] tracked uppercase text-muted mb-1">Upper / Lower</p>
+                  <p className="text-[12px] tracked uppercase text-muted mb-1">Upper / Lower</p>
                   <div className="h-1.5 rounded-full bg-surface2 overflow-hidden flex">
                     <div style={{ width: `${trainingBalanceDetail.upperPct}%`, backgroundColor: COLORS.steel }} />
                     <div style={{ width: `${trainingBalanceDetail.lowerPct}%`, backgroundColor: COLORS.amber }} />
                   </div>
-                  <p className="text-[11px] text-muted mt-1">
+                  <p className="text-[12px] text-muted mt-1">
                     Upper {trainingBalanceDetail.upperPct}% · Lower {trainingBalanceDetail.lowerPct}%
                   </p>
                 </div>
                 {pushPull && pushPull.status !== 'insufficient_data' && (
                   <div>
-                    <p className="text-[10px] tracked uppercase text-muted mb-1">Push / Pull</p>
+                    <p className="text-[12px] tracked uppercase text-muted mb-1">Push / Pull</p>
                     {(() => {
                       const total = Math.max(1, pushPull.pushSets + pushPull.pullSets)
                       const pushPct = Math.round((pushPull.pushSets / total) * 100)
@@ -614,7 +614,7 @@ export default function WeeklyMuscleHeatmap() {
                             <div style={{ width: `${pushPct}%`, backgroundColor: COLORS.rust }} />
                             <div style={{ width: `${100 - pushPct}%`, backgroundColor: COLORS.steel }} />
                           </div>
-                          <p className="text-[11px] text-muted mt-1">
+                          <p className="text-[12px] text-muted mt-1">
                             Push {pushPct}% · Pull {100 - pushPct}%
                           </p>
                         </>
@@ -626,15 +626,15 @@ export default function WeeklyMuscleHeatmap() {
 
               {(balanceIssues.over.length > 0 || balanceIssues.under.length > 0) && (
                 <div>
-                  <p className="text-[10px] tracked uppercase text-muted mb-1">จุดที่ควรปรับ</p>
+                  <p className="text-[12px] tracked uppercase text-muted mb-1">จุดที่ควรปรับ</p>
                   <ul className="space-y-0.5">
                     {balanceIssues.over.map((s) => (
-                      <li key={s.group} className="text-[11px]" style={{ color: BALANCE_COLOR.poor }}>
+                      <li key={s.group} className="text-[12px]" style={{ color: BALANCE_COLOR.poor }}>
                         {s.group} สูงกว่าค่าเหมาะสม
                       </li>
                     ))}
                     {balanceIssues.under.map((s) => (
-                      <li key={s.group} className="text-[11px]" style={{ color: BALANCE_COLOR.ok }}>
+                      <li key={s.group} className="text-[12px]" style={{ color: BALANCE_COLOR.ok }}>
                         {s.group} ต่ำกว่าเป้าหมาย
                       </li>
                     ))}
@@ -644,12 +644,12 @@ export default function WeeklyMuscleHeatmap() {
 
               {(balanceIssues.over.length > 0 || balanceIssues.under.length > 0) && (
                 <div>
-                  <p className="text-[10px] tracked uppercase text-muted mb-1">แนะนำสัปดาห์หน้า</p>
+                  <p className="text-[12px] tracked uppercase text-muted mb-1">แนะนำสัปดาห์หน้า</p>
                   <ul className="space-y-0.5">
                     {balanceIssues.over.map((s) => {
                       const range = optimalVolumeRange(s.targetSets)
                       return (
-                        <li key={s.group} className="text-[11px] text-muted">
+                        <li key={s.group} className="text-[12px] text-muted">
                           ลด{s.group}ให้อยู่ในช่วง {range.min}–{range.max} เซ็ต (ตอนนี้ {s.sets} เซ็ต)
                         </li>
                       )
@@ -658,7 +658,7 @@ export default function WeeklyMuscleHeatmap() {
                       const range = optimalVolumeRange(s.targetSets)
                       const setsNeeded = Math.max(0, range.min - s.sets)
                       return (
-                        <li key={s.group} className="text-[11px] text-muted">
+                        <li key={s.group} className="text-[12px] text-muted">
                           เพิ่ม{s.group}อีก {setsNeeded} เซ็ต ให้ถึงช่วงที่เหมาะสม
                         </li>
                       )

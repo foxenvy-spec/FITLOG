@@ -159,7 +159,7 @@ export default function BodyMetricsRow({
       >
         <div>
           <p className="text-sm text-ink">ยังไม่มีข้อมูลสัดส่วนร่างกาย</p>
-          <p className="text-[11px] text-muted mt-0.5">
+          <p className="text-[12px] text-muted mt-0.5">
             บันทึกน้ำหนัก/ไขมัน/กล้ามเนื้อครั้งแรกที่หน้าสุขภาพ แล้วการ์ดสรุปจะขึ้นตรงนี้
           </p>
         </div>
@@ -291,7 +291,7 @@ export default function BodyMetricsRow({
             </p>
           )}
           {titleHref && (
-            <Link href={titleHref} className="text-[11px] text-amber hover:underline shrink-0">
+            <Link href={titleHref} className="text-[12px] text-amber hover:underline shrink-0">
               ดูทั้งหมด →
             </Link>
           )}
@@ -302,7 +302,7 @@ export default function BodyMetricsRow({
               key={String(opt.value)}
               type="button"
               onClick={() => setTimeframe(opt.value)}
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+              className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
               style={timeframe === opt.value ? { backgroundColor: '#E8A33D22', color: '#E8A33D' } : { color: '#9498A0' }}
             >
               {opt.label}

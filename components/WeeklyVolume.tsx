@@ -104,13 +104,13 @@ export default function WeeklyVolume() {
     <PremiumCard className="overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
-          <p className="text-[10px] tracked uppercase text-muted">Weekly Volume</p>
+          <p className="text-[12px] tracked uppercase text-muted">Weekly Volume</p>
           <p className="font-display text-sm uppercase text-ink mt-0.5">เซ็ตต่อกลุ่มกล้ามเนื้อ (สัปดาห์นี้)</p>
         </div>
         <button
           type="button"
           onClick={() => setSettingsOpen(true)}
-          className="text-[11px] text-muted hover:text-ink border border-line rounded px-2 py-1 mt-0.5 shrink-0"
+          className="text-[12px] text-muted hover:text-ink border border-line rounded px-2 py-1 mt-0.5 shrink-0"
         >
           ตั้งเป้าหมาย
         </button>
@@ -153,7 +153,7 @@ export default function WeeklyVolume() {
                 <div className="flex items-center gap-2 px-2.5 pt-2">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
                   <span className="text-xs text-ink flex-1 min-w-0">{mg}</span>
-                  <span className="text-[11px] font-mono text-muted shrink-0">
+                  <span className="text-[12px] font-mono text-muted shrink-0">
                     {sets}
                     <span className="text-muted/60"> / {target} เซ็ต</span>
                   </span>
@@ -162,15 +162,18 @@ export default function WeeklyVolume() {
                       แค่ตัวเลข diff/% เฉยๆ ต่อแถว (สถานะ 3 กลุ่มมีแค่ในสรุปท้ายการ์ดรวม ไม่ได้อยู่ติดแต่ละแถว)
                       เพิ่มป้ายคำสั้นๆ กำกับใต้ตัวเลขต่อแถวเลย ไม่ใช้ emoji จุดสีเพิ่ม (ฟีดแบ็กเก่าเคยขอลดเหลือ
                       3 สีไม่ใช่ traffic-light แล้ว — ดู comment STATUS_COLOR ด้านบน) */}
-                  <span className="flex flex-col items-end shrink-0 w-16">
-                    <span className="text-[11px] font-mono font-bold" style={{ color }}>
+                  {/* w-16 -> w-20: ป้ายสถานะ (ต่ำกว่าเป้า/ในเป้า/เกินเป้า) ขยับจาก text-[8px] เป็น
+                      text-[12px] ตามพื้นล่างฟอนต์ใหม่ (ฟีดแบ็ก "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง")
+                      คอลัมน์เดิมแคบเกินจะรองรับตัวอักษรไทยที่ใหญ่ขึ้นโดยไม่ตัดคำ */}
+                  <span className="flex flex-col items-end shrink-0 w-20">
+                    <span className="text-[12px] font-mono font-bold" style={{ color }}>
                       {status === 'behind'
                         ? `${diff} เซ็ต`
                         : status === 'high' || status === 'veryHigh'
                           ? `+${diff} เซ็ต`
                           : `${pct}%`}
                     </span>
-                    <span className="text-[8px] tracked uppercase" style={{ color }}>
+                    <span className="text-[12px] tracked uppercase" style={{ color }}>
                       {status === 'behind' || status === 'onTrack' ? 'ต่ำกว่าเป้า' : status === 'veryHigh' ? 'เกินเป้า' : 'ในเป้า'}
                     </span>
                   </span>
@@ -187,7 +190,7 @@ export default function WeeklyVolume() {
                 </div>
                 {detailsOpen && (
                   <div className="px-2.5 pb-2 -mt-1">
-                    <p className="text-[11px]" style={{ color }}>
+                    <p className="text-[12px]" style={{ color }}>
                       {status === 'met' || status === 'high'
                         ? `อยู่ในช่วงที่เหมาะสม (${range.min}–${range.max} เซ็ต)`
                         : status === 'veryHigh'
@@ -206,15 +209,15 @@ export default function WeeklyVolume() {
         <div className="px-4 pb-3.5">
           <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/5">
             <div className="text-center">
-              <p className="text-[10px] text-muted">รวมสัปดาห์นี้</p>
+              <p className="text-[12px] text-muted">รวมสัปดาห์นี้</p>
               <p className="font-mono text-sm text-ink mt-0.5">
-                {totalSets} <span className="text-[10px] text-muted font-sans">เซ็ต</span>
+                {totalSets} <span className="text-[12px] text-muted font-sans">เซ็ต</span>
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] text-muted">อยู่ในเป้าหมาย</p>
+              <p className="text-[12px] text-muted">อยู่ในเป้าหมาย</p>
               <p className="font-mono text-sm text-ink mt-0.5">
-                {onTargetCount} <span className="text-[10px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
+                {onTargetCount} <span className="text-[12px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
               </p>
             </div>
           </div>
@@ -222,7 +225,7 @@ export default function WeeklyVolume() {
           {/* ป้ายสรุปใช้สีเต็ม (ไม่ใช่เฉดจางของ STATUS_COLOR.met/behind) เพราะเป็นตัวแทนทั้งกลุ่ม ไม่ใช่แถว
               เดี่ยว ๆ — ให้ตรงกับ 3 เฉดหลัก (steel/moss/rust) และ bucket นับด้านบนพอดี ไม่ตรงกันข้ามแบบที่
               เคยเจอบั๊กมาก่อน (ป้ายสีหนึ่ง แถวจริงอีกสี) */}
-          <div className="flex items-center justify-center gap-3 mt-2 text-[10px]">
+          <div className="flex items-center justify-center gap-3 mt-2 text-[12px]">
             <span style={{ color: COLORS.steel }}>⚪ ยังไม่ถึงเป้า {underTargetCount}</span>
             <span style={{ color: COLORS.moss }}>🟢 ในช่วงเหมาะสม {onTargetCount}</span>
             <span style={{ color: COLORS.rust }}>🔴 สูงเกินไป {overTargetCount}</span>
@@ -232,7 +235,7 @@ export default function WeeklyVolume() {
             <button
               type="button"
               onClick={() => setDetailsOpen((v) => !v)}
-              className="text-[11px] font-medium"
+              className="text-[12px] font-medium"
               style={{ color: '#E8A33D' }}
             >
               {detailsOpen ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียดทั้งหมด'} {detailsOpen ? '↑' : '→'}

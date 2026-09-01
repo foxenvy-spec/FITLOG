@@ -514,7 +514,7 @@ export default function MetricCard({
                     {deltaText}
                   </p>
                   {lastMeasuredText && (
-                    <p className="text-[9px] text-muted/70 truncate" style={{ marginTop: 2 }}>
+                    <p className="text-[12px] text-muted/70 truncate" style={{ marginTop: 2 }}>
                       {lastMeasuredText}
                     </p>
                   )}

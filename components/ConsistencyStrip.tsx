@@ -334,9 +334,9 @@ export default function ConsistencyStrip() {
       <div className="lg:col-span-2 lg:border-r lg:border-line">
         <div className="px-4 pt-3 pb-2 flex items-start justify-between gap-2">
           <div>
-            <p className="text-[10px] tracked uppercase text-muted">Consistency</p>
+            <p className="text-[12px] tracked uppercase text-muted">Consistency</p>
             {activeWindow && (
-              <p className="text-[11px] text-muted mt-0.5">
+              <p className="text-[12px] text-muted mt-0.5">
                 {weekOffset === 0 ? `ย้อนหลัง ${WINDOW_DAYS} วัน` : `ย้อนหลัง ${WINDOW_DAYS} วัน (${weekOffset} ช่วงก่อนหน้า)`} •{' '}
                 {shortThaiDate(activeWindow.windowStartIso)} - {shortThaiDate(activeWindow.windowEndIso)}
               </p>
@@ -365,7 +365,7 @@ export default function ConsistencyStrip() {
                 ›
               </button>
             </div>
-            <a href="/calendar" className="text-[11px] text-amber shrink-0">
+            <a href="/calendar" className="text-[12px] text-amber shrink-0">
               ดูปฏิทินทั้งหมด →
             </a>
           </div>
@@ -375,7 +375,7 @@ export default function ConsistencyStrip() {
           <div className="max-w-[220px] shrink-0">
             <div className="grid grid-cols-7 gap-1.5 mb-1.5">
               {WEEKDAY_LABELS.map((d) => (
-                <p key={d} className="text-[10px] text-muted text-center">
+                <p key={d} className="text-[12px] text-muted text-center">
                   {d}
                 </p>
               ))}
@@ -415,7 +415,7 @@ export default function ConsistencyStrip() {
 
             <div className="flex items-center gap-3 mt-3 flex-wrap">
               {(['high', 'mid', 'low', 'none'] as Level[]).map((level) => (
-                <span key={level} className="flex items-center gap-1.5 text-[10px] text-muted">
+                <span key={level} className="flex items-center gap-1.5 text-[12px] text-muted">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: LEVEL_COLOR[level] }} />
                   {LEVEL_LABEL[level]}
                 </span>
@@ -472,7 +472,7 @@ export default function ConsistencyStrip() {
         <button
           type="button"
           onClick={() => setShowMoreStats((v) => !v)}
-          className="w-full text-center text-[11px] font-medium py-2 border-t border-line"
+          className="w-full text-center text-[12px] font-medium py-2 border-t border-line"
           style={{ color: '#E8A33D' }}
         >
           {showMoreStats ? 'ซ่อนรายละเอียดเพิ่มเติม ↑' : 'ดูรายละเอียดเพิ่มเติม →'}
@@ -491,14 +491,14 @@ export default function ConsistencyStrip() {
       {data && data.bestStreakEver > 0 && (
         <div className="lg:col-span-3 border-t border-line px-4 py-2.5">
           {data.currentStreak >= data.bestStreakEver ? (
-            <p className="text-[11px] text-center" style={{ color: '#E8A33D' }}>
+            <p className="text-[12px] text-center" style={{ color: '#E8A33D' }}>
               {/* ฟีดแบ็ก "ตอน Streak ขยับแตะสถิติใหม่ ใส่ Micro-celebration เล็กๆ ไอคอนไฟสั่นดุ๊กดิ๊ก+ประกาย" —
                   celebrateStreak คำนวณจากการเทียบ localStorage ด้านบน เล่นครั้งเดียวตอน currentStreak
                   เพิ่งขยับขึ้นจริง (ไม่ใช่ทุกครั้งที่โหลดหน้า) */}
               <span className={celebrateStreak ? 'streak-celebrate inline-block' : 'inline-block'}>🔥</span> กำลังทำสถิติต่อเนื่องที่ดีที่สุดของคุณอยู่ ({data.currentStreak} วันติด)
             </p>
           ) : (
-            <p className="text-[11px] text-center text-muted">
+            <p className="text-[12px] text-center text-muted">
               <span className={celebrateStreak ? 'streak-celebrate inline-block' : 'inline-block'}>🔥</span> อีก <span className="text-amber font-medium">{data.bestStreakEver - data.currentStreak}</span> วัน → ทำสถิติต่อเนื่องใหม่
               (สถิติเดิม {data.bestStreakEver} วัน)
             </p>
@@ -574,18 +574,18 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
     <div className="flex-1 min-w-[180px] border-l border-line pl-4 flex flex-col">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[11px] text-ink font-medium">{shortThaiDate(iso)}</p>
-          <p className="text-[9px] text-muted mt-0.5">
+          <p className="text-[12px] text-ink font-medium">{shortThaiDate(iso)}</p>
+          <p className="text-[12px] text-muted mt-0.5">
             {workouts.length} รายการ • {totalSets} เซ็ต • {Math.round(totalVolumeKg).toLocaleString('th-TH')} กก.
           </p>
         </div>
-        <button type="button" onClick={onClose} className="text-[11px] text-muted hover:text-ink shrink-0 leading-none px-1" aria-label="ปิด">
+        <button type="button" onClick={onClose} className="text-[12px] text-muted hover:text-ink shrink-0 leading-none px-1" aria-label="ปิด">
           ✕
         </button>
       </div>
       <div className="mt-2 overflow-y-auto max-h-[220px]">
         {workouts.length === 0 ? (
-          <p className="text-[11px] text-muted py-2">ไม่มีข้อมูลวันนี้</p>
+          <p className="text-[12px] text-muted py-2">ไม่มีข้อมูลวันนี้</p>
         ) : (
           <ul className="space-y-1">
             {workouts.map((w, i) => {
@@ -598,12 +598,12 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
                     type="button"
                     disabled={!canExpand}
                     onClick={() => toggle(w.id)}
-                    className="w-full text-left text-[11px] text-ink py-0.5 flex items-center justify-between gap-2 disabled:cursor-default enabled:cursor-pointer group"
+                    className="w-full text-left text-[12px] text-ink py-0.5 flex items-center justify-between gap-2 disabled:cursor-default enabled:cursor-pointer group"
                   >
                     <span>{describeWorkout(w)}</span>
                     {canExpand && (
                       <span
-                        className="text-muted text-[9px] shrink-0 transition-transform group-hover:text-amber"
+                        className="text-muted text-[12px] shrink-0 transition-transform group-hover:text-amber"
                         style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}
                         aria-hidden="true"
                       >
@@ -615,8 +615,8 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
                     <div className="grid grid-cols-3 gap-1 mb-1.5 mt-1">
                       {displaySets.map((s) => (
                         <div key={s.id} className="rounded-md bg-surface2 px-1.5 py-1 text-center">
-                          <p className="text-[8px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
-                          <p className="font-mono text-[10px] font-semibold text-ink tabular">
+                          <p className="text-[12px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
+                          <p className="font-mono text-[12px] font-semibold text-ink tabular">
                             {s.weight_kg ?? '—'}กก. × {s.reps ?? '—'}
                           </p>
                         </div>
@@ -662,10 +662,10 @@ function StatTile({
         )}
         {value}
       </p>
-      <p className="text-[10px] text-ink mt-0.5">{label}</p>
-      <p className="text-[9px] text-muted">{caption}</p>
+      <p className="text-[12px] text-ink mt-0.5">{label}</p>
+      <p className="text-[12px] text-muted">{caption}</p>
       {trend != null && trend !== 0 && (
-        <p className="text-[9px] mt-0.5" style={{ color: trend > 0 ? '#7A9B57' : '#C1503A' }}>
+        <p className="text-[12px] mt-0.5" style={{ color: trend > 0 ? '#7A9B57' : '#C1503A' }}>
           {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% จากช่วงก่อน
         </p>
       )}
