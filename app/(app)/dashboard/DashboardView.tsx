@@ -2234,13 +2234,28 @@ export default function DashboardPage() {
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-2.5">
                 <span className="text-xl leading-none shrink-0" aria-hidden="true">🔥</span>
-                <div>
-                  <p className="text-sm text-ink">
-                    <span className="font-mono font-medium">{data.thisWeekWorkoutDays}</span> ครั้งแล้วในสัปดาห์นี้
+                <div className="min-w-0 flex-1">
+                  {/* ฟีดแบ็ก "อยากให้ 'N/เป้า ครั้ง' เป็นตัวเลขหลักที่เห็นทันที + progress bar" — เดิมมีแค่
+                      ข้อความ "N ครั้งแล้วในสัปดาห์นี้" ไม่เห็นเป้าหมายแบบภาพ ต้องอ่านป้าย motivation ข้างล่าง
+                      ไปตีความเอาเอง — เปลี่ยนเป็นเศษส่วน N/เป้า ตัวหนาใหญ่ขึ้น พร้อม progress bar บางๆ
+                      สีมอส (เฉดเดียวกับวันที่ฝึกแล้วใน day-tick row ด้านล่าง) แยกจาก amber ของ Volume ring
+                      ข้างๆ เพื่อไม่ให้เข้าใจผิดว่าเป็นตัวเลขเดียวกัน (คนละ metric — ดู comment เดิมด้านบน) */}
+                  <p className="text-base font-mono font-bold text-ink leading-none">
+                    {data.thisWeekWorkoutDays}
+                    <span className="text-muted font-normal">/{data.weeklyWorkoutGoal} ครั้ง</span>
                   </p>
-                  <p className="text-[12px] text-muted mt-0.5">
+                  <p className="text-[12px] text-muted mt-1">
                     {computeWorkoutMotivationLabel(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal)}
                   </p>
+                  <span className="relative block h-1.5 rounded-full bg-bg/60 overflow-hidden mt-1.5">
+                    <span
+                      className="absolute inset-y-0 left-0 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, (data.thisWeekWorkoutDays / data.weeklyWorkoutGoal) * 100)}%`,
+                        backgroundColor: COLORS.moss,
+                      }}
+                    />
+                  </span>
                 </div>
               </div>
               {/* ฟีดแบ็ก "'0 Day Streak' อ่านแปลกๆ ตอนไม่มี Streak — ควรเป็น 'Streak: 0 วัน' หรือ '0 วัน
