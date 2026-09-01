@@ -1814,7 +1814,11 @@ export default function DashboardPage() {
           className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1 recovery-card-cq"
           style={{ animationDelay: '240ms', containerType: 'inline-size' }}
         >
-          <Link href="/recovery" className="block px-4 py-4 active:bg-surface2 transition">
+          {/* ฟีดแบ็ก "Micro-interaction — hover state ทั่วหน้า Dashboard ยังไม่สม่ำเสมอ" — การ์ดนี้เป็นลิงก์
+              เต็มใบ (คลิกได้ทั้งการ์ด) แต่เดิมมีแค่ active: (ตอนกด) ไม่มี hover: เลย บนจอคอมที่ใช้เมาส์ ผู้ใช้
+              จะไม่เห็นสัญญาณใดๆ ว่าการ์ดนี้กดได้จนกว่าจะคลิกไปแล้ว — เพิ่ม hover เบากว่า active (60% ของสี
+              เดียวกัน) ให้มีสัญญาณ affordance ก่อนคลิกจริง */}
+          <Link href="/recovery" className="block px-4 py-4 hover:bg-surface2/60 active:bg-surface2 transition">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] tracked uppercase text-muted">Recovery</p>
             </div>
