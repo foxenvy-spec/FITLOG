@@ -76,6 +76,7 @@ import AICoachCompactCard from '@/components/AICoachCompactCard'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import { computeFitnessScore } from '@/lib/fitnessScore'
+import FitnessScoreDetailSheet from '@/components/dashboard/FitnessScoreDetailSheet'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
@@ -636,6 +637,12 @@ export default function DashboardPage() {
   const [showAllRecovery, setShowAllRecovery] = useState(false)
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — เปิด/ปิด WarmupGuideSheet
   const [warmupOpen, setWarmupOpen] = useState(false)
+  // ฟีดแบ็ก "40 Moderate ผู้ใช้ยังไม่รู้ว่า 'ทำไม?' ถ้าคลิกแล้วเปิดรายละเอียดได้จะดีมาก" — เดสก์ท็อปเดิม
+  // pill Fitness Score บน header เป็นแค่ <div> โชว์เฉยๆ กดไม่ได้ ทั้งที่ FitnessScoreDetailSheet.tsx
+  // (breakdown ทุกปัจจัย + "💡 เพิ่ม X จาก N% -> M% ได้อีก +คะแนน") มีอยู่แล้วและมือถือใช้อยู่แล้ว
+  // (components/dashboard/FitnessScore.tsx) — เปิดใช้ sheet เดียวกันนี้ที่เดสก์ท็อปแทนที่จะคิดข้อความ
+  // ใหม่/ยัดบรรทัดเพิ่มเข้าไปในพื้นที่ pill แคบๆ ที่ tune ความสูงมาหลายรอบแล้ว
+  const [showFitnessScoreDetail, setShowFitnessScoreDetail] = useState(false)
 
   // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
   // Card (การ์ดเดียวที่ควรมี effect ใหม่ตามกฎ "Hero มีแค่ใบเดียว") จำลองแสงสะท้อนผิวโลหะเปลี่ยนมุมตามที่
@@ -1019,8 +1026,12 @@ export default function DashboardPage() {
             จริงไม่พอให้ประเมิน ไม่เดาให้ ดู fitnessScoreRecoveryPct ด้านบน) */}
         {fitnessScore && (
           <div className="hidden md:flex flex-1 justify-center items-center gap-2.5 self-center">
-            <div
-              className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5"
+            <button
+              type="button"
+              onClick={() => setShowFitnessScoreDetail(true)}
+              className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5 transition hover:brightness-110"
+              aria-haspopup="dialog"
+              aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel} — กดดูรายละเอียด`}
               style={{
                 border: '1.5px solid transparent',
                 backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${fitnessScore.color}14, ${fitnessScore.color}40, ${fitnessScore.color}14)`,
@@ -1043,7 +1054,12 @@ export default function DashboardPage() {
                   {fitnessScore.tierLabel}
                 </p>
               </div>
-            </div>
+            </button>
+            <FitnessScoreDetailSheet
+              open={showFitnessScoreDetail}
+              onClose={() => setShowFitnessScoreDetail(false)}
+              score={fitnessScore}
+            />
             {fitnessScoreRecoveryPct != null && (
               // ฟีดแบ็ก "Fitness Score 38 กับ Recovery วางติดกันดูเหมือนเป็น metric เดียวกัน" — สาเหตุจริง
               // คือป้าย Recovery เดิมไม่มีตัวเลขโชว์เลย (แค่คำ Excellent/Good/Needs Rest) ต่างจาก Fitness
