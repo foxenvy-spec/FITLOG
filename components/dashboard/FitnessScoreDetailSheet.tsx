@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import PremiumCard from '@/components/ui/PremiumCard'
 import { COLORS, TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
 import { suggestFitnessScoreImprovement, type FitnessScoreResult } from '@/lib/fitnessScore'
@@ -59,7 +60,13 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
   // ใน lib/fitnessScore.ts (จำลองผลจากค่าจริงด้วยสูตรเดียวกับ computeFitnessScore เป๊ะ ไม่ประมาณเอง)
   const improvementTip = suggestFitnessScoreImprovement(displayScore.breakdown)
 
-  return (
+  // บั๊ก (ฟีดแบ็กผู้ใช้จริง — คลิก Fitness Score บนหัว Dashboard แล้ว sheet โผล่ผิดตำแหน่ง ลอยทับ
+  // ป้ายวันที่/กระดิ่งแทนที่จะเป็น bottom sheet เต็มจอ): จุดที่เปิด sheet นี้ (DashboardView.tsx) อยู่ใน
+  // <div className="... animate-rise"> ของแถว header — animate-rise ใช้ transform ใน keyframe ซึ่งค้าง
+  // เป็น containing block ของ position:fixed ถาวรตามสเปก CSS (fixed ที่ควรอ้างอิง viewport กลับไปอ้างอิง
+  // กล่อง header แคบๆ แทน) เหตุผลเดียวกับที่ VolumeTargetsSettings.tsx/CardioTargetsSettings.tsx/
+  // HeartRateSettings.tsx เคยเจอและแก้ด้วย portal ไป document.body มาแล้ว — ใช้วิธีเดียวกัน
+  return createPortal(
     <div className="fixed inset-0 z-40 flex items-end justify-center">
       <div
         className={`metric-sheet-backdrop ${closing ? 'is-closing' : ''} absolute inset-0 bg-black/60`}
@@ -204,6 +211,7 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
