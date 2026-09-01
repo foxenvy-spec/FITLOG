@@ -95,6 +95,16 @@ export default function WeeklyVolume() {
   const overTargetCount = rows.filter((r) => r.status === 'veryHigh').length
   const underTargetCount = rows.filter((r) => r.status === 'behind' || r.status === 'onTrack').length
 
+  // ฟีดแบ็ก "สัปดาห์หน้าฉันควรเล่นอะไร? — เพิ่ม Priority: Chest · Shoulders · Arms ให้รู้ทันที" — เอา
+  // เฉพาะกลุ่มที่ "behind" จริง (ยังห่างเป้าหมายเทียบสัดส่วนวันในสัปดาห์ ไม่ใช่แค่ onTrack ที่กำลังไปได้ดี
+  // อยู่แล้ว) เรียงตามส่วนต่างที่ขาดมากสุดก่อน เอาแค่ 3 กลุ่มแรกไม่ให้ยาวเกิน — ไม่มีกลุ่มไหน behind เลย
+  // (ทุกกลุ่มอย่างน้อย onTrack ขึ้นไป) ไม่โชว์บรรทัดนี้เลย ไม่มโนคำแนะนำเมื่อไม่มีอะไรต้องเร่ง
+  const priorityGroups = rows
+    .filter((r) => r.status === 'behind')
+    .sort((a, b) => b.target - b.sets - (a.target - a.sets))
+    .slice(0, 3)
+    .map((r) => r.mg)
+
   return (
     // v(รอบก่อน): เคยลด texture เป็น reducedTexture เพราะตอนนั้นจัด Weekly Volume อยู่กลุ่มเดียวกับ
     // Consistency/Cardio Volume (Level 3 เท่ากันหมด) — ฟีดแบ็กรอบใหม่แยกละเอียดขึ้น: "Muscle Heatmap +
@@ -230,6 +240,12 @@ export default function WeeklyVolume() {
             <span style={{ color: COLORS.moss }}>🟢 ในช่วงเหมาะสม {onTargetCount}</span>
             <span style={{ color: COLORS.rust }}>🔴 สูงเกินไป {overTargetCount}</span>
           </div>
+
+          {priorityGroups.length > 0 && (
+            <p className="text-center text-[12px] mt-1.5" style={{ color: COLORS.steel }}>
+              🎯 สัปดาห์นี้เน้น: {priorityGroups.join(' · ')}
+            </p>
+          )}
 
           <div className="flex justify-end mt-2.5">
             <button
