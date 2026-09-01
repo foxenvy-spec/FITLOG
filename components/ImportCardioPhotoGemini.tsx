@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { COLORS, withAlpha } from '@/lib/theme'
 
 export interface ExtractedCardioData {
   cardio_type: string | null
@@ -30,6 +31,7 @@ export default function ImportCardioPhotoGemini({ onExtracted }: { onExtracted: 
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [foundFields, setFoundFields] = useState<(keyof ExtractedCardioData)[] | null>(null)
+  const [dragOver, setDragOver] = useState(false)
 
   async function handleFile(file: File | undefined) {
     if (!file) return
@@ -73,19 +75,36 @@ export default function ImportCardioPhotoGemini({ onExtracted }: { onExtracted: 
   }
 
   return (
-    <div className="rounded-lg border border-line border-dashed bg-surface2/50 px-3 py-2.5">
+    <div
+      onDragOver={(e) => {
+        e.preventDefault()
+        setDragOver(true)
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragOver(false)
+        handleFile(e.dataTransfer.files?.[0])
+      }}
+      className="rounded-lg border border-dashed px-3 py-2.5 transition"
+      style={{
+        borderColor: dragOver ? withAlpha(COLORS.amber, '80') : withAlpha(COLORS.amber, '35'),
+        background: dragOver ? withAlpha(COLORS.amber, '10') : withAlpha(COLORS.amber, '05'),
+        boxShadow: dragOver ? `0 0 14px ${withAlpha(COLORS.amber, '25')}` : 'none',
+      }}
+    >
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-xs text-ink">
-            นำเข้าจากรูป <span className="text-[10px] text-moss">(ฟรี · Gemini)</span>
+            ✨ นำเข้าจากรูป <span className="text-[10px] text-moss">(ฟรี · Gemini)</span>
           </p>
-          <p className="text-[10px] text-muted">ถ่ายหน้าจอลู่วิ่ง/นาฬิกา แล้วให้ระบบอ่านตัวเลขให้</p>
+          <p className="text-[10px] text-muted">ลากรูปหน้าจอลู่วิ่ง/นาฬิกามาวาง หรือถ่ายรูป — AI จะแกะตัวเลขให้ทันที</p>
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={analyzing}
-          className="text-[11px] shrink-0 border border-line rounded px-2.5 py-1.5 text-ink hover:border-ink/40 disabled:opacity-60"
+          className="text-[11px] shrink-0 border border-amber/40 rounded px-2.5 py-1.5 text-amber hover:bg-amber/10 disabled:opacity-60"
         >
           {analyzing ? 'กำลังอ่าน...' : preview ? 'เปลี่ยนรูป' : '📷 เลือกรูป'}
         </button>

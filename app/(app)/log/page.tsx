@@ -19,6 +19,8 @@ import MuscleDiagram from '@/components/MuscleDiagram'
 import { computePaceSpeed, formatPace } from '@/lib/cardioPace'
 import { classifyHRZone, HR_ZONES, DEFAULT_MAX_HEART_RATE } from '@/lib/heartRate'
 import { cadenceUnitFor, cadenceUnitLabel, cadenceFieldLabel } from '@/lib/cadence'
+import { computeDaySummary } from '@/lib/workoutDisplay'
+import RestTimer from '@/components/timers/RestTimer'
 import PremiumCard from '@/components/ui/PremiumCard'
 // บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): เดิมหน้านี้มี todayStr() ของตัวเอง คำนวณจาก timezone เครื่อง ต่างจาก
 // todayStr() กลางใน lib/weekdays.ts ที่ยึด Asia/Bangkok เสมอ (performed_at ทุกแถวอื่นในแอปใช้ตัวนั้น) —
@@ -494,9 +496,11 @@ function LogPageInner() {
     ? HR_ZONES.find((z) => z.key === classifyHRZone(Number(avgHeartRate), maxHeartRate ?? DEFAULT_MAX_HEART_RATE))
     : null
 
+  const daySummary = today.length > 0 ? computeDaySummary(today) : null
+
   return (
-    <div className="space-y-6 lg:max-w-2xl lg:mx-auto">
-      <div>
+    <div className="max-w-6xl mx-auto pb-4">
+      <div className="mb-5">
         <h1 className="font-display text-2xl tracked uppercase">{editingId ? 'แก้ไขรายการ' : 'บันทึกวันนี้'}</h1>
         <input
           type="date"
@@ -505,6 +509,10 @@ function LogPageInner() {
           className="mt-1 bg-transparent text-muted text-sm font-mono outline-none border-b border-transparent focus:border-line"
         />
       </div>
+
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+      {/* ฝั่งซ้าย ~58% — ฟอร์มกรอกข้อมูล */}
+      <div className="space-y-6 lg:col-span-7">
 
       {editingId && (
         <div className="rounded-lg bg-amber/10 border border-amber/40 px-3 py-2 flex items-center justify-between">
@@ -804,6 +812,45 @@ function LogPageInner() {
           {saving ? 'กำลังบันทึก...' : flash ? 'บันทึกแล้ว ✓' : editingId ? 'บันทึกการแก้ไข' : 'บันทึก'}
         </button>
       </form>
+      </div>
+
+      {/* ฝั่งขวา ~42% — Rest Timer + สรุปสด + รายการวันนี้ (เดิมอยู่ล่างสุดของฟอร์ม ต้อง scroll สลับ
+          ไปมาตอนบันทึกหลายท่า — ย้ายมาไว้คู่กันให้เห็นตลอดบนจอใหญ่) */}
+      <div className="space-y-6 lg:col-span-5">
+        <div>
+          <p className="text-[10px] tracked uppercase text-muted mb-2">พักระหว่างเซ็ต</p>
+          <PremiumCard className="px-4 py-4">
+            <RestTimer voiceEnabled={false} />
+          </PremiumCard>
+        </div>
+
+        {daySummary && (
+          <div>
+            <p className="text-[10px] tracked uppercase text-muted mb-2">สรุปวันนี้</p>
+            <PremiumCard className="px-4 py-3.5 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-lg font-display text-amber">{daySummary.totalSets}</p>
+                <p className="text-[10px] text-muted">เซ็ตรวม</p>
+              </div>
+              <div>
+                <p className="text-lg font-display text-amber">{Math.round(daySummary.totalVolumeKg).toLocaleString('th-TH')}</p>
+                <p className="text-[10px] text-muted">วอลุ่ม (kg)</p>
+              </div>
+              {daySummary.durationMin !== null && (
+                <div>
+                  <p className="text-lg font-display text-amber">{daySummary.durationMin}</p>
+                  <p className="text-[10px] text-muted">นาที (โดยประมาณ)</p>
+                </div>
+              )}
+              {daySummary.caloriesKcal > 0 && (
+                <div>
+                  <p className="text-lg font-display text-amber">{Math.round(daySummary.caloriesKcal).toLocaleString('th-TH')}</p>
+                  <p className="text-[10px] text-muted">แคลอรี่ (kcal)</p>
+                </div>
+              )}
+            </PremiumCard>
+          </div>
+        )}
 
       <div>
         <h2 className="font-display text-sm tracked uppercase text-muted mb-2">
@@ -897,6 +944,8 @@ function LogPageInner() {
       >
         ดูประวัติทั้งหมด →
       </a>
+      </div>
+      </div>
     </div>
   )
 }
