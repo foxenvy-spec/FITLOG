@@ -43,7 +43,15 @@ import {
 } from '@/lib/workoutSession'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
-import { estimateCaloriesToday, getWeekRange, getPreviousWeekRange, computeBestVolumeIncrease, type VolumeIncrease } from '@/lib/dashboardStats'
+import {
+  estimateCaloriesToday,
+  getWeekRange,
+  getPreviousWeekRange,
+  computeBestVolumeIncrease,
+  computeRecoveryPct,
+  recoveryTier,
+  type VolumeIncrease,
+} from '@/lib/dashboardStats'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { dropSetWeightKg } from '@/lib/weightUnit'
 import { suggestNextLoad } from '@/lib/progressiveOverload'
@@ -143,6 +151,14 @@ export default function SessionPage() {
   // ในหน้าจอด้วย — addExercise/swapCurrentExercise อัปเดตเข้า map นี้เพิ่มตอนดึงท่าที่ไม่อยู่ในแผนด้วย
   const [lastPerformanceByName, setLastPerformanceByName] = useState<Record<string, LastPerformance>>({})
 
+  // ฟีดแบ็ก "Live Coach — โชว์ Recovery ของกล้ามเนื้อที่กำลังเล่นอยู่ตอนนี้เลย" (mockup "Pro Workout
+  // Experience") — เดิม recovery มีคำนวณอยู่แล้วจริง (computeSessionMuscleRecovery) แต่ถูก gate ไว้แค่
+  // phase==='done' เท่านั้น (loadSummaryExtras) ไม่เคยโชว์ระหว่างเล่นจริงเลย — ดึง "วันที่ฝึกล่าสุดต่อ
+  // กลุ่มกล้ามเนื้อ (ก่อนวันนี้)" มาเก็บไว้ตั้งแต่โหลดหน้า (query เดียวกับที่ loadSummaryExtras ใช้อยู่
+  // แล้วสำหรับ recentMuscleRows) แล้วคำนวณ % ฟื้นตัวสดๆ ต่อท่าปัจจุบันด้วย computeRecoveryPct/recoveryTier
+  // ตัวเดียวกับ Dashboard/AI Coach ทุกจุดในแอป (ไม่คิดสูตรใหม่แยก กันขัดกันเองแบบที่เคยเจอมาก่อน)
+  const [priorLastTrainedDate, setPriorLastTrainedDate] = useState<Record<string, string | null>>({})
+
   // "เพิ่มท่า" เอง ระหว่างเซสชัน — ไว้สำหรับท่านอกแผนที่อยากแทรกเข้ามาเล่นเพิ่ม
   const [showAddExercise, setShowAddExercise] = useState(false)
   const [newExerciseName, setNewExerciseName] = useState('')
@@ -216,6 +232,22 @@ export default function SessionPage() {
       setPhase('empty')
       return
     }
+
+    // สำหรับ Live Coach ระหว่างเล่น (ดู comment ที่ priorLastTrainedDate state ด้านบน) — query เดียวกับ
+    // recentMuscleRows ใน loadSummaryExtras() เป๊ะ แค่ดึงตั้งแต่ตอนโหลดหน้าแทนที่จะรอถึง phase==='done'
+    const { data: recentMuscleRows } = await supabase
+      .from('workouts')
+      .select('muscle_group, performed_at')
+      .eq('type', 'strength')
+      .lt('performed_at', todayStr())
+      .order('performed_at', { ascending: false })
+      .limit(500)
+    const priorTrained: Record<string, string | null> = {}
+    const muscleRows = (recentMuscleRows as { muscle_group: string | null; performed_at: string }[]) ?? []
+    RECOVERY_MUSCLES.forEach((mgKey) => {
+      priorTrained[mgKey] = muscleRows.find((r) => r.muscle_group === mgKey)?.performed_at ?? null
+    })
+    setPriorLastTrainedDate(priorTrained)
 
     // ดึงท่าที่บันทึกไปแล้ว "วันนี้" กลับมาทั้งหมด (เผื่อกดออกจากหน้านี้/รีเฟรชระหว่างเล่น) — ไม่กรองแค่
     // ท่าที่อยู่ในแผน เพราะท่าที่กด "เพิ่มท่า" เองระหว่างเซสชันก็ต้องรอดจากการรีเฟรชด้วยเหมือนกัน
@@ -1084,6 +1116,9 @@ export default function SessionPage() {
 
   const mg = (current.muscle_group as MuscleGroup) ?? null
   const mgColor = mg ? MUSCLE_GROUP_COLORS[mg] : undefined
+  // Live Coach — % ฟื้นตัวของกล้ามเนื้อที่กำลังเล่นอยู่ตอนนี้ (ดู comment ที่ priorLastTrainedDate state)
+  const currentRecoveryPct = mg ? computeRecoveryPct(priorLastTrainedDate[mg] ?? null, mg) : null
+  const currentRecoveryTier = currentRecoveryPct !== null ? recoveryTier(currentRecoveryPct) : null
   const setsRemaining = Math.max(0, targetSets - currentState.setsLog.length)
   const knownExercise = findExerciseByName(exerciseLibrary, current.exercise_name)
 
@@ -1296,6 +1331,19 @@ export default function SessionPage() {
         </div>
 
         <div className="px-4 py-4 space-y-3">
+          {/* ฟีดแบ็ก "Live Coach — โชว์ Recovery ของกล้ามเนื้อที่กำลังเล่นอยู่ตอนนี้เลย ไม่ใช่แค่ตอนจบ
+              เซสชัน" — เกณฑ์/สี/adviceTh ตัวเดียวกับ Dashboard/AI Coach ทุกจุด (recoveryTier) ไม่คิดเกณฑ์
+              ใหม่แยก ไม่โชว์ถ้าท่านี้ไม่มีกลุ่มกล้ามเนื้อกำกับ (ad-hoc บางท่า) */}
+          {mg && currentRecoveryTier && (
+            <div className="rounded-lg border border-white/5 bg-black/10 px-3 py-2.5">
+              <p className="text-[10px] tracked uppercase text-muted mb-1">🤖 Live Coach</p>
+              <p className="text-[12px] leading-snug font-medium" style={{ color: currentRecoveryTier.color }}>
+                {mg} ฟื้นตัวแล้ว {currentRecoveryPct}%
+              </p>
+              <p className="text-[11px] text-muted mt-0.5 leading-snug">{currentRecoveryTier.adviceTh}</p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between bg-surface2 rounded-lg px-4 py-2.5">
             <div>
               <p className="text-[10px] tracked uppercase text-muted">เซ็ตที่ทำแล้ว</p>
