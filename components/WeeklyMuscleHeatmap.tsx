@@ -356,6 +356,39 @@ export default function WeeklyMuscleHeatmap() {
         </div>
       </div>
 
+      {/* ฟีดแบ็ก "Balance 29% ควรเด่นกว่าเลข 86% Legs — สายตาไปที่ตัวเลขรายกลุ่มก่อน ทั้งที่ Balance สำคัญ
+          กว่าในเชิง UX (86% ไม่ได้แปลว่าดีเสมอไป)" — เดิม Balance ถูกฝังอยู่ท้ายการ์ด ในแถวสรุป 3 คอลัมน์
+          น้ำหนักภาพเท่ากับ "จำนวนเซ็ต/จำนวนท่า" เฉยๆ ย้ายมาไว้บนสุด (ใต้หัวข้อการ์ดทันที ก่อนไดอะแกรม/ลิสต์
+          รายกลุ่ม) เป็น hero metric ตัวใหญ่ (text-3xl) ให้เห็นก่อนอย่างอื่นทั้งหมด — เซ็ต/ท่ารวมย้ายไปเป็น
+          ข้อความรองเล็กๆ ฝั่งขวาแทน ไม่ได้ตัดข้อมูลออก แค่สลับลำดับความสำคัญ */}
+      {!isLoading && hasAnyData && balance && (
+        <div className="px-4 pb-3 flex items-start justify-between gap-3 border-b border-line">
+          <div>
+            <p className="text-[10px] tracked uppercase text-muted">Balance</p>
+            <p className="font-mono font-bold text-3xl leading-none mt-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>
+              {balance.pct}%
+            </p>
+            <span
+              className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-sans font-bold px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: `${BALANCE_COLOR[balance.tier]}26`, color: BALANCE_COLOR[balance.tier] }}
+            >
+              <span className="font-bold">{BALANCE_TIER_ARROW[balance.tier]}</span>
+              {BALANCE_STATUS_LABEL[balance.tier]}
+            </span>
+          </div>
+          <div className="text-right shrink-0 pt-0.5">
+            {balanceSummary && (
+              <p className="text-[11px] font-sans font-medium leading-snug" style={{ color: BALANCE_COLOR[balance.tier] }}>
+                ⚠️ {balanceSummary}
+              </p>
+            )}
+            <p className="text-[10px] text-muted mt-1">
+              {totalSets} เซ็ต · {totalExercises} ท่า
+            </p>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="px-4 pb-4">
           <Skeleton className="h-64 w-full rounded-lg" />
@@ -519,50 +552,6 @@ export default function WeeklyMuscleHeatmap() {
                   </div>
                 )
               })
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ฟีดแบ็ก "ข้อมูลเยอะเกินไปใน Card เดียว (97 sets, 24 exercises, Balance 58%, กล้ามเนื้อเด่น,
-          กล้ามเนื้อด้อย พร้อมกันหมด) — เหลือ Hero Insight (Balance %) แล้วซ่อนรายละเอียดไว้หลังปุ่ม" —
-          เดิม 5 คอลัมน์โชว์พร้อมกันหมด ลดเหลือ 3 (เซ็ต/ท่า/Balance) ย้าย "กล้ามเนื้อเด่น/ด้อย" ไปอยู่ใน
-          ส่วน "ดูรายละเอียด Balance" ด้านล่างแทน (ปุ่มเดียวกับที่ใช้เปิด Upper/Lower, Push/Pull) */}
-      {!isLoading && hasAnyData && balance && (
-        <div className="border-t border-line px-2 py-3 grid grid-cols-3 gap-1">
-          <div className="text-center px-1">
-            <p className="text-[10px] text-muted">จำนวนเซ็ต</p>
-            <p className="font-mono font-bold text-lg text-ink leading-tight mt-0.5">
-              {totalSets} <span className="text-xs font-sans font-normal text-muted">เซ็ต</span>
-            </p>
-          </div>
-          <div className="text-center border-l border-line px-1">
-            <p className="text-[10px] text-muted">จำนวนท่า</p>
-            <p className="font-mono font-bold text-lg text-ink leading-tight mt-0.5">
-              {totalExercises} <span className="text-xs font-sans font-normal text-muted">ท่า</span>
-            </p>
-          </div>
-          <div className="text-center border-l border-line px-1 flex items-center justify-center">
-            <p className="font-mono font-bold text-lg leading-tight flex items-center gap-1.5 flex-wrap justify-center" style={{ color: BALANCE_COLOR[balance.tier] }}>
-              <span>Balance {balance.pct}%</span>
-              <span
-                className="text-[11px] font-sans font-bold flex items-center gap-1 px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${BALANCE_COLOR[balance.tier]}26` }}
-              >
-                <span className="font-bold">{BALANCE_TIER_ARROW[balance.tier]}</span>
-                {BALANCE_STATUS_LABEL[balance.tier]}
-              </span>
-            </p>
-            {/* ฟีดแบ็ก "Balance 29% ↓ ควรปรับปรุง ไม่ actionable — user ต้องรู้ว่าควรทำอะไรต่อ" — balanceSummary
-                คำนวณจากกลุ่มที่เกิน/ขาดเป้าจริงอยู่แล้ว (บรรทัดบน) แค่เดิมโชว์เป็นฟุตโน้ตจิ๋ว text-[9px] มืด
-                จนแทบมองไม่เห็น — ขยับให้เด่นขึ้นเป็นคำแนะนำ ไม่ใช่ตัวเลข tier เฉยๆ */}
-            {balanceSummary && (
-              <p
-                className="text-[11px] font-sans font-medium mt-1 leading-tight flex items-center gap-1 justify-center"
-                style={{ color: BALANCE_COLOR[balance.tier] }}
-              >
-                <span aria-hidden="true">⚠️</span> {balanceSummary}
-              </p>
             )}
           </div>
         </div>
