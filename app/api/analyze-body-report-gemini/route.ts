@@ -249,9 +249,11 @@ export async function POST(req: NextRequest) {
           responseSchema: RESPONSE_SCHEMA,
           // gemini-3.5-flash คิดก่อนตอบ (thinking) เป็นค่าเริ่มต้น และ thinking tokens จะถูกหักออกจาก
           // maxOutputTokens ด้วย — ลดระดับการคิดลงเป็น 'low' และเผื่อ token ให้เยอะขึ้นเป็นเซฟตี้
-          // (รายงานมีฟิลด์เยอะกว่าฝั่งคาร์ดิโอ เลยเผื่อ maxOutputTokens ไว้สูงกว่า)
+          // สคีมานี้มี 31 ฟิลด์ (มากกว่าฝั่งคาร์ดิโอที่มีแค่ 6 ฟิลด์หลายเท่า) และรับได้ถึง 4 รูปต่อคำขอ
+          // ซึ่งทำให้โมเดล "คิด" นานขึ้น — เดิมตั้งไว้แค่ 3072 ซึ่งไม่พอ ทำให้ thinking tokens กิน
+          // งบจนไม่เหลือที่ให้ข้อความคำตอบเลย (parts ว่าง) วิเคราะห์รูปเลยล้มเหลวทุกครั้ง เพิ่มเป็น 8192
           thinkingConfig: { thinkingLevel: 'low' },
-          maxOutputTokens: 3072,
+          maxOutputTokens: 8192,
         },
       }),
     })
@@ -270,6 +272,16 @@ export async function POST(req: NextRequest) {
     const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text
     if (!text) {
       const blockReason = data?.promptFeedback?.blockReason
+      const finishReason = data?.candidates?.[0]?.finishReason
+      console.error('Gemini response had no text', { blockReason, finishReason, data })
+      // finishReason MAX_TOKENS + parts ว่าง = thinking tokens กินงบ maxOutputTokens จนไม่เหลือที่ตอบเลย
+      // return ตรงนี้เลย (แทนที่จะ throw) เพราะ catch ด้านล่างจะเปลี่ยนข้อความเป็นข้อความทั่วไปทับอยู่ดี
+      if (finishReason === 'MAX_TOKENS') {
+        return NextResponse.json(
+          { error: 'รูปมีข้อมูลซับซ้อนเกินไปสำหรับ AI ลองส่งทีละรูป หรือกรอกข้อมูลเองด้านล่าง' },
+          { status: 500 }
+        )
+      }
       throw new Error(blockReason ? `Blocked: ${blockReason}` : 'ไม่ได้รับข้อความตอบกลับ')
     }
 
