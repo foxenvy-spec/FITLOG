@@ -42,6 +42,17 @@ export default function ProgramPage() {
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  // บั๊ก (พบจากฟีดแบ็กผู้ใช้จริง — Dashboard โชว์ "1/5 ครั้ง" ทั้งที่ตั้งตารางไว้แค่ 3 วัน): เดิมหน้านี้มี
+  // "ลบทั้งหมด" ที่ลบแค่ program_exercises ของวันนั้น (handleDeleteAll ด้านล่าง) แต่ไม่มีทางลบตัวแถว
+  // program_days เองเลยทั้งไฟล์ (ตรวจแล้ว ไม่มี .delete() บน program_days ที่ไหนในโปรเจกต์เลย) — วันที่เคย
+  // ตั้งไว้แล้วลบท่าออกจนหมด ยัง "นับเป็นวันฝึกตามตาราง" ต่อไปตลอดกาล (workoutWeekdays ใน DashboardView.tsx/
+  // ConsistencyStrip.tsx ฯลฯ อ่านจาก "มีแถว program_days" ล้วนๆ ไม่ได้เช็คว่ามีท่าอยู่จริงไหม) ทำให้
+  // weeklyWorkoutGoal/Consistency/Streak นับวันที่ผู้ใช้เลิกฝึกไปแล้วรวมด้วย — เพิ่มปุ่มลบวันทั้งวันจริงๆ
+  // (ลบแถว program_days เอง — program_exercises ใต้วันนั้น cascade ลบตามอัตโนมัติผ่าน FK on delete cascade
+  // อยู่แล้ว ไม่ต้องลบมือ, RLS policy "Users can delete their own program days" มีอยู่แล้วในสคีมา แค่ไม่มี
+  // โค้ดฝั่งแอปเรียกใช้เท่านั้น)
+  const [confirmRemoveDay, setConfirmRemoveDay] = useState(false)
+  const [removingDay, setRemovingDay] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -118,6 +129,7 @@ export default function ProgramPage() {
     setSelectedIds(new Set())
     setConfirmBulkDelete(false)
     setConfirmDeleteAll(false)
+    setConfirmRemoveDay(false)
   }, [selectedDow])
 
   async function toggleComplete(exerciseId: string, done: boolean) {
@@ -458,6 +470,29 @@ export default function ProgramPage() {
     if (err) setError(err.message)
   }
 
+  // ลบวันนี้ออกจากตารางฝึกทั้งวัน (ต่างจาก handleDeleteAll ด้านบนที่ลบแค่ท่าในวัน แต่ตัวแถว program_days
+  // ยังอยู่ ทำให้วันนี้ยังนับเป็น "วันฝึกตามตาราง" ต่อไปในหน้า Dashboard/Consistency/Streak) — ดู comment
+  // ที่ confirmRemoveDay ด้านบนไฟล์
+  async function handleRemoveDay() {
+    if (!currentDay) return
+    setRemovingDay(true)
+    setError(null)
+    const { error: err } = await supabase.from('program_days').delete().eq('id', currentDay.id)
+    setRemovingDay(false)
+    if (err) {
+      setError(`ลบวัน${WEEKDAYS[currentDay.day_of_week]}ไม่สำเร็จ: ${err.message}`)
+      return
+    }
+    const removedId = currentDay.id
+    setDays((prev) => prev.filter((d) => d.id !== removedId))
+    setExercisesByDay((prev) => {
+      const next = { ...prev }
+      delete next[removedId]
+      return next
+    })
+    setConfirmRemoveDay(false)
+  }
+
   const isToday = selectedDow === todayDayOfWeek()
 
   if (loading) return <LoadingState />
@@ -587,7 +622,39 @@ export default function ProgramPage() {
                 </button>
               </>
             )}
+            {/* ลบวันนี้ออกจากตารางทั้งวัน (ต่างจาก "ลบทั้งหมด" ด้านบนที่ลบแค่ท่า) — โชว์เสมอไม่ว่าจะมีท่า
+                อยู่หรือไม่ (บั๊กที่พบ: วันที่ลบท่าจนว่างเปล่าแล้วยังนับเป็นวันฝึกตามตารางต่อไป ต้องลบตัววัน
+                ทิ้งจริงๆ ถึงจะหลุดจากการนับ) */}
+            {!selectMode && (
+              <button
+                onClick={() => setConfirmRemoveDay(true)}
+                className="text-[11px] text-muted hover:text-rust shrink-0"
+              >
+                ลบวันนี้ออกจากตาราง
+              </button>
+            )}
           </div>
+
+          {confirmRemoveDay && (
+            <div className="px-4 py-2.5 border-b border-white/5 bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[11px] text-rusttext">
+                ลบวัน{WEEKDAYS[currentDay.day_of_week]}ออกจากตารางฝึกทั้งหมด? (ท่าในวันนี้ {currentExercises.length} ท่าจะถูกลบไปด้วย
+                และวันนี้จะไม่นับเป็นวันฝึกตามตารางอีกต่อไป)
+              </p>
+              <div className="flex gap-3 shrink-0">
+                <button onClick={() => setConfirmRemoveDay(false)} className="text-[11px] text-muted hover:text-ink">
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleRemoveDay}
+                  disabled={removingDay}
+                  className="text-[11px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                >
+                  {removingDay ? '...' : 'ยืนยันลบวันนี้'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {selectMode && (
             <div className="px-4 py-2.5 border-b border-white/5 bg-surface2 flex items-center justify-between gap-2 flex-wrap">
