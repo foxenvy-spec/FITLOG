@@ -31,7 +31,7 @@ const STATUS_COLOR: Record<VolumeStatus, string> = {
 function MetricTile({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <div className="rounded-md bg-surface2 px-3 py-2.5">
-      <p className="text-[10px] tracked uppercase text-muted">{label}</p>
+      <p className="text-[12px] tracked uppercase text-muted">{label}</p>
       <p className="font-mono text-lg text-ink mt-0.5">
         {value}
         {unit && <span className="text-xs text-muted ml-1">{unit}</span>}
@@ -51,7 +51,7 @@ function TargetProgressRow({ label, done, target, unit }: { label: string; done:
     <div>
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs text-ink">{label}</span>
-        <span className="text-[11px] font-mono text-muted">
+        <span className="text-[12px] font-mono text-muted">
           {done}
           <span className="text-muted/60">
             /{target} {unit}
@@ -61,7 +61,7 @@ function TargetProgressRow({ label, done, target, unit }: { label: string; done:
       <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
         <AnimatedBarFill pct={pct} color={color} />
       </div>
-      <p className="mt-1 text-[11px] font-mono" style={{ color }}>
+      <p className="mt-1 text-[12px] font-mono" style={{ color }}>
         {status === 'met'
           ? 'ถึงเป้าหมายพอดี'
           : status === 'high' || status === 'veryHigh'
@@ -135,24 +135,29 @@ export default function WeeklyCardioVolume() {
 
   return (
     // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
-    <div className="rounded-card bg-surface border border-line shadow-elevated overflow-hidden">
+    // ฟีดแบ็ก "ทุกการ์ดดูสำคัญเท่ากันหมด อยากให้การ์ดระดับ Analytics เบาลง โดยไม่ต้องสลับตำแหน่ง/ลำดับ
+    // การ์ดใดๆ" — Cardio เคยถูกระบุไว้ก่อนหน้าว่า "ควรเบาที่สุด" ในบรรดาการ์ดวิเคราะห์ (Muscle Heatmap/
+    // Weekly Volume เป็น Primary ตามฟีดแบ็กที่ยืนยันไว้ก่อนหน้า — การ์ดนี้ไม่ใช่) แต่ยังใช้ bg-surface +
+    // shadow-elevated เดิม (น้ำหนักภาพเท่า Muscle Heatmap) เปลี่ยนเป็น bg-surface2/40 ไม่มี shadow-elevated
+    // (สไตล์เดียวกับ Recovery/Training This Week/Body Goal/Consistency ที่เป็น "การ์ดรอง" อยู่แล้ว)
+    <div className="rounded-card bg-surface2/40 border border-line overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
-          <p className="text-[10px] tracked uppercase text-muted">Weekly Cardio Volume</p>
+          <p className="text-[12px] tracked uppercase text-muted">Weekly Cardio Volume</p>
           <p className="font-display text-sm uppercase text-ink mt-0.5">คาร์ดิโอสัปดาห์นี้</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
           <button
             type="button"
             onClick={() => setTargetsOpen(true)}
-            className="text-[11px] text-muted hover:text-ink border border-line rounded px-2 py-1"
+            className="text-[12px] text-muted hover:text-ink border border-line rounded px-2 py-1"
           >
             ตั้งเป้าหมาย
           </button>
           <button
             type="button"
             onClick={() => setHrSettingsOpen(true)}
-            className="text-[11px] text-muted hover:text-ink border border-line rounded px-2 py-1"
+            className="text-[12px] text-muted hover:text-ink border border-line rounded px-2 py-1"
           >
             ชีพจร & VO2Max
           </button>
@@ -178,7 +183,7 @@ export default function WeeklyCardioVolume() {
             {/* ฟีดแบ็ก "Empty State ทำให้มีประโยชน์ขึ้นได้ — บอกว่าเพิ่ม Cardio แล้วจะเห็นอะไร" — บรรทัดเดียว
                 กะทัดรัด (ไม่ใช่ bullet 3 บรรทัดแยก) รักษาความ compact ของ empty state นี้ไว้ตามที่เคยตั้งใจ
                 ทำไว้ก่อนหน้า (ฟีดแบ็กเดิม "Card ยังใหญ่เกินไปสำหรับข้อมูล 0") แค่เพิ่มเหตุผลสั้นๆ ว่าทำไมควรเพิ่ม */}
-            <p className="text-[10px] text-muted/70">เพิ่ม Cardio เพื่อดู Volume · VO₂ Max · Training Load</p>
+            <p className="text-[12px] text-muted/70">เพิ่ม Cardio เพื่อดู Volume · VO₂ Max · Training Load</p>
             {/* ฟีดแบ็ก "Cardio Quick-log — เพิ่มปุ่มลัดตามชนิด เช่น + วิ่ง, + ปั่นจักรยาน แทนที่จะให้ผู้ใช้
                 กดชิปเลือกเองในฟอร์มอีกที" — ใช้ ?type=cardio&activity=<preset> ที่ /log รองรับแล้ว (ดู
                 comment ที่ useState(cardioType) ใน app/(app)/log/page.tsx) เลือก 3 ชนิดที่พบบ่อยสุดจาก
@@ -189,7 +194,7 @@ export default function WeeklyCardioVolume() {
                 <Link
                   key={activity}
                   href={`/log?type=cardio&activity=${encodeURIComponent(activity)}`}
-                  className="text-[10px] font-display tracked uppercase px-2.5 py-1 rounded-full"
+                  className="text-[12px] font-display tracked uppercase px-2.5 py-1 rounded-full"
                   style={{ border: `1px solid ${withAlpha(COLORS.amber, '40')}`, color: COLORS.amber }}
                 >
                   + {activity}
@@ -229,9 +234,9 @@ export default function WeeklyCardioVolume() {
             )}
 
             <div className="mt-3 space-y-2.5">
-              <p className="text-[10px] tracked uppercase text-muted">เป้าหมายสัปดาห์นี้</p>
+              <p className="text-[12px] tracked uppercase text-muted">เป้าหมายสัปดาห์นี้</p>
               {targetsError ? (
-                <p className="text-[11px] text-rustdim">
+                <p className="text-[12px] text-rustdim">
                   โหลดเป้าหมายไม่สำเร็จ —{' '}
                   <button type="button" onClick={retry} className="underline hover:text-ink">
                     ลองอีกครั้ง
@@ -252,16 +257,16 @@ export default function WeeklyCardioVolume() {
 
             <div className="mt-3">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] tracked uppercase text-muted">Heart Rate Zone Time</p>
+                <p className="text-[12px] tracked uppercase text-muted">Heart Rate Zone Time</p>
                 {volume.hrZones.sessionsWithHR < volume.hrZones.totalCardioSessions && (
-                  <p className="text-[10px] text-muted">
+                  <p className="text-[12px] text-muted">
                     มี HR {volume.hrZones.sessionsWithHR}/{volume.hrZones.totalCardioSessions} ครั้ง
                   </p>
                 )}
               </div>
 
               {volume.hrZones.sessionsWithHR === 0 ? (
-                <p className="text-[11px] text-muted">
+                <p className="text-[12px] text-muted">
                   ยังไม่มีข้อมูลชีพจร — กรอกชีพจรเฉลี่ยตอนบันทึกคาร์ดิโอ (หรือนำเข้าจากรูป) เพื่อดูเวลาในแต่ละโซน
                 </p>
               ) : (
@@ -273,7 +278,7 @@ export default function WeeklyCardioVolume() {
                     if (!load) return null
                     const loadColor = load === 'light' ? '#7A9B57' : load === 'moderate' ? '#E8A33D' : '#C1503A'
                     return (
-                      <p className="text-[11px] mb-2" style={{ color: loadColor }}>
+                      <p className="text-[12px] mb-2" style={{ color: loadColor }}>
                         Cardio Load: <span className="font-medium">{CARDIO_LOAD_LABEL[load]}</span>
                       </p>
                     )
@@ -290,20 +295,20 @@ export default function WeeklyCardioVolume() {
                           const pct = (mins / maxZoneMinutes) * 100
                           return (
                             <div key={z.key} className="flex items-center gap-2">
-                              <span className="text-[10px] text-muted w-24 shrink-0 truncate">{z.label}</span>
+                              <span className="text-[12px] text-muted w-24 shrink-0 truncate">{z.label}</span>
                               <span className="relative flex-1 h-2 rounded-full bg-surface2 overflow-hidden">
                                 {mins > 0 && (
                                   <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, backgroundColor: z.color }} />
                                 )}
                               </span>
-                              <span className="text-[10px] font-mono text-muted w-14 text-right shrink-0">{mins} นาที</span>
+                              <span className="text-[12px] font-mono text-muted w-14 text-right shrink-0">{mins} นาที</span>
                             </div>
                           )
                         })}
                       </div>
                     )
                   })()}
-                  <p className="text-[10px] text-muted/70 mt-1.5">
+                  <p className="text-[12px] text-muted/70 mt-1.5">
                     * ประมาณจากชีพจรเฉลี่ยต่อเซสชัน ไม่ใช่ค่าต่อเนื่องระหว่างออกกำลังกาย
                   </p>
                 </>
