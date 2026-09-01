@@ -2272,11 +2272,22 @@ export default function DashboardPage() {
                   ใช้ `next` ตัวเดียวกับที่การ์ด "Next up" แยกต่างหากด้านล่างเคยใช้ (ย้ายมารวมที่นี่แทน ตัด
                   การ์ดแยกทิ้ง — ฟีดแบ็กข้อ 17 บอกว่า Weekly Goal/Volume/Consistency "แยกกันมากจนรู้สึกเหมือน
                   3 ระบบ" นี่คือก้าวแรกที่รวมชิ้นที่เกี่ยวข้องกันจริงๆ เข้าด้วยกัน) truncate กัน title ยาว
-                  (เช่น "Day 5 — Lower (Hamstring/Glute)") ล้นการ์ดแคบๆ นี้ */}
-              {next && (
+                  (เช่น "Day 5 — Lower (Hamstring/Glute)") ล้นการ์ดแคบๆ นี้
+                  บั๊ก (ฟีดแบ็ก "วันนี้วันอังคารมีตารางฝึกอยู่และยังไม่ได้ฝึก แต่การ์ดขึ้น Next → วันพฤหัส
+                  ข้ามวันนี้ไปเลย"): findNextProgramDay เริ่มนับจาก offset=1 เสมอ (ข้ามวันนี้ไม่ว่าจะฝึก
+                  ไปแล้วหรือยัง) ทำให้ตอนวันนี้เองมีตารางฝึกอยู่แต่ยังไม่เสร็จ กลับข้ามไปโชว์วันถัดไปแทนที่จะ
+                  เตือนวันนี้ก่อน — ใช้ scheduledDay/todayCompleted ตัวเดียวกับที่การ์ด Today's Workout hero
+                  ด้านบนใช้อยู่แล้ว: มีตารางวันนี้ + ยังไม่เสร็จ = โชว์ "Today →" แทน ไม่ข้ามไปวันอื่น */}
+              {scheduledDay && !todayCompleted ? (
                 <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
-                  Next → {splitTitleDetail(next.day.title).main}
+                  Today → {splitTitleDetail(scheduledDay.title).main}
                 </p>
+              ) : (
+                next && (
+                  <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
+                    Next → {splitTitleDetail(next.day.title).main}
+                  </p>
+                )
               )}
             </div>
           </div>
