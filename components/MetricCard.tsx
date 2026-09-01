@@ -364,14 +364,18 @@ export default function MetricCard({
           <p
             className="flex items-center gap-2"
             style={{
-              // TEXT.body (แทน rgba ขาว 94% เดิม) — ตามระดับสีตัวหนังสือใหม่ (Title/Body/Secondary/
-              // Caption) กันไม่ให้ label ขาวจ้าเท่าตัวเลขหลัก ซึ่งควรเด่นกว่า
-              color: compact ? TEXT.body : 'rgba(255,255,255,.94)',
+              // ฟีดแบ็ก "Label ของ Card ควร Contrast ต่ำกว่าตัวเลขประมาณ 1 ระดับ — ตอนนี้บาง Card มี
+              // Label ที่เด่นใกล้เคียงกับ Value" — เดสก์ท็อปเดิม rgba(255,255,255,.94) (ขาวเกือบเต็ม) +
+              // fontWeight 700 (ตัวหนา) สว่าง/หนักพอๆ กับตัวเลขหลัก (TEXT.title, fontWeight 800) ทั้งที่
+              // ควรเป็นชั้น Secondary — เปลี่ยนเป็น TEXT.secondary (โทเคนเดียวกับที่ปรับสว่างขึ้นแล้วรอบ
+              // ก่อนหน้า) + fontWeight ปกติ (500) ให้สายตาไหล Label(เบา) -> Value(หนัก) ชัดเจนขึ้น มือถือ
+              // (compact) ใช้ TEXT.body/500 อยู่แล้วซึ่งตรงกับ hierarchy นี้พอดี ไม่ต้องแตะ
+              color: compact ? TEXT.body : TEXT.secondary,
               // ป้ายชื่อ Metric: มือถือ (compact) จาก dashboardSpec.metricCard.labelFontSize (15px,
               // เดิม 16px) — ลด 1pt กันชื่อยาว ("ไขมันในร่างกาย", "กล้ามเนื้อโครงร่าง") ตัดบรรทัดเพิ่ม
               // ความสูงการ์ดโดยไม่จำเป็น (ดู BodyMetricsRow.tsx ที่ย่อชื่อสองอันนี้ให้สั้นลงด้วยแล้ว)
-              // เดสก์ท็อป (compact=false) ยังคง 700/11px เดิมทุกประการ ไม่กระทบ
-              fontWeight: compact ? 500 : 700,
+              // เดสก์ท็อป (compact=false) ยังคง 11px เดิม (ไม่แตะขนาด กันกระทบ layout ที่ tune มาหลายรอบ)
+              fontWeight: compact ? 500 : 500,
               fontSize: compact ? dashboardSpec.metricCard.labelFontSize : 11,
             }}
           >

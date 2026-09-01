@@ -1155,9 +1155,13 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {weightPct !== null && (
                   <div>
+                    {/* ฟีดแบ็ก "Label ของ Card ควร Contrast ต่ำกว่าตัวเลขประมาณ 1 ระดับ (Label → Value
+                        → Change ไหลเป็นลำดับ)" — เดิมสลับกัน: label 'น้ำหนัก' ใช้ text-ink (สว่าง) ส่วน
+                        ค่าจริง '66.6 → 70.0 kg' ใช้ text-muted (จาง) ทั้งที่ตัวเลขควรเด่นกว่า สลับให้ label
+                        จางลง (text-muted) และค่าจริงเด่นขึ้น (text-ink + font-semibold) */}
                     <div className="flex items-baseline justify-between">
-                      <p className="text-xs text-ink">น้ำหนัก</p>
-                      <p className="text-[12px] font-mono text-muted">
+                      <p className="text-xs text-muted">น้ำหนัก</p>
+                      <p className="text-[12px] font-mono font-semibold text-ink">
                         {toDisplay(data.bodyMetricsSummary.weight.value as number).toFixed(1)} → {toDisplay(data.weightGoalTarget as number).toFixed(1)} {unit}
                       </p>
                     </div>
@@ -1181,9 +1185,10 @@ export default function DashboardPage() {
                 )}
                 {bodyFatPct !== null && (
                   <div>
+                    {/* เหตุผลเดียวกับบล็อกน้ำหนักด้านบน — label 'Body Fat' จางลง, ค่าจริงเด่นขึ้น */}
                     <div className="flex items-baseline justify-between">
-                      <p className="text-xs text-ink">Body Fat</p>
-                      <p className="text-[12px] font-mono text-muted">
+                      <p className="text-xs text-muted">Body Fat</p>
+                      <p className="text-[12px] font-mono font-semibold text-ink">
                         {(data.bodyMetricsSummary.bodyFatPct.value as number).toFixed(1)}% → {(data.bodyFatGoalTarget as number).toFixed(1)}%
                       </p>
                     </div>
