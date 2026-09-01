@@ -33,8 +33,20 @@ import PremiumCard from '@/components/ui/PremiumCard'
 import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
 import { useCountUp } from '@/lib/useCountUp'
 
-const RANGE_DAYS = 180
 const WEEKS_SHOWN = 8
+
+// ฟีดแบ็ก "อยากเลือกดูช่วงเวลาของหน้า /stats เอง [30 วัน | 90 วัน | 180 วัน | 1 ปี | ทั้งหมด] แทนที่จะ
+// fix ไว้ที่ 180 วันตายตัว" — คนละตัวกับ timeframe selector ใน BodyMetricsRow.tsx (อันนั้นคุมแค่การ์ด
+// น้ำหนัก/ไขมัน/กล้ามเนื้อ) ตัวนี้คุม query หลักของทั้งหน้า (workouts state เดียวที่ทุก useMemo ด้านล่าง
+// derive ต่อ) ค่าเริ่มต้น 180 วัน = พฤติกรรมเดิมทุกประการก่อนมีตัวเลือกนี้
+type StatsTimeframe = 30 | 90 | 180 | 365 | 'all'
+const TIMEFRAME_OPTIONS: { value: StatsTimeframe; label: string }[] = [
+  { value: 30, label: '30 วัน' },
+  { value: 90, label: '90 วัน' },
+  { value: 180, label: '180 วัน' },
+  { value: 365, label: '1 ปี' },
+  { value: 'all', label: 'ทั้งหมด' },
+]
 
 function lastNDays(n: number) {
   const days: string[] = []
@@ -93,16 +105,17 @@ export default function StatsPage() {
   // (อิง RPE เฉลี่ยของ 3 เซสชันล่าสุดจริง) เดิมหน้านี้เคยมี engine ของตัวเองแยกต่างหาก (ไม่ดูค่า RPE เลย)
   // ซึ่งซ้ำซ้อนและให้คำแนะนำคนละแบบกับ /coach โดยไม่ตั้งใจ — รวมเป็นตัวเดียวกันแทน
   const [overloadSuggestion, setOverloadSuggestion] = useState<OverloadPlan | null>(null)
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>(180)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const since = lastNDays(RANGE_DAYS)[0]
-    const { data, error: err } = await supabase
-      .from('workouts')
-      .select('*')
-      .gte('performed_at', since)
-      .order('performed_at', { ascending: true })
+    let query = supabase.from('workouts').select('*').order('performed_at', { ascending: true })
+    if (timeframe !== 'all') {
+      const since = lastNDays(timeframe)[0]
+      query = query.gte('performed_at', since)
+    }
+    const { data, error: err } = await query
     if (err) {
       setError(err.message)
       setLoading(false)
@@ -126,7 +139,7 @@ export default function StatsPage() {
     }
 
     setLoading(false)
-  }, [supabase])
+  }, [supabase, timeframe])
 
   useEffect(() => {
     load()
@@ -364,14 +377,37 @@ export default function StatsPage() {
     return <ErrorState title="โหลดข้อมูลสถิติไม่สำเร็จ" message={error} onRetry={load} />
   }
 
+  const timeframeLabel = TIMEFRAME_OPTIONS.find((o) => o.value === timeframe)?.label ?? ''
+  // ฟีดแบ็ก "อยากเลือกดูช่วงเวลาของหน้า /stats เอง" — pill selector สไตล์เดียวกับที่ BodyMetricsRow.tsx
+  // ใช้อยู่แล้ว (rounded-full border border-line bg-surface2 p-0.5, active = amber tint) ให้ทั้งแอปอ่าน
+  // สอดคล้องกัน — print:hidden เพราะเป็นตัวเลือกแบบโต้ตอบ ไม่มีความหมายบนกระดาษที่พิมพ์ออกมา
+  const timeframeSelector = (
+    <div className="print:hidden shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5 overflow-x-auto">
+      {TIMEFRAME_OPTIONS.map((opt) => (
+        <button
+          key={String(opt.value)}
+          type="button"
+          onClick={() => setTimeframe(opt.value)}
+          className="px-2.5 py-1 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors"
+          style={timeframe === opt.value ? { backgroundColor: '#E8A33D22', color: '#E8A33D' } : { color: '#9498A0' }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+
   if (workouts.length === 0) {
     return (
       <div className="space-y-8">
-        <h1 className="font-display text-2xl tracked uppercase">สถิติ · {RANGE_DAYS} วันล่าสุด</h1>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h1 className="font-display text-2xl tracked uppercase">สถิติ · {timeframeLabel}</h1>
+          {timeframeSelector}
+        </div>
         <EmptyState
           icon="📈"
           title="ยังไม่มีข้อมูลสถิติ"
-          message="เริ่มบันทึกการออกกำลังกายครั้งแรก แล้วสถิติของคุณจะเริ่มขึ้นที่นี่"
+          message={`ไม่มีข้อมูลในช่วง ${timeframeLabel} — ลองเลือกช่วงเวลาที่กว้างขึ้น หรือเริ่มบันทึกการออกกำลังกายครั้งแรก`}
           ctaHref="/log"
           ctaLabel="+ เริ่มบันทึก"
         />
@@ -390,15 +426,18 @@ export default function StatsPage() {
           หน้านี้มีข้อมูลสรุปครบอยู่แล้ว (Total Volume/Reps, Weekly Volume, Muscle Distribution, Cardio,
           1RM Trend, Strength Balance, PRs) เหมาะเป็นรายงานความคืบหน้าอยู่แล้วโดยไม่ต้องสร้างหน้าใหม่
           แยกต่างหาก — ปุ่มเองก็ print:hidden (ไม่ต้องปรากฏในรายงานที่พิมพ์ออกมา) */}
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="font-display text-2xl tracked uppercase">สถิติ · {RANGE_DAYS} วันล่าสุด</h1>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[11px] font-display tracked uppercase px-3 py-2 active:scale-[0.98] transition"
-        >
-          📄 Export PDF
-        </button>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h1 className="font-display text-2xl tracked uppercase">สถิติ · {timeframeLabel}</h1>
+        <div className="flex items-center gap-2 flex-wrap">
+          {timeframeSelector}
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[11px] font-display tracked uppercase px-3 py-2 active:scale-[0.98] transition"
+          >
+            📄 Export PDF
+          </button>
+        </div>
       </div>
       {/* หัวรายงานที่เห็นเฉพาะตอนพิมพ์ — บนจอปกติซ่อนไว้ (hidden print:block) ให้บริบท "รายงานของใคร/
           วันที่ไหน" ชัดเจนตอนเปิดไฟล์ PDF ย้อนหลัง (บนจอมี h1 ด้านบนอยู่แล้วไม่ต้องซ้ำ) */}
