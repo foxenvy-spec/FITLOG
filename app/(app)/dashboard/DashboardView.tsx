@@ -1015,8 +1015,13 @@ export default function DashboardPage() {
               </div>
             </div>
             {fitnessScoreRecoveryPct != null && (
+              // ฟีดแบ็ก "Fitness Score 38 กับ Recovery วางติดกันดูเหมือนเป็น metric เดียวกัน" — สาเหตุจริง
+              // คือป้าย Recovery เดิมไม่มีตัวเลขโชว์เลย (แค่คำ Excellent/Good/Needs Rest) ต่างจาก Fitness
+              // Score ที่มีวงแหวน+ตัวเลขชัดเจน ทำให้ดูไม่สมมาตรกัน — เพิ่มวงแหวน %+ตัวเลขให้ Recovery
+              // เหมือนกัน (GoalRing ตัวเดียวกับ Fitness Score) แยกความแตกต่าง 2 metric ให้ชัดด้วยรูปแบบ
+              // ที่สอดคล้องกันแทน ไม่ใช่ลดความคล้าย
               <div
-                className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+                className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5"
                 style={{
                   border: '1.5px solid transparent',
                   backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${withAlpha(COLORS.cyan, '14')}, ${withAlpha(COLORS.cyan, '40')}, ${withAlpha(COLORS.cyan, '14')})`,
@@ -1025,7 +1030,13 @@ export default function DashboardPage() {
                   boxShadow: `0 4px 14px rgba(0,0,0,.35), 0 0 8px ${withAlpha(COLORS.cyan, '1F')}`,
                 }}
               >
-                <span aria-hidden="true">💤</span>
+                <GoalRing
+                  pct={fitnessScoreRecoveryPct}
+                  size={38}
+                  strokeWidth={4}
+                  color={COLORS.cyan}
+                  ariaLabel={`Recovery ${fitnessScoreRecoveryPct}%`}
+                />
                 <div className="leading-tight">
                   <p className="text-[9px] tracked uppercase text-muted">Recovery</p>
                   <p className="text-xs font-display tracked uppercase" style={{ color: COLORS.cyan }}>
@@ -1587,18 +1598,22 @@ export default function DashboardPage() {
                   ฟีดแบ็ก "0 Exercises/0 Sets/~10 นาที ตอนยังไม่มี Workout วันนี้เลย เป็น noise ไม่ใช่ข้อมูล
                   มีความหมาย — Hero Message ควรเหลือแค่ ยังไม่มี Workout วันนี้ + CTA เดียว" — ซ่อนแถวนี้ทั้ง
                   แถวตอน isEmptyWorkoutState (ไม่มีทั้งแผนและยังไม่ได้ log อะไรเลยวันนี้) */}
+              {/* ฟีดแบ็ก "เริ่มเทรนเลย ควรเป็น Primary Action ที่เด่นที่สุดในการ์ด ลดข้อความรองลง
+                  10-15%" — ไม่แตะขนาด/สไตล์ปุ่ม CTA เอง (Button.tsx เตือนไว้แล้วว่าอย่าไปแข่ง class
+                  กับ size prop) ลดความเด่นของแถวสถิติรองแทน (text-lg -> text-base) ให้ปุ่มเด่นขึ้นโดย
+                  เปรียบเทียบแทน */}
               {!isEmptyWorkoutState && (
               <div className="flex items-center gap-4 mt-3 flex-wrap">
                 <div>
-                  <p className="font-mono text-lg text-ink leading-none">{Math.max(data.todayExercises.length, totals.entryCount)}</p>
+                  <p className="font-mono text-base text-ink leading-none">{Math.max(data.todayExercises.length, totals.entryCount)}</p>
                   <p className="text-[10px] text-muted mt-0.5">Exercises</p>
                 </div>
                 <div>
-                  <p className="font-mono text-lg text-ink leading-none">{Math.max(plannedTotalSets, totals.sets)}</p>
+                  <p className="font-mono text-base text-ink leading-none">{Math.max(plannedTotalSets, totals.sets)}</p>
                   <p className="text-[10px] text-muted mt-0.5">Sets</p>
                 </div>
                 <div>
-                  <p className="font-mono text-lg text-ink leading-none">
+                  <p className="font-mono text-base text-ink leading-none">
                     {totals.durationMin !== null ? Math.round(totals.durationMin) : `~${estimatedMinutes}`}
                   </p>
                   <p className="text-[10px] text-muted mt-0.5">นาที</p>
@@ -1608,7 +1623,7 @@ export default function DashboardPage() {
                     เหมือนบัคมากกว่าข้อมูลที่มีความหมาย */}
                 {todayCalories > 0 && (
                   <div>
-                    <p className="font-mono text-lg text-ink leading-none">{todayCalories}</p>
+                    <p className="font-mono text-base text-ink leading-none">{todayCalories}</p>
                     <p className="text-[10px] text-muted mt-0.5">kcal</p>
                   </div>
                 )}
