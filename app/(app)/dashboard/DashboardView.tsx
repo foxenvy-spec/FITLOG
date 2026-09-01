@@ -1561,24 +1561,28 @@ export default function DashboardPage() {
                   Recovery ใช้อยู่แล้ว (ไม่คำนวณซ้ำ) โชว์เฉพาะตอน isRecommendationForToday จริงๆ (กันกรณี
                   คำแนะนำเป็นของวันอื่น/กลุ่มอื่นที่ไม่ตรงกับ workoutTitle ด้านบน จะทำให้ bullet พูดคนละเรื่อง
                   กับหัวการ์ด) */}
+              {/* ฟีดแบ็ก "ทำไมวันนี้? ค่อนข้างแน่นนิดหนึ่ง — จัดเป็น WHY TODAY แล้วทำ 3 bullet ให้ visual
+                  hierarchy ชัดขึ้น" — ไม่ตัดข้อมูลอะไรออก (ทั้ง 3 เหตุผลยังอยู่ครบ) แค่ห่อเป็นกล่องย่อยแยก
+                  ออกจากเนื้อหาอื่นในการ์ด (border จางๆ) เพิ่มระยะห่างระหว่างแถวเล็กน้อย และให้หัวข้อเด่นขึ้น
+                  (ตัวหนา + tracking กว้างขึ้น) ให้สแกนอ่าน 3 บรรทัดแยกจากกันได้ง่ายกว่าเดิมที่ชิดกันเป็นก้อน */}
               {!isEmptyWorkoutState && data.isRecommendationForToday && data.todaysRecommendation && (() => {
                 const rec = data.todaysRecommendation
                 const tier = recoveryTier(rec.pct)
                 const daysSince = daysSinceLastTrained(data.recoveryDates[rec.muscleGroup] ?? null)
                 return (
-                  <div className="mt-2.5 space-y-1">
-                    <p className="text-[9px] tracked uppercase text-muted">ทำไมวันนี้?</p>
-                    <p className="text-[11px]" style={{ color: tier.color }}>
+                  <div className="mt-2.5 rounded-lg border border-white/5 bg-black/10 px-2.5 py-2 space-y-1.5">
+                    <p className="text-[9px] font-bold tracked-lg uppercase text-muted">ทำไมวันนี้?</p>
+                    <p className="text-[11px] leading-snug" style={{ color: tier.color }}>
                       {tier.labelEn === 'Excellent' || tier.labelEn === 'Good' ? '🟢' : tier.labelEn === 'Recovering' ? '🟡' : '🔴'}{' '}
                       {rec.muscleGroup} ฟื้นตัวแล้ว {rec.pct}%
                     </p>
                     {rec.setsTarget > 0 && (
-                      <p className="text-[11px]" style={{ color: rec.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}>
+                      <p className="text-[11px] leading-snug" style={{ color: rec.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}>
                         {rec.setsRemaining > 0 ? '🟢' : '🟡'} เป้าหมายสัปดาห์นี้ {rec.setsCurrent}/{rec.setsTarget} เซ็ต
                       </p>
                     )}
-                    <p className="text-[11px] text-muted">
-                      🟢{' '}
+                    <p className="text-[11px] leading-snug text-muted">
+                      🔵{' '}
                       {daysSince === null
                         ? `ยังไม่เคยเทรน${rec.muscleGroup}มาก่อน`
                         : daysSince === 0
@@ -1857,7 +1861,14 @@ export default function DashboardPage() {
                                 ตามการแบ่งหน้าที่ที่ตั้งใจไว้แล้ว (ดู comment v69 ใน TodaysWorkoutCompactCard.tsx) —
                                 scheduleOverriddenFrom/lowRecoveryCaution ด้านล่างยังคงไว้ เพราะเป็นข้อมูลที่
                                 ไม่มีที่ไหนอื่นพูดถึง ไม่ใช่การซ้ำ */}
-                            <p className="text-xs text-ink whitespace-pre-line">
+                            {/* ฟีดแบ็ก "ข้อความด้านบน Recovery Card ยังแน่น สายตาต้องประมวลผลเยอะ" — เดิม
+                                2 บรรทัดของ recoveryRecommendationLabel (🟢 progress / 🎯 แนะนำ) ใช้
+                                leading ปกติ ชิดกับ scheduleOverriddenFrom/lowRecoveryCaution ด้านล่าง
+                                (mt-0.5) จนอ่านเหมือนก้อนเดียว — เพิ่ม leading-relaxed ให้ 2 บรรทัดใน label
+                                เอง ห่างขึ้น และเพิ่มช่องไฟ mt-0.5 -> mt-1 ระหว่างบรรทัดถัดๆ ไป ไม่แตะ
+                                recoveryRecommendationLabel() เอง (ใช้ร่วมกับหน้า /recovery ด้วย) แค่ปรับ
+                                การแสดงผลตรงจุดนี้เท่านั้น */}
+                            <p className="text-xs text-ink whitespace-pre-line leading-relaxed">
                               {recoveryRecommendationLabel(recoveryLabelPct, data.isRecommendationForToday)}{' '}
                               <span className="font-display tracked uppercase" style={{ color: recColor }}>
                                 {recommendation.muscleGroup}
@@ -1866,14 +1877,14 @@ export default function DashboardPage() {
                             {/* ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — บอกเหตุผลตรงๆ เมื่อ suggestMuscleToTrain
                                 แนะนำกลุ่มนี้แทนกลุ่มตามตารางเพราะ Volume ของกลุ่มตามตารางเกินเป้าไปแล้ว */}
                             {recommendation.scheduleOverriddenFrom && (
-                              <p className="text-[11px] text-muted mt-0.5">
+                              <p className="text-[11px] text-muted mt-1">
                                 ตามตารางคือ{recommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว
                               </p>
                             )}
                             {/* ฟีดแบ็ก "Recovery ต่ำ + Volume ยังไม่ถึงเป้า → เตือน" — เคสที่ 3 ใน
                                 Recommendation Engine decision table (ยังแนะนำกลุ่มเดิม แต่ร่างกายยังไม่พร้อมเต็มที่) */}
                             {recommendation.lowRecoveryCaution && (
-                              <p className="text-[11px] mt-0.5" style={{ color: COLORS.amber }}>
+                              <p className="text-[11px] mt-1" style={{ color: COLORS.amber }}>
                                 ⚠️ ฟื้นตัวยังไม่เต็มที่ แนะนำลดความหนักหรือเลื่อนออกไปก่อน
                               </p>
                             )}
