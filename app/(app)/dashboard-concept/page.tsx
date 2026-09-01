@@ -8,6 +8,7 @@ import { computeFitnessScore } from '@/lib/fitnessScore'
 import { computeRecoveryPct, recoveryTier } from '@/lib/dashboardStats'
 import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import HeroGaugeConcept from '@/components/dashboard/HeroGaugeConcept'
+import HighlightsRow from '@/components/dashboard/HighlightsRow'
 import LoadingState from '@/components/LoadingState'
 import ErrorState from '@/components/ErrorState'
 
@@ -18,18 +19,9 @@ import ErrorState from '@/components/ErrorState'
 // เพิ่มแค่ส่วนที่ยังไม่มีจริง: แถว Highlights (สรุปเร็ว) — ทุกตัวเลขเป็นข้อมูลจริงจาก fetchDashboardData
 // ตัวเดียวกับ Dashboard จริง ไม่มีตัวไหนสมมติ (ตัด "Achievements ใหม่"/nutrition insight ออกจากมอคอัพ
 // เพราะยังไม่มีระบบคำนวณ "ใหม่ล่าสุด" หรือข้อมูลอาหารให้ใช้จริง)
-function HighlightTile({ icon, value, label }: { icon: string; value: string; label: string }) {
-  return (
-    <div className="rounded-lg bg-surface2 px-3 py-2.5 flex-1 min-w-[120px]">
-      <p className="text-lg leading-none">{icon}</p>
-      <p className="font-mono font-bold text-ink mt-1.5" style={{ fontSize: 18 }}>
-        {value}
-      </p>
-      <p className="text-[12px] text-muted mt-0.5">{label}</p>
-    </div>
-  )
-}
-
+// Highlights ย้ายไปเป็น components/dashboard/HighlightsRow.tsx แล้ว (ใช้ร่วมกับ /dashboard จริงหลัง
+// "ลองเอาไปแทรกของจริง") — ที่นี่แค่ import มาแสดงเหมือนเดิม ไม่ก็อปโค้ดซ้ำ ส่วน Quick Action ยังอยู่ที่
+// หน้า preview นี้ที่เดียว (ไม่ได้ตามไป /dashboard จริง เพราะซ้ำกับแถว QuickAction ที่มีอยู่แล้วที่นั่น)
 function QuickActionLink({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
     <Link href={href} className="rounded-lg bg-surface2 hover:bg-surface2/70 transition px-3 py-2.5 flex-1 min-w-[100px] text-center">
@@ -91,22 +83,7 @@ export default function DashboardConceptPreviewPage() {
       </div>
       <HeroGaugeConcept fitnessScore={fitnessScore} recoveryPct={recoveryPct} recoveryLabel={recoveryTier(recoveryPct).labelEn} />
 
-      <div className="rounded-lg border border-line bg-surface px-4 py-4 space-y-3">
-        <p className="text-[12px] tracked uppercase text-muted">Highlights</p>
-        <div className="flex flex-wrap gap-2.5">
-          <HighlightTile icon="🔥" value={`${data.streak} วัน`} label="Streak ต่อเนื่อง" />
-          {data.bestVolumeIncrease && (
-            <HighlightTile
-              icon="📈"
-              value={`+${data.bestVolumeIncrease.pct}%`}
-              label={`${data.bestVolumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน`}
-            />
-          )}
-          {data.weeklyConsistencyPct != null && (
-            <HighlightTile icon="✅" value={`${data.weeklyConsistencyPct}%`} label="Consistency (21 วันล่าสุด)" />
-          )}
-        </div>
-      </div>
+      <HighlightsRow streak={data.streak} bestVolumeIncrease={data.bestVolumeIncrease} weeklyConsistencyPct={data.weeklyConsistencyPct} />
 
       <div className="rounded-lg border border-line bg-surface px-4 py-4 space-y-3">
         <p className="text-[12px] tracked uppercase text-muted">Quick Action</p>

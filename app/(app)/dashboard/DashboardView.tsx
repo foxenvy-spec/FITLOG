@@ -79,6 +79,7 @@ import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import FitnessScoreDetailSheet from '@/components/dashboard/FitnessScoreDetailSheet'
 import HeroGaugeConcept from '@/components/dashboard/HeroGaugeConcept'
+import HighlightsRow from '@/components/dashboard/HighlightsRow'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
@@ -2375,15 +2376,22 @@ export default function DashboardPage() {
           above/below (quick-start + log/templates/stats) stay as-is; at xl they're both
           hidden and replaced by this single deduplicated row so the 12-col grid doesn't
           show the same "บันทึก"/"เทมเพลต" shortcuts twice. Narrowed to col-span-9 (from 12)
-          so it sits beside the AI Coach card instead of running underneath it. */}
-      <div
-        className={`hidden lg:grid lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3 ${data.hasAnyHistory ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
-      >
-        <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
-        <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
-        <QuickAction href="/health" label="วิเคราะห์ร่างกาย" icon="🔍" accent="amber" />
-        <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" weight="tertiary" />
-        {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" weight="tertiary" />}
+          so it sits beside the AI Coach card instead of running underneath it.
+          ฟีดแบ็ก "ลองเอาไปแทรกของจริง" (Highlights จากหน้า preview /dashboard-concept) — วาง
+          HighlightsRow ซ้อนอยู่เหนือแถว QuickAction เดิมในกริดเซลล์เดียวกัน (col-start-1/col-span-9/
+          row-start-2 ย้ายไปอยู่ที่ div ห่อนี้แทน) ไม่ต้องแก้ row-start ของ AI Coach/Heatmap/Volume ที่
+          เหลือเลย เพราะ grid นี้ไม่ได้ fix ความสูงแถวตายตัว (auto-size ตามเนื้อหา) แถว row-start-2 แค่
+          สูงขึ้นเองตามเนื้อหาใหม่ ทุกอย่างด้านล่างขยับตามอัตโนมัติ — ไม่เอา "Quick Action" คู่จากมอคอัพมา
+          ด้วย เพราะซ้ำกับแถว QuickAction ที่มีอยู่แล้วตรงนี้ (คนละลิงก์กัน จะสับสน) */}
+      <div className="hidden lg:flex lg:flex-col lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3">
+        <HighlightsRow streak={data.streak} bestVolumeIncrease={data.bestVolumeIncrease} weeklyConsistencyPct={data.weeklyConsistencyPct} />
+        <div className={`grid gap-3 ${data.hasAnyHistory ? 'grid-cols-5' : 'grid-cols-4'}`}>
+          <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
+          <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
+          <QuickAction href="/health" label="วิเคราะห์ร่างกาย" icon="🔍" accent="amber" />
+          <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" weight="tertiary" />
+          {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" weight="tertiary" />}
+        </div>
       </div>
 
       {/* full width (lg+): below-the-fold charts, insights, quick actions
