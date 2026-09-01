@@ -27,6 +27,11 @@ interface GoalRingProps {
   // (ไม่ใช่จุดสีครีม/ส้มแบบ ProgressRing ซึ่งผูกกับธีมไฟ) ให้เข้ากับทุกสีวง ปิดดีฟอลต์ (false) ไม่กระทบ
   // ที่เรียกใช้เดิมทั้งหมด — เปิดเฉพาะจุดที่อยากได้ (ดู DashboardView.tsx)
   glow?: boolean
+  // ทดลอง (HeroGaugeConcept.tsx) — แผ่นกลมทึบด้านในตัววง กันพื้นหลัง/เอฟเฟกต์ที่วางอยู่ข้างหลัง GoalRing
+  // (เช่นเส้นคลื่นพลังงาน) ทะลุผ่านกลางวงมาตัดกับตัวหนังสือ — optional, ไม่ระบุ = โปร่งใสเหมือนเดิมทุก
+  // จุดที่เรียกใช้อยู่แล้ว (20+ จุดทั่วแอป) ไม่กระทบของเดิมเลย inset คำนวณให้แผ่นชนขอบในของเส้น stroke
+  // พอดี (ไม่ทับเส้น progress เอง)
+  innerDiscColor?: string
 }
 
 export default function GoalRing({
@@ -39,6 +44,7 @@ export default function GoalRing({
   ariaLabel,
   valueLabel,
   glow = false,
+  innerDiscColor,
 }: GoalRingProps) {
   const clamped = Math.max(0, Math.min(100, pct))
   const animatedPct = useCountUp(clamped)
@@ -70,6 +76,13 @@ export default function GoalRing({
           strokeDashoffset={offset}
         />
       </svg>
+      {innerDiscColor && (
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{ inset: strokeWidth, backgroundColor: innerDiscColor }}
+          aria-hidden="true"
+        />
+      )}
       {glow && (
         <>
           <div className="absolute inset-0 pointer-events-none animate-ring-sweep-slow" aria-hidden="true">
