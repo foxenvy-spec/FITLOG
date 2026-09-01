@@ -17,12 +17,22 @@ import type { FitnessScoreResult } from '@/lib/fitnessScore'
 //    ฝั่งสี ไม่มีหัว comet ใดๆ แทนด้วยจุดฝุ่นดาวกระจาย (particle dust)
 // 4. ขอบวงแบนไม่มีออร่า -> คืนชุด Fog/Bloom/Core (เฉดรัศมี 3 ชั้น) ที่ FitnessScore.tsx ใช้อยู่แล้วกับวง
 //    Fitness Score บนมือถือ (ของเดิมที่ tune มาแล้ว ไม่ได้คิดค่าใหม่) + เพิ่มขอบบาง 2 ชั้น (glass bezel)
+//
+// รอบที่ 3 — ฟีดแบ็ก "ลองเอาไปแทรกของจริง" (ใช้แทน pill Fitness Score/Recovery เดิมในหัว /dashboard
+// จริง): เพิ่ม fitnessRingSize/recoverySize (ดีฟอลต์คงขนาดเดิม 140/124 สำหรับหน้า preview) + wrapped
+// (false = ไม่มีกรอบการ์ด/พื้นหลัง/padding ใหญ่ ใช้ตอนฝังในแถว header ที่มีพื้นหลัง/โครงสร้างของตัวเองอยู่
+// แล้ว) + onFitnessScoreClick (ให้กดวง Fitness Score เปิด FitnessScoreDetailSheet ได้เหมือน pill เดิม
+// ไม่เสียฟีเจอร์ "กดดูรายละเอียด" ที่เพิ่งทำไปก่อนหน้านี้)
 interface HeroGaugeConceptProps {
   fitnessScore: FitnessScoreResult
   recoveryPct: number
   recoveryLabel: string
   fitnessScoreDiff?: string
   recoveryDiff?: string
+  fitnessRingSize?: number
+  recoveryRingSize?: number
+  wrapped?: boolean
+  onFitnessScoreClick?: () => void
 }
 
 const INNER_DISC = '#101114'
@@ -109,6 +119,9 @@ function GlowLayers({ size, color }: { size: number; color: string }) {
   )
 }
 
+// fontSize ทุกบรรทัดสเกลตามขนาดวงจริง (ratio เดียวกับที่ GoalRing เองใช้คำนวณ fontSize ตัวเลขกลางวง
+// จาก size*0.24 ภายใน) แทนค่าตายตัว 34/9/12/9px เดิม — จำเป็นตอนเอาไปฝังใน header จริงที่วงเล็กกว่า
+// หน้า preview มาก (ดู fitnessRingSize/recoveryRingSize ด้านล่าง) กันตัวหนังสือใหญ่เกินวงจนล้น
 function DialText({
   eyebrow,
   value,
@@ -116,6 +129,7 @@ function DialText({
   color,
   diff,
   diffColor,
+  ringSize,
 }: {
   eyebrow: string
   value: string
@@ -123,20 +137,25 @@ function DialText({
   color: string
   diff?: string
   diffColor: string
+  ringSize: number
 }) {
+  const valueFontSize = Math.max(14, Math.round(ringSize * 0.24))
+  const eyebrowFontSize = Math.max(7, Math.round(ringSize * 0.065))
+  const tierFontSize = Math.max(8, Math.round(ringSize * 0.08))
+  const diffFontSize = Math.max(7, Math.round(ringSize * 0.065))
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4 text-center">
-      <span className="text-[9px] tracked uppercase" style={{ color: TEXT.secondary, letterSpacing: '0.12em' }}>
+      <span className="tracked uppercase" style={{ fontSize: eyebrowFontSize, color: TEXT.secondary, letterSpacing: '0.1em' }}>
         {eyebrow}
       </span>
-      <span className="font-mono font-extrabold leading-none mt-1" style={{ fontSize: 34, color: TEXT.title }}>
+      <span className="font-mono font-extrabold leading-none mt-1" style={{ fontSize: valueFontSize, color: TEXT.title }}>
         {value}
       </span>
-      <span className="text-xs font-display font-bold tracked uppercase mt-1" style={{ color }}>
+      <span className="font-display font-bold tracked uppercase mt-1" style={{ fontSize: tierFontSize, color }}>
         {tierLabel}
       </span>
       {diff && (
-        <span className="text-[9px] font-medium mt-1" style={{ color: diffColor }}>
+        <span className="font-medium mt-1" style={{ fontSize: diffFontSize, color: diffColor }}>
           {diff}
         </span>
       )}
@@ -150,12 +169,19 @@ export default function HeroGaugeConcept({
   recoveryLabel,
   fitnessScoreDiff,
   recoveryDiff,
+  fitnessRingSize = 140,
+  recoveryRingSize = 124,
+  wrapped = true,
+  onFitnessScoreClick,
 }: HeroGaugeConceptProps) {
-  return (
-    <div className="relative rounded-card border border-line bg-bg overflow-hidden px-6 py-14">
+  const fitnessStrokeWidth = Math.max(4, Math.round(fitnessRingSize * 0.05))
+  const recoveryStrokeWidth = Math.max(4, Math.round(recoveryRingSize * 0.05))
+
+  const content = (
+    <>
       {/* คลื่นใยไหม — เต็มความกว้าง อยู่หลังทุกอย่าง */}
       <div className="absolute inset-0 flex items-center justify-center opacity-90 pointer-events-none">
-        <div className="w-full max-w-4xl h-56">
+        <div className="w-full max-w-4xl h-full">
           <SilkWaves />
         </div>
       </div>
@@ -177,19 +203,28 @@ export default function HeroGaugeConcept({
         />
       ))}
 
-      <div className="relative z-10 flex items-center justify-center gap-10 sm:gap-16">
-        {/* Fitness Score */}
-        <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
-          <GlowLayers size={140} color={fitnessScore.color} />
+      <div className="relative z-10 flex items-center justify-center gap-6 sm:gap-10">
+        {/* Fitness Score — กดได้ถ้าส่ง onFitnessScoreClick มา (ใช้ตอนฝังใน header จริง เปิด
+            FitnessScoreDetailSheet เดิม) ไม่ส่งมา = แค่แสดงผลเฉยๆ เหมือนหน้า preview */}
+        <button
+          type="button"
+          onClick={onFitnessScoreClick}
+          disabled={!onFitnessScoreClick}
+          className={`relative flex items-center justify-center shrink-0 ${onFitnessScoreClick ? 'cursor-pointer hover:brightness-110 transition' : 'cursor-default'}`}
+          style={{ width: fitnessRingSize, height: fitnessRingSize }}
+          aria-haspopup={onFitnessScoreClick ? 'dialog' : undefined}
+          aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel}${onFitnessScoreClick ? ' — กดดูรายละเอียด' : ''}`}
+        >
+          <GlowLayers size={fitnessRingSize} color={fitnessScore.color} />
           <GoalRing
             pct={fitnessScore.score}
-            size={140}
-            strokeWidth={7}
+            size={fitnessRingSize}
+            strokeWidth={fitnessStrokeWidth}
             color={fitnessScore.color}
             valueLabel=" "
             innerDiscColor={INNER_DISC}
             glow
-            ariaLabel={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel}`}
+            ariaLabel={`Fitness Score ${fitnessScore.score}`}
           />
           <DialText
             eyebrow="Fitness Score"
@@ -198,16 +233,17 @@ export default function HeroGaugeConcept({
             color={fitnessScore.color}
             diff={fitnessScoreDiff}
             diffColor={COLORS.rust}
+            ringSize={fitnessRingSize}
           />
-        </div>
+        </button>
 
         {/* Recovery */}
-        <div className="relative flex items-center justify-center" style={{ width: 124, height: 124 }}>
-          <GlowLayers size={124} color={COLORS.cyan} />
+        <div className="relative flex items-center justify-center shrink-0" style={{ width: recoveryRingSize, height: recoveryRingSize }}>
+          <GlowLayers size={recoveryRingSize} color={COLORS.cyan} />
           <GoalRing
             pct={recoveryPct}
-            size={124}
-            strokeWidth={6}
+            size={recoveryRingSize}
+            strokeWidth={recoveryStrokeWidth}
             color={COLORS.cyan}
             valueLabel=" "
             innerDiscColor={INNER_DISC}
@@ -221,9 +257,16 @@ export default function HeroGaugeConcept({
             color={COLORS.cyan}
             diff={recoveryDiff}
             diffColor={COLORS.moss}
+            ringSize={recoveryRingSize}
           />
         </div>
       </div>
-    </div>
+    </>
   )
+
+  if (!wrapped) {
+    return <div className="relative">{content}</div>
+  }
+
+  return <div className="relative rounded-card border border-line bg-bg overflow-hidden px-6 py-14">{content}</div>
 }

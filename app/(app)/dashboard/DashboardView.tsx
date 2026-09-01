@@ -77,6 +77,7 @@ import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import FitnessScoreDetailSheet from '@/components/dashboard/FitnessScoreDetailSheet'
+import HeroGaugeConcept from '@/components/dashboard/HeroGaugeConcept'
 
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
@@ -1024,78 +1025,29 @@ export default function DashboardPage() {
             (ป้ายที่สอง สีฟ้าไซแอนเดียวกับการ์ด Recovery) วางคู่กับ Fitness Score pill — ครบทั้ง 2 สัญญาณ
             ที่มอคอัพต้องการโดยไม่ต้องรื้อโครงสร้างเดิม — ไม่โชว์ถ้ายังไม่เคยฝึกกลุ่มกล้ามเนื้อไหนเลย (ข้อมูล
             จริงไม่พอให้ประเมิน ไม่เดาให้ ดู fitnessScoreRecoveryPct ด้านบน) */}
-        {fitnessScore && (
-          <div className="hidden md:flex flex-1 justify-center items-center gap-2.5 self-center">
-            <button
-              type="button"
-              onClick={() => setShowFitnessScoreDetail(true)}
-              className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5 transition hover:brightness-110"
-              aria-haspopup="dialog"
-              aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel} — กดดูรายละเอียด`}
-              style={{
-                border: '1.5px solid transparent',
-                backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${fitnessScore.color}14, ${fitnessScore.color}40, ${fitnessScore.color}14)`,
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                boxShadow: `0 4px 14px rgba(0,0,0,.35), 0 0 8px ${fitnessScore.color}1F`,
-              }}
-            >
-              <GoalRing
-                pct={fitnessScore.score}
-                size={38}
-                strokeWidth={4}
-                color={fitnessScore.color}
-                valueLabel={String(fitnessScore.score)}
-                ariaLabel={`Fitness Score ${fitnessScore.score}`}
-              />
-              <div className="leading-tight">
-                <p className="text-[12px] tracked uppercase text-muted">Fitness Score</p>
-                <p className="text-xs font-display tracked uppercase" style={{ color: fitnessScore.color }}>
-                  {fitnessScore.tierLabel}
-                </p>
-              </div>
-            </button>
+        {/* ทดลอง (ฟีดแบ็ก "ลองเอาไปแทรกของจริง" หลังลองบนหน้า preview /dashboard-concept แล้ว) — แทนที่
+            pill Fitness Score/Recovery คู่เดิมด้านบนด้วย HeroGaugeConcept (Twin Cyber Gauge เชื่อมด้วย
+            คลื่นพลังงาน) wrapped=false (ไม่มีกรอบการ์ด/พื้นหลังของตัวเอง ฝังในแถว header ตรงๆ) ขนาดวง
+            ย่อลงจากหน้า preview (140/124 -> 88/76) ให้พอดีกับความสูง header แถวนี้มากกว่า — คง
+            fitnessScoreRecoveryPct != null gate เดิมไว้ (ไม่โชว์ถ้ายังไม่เคยฝึกกลุ่มกล้ามเนื้อไหนเลย
+            ข้อมูลจริงไม่พอให้ประเมิน) และคงปุ่มกดเปิด FitnessScoreDetailSheet เดิมไว้ผ่าน
+            onFitnessScoreClick (ไม่เสียฟีเจอร์ "กดดูรายละเอียด" ที่เพิ่งทำไปก่อนหน้านี้) */}
+        {fitnessScore && fitnessScoreRecoveryPct != null && (
+          <div className="hidden md:flex flex-1 justify-center items-center self-center">
+            <HeroGaugeConcept
+              fitnessScore={fitnessScore}
+              recoveryPct={fitnessScoreRecoveryPct}
+              recoveryLabel={recoveryTier(fitnessScoreRecoveryPct).labelEn}
+              fitnessRingSize={88}
+              recoveryRingSize={76}
+              wrapped={false}
+              onFitnessScoreClick={() => setShowFitnessScoreDetail(true)}
+            />
             <FitnessScoreDetailSheet
               open={showFitnessScoreDetail}
               onClose={() => setShowFitnessScoreDetail(false)}
               score={fitnessScore}
             />
-            {fitnessScoreRecoveryPct != null && (
-              // ฟีดแบ็ก "Fitness Score 38 กับ Recovery วางติดกันดูเหมือนเป็น metric เดียวกัน" — สาเหตุจริง
-              // คือป้าย Recovery เดิมไม่มีตัวเลขโชว์เลย (แค่คำ Excellent/Good/Needs Rest) ต่างจาก Fitness
-              // Score ที่มีวงแหวน+ตัวเลขชัดเจน ทำให้ดูไม่สมมาตรกัน — เพิ่มวงแหวน %+ตัวเลขให้ Recovery
-              // เหมือนกัน (GoalRing ตัวเดียวกับ Fitness Score) แยกความแตกต่าง 2 metric ให้ชัดด้วยรูปแบบ
-              // ที่สอดคล้องกันแทน ไม่ใช่ลดความคล้าย
-              <div
-                className="inline-flex items-center gap-2.5 rounded-full px-3 py-1.5"
-                style={{
-                  border: '1.5px solid transparent',
-                  backgroundImage: `${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${withAlpha(COLORS.cyan, '14')}, ${withAlpha(COLORS.cyan, '40')}, ${withAlpha(COLORS.cyan, '14')})`,
-                  backgroundOrigin: 'border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  boxShadow: `0 4px 14px rgba(0,0,0,.35), 0 0 8px ${withAlpha(COLORS.cyan, '1F')}`,
-                }}
-              >
-                <GoalRing
-                  pct={fitnessScoreRecoveryPct}
-                  size={38}
-                  strokeWidth={4}
-                  color={COLORS.cyan}
-                  ariaLabel={`Recovery ${fitnessScoreRecoveryPct}%`}
-                />
-                <div className="leading-tight">
-                  <p className="text-[12px] tracked uppercase text-muted">Recovery</p>
-                  {/* ฟีดแบ็ก "78% = Excellent ด้านบน แต่ 78% = Good ใน Recovery Card — Algorithm เดียวกัน
-                      ต้องแสดง Status เหมือนกันทุกที่" — เจอบั๊กจริง: ป้ายนี้เดิมเขียน threshold เองแยกต่างหาก
-                      (>=76 Excellent, >=41 Good, ต่ำกว่า Needs Rest) คนละชุดกับ RECOVERY_TIERS ที่การ์ด
-                      Recovery ใช้ (>=90 Excellent, >=65 Good, >=35 Recovering, ต่ำกว่า Rest) — เปลี่ยนมาใช้
-                      recoveryTier() ตัวเดียวกับการ์ด Recovery เป๊ะ ให้ป้ายสถานะตรงกันเสมอไม่ว่า % จะเท่าไหร่ */}
-                  <p className="text-xs font-display tracked uppercase" style={{ color: COLORS.cyan }}>
-                    {recoveryTier(fitnessScoreRecoveryPct).labelEn}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
