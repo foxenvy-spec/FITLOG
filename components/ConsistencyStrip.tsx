@@ -10,6 +10,7 @@ import { buildDisplaySets } from '@/components/ExerciseCard'
 import type { Workout, WorkoutSet } from '@/lib/types'
 
 const WEEKDAY_LABELS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
+const WEEKDAY_FULL = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์']
 const WINDOW_DAYS = 21 // 3 สัปดาห์เต็ม (จ-อา) ย้อนหลัง — พอเห็นแพทเทิร์นโดยไม่ยาวเทอะทะ
 
 // บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): toIso เดิมแปลง Date -> string ผ่าน timezone ของเครื่องที่รันโค้ด (เหมือน
@@ -318,6 +319,32 @@ export default function ConsistencyStrip() {
     return buildCalendarGrid(activeWindow.windowStartIso, activeWindow.setsByDay, activeWindow.workoutsByDay)
   }, [activeWindow])
 
+  // ฟีดแบ็ก "Consistency ยังมีพื้นที่ว่างข้างปฏิทิน (ตอนไม่ได้กดเลือกวัน) — เพิ่ม insight สั้นๆ เช่น
+  // วันที่ฝึกดีที่สุด/พลาดไปกี่ครั้ง มาเติมพื้นที่นั้น ไม่ใช่การ์ดใหม่" — ทั้งสองบรรทัดคำนวณจากข้อมูลที่มีอยู่
+  // แล้วทั้งคู่ ไม่ query เพิ่ม: พลาดไปกี่ครั้ง = plannedCount - completedPlannedCount (ตัวเดียวกับ caption
+  // ของ StatTile ด้านขวาอยู่แล้ว), วันฝึกสม่ำเสมอที่สุด = นับความถี่ day-of-week จาก data.workoutsByDay
+  // (ช่วงปัจจุบันเสมอ ไม่ผูกกับ weekOffset ตามกติกาเดียวกับ liveStats) ต้องมีอย่างน้อย 2 ครั้งถึงจะโชว์
+  // (กันกรณี "ดีที่สุด" ที่จริงมีแค่ครั้งเดียว ไม่มีความหมายว่า "สม่ำเสมอ")
+  const insights = useMemo(() => {
+    if (!data || !liveStats) return []
+    const lines: { icon: string; text: string; color: string }[] = []
+    const missed = liveStats.plannedCount - liveStats.completedPlannedCount
+    if (liveStats.plannedCount > 0 && missed > 0) {
+      lines.push({ icon: '📅', text: `พลาดไป ${missed} ครั้งจากแผนที่ตั้งไว้ในช่วงนี้`, color: '#C1503A' })
+    }
+    const tally = Array(7).fill(0)
+    Object.keys(data.workoutsByDay).forEach((iso) => {
+      const idx = (new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7
+      tally[idx]++
+    })
+    const maxCount = Math.max(...tally)
+    if (maxCount >= 2) {
+      const bestIdx = tally.indexOf(maxCount)
+      lines.push({ icon: '🏆', text: `วัน${WEEKDAY_FULL[bestIdx]}คือวันที่คุณฝึกสม่ำเสมอที่สุด (${maxCount} ครั้งในช่วงนี้)`, color: '#7A9B57' })
+    }
+    return lines
+  }, [data, liveStats])
+
   return (
     // ฟีดแบ็ก "Muscle Heatmap + Weekly Volume ควรเป็น PRIMARY, Consistency + Week Streak ควรเป็น
     // SECONDARY — ตอนนี้ทุกการ์ดแย่งความสนใจเท่ากันหมด" — bg-surface + shadow-elevated เดิม ทำให้การ์ด
@@ -423,14 +450,25 @@ export default function ConsistencyStrip() {
             </div>
           </div>
 
-          {/* detail of a clicked day — sits in the space beside the calendar, only rendered once a day is selected */}
-          {selectedDayIso && selectedDayWorkouts && (
+          {/* detail of a clicked day — sits in the space beside the calendar, only rendered once a day is selected;
+              ไม่งั้นใช้พื้นที่เดียวกันโชว์ insight สั้นๆ แทน (ดู comment ที่ insights ด้านบน) */}
+          {selectedDayIso && selectedDayWorkouts ? (
             <DayDetail
               key={selectedDayIso}
               iso={selectedDayIso}
               workouts={selectedDayWorkouts}
               onClose={() => setSelectedDayIso(null)}
             />
+          ) : (
+            insights.length > 0 && (
+              <div className="flex-1 min-w-[180px] border-l border-line pl-4 flex flex-col justify-center gap-2">
+                {insights.map((line) => (
+                  <p key={line.icon} className="text-[12px] leading-snug" style={{ color: line.color }}>
+                    <span aria-hidden="true">{line.icon}</span> {line.text}
+                  </p>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>
