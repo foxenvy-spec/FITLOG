@@ -908,10 +908,12 @@ export function computeMuscleBalance(shares: number[]): number {
 
 export type BalanceStatusTier = 'good' | 'ok' | 'poor'
 
+// ฟีดแบ็ก "'ควรปรับปรุง' ฟังดูเป็นแค่ความเห็น ไม่บอกว่าต้องทำอะไร — เปลี่ยนเป็น 'ต้องปรับสมดุล'
+// ให้สื่อ action ชัดกว่า" — เปลี่ยนเฉพาะ tier 'poor' ตัวเดียว (good/ok ยังเป็นคำอธิบายสถานะปกติอยู่แล้ว)
 export const BALANCE_STATUS_LABEL: Record<BalanceStatusTier, string> = {
   good: 'สมดุลดี',
   ok: 'ปานกลาง',
-  poor: 'ควรปรับปรุง',
+  poor: 'ต้องปรับสมดุล',
 }
 
 export function balanceStatusTier(score: number): BalanceStatusTier {

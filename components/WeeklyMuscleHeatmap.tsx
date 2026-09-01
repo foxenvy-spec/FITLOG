@@ -86,16 +86,11 @@ const BALANCE_COLOR: Record<BalanceTier, string> = {
   poor: '#C1503A', // rust
 }
 
-// ป้ายข้อความ + ลูกศรของ balance tier — ใช้ในแถบสรุปด้านล่างการ์ด (แทนที่ข้อความ AI Coach เดิม)
+// ป้ายข้อความของ balance tier — ใช้ใน hero metric ด้านบนการ์ด
 // หมายเหตุ: label ใช้ BALANCE_STATUS_LABEL จาก lib/dashboardStats.ts (ตัวเดียวกับการ์ด WeeklyVolume)
 // เพื่อให้ตัวเลข/คำอธิบาย Balance ตรงกันทั้งสองการ์ด — เดิมการ์ดนี้คำนวณ Balance ด้วยสูตรของตัวเอง
 // (average deviation จากค่าอุดมคติ) ซึ่งให้ผลต่างจากสูตร coefficient-of-variation ที่ WeeklyVolume ใช้
 // ทำให้สองการ์ดโชว์ Balance % คนละค่ากับข้อมูลชุดเดียวกัน — เปลี่ยนมาใช้ computeMuscleBalance ร่วมกัน
-const BALANCE_TIER_ARROW: Record<BalanceTier, string> = {
-  good: '↑',
-  ok: '→',
-  poor: '↓',
-}
 
 function balanceTier(pct: number): BalanceTier {
   if (pct >= 80) return 'good'
@@ -367,20 +362,22 @@ export default function WeeklyMuscleHeatmap() {
         <div className="px-4 pb-3 flex items-start justify-between gap-3 border-b border-line">
           <div>
             <p className="text-[12px] tracked uppercase text-muted">Balance</p>
+            {/* ฟีดแบ็ก "29% ↓ ควรปรับปรุง อ่านเป็นความเห็นลอยๆ ไม่บอกว่าต้องทำอะไร — อยากเห็น
+                29% · ต้องปรับสมดุล แบบบรรทัดเดียว" — รวมตัวเลขกับป้ายสถานะเป็นบรรทัดเดียวคั่นด้วย "·"
+                (ตัด pill พื้นหลัง + ลูกศรทิ้ง ใช้สีเดียวกับตัวเลขแทน อ่านเร็วกว่า) */}
             <p className="font-mono font-bold text-3xl leading-none mt-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>
               {balance.pct}%
+              <span className="font-sans font-bold text-sm ml-1.5 align-middle">· {BALANCE_STATUS_LABEL[balance.tier]}</span>
             </p>
-            <span
-              className="inline-flex items-center gap-1 mt-1.5 text-[12px] font-sans font-bold px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: `${BALANCE_COLOR[balance.tier]}26`, color: BALANCE_COLOR[balance.tier] }}
-            >
-              <span className="font-bold">{BALANCE_TIER_ARROW[balance.tier]}</span>
-              {BALANCE_STATUS_LABEL[balance.tier]}
-            </span>
           </div>
           <div className="text-right shrink-0 pt-0.5">
+            {/* ฟีดแบ็ก "เพิ่ม '6 กลุ่มยังขาด Volume' เป็นบรรทัดสนับสนุน ก่อนคำแนะนำ action เดียว" —
+                ใช้ balanceIssues.under.length ตัวเดียวกับที่ใช้คำนวณ balanceSummary ด้านล่างอยู่แล้ว */}
+            {balanceIssues.under.length > 0 && (
+              <p className="text-[12px] text-muted">{balanceIssues.under.length} กลุ่มยังขาด Volume</p>
+            )}
             {balanceSummary && (
-              <p className="text-[12px] font-sans font-medium leading-snug" style={{ color: BALANCE_COLOR[balance.tier] }}>
+              <p className="text-[12px] font-sans font-medium leading-snug mt-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>
                 ⚠️ {balanceSummary}
               </p>
             )}
