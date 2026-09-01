@@ -25,8 +25,15 @@ import type { FitnessScoreResult } from '@/lib/fitnessScore'
 // ไม่เสียฟีเจอร์ "กดดูรายละเอียด" ที่เพิ่งทำไปก่อนหน้านี้)
 interface HeroGaugeConceptProps {
   fitnessScore: FitnessScoreResult
-  recoveryPct: number
-  recoveryLabel: string
+  // v5 — บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): ก่อนหน้านี้เป็น required ทั้งคู่ ทำให้ DashboardView.tsx ต้อง gate
+  // ทั้งบล็อกด้วย `fitnessScoreRecoveryPct != null` ไปด้วย — ผลคือผู้ใช้ที่ยังไม่เคยฝึกกลุ่มกล้ามเนื้อไหน
+  // เลย (บัญชีใหม่/ฝึกแต่คาร์ดิโอ) recoveryDates ว่างหมด ทำให้ Fitness Score widget ทั้งก้อนหาย (รวมปุ่ม
+  // "กดดูรายละเอียด" ที่เพิ่งทำไปก่อนหน้า Twin Gauge) ทั้งที่ fitnessScore เองคำนวณได้อยู่แล้วไม่ต้องพึ่ง
+  // recovery (แค่ 1 ใน 6 ปัจจัย ถ่วงน้ำหนักใหม่ได้ถ้าไม่มีค่า) — เดิม (ก่อน Twin Gauge) pill Fitness Score
+  // โชว์ได้อิสระจาก Recovery pill อยู่แล้ว — ทำให้ optional แทน ไม่ส่งมา = โชว์แค่วง Fitness Score เดี่ยวๆ
+  // (ไม่ทำวง Recovery ปลอมขึ้นมาโชว์ 0%/"ไม่มีข้อมูล" ตาม pattern "ไม่ใช้ข้อมูลสมมติ" ที่ยึดมาตลอด)
+  recoveryPct?: number
+  recoveryLabel?: string
   fitnessScoreDiff?: string
   recoveryDiff?: string
   fitnessRingSize?: number
@@ -240,28 +247,30 @@ export default function HeroGaugeConcept({
           />
         </button>
 
-        {/* Recovery */}
-        <div className="relative flex items-center justify-center shrink-0" style={{ width: recoveryRingSize, height: recoveryRingSize }}>
-          <GlowLayers size={recoveryRingSize} color={COLORS.cyan} />
-          <GoalRing
-            pct={recoveryPct}
-            size={recoveryRingSize}
-            strokeWidth={recoveryStrokeWidth}
-            color={COLORS.cyan}
-            valueLabel=" "
-            innerDiscColor={INNER_DISC}
-            ariaLabel={`Recovery ${recoveryPct}% — ${recoveryLabel}`}
-          />
-          <DialText
-            eyebrow="Recovery"
-            value={`${recoveryPct}%`}
-            tierLabel={recoveryLabel}
-            color={COLORS.cyan}
-            diff={recoveryDiff}
-            diffColor={COLORS.moss}
-            ringSize={recoveryRingSize}
-          />
-        </div>
+        {/* Recovery — เฉพาะตอนมีข้อมูลจริง (ดูคอมเมนต์ recoveryPct? ใน props ด้านบน) */}
+        {recoveryPct != null && recoveryLabel && (
+          <div className="relative flex items-center justify-center shrink-0" style={{ width: recoveryRingSize, height: recoveryRingSize }}>
+            <GlowLayers size={recoveryRingSize} color={COLORS.cyan} />
+            <GoalRing
+              pct={recoveryPct}
+              size={recoveryRingSize}
+              strokeWidth={recoveryStrokeWidth}
+              color={COLORS.cyan}
+              valueLabel=" "
+              innerDiscColor={INNER_DISC}
+              ariaLabel={`Recovery ${recoveryPct}% — ${recoveryLabel}`}
+            />
+            <DialText
+              eyebrow="Recovery"
+              value={`${recoveryPct}%`}
+              tierLabel={recoveryLabel}
+              color={COLORS.cyan}
+              diff={recoveryDiff}
+              diffColor={COLORS.moss}
+              ringSize={recoveryRingSize}
+            />
+          </div>
+        )}
       </div>
     </>
   )

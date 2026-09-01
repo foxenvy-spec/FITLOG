@@ -1030,16 +1030,22 @@ export default function DashboardPage() {
         {/* ทดลอง (ฟีดแบ็ก "ลองเอาไปแทรกของจริง" หลังลองบนหน้า preview /dashboard-concept แล้ว) — แทนที่
             pill Fitness Score/Recovery คู่เดิมด้านบนด้วย HeroGaugeConcept (Twin Cyber Gauge เชื่อมด้วย
             คลื่นพลังงาน) wrapped=false (ไม่มีกรอบการ์ด/พื้นหลังของตัวเอง ฝังในแถว header ตรงๆ) ขนาดวง
-            ย่อลงจากหน้า preview (140/124 -> 88/76) ให้พอดีกับความสูง header แถวนี้มากกว่า — คง
-            fitnessScoreRecoveryPct != null gate เดิมไว้ (ไม่โชว์ถ้ายังไม่เคยฝึกกลุ่มกล้ามเนื้อไหนเลย
-            ข้อมูลจริงไม่พอให้ประเมิน) และคงปุ่มกดเปิด FitnessScoreDetailSheet เดิมไว้ผ่าน
-            onFitnessScoreClick (ไม่เสียฟีเจอร์ "กดดูรายละเอียด" ที่เพิ่งทำไปก่อนหน้านี้) */}
-        {fitnessScore && fitnessScoreRecoveryPct != null && (
+            ย่อลงจากหน้า preview (140/124 -> 88/76) ให้พอดีกับความสูง header แถวนี้มากกว่า และคงปุ่มกดเปิด
+            FitnessScoreDetailSheet เดิมไว้ผ่าน onFitnessScoreClick (ไม่เสียฟีเจอร์ "กดดูรายละเอียด" ที่
+            เพิ่งทำไปก่อนหน้านี้)
+            บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): gate เดิมตอนเปลี่ยนมาเป็น Twin Gauge เผลอรวม
+            `fitnessScoreRecoveryPct != null` เข้ากับเงื่อนไขทั้งบล็อก (เดิมก่อน Twin Gauge, commit
+            5a96de3, gate แค่ `fitnessScore &&` ส่วน Recovery pill gate แยกอิสระข้างในอีกที) ทำให้ผู้ใช้
+            ที่ไม่มีข้อมูล recovery เลย (บัญชีใหม่/ฝึกแต่คาร์ดิโอ) เสีย Fitness Score widget ทั้งก้อนไปด้วย
+            ทั้งที่ fitnessScore คำนวณได้เองอยู่แล้วไม่ต้องพึ่ง recovery — คืน gate เดิม (แค่ fitnessScore)
+            แล้วส่ง recoveryPct/recoveryLabel เป็น undefined ถ้ายังไม่มีข้อมูลจริง (HeroGaugeConcept เอง
+            อัปเดตให้ 2 props นี้เป็น optional แล้ว — ไม่โชว์วง Recovery แทนที่จะโชว์ค่าสมมติ) */}
+        {fitnessScore && (
           <div className="hidden md:flex flex-1 justify-center items-center self-center">
             <HeroGaugeConcept
               fitnessScore={fitnessScore}
-              recoveryPct={fitnessScoreRecoveryPct}
-              recoveryLabel={recoveryTier(fitnessScoreRecoveryPct).labelEn}
+              recoveryPct={fitnessScoreRecoveryPct ?? undefined}
+              recoveryLabel={fitnessScoreRecoveryPct != null ? recoveryTier(fitnessScoreRecoveryPct).labelEn : undefined}
               fitnessRingSize={88}
               recoveryRingSize={76}
               wrapped={false}
