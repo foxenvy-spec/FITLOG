@@ -803,10 +803,16 @@ export default function SessionPage() {
       const [{ data: latestMetric }, { data: priorRows }, { data: recentMuscleRows }, { data: twoWeeksRows }, { data: todayCardioRows }] =
         await Promise.all([
           supabase.from('body_metrics').select('weight_kg').order('measured_at', { ascending: false }).limit(1).maybeSingle(),
+          // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิม query นี้ขาด .eq('user_id', user.id) ต่างจาก query อื่นที่
+          // ทำหน้าที่คล้ายกันในไฟล์เดียวกัน (workoutRows บรรทัด ~257, priorWorkouts ~298, fetchLastPerformance
+          // ~455 — ทุกจุดกรอง user_id หมด) — ถ้าชื่อท่าตรงกับผู้ใช้คนอื่นพอดี (ชื่อทั่วไปเช่น "Bench Press")
+          // priorBest อาจไปดึงน้ำหนักของคนอื่นมาเทียบ ทำให้ตรวจ PR ของผู้ใช้นี้ผิดพลาดได้ — เพิ่ม filter ให้
+          // ตรงกับ convention เดิมของไฟล์นี้
           loggedList.length > 0
             ? supabase
                 .from('workouts')
                 .select('exercise_name, weight_kg')
+                .eq('user_id', user.id)
                 .eq('type', 'strength')
                 .lt('performed_at', todayStr())
                 .in(
