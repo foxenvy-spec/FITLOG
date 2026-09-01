@@ -18,7 +18,7 @@ import {
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import { recoveryStatusColor, recoveryTier, computeRecoveryPct } from '@/lib/dashboardStats'
-import { describeMuscleFocus, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
+import { describeMuscleFocus, dominantMuscleGroup, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
@@ -196,6 +196,24 @@ export default function AICoachCompactCard({
     : 0
   const barColor = muscleRecommendation ? recoveryStatusColor(displayPct) : COLORS.amber
 
+  // ฟีดแบ็ก "AI Coach ควรเป็น Decision Engine ไม่ใช่แค่รายงาน — เพิ่ม 'Legs ยัง Recovery ต่ำ →
+  // หลีกเลี่ยงวันนี้' นอกจากบอกว่าควรเล่นอะไร" — เกณฑ์เดียวกับ lowRecoveryCaution ที่การ์ด Recovery
+  // (DashboardView.tsx) ใช้อยู่แล้ว (tier 'Recovering'/'Rest') ไม่คิดเกณฑ์ใหม่แยกต่างหาก — หา "แย่ที่สุด"
+  // ในบรรดากลุ่มที่ "เคยเทรนมาก่อนจริง" เท่านั้น (กรอง pct < 100 ออก กันกลุ่มที่ไม่เคยแตะเลยซึ่งได้ 100%
+  // อัตโนมัติจาก computeRecoveryPct(null, mg) ไม่ใช่ "ต่ำ" จริง) ไม่รวมกลุ่มที่แนะนำอยู่แล้ว (displayMg)
+  // ไม่มี recoveryDates ส่งมา (จุดเรียกใช้อื่นที่ไม่ใช่ Dashboard) หรือไม่มีกลุ่มไหนแย่พอ = ไม่โชว์เลย
+  const worstOtherRecovery = recoveryDates
+    ? RECOVERY_MUSCLES.filter((g) => g !== displayMg)
+        .map((g) => ({ group: g, pct: computeRecoveryPct(recoveryDates[g] ?? null, g) }))
+        .filter((r) => r.pct < 100)
+        .sort((a, b) => a.pct - b.pct)[0] ?? null
+    : null
+  const avoidCaution =
+    worstOtherRecovery &&
+    (recoveryTier(worstOtherRecovery.pct).labelEn === 'Recovering' || recoveryTier(worstOtherRecovery.pct).labelEn === 'Rest')
+      ? worstOtherRecovery
+      : null
+
   async function handleStart() {
     if (!chosen || chosenExercises.length === 0) return
     setStarting(true)
@@ -359,6 +377,11 @@ export default function AICoachCompactCard({
                   {muscleRecommendation && muscleRecommendation.setsRemaining > 0 && (
                     <span style={{ color: '#CFD4DE' }}> · เหลืออีก {muscleRecommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
                   )}
+                </p>
+              )}
+              {!isRestDay && avoidCaution && (
+                <p className="line-clamp-1 mt-1" style={{ fontSize: 10, color: COLORS.amber, lineHeight: 1.35 }}>
+                  ⚠️ {avoidCaution.group} ยัง Recovery ต่ำ ({avoidCaution.pct}%) — หลีกเลี่ยงวันนี้
                 </p>
               )}
             </>
