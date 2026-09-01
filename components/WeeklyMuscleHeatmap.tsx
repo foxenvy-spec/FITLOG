@@ -553,7 +553,17 @@ export default function WeeklyMuscleHeatmap() {
                 {BALANCE_STATUS_LABEL[balance.tier]}
               </span>
             </p>
-            {balanceSummary && <p className="text-[9px] text-muted mt-1 leading-tight">{balanceSummary}</p>}
+            {/* ฟีดแบ็ก "Balance 29% ↓ ควรปรับปรุง ไม่ actionable — user ต้องรู้ว่าควรทำอะไรต่อ" — balanceSummary
+                คำนวณจากกลุ่มที่เกิน/ขาดเป้าจริงอยู่แล้ว (บรรทัดบน) แค่เดิมโชว์เป็นฟุตโน้ตจิ๋ว text-[9px] มืด
+                จนแทบมองไม่เห็น — ขยับให้เด่นขึ้นเป็นคำแนะนำ ไม่ใช่ตัวเลข tier เฉยๆ */}
+            {balanceSummary && (
+              <p
+                className="text-[11px] font-sans font-medium mt-1 leading-tight flex items-center gap-1 justify-center"
+                style={{ color: BALANCE_COLOR[balance.tier] }}
+              >
+                <span aria-hidden="true">⚠️</span> {balanceSummary}
+              </p>
+            )}
           </div>
         </div>
       )}
