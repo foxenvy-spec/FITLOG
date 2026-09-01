@@ -96,12 +96,12 @@ export default function WeeklyVolume() {
   const underTargetCount = rows.filter((r) => r.status === 'behind' || r.status === 'onTrack').length
 
   return (
-    // ฟีดแบ็ก "Information Density สูงไป — Weekly Volume/Consistency/Cardio Volume ควรลดความเด่นทาง
-    // สายตาลง (Level 3 — analytics เสริม ไม่ใช่สิ่งที่ต้องรู้ทันที)" — การ์ดนี้เป็นการ์ดเดียวใน 3 ใบ
-    // (WeeklyVolume/ConsistencyStrip/WeeklyCardioVolume) ที่ใช้ PremiumCard พื้นผิวเต็ม (อีก 2 ใบใช้
-    // div ธรรมดา bg-surface/border-line เงียบกว่าอยู่แล้ว) — ลด texture ให้เบาลงครึ่งหนึ่งด้วย
-    // reducedTexture prop ที่มีอยู่แล้ว (ไม่กระทบจุดอื่นที่ใช้ PremiumCard เพราะ default เดิมยังคงเป็น false)
-    <PremiumCard className="overflow-hidden" reducedTexture>
+    // v(รอบก่อน): เคยลด texture เป็น reducedTexture เพราะตอนนั้นจัด Weekly Volume อยู่กลุ่มเดียวกับ
+    // Consistency/Cardio Volume (Level 3 เท่ากันหมด) — ฟีดแบ็กรอบใหม่แยกละเอียดขึ้น: "Muscle Heatmap +
+    // Weekly Volume ควร PRIMARY, Consistency + Week Streak ควร SECONDARY" จัดการ์ดนี้เป็น primary แล้ว
+    // (คู่กับ Muscle Heatmap ที่ใช้พื้นผิวเต็มอยู่แล้ว) จึงคืนพื้นผิวเต็มกลับมา ไม่ลด texture อีกต่อไป —
+    // ส่วน ConsistencyStrip.tsx ถูกปรับให้เบาลง (bg-surface2/40) แทน เพื่อสร้าง contrast primary/secondary
+    <PremiumCard className="overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Weekly Volume</p>
