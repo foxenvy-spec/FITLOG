@@ -50,14 +50,28 @@ describe('estimateGoalEtaWeeks', () => {
     expect(estimateGoalEtaWeeks(entries, 70)).toBeNull()
   })
 
-  it('computes weeks-to-goal from the earliest/latest endpoint rate', () => {
-    // losing 4kg over 28 days (4 weeks) = -1kg/week, 9kg remaining to target -> 9 weeks
+  it('computes weeks-to-goal from a linear trend across all entries', () => {
+    // perfectly linear: -1kg/week, 9kg remaining to target -> 9 weeks
     const entries = [
       { date: '2026-01-01', value: 80 },
       { date: '2026-01-15', value: 78 },
       { date: '2026-01-29', value: 76 },
     ]
     expect(estimateGoalEtaWeeks(entries, 67)).toBe(9)
+  })
+
+  it('is more robust to a single noisy mid-point than a naive endpoint-to-endpoint rate would be', () => {
+    // day7 is a one-off water-weight dip (76) that breaks the otherwise steady decline —
+    // naive endpoint math (day0=80 vs day28=75) would say -1.25kg/week -> 4 weeks to 70.5,
+    // but the least-squares trend across all 5 points says -0.9kg/week -> 5 weeks instead.
+    const entries = [
+      { date: '2026-01-01', value: 80 },
+      { date: '2026-01-08', value: 76 },
+      { date: '2026-01-15', value: 79 },
+      { date: '2026-01-22', value: 77 },
+      { date: '2026-01-29', value: 75 },
+    ]
+    expect(estimateGoalEtaWeeks(entries, 70.5)).toBe(5)
   })
 
   it('works regardless of input order (sorts by date internally)', () => {

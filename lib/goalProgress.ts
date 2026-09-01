@@ -47,12 +47,18 @@ const MIN_SPAN_DAYS = 14
 // อัตราช้ากว่านี้ (>2 ปีถึงเป้า) ถือว่าไม่ใช่ ETA ที่มีประโยชน์อีกต่อไป มีแต่จะดูมั่นใจเกินจริง
 const MAX_ETA_WEEKS = 104
 
-// คาดว่าจะถึงเป้าหมายอีกกี่สัปดาห์ — คำนวณจากอัตราเปลี่ยนแปลงจริงระหว่างค่าที่บันทึกเก่าสุด/ใหม่สุดในชุด
-// ข้อมูลที่ส่งเข้ามา (endpoint-to-endpoint ตรงกับที่ goalProgressPct ใช้อยู่แล้ว ไม่ใช่ regression แยกสูตร
-// ใหม่ ให้ % progress กับ ETA มาจากฐานข้อมูลชุดเดียวกันเป๊ะ) — คืน null (ไม่โชว์ ETA เลย ไม่ใช่โชว์ตัวเลข
-// ที่ไม่น่าเชื่อถือ) เมื่อ: ข้อมูลไม่พอ (ดู MIN_ENTRIES/MIN_SPAN_DAYS ด้านบน), ถึงเป้าหมายพอดีแล้ว,
-// แนวโน้มสวนทางเป้าหมาย (เช่น ตั้งเป้าลดน้ำหนักแต่ช่วงนี้น้ำหนักขึ้น — ฟีดแบ็ก "ซ่อน ETA ไปเลย ไม่โชว์
-// อะไรเพิ่ม" แทนที่จะโชว์ตัวเลขติดลบ/สวนทางที่สับสน), หรืออัตราช้าเกิน MAX_ETA_WEEKS
+// คาดว่าจะถึงเป้าหมายอีกกี่สัปดาห์ — อัตราเปลี่ยนแปลง/สัปดาห์คำนวณด้วยเส้นแนวโน้ม least-squares
+// (linear regression) จาก "ทุก" ค่าที่บันทึกไว้ในช่วงเก่าสุด-ใหม่สุด ไม่ใช่แค่ 2 จุดปลาย (endpoint-to-
+// endpoint) — ฟีดแบ็ก "ผู้ใช้บันทึกไม่สม่ำเสมอ บางสัปดาห์ไม่ได้วัด อย่างต่ำเดือนละ 4 ครั้ง" ค่าที่วัดแต่ละ
+// ครั้งเป็นค่าวันเดียว แกว่งได้จากน้ำ/อาหารในกระเพาะ (±0.5-2 kg ปกติ) ถ้าอิงแค่จุดแรก/จุดสุดท้าย ตัวไหน
+// สุ่มมาไม่ดีก็ทำให้ ETA เพี้ยนทั้งก้อน — regression ใช้ทุกจุดช่วยเฉลี่ย noise ออก และไม่ต้องมีจังหวะบันทึก
+// สม่ำเสมอเลย (รองรับข้อมูลห่างไม่เท่ากันได้เป็นปกติ) ยิ่งบันทึกถี่/สม่ำเสมอขึ้นเรื่อยๆ เส้นก็ยิ่งนิ่งขึ้นเอง
+// โดยอัตโนมัติ ไม่ต้องแก้เกณฑ์ขั้นต่ำเพิ่ม — remaining (ระยะที่เหลือถึงเป้าหมาย) ยังอิงค่าจริงล่าสุดที่
+// บันทึกไว้ (ไม่ใช่ค่าที่ fit จาก regression) ให้ตรงกับตัวเลข "ตอนนี้" ที่ผู้ใช้เห็นในการ์ดเป๊ะ
+// คืน null (ไม่โชว์ ETA เลย ไม่ใช่โชว์ตัวเลขที่ไม่น่าเชื่อถือ) เมื่อ: ข้อมูลไม่พอ (ดู MIN_ENTRIES/
+// MIN_SPAN_DAYS ด้านบน), ถึงเป้าหมายพอดีแล้ว, แนวโน้มสวนทางเป้าหมาย (เช่น ตั้งเป้าลดน้ำหนักแต่ช่วงนี้
+// น้ำหนักขึ้น — ฟีดแบ็ก "ซ่อน ETA ไปเลย ไม่โชว์อะไรเพิ่ม" แทนที่จะโชว์ตัวเลขติดลบ/สวนทางที่สับสน),
+// หรืออัตราช้าเกิน MAX_ETA_WEEKS
 export function estimateGoalEtaWeeks(entries: GoalEtaEntry[], target: number): number | null {
   if (entries.length < MIN_ENTRIES) return null
 
@@ -60,14 +66,26 @@ export function estimateGoalEtaWeeks(entries: GoalEtaEntry[], target: number): n
   const earliest = sorted[0]
   const latest = sorted[sorted.length - 1]
 
-  const spanDays =
-    (new Date(`${latest.date}T00:00:00`).getTime() - new Date(`${earliest.date}T00:00:00`).getTime()) / 86_400_000
+  const earliestMs = new Date(`${earliest.date}T00:00:00`).getTime()
+  const spanDays = (new Date(`${latest.date}T00:00:00`).getTime() - earliestMs) / 86_400_000
   if (spanDays < MIN_SPAN_DAYS) return null
 
   const remaining = target - latest.value
   if (remaining === 0) return null
 
-  const ratePerWeek = ((latest.value - earliest.value) / spanDays) * 7
+  // เส้นแนวโน้ม least-squares: x = จำนวนวันนับจากจุดแรก, y = ค่าที่วัด
+  const points = sorted.map((e) => ({
+    x: (new Date(`${e.date}T00:00:00`).getTime() - earliestMs) / 86_400_000,
+    y: e.value,
+  }))
+  const n = points.length
+  const meanX = points.reduce((s, p) => s + p.x, 0) / n
+  const meanY = points.reduce((s, p) => s + p.y, 0) / n
+  const numerator = points.reduce((s, p) => s + (p.x - meanX) * (p.y - meanY), 0)
+  const denominator = points.reduce((s, p) => s + (p.x - meanX) ** 2, 0)
+  if (denominator === 0) return null // จุดทั้งหมดอยู่วันเดียวกัน (ไม่ควรเกิดเพราะผ่าน spanDays check แล้ว แต่กันไว้)
+
+  const ratePerWeek = (numerator / denominator) * 7
   // เครื่องหมายของ remaining กับ ratePerWeek ต้องตรงกัน = กำลังเข้าใกล้เป้าหมายจริง (ไม่ใช่ห่างออกไป)
   if (ratePerWeek === 0 || Math.sign(ratePerWeek) !== Math.sign(remaining)) return null
 
