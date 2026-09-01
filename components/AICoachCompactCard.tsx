@@ -347,22 +347,20 @@ export default function AICoachCompactCard({
               <p className="font-display font-bold tracked uppercase text-ink truncate mt-1" style={{ fontSize: 18, lineHeight: 1.15 }}>
                 {isRestDay ? 'Recovery Day' : region}
               </p>
-              {/* v61: ฟีดแบ็ก "'UPPER BODY' อ่านเดี่ยวๆ เหมือนสรุปวันนี้ ไม่ใช่คำแนะนำครั้งถัดไป" — เติม
-                  "Next session • " นำหน้า relatedGroups เฉพาะกรณีมีกลุ่มกล้ามเนื้อแนะนำจริง (ไม่ใช่ Rest
-                  Day ซึ่งมีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่ "ครั้งถัดไป" แบบมีกลุ่มกล้ามเนื้อ)
-                  v69: บรรทัดนี้ต้องสลับคำนำหน้าให้ตรงกับป้าย "· Today"/"· Next" ด้านบนด้วย ไม่งั้นหัวข้อ
-                  บอก "Today" แต่บรรทัดรองยังพูดว่า "Next session" ขัดกันเอง */}
-              <p className="truncate mt-0.5" style={{ fontSize: 11, color: TEXT.body }}>
-                {isRestDay
-                  ? 'วันนี้เหมาะกับการพักและฟื้นตัว'
-                  : `${isRecommendationForToday ? 'Today' : 'Next session'} • ${relatedGroupsText}`}
-              </p>
-
-              {/* verdict สั้นๆ 1 บรรทัด (ดู readinessVerdict ด้านบนไฟล์) — ให้เห็นทันทีว่า "ควรฝึกไหมวันนี้"
-                  ก่อนจะไล่อ่านเหตุผลรายละเอียดด้านล่าง ไม่โชว์ตอน Rest Day (มีข้อความอธิบายของตัวเองแล้ว) */}
-              {!isRestDay && (
-                <p className="mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
-                  {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text}
+              {/* ฟีดแบ็ก "อยากลดข้อความลงประมาณ 20-30% — Coach ควรพูดสั้นๆ เหมือนคนพูด ไม่ใช่ย่อหน้ายาว" —
+                  เดิม subtitle ("Today • Lower • Hamstring") กับ verdict ("🟢 เหมาะสำหรับฝึกวันนี้") เป็น
+                  2 บรรทัดแยกที่พูดคนละมุมของเรื่องเดียวกัน (ควรฝึกไหม + ฝึกกลุ่มไหน) — รวมเป็นบรรทัดเดียว
+                  ไม่ตัดข้อมูลอะไรออก (v61: "Next session • " นำหน้า relatedGroups, v69: สลับคำนำหน้าตรง
+                  กับป้าย "· Today"/"· Next" ด้านบน — ทั้งสองเหตุผลยังใช้ได้เหมือนเดิม แค่รวมบรรทัด) Rest
+                  Day ไม่มี verdict ให้รวมด้วยอยู่แล้ว (ข้อความอธิบายวันพักของตัวเองยังแยกบรรทัดเดิม) */}
+              {isRestDay ? (
+                <p className="truncate mt-0.5" style={{ fontSize: 11, color: TEXT.body }}>
+                  วันนี้เหมาะกับการพักและฟื้นตัว
+                </p>
+              ) : (
+                <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
+                  {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text} ·{' '}
+                  {isRecommendationForToday ? 'Today' : 'Next session'} • {relatedGroupsText}
                 </p>
               )}
 
