@@ -1952,12 +1952,24 @@ export default function DashboardPage() {
                       4-7 แถว ตามมอคอัพเป๊ะ — ไม่แตะ logic การคำนวณ/hover/สีใดๆ แค่ย้ายเลย์เอาต์ */}
                   <div className="flex items-center gap-4 mt-3">
                     {(() => {
-                      // ฟื้นตัวรวม — ค่าเฉลี่ยของทุกกลุ่มกล้ามเนื้อ แสดงเป็นวงแหวนคู่กับลิสต์รายกลุ่ม
+                      // ฟื้นตัวรวม — ค่าเฉลี่ยของกลุ่มกล้ามเนื้อ แสดงเป็นวงแหวนคู่กับลิสต์รายกลุ่ม
                       // (ตามมอคอัพ v3: ring "พื้นตัวรวม" ข้างๆ list แทนที่จะโชว์แค่ list เดี่ยวๆ)
-                      const overallRecoveryPct = Math.round(
-                        RECOVERY_MUSCLES.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) /
-                          RECOVERY_MUSCLES.length
-                      )
+                      // ฟีดแบ็ก "Data Inconsistency — หัวหน้าเว็บบอก Recovery 76% Excellent แต่การ์ดนี้บอก
+                      // 81% Good ตัวเลขเดียวกันแต่คนละค่า ทำให้รู้สึกว่า Algorithm ไม่ Sync กัน — ให้มี
+                      // Recovery Score ตัวเดียวทั้งระบบ" — เดิมวงแหวนนี้เฉลี่ย RECOVERY_MUSCLES ครบทั้ง 7
+                      // กลุ่มเสมอ (กลุ่มที่ไม่เคยเทรนเลยได้ 100% อัตโนมัติจาก computeRecoveryPct(null, mg) —
+                      // ดันค่าเฉลี่ยขึ้นสูงกว่าความจริง) ส่วน fitnessScoreRecoveryPct ที่ป้าย Recovery บน
+                      // header ใช้ (บรรทัด ~871) เฉลี่ยเฉพาะ trainedRecoveryMuscles (กลุ่มที่เคยเทรนจริง
+                      // เท่านั้น) ทำให้สองจุดคำนวณ "Recovery" คนละสูตรจากข้อมูลชุดเดียวกัน — เปลี่ยนวงแหวนนี้
+                      // ให้ใช้ trainedRecoveryMuscles สูตรเดียวกับ header เป๊ะ ให้ค่าตรงกันทั้งหน้าเสมอ
+                      // (ไม่มีข้อมูลเทรนเลยสักกลุ่ม = fallback 100% เหมือน computeRecoveryPct(null, mg) เดิม)
+                      const overallRecoveryPct =
+                        trainedRecoveryMuscles.length > 0
+                          ? Math.round(
+                              trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) /
+                                trainedRecoveryMuscles.length
+                            )
+                          : 100
                       return (
                         // สีฟ้าไซแอน + glow ตามมอคอัพ v3 — เดิมใช้ recoveryStatusColor() ที่เปลี่ยนสีตามเปอร์เซ็นต์
                         // (เขียว/เหลือง/แดง) ตอนนี้ fix เป็นฟ้าให้เข้าธีมเดียวกับวงแหวนอื่นๆ ในมอคอัพ (v45 —
