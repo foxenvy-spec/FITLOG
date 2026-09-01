@@ -220,6 +220,12 @@ export default function TrainPage() {
         setRepeatResult({ date: session.date, message: 'กรุณาเข้าสู่ระบบใหม่' })
         return
       }
+      // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิม payload ขาด total_volume_kg/avg_heart_rate/calories_kcal/
+      // cadence ทั้งที่ Workout ต้นทาง (w) มีค่าจริงอยู่แล้ว และทุกจุด insert workouts อื่นในแอป (session/
+      // page.tsx persistSets, log/page.tsx handleSubmit) ส่งครบทั้ง 4 ฟิลด์นี้ — ผลคือ "เล่นเหมือนรอบนี้"
+      // ทำให้แถวที่ก๊อปมาไม่มี total_volume_kg (workoutVolumeKg() ต้อง fallback ไปคูณจาก top-set แทนผลรวม
+      // จริงจากแต่ละเซ็ต ถ้าเซสชันต้นทางเป็น pyramid/drop set volume จะคำนวณผิด) และคาร์ดิโอเสีย HR/แคล/
+      // cadence ไปเลยแบบเงียบๆ
       const payload = session.workouts.map((w) => ({
         user_id: user.id,
         type: w.type,
@@ -235,6 +241,10 @@ export default function TrainPage() {
         cardio_type: w.cardio_type,
         distance_km: w.distance_km,
         duration_min: w.duration_min,
+        avg_heart_rate: w.avg_heart_rate,
+        cadence: w.cadence,
+        calories_kcal: w.calories_kcal,
+        total_volume_kg: w.total_volume_kg,
         notes: w.notes,
       }))
       const { error } = await supabase.from('workouts').insert(payload)
