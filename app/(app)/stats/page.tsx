@@ -19,7 +19,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, Profile } from '@/lib/types'
 import { MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
-import { todayStr } from '@/lib/weekdays'
+import { todayStr, daysAgoStr } from '@/lib/weekdays'
 import { computeTodayTotals, estimateCaloriesToday } from '@/lib/dashboardStats'
 import { computeProgressiveOverload, type OverloadPlan } from '@/lib/aiCoach'
 import { computeStrengthAxis, vo2MaxToPct, coreVolumeToPct } from '@/lib/strengthStandards'
@@ -48,13 +48,15 @@ const TIMEFRAME_OPTIONS: { value: StatsTimeframe; label: string }[] = [
   { value: 'all', label: 'ทั้งหมด' },
 ]
 
+// บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิมสร้างวันที่ด้วย `new Date().toISOString()` (UTC) แทนที่จะใช้
+// todayStr()/daysAgoStr() (Asia/Bangkok เสมอ) ที่ทั้งแอปใช้ — performed_at ทุกแถวในระบบเขียนด้วย
+// todayStr() (Bangkok) เสมอ ทำให้ช่วง 00:00-06:59 น. เวลาไทย (ยังเป็นเมื่อวานตาม UTC) วันที่ "วันนี้"
+// ของฟังก์ชันนี้เพี้ยนไปหนึ่งวัน กราฟ/cutoff ของหน้านี้จะไม่ตรงกับข้อมูลที่เพิ่งบันทึกไป — บั๊กคลาสเดียวกับ
+// ที่เคยเจอและแก้ใน getWeekRange() มาก่อนแล้ว (lib/dashboardStats.ts) เปลี่ยนมาใช้ daysAgoStr() ตัวเดียวกัน
 function lastNDays(n: number) {
   const days: string[] = []
-  const now = new Date()
   for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(now)
-    d.setDate(now.getDate() - i)
-    days.push(d.toISOString().slice(0, 10))
+    days.push(daysAgoStr(i))
   }
   return days
 }

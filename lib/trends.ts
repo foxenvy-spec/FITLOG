@@ -1,6 +1,7 @@
 import type { Workout } from './types'
 import { RECOVERY_WINDOW_DAYS } from './dashboardStats'
 import { RECOVERY_MUSCLES, type MuscleGroup } from './muscle-groups'
+import { bangkokParts } from './weekdays'
 
 // ==================== วอลุ่มรายเดือน / รายปี ====================
 // ใช้ total_volume_kg ก่อนเสมอ (แม่นยำกว่า) เหมือนที่หน้า /stats ทำกับ weekly volume
@@ -98,11 +99,15 @@ export function computeTrainingLoad(
   days: number,
   reference: Date = new Date()
 ): TrainingLoadPoint[] {
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิมใช้ .toISOString() (UTC) สร้าง dayKeys ไปเทียบกับ performed_at
+  // ซึ่งทั้งแอปเขียนด้วย todayStr() (Asia/Bangkok เสมอ) — เปลี่ยนมาใช้ bangkokParts() ตัวเดียวกับที่
+  // lib/weekdays.ts ใช้ กันเพี้ยนหนึ่งวันช่วง 00:00-06:59 น. เวลาไทย (บั๊กคลาสเดียวกับที่เจอใน
+  // computeRecoveryHistory ด้านล่างในไฟล์นี้เอง)
   const dayKeys: string[] = []
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(reference)
     d.setDate(reference.getDate() - i)
-    dayKeys.push(d.toISOString().slice(0, 10))
+    dayKeys.push(bangkokParts(d))
   }
   const dayIndex = new Map(dayKeys.map((d, i) => [d, i]))
   const loadByDay = new Array(dayKeys.length).fill(0)
@@ -153,11 +158,16 @@ export function computeRecoveryHistory(
   days: number,
   reference: Date = new Date()
 ): RecoveryHistoryPoint[] {
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิมใช้ .toISOString() (UTC) สร้าง dayKeys ไปเทียบกับ performed_at
+  // ซึ่งทั้งแอปเขียนด้วย todayStr() (Asia/Bangkok เสมอ) — ผลคือช่วง 00:00-06:59 น. เวลาไทย กราฟ "Recovery
+  // Score ย้อนหลัง" ที่หน้า /recovery ใช้ฟังก์ชันนี้ จะเห็น "วันนี้" คลาดเคลื่อนไป 1 วันจากรายการด้านล่าง
+  // ของหน้าเดียวกัน (ซึ่งใช้ computeRecoveryPct + todayStr() ตรงๆ อยู่แล้ว ไม่มีบั๊กนี้) — เปลี่ยนมาใช้
+  // bangkokParts() ตัวเดียวกับที่ lib/weekdays.ts ใช้ กันสองส่วนของหน้าเดียวกันขัดกันเอง
   const dayKeys: string[] = []
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(reference)
     d.setDate(reference.getDate() - i)
-    dayKeys.push(d.toISOString().slice(0, 10))
+    dayKeys.push(bangkokParts(d))
   }
 
   const validMuscles = new Set<string>(RECOVERY_MUSCLES)
