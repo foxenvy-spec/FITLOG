@@ -320,11 +320,13 @@ export default function AICoachCompactCard({
               ลอยอยู่บนสุดของการ์ดทั้งใบ แยกขาดจาก layout ของป้ายชื่อข้างล่างนี้ (อยู่ในคอลัมน์ข้อความหลัง
               avatar) ทำให้ทับกันได้เมื่อคอลัมน์ข้อความแคบ (การ์ดแคบ/avatar ใหญ่) — ย้าย timestamp มาอยู่ใน
               flex row เดียวกับป้ายชื่อแทน (justify-between + shrink-0) ให้ทั้งคู่แบ่งพื้นที่กันจริง ไม่ทับ */}
+          {/* ฟีดแบ็ก "AI Coach ควรมี Typography Hierarchy ชัดที่สุด — MINT COACH · TODAY ควรเป็น
+              11px/uppercase/muted" — เดิม 10px/8px (ป้ายชื่อ/timestamp) เล็กกว่าที่ขอ ขยับขึ้นตามสเปค */}
           <div className="flex items-center justify-between gap-2">
-            <p className="font-display text-[10px] tracked uppercase flex items-center gap-1 min-w-0" style={{ color: TEXT.body }}>
+            <p className="font-display text-[11px] tracked uppercase flex items-center gap-1 min-w-0" style={{ color: TEXT.body }}>
               <span aria-hidden="true">✨</span> MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
             </p>
-            <span className="flex items-center gap-1 text-[8px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }} aria-hidden="true">
+            <span className="flex items-center gap-1 text-[9px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
               {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
             </span>
@@ -340,7 +342,9 @@ export default function AICoachCompactCard({
                   text-amber (สีเน้น Action/Energy) + 21px — ตัวเดียวในการ์ดนี้ที่ใช้สีส้มกับข้อความหลัก
                   ทั้งที่การ์ดนี้ไม่ใช่ปุ่ม action เปลี่ยนเป็น text-ink (ขาว/ไทเทเนียม เหมือนป้ายชื่อการ์ดอื่น
                   ที่ไม่ใช่ CTA) + ลดขนาดลง ~15% (21 -> 18) ให้สีส้มเหลือแค่ตรง CTA ปุ่มจริงด้านล่างเท่านั้น */}
-              <p className="font-display font-semibold tracked uppercase text-ink truncate mt-1" style={{ fontSize: 18, lineHeight: 1.15 }}>
+              {/* ฟีดแบ็ก "UPPER BODY ควรเป็น 18-20px/700/white" — เดิม font-semibold (600) ขยับเป็น
+                  font-bold (700) ตามสเปค ขนาด/สี (text-ink, ไม่ใช่ #FFFFFF ล้วน) คงเดิมตามที่ขอ */}
+              <p className="font-display font-bold tracked uppercase text-ink truncate mt-1" style={{ fontSize: 18, lineHeight: 1.15 }}>
                 {isRestDay ? 'Recovery Day' : region}
               </p>
               {/* v61: ฟีดแบ็ก "'UPPER BODY' อ่านเดี่ยวๆ เหมือนสรุปวันนี้ ไม่ใช่คำแนะนำครั้งถัดไป" — เติม
@@ -348,7 +352,7 @@ export default function AICoachCompactCard({
                   Day ซึ่งมีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่ "ครั้งถัดไป" แบบมีกลุ่มกล้ามเนื้อ)
                   v69: บรรทัดนี้ต้องสลับคำนำหน้าให้ตรงกับป้าย "· Today"/"· Next" ด้านบนด้วย ไม่งั้นหัวข้อ
                   บอก "Today" แต่บรรทัดรองยังพูดว่า "Next session" ขัดกันเอง */}
-              <p className="truncate mt-0.5" style={{ fontSize: 10, color: '#CFD4DE' }}>
+              <p className="truncate mt-0.5" style={{ fontSize: 11, color: TEXT.body }}>
                 {isRestDay
                   ? 'วันนี้เหมาะกับการพักและฟื้นตัว'
                   : `${isRecommendationForToday ? 'Today' : 'Next session'} • ${relatedGroupsText}`}
@@ -371,14 +375,21 @@ export default function AICoachCompactCard({
                   v65: ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ยังขัดกัน" — เปลี่ยนจาก muscleRecommendation.pct
                   (กล้ามเนื้อเดี่ยวที่แนะนำ) เป็น displayPct (กล้ามเนื้อหลักของเทมเพลตที่ปุ่มจะเริ่มจริง —
                   ดู comment ที่ displayMg ด้านบน) ให้ % นี้สอดคล้องกับ headline/subtitle ด้านบนเสมอ */}
-              <div className="flex items-center gap-2 mt-1.5">
-                <p className="text-[9px] tracked uppercase shrink-0" style={{ color: '#CFD4DE' }}>Muscle Recovery</p>
-                <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
+              {/* ฟีดแบ็ก "MUSCLE RECOVERY ควรเป็น label เล็ก/muted ส่วนตัวเลข % ควรเด่นเป็น 18px/700/
+                  functional color แยกชั้นชัดเจน แทนที่จะเป็นตัวเลขเล็กๆ ต่อท้ายแท่งบาร์" — จัดใหม่เป็น
+                  label+value แถวบน (baseline, รูปแบบเดียวกับที่การ์ด Body Goal ใช้อยู่แล้ว: label ซ้าย/
+                  value ใหญ่ขวา) แล้วแท่ง progress อยู่แถวล่างเต็มความกว้าง — ตัวเลขขยับจาก 10px เป็น 16px
+                  font-bold (ไม่เต็ม 18px ตามสเปค เพื่อคุมความสูงการ์ดนี้ที่ผ่านการลดขนาดมาหลายรอบก่อนหน้า) */}
+              <div className="mt-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-[10px] tracked uppercase shrink-0" style={{ color: TEXT.secondary }}>Muscle Recovery</p>
+                  <p className="font-mono font-bold shrink-0" style={{ fontSize: 16, color: barColor }}>
+                    {displayPct}%
+                  </p>
+                </div>
+                <div className="h-1 rounded-full overflow-hidden mt-1" style={{ background: 'rgba(255,255,255,.08)' }}>
                   <AnimatedBarFill pct={displayPct} color={barColor} />
                 </div>
-                <p className="text-[10px] font-mono shrink-0" style={{ color: barColor }}>
-                  {displayPct}%
-                </p>
               </div>
               {/* v70: ฟีดแบ็ก "AI Coach ควรอธิบายเหตุผลสั้นๆ 1-2 บรรทัด เช่น 'เหมาะกับการฝึกระดับปานกลาง
                   วันนี้' แทนที่จะโชว์แค่ % เฉยๆ" — ดึงจาก recoveryTier().adviceTh (เกณฑ์/รอยต่อเดียวกับสี
@@ -391,21 +402,24 @@ export default function AICoachCompactCard({
               {/* ฟีดแบ็ก "อยากเห็น 'เหตุผล' เป็น bullet list สั้นๆ แทนย่อหน้ายาว" — รวม adviceTh/
                   setsRemaining/avoidCaution (ตรรกะ/เงื่อนไขเดิมทุกจุด ไม่ตัดอะไรออก) เป็น <ul> แทนย่อหน้า
                   แยก 2 ก้อนแบบเดิม */}
+              {/* ฟีดแบ็ก "Text เล็กมากในการ์ด — เพิ่มขนาด 1px" — 10px -> 11px ทั้ง 2 bullet (เป็นข้อความ
+                  ที่ User ต้องอ่านเพื่อทำความเข้าใจคำแนะนำ) คงสีตามความหมายเดิมไว้ (barColor/amber ผูกกับ
+                  tier ของแท่ง Recovery ด้านบนเป๊ะ ไม่ใช่เทาแบนราบ — สีที่นี่คือ "Important" ไม่ใช่ "Supporting") */}
               {!isRestDay && (
                 <ul className="mt-1.5 space-y-0.5">
-                  <li className="flex gap-1" style={{ fontSize: 10, color: barColor, lineHeight: 1.35 }}>
+                  <li className="flex gap-1" style={{ fontSize: 11, color: barColor, lineHeight: 1.35 }}>
                     <span aria-hidden="true">•</span>
                     <span className="line-clamp-2">
                       {recoveryTier(displayPct).adviceTh}
                       {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำนี้ — เฉพาะตอนยังเหลือโควตาจริง
                           (setsRemaining > 0) เหมือน desktop's Recovery banner ไม่โชว์ตอนเกินเป้าแล้ว */}
                       {muscleRecommendation && muscleRecommendation.setsRemaining > 0 && (
-                        <span style={{ color: '#CFD4DE' }}> · เหลืออีก {muscleRecommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
+                        <span style={{ color: TEXT.body }}> · เหลืออีก {muscleRecommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
                       )}
                     </span>
                   </li>
                   {avoidCaution && (
-                    <li className="flex gap-1" style={{ fontSize: 10, color: COLORS.amber, lineHeight: 1.35 }}>
+                    <li className="flex gap-1" style={{ fontSize: 11, color: COLORS.amber, lineHeight: 1.35 }}>
                       <span aria-hidden="true">•</span>
                       <span className="line-clamp-1">
                         ⚠️ {avoidCaution.group} ยัง Recovery ต่ำ ({avoidCaution.pct}%) — หลีกเลี่ยงวันนี้

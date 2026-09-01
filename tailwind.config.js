@@ -14,7 +14,11 @@ module.exports = {
         surface2: '#23272D',
         line: '#2E333A',
         ink: '#F3F0E8',
-        muted: '#9498A0',
+        // ฟีดแบ็ก "Secondary text (label การ์ด 'Weekly Volume'/'Consistency', timestamp, caption) จม
+        // กับพื้นหลังมืดเล็กน้อย อยากขยับสว่างขึ้นแบบ token เดียว ไม่ต้องขาว" — ขยับขึ้นเล็กน้อย (ยังอยู่
+        // โซนเทากลาง ไม่ใช่เทาสว่าง) ตามหลัก "Supporting = Readable ไม่ใช่ Bright" — ใช้กับ text-muted
+        // ~700 จุดทั่วแอป ผลกระทบเป็น token เดียว ไม่ต้องไล่แก้ทีละไฟล์
+        muted: '#9DA2AA',
         steel: '#6C8CA8',
         steeldim: '#3E5266',
         rust: '#C1503A',

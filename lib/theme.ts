@@ -332,11 +332,16 @@ export function glowAlphaHex(pct: number): string {
 // v2: ปรับตาม palette "metallic silver, avoid pure white" ที่ขอเป๊ะ — Primary #F4F4F4 (เดิม #F8F8F8
 // ยังจ้าเกิน), Secondary รวม body/secondary เดิมเข้าใกล้กับ #BDBDBD/#818181 ที่ขอมากขึ้น — caption
 // (เฉดเงียบสุด ไม่มีในสเปคใหม่ที่ให้มาแค่ 3 ระดับ) คงไว้เป็นชั้นที่ 4 เหมือนเดิม ไม่ตัดออก
+// v3: ฟีดแบ็ก "Secondary text (label การ์ด/timestamp/คำอธิบายใต้การ์ดใน Detail Sheet) จมกับพื้นหลังมืด —
+// อยากขยับสว่างขึ้นแบบ token เดียว ไม่ต้องขาว" — secondary/caption เป็น 2 เฉดที่มืดสุดในชุดนี้ (ใช้กับ
+// เนื้อหา Detail Sheet เป็นหลัก เช่น WorkoutStreakDetailSheet/FitnessScoreDetailSheet/MetricDetailSheet)
+// ขยับขึ้นตามเลขที่ผู้ใช้ระบุเป๊ะ (secondary #818181->#9A9DA3, caption #676767->#70757D) — title/body ไม่แตะ
+// (ผู้ใช้ยืนยันว่าสว่างพอแล้ว ไม่ต้องการเพิ่ม brightness ทั้งระบบ เฉพาะจุดที่จมจริงๆ เท่านั้น)
 export const TEXT = {
   title: '#F4F4F4',
   body: '#BDBDBD',
-  secondary: '#818181',
-  caption: '#676767',
+  secondary: '#9A9DA3',
+  caption: '#70757D',
 } as const
 
 // ===================================================================================
