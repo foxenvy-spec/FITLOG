@@ -70,6 +70,17 @@ interface AICoachCompactCardProps {
 // แอปคำนวณจริง (เคยถูกปฏิเสธไปแล้วรอบก่อนหน้าด้วยเหตุผลเดียวกัน — ไม่ใช้ข้อมูลสมมติ) เลือกทำแค่ "Updated
 // X min ago" ซึ่งมีข้อมูลจริงรองรับ (lastUpdatedAt จาก React Query) แทน — ปัดเป็นหน่วยที่หยาบพอจะไม่ต้อง
 // re-render ทุกวินาที (นาที/ชั่วโมง/วัน) พอสำหรับความหมาย "เพิ่งอัปเดต" ไม่ต้องเป๊ะระดับวินาที
+// ฟีดแบ็ก "อยากเห็นแพทเทิร์น 'วันนี้: X / 🟢 เหมาะสำหรับฝึก / เหตุผล / CTA' — ตอนนี้มีแค่ % + ประโยคแนะนำ
+// ยาวๆ ต้องอ่านเองว่าควรฝึกไหม" — ไม่คิดเกณฑ์ใหม่ ใช้รอยต่อ tier เดียวกับ recoveryTier() เป๊ะ (Excellent/
+// Good = พร้อม, Recovering = เบาลง, Rest = พัก) แค่แปลงเป็น verdict สั้นๆ 1 บรรทัดแยกจาก adviceTh
+// (ซึ่งยังอยู่ต่อเป็นเหตุผลบรรทัดถัดไป ไม่ได้ตัดออก)
+function readinessVerdict(pct: number): { emoji: string; text: string } {
+  const tier = recoveryTier(pct).labelEn
+  if (tier === 'Excellent' || tier === 'Good') return { emoji: '🟢', text: 'เหมาะสำหรับฝึกวันนี้' }
+  if (tier === 'Recovering') return { emoji: '🟡', text: 'ฝึกได้ แต่ควรลดความหนักลง' }
+  return { emoji: '🔴', text: 'ควรพักหรือฝึกเบามากๆ' }
+}
+
 function relativeUpdatedLabel(lastUpdatedAt: number): string {
   const diffMs = Date.now() - lastUpdatedAt
   const mins = Math.floor(diffMs / 60000)
@@ -343,6 +354,14 @@ export default function AICoachCompactCard({
                   : `${isRecommendationForToday ? 'Today' : 'Next session'} • ${relatedGroupsText}`}
               </p>
 
+              {/* verdict สั้นๆ 1 บรรทัด (ดู readinessVerdict ด้านบนไฟล์) — ให้เห็นทันทีว่า "ควรฝึกไหมวันนี้"
+                  ก่อนจะไล่อ่านเหตุผลรายละเอียดด้านล่าง ไม่โชว์ตอน Rest Day (มีข้อความอธิบายของตัวเองแล้ว) */}
+              {!isRestDay && (
+                <p className="mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
+                  {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text}
+                </p>
+              )}
+
               {/* v58: ฟีดแบ็ก "Training Readiness 48 vs Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้อง
                   อธิบายให้ชัด" — ป้าย "Recovery" เดิมสั้นเกินจนอ่านเหมือนจะเป็นตัวเดียวกับ Training Readiness
                   ที่อยู่บน Header (คนละการ์ด แต่ใช้คำเดียวกัน) — เปลี่ยนเป็น "Muscle Recovery" ให้ชัดว่าเป็น
@@ -369,20 +388,31 @@ export default function AICoachCompactCard({
                   เป็นประโยคสำคัญ" — truncate (บรรทัดเดียว) เดิมตัดประโยคที่ยาวกว่าคอลัมน์แคบของการ์ดนี้จน
                   อ่านไม่ครบ เปลี่ยนเป็น line-clamp-2 ให้ขึ้นบรรทัดที่ 2 ได้แทนที่จะตัดทิ้งทันทีที่บรรทัดแรก
                   เต็ม (ยัง ellipsis ถ้ายาวเกิน 2 บรรทัดจริงๆ กันการ์ดสูงขึ้นไม่จำกัด) */}
+              {/* ฟีดแบ็ก "อยากเห็น 'เหตุผล' เป็น bullet list สั้นๆ แทนย่อหน้ายาว" — รวม adviceTh/
+                  setsRemaining/avoidCaution (ตรรกะ/เงื่อนไขเดิมทุกจุด ไม่ตัดอะไรออก) เป็น <ul> แทนย่อหน้า
+                  แยก 2 ก้อนแบบเดิม */}
               {!isRestDay && (
-                <p className="line-clamp-2 mt-1" style={{ fontSize: 10, color: barColor, lineHeight: 1.35 }}>
-                  {recoveryTier(displayPct).adviceTh}
-                  {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำนี้ — เฉพาะตอนยังเหลือโควตาจริง
-                      (setsRemaining > 0) เหมือน desktop's Recovery banner ไม่โชว์ตอนเกินเป้าแล้ว */}
-                  {muscleRecommendation && muscleRecommendation.setsRemaining > 0 && (
-                    <span style={{ color: '#CFD4DE' }}> · เหลืออีก {muscleRecommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
+                <ul className="mt-1.5 space-y-0.5">
+                  <li className="flex gap-1" style={{ fontSize: 10, color: barColor, lineHeight: 1.35 }}>
+                    <span aria-hidden="true">•</span>
+                    <span className="line-clamp-2">
+                      {recoveryTier(displayPct).adviceTh}
+                      {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำนี้ — เฉพาะตอนยังเหลือโควตาจริง
+                          (setsRemaining > 0) เหมือน desktop's Recovery banner ไม่โชว์ตอนเกินเป้าแล้ว */}
+                      {muscleRecommendation && muscleRecommendation.setsRemaining > 0 && (
+                        <span style={{ color: '#CFD4DE' }}> · เหลืออีก {muscleRecommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
+                      )}
+                    </span>
+                  </li>
+                  {avoidCaution && (
+                    <li className="flex gap-1" style={{ fontSize: 10, color: COLORS.amber, lineHeight: 1.35 }}>
+                      <span aria-hidden="true">•</span>
+                      <span className="line-clamp-1">
+                        ⚠️ {avoidCaution.group} ยัง Recovery ต่ำ ({avoidCaution.pct}%) — หลีกเลี่ยงวันนี้
+                      </span>
+                    </li>
                   )}
-                </p>
-              )}
-              {!isRestDay && avoidCaution && (
-                <p className="line-clamp-1 mt-1" style={{ fontSize: 10, color: COLORS.amber, lineHeight: 1.35 }}>
-                  ⚠️ {avoidCaution.group} ยัง Recovery ต่ำ ({avoidCaution.pct}%) — หลีกเลี่ยงวันนี้
-                </p>
+                </ul>
               )}
             </>
           ) : (
