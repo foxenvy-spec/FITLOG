@@ -96,7 +96,12 @@ export default function WeeklyVolume() {
   const underTargetCount = rows.filter((r) => r.status === 'behind' || r.status === 'onTrack').length
 
   return (
-    <PremiumCard className="overflow-hidden">
+    // ฟีดแบ็ก "Information Density สูงไป — Weekly Volume/Consistency/Cardio Volume ควรลดความเด่นทาง
+    // สายตาลง (Level 3 — analytics เสริม ไม่ใช่สิ่งที่ต้องรู้ทันที)" — การ์ดนี้เป็นการ์ดเดียวใน 3 ใบ
+    // (WeeklyVolume/ConsistencyStrip/WeeklyCardioVolume) ที่ใช้ PremiumCard พื้นผิวเต็ม (อีก 2 ใบใช้
+    // div ธรรมดา bg-surface/border-line เงียบกว่าอยู่แล้ว) — ลด texture ให้เบาลงครึ่งหนึ่งด้วย
+    // reducedTexture prop ที่มีอยู่แล้ว (ไม่กระทบจุดอื่นที่ใช้ PremiumCard เพราะ default เดิมยังคงเป็น false)
+    <PremiumCard className="overflow-hidden" reducedTexture>
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-[10px] tracked uppercase text-muted">Weekly Volume</p>
@@ -153,12 +158,21 @@ export default function WeeklyVolume() {
                     <span className="text-muted/60"> / {target} เซ็ต</span>
                   </span>
                   <span className="w-px h-4 bg-line shrink-0" />
-                  <span className="text-[11px] font-mono font-bold shrink-0 w-14 text-right" style={{ color }}>
-                    {status === 'behind'
-                      ? `${diff} เซ็ต`
-                      : status === 'high' || status === 'veryHigh'
-                        ? `+${diff} เซ็ต`
-                        : `${pct}%`}
+                  {/* ฟีดแบ็ก "ขา 24/18 sets +6 sets · OVER TARGET จะอ่านง่ายกว่าแค่ตัวเลขสีเขียว" — เดิมมี
+                      แค่ตัวเลข diff/% เฉยๆ ต่อแถว (สถานะ 3 กลุ่มมีแค่ในสรุปท้ายการ์ดรวม ไม่ได้อยู่ติดแต่ละแถว)
+                      เพิ่มป้ายคำสั้นๆ กำกับใต้ตัวเลขต่อแถวเลย ไม่ใช้ emoji จุดสีเพิ่ม (ฟีดแบ็กเก่าเคยขอลดเหลือ
+                      3 สีไม่ใช่ traffic-light แล้ว — ดู comment STATUS_COLOR ด้านบน) */}
+                  <span className="flex flex-col items-end shrink-0 w-16">
+                    <span className="text-[11px] font-mono font-bold" style={{ color }}>
+                      {status === 'behind'
+                        ? `${diff} เซ็ต`
+                        : status === 'high' || status === 'veryHigh'
+                          ? `+${diff} เซ็ต`
+                          : `${pct}%`}
+                    </span>
+                    <span className="text-[8px] tracked uppercase" style={{ color }}>
+                      {status === 'behind' || status === 'onTrack' ? 'ต่ำกว่าเป้า' : status === 'veryHigh' ? 'เกินเป้า' : 'ในเป้า'}
+                    </span>
                   </span>
                 </div>
                 <div className="px-2.5 pt-1.5 pb-2">
