@@ -998,7 +998,11 @@ export default function DashboardPage() {
       style={{ scrollBehavior: 'smooth' }}
     >
     <div className="shrink-0 w-full snap-center">
-    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start">
+    {/* ฟีดแบ็ก "อยากให้หน้าภาพรวมพอดี 1 จอ 14 นิ้ว" — gap ระหว่าง section หลัก 16px -> 12px (เดิมมี
+        comment เก่าที่บอกว่า "ไม่แตะ lg:gap-4 ของ grid หลัก" แต่นั่นคือตอนอยากลดแค่คู่ header->Body
+        Overview คู่เดียว ไม่ใช่ทุกคู่ — รอบนี้อยากลดทุกคู่พร้อมกันจริงๆ เพื่อประหยัดความสูงรวม จึงแก้ตรงนี้
+        ได้ ปลอดภัย ไม่กระทบเนื้อหา/การ์ดภายในเลย แค่ระยะห่างระหว่างการ์ด) */}
+    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-start">
       {/* greeting + settings */}
       <div className="relative z-20 lg:col-span-12 lg:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
         {/* Hero Background — แสงอำพันจางมากๆ (~3% peak) หลัง Header ตรงจุดที่ชื่อ (BANK ฯลฯ) อยู่ ให้
@@ -1299,7 +1303,7 @@ export default function DashboardPage() {
           flow was leaving phantom empty rows before AI Coach and before the quick-actions row
           (an auto-placement cursor quirk). Explicit col-start / row-start classes on every item
           below sidestep that entirely — placement no longer depends on auto-placement order. */}
-      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-start">
+      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-start">
       {/* left column (lg+): today's workout, quick start, muscle heatmap. */}
       <div className="space-y-6 lg:space-y-0 lg:contents">
       {/* card 1: hero — today's workout. Sets the visual tone: everything else below is
@@ -1628,8 +1632,12 @@ export default function DashboardPage() {
         {/* ฟีดแบ็ก "Today's Workout ใหญ่เกินไปตอนยังไม่มีโปรแกรม — Visual Weight > Information Value"
             — เดิม padding คงที่ py-6 ทุกสถานะ ทั้งที่ State B (ไม่มีโปรแกรม) มีข้อมูลจริงให้แสดงน้อยกว่า
             State A/C มาก ลด padding แนวตั้งลงเฉพาะตอนไม่มีโปรแกรม (py-6 -> py-5) ให้สัดส่วนภาพ/ข้อมูล
-            สมดุลขึ้นโดยไม่แตะขนาด/เลย์เอาต์ตอนมีข้อมูลจริงให้แสดง (ซึ่งผ่านการปรับละเอียดมาหลายรอบแล้ว) */}
-        <div className={`relative z-10 px-5 ${scheduledDay || todayCompleted ? 'py-6' : 'py-5'}`}>
+            สมดุลขึ้นโดยไม่แตะขนาด/เลย์เอาต์ตอนมีข้อมูลจริงให้แสดง (ซึ่งผ่านการปรับละเอียดมาหลายรอบแล้ว)
+            ฟีดแบ็ก (รอบถัดมา) "อยากให้หน้าภาพรวมพอดี 1 จอ 14 นิ้ว" — ยอมรับความเสี่ยงแล้วขอให้ลอง py-6 ->
+            py-5 ต่อใน State A/C ด้วย (เดิมกันไว้ไม่แตะ) ประหยัดแนวตั้งอีก 8px — ไม่แตะ padding แนวนอน
+            (px-5), ตำแหน่ง/ขนาด GoalRing มุมขวาล่าง, หรือรูปดัมเบล/particle/glow ใดๆ เลย (ยังเสี่ยงสูง
+            เกินไปที่จะแตะโดยตรวจผลจริงไม่ได้) */}
+        <div className="relative z-10 px-5 py-5">
           {/* ฟีดแบ็ก "Today's Workout ควรเป็นระบบสถานะของวัน ไม่ใช่แค่รูป workout" — State C: เสร็จแล้ว
               วันนี้ เปลี่ยนป้ายหัวการ์ดเป็น "Workout Complete" แทน "Today's Workout" เดิม (ยังโชว์ต่อไป
               ทั้งวันแม้เทรนเสร็จแล้ว ทำให้ดูเหมือนยังไม่ได้เริ่ม) ใช้ todayCompleted ตัวเดียวกับที่คำนวณ
