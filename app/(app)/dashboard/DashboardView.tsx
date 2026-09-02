@@ -659,7 +659,14 @@ export default function DashboardPage() {
   // balanceSummary ไว้แล้วภายในตัวเอง (จาก balanceIssues.over/under) ไม่อยาก query/คำนวณซ้ำเป็นคอมโพเนนต์
   // แยกใหม่ (เสี่ยงสูตรหลุด sync กัน) — ใช้ callback prop onInsight ยกค่าขึ้นมาเก็บที่นี่แทน (component เดิม
   // ยังเป็น single source of truth อยู่) แล้ว render banner จากค่านี้ในหัวหน้าคอมโพเนนต์
-  const [heatmapInsight, setHeatmapInsight] = useState<{ text: string; color: string } | null>(null)
+  const [heatmapInsight, setHeatmapInsight] = useState<{ text: string; color: string; groups: MuscleGroup[] } | null>(null)
+
+  // ฟีดแบ็ก (P2, "เชื่อม Muscle Heatmap ↔ Insight") "hover/click กล้ามเนื้อบนไดอะแกรม (เช่น อก/แกนกลางลำตัว)
+  // ควรไฮไลต์คำแนะนำที่เกี่ยวข้อง โดยไม่ต้องเพิ่ม card" — WeeklyMuscleHeatmap รายงานกลุ่มที่ active อยู่
+  // (hover บนเดสก์ท็อป หรือแตะเปิดรายละเอียดบนมือถือ) ขึ้นมาผ่าน onActiveGroupChange ใช้ค่านี้เทียบกับ
+  // heatmapInsight.groups (ด้านบน) เพื่อไฮไลต์ข้อความส่วนที่ตรงกันใน Insight Banner — ไม่เพิ่ม card ใหม่
+  // แค่เชื่อม interaction ของ 2 จุดที่มีอยู่แล้วเข้าด้วยกัน
+  const [activeHeatmapGroup, setActiveHeatmapGroup] = useState<MuscleGroup | null>(null)
 
   // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
   // Card (การ์ดเดียวที่ควรมี effect ใหม่ตามกฎ "Hero มีแค่ใบเดียว") จำลองแสงสะท้อนผิวโลหะเปลี่ยนมุมตามที่
@@ -2466,32 +2473,58 @@ export default function DashboardPage() {
           กลายเป็น Evidence รองลงมา" — heatmapInsight มาจาก WeeklyMuscleHeatmap ผ่าน onInsight callback
           ด้านล่าง (ค่าเดียวกันเป๊ะ ไม่คำนวณซ้ำ) col-span-9 เท่าแถว QuickAction ด้านบน ไม่ชนคอลัมน์ AI Coach
           (row-span 2 คร่อมแถว 2-3 อยู่ที่คอลัมน์ 10-12) — ไม่โชว์ถ้ายังไม่มี insight จริง (ไม่มโนคำแนะนำ) */}
-      {heatmapInsight && (
-        <div className="lg:col-start-1 lg:col-span-9 lg:row-start-3 rounded-card border border-line bg-surface2/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-3 min-w-0">
-            <span className="text-lg leading-none shrink-0" aria-hidden="true">
-              🔴
-            </span>
-            <div className="min-w-0">
-              <p className="text-[12px] tracked uppercase text-muted">Insight</p>
-              <p className="font-display font-semibold text-sm leading-snug mt-0.5" style={{ color: heatmapInsight.color }}>
-                {heatmapInsight.text}
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/coach"
-            className="shrink-0 text-[12px] font-display tracked uppercase rounded-full px-3 py-2 transition active:scale-[0.98]"
-            style={{ backgroundColor: withAlpha(heatmapInsight.color, '22'), color: heatmapInsight.color }}
+      {heatmapInsight && (() => {
+        // ฟีดแบ็ก (P2, "เชื่อม Muscle Heatmap ↔ Insight") — กลุ่มที่ hover/แตะอยู่ตอนนี้ ถ้าอยู่ในประโยคนี้
+        // จริง ไฮไลต์ทั้งกล่อง (border/glow เข้มขึ้นด้วยสีเดียวกับ insight) + ไฮไลต์ชื่อกลุ่มนั้นในข้อความ
+        // เป็น chip เล็กๆ ให้เห็นการเชื่อมโยงชัดโดยไม่ต้องเพิ่ม card ใหม่
+        const isMatched = !!activeHeatmapGroup && heatmapInsight.groups.includes(activeHeatmapGroup)
+        const idx = isMatched ? heatmapInsight.text.indexOf(activeHeatmapGroup!) : -1
+        const textNode =
+          idx >= 0 ? (
+            <>
+              {heatmapInsight.text.slice(0, idx)}
+              <span className="rounded px-1" style={{ backgroundColor: withAlpha(heatmapInsight.color, '33') }}>
+                {activeHeatmapGroup}
+              </span>
+              {heatmapInsight.text.slice(idx + activeHeatmapGroup!.length)}
+            </>
+          ) : (
+            heatmapInsight.text
+          )
+        return (
+          <div
+            className="lg:col-start-1 lg:col-span-9 lg:row-start-3 rounded-card border border-line bg-surface2/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap transition-shadow"
+            style={
+              isMatched
+                ? { borderColor: heatmapInsight.color, boxShadow: `0 0 0 1px ${heatmapInsight.color}, 0 0 16px ${withAlpha(heatmapInsight.color, '33')}` }
+                : undefined
+            }
           >
-            ดู Workout ที่แนะนำ →
-          </Link>
-        </div>
-      )}
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="text-lg leading-none shrink-0" aria-hidden="true">
+                🔴
+              </span>
+              <div className="min-w-0">
+                <p className="text-[12px] tracked uppercase text-muted">Insight</p>
+                <p className="font-display font-semibold text-sm leading-snug mt-0.5" style={{ color: heatmapInsight.color }}>
+                  {textNode}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/coach"
+              className="shrink-0 text-[12px] font-display tracked uppercase rounded-full px-3 py-2 transition active:scale-[0.98]"
+              style={{ backgroundColor: withAlpha(heatmapInsight.color, '22'), color: heatmapInsight.color }}
+            >
+              ดู Workout ที่แนะนำ →
+            </Link>
+          </div>
+        )
+      })()}
 
       <div className="grid grid-cols-1 gap-6 items-start lg:contents">
         <div className="lg:col-start-1 lg:col-span-6 lg:row-start-4">
-          <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} />
+          <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} onActiveGroupChange={setActiveHeatmapGroup} />
         </div>
         <div className="lg:col-start-7 lg:col-span-3 lg:row-start-4">
           <WeeklyVolume />

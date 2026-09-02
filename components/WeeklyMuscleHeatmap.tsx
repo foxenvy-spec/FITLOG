@@ -112,10 +112,18 @@ interface WeeklyMuscleHeatmapProps {
   // parent (DashboardView.tsx) render banner แยกแทน ไม่ต้อง query/คำนวณซ้ำเป็นคอมโพเนนต์ใหม่ (เสี่ยงสูตร
   // หลุด sync) — component นี้ยังเป็น single source of truth ของ balanceSummary เหมือนเดิม แค่ "รายงาน"
   // ค่าขึ้นไปด้วย ไม่ระบุ prop นี้ (เช่นตอนใช้ใน /stats) = พฤติกรรมเดิมทุกประการ (⚠️ ยังโชว์ในการ์ดเอง)
-  onInsight?: (insight: { text: string; color: string } | null) => void
+  // groups: รายชื่อกลุ่มกล้ามเนื้อที่ถูกพูดถึงในประโยค insight นี้จริงๆ (topOver + underNames) — ให้ parent
+  // รู้ว่า "กลุ่มไหนบ้าง" ที่ควรไฮไลต์ข้อความ โดยไม่ต้อง parse string เอง (เสี่ยง match ผิดจุด)
+  onInsight?: (insight: { text: string; color: string; groups: MuscleGroup[] } | null) => void
+  // ฟีดแบ็ก (P2, "เชื่อม Muscle Heatmap ↔ Insight") "hover/click กล้ามเนื้อบนไดอะแกรม ควรไฮไลต์คำแนะนำที่
+  // เกี่ยวข้อง โดยไม่ต้องเพิ่ม card" — รายงานกลุ่มที่ "active" อยู่ตอนนี้ขึ้นไปให้ parent (เดสก์ท็อป = กลุ่มที่
+  // เมาส์ชี้อยู่จาก hoveredGroup, มือถือ/แท็บเล็ตที่ไม่มี hover = กลุ่มที่เพิ่งแตะเปิดดูรายละเอียดจาก expanded
+  // แทน — ดู activeGroup ด้านล่าง) ให้ Insight Banner ที่อยู่นอกคอมโพเนนต์นี้ (DashboardView.tsx) ไฮไลต์
+  // ข้อความส่วนที่ตรงกับกลุ่มนั้นได้ ไม่ระบุ prop นี้ = พฤติกรรมเดิมทุกประการ
+  onActiveGroupChange?: (group: MuscleGroup | null) => void
 }
 
-export default function WeeklyMuscleHeatmap({ onInsight }: WeeklyMuscleHeatmapProps = {}) {
+export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: WeeklyMuscleHeatmapProps = {}) {
   const supabase = createClient()
   const { start, end } = getWeekRange()
   const { toDisplay, unit } = useWeightUnit()
@@ -288,7 +296,7 @@ export default function WeeklyMuscleHeatmap({ onInsight }: WeeklyMuscleHeatmapPr
   // เป็นรวมทั้ง 2 ฝั่งในประโยคเดียวเมื่อมีทั้งคู่จริง (กลุ่มที่เกินเป้ามากสุด 1 กลุ่ม + กลุ่มที่ขาดเป้ามากสุด
   // สูงสุด 2 กลุ่ม กันประโยคยาวเกิน) ยังคงเป็นชื่อกลุ่ม+คำอธิบาย ไม่ใช่ตัวเลข deltas ดิบ ไม่ขัดกับเหตุผลเดิม
   // ("ไม่ควรใส่ลิสต์ตัวเลข") — เหลือ fallback ฝั่งเดียวเฉพาะกรณีมีแค่ฝั่งใดฝั่งหนึ่งจริงๆ เหมือนเดิม
-  const balanceSummary = useMemo(() => {
+  const balanceSummaryInfo = useMemo(() => {
     const topOver =
       balanceIssues.over.length > 0
         ? [...balanceIssues.over].sort((a, b) => b.sets - b.targetSets - (a.sets - a.targetSets))[0]
@@ -299,24 +307,33 @@ export default function WeeklyMuscleHeatmap({ onInsight }: WeeklyMuscleHeatmapPr
       .map((s) => s.group)
 
     if (topOver && underNames.length > 0) {
-      return `${topOver.group} สูงกว่าเป้า ขณะที่ ${underNames.join(' และ ')} ต่ำกว่าเป้า`
+      return { text: `${topOver.group} สูงกว่าเป้า ขณะที่ ${underNames.join(' และ ')} ต่ำกว่าเป้า`, groups: [topOver.group, ...underNames] }
     }
     if (underNames.length > 0) {
-      return `เพิ่ม ${underNames.join(' และ ')} ในสัปดาห์นี้`
+      return { text: `เพิ่ม ${underNames.join(' และ ')} ในสัปดาห์นี้`, groups: underNames }
     }
     if (topOver) {
-      return `ลด ${topOver.group} ลงบ้าง`
+      return { text: `ลด ${topOver.group} ลงบ้าง`, groups: [topOver.group] }
     }
     return null
   }, [balanceIssues])
+  const balanceSummary = balanceSummaryInfo?.text ?? null
 
   // รายงาน balanceSummary ขึ้นไปให้ parent (ถ้ามี onInsight — ดูคอมเมนต์ที่ prop) แทนที่จะโชว์แค่ในการ์ด
   // นี้เองอย่างเดียว — ทำใน useEffect (ไม่ใช่ระหว่าง render ตรงๆ) เพราะเป็นการเรียก callback ออกไปนอก
   // component ต้องรอ render เสร็จก่อนตามกฎ React
   useEffect(() => {
     if (!onInsight) return
-    onInsight(balanceSummary && balance ? { text: balanceSummary, color: BALANCE_COLOR[balance.tier] } : null)
-  }, [onInsight, balanceSummary, balance])
+    onInsight(balanceSummaryInfo && balance ? { text: balanceSummaryInfo.text, color: BALANCE_COLOR[balance.tier], groups: balanceSummaryInfo.groups } : null)
+  }, [onInsight, balanceSummaryInfo, balance])
+
+  // กลุ่ม "active" ตอนนี้ — เดสก์ท็อป (มี hover) ใช้กลุ่มที่เมาส์ชี้อยู่ (hoveredGroup), อุปกรณ์ทัช (ไม่มี
+  // hover) ไม่มี hoveredGroup เลย ใช้กลุ่มที่เพิ่งแตะเปิดดูรายละเอียดแทน (expanded) — ให้ทั้งสองแบบ
+  // interaction เชื่อมกับ Insight Banner ได้เหมือนกัน (ดูคอมเมนต์ที่ onActiveGroupChange prop)
+  const activeGroup = hoveredGroup ?? expanded
+  useEffect(() => {
+    onActiveGroupChange?.(activeGroup)
+  }, [onActiveGroupChange, activeGroup])
 
   // กลุ่มเด่น/ด้อย — จัดอันดับตาม % ส่วนแบ่งเซ็ตของสัปดาห์นี้ (สมมติฐาน: เด่น = 3 อันดับบนสุด,
   // ด้อย = 2 อันดับล่างสุด — ถ้าต้องการเกณฑ์อื่น เช่น เทียบกับเป้าหมายต่อกลุ่มแทน แจ้งได้)
