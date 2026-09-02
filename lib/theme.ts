@@ -337,11 +337,18 @@ export function glowAlphaHex(pct: number): string {
 // เนื้อหา Detail Sheet เป็นหลัก เช่น WorkoutStreakDetailSheet/FitnessScoreDetailSheet/MetricDetailSheet)
 // ขยับขึ้นตามเลขที่ผู้ใช้ระบุเป๊ะ (secondary #818181->#9A9DA3, caption #676767->#70757D) — title/body ไม่แตะ
 // (ผู้ใช้ยืนยันว่าสว่างพอแล้ว ไม่ต้องการเพิ่ม brightness ทั้งระบบ เฉพาะจุดที่จมจริงๆ เท่านั้น)
+// v4 (P0, Typography/Contrast review): ตารางฟีดแบ็กรอบใหม่ระบุ Main value/Heading "ดีแล้ว คงไว้" (title/
+// body ไม่แตะ ตรงกับ v3) แต่ Secondary ต้องการ "+10-15% contrast" และ Caption ต้องการ "+contrast" ชัดเจน
+// กว่า Secondary (เพราะเป็นเฉดมืดสุด) — bump ด้วยสูตร lighten() เดียวกับ v3 เดิม: secondary +12%
+// (#9A9DA3->#A6A9AE ตรงกลางช่วง 10-15% ที่ขอ), caption +18% (#70757D->#8A8E94 มากกว่า secondary ตาม
+// สัดส่วนที่มืดกว่าเดิม) — คำนวณ WCAG contrast บนพื้นการ์ด surface2 (#23272D) ยืนยันตัวเลข: caption จาก
+// 3.23:1 (ไม่ผ่าน AA 4.5:1) ขยับเป็น 4.55:1 (ผ่านพอดี), secondary จาก 5.51:1 ขยับเป็น 6.36:1 (ผ่านสบายอยู่
+// แล้ว ขยับแค่พอให้สังเกตความต่างได้ ไม่ทำให้จ้าเกิน tier ที่เข้มกว่า) — title/body ไม่แตะเหมือนเดิม
 export const TEXT = {
   title: '#F4F4F4',
   body: '#BDBDBD',
-  secondary: '#9A9DA3',
-  caption: '#70757D',
+  secondary: '#A6A9AE',
+  caption: '#8A8E94',
 } as const
 
 // ===================================================================================

@@ -18,7 +18,11 @@ module.exports = {
         // กับพื้นหลังมืดเล็กน้อย อยากขยับสว่างขึ้นแบบ token เดียว ไม่ต้องขาว" — ขยับขึ้นเล็กน้อย (ยังอยู่
         // โซนเทากลาง ไม่ใช่เทาสว่าง) ตามหลัก "Supporting = Readable ไม่ใช่ Bright" — ใช้กับ text-muted
         // ~700 จุดทั่วแอป ผลกระทบเป็น token เดียว ไม่ต้องไล่แก้ทีละไฟล์
-        muted: '#9DA2AA',
+        // v2 (P0, Typography/Contrast review): ฟีดแบ็กรอบใหม่ชี้ตรงจุดเดิมอีกครั้ง (subtitle/label การ์ด/
+        // วันที่/legend/text ใต้ progress bar/text ใน Consistency — ทั้งหมดใช้ text-muted) — ขยับต่ออีก
+        // ~12% (ผสมขาว 12% ด้วยสูตรเดียวกับ lighten() ใน lib/theme.ts) ยังอยู่โซนเทากลางเหมือนเดิม ไม่ใช่
+        // เทาสว่าง/ขาว แค่อ่านง่ายขึ้นอีกขั้นตามหลัก "Supporting = Readable ไม่ใช่ Bright" เดิม
+        muted: '#A9ADB4',
         steel: '#6C8CA8',
         steeldim: '#3E5266',
         rust: '#C1503A',
