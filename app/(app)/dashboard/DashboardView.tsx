@@ -1019,11 +1019,14 @@ export default function DashboardPage() {
         />
         <div>
           <p className="text-xs text-muted">👋 {greetingText}</p>
+          {/* ฟีดแบ็ก "อยากให้หน้าภาพรวมพอดี 1 จอ 14 นิ้ว" (รอบต่อเนื่อง หลัง gap/Today's Workout padding
+              ยังไม่พอ) — ยอมรับความเสี่ยงแล้วขอลดต่อ: ชื่อ hero 44px -> 36px (-8px, ยังใหญ่กว่าหัวข้อ
+              section อื่นทั้งหมดในหน้าอยู่มาก ไม่เสีย hierarchy) ไม่แตะสี/glow/font ใดๆ */}
           <p
             className="uppercase mt-1"
             style={{
               fontFamily: 'var(--font-oswald), var(--font-kanit)',
-              fontSize: 44,
+              fontSize: 36,
               fontWeight: 800,
               letterSpacing: '2px',
               lineHeight: 1,
@@ -1039,14 +1042,16 @@ export default function DashboardPage() {
           {/* เส้น gradient สั้นๆ ใต้ชื่อ (60-80px) คั่นระหว่าง hero name กับบรรทัด insight ด้านล่าง
               v60: ฟีดแบ็ก "เพิ่มระยะห่างระหว่าง BANK กับ BODY FAT... ประมาณ 6-8px จะหายใจขึ้น" —
               marginBottom (ช่องว่างระหว่างเส้นคั่นกับบรรทัด insight ด้านล่าง) 10 -> 18 (+8px) ไม่แตะ
-              marginTop (ช่องว่างระหว่างชื่อกับเส้นคั่น) เพราะฟีดแบ็กพูดถึงช่องว่างรวมก่อนถึงบรรทัด Body Fat */}
+              marginTop (ช่องว่างระหว่างชื่อกับเส้นคั่น) เพราะฟีดแบ็กพูดถึงช่องว่างรวมก่อนถึงบรรทัด Body Fat
+              ฟีดแบ็ก "อยากให้หน้าภาพรวมพอดี 1 จอ" (รอบต่อเนื่อง) — ยอม -6px กลับคืน (18 -> 12) เพื่อประหยัด
+              พื้นที่รวม ยังเว้นช่องว่างมากกว่าค่าเดิมก่อน v60 (10) อยู่ */}
           <div
             aria-hidden="true"
             style={{
               width: 70,
               height: 3,
               marginTop: 8,
-              marginBottom: 18,
+              marginBottom: 12,
               borderRadius: 2,
               background: 'linear-gradient(90deg, rgba(255,255,255,.5), transparent)',
             }}
@@ -1222,8 +1227,8 @@ export default function DashboardPage() {
                 ลงจาก Level 1" — Recovery/Training This Week (การ์ดข้างเคียงระดับเดียวกัน) ใช้ bg-surface2/40
                 ไม่มี shadow-elevated มาตั้งแต่ v41 ("การ์ดรอง ไม่ใช่ Hero") แต่การ์ดนี้หลุดไม่ได้ปรับตาม เลย
                 ดูหนักกว่า 2 ใบข้างๆ ที่ควรเป็นน้ำหนักภาพเท่ากัน — ปรับให้ตรงกัน */}
-            <div className="rounded-card bg-surface2/40 border border-line px-4 py-3.5">
-              <p className="text-[12px] tracked uppercase text-muted mb-3 flex items-center gap-1">
+            <div className="rounded-card bg-surface2/40 border border-line px-4 py-3">
+              <p className="text-[12px] tracked uppercase text-muted mb-2 flex items-center gap-1">
                 Body Goal
                 {/* ฟีดแบ็ก (P2, "Metric explanation") "Progress % (เช่น 37%) เพิ่ม ⓘ อธิบายว่าคำนวณจากอะไร" */}
                 <InfoTooltip
@@ -1634,10 +1639,11 @@ export default function DashboardPage() {
             State A/C มาก ลด padding แนวตั้งลงเฉพาะตอนไม่มีโปรแกรม (py-6 -> py-5) ให้สัดส่วนภาพ/ข้อมูล
             สมดุลขึ้นโดยไม่แตะขนาด/เลย์เอาต์ตอนมีข้อมูลจริงให้แสดง (ซึ่งผ่านการปรับละเอียดมาหลายรอบแล้ว)
             ฟีดแบ็ก (รอบถัดมา) "อยากให้หน้าภาพรวมพอดี 1 จอ 14 นิ้ว" — ยอมรับความเสี่ยงแล้วขอให้ลอง py-6 ->
-            py-5 ต่อใน State A/C ด้วย (เดิมกันไว้ไม่แตะ) ประหยัดแนวตั้งอีก 8px — ไม่แตะ padding แนวนอน
-            (px-5), ตำแหน่ง/ขนาด GoalRing มุมขวาล่าง, หรือรูปดัมเบล/particle/glow ใดๆ เลย (ยังเสี่ยงสูง
-            เกินไปที่จะแตะโดยตรวจผลจริงไม่ได้) */}
-        <div className="relative z-10 px-5 py-5">
+            py-5 ต่อใน State A/C ด้วย (เดิมกันไว้ไม่แตะ) ประหยัดแนวตั้งอีก 8px แล้วลดต่อ py-5 -> py-4
+            (อีก 8px รวม -16px) — ไม่แตะ padding แนวนอน (px-5), ตำแหน่ง/ขนาด GoalRing มุมขวาล่าง (อยู่คนละ
+            div, ไม่ได้อ้างอิงตาม padding นี้), หรือรูปดัมเบล/particle/glow ใดๆ เลย (ยังเสี่ยงสูงเกินไปที่จะ
+            แตะโดยตรวจผลจริงไม่ได้) */}
+        <div className="relative z-10 px-5 py-4">
           {/* ฟีดแบ็ก "Today's Workout ควรเป็นระบบสถานะของวัน ไม่ใช่แค่รูป workout" — State C: เสร็จแล้ว
               วันนี้ เปลี่ยนป้ายหัวการ์ดเป็น "Workout Complete" แทน "Today's Workout" เดิม (ยังโชว์ต่อไป
               ทั้งวันแม้เทรนเสร็จแล้ว ทำให้ดูเหมือนยังไม่ได้เริ่ม) ใช้ todayCompleted ตัวเดียวกับที่คำนวณ
@@ -1964,8 +1970,8 @@ export default function DashboardPage() {
               เต็มใบ (คลิกได้ทั้งการ์ด) แต่เดิมมีแค่ active: (ตอนกด) ไม่มี hover: เลย บนจอคอมที่ใช้เมาส์ ผู้ใช้
               จะไม่เห็นสัญญาณใดๆ ว่าการ์ดนี้กดได้จนกว่าจะคลิกไปแล้ว — เพิ่ม hover เบากว่า active (60% ของสี
               เดียวกัน) ให้มีสัญญาณ affordance ก่อนคลิกจริง */}
-          <Link href="/recovery" className="block px-4 py-4 hover:bg-surface2/60 active:bg-surface2 transition">
-            <div className="flex items-center justify-between mb-3">
+          <Link href="/recovery" className="block px-4 py-3 hover:bg-surface2/60 active:bg-surface2 transition">
+            <div className="flex items-center justify-between mb-2">
               <p className="text-[12px] tracked uppercase text-muted">Recovery</p>
             </div>
 
@@ -2317,13 +2323,13 @@ export default function DashboardPage() {
         className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
         style={{ animationDelay: '300ms' }}
       >
-        <div className="px-4 py-4">
+        <div className="px-4 py-3">
           {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ อยากได้การ์ดเดียวชื่อ
               'TRAINING THIS WEEK'" — เปลี่ยนป้ายหัวการ์ดจาก "Weekly Goal" (เดิมอ่านเหมือนพูดถึงแค่ % เดียว)
               เป็น "Training This Week" ให้ตรงกับบทบาทใหม่ที่ครอบทั้ง 3 ตัวเลข ไม่ใช่รื้อการ์ดย่อยที่เหลือ
               (WeeklyVolume/ConsistencyStrip/Heatmap) ทิ้ง — รายละเอียดเต็มยังอยู่ที่เดิมสำหรับคนที่อยากเจาะลึก
               จุดนี้แค่สรุปเลขให้เห็นภาพรวมเชื่อมกันโดยไม่ต้องเลื่อนไปดูอีก 2 การ์ด */}
-          <p className="text-[12px] tracked uppercase text-muted mb-3">Training This Week</p>
+          <p className="text-[12px] tracked uppercase text-muted mb-2">Training This Week</p>
 
           <div className="flex items-center gap-4">
             {/* v45: ฟีดแบ็ก "วงกลมชมพูโดดออกมา ไม่เข้ากับ Dark Titanium — เปลี่ยนเป็น Orange/Titanium
