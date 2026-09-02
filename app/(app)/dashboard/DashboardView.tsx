@@ -650,14 +650,30 @@ export default function DashboardPage() {
   // ฟื้นตัวเต็มที่พร้อมกันหมด (badge "EXCELLENT" ซ้ำ 7 ครั้ง ไม่มีข้อมูลใหม่ให้อ่านเลย) — ดีฟอลต์ย่อเหลือ
   // เฉพาะกลุ่มที่ยังไม่พร้อม (< FULLY_RECOVERED_PCT) ให้เห็นแต่สิ่งที่ต้องตัดสินใจ พร้อม toggle ดูครบทั้งหมด
   const [showAllRecovery, setShowAllRecovery] = useState(false)
-  // ฟีดแบ็ก "โน้ตบุ๊ก 14 นิ้วไม่ควรเลื่อนเกิน 1-2 หน้าจอ ของสำคัญควรเห็นทันที" — ส่วนล่างสุด (Muscle
-  // Heatmap รายละเอียด, Weekly Sets, ปฏิทิน Consistency, Weekly Cardio Volume) เป็นข้อมูลเชิงลึก/ย้อนหลัง
-  // ไม่ใช่ "ต้องทำอะไรวันนี้" — ยุบซ่อนไว้หลังปุ่มโดย default แทนการย้ายออกไปหน้า /stats แบบ 2 รอบก่อนหน้า
-  // ที่เคย revert กลับ (ย้ายข้ามไฟล์เสี่ยงกว่ามาก ต้องคำนวณ grid row-start/order ใหม่ทั้งชุดโดยไม่มีทาง
-  // เห็นผลจริงในเบราว์เซอร์) — ข้อมูลยังอยู่หน้าเดิมทั้งหมด แค่คลิกเดียวก็เห็นครบ ไม่ได้ตัดอะไรออกจริง
-  // ส่วน Insight banner (heatmapInsight) ยังคำนวณ/โชว์ตามปกติเสมอไม่ว่าจะยุบหรือไม่ เพราะ WeeklyMuscleHeatmap
-  // ยัง mount อยู่เบื้องหลัง (ใช้ CSS ซ่อน ไม่ได้ unmount component)
-  const [showMoreSections, setShowMoreSections] = useState(false)
+  // ฟีดแบ็ก "โน้ตบุ๊ก 14 นิ้วไม่ควรเลื่อนเกิน 1-2 หน้าจอ ของสำคัญควรเห็นทันที" -> "อยากสลับเป็นปัดซ้าย-ขวา
+  // เหมือนสไลด์" — ส่วนล่างสุด (Muscle Heatmap รายละเอียด, Weekly Sets, ปฏิทิน Consistency, Weekly Cardio
+  // Volume) เป็นข้อมูลเชิงลึก/ย้อนหลัง ไม่ใช่ "ต้องทำอะไรวันนี้" — รวมเป็น "หน้า 2" เดียว ปัด/ลากเข้า-ออกได้
+  // จริงด้วยเทคนิคเดียวกับ InsightCarousel.tsx ที่มีอยู่แล้ว (scroll-snap ธรรมดา ไม่พึ่ง library ภายนอก)
+  // "หน้า 1" ของ carousel นี้คือการ์ดเชิญชวนเฉยๆ ไม่ใช่ Dashboard ทั้งหมดด้านบน (Header/Body Overview/
+  // Today's Workout/MINT Coach ฯลฯ) ซึ่งยังคงนิ่งอยู่ตำแหน่งเดิมเสมอ ไม่ได้เป็นส่วนหนึ่งของ carousel นี้ —
+  // เคยพิจารณาครอบทั้ง 12-col grid เดิมมาเป็น carousel เต็มรูปแบบ แต่เสี่ยงพังแบบเดียวกับ 2 รอบก่อนที่เคย
+  // revert (ต้องเขียน grid row-start/order ใหม่ทั้งชุดโดยไม่มีทางเห็นผลจริงในเบราว์เซอร์) เลยเลือกทำแค่
+  // ขอบเขตที่เคยพับ/สลับนี้ให้ปัดได้จริงแทน ปลอดภัยกว่ามาก — ข้อมูลยังอยู่หน้าเดิมทั้งหมด ไม่ได้ตัดออกจริง
+  // ส่วน Insight banner (heatmapInsight) ยังคำนวณ/โชว์ตามปกติเสมอไม่ว่าจะอยู่หน้าไหน เพราะ WeeklyMuscleHeatmap
+  // ยัง mount อยู่เบื้องหลังเสมอ (scroll-snap แค่เลื่อนตำแหน่งที่มองเห็น ไม่ได้ unmount component)
+  const detailTrackRef = useRef<HTMLDivElement>(null)
+  const [detailPageIndex, setDetailPageIndex] = useState(0)
+  function scrollDetailToIndex(index: number) {
+    const el = detailTrackRef.current
+    if (!el) return
+    el.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' })
+  }
+  function handleDetailScroll() {
+    const el = detailTrackRef.current
+    if (!el || el.clientWidth === 0) return
+    const index = Math.round(el.scrollLeft / el.clientWidth)
+    setDetailPageIndex(Math.max(0, Math.min(1, index)))
+  }
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — เปิด/ปิด WarmupGuideSheet
   const [warmupOpen, setWarmupOpen] = useState(false)
   // ฟีดแบ็ก "40 Moderate ผู้ใช้ยังไม่รู้ว่า 'ทำไม?' ถ้าคลิกแล้วเปิดรายละเอียดได้จะดีมาก" — เดสก์ท็อปเดิม
@@ -2543,56 +2559,77 @@ export default function DashboardPage() {
         )
       })()}
 
-      <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className={`lg:col-start-1 lg:col-span-6 lg:row-start-4 ${showMoreSections ? '' : 'hidden'}`}>
-          <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} onActiveGroupChange={setActiveHeatmapGroup} />
-        </div>
-        <div className={`lg:col-start-7 lg:col-span-3 lg:row-start-4 ${showMoreSections ? '' : 'hidden'}`}>
-          <WeeklyVolume highlightGroup={activeHeatmapGroup} />
-        </div>
-      </div>
       </div>
       {/* end cards cluster sub-grid */}
 
-      {/* ฟีดแบ็ก "แทนที่จะพับ ทำเป็นสลับหน้า 1/2 แทนดีกว่าไหม" — เปลี่ยนจากปุ่มขยาย/ยุบเดี่ยว เป็น
-          segmented control 2 แท็บ (รูปแบบเดียวกับปุ่ม "ปริมาณ/ความสมดุล" ใน Graphic Muscle Heatmap
-          ด้านบน) หน้า 1 = ภาพรวม/สิ่งที่ต้องทำวันนี้ (ค่าเริ่มต้น) หน้า 2 = รายละเอียดเชิงลึก/ย้อนหลัง —
-          กลไกเบื้องหลัง (showMoreSections + CSS hidden, ไม่ unmount) เหมือนเดิมทุกประการ */}
-      <div className="lg:col-span-12 lg:order-10 flex justify-center py-1">
-        <div className="inline-flex items-center gap-1 rounded-full border border-line p-1">
-          <button
-            type="button"
-            onClick={() => setShowMoreSections(false)}
-            aria-pressed={!showMoreSections}
-            className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${!showMoreSections ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+      {/* ฟีดแบ็ก "แทนที่จะพับ ทำเป็นสลับหน้าแบบปัดซ้าย-ขวาเหมือนสไลด์ดีไหม" — carousel ปัด/ลากได้จริง
+          (เทคนิคเดียวกับ InsightCarousel.tsx: scroll-snap ธรรมดา ไม่พึ่ง library ภายนอก, ไม่ auto-rotate
+          ต่างจาก InsightCarousel เพราะไม่อยากให้กราฟหนักๆ เลื่อนเข้ามาเองระหว่างอ่านหน้า) สไลด์แรกเป็น
+          การ์ดเชิญชวนเฉยๆ (ดู comment ที่ detailPageIndex ด้านบนสำหรับเหตุผลที่ไม่ครอบทั้งหน้าเป็น
+          carousel) สไลด์ 2 รวม Muscle Heatmap/Weekly Sets/Consistency/Cardio Volume ที่ย้ายออกจาก
+          12-col grid เดิมมาอยู่ในสไลด์ของตัวเอง (ไม่ต้องพึ่ง lg:col-start/row-start ของ grid ใหญ่อีก) */}
+      <div className="lg:col-span-12 lg:order-10">
+        <div
+          ref={detailTrackRef}
+          onScroll={handleDetailScroll}
+          className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar"
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          <div
+            className="shrink-0 w-full snap-center flex flex-col items-center justify-center text-center gap-2 px-6 py-8"
+            style={{ minHeight: 220 }}
           >
-            1 · ภาพรวม
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMoreSections(true)}
-            aria-pressed={showMoreSections}
-            className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${showMoreSections ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
-          >
-            2 · รายละเอียด
-          </button>
+            <span className="text-2xl" aria-hidden="true">
+              📊
+            </span>
+            <p className="font-display font-semibold text-sm text-ink">ดูรายละเอียดเพิ่มเติม</p>
+            <p className="text-[12px] text-muted max-w-xs">สัดส่วนกล้ามเนื้อ · เซ็ตต่อสัปดาห์ · ปฏิทิน Consistency · Cardio Volume</p>
+            <button
+              type="button"
+              onClick={() => scrollDetailToIndex(1)}
+              className="mt-1 text-[12px] font-display tracked uppercase text-muted hover:text-ink border border-line rounded-full px-4 py-1.5 transition flex items-center gap-1.5"
+            >
+              ปัดดูเพิ่มเติม <span aria-hidden="true">→</span>
+            </button>
+          </div>
+          <div className="shrink-0 w-full snap-center flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-9 gap-3 items-start">
+              <div className="md:col-span-6">
+                <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} onActiveGroupChange={setActiveHeatmapGroup} />
+              </div>
+              <div className="md:col-span-3">
+                <WeeklyVolume highlightGroup={activeHeatmapGroup} />
+              </div>
+            </div>
+            {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
+                weeks, weekly volume, weekly exercise count) render beside the calendar grid inside
+                ConsistencyStrip itself (two-column on lg+), matching the reference layout instead
+                of duplicating streak/PR numbers in separate cards next to it. */}
+            <ConsistencyStrip />
+            {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — การ์ด "Next up"
+                เดี่ยวๆ ที่เคยอยู่ตรงนี้ย้ายไปรวมกับ Weekly Goal แล้ว (ดู comment "Next →" ในการ์ด Weekly
+                Goal ด้านบน) กันไม่ให้ "เซสชันถัดไป" ถูกพูดซ้ำสองที่บนหน้าเดียวกัน */}
+            <WeeklyCardioVolume />
+          </div>
         </div>
-      </div>
-
-      {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
-          weeks, weekly volume, weekly exercise count) render beside the calendar grid inside
-          ConsistencyStrip itself (two-column on lg+), matching the reference layout instead
-          of duplicating streak/PR numbers in separate cards next to it. */}
-      <div className={`lg:col-span-12 lg:order-15 ${showMoreSections ? '' : 'hidden'}`}>
-        <ConsistencyStrip />
-      </div>
-
-      {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — การ์ด "Next up" เดี่ยวๆ
-          ที่เคยอยู่ตรงนี้ย้ายไปรวมกับ Weekly Goal แล้ว (ดู comment "Next →" ในการ์ด Weekly Goal ด้านบน)
-          กันไม่ให้ "เซสชันถัดไป" ถูกพูดซ้ำสองที่บนหน้าเดียวกัน */}
-
-      <div className={`lg:col-span-12 lg:order-21 ${showMoreSections ? '' : 'hidden'}`}>
-        <WeeklyCardioVolume />
+        <div className="flex items-center justify-center gap-1.5 mt-2" role="tablist" aria-label="รายละเอียดเพิ่มเติม">
+          {[0, 1].map((i) => (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === detailPageIndex}
+              aria-label={i === 0 ? 'หน้าแรก' : 'รายละเอียดเพิ่มเติม'}
+              onClick={() => scrollDetailToIndex(i)}
+              className="rounded-full transition-all"
+              style={{
+                width: i === detailPageIndex ? 14 : 5,
+                height: 5,
+                backgroundColor: i === detailPageIndex ? '#E8A33D' : 'rgba(255,255,255,.18)',
+              }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-9 above */}
