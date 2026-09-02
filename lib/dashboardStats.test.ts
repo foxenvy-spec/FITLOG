@@ -16,6 +16,7 @@ import {
   computeImbalanceInsights,
   computeMissedMuscleInsights,
   volumeStatus,
+  volumeBucket,
   optimalVolumeRange,
   relativeDayLabel,
   findNextProgramDay,
@@ -491,6 +492,22 @@ describe('volumeStatus', () => {
 
   it('does not misclassify a zero target as high/veryHigh (falls through to the pre-existing "met" behavior)', () => {
     expect(volumeStatus(0, 0, 3)).toBe('met')
+  })
+})
+
+describe('volumeBucket', () => {
+  it('maps "behind" to "under" (needs attention)', () => {
+    expect(volumeBucket('behind')).toBe('under')
+  })
+
+  it('maps "onTrack", "met", and "high" to "onTarget" (all proceeding fine, not concerning)', () => {
+    expect(volumeBucket('onTrack')).toBe('onTarget')
+    expect(volumeBucket('met')).toBe('onTarget')
+    expect(volumeBucket('high')).toBe('onTarget')
+  })
+
+  it('maps "veryHigh" to "over" (caution)', () => {
+    expect(volumeBucket('veryHigh')).toBe('over')
   })
 })
 

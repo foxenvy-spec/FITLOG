@@ -890,6 +890,23 @@ export function volumeStatus(setsDone: number, weeklyTarget: number, dayOfWeek1t
   return 'behind'
 }
 
+export type VolumeBucket = 'under' | 'onTarget' | 'over'
+
+// ฟีดแบ็ก "สีคล้ายกันจนต้องอ่านตัวเลขก่อนถึงจะเข้าใจ — อยาก 🔴 ต่ำกว่าเป้ามาก (ต้องสนใจ) / 🟡 สูงกว่าเป้า
+// (ควรระวัง) / 🟢 อยู่ในเป้าหมาย (ดี) ให้ชัดกว่านี้" — รวมความหมาย 3 สีของ VolumeStatus (5 สถานะจาก
+// volumeStatus() ด้านบน) เป็นฟังก์ชันเดียวตรงนี้ ใช้ทั้ง WeeklyVolume.tsx (บาร์/badge ต่อแถว + สรุปยอดรวม)
+// และ WeeklyInsightsCard.tsx (Dashboard) ให้สี/emoji ตรงกันเป๊ะทุกจุดที่พูดถึง volume status เดียวกัน —
+// ก่อนหน้านี้ WeeklyVolume.tsx เขียนแยก 2 จุดเอง (แถวรายกลุ่ม vs สรุปท้ายการ์ด) ด้วย emoji คนละชุด (🔵 vs
+// ⚪ สำหรับ "ต่ำกว่าเป้า" เดียวกัน) เป็นบั๊กประเภทเดียวกับที่เจอซ้ำๆ ในเซสชันนี้ (logic เดียวกันเขียนแยก
+// อิสระหลายจุด แล้ววันหนึ่งขัดกันเอง) — onTrack (กำลังไปตามจังหวะสัดส่วนวันในสัปดาห์แล้ว ยังไม่ถึงตัวเลข
+// เป้าเต็มแต่ไม่ใช่เรื่องน่ากังวล) จัดเข้ากลุ่มเดียวกับ met/high ("ดี") แทนที่จะอยู่กลุ่มเดียวกับ behind
+// ("ต่ำกว่าเป้า") เหมือนเดิม เพราะความหมายจริงคือ "กำลังไปได้ดี" ไม่ใช่ "ตามหลัง"
+export function volumeBucket(status: VolumeStatus): VolumeBucket {
+  if (status === 'behind') return 'under'
+  if (status === 'veryHigh') return 'over'
+  return 'onTarget'
+}
+
 export interface VolumeRange {
   min: number
   max: number

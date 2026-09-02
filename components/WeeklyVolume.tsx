@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, volumeStatus, optimalVolumeRange, type VolumeStatus } from '@/lib/dashboardStats'
+import { getWeekRange, volumeStatus, volumeBucket, optimalVolumeRange, type VolumeBucket } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { COLORS } from '@/lib/theme'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import VolumeTargetsSettings from './VolumeTargetsSettings'
@@ -17,17 +17,17 @@ import PremiumCard from './ui/PremiumCard'
 // แยกจาก VOLUME_MUSCLES ตัวหลัก (ซึ่งใช้ลำดับอื่นและถูกอ้างจากหลายที่ในแอป) เพื่อไม่กระทบจุดอื่น
 const DISPLAY_ORDER = ['อก', 'หลัง', 'ไหล่', 'แขน', 'แกนกลางลำตัว', 'ขา', 'น่อง'] as const
 
-// ฟีดแบ็ก "สีเยอะไป (4-5 เฉด) รู้สึกเหมือน traffic-light dashboard — อยากได้แค่ 3 สี (steel/moss/rust)
-// ตามความหมาย 3 กลุ่ม (ยังไม่ถึงเป้า/อยู่ในช่วงเหมาะสม/สูงเกินไป) แล้วใช้ "ความเข้มของสี" สื่อระดับ
-// ความรุนแรงภายในกลุ่มเดียวกันแทนการเพิ่มเฉดใหม่" — 5 สถานะ (behind/onTrack/met/high/veryHigh) ยังคง
-// อยู่เหมือนเดิมสำหรับ logic/ข้อความ เปลี่ยนแค่สีที่ map ให้เหลือ 3 เฉดจริง: steel (behind จาง/onTrack
-// เข้ม — ยังไม่ถึงเป้า), moss (met จาง/high เข้ม — อยู่ในช่วงเหมาะสม), rust (veryHigh — สูงเกินไป)
-const STATUS_COLOR: Record<VolumeStatus, string> = {
-  behind: withAlpha(COLORS.steel, '99'), // steel จาง — ยังห่างเป้าอยู่มาก
-  onTrack: COLORS.steel, // steel เต็ม — ใกล้ถึงเป้าแล้ว
-  met: withAlpha(COLORS.moss, 'BF'), // moss จาง — เข้าช่วงเหมาะสมพอดี
-  high: COLORS.moss, // moss เต็ม — อยู่ในช่วงเหมาะสมแต่เริ่มเยอะ (100-200%)
-  veryHigh: COLORS.rust, // rust — เกินช่วงเหมาะสม (>200%) อาจเสี่ยง overtraining
+// ฟีดแบ็ก "สีคล้ายกันจนต้องอ่านตัวเลขก่อนถึงจะเข้าใจ — อยาก 🔴 ต่ำกว่าเป้ามาก (ต้องสนใจ) / 🟡 สูงกว่าเป้า
+// (ควรระวัง) / 🟢 อยู่ในเป้าหมาย (ดี) ชัดกว่านี้" — เดิมใช้ steel/moss/rust 3 เฉด (บางเฉดใกล้เคียงกันจน
+// ต้องอ่านตัวเลขก่อนถึงจะรู้ว่าดีหรือไม่ดี) เปลี่ยนเป็น 3 สีจริงที่แยกกันชัดเจน (rust แดง/yellow เหลือง/
+// moss เขียว) ตาม VolumeBucket (lib/dashboardStats.ts, ตัวเดียวกับที่ WeeklyInsightsCard.tsx ใช้ กันสี/
+// emoji ไม่ตรงกันข้ามการ์ด) — ไม่มีการไล่เฉดความเข้ม-อ่อนภายในกลุ่มอีกต่อไป (เดิม behind/met มีเฉดอ่อน
+// กว่า onTrack/high) เพราะเป็นสาเหตุที่ทำให้ "ต้องอ่านตัวเลขก่อน" ตามฟีดแบ็ก — badge กับแท่ง progress ใน
+// แถวเดียวกันตอนนี้ใช้สีเดียวกันเป๊ะเสมอ ไม่มีจุดไหนสีไม่ตรงกันอีก
+const BUCKET_META: Record<VolumeBucket, { emoji: string; label: string; color: string }> = {
+  under: { emoji: '🔴', label: 'ต่ำกว่าเป้า', color: COLORS.rust },
+  onTarget: { emoji: '🟢', label: 'ในเป้า', color: COLORS.moss },
+  over: { emoji: '🟡', label: 'เกินเป้า', color: COLORS.yellow },
 }
 
 export default function WeeklyVolume() {
@@ -87,13 +87,11 @@ export default function WeeklyVolume() {
   // ส่วนการ์ดนี้เน้นความคืบหน้าเทียบเป้าหมายส่วนตัวแทน ซึ่งเป็นข้อมูลเฉพาะของการ์ดนี้ ไม่ซ้ำที่ไหน)
   const totalSets = rows.reduce((sum, r) => sum + r.sets, 0)
   // ฟีดแบ็ก "ถึงเป้าหมายแล้ว 6/7 ทำให้เข้าใจผิดว่า Balance ดี ทั้งที่จริงมีแค่ 1 กลุ่มอยู่ในเป้าพอดี
-  // ส่วนอีก 5 กลุ่มคือ 'เกินเป้า' ไม่ใช่ 'ถึงเป้า'" — เดิมนับ met/high/veryHigh รวมกันเป็น "ถึงเป้าหมายแล้ว"
-  // ก้อนเดียว ซึ่งซ่อนความจริงว่าส่วนใหญ่เกินเป้าไปมาก ไม่ใช่แค่พอดีเป้า — แยกเป็น 3 กลุ่มให้ตรงความจริง
-  // และตรงกับ STATUS_COLOR 3 เฉดด้านบนพอดี: onTarget (อยู่ในช่วงเหมาะสม — met/high, สีมอส), overTarget
-  // (สูงเกินไป — veryHigh เท่านั้น, สีสนิม), underTarget (ยังไม่ถึงเป้า — behind/onTrack, สีสตีล)
-  const onTargetCount = rows.filter((r) => r.status === 'met' || r.status === 'high').length
-  const overTargetCount = rows.filter((r) => r.status === 'veryHigh').length
-  const underTargetCount = rows.filter((r) => r.status === 'behind' || r.status === 'onTrack').length
+  // ส่วนอีก 5 กลุ่มคือ 'เกินเป้า' ไม่ใช่ 'ถึงเป้า'" — แยกเป็น 3 กลุ่มให้ตรงความจริง นับผ่าน volumeBucket()
+  // ตัวเดียวกับที่ badge/แท่งต่อแถวใช้ (ดูคอมเมนต์ที่ BUCKET_META ด้านบน) กันตัวเลขสรุปกับป้ายต่อแถวขัดกัน
+  const onTargetCount = rows.filter((r) => volumeBucket(r.status) === 'onTarget').length
+  const overTargetCount = rows.filter((r) => volumeBucket(r.status) === 'over').length
+  const underTargetCount = rows.filter((r) => volumeBucket(r.status) === 'under').length
 
   // ฟีดแบ็ก "สัปดาห์หน้าฉันควรเล่นอะไร? — เพิ่ม Priority: Chest · Shoulders · Arms ให้รู้ทันที" — เอา
   // เฉพาะกลุ่มที่ "behind" จริง (ยังห่างเป้าหมายเทียบสัดส่วนวันในสัปดาห์ ไม่ใช่แค่ onTrack ที่กำลังไปได้ดี
@@ -149,17 +147,22 @@ export default function WeeklyVolume() {
             </div>
           </div>
 
-          {/* ป้ายสรุปใช้สีเต็ม (ไม่ใช่เฉดจางของ STATUS_COLOR.met/behind) เพราะเป็นตัวแทนทั้งกลุ่ม ไม่ใช่แถว
-              เดี่ยว ๆ — ให้ตรงกับ 3 เฉดหลัก (steel/moss/rust) และ bucket นับด้านล่างพอดี ไม่ตรงกันข้ามแบบที่
-              เคยเจอบั๊กมาก่อน (ป้ายสีหนึ่ง แถวจริงอีกสี) */}
+          {/* ป้ายสรุปใช้ BUCKET_META เดียวกับ badge ต่อแถว (ดูคอมเมนต์ด้านบน) — สี/emoji ตรงกันเป๊ะเสมอ
+              ไม่มีทางขัดกันข้ามจุดแบบที่เคยเจอบั๊กมาก่อน (ป้ายสรุปหนึ่งสี แถวจริงอีกสี) */}
           <div className="flex items-center justify-center gap-3 mt-2 text-[12px]">
-            <span style={{ color: COLORS.steel }}>⚪ ยังไม่ถึงเป้า {underTargetCount}</span>
-            <span style={{ color: COLORS.moss }}>🟢 ในช่วงเหมาะสม {onTargetCount}</span>
-            <span style={{ color: COLORS.rust }}>🔴 สูงเกินไป {overTargetCount}</span>
+            <span style={{ color: BUCKET_META.under.color }}>
+              {BUCKET_META.under.emoji} ต่ำกว่าเป้า {underTargetCount}
+            </span>
+            <span style={{ color: BUCKET_META.onTarget.color }}>
+              {BUCKET_META.onTarget.emoji} ในเป้าหมาย {onTargetCount}
+            </span>
+            <span style={{ color: BUCKET_META.over.color }}>
+              {BUCKET_META.over.emoji} เกินเป้า {overTargetCount}
+            </span>
           </div>
 
           {priorityGroups.length > 0 && (
-            <p className="text-center text-[12px] mt-1.5" style={{ color: COLORS.steel }}>
+            <p className="text-center text-[12px] mt-1.5" style={{ color: BUCKET_META.under.color }}>
               🎯 สัปดาห์นี้เน้น: {priorityGroups.join(' · ')}
             </p>
           )}
@@ -182,7 +185,8 @@ export default function WeeklyVolume() {
             const targetPct = Math.min(100, (target / maxSets) * 100)
             const pct = target > 0 ? Math.round((sets / target) * 100) : 0
             const diff = sets - target
-            const color = STATUS_COLOR[status]
+            const meta = BUCKET_META[volumeBucket(status)]
+            const color = meta.color
             // ฟีดแบ็ก "เกินเป้า ≠ แย่เสมอ — ควรโชว์เป็นช่วงที่เหมาะสม ไม่ใช่จุดเดียว" — ดู optimalVolumeRange
             const range = optimalVolumeRange(target)
             // แถวย่อ ๆ: จุดสี + ชื่อ + จำนวนเซ็ต/เป้าหมาย + เส้นคั่นบาง ๆ + ป้ายสถานะ (met -> +diff,
@@ -214,7 +218,8 @@ export default function WeeklyVolume() {
                   {/* w-16 -> w-24: ป้ายสถานะ (ต่ำกว่าเป้า/ในเป้า/เกินเป้า) ขยับจาก text-[8px] เป็น
                       text-[12px] ตามพื้นล่างฟอนต์ใหม่ (ฟีดแบ็ก "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง")
                       คอลัมน์เดิมแคบเกินจะรองรับตัวอักษรไทยที่ใหญ่ขึ้นโดยไม่ตัดคำ ขยับอีกครั้งเป็น w-24 เพื่อรองรับ
-                      emoji นำหน้าป้าย (ฟีดแบ็ก "🔴 เกินเป้า / 🔵 ขาดเป้า / 🟢 อยู่ในเป้า" ต่อแถว) */}
+                      emoji นำหน้าป้าย — emoji/label มาจาก BUCKET_META เดียวกับป้ายสรุปด้านบนเป๊ะ (ดูคอมเมนต์
+                      ที่ BUCKET_META) ไม่ได้ hardcode แยกเป็นอิสระเหมือนเดิมแล้ว */}
                   <span className="flex flex-col items-end shrink-0 w-24">
                     <span className="text-[12px] font-mono font-bold" style={{ color }}>
                       {status === 'behind'
@@ -224,11 +229,7 @@ export default function WeeklyVolume() {
                           : `${pct}%`}
                     </span>
                     <span className="text-[12px] tracked uppercase" style={{ color }}>
-                      {status === 'behind' || status === 'onTrack'
-                        ? '🔵 ต่ำกว่าเป้า'
-                        : status === 'veryHigh'
-                          ? '🔴 เกินเป้า'
-                          : '🟢 ในเป้า'}
+                      {meta.emoji} {meta.label}
                     </span>
                   </span>
                 </div>

@@ -269,18 +269,33 @@ export default function WeeklyMuscleHeatmap() {
 
   // ฟีดแบ็ก "Hero Metric ต้องอ่านจบภายใน ~1 วินาที — ไม่ควรใส่ประโยคยาวแบบลิสต์ตัวเลข deltas (เช่น
   // 'หลัง +6 เซ็ต · อก -4 เซ็ต') ควรเป็นคำแนะนำสั้นๆ ทางเดียว เช่น 'เพิ่ม Upper Body ในสัปดาห์นี้'" —
-  // เปลี่ยนจากลิสต์ deltas เป็นคำสั่งสั้น 1 บรรทัด: กลุ่มที่ขาดเป้าหมายมากที่สุด (ถ้ามี) ไม่งั้น fallback
-  // ไปกลุ่มที่เกินเป้ามากที่สุดแทน (เกิดเฉพาะกรณีทุกกลุ่มถึงเป้าหมด แต่ยังไม่สมดุลเพราะกระจุกตัวมากไป) —
-  // ตัวเลข deltas เต็มยังอยู่ใน balanceIssues.over/under ที่ใช้ในส่วน "ดูรายละเอียด Balance" ด้านล่าง
-  // เหมือนเดิม ไม่มีข้อมูลหายไป แค่ตัวย่อบน hero การ์ดสั้นลงให้อ่านทันที
+  // เปลี่ยนจากลิสต์ deltas เป็นคำสั่งสั้น 1 บรรทัด — ตัวเลข deltas เต็มยังอยู่ใน balanceIssues.over/under
+  // ที่ใช้ในส่วน "ดูรายละเอียด Balance" ด้านล่างเหมือนเดิม ไม่มีข้อมูลหายไป แค่ตัวย่อบน hero การ์ดสั้นลง
+  // ให้อ่านทันที
+  //
+  // ฟีดแบ็ก (รอบถัดมา) "อยากเห็นทั้ง 2 ฝั่งในประโยคเดียว เช่น '⚠️ Legs สูงกว่าเป้า ขณะที่ Chest และ Core
+  // ต่ำกว่าเป้า' แทนที่จะพูดแค่ฝั่งเดียว" — เปลี่ยนจาก "เลือกฝั่งเดียว (under ก่อน ไม่งั้น fallback over)"
+  // เป็นรวมทั้ง 2 ฝั่งในประโยคเดียวเมื่อมีทั้งคู่จริง (กลุ่มที่เกินเป้ามากสุด 1 กลุ่ม + กลุ่มที่ขาดเป้ามากสุด
+  // สูงสุด 2 กลุ่ม กันประโยคยาวเกิน) ยังคงเป็นชื่อกลุ่ม+คำอธิบาย ไม่ใช่ตัวเลข deltas ดิบ ไม่ขัดกับเหตุผลเดิม
+  // ("ไม่ควรใส่ลิสต์ตัวเลข") — เหลือ fallback ฝั่งเดียวเฉพาะกรณีมีแค่ฝั่งใดฝั่งหนึ่งจริงๆ เหมือนเดิม
   const balanceSummary = useMemo(() => {
-    if (balanceIssues.under.length > 0) {
-      const top = [...balanceIssues.under].sort((a, b) => a.sets - a.targetSets - (b.sets - b.targetSets))[0]
-      return `เพิ่ม ${top.group} ในสัปดาห์นี้`
+    const topOver =
+      balanceIssues.over.length > 0
+        ? [...balanceIssues.over].sort((a, b) => b.sets - b.targetSets - (a.sets - a.targetSets))[0]
+        : null
+    const underNames = [...balanceIssues.under]
+      .sort((a, b) => a.sets - a.targetSets - (b.sets - b.targetSets))
+      .slice(0, 2)
+      .map((s) => s.group)
+
+    if (topOver && underNames.length > 0) {
+      return `${topOver.group} สูงกว่าเป้า ขณะที่ ${underNames.join(' และ ')} ต่ำกว่าเป้า`
     }
-    if (balanceIssues.over.length > 0) {
-      const top = [...balanceIssues.over].sort((a, b) => b.sets - b.targetSets - (a.sets - a.targetSets))[0]
-      return `ลด ${top.group} ลงบ้าง`
+    if (underNames.length > 0) {
+      return `เพิ่ม ${underNames.join(' และ ')} ในสัปดาห์นี้`
+    }
+    if (topOver) {
+      return `ลด ${topOver.group} ลงบ้าง`
     }
     return null
   }, [balanceIssues])
