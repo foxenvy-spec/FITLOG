@@ -126,6 +126,46 @@ export default function WeeklyVolume() {
         </button>
       </div>
 
+      {/* ฟีดแบ็ก "ตัวเลขดิบต้องคิดเองว่าดีหรือไม่ดี ควรให้ระบบสรุปให้เลย ก่อนเข้ารายละเอียด (Insight > Data)"
+          — บล็อกสรุปนี้ (รวมเซ็ต/อยู่ในเป้าหมาย + สถานะ 3 กลุ่ม + กลุ่มที่ควรเน้นสัปดาห์นี้) เดิมอยู่ท้าย
+          การ์ด หลังลิสต์ 7 แถวเต็ม ทำให้ต้องเลื่อนผ่านตัวเลขดิบก่อนถึงจะเห็นข้อสรุป — ย้ายมาไว้บนสุด (ใต้
+          หัวข้อการ์ดทันที ก่อนลิสต์รายกลุ่ม) ให้เห็น "สรุปแล้วว่าดีไหม" ก่อน ไม่ได้ตัดลิสต์ 7 แถวหรือข้อมูล
+          ไหนออกเลย แค่สลับลำดับให้ insight นำหน้า data (ปุ่ม "ดูรายละเอียดทั้งหมด" ยังอยู่ท้ายลิสต์เหมือนเดิม
+          เพราะเป็นตัวควบคุมคำอธิบายต่อแถว ไม่ใช่ส่วนหนึ่งของสรุปนี้) */}
+      {!loading && (
+        <div className="px-4 pb-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="text-center">
+              <p className="text-[12px] text-muted">รวมสัปดาห์นี้</p>
+              <p className="font-mono text-sm text-ink mt-0.5">
+                {totalSets} <span className="text-[12px] text-muted font-sans">เซ็ต</span>
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-[12px] text-muted">อยู่ในเป้าหมาย</p>
+              <p className="font-mono text-sm text-ink mt-0.5">
+                {onTargetCount} <span className="text-[12px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
+              </p>
+            </div>
+          </div>
+
+          {/* ป้ายสรุปใช้สีเต็ม (ไม่ใช่เฉดจางของ STATUS_COLOR.met/behind) เพราะเป็นตัวแทนทั้งกลุ่ม ไม่ใช่แถว
+              เดี่ยว ๆ — ให้ตรงกับ 3 เฉดหลัก (steel/moss/rust) และ bucket นับด้านล่างพอดี ไม่ตรงกันข้ามแบบที่
+              เคยเจอบั๊กมาก่อน (ป้ายสีหนึ่ง แถวจริงอีกสี) */}
+          <div className="flex items-center justify-center gap-3 mt-2 text-[12px]">
+            <span style={{ color: COLORS.steel }}>⚪ ยังไม่ถึงเป้า {underTargetCount}</span>
+            <span style={{ color: COLORS.moss }}>🟢 ในช่วงเหมาะสม {onTargetCount}</span>
+            <span style={{ color: COLORS.rust }}>🔴 สูงเกินไป {overTargetCount}</span>
+          </div>
+
+          {priorityGroups.length > 0 && (
+            <p className="text-center text-[12px] mt-1.5" style={{ color: COLORS.steel }}>
+              🎯 สัปดาห์นี้เน้น: {priorityGroups.join(' · ')}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="px-4 pb-2 space-y-1.5">
         {loading ? (
           DISPLAY_ORDER.map((mg) => (
@@ -220,47 +260,15 @@ export default function WeeklyVolume() {
       </div>
 
       {!loading && (
-        <div className="px-4 pb-3.5">
-          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/5">
-            <div className="text-center">
-              <p className="text-[12px] text-muted">รวมสัปดาห์นี้</p>
-              <p className="font-mono text-sm text-ink mt-0.5">
-                {totalSets} <span className="text-[12px] text-muted font-sans">เซ็ต</span>
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-[12px] text-muted">อยู่ในเป้าหมาย</p>
-              <p className="font-mono text-sm text-ink mt-0.5">
-                {onTargetCount} <span className="text-[12px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
-              </p>
-            </div>
-          </div>
-
-          {/* ป้ายสรุปใช้สีเต็ม (ไม่ใช่เฉดจางของ STATUS_COLOR.met/behind) เพราะเป็นตัวแทนทั้งกลุ่ม ไม่ใช่แถว
-              เดี่ยว ๆ — ให้ตรงกับ 3 เฉดหลัก (steel/moss/rust) และ bucket นับด้านบนพอดี ไม่ตรงกันข้ามแบบที่
-              เคยเจอบั๊กมาก่อน (ป้ายสีหนึ่ง แถวจริงอีกสี) */}
-          <div className="flex items-center justify-center gap-3 mt-2 text-[12px]">
-            <span style={{ color: COLORS.steel }}>⚪ ยังไม่ถึงเป้า {underTargetCount}</span>
-            <span style={{ color: COLORS.moss }}>🟢 ในช่วงเหมาะสม {onTargetCount}</span>
-            <span style={{ color: COLORS.rust }}>🔴 สูงเกินไป {overTargetCount}</span>
-          </div>
-
-          {priorityGroups.length > 0 && (
-            <p className="text-center text-[12px] mt-1.5" style={{ color: COLORS.steel }}>
-              🎯 สัปดาห์นี้เน้น: {priorityGroups.join(' · ')}
-            </p>
-          )}
-
-          <div className="flex justify-end mt-2.5">
-            <button
-              type="button"
-              onClick={() => setDetailsOpen((v) => !v)}
-              className="text-[12px] font-medium"
-              style={{ color: '#E8A33D' }}
-            >
-              {detailsOpen ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียดทั้งหมด'} {detailsOpen ? '↑' : '→'}
-            </button>
-          </div>
+        <div className="px-4 pb-3.5 flex justify-end pt-2 border-t border-white/5">
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((v) => !v)}
+            className="text-[12px] font-medium"
+            style={{ color: '#E8A33D' }}
+          >
+            {detailsOpen ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียดทั้งหมด'} {detailsOpen ? '↑' : '→'}
+          </button>
         </div>
       )}
 

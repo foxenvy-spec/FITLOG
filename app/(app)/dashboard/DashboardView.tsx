@@ -2031,8 +2031,17 @@ export default function DashboardPage() {
                         ตัวคนให้ sync ด้วยแล้ว */}
                     <div className="flex-1 min-w-0 space-y-1.5">
                     {(() => {
+                      // ฟีดแบ็ก (Information Hierarchy review) — "หน้า Home ไม่ควรแสดงทุก muscle group
+                      // แบบเต็มตั้งแต่แรก อยาก top ~3 พอ + ลิงก์ดูรายละเอียด" — เดิม notReadyMuscles โชว์
+                      // ทุกกลุ่มที่ยังไม่ฟื้นตัวเต็มที่ (อาจได้ถึง 5-6 กลุ่ม ถ้าเพิ่งฝึกหนักมาหลายวัน) เรียง
+                      // ตามลำดับ RECOVERY_MUSCLES คงที่ ไม่ใช่ตามความเร่งด่วน — เรียงตาม pct น้อยสุดก่อน
+                      // (ฟื้นตัวน้อยสุด = เร่งด่วนสุดที่ควรรู้) แล้วตัดเหลือ 3 กลุ่มแรกเป็นค่าเริ่มต้น ปุ่ม
+                      // "แสดงทั้งหมด" เดิมด้านล่างยังกดดูครบ 7 กลุ่มได้เหมือนเดิม ไม่เสียข้อมูล แค่ไม่บังคับ
+                      // เห็นทุกกลุ่มตั้งแต่แรก (การ์ดทั้งใบเป็นลิงก์ไป /recovery อยู่แล้วด้วยสำหรับรายละเอียดเต็ม)
                       const notReadyMuscles = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT)
-                      const displayedMuscles = showAllRecovery ? RECOVERY_MUSCLES : notReadyMuscles
+                        .slice()
+                        .sort((a, b) => recoveryPctMap[a] - recoveryPctMap[b])
+                      const displayedMuscles = showAllRecovery ? RECOVERY_MUSCLES : notReadyMuscles.slice(0, 3)
                       if (displayedMuscles.length === 0) {
                         // ฟีดแบ็ก "Recovery 100% ไม่ควรแปลว่า 'ทุกกล้ามเนื้อพร้อมฝึก' — ผู้ใช้อาจตีความเป็น
                         // 'พร้อมฝึก = ควรฝึก' ทั้งที่ Weekly Volume บางกลุ่มอาจเกินเป้าไปแล้ว" — เดิมข้อความนี้
@@ -2126,12 +2135,14 @@ export default function DashboardPage() {
                     })()}
                     </div>
                   </div>
-                  {/* toggle ระหว่างลิสต์ย่อ (เฉพาะกลุ่มที่ยังไม่พร้อม) กับลิสต์เต็ม 7 กลุ่ม — โชว์เฉพาะตอน
-                      มีอะไรให้สลับจริง (บางกลุ่มถูกซ่อนอยู่) กันปุ่มลอยอยู่เฉยๆ ตอนทุกกลุ่มพร้อมหรือทุกกลุ่ม
-                      ยังไม่พร้อมพร้อมกันหมด (ซึ่งลิสต์สั้น/ยาวจะเท่ากันอยู่แล้วในสองเคสนั้น) */}
+                  {/* toggle ระหว่างลิสต์ย่อ (top 3 ที่ยังไม่พร้อม เร่งด่วนสุดก่อน) กับลิสต์เต็ม 7 กลุ่ม —
+                      โชว์เฉพาะตอนมีอะไรให้สลับจริง (ตอนนี้ลิสต์ย่อ cap ไว้แค่ 3 เสมอ — ถ้ามีกลุ่มที่ยังไม่
+                      พร้อมอย่างน้อย 1 กลุ่ม แปลว่ากดขยายแล้วจะเห็นเพิ่มแน่ๆ ไม่ว่าจะเป็นกลุ่มไม่พร้อมที่เหลือ
+                      หรือกลุ่มที่ฟื้นตัวเต็มที่แล้ว) กันปุ่มลอยอยู่เฉยๆ ตอนทุกกลุ่มพร้อมหมดแล้ว (ข้อความ
+                      "ฟื้นตัวดีทุกกลุ่มกล้ามเนื้อ ✅" ด้านบนสื่อสารครบอยู่แล้ว ไม่ต้องมีปุ่มขยายเพิ่ม) */}
                   {(() => {
                     const notReadyCount = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT).length
-                    if (notReadyCount === 0 || notReadyCount === RECOVERY_MUSCLES.length) return null
+                    if (notReadyCount === 0) return null
                     return (
                       <button
                         type="button"
