@@ -252,14 +252,19 @@ export default function RecoveryPage() {
                 <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
               </p>
               {/* ฟีดแบ็ก "Legs ฟื้นตัวแล้ว ≠ Legs ควรฝึก" — บอกเหตุผลตรงๆ เหมือนที่ Dashboard ทำ แทนที่จะ
-                  แนะนำเงียบๆ โดยไม่อธิบายว่าทำไมไม่ตรงตาราง */}
+                  แนะนำเงียบๆ โดยไม่อธิบายว่าทำไมไม่ตรงตาราง
+                  ฟีดแบ็ก (จากรอบตรวจ Dashboard, "Terminology") "Volume ทั้งที่ metric จริงคือจำนวนเซ็ต ควรใช้
+                  ภาษาที่ user ไม่ต้องรู้ศัพท์ระบบ" — ปรับข้อความให้ตรงหลักเดียวกับที่แก้ไปแล้วบน Dashboard
+                  (thisWeekSets/weeklyVolumeTargets ด้านบนวัดเป็น "เซ็ต" ทั้งระบบ ไม่ใช่ kg-volume จริง) —
+                  ตัดคำว่า "Volume" ออก (จุดเดียวกันนี้ยังมีซ้ำใน lib/aiCoach.ts + app/(app)/coach/page.tsx
+                  ที่ยังไม่ได้แก้ เพราะยังไม่ถึงรอบตรวจหน้า Coach) */}
               {recommendation.scheduleOverriddenFrom && (
-                <p className="text-[11px] text-muted mt-0.5">
-                  ตามตารางคือ{recommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว
+                <p className="text-[12px] text-muted mt-0.5">
+                  ตามตารางคือ{recommendation.scheduleOverriddenFrom} แต่ฝึกเกินเป้าหมายสัปดาห์นี้แล้ว
                 </p>
               )}
               {recommendation.lowRecoveryCaution && (
-                <p className="text-[11px] mt-0.5" style={{ color: recColor }}>
+                <p className="text-[12px] mt-0.5" style={{ color: recColor }}>
                   ⚠️ ฟื้นตัวยังไม่เต็มที่ แนะนำลดความหนักหรือเลื่อนออกไปก่อน
                 </p>
               )}
@@ -297,7 +302,7 @@ export default function RecoveryPage() {
                     />
                     <p className="font-display text-base tracked uppercase text-ink truncate">{mg}</p>
                   </div>
-                  <span className="text-[11px] font-mono shrink-0" style={{ color }}>
+                  <span className="text-[12px] font-mono shrink-0" style={{ color }}>
                     {pct}%
                   </span>
                 </div>
@@ -306,21 +311,26 @@ export default function RecoveryPage() {
                   <AnimatedBarFill pct={pct} color={color} />
                 </div>
 
+                {/* ฟีดแบ็ก (จากรอบตรวจ Dashboard, "Typography") "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง" — หน้านี้
+                    เขียนก่อนกฎนี้ถูกยึดเป็นมาตรฐาน (11px/10px ทุกบรรทัดด้านล่าง) ปรับให้ตรงมาตรฐานเดียวกับ
+                    Dashboard/การ์ดอื่นทั่วแอปตอนนี้ — ไม่กระทบ tick ของกราฟ Recovery Score ด้านล่าง (fontSize:
+                    10 ใน recharts) เพราะ tick กราฟเป็นธรรมเนียมแยกต่างหากที่ใช้ 9-11px ตรงกันทั้งแอป (stats/
+                    health/exercises ก็ใช้ค่านี้เหมือนกัน ไม่ใช่ข้อความรองที่กฎ 12px ตั้งใจครอบคลุม) */}
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-[11px] text-muted">
+                  <p className="text-[12px] text-muted">
                     {lastTrained ? (
                       <>ฝึกล่าสุด {relativeDayLabel(lastTrained)}</>
                     ) : (
                       'ยังไม่มีประวัติ'
                     )}
                   </p>
-                  <p className="text-[11px]" style={{ color: status.color }}>{status.text}</p>
+                  <p className="text-[12px]" style={{ color: status.color }}>{status.text}</p>
                 </div>
 
-                <p className="text-[10px] text-muted mt-1">
+                <p className="text-[12px] text-muted mt-1">
                   รอบพักฟื้นโดยประมาณ {RECOVERY_WINDOW_DAYS[mg] ?? 2} วัน
                 </p>
-                <p className="text-[10px] text-muted">
+                <p className="text-[12px] text-muted">
                   {hoursLeft !== null ? `พร้อมฝึกในอีก ~${hoursLeft} ชม.` : 'พร้อมฝึกได้เลย'}
                 </p>
               </PremiumCard>
@@ -333,7 +343,7 @@ export default function RecoveryPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display text-sm tracked uppercase text-muted">Recovery Score ย้อนหลัง</h2>
-            <div className="flex rounded-full bg-surface2 p-0.5 text-[11px]">
+            <div className="flex rounded-full bg-surface2 p-0.5 text-[12px]">
               {(
                 [
                   [30, '30 วัน'],
@@ -380,7 +390,7 @@ export default function RecoveryPage() {
               </LineChart>
             </ResponsiveContainer>
           </PremiumCard>
-          <p className="text-[10px] text-muted mt-2">
+          <p className="text-[12px] text-muted mt-2">
             ค่าเฉลี่ยรวมทุกกลุ่มกล้ามเนื้อ คำนวณย้อนหลังจากวันที่ฝึกจริง — เป็นค่าประมาณเช่นเดียวกับตัวเลขด้านบน
           </p>
         </section>
