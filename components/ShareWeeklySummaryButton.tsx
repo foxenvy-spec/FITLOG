@@ -66,9 +66,12 @@ function drawCard(ctx: CanvasRenderingContext2D, stats: WeeklySummaryStats) {
   ctx.fillText('🔥 วันติดต่อกัน', 72, 540)
 
   // stat chips — 2x2 grid
+  // ฟีดแบ็ก (Information Hierarchy review) "'Weekly Volume' + 'N sets' ผิด terminology — Volume ≠ Sets
+  // เสมอไป" — เหตุผลเดียวกับ WeeklyVolume.tsx/DashboardView.tsx ทุกประการ (นับจำนวนเซ็ต ไม่ใช่
+  // kg x reps x sets) เปลี่ยนป้ายให้ตรงกับสิ่งที่วัดจริง
   const chips: { label: string; value: string }[] = [
     { label: 'Workout Days', value: `${stats.workoutDays}/${stats.workoutGoal}` },
-    { label: 'Weekly Volume', value: `${stats.weeklyTotalSets} sets` },
+    { label: 'Weekly Sets', value: `${stats.weeklyTotalSets} sets` },
     { label: 'Consistency', value: stats.weeklyConsistencyPct != null ? `${stats.weeklyConsistencyPct}%` : '—' },
     { label: 'Goal Progress', value: `${stats.weeklyGoalPct}%` },
   ]

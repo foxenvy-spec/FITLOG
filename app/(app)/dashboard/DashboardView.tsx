@@ -2360,11 +2360,14 @@ export default function DashboardPage() {
               weeklyConsistencyPct เดียวกันนี้ยังเป็น hero metric ของ ConsistencyStrip.tsx ด้านล่างอยู่
               (ไม่ได้หายไปจากหน้า แค่ไม่พูดซ้ำ 2 จุด) — เปลี่ยนจาก grid-cols-2 (Volume คู่กับ Consistency)
               เหลือ Volume บล็อกเดียว */}
+          {/* ฟีดแบ็ก (Information Hierarchy review) "'Weekly Volume' + 'N sets' ผิด terminology —
+              Volume ≠ Sets เสมอไป" — เหตุผลเดียวกับ WeeklyVolume.tsx ทุกประการ (ดูคอมเมนต์ที่นั่น) เปลี่ยน
+              ป้ายให้ตรงกับสิ่งที่วัดจริง (นับจำนวนเซ็ต ไม่ใช่ kg x reps x sets) ไม่แตะตัวเลข/สูตรคำนวณ */}
           <div className="mt-3.5 pt-3 border-t border-white/5">
             <p className="font-mono font-bold text-base text-ink leading-none">
               {data.weeklyTotalSets} <span className="text-[12px] font-sans font-normal text-muted">sets</span>
             </p>
-            <p className="text-[12px] text-muted mt-1">Weekly Volume</p>
+            <p className="text-[12px] text-muted mt-1">Weekly Sets</p>
           </div>
 
           {/* ฟีดแบ็ก "ทำปุ่ม Share สรุปประจำสัปดาห์ออกมาเป็นภาพสไตล์ Spotify Wrapped แชร์ลง IG Story ได้"

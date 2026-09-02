@@ -111,7 +111,13 @@ export default function WeeklyVolume() {
     <PremiumCard className="overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
-          <p className="text-[12px] tracked uppercase text-muted">Weekly Volume</p>
+          {/* ฟีดแบ็ก (Information Hierarchy review) "'Weekly Volume' + '64 sets' ผิด terminology —
+              Volume ≠ Sets เสมอไป (Volume จริงคือ kg x reps x sets) ถ้า metric นี้นับจากจำนวน Sets จริง
+              ควรเปลี่ยนป้ายเป็น Weekly Sets ให้ตรงความหมาย" — การ์ดนี้นับ "จำนวนเซ็ต" ล้วนๆ (ไม่ใช่
+              kg x reps x sets — ดู totalSets ด้านล่าง) เปลี่ยนป้ายให้ตรงกับสิ่งที่วัดจริง ไม่แตะสูตร/
+              ระบบเป้าหมาย (weekly_volume_targets ทั้งระบบผูกกับหน่วย "เซ็ต" อยู่แล้วทั่วแอป เปลี่ยนไปเป็น
+              kg-volume จริงจะกระทบระบบ target เดิมทั้งชุด ไม่ใช่แค่ป้ายชื่อจุดเดียว) */}
+          <p className="text-[12px] tracked uppercase text-muted">Weekly Sets</p>
           <p className="font-display text-sm uppercase text-ink mt-0.5">เซ็ตต่อกลุ่มกล้ามเนื้อ (สัปดาห์นี้)</p>
         </div>
         <button
