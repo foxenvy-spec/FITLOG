@@ -30,13 +30,6 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import EmptyState from '@/components/EmptyState'
 import PremiumCard from '@/components/ui/PremiumCard'
-// ฟีดแบ็ก (Information Hierarchy review) — "Dashboard ยาวเกินไปสำหรับ Home ย้าย Muscle Heatmap/Weekly
-// Volume/Consistency ไปหน้า Statistics/Analysis" — ทั้ง 3 ตัวนี้ self-fetch ข้อมูลของตัวเองอยู่แล้ว
-// (ไม่รับ props เลย) เอามาวางตรงๆ ได้โดยไม่ต้องเขียน query/state ใหม่ — WeeklyCardioVolume ไม่ได้ย้ายมา
-// เพิ่มที่นี่ด้วย เพราะมีหน้าของตัวเองอยู่แล้วที่ /cardio (การ์ด "ดู Cardio Dashboard →" ด้านล่างลิงก์ไปแล้ว)
-import ConsistencyStrip from '@/components/ConsistencyStrip'
-import WeeklyMuscleHeatmap from '@/components/WeeklyMuscleHeatmap'
-import WeeklyVolume from '@/components/WeeklyVolume'
 import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
 import { useCountUp } from '@/lib/useCountUp'
 
@@ -465,12 +458,6 @@ export default function StatsPage() {
         <StatCard label="แคลอรี่ที่เผาผลาญรวม" value={totals.totalCalories} unit="kcal" accent="amber" />
         <StatCard label="เวลาเฉลี่ย/วัน" value={totals.avgDurationMin} unit="นาที" accent="steel" />
       </div>
-
-      {/* ย้ายมาจาก Dashboard (ดูคอมเมนต์ที่ import ด้านบน) — สัปดาห์นี้: ความสม่ำเสมอ -> สมดุลกล้ามเนื้อ ->
-          เซ็ตเทียบเป้าหมายรายกลุ่ม ก่อนเข้าสู่กราฟย้อนหลัง 8 สัปดาห์ที่หน้านี้มีอยู่แล้วด้านล่าง */}
-      <ConsistencyStrip />
-      <WeeklyMuscleHeatmap />
-      <WeeklyVolume />
 
       <section>
         <h2 className="font-display text-sm tracked uppercase text-muted mb-3">
