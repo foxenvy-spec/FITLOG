@@ -205,7 +205,12 @@ export default function WeeklyCardioVolume() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2">
-              <MetricTile label="Total Minutes" value={volume.totalMinutes.toLocaleString('th-TH')} unit="นาที" />
+              {/* ฟีดแบ็ก (P3, Cardio polish) "ตัวเลขนาทีดิบมีทศนิยมยาวเกินไป เช่น 52.43 นาที (มาจากผลรวม
+                  duration_min ของหลายเซสชันที่กรอกเป็นทศนิยม)" — maximumFractionDigits: 1 ตัด/ปัดเหลือ
+                  ทศนิยมสูงสุด 1 ตำแหน่ง (52.4 นาที) แทนที่จะโชว์ทศนิยมดิบทุกตำแหน่งที่ toLocaleString() เดิม
+                  ปล่อยผ่านมา — ไม่ปัดเป็นจำนวนเต็ม เพราะทศนิยม 1 ตำแหน่งยังมีความหมาย (นาทีที่สะสมจริง) แค่ตัด
+                  ความรกของทศนิยมยาวๆ ออก */}
+              <MetricTile label="Total Minutes" value={volume.totalMinutes.toLocaleString('th-TH', { maximumFractionDigits: 1 })} unit="นาที" />
               <MetricTile label="Sessions" value={String(volume.sessions)} unit="ครั้ง" />
               <MetricTile label="Calories" value={volume.totalCalories.toLocaleString('th-TH')} unit="kcal" />
               <MetricTile label="Distance" value={volume.totalDistanceKm.toLocaleString('th-TH')} unit="กม." />
@@ -272,13 +277,23 @@ export default function WeeklyCardioVolume() {
               ) : (
                 <>
                   {/* ฟีดแบ็ก "ไม่ควรดูแค่เวลาอย่างเดียว — สรุปเป็น Cardio Load: Moderate" — สรุปการกระจาย
-                      เวลาต่อโซนเป็นค่าเดียว (ดู classifyCardioLoad, ถ่วงน้ำหนักตามอันดับความหนักของโซน) */}
+                      เวลาต่อโซนเป็นค่าเดียว (ดู classifyCardioLoad, ถ่วงน้ำหนักตามอันดับความหนักของโซน)
+                      v2 (P3, Cardio polish): ฟีดแบ็ก "HR Zone breakdown ควรมี takeaway บรรทัดเดียวชัดๆ เช่น
+                      'Zone 2 — 52 min / Cardio Load: Light' แทนที่จะให้ผู้ใช้อ่านแท่ง 5 แถวเองว่าโซนไหนเด่น" —
+                      เพิ่มโซนที่ใช้เวลามากสุด (dominantZone, หาจาก minutesByZone ตัวเดียวกับที่แท่งด้านล่างใช้
+                      อยู่แล้ว ไม่คำนวณซ้ำสูตรใหม่) นำหน้า Cardio Load เดิมในบรรทัดเดียวกัน — แท่ง 5 แถวด้านล่าง
+                      ยังอยู่ครบเหมือนเดิม (ไม่ได้แทนที่ แค่เพิ่มสรุปนำก่อน) */}
                   {(() => {
                     const load = classifyCardioLoad(volume.hrZones.minutesByZone)
                     if (!load) return null
                     const loadColor = load === 'light' ? '#7A9B57' : load === 'moderate' ? '#E8A33D' : '#C1503A'
+                    const dominantZone = [...HR_ZONES].sort(
+                      (a, b) => (volume.hrZones.minutesByZone[b.key] ?? 0) - (volume.hrZones.minutesByZone[a.key] ?? 0)
+                    )[0]
+                    const dominantMinutes = Math.round(volume.hrZones.minutesByZone[dominantZone.key] ?? 0)
                     return (
                       <p className="text-[12px] mb-2" style={{ color: loadColor }}>
+                        <span className="font-medium">{dominantZone.label}</span> · {dominantMinutes.toLocaleString('th-TH')} นาที ·{' '}
                         Cardio Load: <span className="font-medium">{CARDIO_LOAD_LABEL[load]}</span>
                       </p>
                     )
@@ -301,7 +316,12 @@ export default function WeeklyCardioVolume() {
                                   <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, backgroundColor: z.color }} />
                                 )}
                               </span>
-                              <span className="text-[12px] font-mono text-muted w-14 text-right shrink-0">{mins} นาที</span>
+                              {/* ฟีดแบ็ก (P3, Cardio polish) "ทศนิยมดิบยาวเกินไป เช่น 26.43 นาที" — ปัดเป็น
+                                  จำนวนเต็มนาที (ต่างจาก Total Minutes ด้านบนที่คง 1 ตำแหน่งทศนิยมไว้ เพราะ
+                                  แถวนี้แคบ/เทียบกับแท่งกราฟ ความละเอียดระดับนาทีก็พอสำหรับอ่านเปรียบเทียบ) */}
+                              <span className="text-[12px] font-mono text-muted w-14 text-right shrink-0">
+                                {Math.round(mins).toLocaleString('th-TH')} นาที
+                              </span>
                             </div>
                           )
                         })}
