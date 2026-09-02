@@ -34,7 +34,9 @@ export default function HighlightsRow({ streak, bestVolumeIncrease, weeklyConsis
     <div className="rounded-lg border border-line bg-surface2/40 px-4 py-3.5 space-y-2.5">
       <p className="text-[12px] tracked uppercase text-muted">Highlights</p>
       <div className="flex flex-wrap gap-2.5">
-        <HighlightTile icon="🔥" value={`${streak} วัน`} label="Streak ต่อเนื่อง" />
+        {/* ฟีดแบ็ก "Streak ต่อเนื่อง ซ้ำความหมายกันเอง (Streak ก็แปลว่าต่อเนื่องอยู่แล้ว)" — ตัด "ต่อเนื่อง"
+            ออก เหลือแค่ "Streak" ให้กระชับขึ้น ไม่กระทบความหมาย/ตัวเลข */}
+        <HighlightTile icon="🔥" value={`${streak} วัน`} label="Streak" />
         {bestVolumeIncrease && (
           <HighlightTile icon="📈" value={`+${bestVolumeIncrease.pct}%`} label={`${bestVolumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน`} />
         )}
