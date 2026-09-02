@@ -1084,7 +1084,7 @@ describe('computeGreetingContext', () => {
   it('falls back to the volume increase when there is no scheduled day today', () => {
     const ctx = computeGreetingContext(null, { muscleGroup: 'อก', pct: 95 }, { muscleGroup: 'หลัง', pct: 18 })
     expect(ctx.headline).toBeNull()
-    expect(ctx.detail).toBe('วอลุ่มสัปดาห์นี้ของคุณเพิ่มขึ้น 18% จากสัปดาห์ที่แล้ว')
+    expect(ctx.detail).toBe('จำนวนเซ็ตสัปดาห์นี้ของคุณเพิ่มขึ้น 18% จากสัปดาห์ที่แล้ว')
   })
 
   it('is silent when there is nothing to say', () => {

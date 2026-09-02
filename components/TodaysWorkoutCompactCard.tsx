@@ -304,7 +304,7 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, volum
               มีน้ำหนักมากกว่า Level 3 จริง — ไม่แตะขนาด (11px คงเดิม) เพราะคอลัมน์นี้แคบ (~131px จาก maxWidth
               68%) เคยวัดมาแล้วว่าขยับ tracking ขึ้นถึง 0.17em ก็ตัดขึ้น 2 บรรทัด (ดู comment เดิมด้านบน) —
               เพิ่มขนาดจะเสี่ยงบั๊กเดิมซ้ำ ใช้สี/น้ำหนักตัวอักษรสร้าง hierarchy แทน */}
-          <p className="text-[11px] uppercase whitespace-nowrap" style={{ letterSpacing: '0.14em', color: TEXT.body, fontWeight: 500 }}>
+          <p className="text-[12px] uppercase whitespace-nowrap" style={{ letterSpacing: '0.14em', color: TEXT.body, fontWeight: 500 }}>
             Today&apos;s Workout
           </p>
 
@@ -345,7 +345,7 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, volum
           {/* เฉพาะตอนเทรนเสร็จแล้ว + มีข้อมูลพอเทียบ (ตัวเดียวกับเงื่อนไข State C บนเดสก์ท็อป) —
               ไม่เดา/ไม่โชว์เลขลอยๆ ถ้า changePct เป็น null */}
           {isCompleted && volumeChangePct != null && (
-            <p className="text-[9px] leading-none mt-1" style={{ color: volumeChangePct >= 0 ? COLORS.moss : COLORS.amber }}>
+            <p className="text-[12px] leading-none mt-1" style={{ color: volumeChangePct >= 0 ? COLORS.moss : COLORS.amber }}>
               Volume {volumeChangePct >= 0 ? '+' : ''}
               {volumeChangePct}% จากครั้งก่อน
             </p>

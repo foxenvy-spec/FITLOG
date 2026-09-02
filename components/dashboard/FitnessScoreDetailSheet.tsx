@@ -86,7 +86,7 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
           <div className="flex items-center justify-between">
             {/* v2: "Fitness Score" -> "Training Readiness" — ฟีดแบ็ก "ตีความว่าคะแนนสุขภาพโดยรวม แต่
                 จริงๆ วัดความพร้อมฝึกวันนี้" (เหตุผลเดียวกับ FitnessScore.tsx) */}
-            <p className="text-[11px] tracked uppercase" style={{ color: TEXT.body, fontWeight: 500 }}>
+            <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body, fontWeight: 500 }}>
               Training Readiness
             </p>
             <button
@@ -116,7 +116,7 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
             {displayScore.breakdown.map((factor) => (
               <div key={factor.key}>
                 <div className="flex items-baseline justify-between">
-                  <p className="text-[11px] uppercase tracked" style={{ color: TEXT.body }}>
+                  <p className="text-[12px] uppercase tracked" style={{ color: TEXT.body }}>
                     {factor.label}
                   </p>
                   <p className="font-mono text-[12px]" style={{ color: factor.value != null ? TEXT.body : TEXT.secondary }}>
@@ -135,7 +135,7 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
               className="mb-4 rounded-lg px-3 py-2.5"
               style={{ backgroundColor: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '2A')}` }}
             >
-              <p className="text-[11px] leading-relaxed" style={{ color: TEXT.body }}>
+              <p className="text-[12px] leading-relaxed" style={{ color: TEXT.body }}>
                 💡 เพิ่ม{improvementTip.factorLabel}จาก {improvementTip.currentValue}% → {improvementTip.suggestedValue}%
                 {' — '}Fitness Score จะเพิ่มขึ้นประมาณ{' '}
                 <span style={{ color: COLORS.amber, fontWeight: 600 }}>+{improvementTip.scoreDelta}</span>
@@ -147,11 +147,11 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
               แยก "Recovery (Avg)" ตรงนี้ (เฉลี่ยทุกกลุ่มกล้ามเนื้อที่เคยฝึก เป็นแค่ 1 ใน 5 ปัจจัยถ่วงน้ำหนัก)
               ออกจาก "Muscle Recovery" ที่การ์ด AI Coach ใช้ (กลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว) —
               ตัวเลขต่างกันได้ปกติ เพราะวัดคนละขอบเขต ไม่ใช่ปัจจัยเดียวกัน */}
-          <p className="pb-2 -mt-1 text-[11px] leading-relaxed" style={{ color: TEXT.secondary }}>
+          <p className="pb-2 -mt-1 text-[12px] leading-relaxed" style={{ color: TEXT.secondary }}>
             คำนวณจากน้ำหนักตั้งต้น: Workout 30% · Streak 20% · Sleep 20% · Recovery (Avg) 15% · Weekly Goal 10% ·
             Activity 5% — ปัจจัยที่ยังไม่มีข้อมูล (เช่น Sleep) จะถูกตัดออกแล้วกระจายน้ำหนักให้ปัจจัยอื่นแทน
           </p>
-          <p className="pb-5 text-[11px] leading-relaxed" style={{ color: TEXT.secondary }}>
+          <p className="pb-5 text-[12px] leading-relaxed" style={{ color: TEXT.secondary }}>
             &quot;Recovery (Avg)&quot; ตรงนี้เฉลี่ยจากทุกกลุ่มกล้ามเนื้อที่เคยฝึก — คนละตัวกับ &quot;Muscle
             Recovery&quot; บนการ์ด AI Coach ที่วัดเฉพาะกลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว ตัวเลขสองจุดนี้
             ต่างกันได้ตามปกติ

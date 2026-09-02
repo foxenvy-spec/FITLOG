@@ -253,7 +253,7 @@ export default function WorkoutHeatmap() {
     <div className="rounded-lg bg-surface border border-line shadow-elevated overflow-hidden">
       <div className="px-4 pt-3.5 pb-1 flex items-center justify-between">
         <div>
-          <p className="text-[10px] tracked uppercase text-muted">Consistency</p>
+          <p className="text-[12px] tracked uppercase text-muted">Consistency</p>
           {loading ? (
             <Skeleton className="h-5 w-40 mt-1" />
           ) : (
@@ -284,7 +284,7 @@ export default function WorkoutHeatmap() {
 
       <div className="px-4 pt-1 pb-2 relative">
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted pointer-events-none">🔍</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] text-muted pointer-events-none">🔍</span>
           <input
             type="text"
             value={searchQuery}
@@ -312,7 +312,7 @@ export default function WorkoutHeatmap() {
                       — {w.sets}×{w.reps} @ {format(w.weight_kg)}
                     </span>
                   </span>
-                  <span className="text-muted shrink-0 font-mono text-[10px]">
+                  <span className="text-muted shrink-0 font-mono text-[12px]">
                     {new Date(w.performed_at + 'T00:00:00').toLocaleDateString('th-TH', {
                       day: 'numeric',
                       month: 'short',
@@ -327,13 +327,13 @@ export default function WorkoutHeatmap() {
       </div>
 
       <div className="px-4 pt-1 pb-2 flex items-center gap-1.5 flex-wrap">
-        <span className="text-[9px] tracked uppercase text-muted mr-0.5">Heatmap by</span>
+        <span className="text-[12px] tracked uppercase text-muted mr-0.5">Heatmap by</span>
         {(Object.keys(HEATMAP_METRIC_LABEL) as HeatmapMetric[]).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => chooseMetric(m)}
-            className={`px-2 py-0.5 rounded-full text-[10px] tracked uppercase border transition ${
+            className={`px-2 py-0.5 rounded-full text-[12px] tracked uppercase border transition ${
               metric === m
                 ? 'bg-amber/15 border-amber/50 text-amber'
                 : 'border-line text-muted hover:text-ink hover:border-ink/30'
@@ -348,7 +348,7 @@ export default function WorkoutHeatmap() {
         <div className="max-w-md w-full shrink-0">
           <div className="grid grid-cols-7 gap-1.5 mb-1.5">
             {WEEKDAY_LABELS.map((w) => (
-              <span key={w} className="text-center text-[9px] tracked uppercase text-muted">
+              <span key={w} className="text-center text-[12px] tracked uppercase text-muted">
                 {w}
               </span>
             ))}
@@ -395,7 +395,7 @@ export default function WorkoutHeatmap() {
                         setExpandedIds(new Set())
                       }}
                       title={`${date.getDate()} ${monthLabel}${entryCount ? ` · ${metricDisplay(value)}` : ''}`}
-                      className={`relative aspect-square rounded-[4px] flex items-center justify-center text-[9px] font-mono transition ${
+                      className={`relative aspect-square rounded-[4px] flex items-center justify-center text-[12px] font-mono transition ${
                         isFuture ? 'border border-dashed border-line text-muted/50' : 'text-bg'
                       } ${isToday ? 'ring-1 ring-amber ring-offset-1 ring-offset-surface' : ''} ${
                         selectedDate === iso ? 'ring-2 ring-steel ring-offset-1 ring-offset-surface' : ''
@@ -420,20 +420,20 @@ export default function WorkoutHeatmap() {
           </div>
 
           <div className="flex items-center justify-between gap-2 mt-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-[10px] text-muted flex-wrap">
+            <div className="flex items-center gap-1.5 text-[12px] text-muted flex-wrap">
               <span>🏆 PR</span>
               <span>❤️ น้ำหนักตัว</span>
               <span>📏 วัดรอบตัว</span>
               <span>🏃 Cardio</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-muted">
+              <span className="text-[12px] text-muted">
                 สี = <span className="text-ink">{HEATMAP_METRIC_LABEL[metric]}</span> · น้อย
               </span>
               {[0, 1, 2, 3].map((lv) => (
                 <span key={lv} className="w-3 h-3 rounded-[3px]" style={{ backgroundColor: LEVEL_STYLE[lv].bg }} />
               ))}
-              <span className="text-[10px] text-muted">มาก</span>
+              <span className="text-[12px] text-muted">มาก</span>
             </div>
           </div>
         </div>
@@ -453,7 +453,7 @@ export default function WorkoutHeatmap() {
               </p>
               <div className="flex items-center gap-2">
                 {expandableWorkoutIds.length > 0 && (
-                  <div className="flex items-center gap-1 text-[10px] tracked uppercase">
+                  <div className="flex items-center gap-1 text-[12px] tracked uppercase">
                     <button
                       type="button"
                       onClick={() => setExpandedIds(new Set(expandableWorkoutIds))}
@@ -491,17 +491,17 @@ export default function WorkoutHeatmap() {
                   <>
                     {groupVolumes.length > 0 && (
                       <div className="rounded-md bg-surface2 px-3 py-2.5 space-y-1.5 text-xs">
-                        <p className="text-[9px] tracked uppercase text-muted">Muscle Group Summary</p>
+                        <p className="text-[12px] tracked uppercase text-muted">Muscle Group Summary</p>
                         {groupVolumes.map(({ group, volumeKg }) => (
                           <div key={group} className="flex items-center gap-2">
-                            <span className="w-16 shrink-0 text-ink text-[11px] truncate">{group}</span>
+                            <span className="w-16 shrink-0 text-ink text-[12px] truncate">{group}</span>
                             <div className="flex-1 h-2 rounded-full bg-bg/60 overflow-hidden">
                               <div
                                 className="h-full rounded-full bg-amber"
                                 style={{ width: `${Math.max(6, (volumeKg / maxGroupVolume) * 100)}%` }}
                               />
                             </div>
-                            <span className="w-16 shrink-0 text-right font-mono text-muted text-[10px] tabular">
+                            <span className="w-16 shrink-0 text-right font-mono text-muted text-[12px] tabular">
                               {Math.round(toDisplay(volumeKg)).toLocaleString()} {unit}
                             </span>
                           </div>
@@ -553,8 +553,8 @@ export default function WorkoutHeatmap() {
                   // แทนที่จะเป็นแค่รายการเรียงเฉยๆ
                   <li key={w.id} className="flex gap-2">
                     <div className="w-11 shrink-0 flex flex-col items-center pt-2.5">
-                      <span className="text-[9px] font-mono text-steel tabular">{timeLabel}</span>
-                      {!isLast && <span className="text-muted/30 text-[10px] leading-none mt-1">↓</span>}
+                      <span className="text-[12px] font-mono text-steel tabular">{timeLabel}</span>
+                      {!isLast && <span className="text-muted/30 text-[12px] leading-none mt-1">↓</span>}
                     </div>
                     <div className="flex-1 min-w-0 rounded-md bg-surface2 overflow-hidden">
                       <button
@@ -573,7 +573,7 @@ export default function WorkoutHeatmap() {
                                 {w.sets}×{w.reps} @ {format(w.weight_kg)}
                               </span>
                               {hasSets && <span className="text-muted ml-1">{expanded ? '▲' : '▼'}</span>}
-                              {w.muscle_group && <p className="text-[10px] text-steel mt-0.5">{w.muscle_group}</p>}
+                              {w.muscle_group && <p className="text-[12px] text-steel mt-0.5">{w.muscle_group}</p>}
                             </span>
                             <ExerciseProgressBadge progress={computeExerciseProgress(w, progressHistory)} format={format} />
                           </div>
@@ -587,15 +587,15 @@ export default function WorkoutHeatmap() {
                             </span>
                           </>
                         )}
-                        {w.notes && <p className="text-[10px] text-muted/80 mt-0.5 truncate">{w.notes}</p>}
+                        {w.notes && <p className="text-[12px] text-muted/80 mt-0.5 truncate">{w.notes}</p>}
                       </button>
 
                       {expanded && (
                         <div className="px-3 pb-2.5 pt-0.5 grid grid-cols-3 gap-1.5">
                           {displaySets.map((s) => (
                             <div key={s.id} className="rounded bg-bg/40 px-2 py-1.5 text-center">
-                              <p className="text-[9px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
-                              <p className="text-[11px] font-mono text-ink mt-0.5">
+                              <p className="text-[12px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
+                              <p className="text-[12px] font-mono text-ink mt-0.5">
                                 {s.reps ?? '—'} × {s.weight_kg !== null ? format(s.weight_kg) : '—'}
                               </p>
                             </div>

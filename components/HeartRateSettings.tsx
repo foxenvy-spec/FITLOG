@@ -83,7 +83,7 @@ export default function HeartRateSettings({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <p className="text-[11px] text-muted mb-1.5">
+            <p className="text-[12px] text-muted mb-1.5">
               ชีพจรสูงสุด — ถ้าไม่ทราบ ประมาณคร่าวๆ ได้จาก 220 − อายุ
             </p>
             <input
@@ -99,7 +99,7 @@ export default function HeartRateSettings({
             />
           </div>
           <div>
-            <p className="text-[11px] text-muted mb-1.5">ชีพจรขณะพัก — วัดตอนตื่นนอนตอนเช้าจะแม่นสุด</p>
+            <p className="text-[12px] text-muted mb-1.5">ชีพจรขณะพัก — วัดตอนตื่นนอนตอนเช้าจะแม่นสุด</p>
             <input
               type="number"
               inputMode="numeric"
@@ -115,7 +115,7 @@ export default function HeartRateSettings({
         </div>
 
         <div className="mt-4 rounded-md bg-surface2 px-3 py-2.5 text-center">
-          <p className="text-[10px] tracked uppercase text-muted">VO2Max โดยประมาณ</p>
+          <p className="text-[12px] tracked uppercase text-muted">VO2Max โดยประมาณ</p>
           {vo2max !== null ? (
             <p className="font-mono text-lg text-ink mt-0.5">
               {vo2max}
@@ -123,14 +123,14 @@ export default function HeartRateSettings({
               {vo2maxCategory && <span className="text-xs text-muted ml-1.5">· {vo2maxCategory.label}</span>}
             </p>
           ) : (
-            <p className="text-[11px] text-muted mt-0.5">กรอกชีพจรขณะพักเพื่อดูค่าประมาณ</p>
+            <p className="text-[12px] text-muted mt-0.5">กรอกชีพจรขณะพักเพื่อดูค่าประมาณ</p>
           )}
-          <p className="text-[10px] text-muted/70 mt-1">
+          <p className="text-[12px] text-muted/70 mt-1">
             * ประมาณจากสูตร Uth (15.3 × ชีพจรสูงสุด/ชีพจรขณะพัก) ไม่ใช่ค่าจากการทดสอบจริง
           </p>
         </div>
 
-        {error && <p className="text-[11px] text-rust mt-3">{error}</p>}
+        {error && <p className="text-[12px] text-rust mt-3">{error}</p>}
 
         <button
           type="button"

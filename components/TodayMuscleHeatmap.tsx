@@ -31,9 +31,9 @@ export default function TodayMuscleHeatmap({ todayWorkouts }: TodayMuscleHeatmap
   return (
     <div className="rounded-lg border border-amber/15 shadow-hero px-4 py-4 bg-surface">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] tracked uppercase text-muted">กล้ามเนื้อที่เทรนวันนี้</p>
+        <p className="text-[12px] tracked uppercase text-muted">กล้ามเนื้อที่เทรนวันนี้</p>
         {hasTrainedToday && (
-          <span className="text-[10px] font-mono text-muted">{trainedSet.size}/{VOLUME_MUSCLES.length}</span>
+          <span className="text-[12px] font-mono text-muted">{trainedSet.size}/{VOLUME_MUSCLES.length}</span>
         )}
       </div>
       {/* กริดแสดงทุกกลุ่มกล้ามเนื้อเสมอ (ไม่ใช่แค่ตอนเทรนแล้ว) กันการ์ดดูโล่ง/ว่างเปล่าตอนยังไม่ได้
@@ -63,10 +63,10 @@ export default function TodayMuscleHeatmap({ todayWorkouts }: TodayMuscleHeatmap
                   boxShadow: active ? `0 0 8px ${color}99` : 'none',
                 }}
               />
-              <p className="text-[11px] font-display tracked uppercase" style={{ color: active ? color : '#9498A0' }}>
+              <p className="text-[12px] font-display tracked uppercase" style={{ color: active ? color : '#9498A0' }}>
                 {group}
               </p>
-              <p className="text-[9px] text-muted">{MUSCLE_GROUP_LABELS_EN[group]}</p>
+              <p className="text-[12px] text-muted">{MUSCLE_GROUP_LABELS_EN[group]}</p>
             </div>
           )
         })}

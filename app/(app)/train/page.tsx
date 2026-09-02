@@ -263,7 +263,7 @@ export default function TrainPage() {
   return (
     <div className="pb-4">
       <div className="mb-5">
-        <p className="text-[10px] tracked uppercase text-muted">Train</p>
+        <p className="text-[12px] tracked uppercase text-muted">Train</p>
         <h1 className="font-display text-xl tracked uppercase text-ink">เริ่มเล่นเลย</h1>
       </div>
 
@@ -319,8 +319,8 @@ function TrainBody({
       <div className="order-1 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-1">
         <PremiumCard className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-[10px] tracked uppercase text-amber">โปรแกรมวันนี้</p>
-            <p className="shrink-0 text-[11px] text-muted whitespace-nowrap">🔥 {data.streak} วันติด</p>
+            <p className="text-[12px] tracked uppercase text-amber">โปรแกรมวันนี้</p>
+            <p className="shrink-0 text-[12px] text-muted whitespace-nowrap">🔥 {data.streak} วันติด</p>
           </div>
 
           {data.currentDay ? (
@@ -330,13 +330,13 @@ function TrainBody({
                 <p className="text-xs text-muted mt-1.5">{splits.map((s) => `${s.group} ${s.sets} เซ็ต`).join(' · ')}</p>
               )}
               {previewNames && (
-                <p className="text-[11px] text-muted/80 mt-1.5">
+                <p className="text-[12px] text-muted/80 mt-1.5">
                   พรีวิว: {previewNames}
                   {previewExtra}
                 </p>
               )}
               {totalToday > 0 && (
-                <p className="text-[11px] text-muted mt-2">
+                <p className="text-[12px] text-muted mt-2">
                   {data.completedCount}/{totalToday} ท่าเสร็จแล้ว
                 </p>
               )}
@@ -362,14 +362,14 @@ function TrainBody({
           <span className="shrink-0 w-9 h-9 rounded-full bg-amber/15 text-amber flex items-center justify-center text-base">✚</span>
           <div className="min-w-0">
             <p className="font-display tracked uppercase text-ink text-xs">บันทึกเวิร์กเอาต์แบบอิสระ</p>
-            <p className="text-[11px] text-muted mt-0.5 truncate">จดเซ็ต น้ำหนัก คาร์ดิโอ แบบอิสระ</p>
+            <p className="text-[12px] text-muted mt-0.5 truncate">จดเซ็ต น้ำหนัก คาร์ดิโอ แบบอิสระ</p>
           </div>
         </PremiumCard>
       </div>
 
       {data.recentSessions.length > 0 && (
         <div className="order-4 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-3 space-y-2.5">
-          <p className="text-[10px] tracked uppercase text-muted">เซสชันล่าสุดที่เล่นไป</p>
+          <p className="text-[12px] tracked uppercase text-muted">เซสชันล่าสุดที่เล่นไป</p>
           {data.recentSessions.map((session) => {
             const summary = computeDaySummary(session.workouts)
             return (
@@ -379,7 +379,7 @@ function TrainBody({
                     {relativeDayLabel(session.date)}
                     {summary.muscleGroups.length > 0 ? ` — ${summary.muscleGroups.join(' · ')}` : ''}
                   </p>
-                  <p className="text-[11px] text-muted mt-0.5">
+                  <p className="text-[12px] text-muted mt-0.5">
                     {summary.exerciseCount} ท่า · {summary.totalSets} เซ็ต
                     {summary.totalVolumeKg > 0 ? ` · ${Math.round(summary.totalVolumeKg).toLocaleString('th-TH')} kg` : ''}
                   </p>
@@ -401,7 +401,7 @@ function TrainBody({
                   </button>
                 </div>
                 {repeatResult && repeatResult.date === session.date && (
-                  <p className="text-[11px] text-muted">{repeatResult.message}</p>
+                  <p className="text-[12px] text-muted">{repeatResult.message}</p>
                 )}
               </PremiumCard>
             )
@@ -412,7 +412,7 @@ function TrainBody({
       {/* ฝั่งขวา ~40% — เทมเพลตด่วน + เครื่องมือ */}
       {data.templates.length > 0 && (
         <div className="order-5 lg:order-none lg:col-start-8 lg:col-span-5 lg:row-start-1">
-          <p className="text-[10px] tracked uppercase text-muted mb-2">เทมเพลตด่วน</p>
+          <p className="text-[12px] tracked uppercase text-muted mb-2">เทมเพลตด่วน</p>
           <PremiumCard className="divide-y divide-white/5">
             {data.templates.map((t) => {
               const exs = data.exercisesByTemplate[t.id] ?? []
@@ -420,7 +420,7 @@ function TrainBody({
                 <div key={t.id} className="flex items-center gap-3 px-4 py-3.5">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-ink truncate">{t.title}</p>
-                    <p className="text-[11px] text-muted mt-0.5">{exs.length} ท่า</p>
+                    <p className="text-[12px] text-muted mt-0.5">{exs.length} ท่า</p>
                   </div>
                   <button
                     type="button"
@@ -434,12 +434,12 @@ function TrainBody({
               )
             })}
           </PremiumCard>
-          {templateMessage && <p className="text-[11px] text-muted mt-2">{templateMessage}</p>}
+          {templateMessage && <p className="text-[12px] text-muted mt-2">{templateMessage}</p>}
         </div>
       )}
 
       <div className="order-3 lg:order-none lg:col-start-8 lg:col-span-5 lg:row-start-2">
-        <p className="text-[10px] tracked uppercase text-muted mb-2">เครื่องมือ</p>
+        <p className="text-[12px] tracked uppercase text-muted mb-2">เครื่องมือ</p>
         <div className="grid grid-cols-2 gap-2.5">
           {SECONDARY.map((item) => (
             <PremiumCard
@@ -449,7 +449,7 @@ function TrainBody({
               className="flex flex-col items-center justify-center gap-1.5 py-5 text-muted hover:text-amber transition"
             >
               <span className="text-xl">{item.icon}</span>
-              <span className="text-[10px] font-display tracked uppercase">{item.label}</span>
+              <span className="text-[12px] font-display tracked uppercase">{item.label}</span>
             </PremiumCard>
           ))}
         </div>
@@ -474,7 +474,7 @@ function PlateCalculatorWidget() {
 
   return (
     <div>
-      <p className="text-[10px] tracked uppercase text-muted mb-2">คำนวณแผ่นเหล็ก</p>
+      <p className="text-[12px] tracked uppercase text-muted mb-2">คำนวณแผ่นเหล็ก</p>
       <PremiumCard className="px-4 py-3.5 space-y-3">
         <div className="flex items-center gap-2">
           <input
@@ -489,18 +489,18 @@ function PlateCalculatorWidget() {
         </div>
         {breakdown && (
           <div className="rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap" style={{ background: 'rgba(255,255,255,.04)' }}>
-            <span className="text-[9px] tracked uppercase text-muted shrink-0">
+            <span className="text-[12px] tracked uppercase text-muted shrink-0">
               แผ่น/ข้าง (บาร์ {breakdown.barWeight}{unit})
             </span>
             {breakdown.perSide.length === 0 ? (
-              <span className="text-[11px] font-mono" style={{ color: '#CFD4DE' }}>
+              <span className="text-[12px] font-mono" style={{ color: '#CFD4DE' }}>
                 บาร์เปล่า
               </span>
             ) : (
               breakdown.perSide.map((p) => (
                 <span
                   key={p.plate}
-                  className="rounded-md px-1.5 py-0.5 text-[11px] font-mono"
+                  className="rounded-md px-1.5 py-0.5 text-[12px] font-mono"
                   style={{ background: withAlpha(COLORS.steel, '26'), color: COLORS.steel }}
                 >
                   {p.plate}×{p.count}
@@ -508,7 +508,7 @@ function PlateCalculatorWidget() {
               ))
             )}
             {breakdown.leftoverPerSide > 0 && (
-              <span className="text-[9px] tracked text-muted">
+              <span className="text-[12px] tracked text-muted">
                 (แบ่งแผ่นไม่ลงตัว เหลือ {breakdown.leftoverPerSide}{unit}/ข้าง)
               </span>
             )}

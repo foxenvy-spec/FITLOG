@@ -96,15 +96,15 @@ export default function ImportCardioPhotoGemini({ onExtracted }: { onExtracted: 
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-xs text-ink">
-            ✨ นำเข้าจากรูป <span className="text-[10px] text-moss">(ฟรี · Gemini)</span>
+            ✨ นำเข้าจากรูป <span className="text-[12px] text-moss">(ฟรี · Gemini)</span>
           </p>
-          <p className="text-[10px] text-muted">ลากรูปหน้าจอลู่วิ่ง/นาฬิกามาวาง หรือถ่ายรูป — AI จะแกะตัวเลขให้ทันที</p>
+          <p className="text-[12px] text-muted">ลากรูปหน้าจอลู่วิ่ง/นาฬิกามาวาง หรือถ่ายรูป — AI จะแกะตัวเลขให้ทันที</p>
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={analyzing}
-          className="text-[11px] shrink-0 border border-amber/40 rounded px-2.5 py-1.5 text-amber hover:bg-amber/10 disabled:opacity-60"
+          className="text-[12px] shrink-0 border border-amber/40 rounded px-2.5 py-1.5 text-amber hover:bg-amber/10 disabled:opacity-60"
         >
           {analyzing ? 'กำลังอ่าน...' : preview ? 'เปลี่ยนรูป' : '📷 เลือกรูป'}
         </button>
@@ -123,13 +123,13 @@ export default function ImportCardioPhotoGemini({ onExtracted }: { onExtracted: 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="รูปที่นำเข้า" className="w-14 h-14 object-cover rounded border border-line" />
           <div className="flex-1 min-w-0">
-            {analyzing && <p className="text-[11px] text-muted">กำลังอ่านตัวเลขจากรูป...</p>}
+            {analyzing && <p className="text-[12px] text-muted">กำลังอ่านตัวเลขจากรูป...</p>}
             {!analyzing && foundFields && (
-              <p className="text-[11px] text-moss">
+              <p className="text-[12px] text-moss">
                 เติมให้แล้ว: {foundFields.map((f) => FIELD_LABEL[f]).join(', ')} — ตรวจสอบก่อนบันทึก
               </p>
             )}
-            {!analyzing && error && <p className="text-[11px] text-rusttext">{error}</p>}
+            {!analyzing && error && <p className="text-[12px] text-rusttext">{error}</p>}
           </div>
         </div>
       )}

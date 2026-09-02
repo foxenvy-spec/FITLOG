@@ -294,7 +294,7 @@ export default function ImportPage() {
             โปรแกรมประจำสัปดาห์
           </button>
         </div>
-        <p className="text-[11px] text-muted mt-1.5">
+        <p className="text-[12px] text-muted mt-1.5">
           {mode === 'log'
             ? 'บันทึกเป็นรายการที่ "ทำไปแล้ว" ในวันที่ที่เลือก จะไปโผล่ที่หน้าประวัติทันที'
             : 'ตั้งเป็นแผนประจำวันในสัปดาห์ ไว้ดูซ้ำได้ทุกสัปดาห์ที่หน้า "โปรแกรม" — ยังไม่ถูกบันทึกเป็นประวัติจนกว่าจะกดทำจริง'}
@@ -430,7 +430,7 @@ function DayCard({
       <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm text-ink font-display tracked uppercase truncate">{day.title}</p>
-          <p className="text-[11px] text-muted">
+          <p className="text-[12px] text-muted">
             {includedCount}/{day.exercises.length} ท่าที่จะนำเข้า
           </p>
         </div>
@@ -459,13 +459,13 @@ function DayCard({
       <div className="px-4 pt-2 pb-1 flex gap-3">
         <button
           onClick={() => onToggleAll(true)}
-          className="text-[11px] tracked uppercase text-muted hover:text-amber"
+          className="text-[12px] tracked uppercase text-muted hover:text-amber"
         >
           เลือกทั้งหมด
         </button>
         <button
           onClick={() => onToggleAll(false)}
-          className="text-[11px] tracked uppercase text-muted hover:text-amber"
+          className="text-[12px] tracked uppercase text-muted hover:text-amber"
         >
           ไม่เลือกเลย
         </button>
@@ -541,7 +541,7 @@ function DayCard({
                   ))}
                 </select>
                 {ex.secondaryMuscles.length > 0 && (
-                  <p className="text-[11px] text-muted/70">กล้ามเนื้อรอง: {ex.secondaryMuscles.join(', ')}</p>
+                  <p className="text-[12px] text-muted/70">กล้ามเนื้อรอง: {ex.secondaryMuscles.join(', ')}</p>
                 )}
               </div>
             )}
@@ -563,7 +563,7 @@ function BodyLogCard({
     <PremiumCard className="overflow-hidden">
       <div className="px-4 py-3 border-b border-white/5">
         <p className="text-sm text-ink font-display tracked uppercase">บันทึกสัดส่วนร่างกาย</p>
-        <p className="text-[11px] text-muted">พบ {bodyLog.length} แถวที่มีวันที่กรอกไว้</p>
+        <p className="text-[12px] text-muted">พบ {bodyLog.length} แถวที่มีวันที่กรอกไว้</p>
       </div>
       <div className="divide-y divide-white/5">
         {bodyLog.map((row) => (
@@ -590,7 +590,7 @@ function MatchBadge({ confidence }: { confidence: ParsedExerciseRow['matchConfid
 
   if (confidence === 'fuzzy') {
     return (
-      <p className="pl-6 text-[10px] tracked uppercase text-amber">
+      <p className="pl-6 text-[12px] tracked uppercase text-amber">
         จับคู่แบบไม่ตรงเป๊ะ (fuzzy) — ตรวจสอบชื่อท่า/กลุ่มกล้ามเนื้ออีกครั้ง
       </p>
     )
@@ -598,7 +598,7 @@ function MatchBadge({ confidence }: { confidence: ParsedExerciseRow['matchConfid
 
   // confidence === null — ไม่พบใน Library เลย
   return (
-    <p className="pl-6 text-[10px] tracked uppercase text-muted">
+    <p className="pl-6 text-[12px] tracked uppercase text-muted">
       ไม่พบใน Library — เดากลุ่มกล้ามเนื้อจากชื่อวันแทน
     </p>
   )
@@ -617,7 +617,7 @@ function NumberField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <span className="block text-[12px] tracked uppercase text-muted mb-0.5">{label}</span>
       <input
         type="number"
         inputMode="decimal"
@@ -641,7 +641,7 @@ function TextField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <span className="block text-[12px] tracked uppercase text-muted mb-0.5">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}

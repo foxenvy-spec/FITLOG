@@ -106,7 +106,7 @@ export default function CardioTargetsSettings({
           </label>
         </div>
 
-        {error && <p className="text-[11px] text-rust mt-3">{error}</p>}
+        {error && <p className="text-[12px] text-rust mt-3">{error}</p>}
 
         <button
           type="button"

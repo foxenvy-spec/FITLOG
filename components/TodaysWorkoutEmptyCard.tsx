@@ -36,7 +36,7 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
           />
         </span>
         <div className="min-w-0">
-          <p className="text-[10px] tracked uppercase" style={{ color: TEXT.body }}>
+          <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body }}>
             Today&apos;s Workout
           </p>
           <p className="font-display tracked uppercase text-ink" style={{ fontSize: 14 }}>
@@ -60,7 +60,7 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
   return (
     <PremiumCard className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
-        <p className="text-[10px] tracked uppercase" style={{ color: TEXT.body }}>
+        <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body }}>
           Today&apos;s Workout
         </p>
         <p className="font-display tracked uppercase text-ink" style={{ fontSize: 14 }}>

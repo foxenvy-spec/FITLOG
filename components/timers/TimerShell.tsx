@@ -126,7 +126,7 @@ export function NumberStepper({
 
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3">
-      <p className="text-[11px] tracked uppercase text-muted mb-1.5">{label}</p>
+      <p className="text-[12px] tracked uppercase text-muted mb-1.5">{label}</p>
       <div className="flex items-center justify-between">
         <button
           type="button"

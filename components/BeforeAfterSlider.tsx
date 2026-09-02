@@ -80,10 +80,10 @@ export default function BeforeAfterSlider({
         </span>
       </div>
       {/* ป้ายมุมบอกว่าฝั่งไหนคือก่อน/หลัง */}
-      <span className="absolute top-2 left-2 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full pointer-events-none" style={{ background: 'rgba(0,0,0,.6)', color: '#fff' }}>
+      <span className="absolute top-2 left-2 text-[12px] font-display tracked uppercase px-2 py-0.5 rounded-full pointer-events-none" style={{ background: 'rgba(0,0,0,.6)', color: '#fff' }}>
         {beforeLabel}
       </span>
-      <span className="absolute top-2 right-2 text-[10px] font-display tracked uppercase px-2 py-0.5 rounded-full pointer-events-none" style={{ background: 'rgba(0,0,0,.6)', color: '#fff' }}>
+      <span className="absolute top-2 right-2 text-[12px] font-display tracked uppercase px-2 py-0.5 rounded-full pointer-events-none" style={{ background: 'rgba(0,0,0,.6)', color: '#fff' }}>
         {afterLabel}
       </span>
     </div>

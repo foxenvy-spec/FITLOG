@@ -223,8 +223,8 @@ function HistoryPageInner() {
 
       {exerciseFilter && (
         <div className="flex items-center gap-2 rounded-full bg-surface2 border border-line px-3 py-1.5 w-fit">
-          <span className="text-[11px] text-muted">กรอง:</span>
-          <span className="text-[11px] text-ink">{exerciseFilter}</span>
+          <span className="text-[12px] text-muted">กรอง:</span>
+          <span className="text-[12px] text-ink">{exerciseFilter}</span>
           <button
             type="button"
             onClick={clearExerciseFilter}
@@ -276,11 +276,11 @@ function HistoryPageInner() {
 
       {dates.length > 0 && (
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={expandAll} className="text-[11px] tracked uppercase text-muted hover:text-amber transition">
+          <button type="button" onClick={expandAll} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
             Expand All
           </button>
           <span className="text-line">|</span>
-          <button type="button" onClick={collapseAll} className="text-[11px] tracked uppercase text-muted hover:text-amber transition">
+          <button type="button" onClick={collapseAll} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
             Collapse All
           </button>
         </div>

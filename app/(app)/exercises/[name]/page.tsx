@@ -137,7 +137,7 @@ export default function ExerciseDetailPage() {
           <div className="min-w-0">
             <h1 className="font-display text-xl tracked uppercase text-ink truncate">{exerciseName}</h1>
             {known && (
-              <p className="text-[11px] text-muted">
+              <p className="text-[12px] text-muted">
                 <span style={{ color }}>{muscleGroupLabel(known.muscleGroup, 'en')}</span> · {equipmentLabel(known.equipment)}
               </p>
             )}
@@ -164,7 +164,7 @@ export default function ExerciseDetailPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingImage}
-              className="absolute bottom-1.5 right-1.5 text-[10px] font-display tracked uppercase bg-bg/80 text-ink border border-line rounded-full px-2.5 py-1 disabled:opacity-50"
+              className="absolute bottom-1.5 right-1.5 text-[12px] font-display tracked uppercase bg-bg/80 text-ink border border-line rounded-full px-2.5 py-1 disabled:opacity-50"
             >
               {uploadingImage ? '...' : known.imageUrl ? 'เปลี่ยนรูป' : '+ เพิ่มรูป'}
             </button>
@@ -214,10 +214,10 @@ export default function ExerciseDetailPage() {
               return (
                 <div className={`rounded-lg border px-4 py-3.5 ${isNewPR ? 'animate-pr-glow' : ''}`} style={prCardStyle}>
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-[10px] tracked uppercase text-muted">🏆 Personal Record</p>
+                    <p className="text-[12px] tracked uppercase text-muted">🏆 Personal Record</p>
                     {isNewPR && (
                       <span
-                        className="animate-pop-in text-[10px] font-display tracked uppercase text-bg rounded-full px-2 py-0.5"
+                        className="animate-pop-in text-[12px] font-display tracked uppercase text-bg rounded-full px-2 py-0.5"
                         style={{ backgroundColor: color }}
                       >
                         🎉 PR ใหม่วันนี้!
@@ -230,7 +230,7 @@ export default function ExerciseDetailPage() {
                       <span className="text-xs text-muted ml-1">{unit}</span>
                     </p>
                     {stats.bestWeightDate && !isNewPR && (
-                      <p className="text-[11px] text-muted">{relativeDayLabel(stats.bestWeightDate)}</p>
+                      <p className="text-[12px] text-muted">{relativeDayLabel(stats.bestWeightDate)}</p>
                     )}
                   </div>
                 </div>
@@ -277,7 +277,7 @@ export default function ExerciseDetailPage() {
                   บันทึกท่านี้อีกอย่างน้อย 2 ครั้งเพื่อดูแนวโน้ม
                 </p>
               )}
-              <p className="text-[11px] text-muted mt-2">คำนวณด้วยสูตร Epley: น้ำหนัก × (1 + reps/30) — เป็นค่าประมาณ ไม่ใช่ค่าวัดจริง</p>
+              <p className="text-[12px] text-muted mt-2">คำนวณด้วยสูตร Epley: น้ำหนัก × (1 + reps/30) — เป็นค่าประมาณ ไม่ใช่ค่าวัดจริง</p>
             </section>
 
             {/* last 10 sessions */}
@@ -290,12 +290,12 @@ export default function ExerciseDetailPage() {
                       <p className="text-sm text-ink">
                         {s.sets ?? '–'}×{s.reps ?? '–'} @ {format(s.weightKg)}
                       </p>
-                      <p className="text-[11px] text-muted mt-0.5">{relativeDayLabel(s.date)}</p>
+                      <p className="text-[12px] text-muted mt-0.5">{relativeDayLabel(s.date)}</p>
                     </div>
                     <div className="text-right shrink-0 ml-3">
                       <p className="font-mono text-sm text-ink">{Math.round(toDisplay(s.volumeKg)).toLocaleString('th-TH')}{unit}</p>
                       {s.estimated1RM !== null && (
-                        <p className="text-[10px] text-muted">1RM ≈ {format(s.estimated1RM)}</p>
+                        <p className="text-[12px] text-muted">1RM ≈ {format(s.estimated1RM)}</p>
                       )}
                     </div>
                   </li>
@@ -319,7 +319,7 @@ export default function ExerciseDetailPage() {
 function StatCard({ label, value, unit, accent }: { label: string; value: string; unit: string; accent?: boolean }) {
   return (
     <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-3.5">
-      <p className="text-[11px] tracked uppercase text-muted mb-1">{label}</p>
+      <p className="text-[12px] tracked uppercase text-muted mb-1">{label}</p>
       <p className={`font-mono text-2xl tabular ${accent ? 'text-amber' : 'text-ink'}`}>
         {value}
         <span className="text-xs text-muted ml-1">{unit}</span>

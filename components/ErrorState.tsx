@@ -17,7 +17,7 @@ export default function ErrorState({
       <button
         type="button"
         onClick={onRetry}
-        className="mt-1 text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
+        className="mt-1 text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
       >
         ลองอีกครั้ง
       </button>

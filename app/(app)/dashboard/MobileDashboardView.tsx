@@ -449,20 +449,20 @@ export default function MobileDashboardView() {
           return (
             <div className="animate-rise" style={{ animationDelay: '18ms', marginTop: 10 }}>
               <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3.5">
-                <p className="text-[10px] tracked uppercase text-muted mb-3">Body Goal</p>
+                <p className="text-[12px] tracked uppercase text-muted mb-3">Body Goal</p>
                 <div className="space-y-3">
                   {weightPct !== null && (
                     <div>
                       <div className="flex items-baseline justify-between">
                         <p className="text-xs text-ink">น้ำหนัก</p>
-                        <p className="text-[11px] font-mono text-muted">
+                        <p className="text-[12px] font-mono text-muted">
                           {toDisplay(data.bodyMetricsSummary.weight.value as number).toFixed(1)} → {toDisplay(data.weightGoalTarget as number).toFixed(1)} {unit}
                         </p>
                       </div>
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
                       </div>
-                      <p className="text-[10px] text-muted mt-1">
+                      <p className="text-[12px] text-muted mt-1">
                         {goalProgressLabel(
                           weightPct,
                           `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
@@ -474,14 +474,14 @@ export default function MobileDashboardView() {
                     <div>
                       <div className="flex items-baseline justify-between">
                         <p className="text-xs text-ink">Body Fat</p>
-                        <p className="text-[11px] font-mono text-muted">
+                        <p className="text-[12px] font-mono text-muted">
                           {(data.bodyMetricsSummary.bodyFatPct.value as number).toFixed(1)}% → {(data.bodyFatGoalTarget as number).toFixed(1)}%
                         </p>
                       </div>
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                       </div>
-                      <p className="text-[10px] text-muted mt-1">
+                      <p className="text-[12px] text-muted mt-1">
                         {goalProgressLabel(
                           bodyFatPct,
                           `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
@@ -523,7 +523,7 @@ export default function MobileDashboardView() {
           <button
             type="button"
             onClick={() => setWarmupOpen(true)}
-            className="text-[11px] text-amber active:opacity-70 transition flex items-center gap-1 px-1"
+            className="text-[12px] text-amber active:opacity-70 transition flex items-center gap-1 px-1"
           >
             <span aria-hidden="true">🔥</span> ดูท่าวอร์มอัป 3 นาที
           </button>

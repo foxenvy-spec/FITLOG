@@ -18,11 +18,11 @@ export default function OnboardingBanner({ onDismiss }: { onDismiss: () => void 
           ✕
         </button>
 
-        <p className="text-[10px] tracked uppercase text-amber flex items-center gap-1.5">
+        <p className="text-[12px] tracked uppercase text-amber flex items-center gap-1.5">
           <span aria-hidden="true">👋</span> ยินดีต้อนรับสู่ FITLOG
         </p>
         <p className="font-display text-lg tracked uppercase text-ink mt-1.5">เริ่มยังไงดี?</p>
-        <p className="text-[11px] text-muted mt-1 leading-relaxed">
+        <p className="text-[12px] text-muted mt-1 leading-relaxed">
           ไม่ต้องตั้งค่าอะไรก่อนก็บันทึกได้เลย — โปรแกรมมีไว้ช่วยจำท่าที่ทำซ้ำๆ เฉยๆ ตั้งทีหลังได้เสมอ
         </p>
 

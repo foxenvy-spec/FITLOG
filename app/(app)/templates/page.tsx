@@ -648,13 +648,13 @@ export default function TemplatesPage() {
         <div className="flex gap-2 shrink-0">
           <a
             href="/exercises"
-            className="inline-flex items-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
+            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
           >
             🔍 ฐานข้อมูลท่า
           </a>
           <a
             href="/history"
-            className="inline-flex items-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
+            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
           >
             🕐 ดูประวัติ
           </a>
@@ -808,7 +808,7 @@ export default function TemplatesPage() {
                             </p>
                           )
                         })()}
-                        <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,.7)', fontWeight: 600 }}>
+                        <p className="text-[12px] mt-1" style={{ color: 'rgba(255,255,255,.7)', fontWeight: 600 }}>
                           🕐 {exercises.length} ท่า
                         </p>
                       </span>
@@ -816,7 +816,7 @@ export default function TemplatesPage() {
                     <button
                       onClick={() => handleStart(t)}
                       disabled={startingId === t.id || exercises.length === 0}
-                      className="shrink-0 w-[92px] rounded-[18px] text-[9px] leading-tight font-display tracked uppercase text-bg py-2 px-3 text-center active:scale-[0.99] disabled:opacity-40 transition"
+                      className="shrink-0 w-[92px] rounded-[18px] text-[12px] leading-tight font-display tracked uppercase text-bg py-2 px-3 text-center active:scale-[0.99] disabled:opacity-40 transition"
                       style={{
                         backgroundImage: [
                           'linear-gradient(180deg, rgba(255,255,255,.35), transparent 55%)',
@@ -864,7 +864,7 @@ export default function TemplatesPage() {
                   </div>
                   {applyPickerId === t.id && (
                     <div className="px-4 pb-4 space-y-2">
-                      <p className="text-[11px] text-muted">เลือกวันในสัปดาห์ที่จะใส่ท่าจากเทมเพลตนี้เข้าไป (เพิ่มต่อท้ายถ้าวันนั้นมีท่าอยู่แล้ว)</p>
+                      <p className="text-[12px] text-muted">เลือกวันในสัปดาห์ที่จะใส่ท่าจากเทมเพลตนี้เข้าไป (เพิ่มต่อท้ายถ้าวันนั้นมีท่าอยู่แล้ว)</p>
                       <div className="grid grid-cols-7 gap-1">
                         {WEEKDAYS_SHORT.map((label, dow) => (
                           <button
@@ -877,7 +877,7 @@ export default function TemplatesPage() {
                           </button>
                         ))}
                       </div>
-                      {applyingId === t.id && <p className="text-[11px] text-muted">กำลังตั้งโปรแกรม...</p>}
+                      {applyingId === t.id && <p className="text-[12px] text-muted">กำลังตั้งโปรแกรม...</p>}
                     </div>
                   )}
                   {addingToId === t.id && (
@@ -902,7 +902,7 @@ export default function TemplatesPage() {
               style={{ borderColor: withAlpha(COLORS.amber, '66'), color: COLORS.amber }}
             >
               <span className="block font-display text-sm tracked uppercase">+ เทมเพลตใหม่</span>
-              <span className="block text-[10px] text-muted mt-1 normal-case">สร้างโปรแกรมของคุณเอง</span>
+              <span className="block text-[12px] text-muted mt-1 normal-case">สร้างโปรแกรมของคุณเอง</span>
             </button>
           )}
           <button
@@ -912,7 +912,7 @@ export default function TemplatesPage() {
             style={{ borderColor: withAlpha(COLORS.steel, '66'), color: COLORS.steel }}
           >
             <span className="block font-display text-sm tracked uppercase">{importing ? '...' : '⬆ Import'}</span>
-            <span className="block text-[10px] text-muted mt-1 normal-case">นำเข้าเทมเพลตจาก .json หรือ .xlsx</span>
+            <span className="block text-[12px] text-muted mt-1 normal-case">นำเข้าเทมเพลตจาก .json หรือ .xlsx</span>
           </button>
           <input ref={fileInputRef} type="file" accept="application/json,.json,.xlsx,.xls" onChange={handleImportFile} className="hidden" />
         </div>
@@ -1055,23 +1055,23 @@ function ExerciseRow({
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-ink truncate">{exercise.exercise_name}</p>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onToggleEdit} className="text-[11px] text-muted hover:text-amber transition">
+            <button onClick={onToggleEdit} className="text-[12px] text-muted hover:text-amber transition">
               {editing ? 'เสร็จ' : 'แก้ไข'}
             </button>
-            <button onClick={onDelete} className="text-[11px] text-muted hover:text-rust transition">
+            <button onClick={onDelete} className="text-[12px] text-muted hover:text-rust transition">
               ลบ
             </button>
           </div>
         </div>
 
         {!editing && (
-          <p className="text-[11px] text-muted mt-0.5">
+          <p className="text-[12px] text-muted mt-0.5">
             {exercise.sets ?? '–'} เซ็ต × {exercise.target_reps ?? '–'} reps
             {exercise.target_rir && ` · RIR ${exercise.target_rir}`}
             {exercise.rest && ` · พัก ${exercise.rest}`}
           </p>
         )}
-        {!editing && exercise.notes && <p className="text-[11px] text-muted/70 mt-1 italic">{exercise.notes}</p>}
+        {!editing && exercise.notes && <p className="text-[12px] text-muted/70 mt-1 italic">{exercise.notes}</p>}
 
         {editing && (
           <div className="mt-2 space-y-2">
@@ -1094,7 +1094,7 @@ function ExerciseRow({
               <BlurField label="พัก" value={exercise.rest ?? ''} onBlur={(v) => onUpdate({ rest: v || null })} />
             </div>
             <label className="block">
-              <span className="block text-[9px] tracked uppercase text-muted mb-0.5">กลุ่มกล้ามเนื้อ</span>
+              <span className="block text-[12px] tracked uppercase text-muted mb-0.5">กลุ่มกล้ามเนื้อ</span>
               <select
                 value={(exercise.muscle_group as MuscleGroup) ?? 'อื่นๆ'}
                 onChange={(e) => onUpdate({ muscle_group: e.target.value })}
@@ -1120,7 +1120,7 @@ function BlurField({ label, value, onBlur }: { label: string; value: string; onB
   useEffect(() => setLocal(value), [value])
   return (
     <label className="block">
-      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <span className="block text-[12px] tracked uppercase text-muted mb-0.5">{label}</span>
       <input
         value={local}
         onChange={(e) => setLocal(e.target.value)}
@@ -1136,7 +1136,7 @@ function BlurTextArea({ label, value, onBlur }: { label: string; value: string; 
   useEffect(() => setLocal(value), [value])
   return (
     <label className="block">
-      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <span className="block text-[12px] tracked uppercase text-muted mb-0.5">{label}</span>
       <textarea
         value={local}
         onChange={(e) => setLocal(e.target.value)}
@@ -1235,7 +1235,7 @@ function AddExerciseForm({
         ))}
       </select>
       <label className="block">
-        <span className="block text-[9px] tracked uppercase text-muted mb-0.5">Rationale (คำแนะนำในการเล่น)</span>
+        <span className="block text-[12px] tracked uppercase text-muted mb-0.5">Rationale (คำแนะนำในการเล่น)</span>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -1245,14 +1245,14 @@ function AddExerciseForm({
         />
       </label>
       <div className="flex gap-2">
-        <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2 text-[11px] transition active:scale-[0.98] hover:bg-white/5">
+        <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2 text-[12px] transition active:scale-[0.98] hover:bg-white/5">
           ยกเลิก
         </button>
         <button
           onClick={() =>
             name.trim() && onSubmit({ name: name.trim(), sets, reps, rir, rest, notes, muscleGroup, secondaryMuscles, exerciseLibraryId })
           }
-          className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2 text-[11px] transition active:scale-[0.99] hover:opacity-90"
+          className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2 text-[12px] transition active:scale-[0.99] hover:opacity-90"
         >
           เพิ่มท่านี้
         </button>
@@ -1264,7 +1264,7 @@ function AddExerciseForm({
 function MiniField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <span className="block text-[12px] tracked uppercase text-muted mb-0.5">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}

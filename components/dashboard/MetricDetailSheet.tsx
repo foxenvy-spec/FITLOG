@@ -155,7 +155,7 @@ export default function MetricDetailSheet({ open, onClose, card }: MetricDetailS
 
           {series.length >= 2 && (
             <div className="mb-4">
-              <p className="text-[10px] tracked uppercase mb-1.5" style={{ color: TEXT.secondary }}>
+              <p className="text-[12px] tracked uppercase mb-1.5" style={{ color: TEXT.secondary }}>
                 30 DAY TREND
               </p>
               <Sparkline series={series} color="#9498A0" endpointColor="#8CB264" height={48} width={400} stretch />
@@ -165,7 +165,7 @@ export default function MetricDetailSheet({ open, onClose, card }: MetricDetailS
           {goal ? (
             <div className="pb-5">
               <div className="flex items-baseline justify-between">
-                <p className="text-[11px] uppercase tracked" style={{ color: TEXT.secondary }}>
+                <p className="text-[12px] uppercase tracked" style={{ color: TEXT.secondary }}>
                   Goal
                 </p>
                 <p className="font-mono text-[13px]" style={{ color: TEXT.body }}>
@@ -183,7 +183,7 @@ export default function MetricDetailSheet({ open, onClose, card }: MetricDetailS
                       style={{ width: `${goal.progressPct}%`, backgroundColor: COLORS.amber }}
                     />
                   </div>
-                  <p className="mt-1 text-right font-mono text-[11px]" style={{ color: COLORS.amber }}>
+                  <p className="mt-1 text-right font-mono text-[12px]" style={{ color: COLORS.amber }}>
                     {Math.round(goal.progressPct)}%
                   </p>
                 </>

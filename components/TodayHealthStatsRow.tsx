@@ -89,7 +89,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
               return (
                 <span
                   key={key}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px]"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[12px]"
                   style={{
                     backgroundColor: withAlpha(meta.color, '1c'),
                     border: `1px solid ${withAlpha(meta.color, '28')}`,
@@ -102,7 +102,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
             })}
           </div>
           <div className="min-w-0">
-            <p className="font-display text-[11px] tracked uppercase text-ink truncate">เชื่อมต่อ Health App</p>
+            <p className="font-display text-[12px] tracked uppercase text-ink truncate">เชื่อมต่อ Health App</p>
             {/* v31: ฟีดแบ็ก "เพิ่ม contrast ข้อความรองบนพื้น Titanium" — text-muted (#9498A0) เดิมจางไป
                 บนพื้นกระจก (glass) ของแบนเนอร์นี้ ขยับเป็น #A8ACB4 ตามแพทเทิร์นเดียวกับการ์ดอื่นๆ ในรอบนี้
                 v15: ฟีดแบ็ก "เพิ่ม Contrast ของ Secondary Text อีก 10-15% โดยเฉพาะ ติดตามสุขภาพ..." (ยกมา
@@ -149,7 +149,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
             </span>
             <p className="font-mono text-ink leading-none whitespace-nowrap" style={{ fontSize: 13 }}>
               <span style={{ fontWeight: 700 }}>{valueLabel}</span>{' '}
-              <span className="text-[9px] text-muted">{meta.unit}</span>
+              <span className="text-[12px] text-muted">{meta.unit}</span>
             </p>
             <div className="w-full max-w-[52px]">
               <MiniHealthWave color={meta.color} />

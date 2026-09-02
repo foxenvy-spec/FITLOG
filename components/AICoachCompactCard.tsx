@@ -327,10 +327,10 @@ export default function AICoachCompactCard({
           {/* ฟีดแบ็ก "AI Coach ควรมี Typography Hierarchy ชัดที่สุด — MINT COACH · TODAY ควรเป็น
               11px/uppercase/muted" — เดิม 10px/8px (ป้ายชื่อ/timestamp) เล็กกว่าที่ขอ ขยับขึ้นตามสเปค */}
           <div className="flex items-center justify-between gap-2">
-            <p className="font-display text-[11px] tracked uppercase flex items-center gap-1 min-w-0" style={{ color: TEXT.body }}>
+            <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 min-w-0" style={{ color: TEXT.body }}>
               <span aria-hidden="true">✨</span> MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
             </p>
-            <span className="flex items-center gap-1 text-[9px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
+            <span className="flex items-center gap-1 text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
               {lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}
             </span>
@@ -384,7 +384,7 @@ export default function AICoachCompactCard({
                   font-bold (ไม่เต็ม 18px ตามสเปค เพื่อคุมความสูงการ์ดนี้ที่ผ่านการลดขนาดมาหลายรอบก่อนหน้า) */}
               <div className="mt-1.5">
                 <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[10px] tracked uppercase shrink-0" style={{ color: TEXT.secondary }}>Muscle Recovery</p>
+                  <p className="text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.secondary }}>Muscle Recovery</p>
                   <p className="font-mono font-bold shrink-0" style={{ fontSize: 16, color: barColor }}>
                     {displayPct}%
                   </p>
@@ -445,7 +445,7 @@ export default function AICoachCompactCard({
           StatChip/LockedChip/readinessLabel (ไทย, ใช้แค่ใน StatChip) ไม่มีจุดเรียกใช้แล้ว ลบทิ้งทั้งหมด
           (ดูท้ายไฟล์) */}
 
-      {errorMessage && <p className="text-[11px] text-rusttext">{errorMessage}</p>}
+      {errorMessage && <p className="text-[12px] text-rusttext">{errorMessage}</p>}
 
       {startedMessage ? (
         <p className="text-xs text-moss flex items-center gap-1.5">✓ {startedMessage}</p>

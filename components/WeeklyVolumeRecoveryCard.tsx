@@ -90,12 +90,12 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
       <div className="grid grid-cols-2 divide-x divide-line">
         {/* Weekly Volume */}
         <div className="px-4 py-4">
-          <p className="text-[10px] tracked uppercase text-muted">Weekly Volume</p>
+          <p className="text-[12px] tracked uppercase text-muted">Weekly Volume</p>
           <p className="font-mono text-lg text-ink mt-1.5">
             {Math.round(totalThisWeek).toLocaleString()} <span className="text-xs text-muted">kg</span>
           </p>
           {pctChange != null && (
-            <p className="text-[11px] mt-0.5" style={{ color: pctChange >= 0 ? COLORS.deltaGood : COLORS.rust }}>
+            <p className="text-[12px] mt-0.5" style={{ color: pctChange >= 0 ? COLORS.deltaGood : COLORS.rust }}>
               {pctChange >= 0 ? '↑' : '↓'}{Math.abs(pctChange)}% จากสัปดาห์ที่แล้ว
             </p>
           )}
@@ -116,7 +116,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
 
         {/* Recovery Score */}
         <div className="px-4 py-4">
-          <p className="text-[10px] tracked uppercase text-muted">Recovery Score</p>
+          <p className="text-[12px] tracked uppercase text-muted">Recovery Score</p>
           <div className="flex items-center gap-3 mt-1.5">
             <div style={{ filter: `drop-shadow(0 0 8px ${recoveryColor}88)` }}>
               <GoalRing pct={recoveryPct} size={56} strokeWidth={6} color={recoveryColor} valueLabel="" ariaLabel={`Recovery Score ${recoveryPct} จาก 100`} />
@@ -125,7 +125,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
               <p className="font-mono text-lg text-ink leading-none">
                 {recoveryPct}<span className="text-xs text-muted">/100</span>
               </p>
-              <p className="text-[11px] mt-1" style={{ color: recoveryColor }}>{recoveryLabel}</p>
+              <p className="text-[12px] mt-1" style={{ color: recoveryColor }}>{recoveryLabel}</p>
             </div>
           </div>
         </div>

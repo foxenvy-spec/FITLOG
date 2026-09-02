@@ -154,7 +154,7 @@ export default function CommandPalette() {
             className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-muted"
             aria-label="ค้นหาคำสั่ง"
           />
-          <kbd className="text-[10px] text-muted border border-line rounded px-1.5 py-0.5">esc</kbd>
+          <kbd className="text-[12px] text-muted border border-line rounded px-1.5 py-0.5">esc</kbd>
         </div>
 
         <div className="max-h-[50vh] overflow-y-auto py-1.5" role="listbox">
@@ -178,7 +178,7 @@ export default function CommandPalette() {
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm text-ink truncate">{c.label}</span>
                 </span>
-                {c.hint && <span className="text-[10px] text-muted shrink-0">{c.hint}</span>}
+                {c.hint && <span className="text-[12px] text-muted shrink-0">{c.hint}</span>}
               </button>
             ))
           )}

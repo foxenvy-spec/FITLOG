@@ -45,16 +45,16 @@ export default function WarmupGuideSheet({
             ✕
           </button>
         </div>
-        {muscleLabel && <p className="text-[11px] text-muted mb-3">เตรียมพร้อมก่อนเล่น {muscleLabel}</p>}
+        {muscleLabel && <p className="text-[12px] text-muted mb-3">เตรียมพร้อมก่อนเล่น {muscleLabel}</p>}
         <ul className="space-y-2.5">
           {moves.map((move) => (
             <li key={move.name} className="flex items-center justify-between gap-3 text-sm">
               <span className="text-ink">{move.name}</span>
-              <span className="text-[11px] font-mono text-muted shrink-0">{move.duration}</span>
+              <span className="text-[12px] font-mono text-muted shrink-0">{move.duration}</span>
             </li>
           ))}
         </ul>
-        <p className="text-[10px] text-muted mt-4">
+        <p className="text-[12px] text-muted mt-4">
           ท่าวอร์มอัปทั่วไป ไม่ใช่คำแนะนำทางการแพทย์ — ปรับตามความเหมาะสมของร่างกายตัวเอง
         </p>
       </div>

@@ -28,18 +28,18 @@ export default function TodayMuscleChips({ todayWorkouts }: TodayMuscleChipsProp
   }, [todayWorkouts])
 
   if (trainedList.length === 0) {
-    return <p className="text-[11px] text-muted mt-3">ยังไม่ได้เทรนวันนี้ — เริ่มบันทึกแล้วกล้ามเนื้อจะขึ้นตรงนี้</p>
+    return <p className="text-[12px] text-muted mt-3">ยังไม่ได้เทรนวันนี้ — เริ่มบันทึกแล้วกล้ามเนื้อจะขึ้นตรงนี้</p>
   }
 
   return (
     <div className="flex items-center flex-wrap gap-1.5 mt-3">
-      <span className="text-[10px] text-muted mr-0.5">วันนี้:</span>
+      <span className="text-[12px] text-muted mr-0.5">วันนี้:</span>
       {trainedList.map((group) => {
         const color = MUSCLE_GROUP_COLORS[group]
         return (
           <span
             key={group}
-            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-display tracked uppercase"
+            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[12px] font-display tracked uppercase"
             style={{ borderColor: `${color}55`, backgroundColor: `${color}22`, color }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}99` }} />

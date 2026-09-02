@@ -74,7 +74,7 @@ export default function ProgressTimelineCard({ heightCm }: { heightCm: number | 
               key={r.key}
               type="button"
               onClick={() => setRangeDays(r.key)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-display tracked uppercase transition ${
+              className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
                 rangeDays === r.key ? 'bg-steel text-bg' : 'text-muted'
               }`}
             >
@@ -90,7 +90,7 @@ export default function ProgressTimelineCard({ heightCm }: { heightCm: number | 
             key={m.key}
             type="button"
             onClick={() => setMetric(m.key)}
-            className={`px-3 py-1.5 rounded-full text-[11px] font-display tracked uppercase transition ${
+            className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
               metric === m.key ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
             }`}
           >
@@ -135,7 +135,7 @@ export default function ProgressTimelineCard({ heightCm }: { heightCm: number | 
             {markers.length > 0 && (
               <ul className="mt-2 space-y-1 border-t border-line pt-2">
                 {markers.map((mk) => (
-                  <li key={mk.date + mk.icon} className="text-[11px] text-muted flex items-center gap-1.5">
+                  <li key={mk.date + mk.icon} className="text-[12px] text-muted flex items-center gap-1.5">
                     <span>{mk.icon}</span>
                     <span>{mk.label}</span>
                     <span className="text-muted/60">· {mk.date}</span>
@@ -145,7 +145,7 @@ export default function ProgressTimelineCard({ heightCm }: { heightCm: number | 
             )}
           </>
         ) : (
-          <p className="text-[11px] text-muted text-center py-8">
+          <p className="text-[12px] text-muted text-center py-8">
             ยังไม่มีข้อมูล {activeConfig.label} พอในช่วงนี้ — บันทึกอย่างน้อย 2 ครั้งแล้วกราฟจะขึ้นให้อัตโนมัติ
           </p>
         )}

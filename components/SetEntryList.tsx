@@ -71,7 +71,7 @@ function Stepper({
           </span>
         )}
       </div>
-      {suffix && <span className="text-[10px] text-muted -ml-0.5">{suffix}</span>}
+      {suffix && <span className="text-[12px] text-muted -ml-0.5">{suffix}</span>}
       <button
         type="button"
         onClick={() => bump(step)}
@@ -125,7 +125,7 @@ export default function SetEntryList({
   return (
     <div className="space-y-2">
       {rows.length > 0 && (
-        <div className="flex items-center gap-2 px-1 text-[10px] tracked uppercase text-muted">
+        <div className="flex items-center gap-2 px-1 text-[12px] tracked uppercase text-muted">
           <span className="w-6 text-center">#</span>
           <span className="flex-1 pl-1">{weightLabel}</span>
           <span className="flex-1 pl-1">Reps</span>

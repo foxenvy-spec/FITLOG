@@ -133,13 +133,13 @@ export default function ImportBodyReportPhoto({ onExtracted }: { onExtracted: (d
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-xs text-ink">นำเข้าจากรูปรายงาน</p>
-          <p className="text-[10px] text-muted">ถ่าย/แนบรายงานเครื่องชั่ง (Fitdays, InBody ฯลฯ) เลือกได้หลายรูปถ้ามีหลายหน้า</p>
+          <p className="text-[12px] text-muted">ถ่าย/แนบรายงานเครื่องชั่ง (Fitdays, InBody ฯลฯ) เลือกได้หลายรูปถ้ามีหลายหน้า</p>
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={analyzing}
-          className="text-[11px] shrink-0 border border-line rounded px-2.5 py-1.5 text-ink hover:border-ink/40 disabled:opacity-60"
+          className="text-[12px] shrink-0 border border-line rounded px-2.5 py-1.5 text-ink hover:border-ink/40 disabled:opacity-60"
         >
           {analyzing ? 'กำลังอ่าน...' : previews.length > 0 ? 'เปลี่ยนรูป' : '📷 เลือกรูป'}
         </button>
@@ -162,13 +162,13 @@ export default function ImportBodyReportPhoto({ onExtracted }: { onExtracted: (d
             ))}
           </div>
           <div className="flex-1 min-w-0">
-            {analyzing && <p className="text-[11px] text-muted">กำลังอ่านตัวเลขจากรูป...</p>}
+            {analyzing && <p className="text-[12px] text-muted">กำลังอ่านตัวเลขจากรูป...</p>}
             {!analyzing && foundFields && (
-              <p className="text-[11px] text-moss">
+              <p className="text-[12px] text-moss">
                 เติมให้แล้ว: {foundFields.map((f) => FIELD_LABEL[f]).join(', ')} — ตรวจสอบก่อนบันทึก
               </p>
             )}
-            {!analyzing && error && <p className="text-[11px] text-rusttext">{error}</p>}
+            {!analyzing && error && <p className="text-[12px] text-rusttext">{error}</p>}
           </div>
         </div>
       )}

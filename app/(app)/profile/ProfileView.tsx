@@ -117,7 +117,7 @@ export default function ProfileView() {
         </div>
         <div className="min-w-0">
           <p className="font-display text-lg tracked uppercase text-ink truncate">{name}</p>
-          <p className="text-[11px] text-muted font-mono truncate">{email}</p>
+          <p className="text-[12px] text-muted font-mono truncate">{email}</p>
         </div>
       </div>
 
@@ -136,8 +136,8 @@ export default function ProfileView() {
         {highlightBadges.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] tracked uppercase text-muted">ความสำเร็จล่าสุด</p>
-              <a href="/achievements" className="text-[10px] text-muted hover:text-amber transition">
+              <p className="text-[12px] tracked uppercase text-muted">ความสำเร็จล่าสุด</p>
+              <a href="/achievements" className="text-[12px] text-muted hover:text-amber transition">
                 ดูทั้งหมด →
               </a>
             </div>
@@ -146,7 +146,7 @@ export default function ProfileView() {
                 {highlightBadges.map((b) => (
                   <div key={b.key} className="flex flex-col items-center text-center gap-1">
                     <span className="text-2xl">{b.icon}</span>
-                    <span className="text-[9px] text-muted leading-tight">{b.title}</span>
+                    <span className="text-[12px] text-muted leading-tight">{b.title}</span>
                   </div>
                 ))}
               </div>
@@ -156,7 +156,7 @@ export default function ProfileView() {
 
         <div className="hidden lg:flex lg:flex-col lg:items-center lg:gap-3 lg:pt-1">
           <SignOutButton />
-          <p className="text-[10px] text-muted/60 font-mono text-center">
+          <p className="text-[12px] text-muted/60 font-mono text-center">
             FitLog v1.0.0 (Beta)
             <br />
             Designed for Science-Based Training
@@ -175,7 +175,7 @@ export default function ProfileView() {
               <span className="shrink-0 text-lg w-6 text-center">{item.icon}</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-ink">{item.label}</p>
-                {item.desc ? <p className="text-[11px] text-muted mt-0.5 truncate">{item.desc}</p> : null}
+                {item.desc ? <p className="text-[12px] text-muted mt-0.5 truncate">{item.desc}</p> : null}
               </div>
               <span className="text-muted text-xs">→</span>
             </a>
@@ -183,7 +183,7 @@ export default function ProfileView() {
         </PremiumCard>
 
         <div>
-          <p className="text-[10px] tracked uppercase text-muted mb-2">ศูนย์สำรองข้อมูล</p>
+          <p className="text-[12px] tracked uppercase text-muted mb-2">ศูนย์สำรองข้อมูล</p>
           <div className="grid grid-cols-2 gap-3">
             {BACKUP_LINKS.map((item) => (
               <a
@@ -199,7 +199,7 @@ export default function ProfileView() {
         </div>
 
         <div>
-          <p className="text-[10px] tracked uppercase text-muted mb-2">ตั้งค่า</p>
+          <p className="text-[12px] tracked uppercase text-muted mb-2">ตั้งค่า</p>
           <PremiumCard className="px-4 py-3.5 flex items-center justify-between">
             <p className="text-sm text-ink">หน่วยน้ำหนัก</p>
             <WeightUnitToggle />
@@ -208,7 +208,7 @@ export default function ProfileView() {
 
         <div className="flex flex-col items-center gap-3 pt-1 lg:hidden">
           <SignOutButton />
-          <p className="text-[10px] text-muted/60 font-mono text-center">
+          <p className="text-[12px] text-muted/60 font-mono text-center">
             FitLog v1.0.0 (Beta)
             <br />
             Designed for Science-Based Training
@@ -314,7 +314,7 @@ function PersonalInfoCard({
 
   return (
     <PremiumCard className="px-4 py-3.5 space-y-3">
-      <p className="text-[10px] tracked uppercase text-muted">ข้อมูลส่วนตัว</p>
+      <p className="text-[12px] tracked uppercase text-muted">ข้อมูลส่วนตัว</p>
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-ink">เพศ</p>
@@ -370,7 +370,7 @@ function PersonalInfoCard({
         />
       </div>
 
-      {ageError && <p className="text-[11px] text-rusttext">{ageError}</p>}
+      {ageError && <p className="text-[12px] text-rusttext">{ageError}</p>}
 
       <div className="flex items-center justify-between gap-3">
         <label htmlFor="profile-height" className="text-sm text-ink">
@@ -391,19 +391,19 @@ function PersonalInfoCard({
         />
       </div>
 
-      {heightError && <p className="text-[11px] text-rusttext">{heightError}</p>}
+      {heightError && <p className="text-[12px] text-rusttext">{heightError}</p>}
 
       {bmr !== null ? (
         <div
           className="rounded-lg px-3 py-2.5 flex items-center justify-between gap-3"
           style={{ backgroundColor: withAlpha(COLORS.amber, '0d'), border: `1px solid ${withAlpha(COLORS.amber, '25')}` }}
         >
-          <p className="text-[11px] text-muted">🔥 BMR โดยประมาณ</p>
+          <p className="text-[12px] text-muted">🔥 BMR โดยประมาณ</p>
           <p className="text-sm font-display tracked text-amber">~{bmr.toLocaleString('th-TH')} kcal/วัน</p>
         </div>
       ) : null}
 
-      <p className="text-[10px] text-muted/70">
+      <p className="text-[12px] text-muted/70">
         {bmr !== null
           ? 'BMR คำนวณจากเพศ/อายุ/ส่วนสูง/น้ำหนักล่าสุด — ดู TDEE ตามระดับกิจกรรมและเกณฑ์มาตรฐานสุขภาพเพิ่มเติมที่หน้า Measures & สุขภาพ'
           : 'กรอกเพศ อายุ ส่วนสูง และบันทึกน้ำหนักที่หน้า Measures & สุขภาพให้ครบ เพื่อดูค่า BMR/TDEE โดยประมาณ'}

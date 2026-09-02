@@ -240,7 +240,7 @@ export default function ExportPage() {
         <div className="px-4 py-3.5 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm text-ink">Restore จากไฟล์ Backup</p>
-            <p className="text-[11px] text-muted mt-0.5">
+            <p className="text-[12px] text-muted mt-0.5">
               เพิ่มข้อมูลจากไฟล์เข้ามาต่อท้ายของเดิม (ไม่ลบของเดิม) รองรับเฉพาะ ออกกำลังกาย/ข้อมูลร่างกาย/เป้าหมาย —
               ยังไม่รวมโปรแกรมประจำสัปดาห์
             </p>
@@ -282,7 +282,7 @@ function SectionRow({
     <div className="px-4 py-3.5 flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="text-sm text-ink">{title}</p>
-        <p className="text-[11px] text-muted mt-0.5">{desc}</p>
+        <p className="text-[12px] text-muted mt-0.5">{desc}</p>
       </div>
       <button
         onClick={onClick}

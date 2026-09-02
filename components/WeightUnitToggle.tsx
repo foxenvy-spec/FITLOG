@@ -7,7 +7,7 @@ export default function WeightUnitToggle() {
 
   return (
     <div
-      className="shrink-0 inline-flex rounded-full border border-line bg-surface2 p-0.5 text-[10px] tracked uppercase"
+      className="shrink-0 inline-flex rounded-full border border-line bg-surface2 p-0.5 text-[12px] tracked uppercase"
       role="group"
       aria-label="หน่วยน้ำหนัก"
     >

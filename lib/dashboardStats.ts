@@ -1191,9 +1191,12 @@ export function computeGreetingContext(
   }
 
   if (bestVolumeIncrease) {
+    // ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ computeBestVolumeIncrease
+    // (ดูจุดเรียกใช้) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — ตรงหลักเดียวกับที่แก้ไปแล้วใน
+    // HighlightsRow.tsx/session/page.tsx (เอนจินเดียวกันนี้) — ตัดคำว่า "วอลุ่ม" ออก
     return {
       headline: null,
-      detail: `วอลุ่มสัปดาห์นี้ของคุณเพิ่มขึ้น ${bestVolumeIncrease.pct}% จากสัปดาห์ที่แล้ว`,
+      detail: `จำนวนเซ็ตสัปดาห์นี้ของคุณเพิ่มขึ้น ${bestVolumeIncrease.pct}% จากสัปดาห์ที่แล้ว`,
     }
   }
 

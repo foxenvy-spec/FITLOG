@@ -118,7 +118,7 @@ export default function GoalRing({
         <span className="font-mono text-ink leading-none" style={{ fontSize: size * 0.24 }}>
           {valueLabel ?? `${Math.round(animatedPct)}%`}
         </span>
-        {label && <span className="text-[9px] text-muted mt-0.5">{label}</span>}
+        {label && <span className="text-[12px] text-muted mt-0.5">{label}</span>}
       </div>
     </div>
   )

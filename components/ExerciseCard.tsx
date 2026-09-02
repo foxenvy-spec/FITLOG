@@ -107,14 +107,14 @@ export default function ExerciseCard({
                 </>
               )}
             </div>
-            {w.muscle_group && <p className="text-[11px] text-steel mt-1">{w.muscle_group}</p>}
-            {w.notes && <p className="text-[10px] text-muted/50 mt-1 truncate italic">{w.notes}</p>}
+            {w.muscle_group && <p className="text-[12px] text-steel mt-1">{w.muscle_group}</p>}
+            {w.notes && <p className="text-[12px] text-muted/50 mt-1 truncate italic">{w.notes}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-0.5">
             <ExerciseProgressBadge progress={progress} format={format} />
             {hasSets && (
               <span
-                className="text-muted text-[10px] transition-transform"
+                className="text-muted text-[12px] transition-transform"
                 style={{ transform: expanded ? 'rotate(180deg)' : 'none' }}
                 aria-hidden="true"
               >
@@ -131,7 +131,7 @@ export default function ExerciseCard({
           <div className="grid grid-cols-4 gap-1.5">
             {displaySets.map((s) => (
               <div key={s.id} className="rounded-md bg-surface2 px-2 py-1.5 text-center">
-                <p className="text-[9px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
+                <p className="text-[12px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
                 <p className="font-mono text-xs font-semibold text-ink mt-0.5 tabular">
                   {s.weight_kg !== null ? format(s.weight_kg) : '—'} × {s.reps ?? '—'}
                 </p>

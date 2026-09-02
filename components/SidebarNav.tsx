@@ -169,7 +169,7 @@ export default function SidebarNav() {
               >
                 <Icon active={active} />
               </span>
-              <span className={`hidden xl:inline font-display tracked uppercase text-[11px] ${active ? 'text-amber' : 'text-muted'}`}>{label}</span>
+              <span className={`hidden xl:inline font-display tracked uppercase text-[12px] ${active ? 'text-amber' : 'text-muted'}`}>{label}</span>
             </Link>
           )
         })}
@@ -185,7 +185,7 @@ export default function SidebarNav() {
           className="w-full flex items-center justify-center xl:justify-start gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted hover:text-ink hover:bg-white/5 transition"
         >
           <GearIcon active={false} />
-          <span className="hidden xl:inline font-display tracked uppercase text-[11px]">ตั้งค่า</span>
+          <span className="hidden xl:inline font-display tracked uppercase text-[12px]">ตั้งค่า</span>
         </button>
       </div>
 
@@ -213,7 +213,7 @@ export default function SidebarNav() {
         </span>
         <span className="hidden xl:block min-w-0">
           <p className="text-sm text-ink truncate">{name}</p>
-          <p className="text-[10px] text-muted truncate">ดูโปรไฟล์</p>
+          <p className="text-[12px] text-muted truncate">ดูโปรไฟล์</p>
         </span>
       </Link>
     </aside>

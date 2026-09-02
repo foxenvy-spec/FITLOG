@@ -125,10 +125,10 @@ function ExercisesPageContent() {
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-ink truncate">{ex.name}</span>
-                    <span className="block text-[11px] text-muted truncate">{equipmentLabel(ex.equipment)}</span>
+                    <span className="block text-[12px] text-muted truncate">{equipmentLabel(ex.equipment)}</span>
                   </span>
                   <span
-                    className="shrink-0 text-[10px] px-2 py-0.5 rounded-full border"
+                    className="shrink-0 text-[12px] px-2 py-0.5 rounded-full border"
                     style={{
                       color: MUSCLE_GROUP_COLORS[ex.muscleGroup],
                       borderColor: MUSCLE_GROUP_COLORS[ex.muscleGroup] + '66',
@@ -175,7 +175,7 @@ function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }
       )}
 
       <div>
-        <p className="text-[10px] tracked uppercase text-muted mb-1">กล้ามเนื้อหลัก</p>
+        <p className="text-[12px] tracked uppercase text-muted mb-1">กล้ามเนื้อหลัก</p>
         <span
           className="inline-block text-xs px-2.5 py-1 rounded-full border"
           style={{
@@ -190,7 +190,7 @@ function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }
 
       {ex.secondaryMuscles.length > 0 && (
         <div>
-          <p className="text-[10px] tracked uppercase text-muted mb-1">กล้ามเนื้อรอง</p>
+          <p className="text-[12px] tracked uppercase text-muted mb-1">กล้ามเนื้อรอง</p>
           <div className="flex flex-wrap gap-1.5">
             {ex.secondaryMuscles.map((mg) => (
               <span
@@ -209,7 +209,7 @@ function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }
       )}
 
       <div>
-        <p className="text-[10px] tracked uppercase text-muted mb-1.5">วิธีเล่น</p>
+        <p className="text-[12px] tracked uppercase text-muted mb-1.5">วิธีเล่น</p>
         <ol className="space-y-1.5">
           {ex.instructions.map((step, i) => (
             <li key={i} className="text-sm text-ink flex gap-2">

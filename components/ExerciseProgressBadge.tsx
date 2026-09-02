@@ -16,8 +16,8 @@ export default function ExerciseProgressBadge({
         <span className="inline-block rounded-full bg-violetdim px-2.5 py-1">
           <p className="text-[12px] font-semibold text-violet">PR 🎉</p>
         </span>
-        <p className="text-[11px] font-mono font-semibold text-moss tabular mt-1">▲ +{format(progress.deltaKg)}</p>
-        <p className="text-[9px] text-muted">vs Last Session</p>
+        <p className="text-[12px] font-mono font-semibold text-moss tabular mt-1">▲ +{format(progress.deltaKg)}</p>
+        <p className="text-[12px] text-muted">vs Last Session</p>
       </div>
     )
   }
@@ -39,7 +39,7 @@ export default function ExerciseProgressBadge({
         <span className="inline-block rounded-full bg-mossdim px-2.5 py-1">
           <p className="text-[12px] font-mono font-semibold text-moss tabular">▲ +{format(progress.deltaKg)}</p>
         </span>
-        <p className="text-[9px] text-muted mt-1">vs Last Session</p>
+        <p className="text-[12px] text-muted mt-1">vs Last Session</p>
       </div>
     )
   }
@@ -49,18 +49,18 @@ export default function ExerciseProgressBadge({
         <span className="inline-block rounded-full bg-rustdim px-2.5 py-1">
           <p className="text-[12px] font-mono font-semibold text-rusttext tabular">▼ -{format(progress.deltaKg)}</p>
         </span>
-        <p className="text-[9px] text-muted mt-1">vs Last Session</p>
+        <p className="text-[12px] text-muted mt-1">vs Last Session</p>
       </div>
     )
   }
   if (progress.kind === 'repsUp') {
-    return <span className="text-[10px] font-mono text-moss shrink-0">🟢 +{progress.deltaReps} reps</span>
+    return <span className="text-[12px] font-mono text-moss shrink-0">🟢 +{progress.deltaReps} reps</span>
   }
   if (progress.kind === 'repsDown') {
-    return <span className="text-[10px] font-mono text-rusttext shrink-0">🔴 -{progress.deltaReps} reps</span>
+    return <span className="text-[12px] font-mono text-rusttext shrink-0">🔴 -{progress.deltaReps} reps</span>
   }
   if (progress.kind === 'same') {
-    return <span className="text-[10px] font-mono text-muted shrink-0">⚪ Same</span>
+    return <span className="text-[12px] font-mono text-muted shrink-0">⚪ Same</span>
   }
   return null
 }

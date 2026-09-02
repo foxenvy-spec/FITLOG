@@ -50,7 +50,7 @@ export default function NotificationButton({ notifications }: { notifications: D
           <path d="M9.5 18a2.5 2.5 0 0 0 5 0h-5Z" fill="#FFD24A" />
         </svg>
         {notifications.length > 0 && (
-          <span className="animate-badge-pulse absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rust text-[9px] font-mono font-bold text-white flex items-center justify-center leading-none">
+          <span className="animate-badge-pulse absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rust text-[12px] font-mono font-bold text-white flex items-center justify-center leading-none">
             {notifications.length}
           </span>
         )}
@@ -58,7 +58,7 @@ export default function NotificationButton({ notifications }: { notifications: D
 
       {open && (
         <div className="absolute right-0 mt-2 w-72 max-w-[85vw] rounded-lg bg-surface border border-line shadow-elevated z-20 overflow-hidden">
-          <p className="px-3.5 pt-3 pb-2 text-[10px] tracked uppercase text-muted border-b border-line">การแจ้งเตือน</p>
+          <p className="px-3.5 pt-3 pb-2 text-[12px] tracked uppercase text-muted border-b border-line">การแจ้งเตือน</p>
           {notifications.length === 0 ? (
             <p className="px-3.5 py-4 text-xs text-muted text-center">ยังไม่มีการแจ้งเตือนใหม่</p>
           ) : (
@@ -70,7 +70,7 @@ export default function NotificationButton({ notifications }: { notifications: D
                     onClick={() => setOpen(false)}
                     className="block px-3.5 py-3 hover:bg-surface2 active:bg-surface2 transition"
                   >
-                    <p className="text-[10px] tracked uppercase text-muted">
+                    <p className="text-[12px] tracked uppercase text-muted">
                       {item.icon} {item.title}
                     </p>
                     <p className="text-sm text-ink mt-0.5">{item.detail}</p>

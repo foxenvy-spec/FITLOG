@@ -171,7 +171,7 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
               v16: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ Hamstring • Glute — เพิ่ม contrast
               ก่อน ไม่ต้องขยายขนาดเยอะ" (ยังไม่พอแม้บวกไปแล้วรอบก่อน) — บวกอีกขั้น #BCC1CA -> #CFD4DE
               (ไม่แตะขนาด/font-weight ตามที่ขอ) */}
-          <p className="text-[10px] tracked uppercase" style={{ color: '#CFD4DE' }}>Today&apos;s Focus</p>
+          <p className="text-[12px] tracked uppercase" style={{ color: '#CFD4DE' }}>Today&apos;s Focus</p>
           {/* v30: ชื่อโปรแกรมวันนี้ — เดิม text-amber (สีส้ม) เปลี่ยนเป็น text-ink (ขาว/ไทเทเนียม) ตามกฎ
               "Orange = Action/Energy เท่านั้น" — ป้ายนี้เป็นแค่ข้อมูล ไม่ใช่ปุ่ม/คำแนะนำ */}
           <p className="font-display tracked uppercase text-ink truncate" style={{ fontSize: 14 }}>

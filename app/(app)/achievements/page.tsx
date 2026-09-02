@@ -82,13 +82,13 @@ export default function AchievementsPage() {
             >
               <div className={`text-3xl ${unlocked ? '' : 'grayscale opacity-50'}`}>{b.icon}</div>
               <p className={`text-xs font-display tracked uppercase ${unlocked ? 'text-ink' : 'text-muted'}`}>{b.title}</p>
-              <p className="text-[10px] text-muted">{b.desc}</p>
+              <p className="text-[12px] text-muted">{b.desc}</p>
               {!unlocked && (
                 <div className="pt-1">
                   <div className="h-1 rounded-full bg-line overflow-hidden">
                     <AnimatedBarFill pct={pct} color={COLORS.steel} />
                   </div>
-                  <p className="text-[9px] text-muted mt-1 font-mono">
+                  <p className="text-[12px] text-muted mt-1 font-mono">
                     {b.isWeight
                       ? `${Math.floor(toDisplay(b.current)).toLocaleString()}/${Math.round(toDisplay(b.target)).toLocaleString()} ${unit}`
                       : `${Math.floor(b.current)}/${b.target}`}
@@ -112,7 +112,7 @@ function StatBox({ label, value, unit }: { label: string; value: number; unit: s
       <p className="text-lg font-display text-amber">
         {Math.round(animatedValue)} {unit}
       </p>
-      <p className="text-[10px] text-muted tracked uppercase mt-0.5">{label}</p>
+      <p className="text-[12px] text-muted tracked uppercase mt-0.5">{label}</p>
     </PremiumCard>
   )
 }

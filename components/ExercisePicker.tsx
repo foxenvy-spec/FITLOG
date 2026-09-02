@@ -170,10 +170,10 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm text-ink truncate">{ex.name}</span>
-                      <span className="block text-[11px] text-muted truncate">{equipmentLabel(ex.equipment)}</span>
+                      <span className="block text-[12px] text-muted truncate">{equipmentLabel(ex.equipment)}</span>
                     </span>
                     <span
-                      className="shrink-0 text-[10px] px-2 py-0.5 rounded-full border"
+                      className="shrink-0 text-[12px] px-2 py-0.5 rounded-full border"
                       style={{
                         color: MUSCLE_GROUP_COLORS[ex.muscleGroup],
                         borderColor: MUSCLE_GROUP_COLORS[ex.muscleGroup] + '66',
@@ -190,7 +190,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
           <div className="border-t border-line px-3 py-2">
             <a
               href="/exercises"
-              className="text-[11px] font-display tracked uppercase text-muted hover:text-amber transition"
+              className="text-[12px] font-display tracked uppercase text-muted hover:text-amber transition"
             >
               ดูฐานข้อมูลท่าออกกำลังกายทั้งหมด →
             </a>
@@ -217,7 +217,7 @@ function MuscleTab({
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`shrink-0 text-[10px] px-2.5 py-1 rounded-full border transition whitespace-nowrap ${
+      className={`shrink-0 text-[12px] px-2.5 py-1 rounded-full border transition whitespace-nowrap ${
         active ? 'bg-steel text-bg border-steel' : 'bg-surface border-line text-muted'
       }`}
       style={!active && color ? { borderColor: color + '55', color } : undefined}

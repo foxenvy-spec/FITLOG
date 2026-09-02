@@ -61,7 +61,7 @@ export default function AmrapTimer({ voiceEnabled }: { voiceEnabled: boolean }) 
 
       <div className="bg-surface border border-line shadow-elevated rounded-lg px-4 py-4 flex items-center justify-between">
         <div>
-          <p className="text-[11px] tracked uppercase text-muted mb-1">รอบที่ทำได้</p>
+          <p className="text-[12px] tracked uppercase text-muted mb-1">รอบที่ทำได้</p>
           <p className="font-mono tabular text-3xl text-amber">{rounds}</p>
         </div>
         <div className="flex gap-2">

@@ -152,7 +152,7 @@ export default function ShareWeeklySummaryButton({ stats }: { stats: WeeklySumma
       <Button type="button" variant="secondary" size="sm" onClick={handleShare} disabled={busy}>
         {busy ? '...' : '📤 แชร์สรุปสัปดาห์'}
       </Button>
-      {error && <p className="text-[10px]" style={{ color: COLORS.rust }}>{error}</p>}
+      {error && <p className="text-[12px]" style={{ color: COLORS.rust }}>{error}</p>}
     </div>
   )
 }

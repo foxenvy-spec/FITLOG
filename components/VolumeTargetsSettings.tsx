@@ -113,7 +113,7 @@ export default function VolumeTargetsSettings({
               key={preset.label}
               type="button"
               onClick={() => setDraft({ ...draft, ...preset.targets })}
-              className="text-[11px] px-2.5 py-1 rounded-full border border-line text-muted hover:text-ink hover:border-ink/40"
+              className="text-[12px] px-2.5 py-1 rounded-full border border-line text-muted hover:text-ink hover:border-ink/40"
             >
               {preset.label}
             </button>
@@ -141,7 +141,7 @@ export default function VolumeTargetsSettings({
           ))}
         </div>
 
-        {error && <p className="text-[11px] text-rust mt-3">{error}</p>}
+        {error && <p className="text-[12px] text-rust mt-3">{error}</p>}
 
         <button
           type="button"

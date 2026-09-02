@@ -547,7 +547,7 @@ export default function ProgramPage() {
       </div>
 
       {!isToday && (
-        <p className="text-[11px] text-muted bg-surface2 rounded-lg px-3 py-2">
+        <p className="text-[12px] text-muted bg-surface2 rounded-lg px-3 py-2">
           กำลังดูแผนของวัน{WEEKDAYS[selectedDow]} — ถ้ากด &quot;บันทึกเข้า Log&quot; จะถูกบันทึกลงวันที่จริงคือวันนี้เสมอ
         </p>
       )}
@@ -620,13 +620,13 @@ export default function ProgramPage() {
               <>
                 <button
                   onClick={() => setSelectMode(true)}
-                  className="text-[11px] text-muted hover:text-amber shrink-0"
+                  className="text-[12px] text-muted hover:text-amber shrink-0"
                 >
                   เลือก
                 </button>
                 <button
                   onClick={() => setConfirmDeleteAll(true)}
-                  className="text-[11px] text-muted hover:text-rust shrink-0"
+                  className="text-[12px] text-muted hover:text-rust shrink-0"
                 >
                   ลบทั้งหมด
                 </button>
@@ -638,7 +638,7 @@ export default function ProgramPage() {
             {!selectMode && (
               <button
                 onClick={() => setConfirmRemoveDay(true)}
-                className="text-[11px] text-muted hover:text-rust shrink-0"
+                className="text-[12px] text-muted hover:text-rust shrink-0"
               >
                 ลบวันนี้ออกจากตาราง
               </button>
@@ -647,18 +647,18 @@ export default function ProgramPage() {
 
           {confirmRemoveDay && (
             <div className="px-4 py-2.5 border-b border-white/5 bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[11px] text-rusttext">
+              <p className="text-[12px] text-rusttext">
                 ลบวัน{WEEKDAYS[currentDay.day_of_week]}ออกจากตารางฝึกทั้งหมด? (ท่าในวันนี้ {currentExercises.length} ท่าจะถูกลบไปด้วย
                 และวันนี้จะไม่นับเป็นวันฝึกตามตารางอีกต่อไป)
               </p>
               <div className="flex gap-3 shrink-0">
-                <button onClick={() => setConfirmRemoveDay(false)} className="text-[11px] text-muted hover:text-ink">
+                <button onClick={() => setConfirmRemoveDay(false)} className="text-[12px] text-muted hover:text-ink">
                   ยกเลิก
                 </button>
                 <button
                   onClick={handleRemoveDay}
                   disabled={removingDay}
-                  className="text-[11px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                  className="text-[12px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
                 >
                   {removingDay ? '...' : 'ยืนยันลบวันนี้'}
                 </button>
@@ -668,15 +668,15 @@ export default function ProgramPage() {
 
           {selectMode && (
             <div className="px-4 py-2.5 border-b border-white/5 bg-surface2 flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[11px] text-muted">เลือกแล้ว {selectedIds.size} ท่า</p>
+              <p className="text-[12px] text-muted">เลือกแล้ว {selectedIds.size} ท่า</p>
               <div className="flex gap-3 shrink-0">
-                <button onClick={exitSelectMode} className="text-[11px] text-muted hover:text-ink">
+                <button onClick={exitSelectMode} className="text-[12px] text-muted hover:text-ink">
                   ยกเลิก
                 </button>
                 <button
                   onClick={() => setConfirmBulkDelete(true)}
                   disabled={selectedIds.size === 0}
-                  className="text-[11px] text-rusttext hover:underline disabled:opacity-40 disabled:no-underline"
+                  className="text-[12px] text-rusttext hover:underline disabled:opacity-40 disabled:no-underline"
                 >
                   ลบที่เลือก
                 </button>
@@ -686,15 +686,15 @@ export default function ProgramPage() {
 
           {confirmBulkDelete && (
             <div className="px-4 py-2.5 border-b border-white/5 bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[11px] text-rusttext">ลบ {selectedIds.size} ท่าที่เลือก?</p>
+              <p className="text-[12px] text-rusttext">ลบ {selectedIds.size} ท่าที่เลือก?</p>
               <div className="flex gap-3 shrink-0">
-                <button onClick={() => setConfirmBulkDelete(false)} className="text-[11px] text-muted hover:text-ink">
+                <button onClick={() => setConfirmBulkDelete(false)} className="text-[12px] text-muted hover:text-ink">
                   ยกเลิก
                 </button>
                 <button
                   onClick={handleBulkDelete}
                   disabled={bulkDeleting}
-                  className="text-[11px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                  className="text-[12px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
                 >
                   {bulkDeleting ? '...' : 'ยืนยันลบ'}
                 </button>
@@ -704,15 +704,15 @@ export default function ProgramPage() {
 
           {confirmDeleteAll && (
             <div className="px-4 py-2.5 border-b border-white/5 bg-rustdim/40 flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[11px] text-rusttext">ลบท่าทั้งหมด {currentExercises.length} ท่าในวันนี้?</p>
+              <p className="text-[12px] text-rusttext">ลบท่าทั้งหมด {currentExercises.length} ท่าในวันนี้?</p>
               <div className="flex gap-3 shrink-0">
-                <button onClick={() => setConfirmDeleteAll(false)} className="text-[11px] text-muted hover:text-ink">
+                <button onClick={() => setConfirmDeleteAll(false)} className="text-[12px] text-muted hover:text-ink">
                   ยกเลิก
                 </button>
                 <button
                   onClick={handleDeleteAll}
                   disabled={bulkDeleting}
-                  className="text-[11px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                  className="text-[12px] text-bg bg-rust rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
                 >
                   {bulkDeleting ? '...' : 'ยืนยันลบทั้งหมด'}
                 </button>
@@ -821,7 +821,7 @@ function ExerciseRow({
         <div className="flex-1 min-w-0">
           <p className={`text-sm ${done ? 'text-muted line-through' : 'text-ink'}`}>{exercise.exercise_name}</p>
           {!editing && (
-            <p className="text-[11px] text-muted mt-0.5">
+            <p className="text-[12px] text-muted mt-0.5">
               {exercise.sets ?? '–'} เซ็ต × {exercise.target_reps ?? '–'} reps
               {exercise.target_rir && ` · RIR ${exercise.target_rir}`}
               {exercise.rest && ` · พัก ${exercise.rest}`}
@@ -829,9 +829,9 @@ function ExerciseRow({
             </p>
           )}
           {!editing && exercise.secondary_muscles && exercise.secondary_muscles.length > 0 && (
-            <p className="text-[11px] text-muted/70 mt-0.5">กล้ามเนื้อรอง: {exercise.secondary_muscles.join(', ')}</p>
+            <p className="text-[12px] text-muted/70 mt-0.5">กล้ามเนื้อรอง: {exercise.secondary_muscles.join(', ')}</p>
           )}
-          {!editing && exercise.rationale && <p className="text-[11px] text-muted/70 mt-1 italic">{exercise.rationale}</p>}
+          {!editing && exercise.rationale && <p className="text-[12px] text-muted/70 mt-1 italic">{exercise.rationale}</p>}
         </div>
         {!selectMode && (
           <button
@@ -839,7 +839,7 @@ function ExerciseRow({
               e.stopPropagation()
               setEditing((v) => !v)
             }}
-            className="text-[11px] text-muted hover:text-amber shrink-0"
+            className="text-[12px] text-muted hover:text-amber shrink-0"
           >
             {editing ? 'เสร็จ' : 'แก้ไข'}
           </button>
@@ -859,7 +859,7 @@ function ExerciseRow({
               onBlur={(v) => onUpdate({ default_weight_kg: v ? toKg(Number(v)) : null })}
             />
             <label className="block">
-              <span className="block text-[9px] tracked uppercase text-muted mb-0.5">กลุ่มกล้ามเนื้อ</span>
+              <span className="block text-[12px] tracked uppercase text-muted mb-0.5">กลุ่มกล้ามเนื้อ</span>
               <select
                 value={(exercise.muscle_group as MuscleGroup) ?? 'อื่นๆ'}
                 onChange={(e) => onUpdate({ muscle_group: e.target.value })}
@@ -873,7 +873,7 @@ function ExerciseRow({
               </select>
             </label>
           </div>
-          <button onClick={onDelete} className="text-[11px] text-rusttext hover:underline">
+          <button onClick={onDelete} className="text-[12px] text-rusttext hover:underline">
             ลบท่านี้
           </button>
         </div>
@@ -887,7 +887,7 @@ function MiniField({ label, value, onBlur }: { label: string; value: string; onB
   useEffect(() => setLocal(value), [value])
   return (
     <label className="block">
-      <span className="block text-[9px] tracked uppercase text-muted mb-0.5">{label}</span>
+      <span className="block text-[12px] tracked uppercase text-muted mb-0.5">{label}</span>
       <input
         value={local}
         onChange={(e) => setLocal(e.target.value)}
@@ -919,7 +919,7 @@ function TemplatePickerPanel({
     <PremiumCard className="px-4 py-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-ink font-display tracked uppercase">เลือกจากเทมเพลต</p>
-        <button onClick={onCancel} className="text-[11px] text-muted hover:text-ink shrink-0">
+        <button onClick={onCancel} className="text-[12px] text-muted hover:text-ink shrink-0">
           ยกเลิก
         </button>
       </div>
@@ -950,9 +950,9 @@ function TemplatePickerPanel({
                 >
                   <span className="min-w-0">
                     <span className="block text-sm text-ink truncate">{t.title}</span>
-                    <span className="block text-[11px] text-muted">{exCount} ท่า</span>
+                    <span className="block text-[12px] text-muted">{exCount} ท่า</span>
                   </span>
-                  <span className="text-[11px] text-amber shrink-0">{applying ? 'กำลังใส่...' : 'ใช้เทมเพลตนี้ →'}</span>
+                  <span className="text-[12px] text-amber shrink-0">{applying ? 'กำลังใส่...' : 'ใช้เทมเพลตนี้ →'}</span>
                 </button>
               </li>
             )

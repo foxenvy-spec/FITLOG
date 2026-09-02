@@ -65,7 +65,7 @@ export default function WorkoutStreakDetailSheet({ open, onClose, streak, bestSt
           <div className="mx-auto mb-3 h-1 w-10 rounded-full" style={{ backgroundColor: withAlpha('#FFFFFF', '14') }} aria-hidden="true" />
 
           <div className="flex items-center justify-between">
-            <p className="text-[11px] tracked uppercase" style={{ color: TEXT.body, fontWeight: 500 }}>
+            <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body, fontWeight: 500 }}>
               Streak
             </p>
             <button
@@ -83,7 +83,7 @@ export default function WorkoutStreakDetailSheet({ open, onClose, streak, bestSt
 
           <div className="pb-5 grid grid-cols-2 gap-3">
             <div>
-              <p className="text-[10px] uppercase tracked" style={{ color: TEXT.secondary }}>
+              <p className="text-[12px] uppercase tracked" style={{ color: TEXT.secondary }}>
                 Current Streak
               </p>
               <p className="font-mono leading-none mt-1.5" style={{ color: COLORS.amber, fontSize: 30, fontWeight: 700 }}>
@@ -92,7 +92,7 @@ export default function WorkoutStreakDetailSheet({ open, onClose, streak, bestSt
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracked" style={{ color: TEXT.secondary }}>
+              <p className="text-[12px] uppercase tracked" style={{ color: TEXT.secondary }}>
                 Best Streak
               </p>
               <p className="font-mono leading-none mt-1.5" style={{ color: TEXT.title, fontSize: 30, fontWeight: 700 }}>
@@ -102,7 +102,7 @@ export default function WorkoutStreakDetailSheet({ open, onClose, streak, bestSt
             </div>
           </div>
 
-          <p className="pb-5 -mt-2 text-[11px] leading-relaxed" style={{ color: TEXT.secondary }}>
+          <p className="pb-5 -mt-2 text-[12px] leading-relaxed" style={{ color: TEXT.secondary }}>
             Best Streak คือสายโซ่ต่อเนื่องยาวที่สุดในประวัติของคุณ (ย้อนหลังสูงสุด 400 วัน)
           </p>
         </PremiumCard>

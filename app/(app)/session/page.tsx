@@ -1030,13 +1030,17 @@ export default function SessionPage() {
             greeting บน Dashboard อยู่แล้ว ไม่ได้สร้างสูตรใหม่) */}
         {summaryExtras && (
           <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
-            <p className="text-[10px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
+            <p className="text-[12px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
             <p className="text-xs text-ink">
               ⭐ Workout Score <span className="font-mono text-amber">{summaryExtras.workoutScore}</span>
             </p>
+            {/* ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ engine
+                (computeBestVolumeIncrease) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — HighlightsRow.tsx
+                (Dashboard) ใช้ engine เดียวกันนี้แล้วเลี่ยงคำว่า Volume ไปแล้ว ("X เพิ่มขึ้นจากสัปดาห์ก่อน")
+                ปรับข้อความจุดนี้ให้ตรงกัน */}
             {summaryExtras.volumeIncrease && (
               <p className="text-xs text-ink">
-                🔥 {summaryExtras.volumeIncrease.muscleGroup} Volume{' '}
+                🔥 {summaryExtras.volumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน{' '}
                 <span className="font-mono text-moss">+{summaryExtras.volumeIncrease.pct}%</span>
               </p>
             )}
@@ -1045,22 +1049,22 @@ export default function SessionPage() {
 
         {skipped.length > 0 && (
           <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
-            <p className="text-[10px] tracked uppercase text-muted">⏭️ ข้ามไป {skipped.length} ท่า</p>
+            <p className="text-[12px] tracked uppercase text-muted">⏭️ ข้ามไป {skipped.length} ท่า</p>
             <p className="text-xs text-ink">{skipped.map((s) => s.exerciseName).join(', ')}</p>
-            <p className="text-[11px] text-muted">ลองแทรกในเซสชันหน้าดูนะ</p>
+            <p className="text-[12px] text-muted">ลองแทรกในเซสชันหน้าดูนะ</p>
           </div>
         )}
 
         {summaryExtras && summaryExtras.prs.length > 0 && (
           <div className="rounded-lg bg-surface2 border border-amber/30 px-4 py-3 text-left space-y-1">
-            <p className="text-[10px] tracked uppercase text-amber">🏆 สถิติใหม่</p>
+            <p className="text-[12px] tracked uppercase text-amber">🏆 สถิติใหม่</p>
             {summaryExtras.prs.slice(0, 2).map((pr) => (
               <p key={pr.exerciseName} className="text-xs text-ink">
                 {pr.exerciseName} <span className="text-amber font-mono">+{format(pr.deltaKg)}</span>
               </p>
             ))}
             {summaryExtras.prs.length > 2 && (
-              <p className="text-[11px] text-muted">และอีก {summaryExtras.prs.length - 2} ท่า</p>
+              <p className="text-[12px] text-muted">และอีก {summaryExtras.prs.length - 2} ท่า</p>
             )}
           </div>
         )}
@@ -1072,7 +1076,7 @@ export default function SessionPage() {
         {summaryExtras && (
           <PremiumCard className="px-4 py-4 text-left space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] tracked uppercase text-muted">ความพร้อมกล้ามเนื้อโดยรวม</p>
+              <p className="text-[12px] tracked uppercase text-muted">ความพร้อมกล้ามเนื้อโดยรวม</p>
               <ProgressRing value={summaryExtras.recovery.overall} size={46} strokeWidth={5} gradientStops={ringStopsForPct(summaryExtras.recovery.overall)}>
                 <span className="font-mono text-xs text-ink">{summaryExtras.recovery.overall}%</span>
               </ProgressRing>
@@ -1089,16 +1093,16 @@ export default function SessionPage() {
                     >
                       <MuscleGroupIcon />
                     </span>
-                    <span className="text-[11px] text-muted w-14 shrink-0">{m.muscleGroup}</span>
+                    <span className="text-[12px] text-muted w-14 shrink-0">{m.muscleGroup}</span>
                     <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
                       <div className={`h-full rounded-full ${recoveryBarColor(m.tier)}`} style={{ width: `${m.pct}%` }} />
                     </div>
-                    <span className="text-[11px] font-mono text-ink w-9 text-right">{m.pct}%</span>
+                    <span className="text-[12px] font-mono text-ink w-9 text-right">{m.pct}%</span>
                   </div>
                 )
               })}
             </div>
-            <p className="text-[10px] text-muted/70">
+            <p className="text-[12px] text-muted/70">
               ประเมินจากวอลุ่ม/ความหนักที่เพิ่งฝึกและวันที่ฝึกล่าสุดของแต่ละกลุ่มกล้ามเนื้อ (ยังไม่รวมข้อมูลการนอน)
             </p>
           </PremiumCard>
@@ -1121,7 +1125,7 @@ export default function SessionPage() {
             แชร์
           </button>
         </div>
-        <a href="/history" className="block text-[11px] text-muted hover:text-amber transition">
+        <a href="/history" className="block text-[12px] text-muted hover:text-amber transition">
           ดูประวัติทั้งหมด
         </a>
       </div>
@@ -1148,7 +1152,7 @@ export default function SessionPage() {
     <div className="lg:max-w-5xl lg:mx-auto lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
       <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] tracked uppercase text-muted">
+        <p className="text-[12px] tracked uppercase text-muted">
           ท่าที่ <span className="text-ink font-mono">{index + 1}</span>/{exercises.length}
           {/* ฟีดแบ็ก "Session Volume รวม โชว์สดระหว่างเล่น" — ต่อท้ายบรรทัดเดิมด้วย " · " คั่น ไม่เพิ่ม
               บรรทัดใหม่ กันดันความสูงแถบบนที่ tune มาแล้ว */}
@@ -1159,11 +1163,11 @@ export default function SessionPage() {
           เซ็ต
         </p>
         <div className="flex items-center gap-3">
-          <p className="text-[11px] font-mono text-muted tabular">{formatClock(totalElapsedMs)}</p>
+          <p className="text-[12px] font-mono text-muted tabular">{formatClock(totalElapsedMs)}</p>
           <button
             type="button"
             onClick={endSession}
-            className="text-[11px] text-muted hover:text-rusttext transition"
+            className="text-[12px] text-muted hover:text-rusttext transition"
           >
             จบก่อน
           </button>
@@ -1187,7 +1191,7 @@ export default function SessionPage() {
 
       {showAddExercise ? (
         <PremiumCard className="px-4 py-3.5 space-y-2.5">
-          <p className="text-[10px] tracked uppercase text-muted">เพิ่มท่านอกแผน</p>
+          <p className="text-[12px] tracked uppercase text-muted">เพิ่มท่านอกแผน</p>
           <ExercisePicker
             value={newExerciseName}
             onChange={(name) => {
@@ -1242,7 +1246,7 @@ export default function SessionPage() {
           แล้วกด "🔁 เปลี่ยนท่า" ต่อ) จะกลับไปเจอปัญหาการ์ดสูงเกินจอแบบเดิมอีกรอบ เพราะสอง panel ซ้อนกัน */}
       {showSwapExercise && (
         <PremiumCard className="px-4 py-3.5 space-y-2.5">
-          <p className="text-[10px] tracked uppercase text-muted">
+          <p className="text-[12px] tracked uppercase text-muted">
             เปลี่ยนท่า &quot;{current.exercise_name}&quot; เป็นท่าอื่น
             {currentState.setsLog.length > 0 && ` (บันทึก ${currentState.setsLog.length} เซ็ตที่ทำไปแล้วไว้ก่อน)`}
           </p>
@@ -1341,21 +1345,21 @@ export default function SessionPage() {
                   setShowSwapExercise((v) => !v)
                   setShowAddExercise(false)
                 }}
-                className="shrink-0 text-[10px] tracked uppercase text-muted hover:text-amber transition"
+                className="shrink-0 text-[12px] tracked uppercase text-muted hover:text-amber transition"
                 style={knownExercise?.imageUrl ? { textShadow: '0 1px 3px rgba(0,0,0,0.9)' } : undefined}
               >
                 🔁 เปลี่ยนท่า
               </button>
             </div>
             <p
-              className="text-[11px] text-muted mt-1"
+              className="text-[12px] text-muted mt-1"
               style={knownExercise?.imageUrl ? { textShadow: '0 1px 3px rgba(0,0,0,0.9)' } : undefined}
             >
               เป้าหมาย {targetSets} เซ็ต × {current.target_reps ?? '–'} reps
               {current.target_rir && ` · RIR ${current.target_rir}`}
               {current.rest && ` · พัก ${current.rest}`}
             </p>
-            {current.rationale && <p className="text-[11px] text-muted/70 mt-1 italic">{current.rationale}</p>}
+            {current.rationale && <p className="text-[12px] text-muted/70 mt-1 italic">{current.rationale}</p>}
           </div>
         </div>
 
@@ -1365,17 +1369,17 @@ export default function SessionPage() {
               ใหม่แยก ไม่โชว์ถ้าท่านี้ไม่มีกลุ่มกล้ามเนื้อกำกับ (ad-hoc บางท่า) */}
           {mg && currentRecoveryTier && (
             <div className="rounded-lg border border-white/5 bg-black/10 px-3 py-2.5">
-              <p className="text-[10px] tracked uppercase text-muted mb-1">🤖 Live Coach</p>
+              <p className="text-[12px] tracked uppercase text-muted mb-1">🤖 Live Coach</p>
               <p className="text-[12px] leading-snug font-medium" style={{ color: currentRecoveryTier.color }}>
                 {mg} ฟื้นตัวแล้ว {currentRecoveryPct}%
               </p>
-              <p className="text-[11px] text-muted mt-0.5 leading-snug">{currentRecoveryTier.adviceTh}</p>
+              <p className="text-[12px] text-muted mt-0.5 leading-snug">{currentRecoveryTier.adviceTh}</p>
             </div>
           )}
 
           <div className="flex items-center justify-between bg-surface2 rounded-lg px-4 py-2.5">
             <div>
-              <p className="text-[10px] tracked uppercase text-muted">เซ็ตที่ทำแล้ว</p>
+              <p className="text-[12px] tracked uppercase text-muted">เซ็ตที่ทำแล้ว</p>
               <p className="font-mono text-xl text-ink mt-0.5">
                 {currentState.setsLog.length}
                 <span className="text-sm text-muted">/{targetSets}</span>
@@ -1394,7 +1398,7 @@ export default function SessionPage() {
               {currentState.setsLog.map((s, i) => (
                 <li
                   key={i}
-                  className="flex items-center justify-between text-[11px] font-mono text-muted bg-surface2 rounded px-2.5 py-1"
+                  className="flex items-center justify-between text-[12px] font-mono text-muted bg-surface2 rounded px-2.5 py-1"
                 >
                   <span>เซ็ต {i + 1}</span>
                   <span className="text-ink">
@@ -1419,7 +1423,7 @@ export default function SessionPage() {
               style={{ background: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '2A')}` }}
             >
               <div className="min-w-0">
-                <p className="text-[9px] tracked uppercase truncate" style={{ color: '#CFD4DE' }}>
+                <p className="text-[12px] tracked uppercase truncate" style={{ color: '#CFD4DE' }}>
                   ครั้งก่อน {format(currentLastPerf.weightKg)} × {currentLastPerf.reps} ·{' '}
                   {overloadSuggestion.increasedWeight ? 'พร้อมเพิ่มน้ำหนักแล้ว' : 'ลองเพิ่มอีก 1 rep'}
                 </p>
@@ -1430,7 +1434,7 @@ export default function SessionPage() {
               <button
                 type="button"
                 onClick={() => updateCurrent({ weightKg: overloadSuggestion.weightKg, reps: overloadSuggestion.reps })}
-                className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-display tracked uppercase active:scale-[0.98] transition"
+                className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-display tracked uppercase active:scale-[0.98] transition"
                 style={{ background: COLORS.amber, color: NEUTRAL.onAmberText }}
               >
                 ใช้เลย
@@ -1461,16 +1465,16 @@ export default function SessionPage() {
               ใช้บาร์มาตรฐาน 20kg/45lb ตายตัว (ไม่มีข้อมูลบาร์เฉพาะทางต่อท่าในระบบให้ปรับ) */}
           {plateBreakdown && (
             <div className="rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap" style={{ background: 'rgba(255,255,255,.04)' }}>
-              <span className="text-[9px] tracked uppercase text-muted shrink-0">
+              <span className="text-[12px] tracked uppercase text-muted shrink-0">
                 แผ่น/ข้าง (บาร์ {plateBreakdown.barWeight}{unit})
               </span>
               {plateBreakdown.perSide.length === 0 ? (
-                <span className="text-[11px] font-mono" style={{ color: '#CFD4DE' }}>บาร์เปล่า</span>
+                <span className="text-[12px] font-mono" style={{ color: '#CFD4DE' }}>บาร์เปล่า</span>
               ) : (
                 plateBreakdown.perSide.map((p) => (
                   <span
                     key={p.plate}
-                    className="rounded-md px-1.5 py-0.5 text-[11px] font-mono"
+                    className="rounded-md px-1.5 py-0.5 text-[12px] font-mono"
                     style={{ background: withAlpha(COLORS.steel, '26'), color: COLORS.steel }}
                   >
                     {p.plate}×{p.count}
@@ -1478,7 +1482,7 @@ export default function SessionPage() {
                 ))
               )}
               {plateBreakdown.leftoverPerSide > 0 && (
-                <span className="text-[9px] tracked text-muted">
+                <span className="text-[12px] tracked text-muted">
                   (แบ่งแผ่นไม่ลงตัว เหลือ {plateBreakdown.leftoverPerSide}{unit}/ข้าง)
                 </span>
               )}
@@ -1491,13 +1495,13 @@ export default function SessionPage() {
               ปัดเศษผิดพลาดจากการแปลงหน่วยไปมาซ้ำๆ ระหว่างเซ็ต */}
           {(currentState.weightKg ?? 0) > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] tracked uppercase text-muted shrink-0">Drop Set</span>
+              <span className="text-[12px] tracked uppercase text-muted shrink-0">Drop Set</span>
               {[10, 20].map((pct) => (
                 <button
                   key={pct}
                   type="button"
                   onClick={() => updateCurrent({ weightKg: dropSetWeightKg(currentState.weightKg ?? 0, pct, unit) })}
-                  className="flex-1 rounded-lg border border-line text-muted hover:text-amber hover:border-amber/50 transition py-1.5 text-[11px] font-display tracked uppercase active:scale-[0.98]"
+                  className="flex-1 rounded-lg border border-line text-muted hover:text-amber hover:border-amber/50 transition py-1.5 text-[12px] font-display tracked uppercase active:scale-[0.98]"
                 >
                   −{pct}%
                 </button>
@@ -1521,7 +1525,7 @@ export default function SessionPage() {
             className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <span
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0"
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] shrink-0"
               style={{ backgroundColor: NEUTRAL.onAmberText, color: COLORS.green }}
             >
               ✓
@@ -1533,7 +1537,7 @@ export default function SessionPage() {
             <button
               type="button"
               onClick={removeLastSet}
-              className="w-full text-[11px] text-muted hover:text-amber transition"
+              className="w-full text-[12px] text-muted hover:text-amber transition"
             >
               แก้ไข — ลบเซ็ตล่าสุด
             </button>
@@ -1579,7 +1583,7 @@ export default function SessionPage() {
             ขึ้นกับลำดับใน stylesheet ที่คอมไพล์ ไม่ใช่ลำดับใน className string — ใช้ style ให้ชนะแน่นอน
             (inline style ชนะทุกคลาสเสมอตามสเปก CSS specificity) กันสถานะเมนูข้างไม่ sticky จริงเงียบๆ */}
         <PremiumCard className="p-3 space-y-0.5" style={{ position: 'sticky', top: 16 }}>
-          <p className="text-[10px] tracked uppercase text-muted px-1.5 pb-1.5">ท่าในเซสชันนี้</p>
+          <p className="text-[12px] tracked uppercase text-muted px-1.5 pb-1.5">ท่าในเซสชันนี้</p>
           <ul className="space-y-0.5">
             {exercises.map((ex, i) => {
               const st = states[ex.id]
@@ -1596,7 +1600,7 @@ export default function SessionPage() {
                     }`}
                   >
                     <span
-                      className={`w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-[9px] ${
+                      className={`w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-[12px] ${
                         done ? 'bg-steel text-bg' : activeItem ? 'bg-amber text-bg' : 'bg-surface2 text-muted'
                       }`}
                     >
@@ -1632,7 +1636,7 @@ function GlowStatCell({ icon, color, value, label }: { icon: React.ReactNode; co
     <PremiumCard className="py-3.5 px-2 flex flex-col items-center gap-1.5">
       <GlowIconChip icon={icon} color={color} size={34} />
       <p className="font-mono text-lg text-ink tabular">{value}</p>
-      <p className="text-[9px] tracked uppercase text-muted">{label}</p>
+      <p className="text-[12px] tracked uppercase text-muted">{label}</p>
     </PremiumCard>
   )
 }
@@ -1643,7 +1647,7 @@ function GlowStatRow({ icon, color, value, label }: { icon: React.ReactNode; col
       <GlowIconChip icon={icon} color={color} size={40} />
       <div className="min-w-0 text-left">
         <p className="font-mono text-lg text-ink tabular truncate">{value}</p>
-        <p className="text-[9px] tracked uppercase text-muted">{label}</p>
+        <p className="text-[12px] tracked uppercase text-muted">{label}</p>
       </div>
     </PremiumCard>
   )
@@ -1858,7 +1862,7 @@ function RestTimerButton({
   }, [remainingMs, remainingSec, running, pause, voiceEnabled])
 
   if (!running && displayElapsedMs === 0) {
-    return <p className="text-[10px] text-muted text-right">พัก {restSeconds}s หลังกดเซ็ต</p>
+    return <p className="text-[12px] text-muted text-right">พัก {restSeconds}s หลังกดเซ็ต</p>
   }
 
   const done = !running && finishedRef.current
@@ -1872,7 +1876,7 @@ function RestTimerButton({
           finishedRef.current = true
           pause()
         }}
-        className="text-[10px] text-muted hover:text-amber transition"
+        className="text-[12px] text-muted hover:text-amber transition"
       >
         {done ? 'พักครบแล้ว' : 'ข้ามพัก'}
       </button>

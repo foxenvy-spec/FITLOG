@@ -125,7 +125,7 @@ export default function DashboardSettings({
               {saveState === 'saving' ? '...' : 'บันทึก'}
             </button>
           </div>
-          <p className="text-[11px] text-muted mt-1.5">
+          <p className="text-[12px] text-muted mt-1.5">
             {saveState === 'saved' && '✓ บันทึกแล้ว'}
             {saveState === 'error' && 'บันทึกไม่สำเร็จ ลองอีกครั้ง'}
             {saveState !== 'saved' &&

@@ -40,7 +40,7 @@ export default function DaySummaryHeader({
             className={`flex-1 text-center px-2 ${i > 0 ? 'border-l border-line' : ''}`}
           >
             <p className="font-mono text-base sm:text-lg font-bold text-ink tabular leading-tight">{s.value}</p>
-            <p className="text-[9px] tracked uppercase text-muted mt-0.5">{s.label}</p>
+            <p className="text-[12px] tracked uppercase text-muted mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>

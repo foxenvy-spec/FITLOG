@@ -32,7 +32,7 @@ type ButtonProps<T extends ElementType = 'button'> = ButtonOwnProps & {
 } & Omit<ComponentPropsWithoutRef<T>, keyof ButtonOwnProps | 'as'>
 
 const PRIMARY_SIZE_CLASS = {
-  sm: 'text-[11px] px-4 py-2',
+  sm: 'text-[12px] px-4 py-2',
   md: 'text-sm px-5 py-2.5',
 } as const
 

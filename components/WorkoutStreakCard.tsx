@@ -69,7 +69,7 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                 แล้วยาวเกินจนกินพื้นที่ที่ตั้งใจเผื่อให้แถวจุด 7 วันด้านขวา — ขัดกับเป้าหมายหลักของรอบนี้คือ
                 ลดความแน่นของแถวจุด ไม่ใช่เพิ่มความกว้างฝั่งซ้ายไปแย่งพื้นที่คืน) — 🔥 + สีอำพันของตัวเลขบรรทัด
                 นี้สื่อความหมาย "streak" อยู่แล้วโดยไม่ต้องเขียนคำว่า streak ซ้ำ */}
-            <p className="text-[9px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Weekly Activity</p>
+            <p className="text-[12px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Weekly Activity</p>
             <p className="font-mono text-amber leading-none mt-1" style={{ fontSize: 13 }}>{weeklyTrainedCount} วัน</p>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                     คำนวณอยู่ (DashboardView.tsx) แต่ตอนนี้ใช้แค่ใน aria-label ให้ screen reader ยังแยกได้ว่า
                     วันไหนอยู่ใน streak ปัจจุบันจริง ไม่ได้ทิ้งข้อมูลนี้ไปเฉยๆ แค่ไม่ใช้ทำสีอีกต่อไป */}
                 <span
-                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] shrink-0"
+                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[12px] shrink-0"
                   role="img"
                   aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${
                     tick.trained

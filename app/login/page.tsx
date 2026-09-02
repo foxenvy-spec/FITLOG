@@ -116,7 +116,7 @@ export default function LoginPage() {
               className="w-[clamp(110px,20vh,180px)] sm:w-[clamp(120px,18vh,260px)] h-auto select-none"
               draggable={false}
             />
-            <p className="mt-[clamp(0.2rem,0.8vh,0.3rem)] sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[11px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+            <p className="mt-[clamp(0.2rem,0.8vh,0.3rem)] sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[12px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
             <p className="mt-[clamp(0.3rem,1vh,0.4rem)] sm:mt-[clamp(0.25rem,0.6vh,0.5rem)] text-sm text-ink/90 font-body text-center">
               Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
             </p>
@@ -253,7 +253,7 @@ function Feature({ icon, title, subtitle }: { icon: React.ReactNode; title: stri
     <div className="flex flex-col items-center gap-1.5 px-1">
       <span className="text-amber">{icon}</span>
       <p className="text-xs font-display tracked uppercase text-ink">{title}</p>
-      <p className="text-[11px] text-muted leading-snug">{subtitle}</p>
+      <p className="text-[12px] text-muted leading-snug">{subtitle}</p>
     </div>
   )
 }

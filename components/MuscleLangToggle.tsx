@@ -10,7 +10,7 @@ export default function MuscleLangToggle({
   onChange: (lang: MuscleLabelLang) => void
 }) {
   return (
-    <div className="shrink-0 inline-flex rounded-full border border-line bg-surface2 p-0.5 text-[10px] tracked uppercase">
+    <div className="shrink-0 inline-flex rounded-full border border-line bg-surface2 p-0.5 text-[12px] tracked uppercase">
       <button
         type="button"
         onMouseDown={(e) => e.preventDefault()}

@@ -75,13 +75,13 @@ export default function ImportCardioPhoto({ onExtracted }: { onExtracted: (data:
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-xs text-ink">นำเข้าจากรูป</p>
-          <p className="text-[10px] text-muted">ถ่ายหน้าจอลู่วิ่ง/นาฬิกา แล้วให้ระบบอ่านตัวเลขให้</p>
+          <p className="text-[12px] text-muted">ถ่ายหน้าจอลู่วิ่ง/นาฬิกา แล้วให้ระบบอ่านตัวเลขให้</p>
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={analyzing}
-          className="text-[11px] shrink-0 border border-line rounded px-2.5 py-1.5 text-ink hover:border-ink/40 disabled:opacity-60"
+          className="text-[12px] shrink-0 border border-line rounded px-2.5 py-1.5 text-ink hover:border-ink/40 disabled:opacity-60"
         >
           {analyzing ? 'กำลังอ่าน...' : preview ? 'เปลี่ยนรูป' : '📷 เลือกรูป'}
         </button>
@@ -100,13 +100,13 @@ export default function ImportCardioPhoto({ onExtracted }: { onExtracted: (data:
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="รูปที่นำเข้า" className="w-14 h-14 object-cover rounded border border-line" />
           <div className="flex-1 min-w-0">
-            {analyzing && <p className="text-[11px] text-muted">กำลังอ่านตัวเลขจากรูป...</p>}
+            {analyzing && <p className="text-[12px] text-muted">กำลังอ่านตัวเลขจากรูป...</p>}
             {!analyzing && foundFields && (
-              <p className="text-[11px] text-moss">
+              <p className="text-[12px] text-moss">
                 เติมให้แล้ว: {foundFields.map((f) => FIELD_LABEL[f]).join(', ')} — ตรวจสอบก่อนบันทึก
               </p>
             )}
-            {!analyzing && error && <p className="text-[11px] text-rusttext">{error}</p>}
+            {!analyzing && error && <p className="text-[12px] text-rusttext">{error}</p>}
           </div>
         </div>
       )}

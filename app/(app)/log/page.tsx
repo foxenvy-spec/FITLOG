@@ -625,7 +625,7 @@ function LogPageInner() {
                 </div>
               )}
               {secondaryMuscles.length > 0 && (
-                <p className="mt-1.5 text-[11px] text-muted">
+                <p className="mt-1.5 text-[12px] text-muted">
                   กล้ามเนื้อรอง:{' '}
                   {secondaryMuscles.map((mg, i) => (
                     <span key={mg} style={{ color: MUSCLE_GROUP_COLORS[mg as keyof typeof MUSCLE_GROUP_COLORS] }}>
@@ -637,7 +637,7 @@ function LogPageInner() {
               )}
               {lastEntry && (
                 <div className="mt-2 rounded-lg bg-surface2 border border-line px-3 py-2 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-muted">
+                  <span className="text-[12px] text-muted">
                     ครั้งก่อน ({shortDate(lastEntry.performed_at)}): {lastEntry.sets}×{lastEntry.reps} @{' '}
                     {format(lastEntry.weight_kg)}
                   </span>
@@ -741,7 +741,7 @@ function LogPageInner() {
                   className="input font-mono text-center"
                 />
                 {hrZoneDef && (
-                  <p className="text-[11px] font-mono mt-1.5 flex items-center justify-center gap-1.5" style={{ color: hrZoneDef.color }}>
+                  <p className="text-[12px] font-mono mt-1.5 flex items-center justify-center gap-1.5" style={{ color: hrZoneDef.color }}>
                     <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hrZoneDef.color }} />
                     {hrZoneDef.label}
                   </p>
@@ -775,14 +775,14 @@ function LogPageInner() {
             {paceSpeed && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-md bg-surface2 px-3 py-2.5 text-center">
-                  <p className="text-[10px] tracked uppercase text-muted">Pace เฉลี่ย</p>
+                  <p className="text-[12px] tracked uppercase text-muted">Pace เฉลี่ย</p>
                   <p className="font-mono text-lg text-ink mt-0.5">
                     {formatPace(paceSpeed.paceMinPerKm)}
                     <span className="text-xs text-muted ml-1">/km</span>
                   </p>
                 </div>
                 <div className="rounded-md bg-surface2 px-3 py-2.5 text-center">
-                  <p className="text-[10px] tracked uppercase text-muted">Avg Speed</p>
+                  <p className="text-[12px] tracked uppercase text-muted">Avg Speed</p>
                   <p className="font-mono text-lg text-ink mt-0.5">
                     {paceSpeed.speedKmh.toFixed(1)}
                     <span className="text-xs text-muted ml-1">km/h</span>
@@ -826,7 +826,7 @@ function LogPageInner() {
           ไปมาตอนบันทึกหลายท่า — ย้ายมาไว้คู่กันให้เห็นตลอดบนจอใหญ่) */}
       <div className="space-y-6 lg:col-span-5">
         <div>
-          <p className="text-[10px] tracked uppercase text-muted mb-2">พักระหว่างเซ็ต</p>
+          <p className="text-[12px] tracked uppercase text-muted mb-2">พักระหว่างเซ็ต</p>
           <PremiumCard className="px-4 py-4">
             <RestTimer voiceEnabled={false} />
           </PremiumCard>
@@ -834,26 +834,26 @@ function LogPageInner() {
 
         {daySummary && (
           <div>
-            <p className="text-[10px] tracked uppercase text-muted mb-2">สรุปวันนี้</p>
+            <p className="text-[12px] tracked uppercase text-muted mb-2">สรุปวันนี้</p>
             <PremiumCard className="px-4 py-3.5 grid grid-cols-2 gap-3">
               <div>
                 <p className="text-lg font-display text-amber">{daySummary.totalSets}</p>
-                <p className="text-[10px] text-muted">เซ็ตรวม</p>
+                <p className="text-[12px] text-muted">เซ็ตรวม</p>
               </div>
               <div>
                 <p className="text-lg font-display text-amber">{Math.round(daySummary.totalVolumeKg).toLocaleString('th-TH')}</p>
-                <p className="text-[10px] text-muted">วอลุ่ม (kg)</p>
+                <p className="text-[12px] text-muted">วอลุ่ม (kg)</p>
               </div>
               {daySummary.durationMin !== null && (
                 <div>
                   <p className="text-lg font-display text-amber">{daySummary.durationMin}</p>
-                  <p className="text-[10px] text-muted">นาที (โดยประมาณ)</p>
+                  <p className="text-[12px] text-muted">นาที (โดยประมาณ)</p>
                 </div>
               )}
               {daySummary.caloriesKcal > 0 && (
                 <div>
                   <p className="text-lg font-display text-amber">{Math.round(daySummary.caloriesKcal).toLocaleString('th-TH')}</p>
-                  <p className="text-[10px] text-muted">แคลอรี่ (kcal)</p>
+                  <p className="text-[12px] text-muted">แคลอรี่ (kcal)</p>
                 </div>
               )}
             </PremiumCard>
@@ -872,7 +872,7 @@ function LogPageInner() {
             <button
               type="button"
               onClick={loadToday}
-              className="text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 inline-block"
+              className="text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 inline-block"
             >
               ลองอีกครั้ง
             </button>
@@ -883,7 +883,7 @@ function LogPageInner() {
             <p className="text-sm text-muted">ยังไม่มีรายการวันนี้ เริ่มบันทึกเซ็ตแรกได้เลย</p>
             <a
               href="#log-form"
-              className="inline-block text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
+              className="inline-block text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
             >
               + บันทึกเซ็ตแรก
             </a>
@@ -921,7 +921,7 @@ function LogPageInner() {
                       )}
                     </p>
                   )}
-                  {w.notes && <p className="text-[11px] text-muted mt-0.5 truncate">{w.notes}</p>}
+                  {w.notes && <p className="text-[12px] text-muted mt-0.5 truncate">{w.notes}</p>}
                 </div>
                 <div className="flex items-center gap-3 shrink-0 ml-3">
                   <button
@@ -990,7 +990,7 @@ function DeltaBadge({ current, previous }: { current: number | null; previous: n
   const diff = Math.round((current - previous) * 10) / 10
   const up = diff > 0
   return (
-    <span className={`text-[11px] font-mono shrink-0 ${up ? 'text-steel' : 'text-rusttext'}`}>
+    <span className={`text-[12px] font-mono shrink-0 ${up ? 'text-steel' : 'text-rusttext'}`}>
       {up ? '▲' : '▼'} {up ? '+' : ''}
       {diff}
       {unit}
