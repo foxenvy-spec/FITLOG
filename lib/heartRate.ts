@@ -15,9 +15,13 @@ export interface HRZoneDef {
   color: string
 }
 
+// ฟีดแบ็ก (P0, "Semantic accuracy") "Zone 2 · เผาผลาญไขมัน ขัดกับ disclaimer ท้าย section ที่บอกว่าเป็นค่า
+// ประมาณจากชีพจรเฉลี่ยต่อเซสชัน ไม่ใช่ค่าต่อเนื่อง — คำว่า 'เผาผลาญไขมัน' ฟังดูเป็นการฟันธงเกินกว่าข้อมูลที่มี
+// จริง (ไม่มี continuous HR) เปลี่ยนเป็นบอกระดับความหนักตรงๆ แทนการตีความผลลัพธ์ทางสรีรวิทยา" — แก้เฉพาะ
+// label ของ z2 ตามที่ระบุมาเจาะจง (zone อื่นไม่แตะ ตามที่ผู้ใช้ยืนยันชัดเจนว่า "ส่วนที่เหลือไม่แตะ")
 export const HR_ZONES: HRZoneDef[] = [
   { key: 'z1', label: 'Zone 1 · ฟื้นตัว', minPct: 0, maxPct: 60, color: '#8FA0AD' },
-  { key: 'z2', label: 'Zone 2 · เผาผลาญไขมัน', minPct: 60, maxPct: 70, color: '#7A9B57' },
+  { key: 'z2', label: 'Zone 2 · ความหนักปานกลาง', minPct: 60, maxPct: 70, color: '#7A9B57' },
   { key: 'z3', label: 'Zone 3 · แอโรบิก', minPct: 70, maxPct: 80, color: '#E8A33D' },
   { key: 'z4', label: 'Zone 4 · เทรชโฮลด์', minPct: 80, maxPct: 90, color: '#C1503A' },
   { key: 'z5', label: 'Zone 5 · สูงสุด', minPct: 90, maxPct: Infinity, color: '#8B2E2E' },

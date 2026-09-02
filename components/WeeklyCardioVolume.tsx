@@ -40,6 +40,14 @@ function MetricTile({ label, value, unit }: { label: string; value: string; unit
   )
 }
 
+// ฟีดแบ็ก (P1, "Formatting consistency") "52.43 / 120 กับ อีก 67.57 นาที ยังมีทศนิยมยาว ทั้งที่ตัวเลข
+// นาทีอื่นในการ์ดเดียวกัน (Total Minutes, HR Zone) ปัดเหลือ 1 ตำแหน่งไปแล้ว — เลือก 1 decimal ทั้งระบบ"
+// — ใช้ตัวเดียวกับ Total Minutes tile ด้านบน (maximumFractionDigits: 1) ให้ทุกตัวเลขนาทีในการ์ดนี้ปัด
+// เหมือนกันหมด แถว "ครั้ง" (จำนวนเต็มอยู่แล้ว) ไม่ได้รับผลกระทบ (ไม่มีทศนิยมให้ปัดตั้งแต่แรก)
+function formatCardioNumber(n: number): string {
+  return n.toLocaleString('th-TH', { maximumFractionDigits: 1 })
+}
+
 function TargetProgressRow({ label, done, target, unit }: { label: string; done: number; target: number; unit: string }) {
   const dayOfWeek1to7 = ((todayDayOfWeek() + 6) % 7) + 1
   const status = volumeStatus(done, target, dayOfWeek1to7)
@@ -52,9 +60,9 @@ function TargetProgressRow({ label, done, target, unit }: { label: string; done:
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs text-ink">{label}</span>
         <span className="text-[12px] font-mono text-muted">
-          {done}
+          {formatCardioNumber(done)}
           <span className="text-muted/60">
-            /{target} {unit}
+            /{formatCardioNumber(target)} {unit}
           </span>
         </span>
       </div>
@@ -65,8 +73,8 @@ function TargetProgressRow({ label, done, target, unit }: { label: string; done:
         {status === 'met'
           ? 'ถึงเป้าหมายพอดี'
           : status === 'high' || status === 'veryHigh'
-            ? `+${diff} ${unit}`
-            : `อีก ${target - done} ${unit} ถึงเป้าหมาย`}
+            ? `+${formatCardioNumber(diff)} ${unit}`
+            : `อีก ${formatCardioNumber(target - done)} ${unit} ถึงเป้าหมาย`}
       </p>
     </div>
   )
@@ -210,7 +218,7 @@ export default function WeeklyCardioVolume() {
                   ทศนิยมสูงสุด 1 ตำแหน่ง (52.4 นาที) แทนที่จะโชว์ทศนิยมดิบทุกตำแหน่งที่ toLocaleString() เดิม
                   ปล่อยผ่านมา — ไม่ปัดเป็นจำนวนเต็ม เพราะทศนิยม 1 ตำแหน่งยังมีความหมาย (นาทีที่สะสมจริง) แค่ตัด
                   ความรกของทศนิยมยาวๆ ออก */}
-              <MetricTile label="Total Minutes" value={volume.totalMinutes.toLocaleString('th-TH', { maximumFractionDigits: 1 })} unit="นาที" />
+              <MetricTile label="Total Minutes" value={formatCardioNumber(volume.totalMinutes)} unit="นาที" />
               <MetricTile label="Sessions" value={String(volume.sessions)} unit="ครั้ง" />
               <MetricTile label="Calories" value={volume.totalCalories.toLocaleString('th-TH')} unit="kcal" />
               <MetricTile label="Distance" value={volume.totalDistanceKm.toLocaleString('th-TH')} unit="กม." />

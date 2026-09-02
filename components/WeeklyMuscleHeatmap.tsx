@@ -439,8 +439,10 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
                 แต่ลด opacity ลงอีกขั้น (text-muted/70) ให้จางกว่าบรรทัดอื่นอย่างเห็นได้ชัด สื่อว่าเป็นตัวเลข
                 สนับสนุน ไม่ใช่ insight หลัก — ⚠️ ด้านล่างยังเป็น text-[12px] font-medium สีเต็มเหมือนเดิม
                 (ไม่แตะ) ให้เด่นกว่าเห็นชัด — ไม่ได้ตัดข้อมูลออก แค่ลดน้ำหนักภาพ (typography hierarchy) */}
+            {/* ฟีดแบ็ก (P2, "Terminology") "'กลุ่มยังขาด Volume' ควรใช้ terminology เดียวกับที่การ์ดอื่นเปลี่ยน
+                ไปแล้ว (Weekly Sets) — 'กลุ่มยังฝึกไม่ถึงเป้า' ดีกว่า เพราะ user ไม่ต้องรู้ศัพท์ระบบ (Volume)" */}
             {balanceIssues.under.length > 0 && (
-              <p className="text-[12px] text-muted/70">{balanceIssues.under.length} กลุ่มยังขาด Volume</p>
+              <p className="text-[12px] text-muted/70">{balanceIssues.under.length} กลุ่มยังฝึกไม่ถึงเป้า</p>
             )}
             {/* P2: onInsight ระบุมา (เช่น Dashboard) แปลว่า parent เอา balanceSummary ไปโชว์เป็น Insight
                 Banner แยกต่างหากแล้ว (ดูคอมเมนต์ที่ prop) — ไม่โชว์ซ้ำในการ์ดนี้อีก กันปัญหา "insight พูด
