@@ -497,11 +497,14 @@ export default function MetricCard({
               )}
             </>
           ) : (
-            // เดสก์ท็อป — ไม่กระทบ เหมือนเดิมทุกประการ (position:absolute ชิดขอบล่าง, ตัวเลข+กราฟข้างกัน,
-            // เดลต้าบรรทัดเดียวรวม caption ด้านล่าง)
+            // เดสก์ท็อป (position:absolute ชิดขอบล่าง, ตัวเลข+กราฟข้างกัน, เดลต้าบรรทัดเดียวรวม caption
+            // ด้านล่าง) — ฟีดแบ็ก (P5, Information Hierarchy review) "ปรับ typography/ตัวเลขให้โดดเด่นขึ้น"
+            // เลือก Body Overview เป็นจุดโฟกัส (การ์ด summary แรกที่เห็นทุกครั้งเปิดแอป) — ตัวเลขหลักขยับจาก
+            // 20px เป็น 22px (+10%) เท่านั้น ไม่แตะ layout/ตำแหน่ง/สี — ความสูงการ์ด (h-[124px]/[138px])
+            // เผื่อพื้นที่ไว้พออยู่แล้ว ไม่เสี่ยงล้น
             <div className="absolute left-0 right-0 bottom-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="font-mono leading-none text-ink" style={{ fontSize: 20, letterSpacing: '-0.025em' }}>
+                <p className="font-mono leading-none text-ink" style={{ fontSize: 22, letterSpacing: '-0.025em' }}>
                   <span style={{ fontWeight: 800 }}>{splitValueUnit(valueText).num}</span>
                   {splitValueUnit(valueText).unit && (
                     <span style={{ fontWeight: 500, fontSize: '0.82em' }}> {splitValueUnit(valueText).unit}</span>
