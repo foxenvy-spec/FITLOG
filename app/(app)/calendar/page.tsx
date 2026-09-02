@@ -250,14 +250,30 @@ export default function CalendarPage() {
     return pct === null ? null : pct / 100
   }
 
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): handleDeleteGoal/handleToggleDone เดิมไม่เช็ค error ของ Supabase
+  // เลย — ถ้าลบ/อัปเดตพัง (RLS/เน็ตหลุด) UI จะยัง optimistic-update state ว่าสำเร็จ (เป้าหมายหายไปจากลิสต์/
+  // สถานะเปลี่ยน) ทั้งที่แถวจริงในฐานข้อมูลไม่เปลี่ยน แล้ว "ย้อนกลับ" เงียบๆ ตอนโหลดหน้าใหม่ครั้งถัดไปโดยไม่มี
+  // error ให้เห็นเลย — เช็ค error ก่อน apply optimistic update เสมอ ไม่สำเร็จก็ไม่แตะ state และโชว์ข้อความ
+  const [goalActionError, setGoalActionError] = useState<string | null>(null)
+
   async function handleDeleteGoal(id: string) {
-    await supabase.from('goals').delete().eq('id', id)
+    const { error } = await supabase.from('goals').delete().eq('id', id)
+    if (error) {
+      setGoalActionError('ลบเป้าหมายไม่สำเร็จ ลองใหม่อีกครั้ง')
+      return
+    }
+    setGoalActionError(null)
     setGoals((prev) => prev.filter((g) => g.id !== id))
   }
 
   async function handleToggleDone(goal: Goal) {
     const nextStatus: GoalStatus = goal.status === 'done' ? 'active' : 'done'
-    await supabase.from('goals').update({ status: nextStatus }).eq('id', goal.id)
+    const { error } = await supabase.from('goals').update({ status: nextStatus }).eq('id', goal.id)
+    if (error) {
+      setGoalActionError('อัปเดตเป้าหมายไม่สำเร็จ ลองใหม่อีกครั้ง')
+      return
+    }
+    setGoalActionError(null)
     setGoals((prev) => prev.map((g) => (g.id === goal.id ? { ...g, status: nextStatus } : g)))
   }
 
@@ -445,6 +461,8 @@ export default function CalendarPage() {
             {showGoalForm ? 'ปิด' : '+ เพิ่มเป้าหมาย'}
           </button>
         </div>
+
+        {goalActionError && <p className="text-[12px] text-rusttext">{goalActionError}</p>}
 
         {showGoalForm && (
           <GoalForm

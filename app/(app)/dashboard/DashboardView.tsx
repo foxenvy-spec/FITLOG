@@ -11,7 +11,7 @@ import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import Button from '@/components/ui/Button'
 import InfoTooltip from '@/components/ui/InfoTooltip'
 import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
-import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
+import { todayDayOfWeek, todayStr, daysAgoStr, bangkokParts } from '@/lib/weekdays'
 import {
   computeCurrentStreakDates,
   computeLongestStreak,
@@ -327,17 +327,22 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
 
   // Consistency % ย้อนหลัง 21 วัน — สูตรเดียวกับ ConsistencyStrip.tsx (computePlannedConsistency) ทุก
   // ประการ ใช้ distinctDates/workoutWeekdays ชุดเดียวกับที่คำนวณ streak ด้านบนอยู่แล้ว (ครอบคลุม 400 วัน
-  // ย้อนหลัง เกินพอสำหรับ 21 วัน) ไม่ query ซ้ำ — toIso ใช้ local timezone offset เดียวกับ ConsistencyStrip
-  // เพื่อให้ตัวเลขตรงกันเป๊ะ (ทั้งคู่รันฝั่ง browser ผ่าน useQuery เหมือนกัน)
+  // ย้อนหลัง เกินพอสำหรับ 21 วัน) ไม่ query ซ้ำ
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิม comment อ้างว่า "ใช้ local timezone offset เดียวกับ
+  // ConsistencyStrip เพื่อให้ตัวเลขตรงกันเป๊ะ" แต่ ConsistencyStrip.tsx ถูกแก้ไปใช้ bangkokParts()/Bangkok
+  // timezone ตรงๆ ไปแล้วก่อนหน้านี้ (ไม่ใช่ device timezone offset อีกต่อไป) — comment นี้เลยไม่จริงแล้ว และ
+  // getTimezoneOffset() ยังใช้ timezone ของเครื่องผู้ใช้อยู่ ต่างจาก ConsistencyStrip จริงๆ ตอนนี้ — ผู้ใช้ที่
+  // ตั้งเครื่อง/เบราว์เซอร์เป็นโซนเวลาอื่น (เช่น เดินทางต่างประเทศ) จะได้ % Consistency/ป้าย streak เพี้ยนจาก
+  // ที่อื่นในแอปที่ยึด Bangkok เสมอ — เปลี่ยนมาใช้ daysAgoStr() (เอนจินเดียวกับ ConsistencyStrip/getWeekRange)
+  // แทน ไม่คำนวณ offset เองอีกต่อไป — dayOfWeek หาจาก ISO date string ตรงๆ ผ่าน UTC parse (เทคนิคเดียวกับ
+  // todayDayOfWeek() ใน lib/weekdays.ts) กัน device timezone หลุดเข้ามาที่จุดนี้ด้วย
   const distinctDateSet = new Set(distinctDates)
   const CONSISTENCY_WINDOW_DAYS = 21
   const consistencyWindowDays: { dayOfWeek: number; hasWorkout: boolean }[] = []
   for (let i = 0; i < CONSISTENCY_WINDOW_DAYS; i++) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    const offset = d.getTimezoneOffset()
-    const iso = new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10)
-    consistencyWindowDays.push({ dayOfWeek: d.getDay(), hasWorkout: distinctDateSet.has(iso) })
+    const iso = daysAgoStr(i)
+    const dayOfWeek = new Date(`${iso}T00:00:00Z`).getUTCDay()
+    consistencyWindowDays.push({ dayOfWeek, hasWorkout: distinctDateSet.has(iso) })
   }
   const weeklyConsistencyPct = computePlannedConsistency(consistencyWindowDays, workoutWeekdays).pct
 
@@ -399,11 +404,11 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // แถวติ๊กถูกรายวัน (จ-อา) สำหรับการ์ด Weekly Goal — ใช้ distinctDates ชุดเดียวกับที่คำนวณ
   // streak/thisWeekWorkoutDays ด้านบน ไม่ต้อง query ซ้ำ
   const trainedDateSet = new Set(distinctDates)
-  const toIsoLocal = (d: Date) => {
-    const offset = d.getTimezoneOffset()
-    const local = new Date(d.getTime() - offset * 60000)
-    return local.toISOString().slice(0, 10)
-  }
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิม toIsoLocal ใช้ getTimezoneOffset() ของเครื่องผู้ใช้ — บั๊ก
+  // คลาสเดียวกับจุดข้างบน (CONSISTENCY_WINDOW_DAYS) เปลี่ยนมาใช้ bangkokParts() (lib/weekdays.ts, ตัวเดียว
+  // กับที่ todayStr()/daysAgoStr() ใช้ภายใน) แทน ให้ผลลัพธ์ยึด Asia/Bangkok เสมอไม่ว่าเครื่อง/เบราว์เซอร์
+  // ผู้ใช้จะตั้ง timezone เป็นอะไร
+  const toIsoLocal = (d: Date) => bangkokParts(d)
   const monday = new Date(thisWeekStart + 'T00:00:00')
   const weekDayTicks: { iso: string; trained: boolean; isFuture: boolean; inStreak: boolean }[] = Array.from(
     { length: 7 },

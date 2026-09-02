@@ -415,6 +415,16 @@ describe('detectDeloadSignal', () => {
   it('returns a zeroed, non-deloading result for an empty volume history', () => {
     expect(detectDeloadSignal([], null)).toEqual({ weeksElevated: 0, avgRecentRpe: null, shouldDeload: false, rationale: '' })
   })
+
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิม loop เช็คแค่ทิศทางเดียว (curr ลดลงจาก prev) ไม่เช็คทิศตรงข้าม
+  // (prev ต่ำกว่า curr มาก = prev เป็นสัปดาห์พักที่ curr เพิ่งฟื้นตัวขึ้นมาจาก) ทำให้สัปดาห์พักที่อยู่ตรงกลาง
+  // (ไม่ใช่ปลายสุดของ array) ถูกนับข้ามไปเงียบๆ — เคสนี้คือสัปดาห์ที่ 5 พักไป 80% แล้วสัปดาห์ 6-7 กลับมาปกติ
+  // ควรนับ weeksElevated=2 (แค่ 2 สัปดาห์หลังพัก) ไม่ใช่ 3 (ซึ่งจะข้ามสัปดาห์พักไปนับรวมผิดๆ)
+  it('does not count a mid-history rest week toward the elevated streak, even after it rebounds', () => {
+    const signal = detectDeloadSignal([1000, 1000, 1000, 1000, 200, 1000, 1000], null)
+    expect(signal.weeksElevated).toBe(2)
+    expect(signal.shouldDeload).toBe(false)
+  })
 })
 
 describe('deloadInsight', () => {

@@ -164,6 +164,10 @@ export default function HealthPage() {
   const [photos, setPhotos] = useState<(ProgressPhoto & { url?: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): ปุ่มลบ body_metric แถวเดียวเดิมไม่เช็ค error ของ Supabase เลย —
+  // ถ้าลบพัง (RLS/เน็ตหลุด) UI จะยัง optimistic-update ว่าลบสำเร็จ (แถวหายจากลิสต์) ทั้งที่แถวจริงในฐานข้อมูล
+  // ไม่เปลี่ยน แล้ว "โผล่กลับมา" เงียบๆ ตอนโหลดหน้าใหม่ครั้งถัดไปโดยไม่มี error ให้เห็นเลย
+  const [metricDeleteError, setMetricDeleteError] = useState<string | null>(null)
   const [tab, setTab] = useState<'overview' | 'trends' | 'log' | 'photos'>('overview')
   const [trendGroup, setTrendGroup] = useState<'comp' | 'measure'>('comp')
   const [trendMetric, setTrendMetric] = useState<number | 'all'>('all')
@@ -1734,6 +1738,7 @@ export default function HealthPage() {
 
           <section>
             <h2 className="font-display text-sm tracked uppercase text-muted mb-3">ประวัติการวัดผล</h2>
+            {metricDeleteError && <p className="text-[12px] text-rusttext mb-2">{metricDeleteError}</p>}
             {metrics.length === 0 ? (
               <PremiumCard className="px-4 py-8 text-center space-y-3">
                 <div className="text-3xl">📏</div>
@@ -1753,7 +1758,12 @@ export default function HealthPage() {
                       <span className="text-xs font-mono text-muted">{shortLabel(m.measured_at)}</span>
                       <button
                         onClick={async () => {
-                          await supabase.from('body_metrics').delete().eq('id', m.id)
+                          const { error } = await supabase.from('body_metrics').delete().eq('id', m.id)
+                          if (error) {
+                            setMetricDeleteError('ลบไม่สำเร็จ ลองใหม่อีกครั้ง')
+                            return
+                          }
+                          setMetricDeleteError(null)
                           setMetrics((prev) => prev.filter((x) => x.id !== m.id))
                         }}
                         className="text-muted hover:text-rust text-xs transition"
@@ -4936,8 +4946,16 @@ function PhotosTab({
   }
 
   async function handleDelete(photo: ProgressPhoto) {
-    await supabase.storage.from('progress-photos').remove([photo.storage_path])
-    await supabase.from('progress_photos').delete().eq('id', photo.id)
+    // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิมไม่เช็ค error ของทั้งสองคำสั่งเลย ต่างจาก handleUpload
+    // ด้านบนในฟังก์ชันเดียวกันที่เช็ค insertError แล้วโชว์ error ให้เห็น — ถ้าลบพัง (RLS/เน็ตหลุด)
+    // onChanged() ยังถูกเรียกเหมือนสำเร็จ (แค่ refetch state เดิมกลับมา ไม่ error ให้ผู้ใช้เห็นเลยว่าทำไม
+    // รูปยังไม่หายไป) — เช็ค error ทั้งสองจุด ใช้ setError ตัวเดียวกับ handleUpload
+    const { error: storageErr } = await supabase.storage.from('progress-photos').remove([photo.storage_path])
+    const { error: dbErr } = await supabase.from('progress_photos').delete().eq('id', photo.id)
+    if (storageErr || dbErr) {
+      setError('ลบรูปไม่สำเร็จ ลองใหม่อีกครั้ง')
+      return
+    }
     onChanged()
   }
 

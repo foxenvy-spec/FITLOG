@@ -297,7 +297,11 @@ function LogPageInner() {
     }
 
     if (type === 'strength') {
-      const doneRows = setRows.filter((r) => r.done && r.weight !== '' && r.reps !== '')
+      // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิมเช็คแค่ r.reps !== '' (สตริงไม่ว่าง) — Stepper กด "−"
+      // ลดลงไปถึง "0" ได้ (สตริง "0" ไม่ว่างเปล่า) ทำให้ติ๊กเซ็ตว่า "ทำเสร็จ" ด้วย 0 reps ได้ แล้วถูกนับรวมใน
+      // sets/volume/average ที่อื่นทั่วแอปทั้งที่ไม่มีความหมายทางกายภาพ — เพิ่มเช็ค Number(r.reps) > 0 (weight
+      // ไม่แตะ เพราะ 0 กก. เป็นค่าที่ถูกต้องจริงสำหรับท่า bodyweight)
+      const doneRows = setRows.filter((r) => r.done && r.weight !== '' && r.reps !== '' && Number(r.reps) > 0)
       if (doneRows.length === 0) {
         setError('ติ๊ก ✓ อย่างน้อย 1 เซ็ตที่ทำเสร็จแล้วก่อนบันทึก')
         return
@@ -318,9 +322,13 @@ function LogPageInner() {
 
       let isPR = false
       if (exerciseName) {
+        // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): query นี้ขาด .eq('user_id', user.id) — บั๊กคลาสเดียวกับที่
+        // เคยเจอและแก้ใน session/page.tsx (priorRows/recentMuscleRows) มาก่อน — ถ้าชื่อท่าตรงกับผู้ใช้คนอื่น
+        // พอดี (ชื่อทั่วไปเช่น "Bench Press") prevMax อาจไปดึงน้ำหนักของคนอื่นมาเทียบ ทำให้ตรวจ PR ผิดพลาดได้
         let prQuery = supabase
           .from('workouts')
           .select('weight_kg')
+          .eq('user_id', user.id)
           .eq('type', 'strength')
           .eq('exercise_name', exerciseName)
         // แก้ไขรายการเดิมอยู่ — ไม่เอาแถวตัวเองมาเทียบกับตัวเอง ไม่งั้นจะไม่มีวันเป็น PR ใหม่ได้เลย

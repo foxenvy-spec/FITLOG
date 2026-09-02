@@ -260,12 +260,22 @@ function PersonalInfoCard({
     }
   }
 
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): handleAgeBlur/handleHeightBlur เดิมเช็คแค่ Number.isFinite
+  // ไม่มีขอบเขตค่าต่ำสุด/สูงสุดเลย (input type="number" ก็ไม่มี min/max กำกับ และการบันทึกเกิดตอน onBlur
+  // ไม่ใช่ตอน submit form จึงไม่โดน constraint validation ของเบราว์เซอร์เช็คด้วย) — กรอกอายุ/ส่วนสูงติดลบ
+  // หรือค่าที่เป็นไปไม่ได้ (เช่น อายุ 9999) บันทึกลง DB ได้ตรงๆ แล้วไหลเข้า computeBmr() ต่อทันที ทำให้ BMR
+  // ที่โชว์ผิดเพี้ยน/ติดลบ — เพิ่มขอบเขตค่าที่เป็นไปได้จริงของมนุษย์ (อายุ 1-120 ปี, ส่วนสูง 50-250 ซม.)
   async function handleAgeBlur() {
     if (!profile) return
     const trimmed = ageInput.trim()
     if (!trimmed) return
     const num = Math.round(Number(trimmed))
-    if (!Number.isFinite(num) || num === profile.age) return
+    if (!Number.isFinite(num)) return
+    if (num < 1 || num > 120) {
+      setAgeError('อายุต้องอยู่ระหว่าง 1-120 ปี')
+      return
+    }
+    if (num === profile.age) return
     setAgeError(null)
     try {
       await saveAge(supabase, num)
@@ -281,7 +291,12 @@ function PersonalInfoCard({
     const trimmed = heightInput.trim()
     if (!trimmed) return
     const num = Math.round(Number(trimmed))
-    if (!Number.isFinite(num) || num === profile.height_cm) return
+    if (!Number.isFinite(num)) return
+    if (num < 50 || num > 250) {
+      setHeightError('ส่วนสูงต้องอยู่ระหว่าง 50-250 ซม.')
+      return
+    }
+    if (num === profile.height_cm) return
     setHeightError(null)
     try {
       await saveHeightCm(supabase, num)
@@ -344,6 +359,8 @@ function PersonalInfoCard({
           id="profile-age"
           type="number"
           inputMode="numeric"
+          min={1}
+          max={120}
           disabled={!profile}
           value={ageInput}
           onChange={(e) => setAgeInput(e.target.value)}
@@ -363,6 +380,8 @@ function PersonalInfoCard({
           id="profile-height"
           type="number"
           inputMode="numeric"
+          min={50}
+          max={250}
           disabled={!profile}
           value={heightInput}
           onChange={(e) => setHeightInput(e.target.value)}

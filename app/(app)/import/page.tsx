@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutType } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
-import { WEEKDAYS, defaultWeekdayForIndex } from '@/lib/weekdays'
+import { WEEKDAYS, defaultWeekdayForIndex, todayStr, daysAgoStr } from '@/lib/weekdays'
 import { getExerciseLibrary } from '@/lib/exerciseLibrary'
 import { getErrorMessage } from '@/lib/errors'
 import {
@@ -19,13 +19,13 @@ import { CARD_BORDER_CSS } from '@/lib/theme'
 
 type Mode = 'log' | 'program'
 
-function todayStr(offsetDays = 0) {
-  const d = new Date()
-  d.setDate(d.getDate() + offsetDays)
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60000)
-  return local.toISOString().slice(0, 10)
-}
+// บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): ไฟล์นี้เคยประกาศ todayStr(offsetDays) ของตัวเอง (ใช้
+// getTimezoneOffset() ของเครื่องผู้ใช้) บัง todayStr() ตัวจริงจาก lib/weekdays.ts ที่ import อยู่แล้ว
+// (WEEKDAYS/defaultWeekdayForIndex) — บั๊กคลาสเดียวกับที่เคยเจอและแก้ในหลายไฟล์ก่อนหน้านี้ (lib/trends.ts,
+// stats/page.tsx, DashboardView.tsx) ผู้ใช้ที่ตั้งเครื่อง/เบราว์เซอร์เป็นโซนเวลาอื่นจะได้วันที่เริ่มต้นของ
+// แต่ละวันที่ import ผิดเพี้ยนไปหนึ่งวันช่วง 00:00-06:59 น. เวลาไทย — เปลี่ยนมาใช้ daysAgoStr(-offsetDays)
+// (เอนจินเดียวกับ todayStr() ตัวจริง — daysAgoStr ลบวัน ส่ง offset ติดลบเพื่อบวกแทน) ตรงจุดที่เรียกด้วย
+// offset แทน
 
 export default function ImportPage() {
   const supabase = createClient()
@@ -66,7 +66,7 @@ export default function ImportPage() {
       const dates: Record<string, string> = {}
       const weekdays: Record<string, number> = {}
       parsedResult.days.forEach((day, i) => {
-        dates[day.sheetName] = todayStr(i)
+        dates[day.sheetName] = daysAgoStr(-i)
         weekdays[day.sheetName] = defaultWeekdayForIndex(i)
       })
       setDayDates(dates)

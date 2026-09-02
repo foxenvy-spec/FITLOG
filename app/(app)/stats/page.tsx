@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ResponsiveContainer,
   BarChart,
@@ -109,7 +109,15 @@ export default function StatsPage() {
   const [overloadSuggestion, setOverloadSuggestion] = useState<OverloadPlan | null>(null)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>(180)
 
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): load() เดิมไม่มี guard กันผลลัพธ์เก่ามาทับของใหม่ — สลับ
+  // timeframe เร็วๆ (เช่น 30 วัน -> 180 วัน -> 30 วัน) อาจทำให้ response ของ 180 วัน (ช้ากว่าเพราะข้อมูล
+  // เยอะกว่า) มาถึงทีหลัง response ของ 30 วันที่เลือกล่าสุด แล้วทับ state ผิด ให้หน้าโชว์ข้อมูลไม่ตรงกับตัว
+  // เลือกที่แสดงอยู่ — ใช้ token ref แบบเดียวกับที่แก้ใน exercises/[name]/page.tsx (load ยังต้องเรียกซ้ำได้
+  // จากปุ่ม "ลองใหม่" ของ ErrorState ด้วย เก็บเป็น useCallback เดิม)
+  const loadTokenRef = useRef(0)
+
   const load = useCallback(async () => {
+    const token = ++loadTokenRef.current
     setLoading(true)
     setError(null)
     let query = supabase.from('workouts').select('*').order('performed_at', { ascending: true })
@@ -118,6 +126,7 @@ export default function StatsPage() {
       query = query.gte('performed_at', since)
     }
     const { data, error: err } = await query
+    if (loadTokenRef.current !== token) return
     if (err) {
       setError(err.message)
       setLoading(false)
@@ -131,6 +140,7 @@ export default function StatsPage() {
     const strengthIds = loaded.filter((w) => w.type === 'strength').map((w) => w.id)
     if (strengthIds.length > 0) {
       const { data: setsData } = await supabase.from('workout_sets').select('workout_id, reps').in('workout_id', strengthIds)
+      if (loadTokenRef.current !== token) return
       const repsMap = new Map<string, number>()
       ;(setsData as { workout_id: string; reps: number | null }[] | null)?.forEach((s) => {
         repsMap.set(s.workout_id, (repsMap.get(s.workout_id) ?? 0) + (s.reps ?? 0))

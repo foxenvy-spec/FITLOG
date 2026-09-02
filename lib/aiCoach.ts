@@ -248,11 +248,20 @@ export function detectDeloadSignal(weeklyVolumeKg: number[], avgRecentRpe: numbe
     return { weeksElevated: 0, avgRecentRpe, shouldDeload: false, rationale: '' }
   }
 
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิมเช็คแค่ทิศทางเดียว (curr ลดลงมากกว่า prev = curr คือ
+  // สัปดาห์พัก) แต่ไม่เช็คทิศตรงข้าม (prev ต่ำกว่า curr มาก = prev คือสัปดาห์พักที่ curr เพิ่งฟื้นตัวขึ้นมา
+  // จาก) ทำให้สัปดาห์พักจริงๆ ที่อยู่ตรงกลาง (ไม่ใช่ปลายสุดของ array) ถูกนับรวมเข้า weeksElevated ผิดๆ เช่น
+  // [1000,1000,1000,1000,200,1000,1000] (สัปดาห์ที่ 5 พัก 80% แล้วสัปดาห์ 6-7 กลับมาปกติ) — เดิมนับ
+  // weeksElevated=3 (ข้ามสัปดาห์พักไปเงียบๆ) ทำให้ระบบแนะนำ Deload ซ้ำทันทีหลังจากผู้ใช้เพิ่งพักไปเอง —
+  // เพิ่มเช็คทิศตรงข้ามด้วย (prev < curr * (1 - RATIO) = prev เป็นสัปดาห์พัก) ให้หยุดนับตรงนั้นเหมือนกัน
   let weeksElevated = 1
   for (let i = weeklyVolumeKg.length - 1; i > 0; i--) {
     const curr = weeklyVolumeKg[i]
     const prev = weeklyVolumeKg[i - 1]
-    if (prev <= 0 || curr < prev * (1 - DELOAD_REST_DROP_RATIO)) break
+    if (prev <= 0) break
+    const currIsRestWeek = curr < prev * (1 - DELOAD_REST_DROP_RATIO)
+    const prevIsRestWeek = prev < curr * (1 - DELOAD_REST_DROP_RATIO)
+    if (currIsRestWeek || prevIsRestWeek) break
     weeksElevated++
   }
 

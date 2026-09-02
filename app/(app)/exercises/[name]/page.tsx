@@ -77,7 +77,16 @@ export default function ExerciseDetailPage() {
     }
   }
 
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): load() เดิมไม่มี guard กันผลลัพธ์เก่ามาทับของใหม่ (race
+  // condition) — ต่างจาก daySets effect ใน calendar/page.tsx ที่มี cancelled flag ป้องกันไว้แล้ว — ถ้า
+  // Next.js reuse component instance ตอนเปลี่ยนหน้าจากท่าหนึ่งไปอีกท่า (URL param เปลี่ยนแต่ instance เดิม)
+  // แล้ว request ของท่าเก่ายังไม่ return, พอ return ทีหลัง request ของท่าใหม่ stats จะถูกทับด้วยข้อมูลท่า
+  // เก่าผิดตัว — ใช้ token ref แทน cancelled flag ธรรมดา เพราะ load ยังต้องเรียกซ้ำได้จากปุ่ม "ลองใหม่" ของ
+  // ErrorState ด้วย (เก็บเป็น useCallback เดิม ไม่ย้ายเข้าไปในตัว useEffect ตรงๆ)
+  const loadTokenRef = useRef(0)
+
   const load = useCallback(async () => {
+    const token = ++loadTokenRef.current
     setLoading(true)
     setError(null)
     try {
@@ -88,13 +97,15 @@ export default function ExerciseDetailPage() {
         .eq('exercise_name', exerciseName)
         .order('performed_at', { ascending: true })
 
+      if (loadTokenRef.current !== token) return
       setStats(computeExerciseStats(exerciseName, (data as Workout[]) ?? []))
     } catch (err) {
+      if (loadTokenRef.current !== token) return
       console.error('Exercise detail load failed', err)
       Sentry.captureException(err, { tags: { source: 'exercise-detail-page' } })
       setError('ไม่สามารถโหลดสถิติของท่านี้ได้ ตรวจสอบการเชื่อมต่อแล้วลองใหม่')
     } finally {
-      setLoading(false)
+      if (loadTokenRef.current === token) setLoading(false)
     }
   }, [supabase, exerciseName])
 

@@ -203,7 +203,17 @@ export default function ProgramPage() {
         program_exercise_id: ex.id,
         completed_at: todayStr(),
       }))
-      await supabase.from('program_completions').upsert(completionPayload, { onConflict: 'user_id,program_exercise_id,completed_at' })
+      // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): error ของ upsert นี้เดิมไม่ถูกเช็คเลย ต่างจาก insert ของ
+      // workouts ด้านบนที่เช็ค error แล้ว return ทันที — ถ้า upsert นี้พัง (constraint/RLS/เน็ตหลุด) UI จะ
+      // ยัง mark ว่าทำครบ 100% (setCompletedIds) และโชว์ข้อความสำเร็จ ทั้งที่ completions จริงไม่ถูกบันทึก
+      // (จะ revert เงียบๆ ตอนโหลดหน้าใหม่ครั้งถัดไป โดยไม่มี error ให้เห็นเลย)
+      const { error: cErr } = await supabase
+        .from('program_completions')
+        .upsert(completionPayload, { onConflict: 'user_id,program_exercise_id,completed_at' })
+      if (cErr) {
+        setError(`บันทึกความคืบหน้าไม่สำเร็จ: ${cErr.message}`)
+        return
+      }
 
       setCompletedIds(new Set(currentExercises.map((ex) => ex.id)))
       setLogMessage(`บันทึก ${payload.length} ท่าเข้า Log ของวันนี้แล้ว`)

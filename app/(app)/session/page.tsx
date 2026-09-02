@@ -235,9 +235,14 @@ export default function SessionPage() {
 
     // สำหรับ Live Coach ระหว่างเล่น (ดู comment ที่ priorLastTrainedDate state ด้านบน) — query เดียวกับ
     // recentMuscleRows ใน loadSummaryExtras() เป๊ะ แค่ดึงตั้งแต่ตอนโหลดหน้าแทนที่จะรอถึง phase==='done'
+    // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): query นี้ขาด .eq('user_id', user.id) เหมือนกับที่เคยแก้ใน
+    // recentMuscleRows ตัวใน loadSummaryExtras() ด้านล่าง (บรรทัด ~823) — เป็น query คนละจุดแต่ทำหน้าที่
+    // เดียวกัน ตอนแก้ครั้งก่อนแก้ไม่ครบ พลาดจุดนี้ไป — ถ้ากลุ่มกล้ามเนื้อเดียวกันมีคนอื่นเพิ่งฝึกไปเมื่อไม่นาน
+    // priorTrained อาจไปดึงวันที่ของคนอื่นมาคำนวณ % ฟื้นตัวสดๆ ระหว่างเล่นผิดพลาดได้
     const { data: recentMuscleRows } = await supabase
       .from('workouts')
       .select('muscle_group, performed_at')
+      .eq('user_id', user.id)
       .eq('type', 'strength')
       .lt('performed_at', todayStr())
       .order('performed_at', { ascending: false })
@@ -820,9 +825,14 @@ export default function SessionPage() {
                   loggedList.map((e) => e.ex.exercise_name)
                 )
             : Promise.resolve({ data: [] as { exercise_name: string; weight_kg: number | null }[] }),
+          // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): query นี้ก็ขาด .eq('user_id', user.id) เหมือนกับ priorRows
+          // ด้านบน (แก้ไปแล้วครั้งก่อน แต่พลาดจุดนี้ — คนละ query แต่ทำหน้าที่คล้ายกันในไฟล์เดียวกัน) — ถ้า
+          // กลุ่มกล้ามเนื้อเดียวกันมีคนอื่นเพิ่งฝึกไปเมื่อไม่นาน priorLastTrainedDate อาจไปดึงวันที่ของคนอื่น
+          // มาคำนวณ % ฟื้นตัวในสรุปท้ายเซสชันผิดพลาดได้
           supabase
             .from('workouts')
             .select('muscle_group, performed_at')
+            .eq('user_id', user.id)
             .eq('type', 'strength')
             .lt('performed_at', todayStr())
             .order('performed_at', { ascending: false })
