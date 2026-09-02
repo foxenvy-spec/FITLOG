@@ -435,7 +435,7 @@ export default function StatsPage() {
           <button
             type="button"
             onClick={() => window.print()}
-            className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[11px] font-display tracked uppercase px-3 py-2 active:scale-[0.98] transition"
+            className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-2 active:scale-[0.98] transition"
           >
             📄 Export PDF
           </button>
@@ -528,7 +528,7 @@ export default function StatsPage() {
             WeeklyCardioVolume บน Dashboard เดสก์ท็อป) ลิงก์ตรงนี้แทนการย้ำข้อมูลซ้ำในหน้านี้อีกที */}
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-sm tracked uppercase text-muted">ระยะทางคาร์ดิโอ (กม. ต่อวัน, 28 วันล่าสุด)</h2>
-          <a href="/cardio" className="text-[11px] text-amber hover:underline shrink-0">
+          <a href="/cardio" className="text-[12px] text-amber hover:underline shrink-0">
             ดู Cardio Dashboard →
           </a>
         </div>
@@ -578,7 +578,7 @@ export default function StatsPage() {
           {/* ฟีดแบ็ก "คำอธิบายยาวเป็นพรืดและตัวเล็ก อ่านเหมือน text หลุดกรอบ" — ใส่กรอบ info box จางๆ
               ให้แยกจากเนื้อหาอื่นชัดเจนขึ้น ไม่แตะเนื้อหา/ความยาวข้อความเลย แค่เปลี่ยน container */}
           <p
-            className="text-[11px] text-muted mt-2 px-3 py-2 rounded-lg border"
+            className="text-[12px] text-muted mt-2 px-3 py-2 rounded-lg border"
             style={{ backgroundColor: 'rgba(255,255,255,.03)', borderColor: NEUTRAL.chipInactive }}
           >
             Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว (Novice–Elite){profile?.sex ? '' : ' — ตั้งค่าเพศในโปรไฟล์เพื่อความแม่นยำขึ้น'}
@@ -629,7 +629,7 @@ export default function StatsPage() {
           ) : (
             <PremiumCard className="text-sm text-muted px-4 py-6 text-center">บันทึกท่านี้อีกอย่างน้อย 2 ครั้งเพื่อดูแนวโน้ม</PremiumCard>
           )}
-          <p className="text-[11px] text-muted mt-2">คำนวณด้วยสูตร Epley: น้ำหนัก × (1 + reps/30) — เป็นค่าประมาณ ไม่ใช่ค่าวัดจริง</p>
+          <p className="text-[12px] text-muted mt-2">คำนวณด้วยสูตร Epley: น้ำหนัก × (1 + reps/30) — เป็นค่าประมาณ ไม่ใช่ค่าวัดจริง</p>
         </section>
       )}
 
@@ -656,13 +656,13 @@ export default function StatsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[10px] tracked uppercase text-muted">Current</p>
+                <p className="text-[12px] tracked uppercase text-muted">Current</p>
                 <p className="font-mono text-base text-muted">
                   {format(overloadSuggestion.currentWeight)} × {overloadSuggestion.currentReps}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] tracked uppercase text-muted">Target</p>
+                <p className="text-[12px] tracked uppercase text-muted">Target</p>
                 <p className="font-mono text-base text-violet">
                   {format(overloadSuggestion.targetWeight)} × {overloadSuggestion.targetReps}
                 </p>
@@ -671,7 +671,7 @@ export default function StatsPage() {
             {/* เหตุผลของคำแนะนำ (อิง RPE เฉลี่ย 3 เซสชันล่าสุด) — engine เดียวกับหน้า /coach
                 (computeProgressiveOverload ใน lib/aiCoach.ts) ตรงกับ roadmap Priority 7
                 ("ครั้งหน้าควรเล่นเท่าไหร่?") */}
-            <p className="text-[11px] text-muted mt-2">{overloadSuggestion.rationale}</p>
+            <p className="text-[12px] text-muted mt-2">{overloadSuggestion.rationale}</p>
           </a>
         </section>
       )}
@@ -712,7 +712,7 @@ export default function StatsPage() {
                     <span className="text-sm text-ink flex items-center gap-1.5">
                       {p.name}
                       {isNewPR && (
-                        <span className="animate-pop-in text-[9px] font-display tracked uppercase text-bg bg-violet rounded-full px-1.5 py-0.5">
+                        <span className="animate-pop-in text-[12px] font-display tracked uppercase text-bg bg-violet rounded-full px-1.5 py-0.5">
                           NEW
                         </span>
                       )}
@@ -808,7 +808,7 @@ function StatCard({
   const animatedValue = useCountUp(value)
   return (
     <div className="border shadow-glow rounded-card px-4 py-3.5" style={glowStyle}>
-      <p className="text-[11px] tracked uppercase text-muted mb-1">{label}</p>
+      <p className="text-[12px] tracked uppercase text-muted mb-1">{label}</p>
       <p className={`font-mono text-2xl tabular ${STAT_ACCENT_TEXT[accent]}`}>
         {animatedValue.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
         <span className="text-xs text-muted ml-1">{unit}</span>
