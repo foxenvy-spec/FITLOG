@@ -269,7 +269,10 @@ export default function CalendarPage() {
 
       {streak > 0 && (
         <PremiumCard className="px-4 py-3.5 flex items-center justify-between">
-          <span className="text-sm text-ink">🔥 Streak ต่อเนื่อง</span>
+          {/* ฟีดแบ็ก (รอบก่อนหน้า, Dashboard) "'Streak ต่อเนื่อง' คำซ้ำความหมาย (Streak มีนัย 'ต่อเนื่อง' อยู่
+              แล้ว) ย่อเหลือ 'Streak' เฉยๆ" — ยืนยันแล้วบน Dashboard ก่อนหน้านี้ หน้านี้ยังไม่เคยแก้ตาม ปรับให้
+              ตรงกัน */}
+          <span className="text-sm text-ink">🔥 Streak</span>
           <span className="font-mono text-2xl tabular text-amber">
             {streak}
             <span className="text-xs text-muted ml-1">วัน</span>
@@ -304,7 +307,7 @@ export default function CalendarPage() {
 
             <div className="grid grid-cols-7 gap-1 text-center mb-1">
               {weekdayLabels.map((w) => (
-                <span key={w} className="text-[10px] text-muted uppercase tracked">
+                <span key={w} className="text-[12px] text-muted uppercase tracked">
                   {w}
                 </span>
               ))}
@@ -332,12 +335,12 @@ export default function CalendarPage() {
                     }`}
                   >
                     {marks?.pr && (
-                      <span className="absolute -top-1 -right-1 text-[10px] leading-none" aria-label="ทำสถิติใหม่วันนี้">
+                      <span className="absolute -top-1 -right-1 text-[12px] leading-none" aria-label="ทำสถิติใหม่วันนี้">
                         ⭐
                       </span>
                     )}
                     {hasProgram && (
-                      <span className="absolute -top-1 -left-1 text-[10px] leading-none" aria-label="มีโปรแกรมตั้งไว้วันนี้">
+                      <span className="absolute -top-1 -left-1 text-[12px] leading-none" aria-label="มีโปรแกรมตั้งไว้วันนี้">
                         📋
                       </span>
                     )}
@@ -366,7 +369,7 @@ export default function CalendarPage() {
           </p>
           {scheduledProgram && (
             <div className="bg-surface2 border border-line rounded-lg px-4 py-3 mb-3">
-              <p className="text-[11px] text-muted tracked uppercase mb-1.5">📋 โปรแกรมที่ตั้งไว้ · {scheduledProgram.day.title}</p>
+              <p className="text-[12px] text-muted tracked uppercase mb-1.5">📋 โปรแกรมที่ตั้งไว้ · {scheduledProgram.day.title}</p>
               <ul className="space-y-1">
                 {scheduledProgram.exercises.map((ex) => (
                   <li key={ex.id} className="text-xs text-ink">
@@ -396,11 +399,11 @@ export default function CalendarPage() {
 
               {selectedWorkouts.filter((w) => w.type === 'strength').length > 1 && (
                 <div className="flex justify-end gap-3 mb-2">
-                  <button type="button" onClick={expandAllDay} className="text-[11px] tracked uppercase text-muted hover:text-amber transition">
+                  <button type="button" onClick={expandAllDay} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
                     Expand All
                   </button>
                   <span className="text-line">|</span>
-                  <button type="button" onClick={collapseAllDay} className="text-[11px] tracked uppercase text-muted hover:text-amber transition">
+                  <button type="button" onClick={collapseAllDay} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
                     Collapse All
                   </button>
                 </div>
@@ -470,7 +473,7 @@ export default function CalendarPage() {
                       <p className={`text-sm ${g.status === 'done' ? 'text-muted line-through' : 'text-ink'}`}>
                         {g.title}
                       </p>
-                      <p className="text-[11px] text-muted mt-0.5">
+                      <p className="text-[12px] text-muted mt-0.5">
                         {goalTypeLabel(unit)[g.goal_type]}
                         {g.target_value !== null &&
                           ` · เป้าหมาย ${isWeightGoalType(g.goal_type) ? toDisplay(g.target_value) : g.target_value}`}
