@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import Button from '@/components/ui/Button'
+import InfoTooltip from '@/components/ui/InfoTooltip'
 import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import {
@@ -1153,7 +1154,14 @@ export default function DashboardPage() {
                 ไม่มี shadow-elevated มาตั้งแต่ v41 ("การ์ดรอง ไม่ใช่ Hero") แต่การ์ดนี้หลุดไม่ได้ปรับตาม เลย
                 ดูหนักกว่า 2 ใบข้างๆ ที่ควรเป็นน้ำหนักภาพเท่ากัน — ปรับให้ตรงกัน */}
             <div className="rounded-card bg-surface2/40 border border-line px-4 py-3.5">
-              <p className="text-[12px] tracked uppercase text-muted mb-3">Body Goal</p>
+              <p className="text-[12px] tracked uppercase text-muted mb-3 flex items-center gap-1">
+                Body Goal
+                {/* ฟีดแบ็ก (P2, "Metric explanation") "Progress % (เช่น 37%) เพิ่ม ⓘ อธิบายว่าคำนวณจากอะไร" */}
+                <InfoTooltip
+                  label="คำอธิบาย Body Goal Progress %"
+                  text="% ความคืบหน้าจากค่าที่บันทึกไว้ครั้งแรก (ไม่ใช่แค่ตอนตั้งเป้า) ไปจนถึงเป้าหมายที่ตั้งไว้ — 0% = เท่ากับจุดเริ่มต้น, 100% = ถึงเป้าหมายพอดี"
+                />
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {weightPct !== null && (
                   <div>
@@ -2527,7 +2535,7 @@ export default function DashboardPage() {
           <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} onActiveGroupChange={setActiveHeatmapGroup} />
         </div>
         <div className="lg:col-start-7 lg:col-span-3 lg:row-start-4">
-          <WeeklyVolume />
+          <WeeklyVolume highlightGroup={activeHeatmapGroup} />
         </div>
       </div>
       </div>

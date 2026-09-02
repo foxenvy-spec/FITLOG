@@ -25,6 +25,7 @@ import { useWeightUnit } from './WeightUnitProvider'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import MuscleBodyDiagram from './MuscleBodyDiagram'
+import InfoTooltip from './ui/InfoTooltip'
 
 // Graphic Muscle Heatmap — ไดอะแกรมรูปร่างคน (วาดเองด้วย SVG ธรรมดา ไม่พึ่ง react-body-highlighter
 // เพราะไลบรารีนั้นไม่รองรับกล้ามเนื้อขา) ไล่สีตาม % สัดส่วนเซ็ตของกลุ่มกล้ามเนื้อนั้นเทียบกับ
@@ -411,7 +412,15 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
       {!isLoading && hasAnyData && balance && (
         <div className="px-4 pb-3 flex items-start justify-between gap-3 border-b border-line">
           <div>
-            <p className="text-[12px] tracked uppercase text-muted">Balance</p>
+            <p className="text-[12px] tracked uppercase text-muted flex items-center gap-1">
+              Balance
+              {/* ฟีดแบ็ก (P2, "Metric explanation") "46% ยังต้องอธิบายให้ชัดว่ามาจากอะไร — ไม่ต้องเพิ่ม
+                  คำอธิบายบน card หลัก แค่ ⓘ ข้าง BALANCE ก็พอ" */}
+              <InfoTooltip
+                label="คำอธิบาย Balance %"
+                text="วัดความสมดุลของสัดส่วนเซ็ตที่ฝึกแต่ละกลุ่มกล้ามเนื้อสัปดาห์นี้ เทียบกับสัดส่วนที่เท่ากันทุกกลุ่มพอดี (100% = ฝึกทุกกลุ่มสมดุลกันเป๊ะ, ยิ่งฝึกบางกลุ่มมาก/น้อยกว่ากลุ่มอื่นมาก คะแนนยิ่งลด)"
+              />
+            </p>
             {/* ฟีดแบ็ก "29% ↓ ควรปรับปรุง อ่านเป็นความเห็นลอยๆ ไม่บอกว่าต้องทำอะไร — อยากเห็น
                 29% · ต้องปรับสมดุล แบบบรรทัดเดียว" — รวมตัวเลขกับป้ายสถานะเป็นบรรทัดเดียวคั่นด้วย "·"
                 (ตัด pill พื้นหลัง + ลูกศรทิ้ง ใช้สีเดียวกับตัวเลขแทน อ่านเร็วกว่า) */}
@@ -442,7 +451,10 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
                 ⚠️ {balanceSummary}
               </p>
             )}
-            <p className="text-[12px] text-muted mt-1">
+            {/* ฟีดแบ็ก (P0, Typography รอบล่าสุด) "64 เซ็ต · 16 ท่า ยังดูเบาไป" — เพิ่ม font-medium (ส่วน
+                "font weight" ของฟีดแบ็ก) เฉพาะบรรทัดนี้ (ข้อมูลจริงที่ผู้ใช้ต้องอ่าน) ไม่ใช่ label หมวดหมู่
+                แบบ tracked-uppercase ข้างบน (BALANCE) ที่ควรเบากว่าเป็น tertiary tier ต่อไป */}
+            <p className="text-[12px] font-medium text-muted mt-1">
               {totalSets} เซ็ต · {totalExercises} ท่า
             </p>
           </div>

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getWeekRange, volumeStatus, volumeBucket, optimalVolumeRange, type VolumeBucket } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
-import { VOLUME_MUSCLES } from '@/lib/muscle-groups'
+import { VOLUME_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { COLORS } from '@/lib/theme'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
@@ -29,7 +29,16 @@ const BUCKET_META: Record<VolumeBucket, { emoji: string; color: string }> = {
   over: { emoji: '🟡', color: COLORS.yellow },
 }
 
-export default function WeeklyVolume() {
+interface WeeklyVolumeProps {
+  // ฟีดแบ็ก (P1, "เชื่อม Muscle Heatmap ↔ Insight ↔ Weekly Sets ให้เป็น interaction เดียวกัน") — กลุ่มที่
+  // hover/แตะอยู่บนไดอะแกรม Muscle Heatmap ตอนนี้ (มาจาก WeeklyMuscleHeatmap ผ่าน onActiveGroupChange ->
+  // DashboardView.tsx -> ส่งต่อมาที่นี่) ใช้ไฮไลต์แถวที่ตรงกันในลิสต์นี้ — ต่อยอดจาก P2 รอบก่อน (ที่เชื่อม
+  // ไดอะแกรมกับ Insight Banner ไปแล้ว) ให้ครบ 3 จุด: ไดอะแกรม -> Insight -> แถว Weekly Sets เดียวกัน ไม่ระบุ
+  // prop นี้ (เช่นตอนไม่มี parent ส่งมา) = ไม่ไฮไลต์อะไรเลย พฤติกรรมเดิมทุกประการ
+  highlightGroup?: MuscleGroup | null
+}
+
+export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {}) {
   const supabase = createClient()
   const queryClient = useQueryClient()
   const { start, end } = getWeekRange()
@@ -138,14 +147,17 @@ export default function WeeklyVolume() {
       {!loading && (
         <div className="px-4 pb-2">
           <div className="grid grid-cols-2 gap-2">
+            {/* ฟีดแบ็ก (P0, Typography รอบล่าสุด) "รวมสัปดาห์นี้/อยู่ในเป้าหมาย ยังดูเบาไป — เพิ่ม font
+                weight" — font-medium เฉพาะ label คู่นี้ (ทำหน้าที่อธิบายตัวเลขข้างล่างโดยตรง ไม่ใช่แค่
+                หมวดหมู่ตกแต่ง) */}
             <div className="text-center">
-              <p className="text-[12px] text-muted">รวมสัปดาห์นี้</p>
+              <p className="text-[12px] font-medium text-muted">รวมสัปดาห์นี้</p>
               <p className="font-mono text-sm text-ink mt-0.5">
                 {totalSets} <span className="text-[12px] text-muted font-sans">เซ็ต</span>
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[12px] text-muted">อยู่ในเป้าหมาย</p>
+              <p className="text-[12px] font-medium text-muted">อยู่ในเป้าหมาย</p>
               <p className="font-mono text-sm text-ink mt-0.5">
                 {onTargetCount} <span className="text-[12px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
               </p>
@@ -203,11 +215,18 @@ export default function WeeklyVolume() {
             // ไล่ตาม color ของแต่ละ status เอง (moss/amber/rust) ไม่ใช่เขียวตายตัวเหมือนเดิม เพราะ veryHigh
             // ควรดูต่างจาก met ธรรมดาแม้จะ "ถึงเป้าแล้ว" เหมือนกัน ส่วนแถวอื่นไม่มีพื้นหลัง (ตามการ์ดต้นแบบ)
             const reachedTarget = status === 'met' || status === 'high' || status === 'veryHigh'
+            // ไฮไลต์แถวนี้ถ้าตรงกับกลุ่มที่กำลัง hover/แตะอยู่บนไดอะแกรม Muscle Heatmap (ดูคอมเมนต์ที่
+            // highlightGroup prop ด้านบน) — ใช้สีสถานะของแถวเอง (color, ตัวเดียวกับ badge/แท่ง progress
+            // ในแถวนี้) ไม่ hardcode สีแยก ให้ไฮไลต์ยังสื่อความหมายสถานะไปด้วยในตัว
+            const isHighlighted = highlightGroup === mg
             return (
               <div
                 key={mg}
-                className={reachedTarget ? 'rounded-md' : 'rounded-md bg-surface2'}
-                style={reachedTarget ? { backgroundColor: `${color}1A` } : undefined}
+                className={`${reachedTarget ? 'rounded-md' : 'rounded-md bg-surface2'} transition-shadow`}
+                style={{
+                  ...(reachedTarget ? { backgroundColor: `${color}1A` } : undefined),
+                  ...(isHighlighted ? { boxShadow: `0 0 0 1.5px ${color}`, backgroundColor: `${color}26` } : undefined),
+                }}
               >
                 <div className="flex items-center gap-2 px-2.5 pt-2">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
