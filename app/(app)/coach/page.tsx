@@ -492,20 +492,25 @@ export default function CoachPage() {
                 {/* ฟีดแบ็ก "AI Coach ควรกลายเป็น Decision Engine ที่มีเหตุผล ไม่ใช่แค่ Widget" — โชว์
                     recovery % ของกลุ่มกล้ามเนื้อที่เกี่ยวข้องทั้งหมดเป็น bullet แทนที่จะให้ dailySummary
                     ประโยคเดียวพูดแทนทุกอย่าง ให้ผู้ใช้เห็นเหตุผลจริงเบื้องหลังคำแนะนำ */}
+                {/* ฟีดแบ็ก (จากรอบตรวจ Recovery, "Typography") "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง" — หน้านี้
+                    เขียนก่อนกฎนี้ถูกยึดเป็นมาตรฐาน (9px/10px/11px หลายจุดในหน้านี้) ปรับให้ตรงมาตรฐานเดียวกับ
+                    Dashboard/Recovery ที่แก้ไปแล้ว */}
                 {data.reasoningGroups.length > 0 && (
                   <div className="mt-2 space-y-0.5">
-                    <p className="text-[9px] tracked uppercase text-muted">เหตุผล</p>
+                    <p className="text-[12px] tracked uppercase text-muted">เหตุผล</p>
                     {data.reasoningGroups.map((g) => {
                       const tier = recoveryTier(g.pct)
                       return (
-                        <p key={g.muscleGroup} className="text-[11px]" style={{ color: tier.color }}>
+                        <p key={g.muscleGroup} className="text-[12px]" style={{ color: tier.color }}>
                           {recoveryVerdictEmoji(g.pct)} {g.muscleGroup} ฟื้นตัวแล้ว {g.pct}%
                         </p>
                       )
                     })}
+                    {/* ฟีดแบ็ก (จากรอบตรวจ Dashboard/Recovery, "Terminology") "Volume ทั้งที่ metric จริงคือ
+                        จำนวนเซ็ต" — ตัดคำว่า Volume ออก ตรงหลักเดียวกับที่แก้ไปแล้วบน Dashboard/Recovery */}
                     {data.muscleRecommendation?.scheduleOverriddenFrom && (
-                      <p className="text-[11px]" style={{ color: COLORS.rust }}>
-                        🔴 {data.muscleRecommendation.scheduleOverriddenFrom} ยังมี Volume สูงกว่าเป้าหมาย
+                      <p className="text-[12px]" style={{ color: COLORS.rust }}>
+                        🔴 {data.muscleRecommendation.scheduleOverriddenFrom} ยังฝึกเกินเป้าหมาย
                       </p>
                     )}
                   </div>
@@ -526,7 +531,7 @@ export default function CoachPage() {
                 ) : (
                   <div className="space-y-2.5">
                     {generatedWorkout.source === 'ai' && (
-                      <p className="text-[9px] font-display tracked uppercase text-violet">🔮 ปรุงแต่งโดย Gemini</p>
+                      <p className="text-[12px] font-display tracked uppercase text-violet">🔮 ปรุงแต่งโดย Gemini</p>
                     )}
                     <ul className="space-y-1.5">
                       {generatedWorkout.exercises.map((g, i) => (
@@ -543,17 +548,17 @@ export default function CoachPage() {
                                 type="button"
                                 onClick={() => handleSwapExercise(i)}
                                 title="สลับท่านี้ (เช่น ยิมไม่มีอุปกรณ์นี้)"
-                                className="text-[11px] text-muted hover:text-amber active:scale-[0.99] transition"
+                                className="text-[12px] text-muted hover:text-amber active:scale-[0.99] transition"
                               >
                                 🔄
                               </button>
                             </div>
                           </div>
-                          {g.rationale && <p className="text-[10px] text-violet/80 mt-0.5">{g.rationale}</p>}
+                          {g.rationale && <p className="text-[12px] text-violet/80 mt-0.5">{g.rationale}</p>}
                         </li>
                       ))}
                     </ul>
-                    {swapError && <p className="text-[11px] text-rusttext">{swapError}</p>}
+                    {swapError && <p className="text-[12px] text-rusttext">{swapError}</p>}
                     {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-amber เรียบๆ
                         ไม่มี glow เปลี่ยนมาใช้ Button component กลาง (Phase 2) */}
                     <div className="flex flex-wrap gap-2">
@@ -571,7 +576,7 @@ export default function CoachPage() {
                         </button>
                       )}
                     </div>
-                    {aiWorkoutError && <p className="text-[11px] text-rusttext">{aiWorkoutError}</p>}
+                    {aiWorkoutError && <p className="text-[12px] text-rusttext">{aiWorkoutError}</p>}
                   </div>
                 )}
               </div>
@@ -581,7 +586,7 @@ export default function CoachPage() {
               <div className="flex items-start gap-2.5 rounded-lg border border-violet/25 bg-violetdim/30 px-3 py-3">
                 <span className="text-base leading-none shrink-0">🔮</span>
                 <div className="min-w-0">
-                  <p className="text-[9px] font-display tracked uppercase text-violet mb-1">Gemini Insight</p>
+                  <p className="text-[12px] font-display tracked uppercase text-violet mb-1">Gemini Insight</p>
                   <p className="text-sm text-ink whitespace-pre-line">{aiMessage}</p>
                 </div>
               </div>
@@ -595,7 +600,7 @@ export default function CoachPage() {
                 >
                   {aiLoading ? 'กำลังวิเคราะห์...' : '🔮 ขอคำแนะนำเชิงลึกจาก AI'}
                 </button>
-                {aiError && <p className="text-[11px] text-rusttext mt-2">{aiError}</p>}
+                {aiError && <p className="text-[12px] text-rusttext mt-2">{aiError}</p>}
               </div>
             )}
           </PremiumCard>
@@ -629,7 +634,7 @@ export default function CoachPage() {
                   </>
                 )
               })()}
-              <p className="text-[11px] text-muted pt-1">
+              <p className="text-[12px] text-muted pt-1">
                 {data.balance.status === 'insufficient_data'
                   ? 'ยังมีข้อมูลสัปดาห์นี้ไม่พอให้วิเคราะห์สมดุล'
                   : data.balance.status === 'balanced'
@@ -646,7 +651,7 @@ export default function CoachPage() {
             <h2 className="font-display text-sm tracked uppercase text-muted">Progressive Overload</h2>
             {data.overloadPlans.length === 0 ? (
               <PremiumCard className="px-4 py-3.5">
-                <p className="text-[11px] text-muted">
+                <p className="text-[12px] text-muted">
                   ยังไม่มีประวัติพอให้แนะนำ —{' '}
                   <a href="/log" className="text-amber hover:underline">
                     บันทึกเซ็ตแรก
@@ -665,23 +670,23 @@ export default function CoachPage() {
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="font-display text-base tracked uppercase text-ink">{plan.exerciseName}</p>
-                      <span className={`text-[10px] tracked uppercase font-display ${action.color}`}>{action.text}</span>
+                      <span className={`text-[12px] tracked uppercase font-display ${action.color}`}>{action.text}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3 mb-2">
                       <div>
-                        <p className="text-[10px] tracked uppercase text-muted">Current</p>
+                        <p className="text-[12px] tracked uppercase text-muted">Current</p>
                         <p className="font-mono text-base text-muted">
                           {format(plan.currentWeight)} × {plan.currentReps}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] tracked uppercase text-muted">Target</p>
+                        <p className="text-[12px] tracked uppercase text-muted">Target</p>
                         <p className={`font-mono text-base ${action.color}`}>
                           {format(plan.targetWeight)} × {plan.targetReps}
                         </p>
                       </div>
                     </div>
-                    <p className="text-[11px] text-muted">{plan.rationale}</p>
+                    <p className="text-[12px] text-muted">{plan.rationale}</p>
                   </PremiumCard>
                 )
               })

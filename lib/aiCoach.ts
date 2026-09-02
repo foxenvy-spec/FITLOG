@@ -192,10 +192,14 @@ export function computeAIDailySummary(
   let msg = `${recoveryRecommendationLabel(progressPct, isForToday)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
 
   // ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — ถ้า suggestMuscleToTrain แนะนำกลุ่มนี้แทนกลุ่มตามตารางเพราะ
-  // Volume ของกลุ่มตามตารางเกินเป้าหมายไปแล้ว (scheduleOverriddenFrom) ต้องบอกเหตุผลตรงๆ ไม่ใช่แนะนำเงียบๆ
+  // เซ็ตของกลุ่มตามตารางเกินเป้าหมายไปแล้ว (scheduleOverriddenFrom) ต้องบอกเหตุผลตรงๆ ไม่ใช่แนะนำเงียบๆ
   // เดี๋ยวผู้ใช้จะงงว่าทำไมจู่ๆ ไม่แนะนำกลุ่มตามตารางที่คุ้นเคยแล้ว
+  // ฟีดแบ็ก (จากรอบตรวจ Dashboard, "Terminology") "Volume ทั้งที่ metric จริงคือจำนวนเซ็ต ควรใช้ภาษาที่ user
+  // ไม่ต้องรู้ศัพท์ระบบ" — thisWeekSets/weeklyVolumeTargets ที่ suggestMuscleToTrain ใช้ตัดสินตรงนี้วัดเป็น
+  // "เซ็ต" ทั้งระบบ ไม่ใช่ kg-volume จริง (ต่างจาก "Volume สูงต่อเนื่อง" ใน detectDeloadSignal/deloadInsight
+  // ด้านล่างของไฟล์นี้ ซึ่งอ้างอิง weeklyVolumeKg จริงๆ — จุดนั้นใช้คำว่า Volume ถูกต้องแล้ว ไม่แตะ)
   if (muscleRecommendation.scheduleOverriddenFrom) {
-    msg += ` — ตามตารางคือ${muscleRecommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายไปแล้ว จึงแนะนำเน้น${muscleRecommendation.muscleGroup}แทน`
+    msg += ` — ตามตารางคือ${muscleRecommendation.scheduleOverriddenFrom} แต่ฝึกเกินเป้าหมายสัปดาห์นี้แล้ว จึงแนะนำเน้น${muscleRecommendation.muscleGroup}แทน`
   }
 
   // ฟีดแบ็ก "Recovery ต่ำ + Volume ยังไม่ถึงเป้า → เตือน" (เคสที่ 3 ใน Recommendation Engine decision
