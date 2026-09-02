@@ -965,14 +965,14 @@ export default function DashboardPage() {
     {/* ฟีดแบ็ก "อยากให้หน้า 1 เลื่อนออกจริง ไม่ใช่แค่ส่วนล่างสลับ" — carousel เต็มหน้าจริง: หน้า 1 (ทั้ง
         grid 12-col เดิม — Header/Body Overview/Today's Workout/MINT Coach ฯลฯ ไม่แตะ/ไม่แก้ภายในเลย)
         กับหน้า 2 (Muscle Heatmap/Weekly Sets/Consistency/Cardio Volume) เป็น 2 สไลด์เต็มความกว้างจริง
-        ปัด/ลากได้ (เทคนิคเดียวกับ InsightCarousel.tsx) ปุ่มสลับหน้าตรึงตำแหน่งไว้ ให้กดสลับได้จากทุกจุด
-        ของหน้า ไม่ต้องเลื่อนกลับขึ้นบนสุดก่อน (อยู่นอก track ทั้งหมด ไม่ใช่ลูกของสไลด์ไหนเลย) —
-        ฟีดแบ็ก "ย้ายปุ่มจากล่างขึ้นบน" — เดิมใช้ fixed bottom ลอยทับเนื้อหา เปลี่ยนเป็น sticky top-0 แทน
-        (ไม่ใช่ fixed) เพราะ sticky จองพื้นที่ของตัวเองในโฟลว์ปกติก่อน (ดันเนื้อหาข้างล่างลงมาเล็กน้อยแทนที่
-        จะลอยทับ) จึงไม่มีความเสี่ยงชนกับชื่อ/วันที่/กระดิ่งแจ้งเตือนใน Header (order-1) ที่อยู่ติดกันด้านล่าง
-        ทันที ต่างจาก fixed ที่ต้องกะระยะ pixel เองแล้วเสี่ยงทับโดยไม่มีทางเห็นผลจริงในเบราว์เซอร์ */}
-    <div className="sticky top-2 z-30 flex justify-center">
-      <div className="inline-flex items-center gap-1 rounded-full border border-line bg-surface/95 backdrop-blur p-1 shadow-elevated">
+        ปัด/ลากได้ (เทคนิคเดียวกับ InsightCarousel.tsx) อยู่นอก track ทั้งหมด ไม่ใช่ลูกของสไลด์ไหนเลย —
+        ฟีดแบ็ก "ย้ายปุ่มจากล่างขึ้นบน" -> "ลอยติด fixed ดูไม่สวยเลย" — ตัด sticky/fixed ออกทั้งคู่ ตัด
+        พื้นหลังกระจก+เงาลอย (backdrop-blur/shadow-elevated) ที่ทำให้ดูเป็นการ์ดลอยทับเนื้อหาออกด้วย เหลือ
+        เป็น segmented control ธรรมดาแบนราบอยู่ในโฟลว์ปกติบนสุดของหน้า (border บาง ไม่มีพื้นหลัง/เงา)
+        แลกกับการที่ต้องเลื่อนกลับขึ้นบนสุดก่อนถึงจะกดสลับได้ถ้าเลื่อนลงไปอ่านเนื้อหาลึกๆ แล้ว — ยังปัด/ลาก
+        สลับหน้าได้ตรงๆ จากจุดไหนก็ได้เหมือนเดิม (ไม่ต้องพึ่งปุ่มนี้เสมอไป) */}
+    <div className="flex justify-center pb-3">
+      <div className="inline-flex items-center gap-1 rounded-full border border-line p-1">
         <button
           type="button"
           onClick={() => scrollDetailToIndex(0)}
