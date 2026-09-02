@@ -1086,8 +1086,13 @@ export default function DashboardPage() {
 
       {/* body composition snapshot — weight/body fat/skeletal muscle/fat mass/BMI with
           week-over-week deltas, pulled from the same body_metrics rows as the /health page.
-          Sits above the fold since it's the first thing a user checks each morning. */}
-      <div className="lg:col-span-12 lg:order-3 animate-rise" style={{ animationDelay: '15ms' }}>
+          Sits above the fold since it's the first thing a user checks each morning.
+          ฟีดแบ็ก (Information Hierarchy review) — "บริเวณ MINT → Fitness Score/Recovery → Body Overview
+          มีพื้นที่ว่างค่อนข้างมาก ลด vertical spacing ตรงนี้ลงประมาณ 10-15%" — เพิ่ม lg:-mt-0.5 (-2px)
+          เฉพาะจุดนี้ (ไม่แตะ lg:gap-4 ของ grid หลักที่ใช้ร่วมกับคู่อื่นทั้งหน้า เช่น Body Goal -> การ์ด
+          คลัสเตอร์ ด้านล่าง) ให้ระยะจาก header แถวบนสุดเหลือ 14px จาก 16px เดิม (-12.5%, อยู่ในช่วงที่ขอ)
+          กระทบแค่คู่ header->Body Overview คู่เดียวเท่านั้น */}
+      <div className="lg:col-span-12 lg:order-3 lg:-mt-0.5 animate-rise" style={{ animationDelay: '15ms' }}>
         {/* v41: ฟีดแบ็ก "ทำเป็น Version 3 (Minimal Dark Titanium)" — เดสก์ท็อปเคยใช้ชุดสีนีออนอิ่มตัวเต็มที่
             แยกต่างหากจากมือถือ (ผ่าน colorScheme="vibrant") — สลับมาใช้ชุดสี/glow เดียวกับมือถือแล้ว
             (compact ยังเป็น false ตามเดิม — โครงเลย์เอาต์ 5 คอลัมน์ของเดสก์ท็อปไม่กระทบ แค่สี/ความเข้ม glow
