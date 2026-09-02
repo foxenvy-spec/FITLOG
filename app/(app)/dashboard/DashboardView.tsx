@@ -965,26 +965,31 @@ export default function DashboardPage() {
     {/* ฟีดแบ็ก "อยากให้หน้า 1 เลื่อนออกจริง ไม่ใช่แค่ส่วนล่างสลับ" — carousel เต็มหน้าจริง: หน้า 1 (ทั้ง
         grid 12-col เดิม — Header/Body Overview/Today's Workout/MINT Coach ฯลฯ ไม่แตะ/ไม่แก้ภายในเลย)
         กับหน้า 2 (Muscle Heatmap/Weekly Sets/Consistency/Cardio Volume) เป็น 2 สไลด์เต็มความกว้างจริง
-        ปัด/ลากได้ (เทคนิคเดียวกับ InsightCarousel.tsx) ปุ่มสลับหน้าลอยตรึงตำแหน่งไว้ (fixed) ให้กดสลับ
-        ได้จากทุกจุดของหน้า ไม่ต้องเลื่อนกลับขึ้นบนสุดก่อน — ไม่มี fixed element อื่นชนใน DashboardView.tsx/
-        layout.tsx เดิมอยู่แล้ว (เช็คก่อนเพิ่ม) */}
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 inline-flex items-center gap-1 rounded-full border border-line bg-surface/95 backdrop-blur p-1 shadow-elevated">
-      <button
-        type="button"
-        onClick={() => scrollDetailToIndex(0)}
-        aria-pressed={detailPageIndex === 0}
-        className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 0 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
-      >
-        1 · ภาพรวม
-      </button>
-      <button
-        type="button"
-        onClick={() => scrollDetailToIndex(1)}
-        aria-pressed={detailPageIndex === 1}
-        className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 1 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
-      >
-        2 · รายละเอียด
-      </button>
+        ปัด/ลากได้ (เทคนิคเดียวกับ InsightCarousel.tsx) ปุ่มสลับหน้าตรึงตำแหน่งไว้ ให้กดสลับได้จากทุกจุด
+        ของหน้า ไม่ต้องเลื่อนกลับขึ้นบนสุดก่อน (อยู่นอก track ทั้งหมด ไม่ใช่ลูกของสไลด์ไหนเลย) —
+        ฟีดแบ็ก "ย้ายปุ่มจากล่างขึ้นบน" — เดิมใช้ fixed bottom ลอยทับเนื้อหา เปลี่ยนเป็น sticky top-0 แทน
+        (ไม่ใช่ fixed) เพราะ sticky จองพื้นที่ของตัวเองในโฟลว์ปกติก่อน (ดันเนื้อหาข้างล่างลงมาเล็กน้อยแทนที่
+        จะลอยทับ) จึงไม่มีความเสี่ยงชนกับชื่อ/วันที่/กระดิ่งแจ้งเตือนใน Header (order-1) ที่อยู่ติดกันด้านล่าง
+        ทันที ต่างจาก fixed ที่ต้องกะระยะ pixel เองแล้วเสี่ยงทับโดยไม่มีทางเห็นผลจริงในเบราว์เซอร์ */}
+    <div className="sticky top-2 z-30 flex justify-center">
+      <div className="inline-flex items-center gap-1 rounded-full border border-line bg-surface/95 backdrop-blur p-1 shadow-elevated">
+        <button
+          type="button"
+          onClick={() => scrollDetailToIndex(0)}
+          aria-pressed={detailPageIndex === 0}
+          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 0 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+        >
+          1 · ภาพรวม
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollDetailToIndex(1)}
+          aria-pressed={detailPageIndex === 1}
+          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 1 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+        >
+          2 · รายละเอียด
+        </button>
+      </div>
     </div>
     <div
       ref={detailTrackRef}
