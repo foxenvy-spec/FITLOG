@@ -1206,13 +1206,13 @@ export default function HealthPage() {
           <button
             type="button"
             onClick={handleShare}
-            className="flex items-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-2 active:scale-[0.99] transition"
+            className="flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-2 active:scale-[0.99] transition"
           >
             <ShareIcon />
             แชร์รายงาน
           </button>
           {latest?.measured_at && (
-            <span className="flex items-center gap-1.5 text-[11px] font-mono text-muted border border-line rounded-full px-3 py-2 whitespace-nowrap">
+            <span className="flex items-center gap-1.5 text-[12px] font-mono text-muted border border-line rounded-full px-3 py-2 whitespace-nowrap">
               <CalendarIcon />
               {shortLabel(latest.measured_at)}
             </span>
@@ -1239,7 +1239,7 @@ export default function HealthPage() {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`flex-1 py-2.5 rounded-full text-[11px] sm:text-sm font-display tracked uppercase transition ${
+              className={`flex-1 py-2.5 rounded-full text-[12px] sm:text-sm font-display tracked uppercase transition ${
                 tab === t.key ? (t.key === 'photos' ? 'bg-rust text-ink' : 'bg-steel text-bg') : 'text-muted'
               }`}
             >
@@ -1302,7 +1302,7 @@ export default function HealthPage() {
                 <button
                   type="button"
                   onClick={() => setTab('trends')}
-                  className="mt-3 w-full text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
+                  className="mt-3 w-full text-center text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
                 >
                   ดูคำแนะนำเพิ่มเติม
                 </button>
@@ -1351,7 +1351,7 @@ export default function HealthPage() {
               ที่ไม่มีจุดใช้อื่นแล้วออกไปด้วย) ให้การ์ด Key Metrics โฟกัสแค่ "ค่าปัจจุบัน + เดลต้า" (Level 1)
               ส่วนเทรนด์เป็นหน้าที่ของ Body Progress (Level 2) เพียงจุดเดียว ไม่ซ้ำข้อมูลกันอีก */}
           <div>
-            <p className="text-[10px] tracked uppercase mb-2 flex items-center gap-1" style={{ color: '#B8BBC2' }}>
+            <p className="text-[12px] tracked uppercase mb-2 flex items-center gap-1" style={{ color: '#B8BBC2' }}>
               Key Metrics
               <button
                 type="button"
@@ -1363,7 +1363,7 @@ export default function HealthPage() {
               </button>
             </p>
             {showRangeVsGoalInfo && (
-              <p className="text-[11px] text-muted mb-2 -mt-1">
+              <p className="text-[12px] text-muted mb-2 -mt-1">
                 ป้ายสถานะ (เช่น &quot;ปกติ&quot;) บนการ์ดคือช่วงอ้างอิงทั่วไป ไม่ใช่เป้าหมายส่วนตัวของคุณ — เป้าหมายที่ตั้งไว้ดูได้ที่คอลัมน์ &quot;เป้าหมายร่างกาย&quot; ในคะแนนสุขภาพด้านบน
               </p>
             )}
@@ -1431,7 +1431,7 @@ export default function HealthPage() {
                 Visceral Fat, ○ Body Water/Protein/Bone Mass/Body Age/BMR (ข้อมูลประกอบ)" — เดิม Body Water
                 อยู่ tier 2 (◉ สำคัญรอง) ย้ายไป tier 3 (○ ข้อมูลประกอบ) ตามลำดับใหม่ ตัวอื่นใน tier 2/3 ตรงกับ
                 ที่ขอไว้แล้วจากรอบก่อนๆ ไม่ต้องแก้ */}
-            <p className="text-[10px] tracked uppercase mt-3 mb-2" style={{ color: '#6E7178' }}>Secondary</p>
+            <p className="text-[12px] tracked uppercase mt-3 mb-2" style={{ color: '#6E7178' }}>Secondary</p>
             <div className="grid grid-cols-2 gap-2.5 items-stretch">
             <IconStatCard
               label="ดัชนีมวลกาย"
@@ -1496,7 +1496,7 @@ export default function HealthPage() {
             {muscleFatItems.length > 0 ? (
               <MuscleFatAnalysisChart items={muscleFatItems} unit={unit} periodLabel={periodLabelOf(latest, metrics[1] ?? null)} />
             ) : (
-              <PremiumCard className="text-[11px] text-muted px-4 py-3">
+              <PremiumCard className="text-[12px] text-muted px-4 py-3">
                 อยากดูกราฟ Muscle Fat Analysis (น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน เทียบช่วงมาตรฐาน) — กรอกช่วงมาตรฐานจากรายงานเครื่องชั่งในฟอร์มด้านล่าง (ช่อง &quot;ช่วงมาตรฐาน&quot;) สักครั้ง แล้วกราฟจะขึ้นให้อัตโนมัติ
               </PremiumCard>
             )}
@@ -1518,7 +1518,7 @@ export default function HealthPage() {
                   setTrendGroup('comp')
                   setTrendMetric('all')
                 }}
-                className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
+                className={`px-3 py-2 rounded-full text-[12px] font-display tracked uppercase transition ${
                   trendGroup === 'comp' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
                 }`}
               >
@@ -1530,7 +1530,7 @@ export default function HealthPage() {
                   setTrendGroup('measure')
                   setTrendMetric('all')
                 }}
-                className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
+                className={`px-3 py-2 rounded-full text-[12px] font-display tracked uppercase transition ${
                   trendGroup === 'measure' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
                 }`}
               >
@@ -1543,7 +1543,7 @@ export default function HealthPage() {
                   key={d}
                   type="button"
                   onClick={() => setTrendPeriodDays(d)}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-display tracked uppercase transition ${
+                  className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
                     trendPeriodDays === d ? 'bg-steel text-bg' : 'text-muted'
                   }`}
                 >
@@ -1657,7 +1657,7 @@ export default function HealthPage() {
                       <button
                         type="button"
                         onClick={() => setShowAllMetrics((v) => !v)}
-                        className="w-full flex items-center justify-center gap-1.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-lg py-2.5 active:scale-[0.99] transition"
+                        className="w-full flex items-center justify-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-lg py-2.5 active:scale-[0.99] transition"
                       >
                         {showAllMetrics ? 'แสดงน้อยลง' : 'ดูตัวชี้วัดเพิ่มเติม'}
                         <span className={`transition-transform ${showAllMetrics ? '-rotate-90' : 'rotate-90'}`}>
@@ -1667,14 +1667,14 @@ export default function HealthPage() {
                     )}
                   </div>
                 ) : (
-                  <PremiumCard className="text-[11px] text-muted px-4 py-3">
+                  <PremiumCard className="text-[12px] text-muted px-4 py-3">
                     ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มในหมวดนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งก่อน แล้วกราฟจะขึ้นให้อัตโนมัติ
                   </PremiumCard>
                 )
               ) : selectedTrend && selectedTrend.data.length > 1 ? (
                 <MetricRowCard trend={selectedTrend} periodLabel={`${trendPeriodDays} วัน`} />
               ) : (
-                <PremiumCard className="text-[11px] text-muted px-4 py-3">
+                <PremiumCard className="text-[12px] text-muted px-4 py-3">
                   ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มในหมวดนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งก่อน แล้วกราฟจะขึ้นให้อัตโนมัติ
                 </PremiumCard>
               )}
@@ -1701,7 +1701,7 @@ export default function HealthPage() {
                     ))}
                   </div>
                 ) : (
-                  <PremiumCard className="text-[11px] text-muted px-4 py-3">
+                  <PremiumCard className="text-[12px] text-muted px-4 py-3">
                     ยังไม่มีการเปลี่ยนแปลงที่ชัดเจนพอในช่วง {trendPeriodDays} วันนี้
                   </PremiumCard>
                 )}
@@ -1740,7 +1740,7 @@ export default function HealthPage() {
                 <p className="text-sm text-muted">ยังไม่มีข้อมูล เริ่มบันทึกครั้งแรกได้เลย</p>
                 <a
                   href="#metric-form"
-                  className="inline-block text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
+                  className="inline-block text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
                 >
                   + บันทึกครั้งแรก
                 </a>
@@ -1905,7 +1905,7 @@ function ZoneBadge({ zone, direction = 'neutral' }: { zone: 'Low' | 'Standard' |
   const cls = status === 'needsWork' ? 'bg-rustdim text-rusttext' : status === 'good' ? 'bg-mossdim text-moss' : 'bg-steeldim text-steel'
   const zoneIsFavorable = zone === 'High' ? direction === 'higherBetter' : zone === 'Low' ? direction === 'lowerBetter' : false
   return (
-    <span className={`text-[10px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
+    <span className={`text-[12px] font-display tracked uppercase px-2 py-1 rounded-full whitespace-nowrap ${cls}`}>
       {zoneIsFavorable ? (
         'ดี ✓'
       ) : (
@@ -1959,7 +1959,7 @@ function AdditionalMetricStatus({
         const dot = status === 'needsWork' ? '🔴' : status === 'good' ? '🟢' : '🔵'
         const color = status === 'needsWork' ? '#CF715F' : status === 'good' ? '#8CB264' : '#9DA0A8'
         return (
-          <span className="text-[11px] whitespace-nowrap" style={{ color }}>
+          <span className="text-[12px] whitespace-nowrap" style={{ color }}>
             {dot} {ZONE_ARROW[zone] && `${ZONE_ARROW[zone]} `}
             {ZONE_LABEL_TH[zone]}
           </span>
@@ -1973,13 +1973,13 @@ function AdditionalMetricStatus({
           const bad = direction !== 'neutral' && (direction === 'higherBetter' ? delta < 0 : delta > 0)
           const cls = good ? 'text-moss' : bad ? 'text-rusttext' : 'text-muted'
           return (
-            <span className={`text-[11px] font-mono whitespace-nowrap ${cls}`}>
+            <span className={`text-[12px] font-mono whitespace-nowrap ${cls}`}>
               {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)} {deltaUnit}
             </span>
           )
         })()
       : null
-  if (!zoneNode && !deltaNode) return <span className="text-[11px] text-muted">—</span>
+  if (!zoneNode && !deltaNode) return <span className="text-[12px] text-muted">—</span>
   return (
     <span className="flex items-center gap-2 flex-wrap justify-end">
       {deltaNode}
@@ -1996,7 +1996,7 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
   const visible = expanded ? rows : rows.slice(0, 4)
   return (
     <div>
-      <p className="text-[10px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Additional Metrics</p>
+      <p className="text-[12px] tracked uppercase mb-2" style={{ color: '#B8BBC2' }}>Additional Metrics</p>
       {/* v55: การ์ดรอง (ชื่อก็บอกอยู่แล้วว่า "Additional") ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 ของ Key Metrics
           v60: ฟีดแบ็ก "Card ใหญ่เกินข้อมูล ลดความสูงประมาณ 30-40%" — ลด padding รอบการ์ด (py-1→py-0.5) และ
           ต่อแถว (py-2.5→py-1.5, ช่องว่างระหว่างบรรทัดค่า/สถานะ mt-1→mt-0.5) ไม่ลดฟอนต์/ตัดข้อมูลใดออก แค่ลด
@@ -2027,7 +2027,7 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="w-full flex flex-col items-center justify-center gap-0.5 text-[11px] font-display tracked uppercase text-muted border border-line rounded-lg py-2 mt-2 active:scale-[0.99] transition"
+          className="w-full flex flex-col items-center justify-center gap-0.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-lg py-2 mt-2 active:scale-[0.99] transition"
         >
           <span className="flex items-center gap-1.5">
             {expanded ? 'แสดงน้อยลง' : 'ดูตัวชี้วัดเพิ่มเติม'}
@@ -2039,7 +2039,7 @@ function AdditionalMetricsTable({ rows }: { rows: AdditionalMetricRow[] }) {
               ใช้ label จริงของแถวที่ถูกซ่อนอยู่ (rows.slice(4)) ไม่ fabricate ชื่อใหม่ ไม่ใช่ตัวช่วยลดความสูงหน้า
               (section นี้พับอยู่แล้วตั้งแต่ก่อนหน้า) แค่ทำให้ปุ่มสื่อสารได้ตรงว่ากดแล้วจะเจออะไร */}
           {!expanded && (
-            <span className="normal-case tracking-normal text-[10px] text-muted/70 truncate max-w-full px-2">
+            <span className="normal-case tracking-normal text-[12px] text-muted/70 truncate max-w-full px-2">
               {rows.slice(4).map((r) => r.label).join(' • ')}
             </span>
           )}
@@ -2242,18 +2242,18 @@ function TopStatCard({
     <PremiumCard className="px-4 py-3.5">
       <div className="flex items-center gap-2 mb-1.5">
         <MetricIconChip iconKey={iconKey} imageKey={imageKey} color={color} size={24} />
-        <span className="text-[11px] tracked uppercase text-muted truncate">{label}</span>
+        <span className="text-[12px] tracked uppercase text-muted truncate">{label}</span>
       </div>
       <p className="font-mono text-xl tabular text-ink">
         {value != null ? value.toFixed(decimals) : '—'}
         <span className="text-xs text-muted ml-1">{unit}</span>
         {delta !== null && (
-          <span className={`text-[11px] font-mono ml-1.5 ${deltaColor}`}>
+          <span className={`text-[12px] font-mono ml-1.5 ${deltaColor}`}>
             {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(decimals)}
           </span>
         )}
       </p>
-      {periodLabel && <p className="text-[10px] text-muted mt-0.5">จาก{periodLabel}ก่อน</p>}
+      {periodLabel && <p className="text-[12px] text-muted mt-0.5">จาก{periodLabel}ก่อน</p>}
       {hasSpark ? (
         <div className="h-8 -mx-1 mt-1.5">
           <ResponsiveContainer width="100%" height="100%">
@@ -2592,7 +2592,7 @@ function OverviewTrendChart({
               key={k}
               type="button"
               onClick={() => setMetricKey(k)}
-              className={`px-3 py-2 rounded-full text-[11px] font-display tracked uppercase transition ${
+              className={`px-3 py-2 rounded-full text-[12px] font-display tracked uppercase transition ${
                 metricKey === k ? 'text-bg' : 'bg-surface border border-line text-muted'
               }`}
               style={metricKey === k ? { background: OVERVIEW_TREND_METRICS[k].color } : undefined}
@@ -2607,7 +2607,7 @@ function OverviewTrendChart({
               key={r.days}
               type="button"
               onClick={() => setRangeDays(r.days)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-display tracked uppercase transition ${
+              className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
                 rangeDays === r.days ? 'bg-steel text-bg' : 'text-muted'
               }`}
             >
@@ -2648,7 +2648,7 @@ function OverviewTrendChart({
                   มีความหมายขึ้น" — ต่อท้าย badge เดิมด้วยระยะห่างจริง (latestVal ที่มีอยู่แล้วในกราฟนี้ ไม่ใช่
                   ตัวเลขใหม่) Body Fat ใช้ "จุดเปอร์เซ็นต์" ให้ตรงกับ convention เดียวกับจุดอื่นของหน้า ไม่ใช่ % */}
               {goalTarget !== null && (
-                <p className="inline-flex items-center gap-1 text-[11px] mt-1.5 px-2 py-0.5 rounded-full bg-surface border border-line text-muted">
+                <p className="inline-flex items-center gap-1 text-[12px] mt-1.5 px-2 py-0.5 rounded-full bg-surface border border-line text-muted">
                   <span aria-hidden="true">🎯</span> เป้าหมาย {goalTarget.toFixed(1)} {valueUnit}
                   {latestVal !== null && (
                     <span>
@@ -2692,7 +2692,7 @@ function OverviewTrendChart({
                     </span>
                     {stats.avg.toFixed(1)}
                   </p>
-                  <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
+                  <p className="text-[12px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     เฉลี่ย
                   </p>
                 </div>
@@ -2712,7 +2712,7 @@ function OverviewTrendChart({
                     )}
                     {stats.min.toFixed(1)}
                   </p>
-                  <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
+                  <p className="text-[12px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     ต่ำสุด
                   </p>
                 </div>
@@ -2726,7 +2726,7 @@ function OverviewTrendChart({
                     )}
                     {stats.max.toFixed(1)}
                   </p>
-                  <p className="text-[9px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
+                  <p className="text-[12px] tracked uppercase mt-0.5" style={{ color: '#9DA0A8' }}>
                     สูงสุด
                   </p>
                 </div>
@@ -2889,7 +2889,7 @@ function OverviewTrendChart({
           )}
         </>
       ) : (
-        <p className="text-[11px] text-muted px-1 py-10 text-center">
+        <p className="text-[12px] text-muted px-1 py-10 text-center">
           ยังไม่มีข้อมูลพอสำหรับดูแนวโน้มช่วงนี้ — บันทึกข้อมูลอย่างน้อย 2 ครั้งในช่วงเวลาที่เลือก แล้วกราฟจะขึ้นให้อัตโนมัติ
         </p>
       )}
@@ -2921,7 +2921,7 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
               <span className="text-xs text-muted ml-1">{trend.unit}</span>
             </span>
             {delta !== null && (
-              <span className={`block text-[11px] font-mono mt-0.5 ${deltaGood ? 'text-moss' : 'text-rusttext'}`}>
+              <span className={`block text-[12px] font-mono mt-0.5 ${deltaGood ? 'text-moss' : 'text-rusttext'}`}>
                 {delta > 0 ? '↑' : delta < 0 ? '↓' : '·'} {Math.abs(delta).toFixed(dec)} {trend.unit}
               </span>
             )}
@@ -2953,20 +2953,20 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex justify-between text-[9px] text-muted mt-0.5">
+              <div className="flex justify-between text-[12px] text-muted mt-0.5">
                 <span>{data[0].label}</span>
                 <span>{data[data.length - 1].label}</span>
               </div>
             </>
           ) : (
-            <p className="text-[11px] text-muted py-6 text-center">ยังไม่มีข้อมูลพอในช่วง{periodLabel} — บันทึกอย่างน้อย 2 ครั้ง</p>
+            <p className="text-[12px] text-muted py-6 text-center">ยังไม่มีข้อมูลพอในช่วง{periodLabel} — บันทึกอย่างน้อย 2 ครั้ง</p>
           )}
         </div>
 
         {/* คอลัมน์ขวา: แถบ Low/Standard/High */}
         {trend.range ? (
           <div>
-            <div className="flex text-[9px] mb-1 text-center">
+            <div className="flex text-[12px] mb-1 text-center">
               <span className="flex-1 text-steel">Low</span>
               <span className="flex-1 text-moss">Standard</span>
               <span className="flex-1 text-rusttext">High</span>
@@ -2976,17 +2976,17 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
               <div className="flex-1 bg-moss/70" />
               <div className="flex-1 bg-rust/70" />
             </div>
-            <div className="flex justify-between text-[9px] text-muted mt-1">
+            <div className="flex justify-between text-[12px] text-muted mt-1">
               <span>{trend.range.low.toFixed(dec)}</span>
               <span className="text-ink">
                 {((trend.range.low + trend.range.high) / 2).toFixed(dec)}
               </span>
               <span>{trend.range.high.toFixed(dec)}</span>
             </div>
-            <p className="text-[9px] text-muted mt-1">
+            <p className="text-[12px] text-muted mt-1">
               (Ideal {trend.range.low.toFixed(dec)} - {trend.range.high.toFixed(dec)})
             </p>
-            {trend.range.note && <p className="text-[9px] text-muted mt-0.5 italic">{trend.range.note}</p>}
+            {trend.range.note && <p className="text-[12px] text-muted mt-0.5 italic">{trend.range.note}</p>}
           </div>
         ) : (
           <div className="hidden sm:block" />
@@ -3066,29 +3066,29 @@ function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toD
         <h2 className="font-display text-sm tracked uppercase text-ink">คาดการณ์ 4 สัปดาห์ข้างหน้า</h2>
       </div>
       {forecast.length === 0 ? (
-        <p className="text-[11px] text-muted mt-2">
+        <p className="text-[12px] text-muted mt-2">
           ยังมีข้อมูลไม่พอสำหรับคาดการณ์ — บันทึกข้อมูลอย่างน้อย 3 ครั้งในช่วง 90 วันที่ผ่านมา แล้วระบบจะคาดการณ์แนวโน้มให้อัตโนมัติ
         </p>
       ) : (
         <>
-          <p className="text-[11px] text-muted mb-3">หากทำตามแนวโน้มปัจจุบันต่อเนื่อง คาดว่าภายใน 4 สัปดาห์...</p>
+          <p className="text-[12px] text-muted mb-3">หากทำตามแนวโน้มปัจจุบันต่อเนื่อง คาดว่าภายใน 4 สัปดาห์...</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {forecast.map((it) => (
               <div key={it.label}>
-                <p className="text-[10px] tracked uppercase text-muted truncate">{it.label}</p>
+                <p className="text-[12px] tracked uppercase text-muted truncate">{it.label}</p>
                 <p className="font-mono text-base text-ink">
                   {it.value!.toFixed(1)}
-                  <span className="text-[10px] text-muted ml-1">{it.unit}</span>
+                  <span className="text-[12px] text-muted ml-1">{it.unit}</span>
                 </p>
                 {it.delta !== null && (
-                  <p className={`text-[11px] font-mono ${it.delta < 0 ? 'text-moss' : it.delta > 0 ? 'text-rusttext' : 'text-muted'}`}>
+                  <p className={`text-[12px] font-mono ${it.delta < 0 ? 'text-moss' : it.delta > 0 ? 'text-rusttext' : 'text-muted'}`}>
                     {it.delta > 0 ? '↑' : it.delta < 0 ? '↓' : '·'} {Math.abs(it.delta).toFixed(1)} {it.unit}
                   </p>
                 )}
               </div>
             ))}
           </div>
-          <p className="text-[9px] text-muted mt-3 italic">
+          <p className="text-[12px] text-muted mt-3 italic">
             * ประมาณจากแนวโน้มข้อมูล 90 วันที่ผ่านมา ไม่ใช่คำแนะนำทางการแพทย์
           </p>
         </>
@@ -3300,7 +3300,7 @@ function OverviewHealthScoreHeader({
             รวมวันที่+เวลาเป็นบรรทัดเดียวด้วย "·" ให้กินพื้นที่แนวตั้งน้อยลงด้วย ไม่ได้ซ่อนข้อมูล แค่ลดน้ำหนักภาพ */}
         {updatedDateLabel && (
           <div className="shrink-0 border-l border-line/40 pl-5">
-            <p className="text-[10px] tracked uppercase" style={{ color: '#B8BBC2' }}>ล่าสุด</p>
+            <p className="text-[12px] tracked uppercase" style={{ color: '#B8BBC2' }}>ล่าสุด</p>
             <p className="font-mono text-xs mt-0.5" style={{ color: '#9DA0A8' }}>
               {updatedDateLabel}
               {updatedTimeLabel && <span> · {updatedTimeLabel}</span>}
@@ -3316,7 +3316,7 @@ function OverviewHealthScoreHeader({
                 (periodOverride) เพราะฐานเวลาจริงไม่เท่ากันเสมอไป (แถวคะแนน = เดือนที่แล้วคงที่, แถวไขมัน/
                 กล้ามเนื้อ = ล่าสุด vs ก่อนหน้าล่าสุด) ผูก heading เป็นช่วงเดียวจะโกหกบางแถวอยู่ดี ดูคอมเมนต์
                 จุดสร้าง signals ด้านบน */}
-            <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>
+            <p className="text-[12px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>
               การเปลี่ยนแปลง
             </p>
             <div className="flex flex-col gap-1.5">
@@ -3350,7 +3350,7 @@ function OverviewHealthScoreHeader({
             "เป้าหมายร่างกาย" ที่ครอบทั้งบล็อกอยู่แล้ว — ตัด label ออกจากสิ่งที่แสดงผล (ยังเก็บไว้ใน data
             เป็น key เท่านั้น) เหลือแค่ valueText เด่น + subText (สีเขียว, ระยะที่เหลือ) บรรทัดเดียว */}
         <div className="shrink-0 border-l border-line/40 pl-5">
-          <p className="text-[10px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>เป้าหมายร่างกาย</p>
+          <p className="text-[12px] tracked uppercase mb-1" style={{ color: '#B8BBC2' }}>เป้าหมายร่างกาย</p>
           {goalRows.length > 0 ? (
             <div className="flex flex-col gap-2">
               {goalRows.map((g) => (
@@ -3378,7 +3378,7 @@ function OverviewHealthScoreHeader({
                       v61: ฟีดแบ็ก "'ยังไม่มีข้อมูลเริ่มต้นสำหรับคำนวณความคืบหน้า' ยังยาว/เทคนิคไปนิด" — สั้นลง
                       ตามคำที่เสนอตรงๆ */}
                   {g.progressPct === null ? (
-                    <p className="text-[10px] text-muted mt-1.5">ยังไม่มีข้อมูลความคืบหน้า</p>
+                    <p className="text-[12px] text-muted mt-1.5">ยังไม่มีข้อมูลความคืบหน้า</p>
                   ) : (
                     <div className="mt-1.5">
                       <div className="h-1.5 w-28 rounded-full bg-white/10 overflow-hidden">
@@ -3388,7 +3388,7 @@ function OverviewHealthScoreHeader({
                           ต้องแยกให้ชัดว่าคนละเรื่อง" — เดิม "คืบหน้า" เฉยๆ ชวนสับสนกับหมวด PROGRESS ใน
                           breakdown ด้านบน ทั้งที่นี่คือ % ระยะทางถึงเป้าหมาย ไม่ใช่คะแนนแนวโน้ม — เติม "สู่
                           เป้าหมาย" ให้ชัดว่าคนละตัวเลขคนละความหมาย */}
-                      <p className="text-[10px] text-muted mt-1">คืบหน้าสู่เป้าหมาย {Math.round(g.progressPct)}%</p>
+                      <p className="text-[12px] text-muted mt-1">คืบหน้าสู่เป้าหมาย {Math.round(g.progressPct)}%</p>
                     </div>
                   )}
                 </div>
@@ -3397,7 +3397,7 @@ function OverviewHealthScoreHeader({
           ) : (
             <>
               <p className="font-mono text-sm" style={{ color: '#9DA0A8' }}>ยังไม่ได้ตั้ง</p>
-              <a href="/calendar" className="text-[11px] text-amber transition hover:text-ink">
+              <a href="/calendar" className="text-[12px] text-amber transition hover:text-ink">
                 + ตั้งเป้าหมาย
               </a>
             </>
@@ -3412,7 +3412,7 @@ function OverviewHealthScoreHeader({
               v34: ฟีดแบ็ก "breakdown มี 4 หมวดจริง (Body Composition/Muscle/Metabolic Health/Progress) ควรพูด
               ให้ตรงกับ 4 หมวดนั้น" — เดิมพูดถึง "แนวโน้มไขมัน มวลกล้ามเนื้อ BMI" (คำละคำจากตัว metric ไม่ใช่
               ชื่อหมวด) เปลี่ยนให้ใช้ชื่อ 4 หมวดจริงตามลำดับที่แสดงผลด้านล่าง */}
-          <p className="text-[11px] text-muted mb-2.5">คะแนนนี้ประเมินจากองค์ประกอบร่างกาย มวลกล้ามเนื้อ สุขภาพเมตาบอลิก และความคืบหน้าโดยรวม</p>
+          <p className="text-[12px] text-muted mb-2.5">คะแนนนี้ประเมินจากองค์ประกอบร่างกาย มวลกล้ามเนื้อ สุขภาพเมตาบอลิก และความคืบหน้าโดยรวม</p>
           {/* v31: ฟีดแบ็ก "ควรเป็น Health Score → เปิดดู breakdown ของสูตรที่มีอยู่แล้ว ไม่ใช่สร้าง sub-score
               ใหม่ — UI ควรสะท้อนสูตรจริง 1:1" — categoryRows เป็นข้อมูลจริงที่มีอยู่แล้ว (ไม่เปลี่ยน scoring
               model เลย)
@@ -3429,7 +3429,7 @@ function OverviewHealthScoreHeader({
             {categoryRows.map((row) => {
               const color = healthScoreTier(row.pct).color
               return (
-                <div key={row.title} className="text-[11px] min-w-0">
+                <div key={row.title} className="text-[12px] min-w-0">
                   <p className="tracked uppercase text-muted truncate">{row.title}</p>
                   <p className="normal-case tracking-normal text-muted/60">น้ำหนัก {row.weight}%</p>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -3447,7 +3447,7 @@ function OverviewHealthScoreHeader({
           {/* v61: ฟีดแบ็ก "'คะแนนแนวโน้มล่าสุด' อยู่ใต้ PROGRESS อาจทำให้เข้าใจว่า Health Score ทั้งก้อนเป็นแค่
               Trend Score — ควรเป็นข้อความปิดท้ายทั้ง breakdown แทน บอกว่า Health Score คือคะแนนสุขภาพโดยรวม
               ไม่ใช่ % ความสำเร็จเป้าหมาย" — ย้ายจาก caption เฉพาะแถว PROGRESS มาเป็นบรรทัดปิดท้ายทั้ง 4 หมวด */}
-          <p className="text-[11px] text-muted mt-3">Health Score เป็นคะแนนสุขภาพโดยรวม ไม่ใช่ % ความสำเร็จของเป้าหมาย</p>
+          <p className="text-[12px] text-muted mt-3">Health Score เป็นคะแนนสุขภาพโดยรวม ไม่ใช่ % ความสำเร็จของเป้าหมาย</p>
         </div>
       )}
     </div>
@@ -3469,7 +3469,7 @@ function HealthScoreCard({
     <PremiumCard className="p-4">
       <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คะแนนสุขภาพรวม</h2>
       {!result ? (
-        <p className="text-[11px] text-muted">กรอกช่วงมาตรฐานในฟอร์มบันทึกข้อมูล เพื่อดูคะแนนสุขภาพตรงนี้</p>
+        <p className="text-[12px] text-muted">กรอกช่วงมาตรฐานในฟอร์มบันทึกข้อมูล เพื่อดูคะแนนสุขภาพตรงนี้</p>
       ) : (
         <div className="flex items-center gap-4">
           <GoalRing pct={pct} size={88} strokeWidth={8} color={ringColor} ariaLabel="คะแนนสุขภาพรวม" />
@@ -3478,7 +3478,7 @@ function HealthScoreCard({
               {label}
             </p>
             {monthDeltaPct !== null && monthDeltaPct !== undefined && monthDeltaPct !== 0 && (
-              <p className={`text-[11px] mt-1 ${monthDeltaPct > 0 ? 'text-moss' : 'text-rusttext'}`}>
+              <p className={`text-[12px] mt-1 ${monthDeltaPct > 0 ? 'text-moss' : 'text-rusttext'}`}>
                 {monthDeltaPct > 0 ? 'ดีขึ้นจากเดือนที่แล้ว' : 'แย่ลงจากเดือนที่แล้ว'}{' '}
                 <span className="font-mono">
                   {monthDeltaPct > 0 ? '↑' : '↓'} {Math.abs(monthDeltaPct)} คะแนน
@@ -3492,13 +3492,13 @@ function HealthScoreCard({
                   style={{ left: `${Math.max(2, Math.min(98, pct))}%`, transform: 'translate(-50%, -50%)', borderColor: ringColor }}
                 />
               </div>
-              <div className="flex justify-between text-[9px] text-muted mt-1">
+              <div className="flex justify-between text-[12px] text-muted mt-1">
                 <span>แย่</span>
                 <span>ดีเยี่ยม</span>
               </div>
             </div>
             {selfPercentile !== null && selfPercentile !== undefined && (
-              <p className="flex items-start gap-1.5 text-[11px] text-muted mt-2">
+              <p className="flex items-start gap-1.5 text-[12px] text-muted mt-2">
                 <span>🏆</span>
                 <span>
                   คุณอยู่ใน <span className="text-ink">{selfPercentile}%</span> แรก เมื่อเทียบกับข้อมูลย้อนหลังของคุณเอง
@@ -3533,12 +3533,12 @@ function GoalsCard({
     <PremiumCard className="p-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-sm tracked uppercase text-muted">เป้าหมายของคุณ</h2>
-        <a href="/calendar" className="text-[10px] text-amber underline">
+        <a href="/calendar" className="text-[12px] text-amber underline">
           แก้ไขเป้าหมาย
         </a>
       </div>
       {goals.length === 0 ? (
-        <p className="text-[11px] text-muted">ยังไม่ได้ตั้งเป้าหมาย ไปตั้งเป้าหมายน้ำหนักหรือ Body Fat ได้ที่หน้าปฏิทิน</p>
+        <p className="text-[12px] text-muted">ยังไม่ได้ตั้งเป้าหมาย ไปตั้งเป้าหมายน้ำหนักหรือ Body Fat ได้ที่หน้าปฏิทิน</p>
       ) : (
         <div className="space-y-5">
           {goals.map((g) => {
@@ -3577,15 +3577,15 @@ function GoalsCard({
                       className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
                       style={{ left: `${Math.min(100, Math.max(0, pct))}%` }}
                     >
-                      <span className="text-[10px] font-mono text-ink whitespace-nowrap">{fmt(current!)}</span>
+                      <span className="text-[12px] font-mono text-ink whitespace-nowrap">{fmt(current!)}</span>
                       <span className="text-amber leading-none" aria-hidden="true">▲</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden">
                       <div className="h-full bg-amber rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] text-muted">{fmt(start!)}</span>
-                      <span className="text-[10px] text-muted">{fmt(g.target_value!)}</span>
+                      <span className="text-[12px] text-muted">{fmt(start!)}</span>
+                      <span className="text-[12px] text-muted">{fmt(g.target_value!)}</span>
                     </div>
                   </div>
                 ) : (
@@ -3600,7 +3600,7 @@ function GoalsCard({
       )}
       <a
         href="/calendar"
-        className="mt-3 block text-center text-[11px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
+        className="mt-3 block text-center text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
       >
         ดูเป้าหมายทั้งหมด
       </a>
@@ -3656,10 +3656,10 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
               </span>
               <div className="min-w-0">
                 <p className="text-xs font-display tracked uppercase text-ink">{highlight.title}</p>
-                <p className="text-[11px] text-muted mt-0.5">{highlight.detail}</p>
+                <p className="text-[12px] text-muted mt-0.5">{highlight.detail}</p>
                 <a
                   href="/program"
-                  className="inline-block mt-2 text-[10px] font-display tracked uppercase text-bg bg-amber rounded-full px-3 py-1.5 transition active:scale-[0.99] hover:opacity-90"
+                  className="inline-block mt-2 text-[12px] font-display tracked uppercase text-bg bg-amber rounded-full px-3 py-1.5 transition active:scale-[0.99] hover:opacity-90"
                 >
                   ดูโปรแกรมแนะนำ
                 </a>
@@ -3673,7 +3673,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
           </span>
           <div className="min-w-0 text-xs">
             <p className="text-ink">ดื่มน้ำให้เพียงพอ</p>
-            <p className="text-[11px] text-muted mt-0.5">
+            <p className="text-[12px] text-muted mt-0.5">
               {waterLiters !== null ? `อย่างน้อยวันละ ${waterLiters.toFixed(1)} ลิตร` : 'อย่างน้อยวันละ 2-2.5 ลิตร'}
             </p>
           </div>
@@ -3684,7 +3684,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
           </span>
           <div className="min-w-0 text-xs">
             <p className="text-ink">นอนหลับให้เพียงพอ</p>
-            <p className="text-[11px] text-muted mt-0.5">7-8 ชั่วโมงต่อคืน</p>
+            <p className="text-[12px] text-muted mt-0.5">7-8 ชั่วโมงต่อคืน</p>
           </div>
         </div>
       </div>
@@ -3740,7 +3740,7 @@ function ObesityAnalysisChart({
         <ScaleIcon />
         <span>
           องค์ประกอบร่างกายเทียบเกณฑ์
-          <span className="text-[10px] uppercase tracked text-muted/70 ml-1.5">Health Range Analysis</span>
+          <span className="text-[12px] uppercase tracked text-muted/70 ml-1.5">Health Range Analysis</span>
         </span>
         <span className="text-muted">
           <InfoIcon />
@@ -3753,7 +3753,7 @@ function ObesityAnalysisChart({
       {/* ฟีดแบ็ก "สำนวนข้อความยังไม่เป็นทางการระดับแอปสุขภาพ" — คงประโยคแรก (ตัวเลขเดียวกับ Key Metrics
           ด้านบน) ไว้ตามเดิม เพราะเป็นบริบทที่มีประโยชน์จริง (กันความรู้สึกว่าเห็นตัวเลขซ้ำโดยไม่มีเหตุผล
           ตาม v50 ด้านบน) แค่เปลี่ยนครึ่งหลังให้อ่านเป็นทางการขึ้นตามที่แนะนำ */}
-      <p className="text-[11px] text-muted mb-3">
+      <p className="text-[12px] text-muted mb-3">
         ตัวเลขเดียวกับ Key Metrics ด้านบน — แสดงเป็นการประเมินตำแหน่งดัชนีร่างกายเทียบเกณฑ์มาตรฐานสุขภาพ
       </p>
       {/* v55: "detail tier" (steel accent ด้านบน) = การ์ดรอง ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 อื่นๆ */}
@@ -3876,8 +3876,8 @@ function ZoneBarRow({
           </span>
         </span>
       </div>
-      {interpretation && <p className="text-[11px] text-muted mb-2 -mt-1">{interpretation}</p>}
-      <div className="flex text-[10px] mb-1.5">
+      {interpretation && <p className="text-[12px] text-muted mb-2 -mt-1">{interpretation}</p>}
+      <div className="flex text-[12px] mb-1.5">
         <span style={{ width: `${lowPct}%` }} className="truncate text-steel">
           Low
         </span>
@@ -3897,7 +3897,7 @@ function ZoneBarRow({
           style={{ left: `${valuePct}%`, transform: 'translate(-50%, -50%)' }}
         />
       </div>
-      <div className="flex justify-between text-[10px] text-muted mt-1.5">
+      <div className="flex justify-between text-[12px] text-muted mt-1.5">
         <span>{min.toFixed(decimals)}</span>
         <span>{low.toFixed(decimals)}</span>
         <span>{high.toFixed(decimals)}</span>
@@ -3922,7 +3922,7 @@ function MuscleFatAnalysisChart({
         <MuscleIcon />
         <span>
           กล้ามเนื้อและไขมัน
-          <span className="text-[10px] uppercase tracked text-muted/70 ml-1.5">Muscle &amp; Fat Analysis</span>
+          <span className="text-[12px] uppercase tracked text-muted/70 ml-1.5">Muscle &amp; Fat Analysis</span>
         </span>
         <span className="text-muted">
           <InfoIcon />
@@ -3931,7 +3931,7 @@ function MuscleFatAnalysisChart({
       {/* v50: ฟีดแบ็ก "น้ำหนัก/กล้ามเนื้อโครงร่าง/มวลไขมัน ซ้ำกับ Key Metrics/Additional Metrics ด้านบน — คง
           ไว้ทั้งสองที่ได้ แต่ทำให้ดูเป็นคนละเลเวลชัดขึ้น" — ดูคอมเมนต์เดียวกันที่ ObesityAnalysisChart */}
       {/* ฟีดแบ็ก "สำนวนข้อความยังไม่เป็นทางการระดับแอปสุขภาพ" — ดูคอมเมนต์เดียวกันที่ ObesityAnalysisChart */}
-      <p className="text-[11px] text-muted mb-3">
+      <p className="text-[12px] text-muted mb-3">
         ตัวเลขเดียวกับด้านบน — แสดงเป็นการกระจายตัวขององค์ประกอบร่างกายเทียบเกณฑ์มาตรฐานสุขภาพ
       </p>
       {/* v55: "detail tier" (steel accent ด้านบน) = การ์ดรอง ลด texture ลงครึ่งหนึ่งเหมือน tier 2/3 อื่นๆ */}
@@ -4022,7 +4022,7 @@ function MuscleFatBarRow({
           3 ช่วง (steel/moss/rust) ใช้สีตายตัวไม่สนทิศทาง เปลี่ยนให้ช่วง Low/High ใช้สีเขียว (moss) แทนถ้าฝั่ง
           นั้น favorable จริง (ตรงกับ meta.direction เดียวกับที่ ZoneBadge ใช้ตัดสิน) แถบกับ badge จะพูดเรื่อง
           เดียวกันเสมอ ไม่ขัดกันอีก */}
-      <p className="text-[11px] text-muted mb-1.5 ml-12">{interpretation}</p>
+      <p className="text-[12px] text-muted mb-1.5 ml-12">{interpretation}</p>
       <div className="relative h-2.5 rounded-full bg-surface2 overflow-hidden">
         <div
           className="absolute inset-y-0"
@@ -4046,7 +4046,7 @@ function MuscleFatBarRow({
       {/* v78: ฟีดแบ็ก "อยากให้รวมเป็นบรรทัดเดียว 'ค่าอ้างอิง 22.9–28.0 kg' แทนเลข 2 ฝั่ง + label กลาง แยกกัน 3
           จุด" — เปลี่ยนจาก 3-column spread (low ซ้าย / (ค่าอ้างอิง) กลาง / high ขวา) เป็นบรรทัดเดียวรวมกัน
           กึ่งกลาง อ่านเป็นประโยคเดียวชัดเจนกว่า (เนื้อหาเดียวกันเป๊ะ ไม่ได้เปลี่ยนตัวเลข low/high) */}
-      <p className="text-center text-[10px] text-muted mt-1.5">
+      <p className="text-center text-[12px] text-muted mt-1.5">
         ค่าอ้างอิง {low.toFixed(1)}–{high.toFixed(1)} {unit}
       </p>
     </div>
@@ -4222,7 +4222,12 @@ function IconStatCard({
   const labelCaption = (
     <p className={`text-ink font-medium leading-tight flex items-center gap-1 mt-1.5 ${primary ? 'text-sm' : 'text-xs'}`}>
       {label}
-      <span className={`tracked uppercase text-muted/70 leading-snug ${primary ? 'text-[10px]' : 'text-[9px]'}`}>{subLabel}</span>
+      {/* ฟีดแบ็ก (จากรอบตรวจ Dashboard/Recovery/Coach, "Typography") "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง" —
+          เดิม primary/ไม่ primary ใช้ text-[10px]/text-[9px] แยกกัน (ส่วนหนึ่งของระบบ tier ที่ตั้งใจให้การ์ด
+          รองดูเรียบกว่าการ์ดหลัก — ดู comment v26/v55 ด้านบน) ปรับทั้งคู่ขึ้นมาที่ 12px เท่ากัน ทำให้ ternary
+          ไม่มีผลต่อ font-size อีกต่อไป (เหลือแค่ text-[12px] คงที่) — ลำดับชั้น primary/รองยังคงอยู่ผ่านมิติ
+          อื่น (ขนาดเลขค่าหลัก 52px vs 24-30px, ไอคอน, padding การ์ด ฯลฯ) ไม่ได้หายไปไหน */}
+      <span className="tracked uppercase text-muted/70 leading-snug text-[12px]">{subLabel}</span>
       {infoText && (
         <button
           type="button"
@@ -4274,7 +4279,7 @@ function IconStatCard({
         <MetricIconChip iconKey={icon} imageKey={imageKey} color={color} size={primary ? 44 : tier >= 2 ? 22 : 32} />
         {showZonePill && zoneLabel && (
           <span
-            className={`ml-auto shrink-0 font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${zonePillClass} ${primary ? 'text-[11px]' : 'text-[9px]'}`}
+            className={`ml-auto shrink-0 font-display tracked uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${zonePillClass} text-[12px]`}
           >
             {zoneLabel}
           </span>
@@ -4334,11 +4339,11 @@ function IconStatCard({
                   <div className="h-px bg-line mb-2" />
                   {(trendLabel || trendTag) && (
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      {trendLabel && <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>}
+                      {trendLabel && <p className="text-[12px] tracked uppercase text-muted">{trendLabel}</p>}
                       {/* ฟีดแบ็ก "30 DAY TREND ดีไซน์สวย แต่ Muscle-driven ↑ สีเขียวค่อนข้างเด่น แย่งสายตา
                           จากกราฟ — กราฟควรเป็นพระเอก ไม่ใช่ label" — ลด opacity จาก text-moss เต็มเป็น
                           text-moss/70 */}
-                      {trendTag && <span className="text-[11px] text-moss/70 shrink-0">{trendTag}</span>}
+                      {trendTag && <span className="text-[12px] text-moss/70 shrink-0">{trendTag}</span>}
                     </div>
                   )}
                   <Sparkline series={series} color={trendColor ?? color} endpointColor={trendEndpointColor} height={48} width={400} stretch />
@@ -4347,12 +4352,12 @@ function IconStatCard({
                 <>
                   <div className="h-px bg-line mb-2" />
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] tracked uppercase text-muted">{trendLabel}</p>
-                    {trendTag && <span className="text-[11px] text-moss shrink-0">{trendTag}</span>}
+                    <p className="text-[12px] tracked uppercase text-muted">{trendLabel}</p>
+                    {trendTag && <span className="text-[12px] text-moss shrink-0">{trendTag}</span>}
                   </div>
                 </>
               ) : null}
-              {lastMeasuredLabel && <p className="text-[10px] text-muted mt-2">ล่าสุด {lastMeasuredLabel}</p>}
+              {lastMeasuredLabel && <p className="text-[12px] text-muted mt-2">ล่าสุด {lastMeasuredLabel}</p>}
             </div>
           )}
           {showInfo && infoText && <p className="text-xs text-muted mt-2 pt-2 border-t border-line">{infoText}</p>}
@@ -4372,17 +4377,17 @@ function IconStatCard({
           {/* ฟีดแบ็ก "Metric Cards ควรอ่านได้ใน 1 วินาที...ข้อความรองค่อนข้างจางและแน่น — เพิ่มระยะห่างระหว่าง
               แต่ละข้อมูล" — เดิม secondary ไม่มี margin-top เลย (ชิดค่าหลักทันที) เพิ่ม mt-0.5 คั่น แล้วเพิ่ม
               insight จาก mt-0.5 เป็น mt-1 ให้แยกจาก secondary ชัดขึ้นอีกขั้น */}
-          {secondary && <p className={`font-mono whitespace-nowrap text-[11px] mt-0.5 ${secondary.color}`}>{secondary.text}</p>}
+          {secondary && <p className={`font-mono whitespace-nowrap text-[12px] mt-0.5 ${secondary.color}`}>{secondary.text}</p>}
           {/* v21: ฟีดแบ็ก "คำอธิบายด้านล่าง...เพิ่มความสว่างของตัวอักษรประมาณ 10-15%" — เหมือนบรรทัด insight
               ของ primary card ด้านบน เปลี่ยนจาก text-muted เป็น #A8ACB4 (สว่างกว่า ~12%) */}
-          {insight && <p className="truncate text-[10px] mt-1" style={{ color: '#A8ACB4' }}>{insight}</p>}
+          {insight && <p className="truncate text-[12px] mt-1" style={{ color: '#A8ACB4' }}>{insight}</p>}
           {labelCaption}
           {series && series.length >= 2 && (
             <div className="mt-1.5">
               <Sparkline series={series} color={sparklineColor} height={18} width={200} stretch />
             </div>
           )}
-          {showInfo && infoText && <p className="text-[10px] text-muted mt-1.5 pt-1.5 border-t border-line">{infoText}</p>}
+          {showInfo && infoText && <p className="text-[12px] text-muted mt-1.5 pt-1.5 border-t border-line">{infoText}</p>}
         </div>
       )}
     </PremiumCard>
@@ -4429,7 +4434,7 @@ function SexPrompt({ profile, onSaved }: { profile: Profile; onSaved: (p: Profil
         >
           {saving === 'female' ? '...' : 'หญิง'}
         </button>
-        <button type="button" onClick={() => setDismissed(true)} className="text-[10px] text-muted underline transition hover:text-ink">
+        <button type="button" onClick={() => setDismissed(true)} className="text-[12px] text-muted underline transition hover:text-ink">
           ข้าม
         </button>
       </div>
@@ -4707,7 +4712,7 @@ function MetricForm({
       </div>
 
       <ImportBodyReportPhoto onExtracted={handleExtracted} />
-      {heightNote && <p className="text-[11px] text-muted -mt-1">{heightNote}</p>}
+      {heightNote && <p className="text-[12px] text-muted -mt-1">{heightNote}</p>}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         <LabeledInput label="ส่วนสูง (ซม.)" value={heightCm} onChange={setHeightCm} onBlur={handleHeightBlur} />
@@ -4735,13 +4740,13 @@ function MetricForm({
         <button
           type="button"
           onClick={() => setShowRanges((v) => !v)}
-          className="text-[11px] text-steel underline"
+          className="text-[12px] text-steel underline"
         >
           {showRanges ? 'ซ่อนช่วงมาตรฐาน' : '+ กรอกช่วงมาตรฐาน (สำหรับกราฟ Muscle Fat Analysis)'}
         </button>
         {showRanges && (
           <div className="mt-3 space-y-3">
-            <p className="text-[10px] text-muted">
+            <p className="text-[12px] text-muted">
               คัดลอกจากตาราง &quot;Muscle fat analysis&quot; ในรายงานเครื่องชั่ง (Low–High) — กรอกครั้งแรกครั้งเดียวก็พอ ใช้ค่าล่าสุดที่เคยกรอกไว้ต่อได้เรื่อยๆ
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -4786,7 +4791,7 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
     return (
       <PremiumCard className="px-4 py-3.5">
         <h2 className="font-display text-sm tracked uppercase text-muted mb-1">BMR/TDEE โดยประมาณ</h2>
-        <p className="text-[11px] text-muted">
+        <p className="text-[12px] text-muted">
           กรอกอายุ, ส่วนสูง, เพศ และน้ำหนักล่าสุดให้ครบ (แท็บ &quot;บันทึกข้อมูล&quot;) เพื่อประมาณอัตราการเผาผลาญพื้นฐาน
         </p>
       </PremiumCard>
@@ -4800,18 +4805,18 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
     <PremiumCard className="px-4 py-3.5 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm tracked uppercase text-muted">BMR/TDEE โดยประมาณ</h2>
-        <span className="text-[10px] text-muted">สูตร Mifflin-St Jeor</span>
+        <span className="text-[12px] text-muted">สูตร Mifflin-St Jeor</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <p className="text-[10px] tracked uppercase text-muted">BMR</p>
+          <p className="text-[12px] tracked uppercase text-muted">BMR</p>
           <p className="font-mono text-xl text-ink">
             {bmr}
             <span className="text-xs text-muted ml-1">kcal</span>
           </p>
         </div>
         <div>
-          <p className="text-[10px] tracked uppercase text-muted">TDEE</p>
+          <p className="text-[12px] tracked uppercase text-muted">TDEE</p>
           <p className="font-mono text-xl text-amber">
             {tdee}
             <span className="text-xs text-muted ml-1">kcal</span>
@@ -4819,7 +4824,7 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
         </div>
       </div>
       <label className="block">
-        <span className="block text-[10px] tracked uppercase text-muted mb-1">ระดับกิจกรรม</span>
+        <span className="block text-[12px] tracked uppercase text-muted mb-1">ระดับกิจกรรม</span>
         <select
           value={activity}
           onChange={(e) => setActivity(e.target.value as ActivityLevel)}
@@ -4832,7 +4837,7 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
           ))}
         </select>
       </label>
-      <p className="text-[10px] text-muted/70">
+      <p className="text-[12px] text-muted/70">
         * เป็นค่าประมาณจากสูตรทั่วไป ไม่ใช่ค่าที่วัดจริง ถ้ามีค่า BMR จากรายงานเครื่องชั่งจะใช้ค่านั้นแทนอัตโนมัติ (แม่นกว่า)
       </p>
     </PremiumCard>
@@ -4852,7 +4857,7 @@ function LabeledInput({
 }) {
   return (
     <div>
-      <label className="block text-[10px] tracked uppercase text-muted mb-1">{label}</label>
+      <label className="block text-[12px] tracked uppercase text-muted mb-1">{label}</label>
       <input
         type="number"
         inputMode="decimal"
@@ -5015,7 +5020,7 @@ function PhotosTab({
                 >
                   ×
                 </button>
-                <p className="text-[10px] text-muted mt-1 truncate">{shortLabel(p.taken_at)}</p>
+                <p className="text-[12px] text-muted mt-1 truncate">{shortLabel(p.taken_at)}</p>
               </div>
             ))}
           </div>
