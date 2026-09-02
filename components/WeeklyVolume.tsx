@@ -245,7 +245,7 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
                       จอมือถือแสงจ้าจะอ่านสีล้วนๆ ยากกว่ามี emoji กำกับ) ยุบจาก 2 บรรทัด (ตัวเลข/คำ) เหลือ
                       บรรทัดเดียว (emoji+ตัวเลข) คอลัมน์แคบลงตาม (w-24 -> w-20) — emoji มาจาก BUCKET_META
                       เดียวกับป้ายสรุปด้านบนเป๊ะ (ดูคอมเมนต์ที่ BUCKET_META) ไม่ได้ hardcode แยกอิสระ */}
-                  <span className="flex items-center justify-end gap-1 shrink-0 w-20">
+                  <span className="flex items-center gap-1 shrink-0">
                     <span aria-hidden="true">{meta.emoji}</span>
                     <span className="text-[12px] font-mono font-bold" style={{ color }}>
                       {status === 'behind'
