@@ -71,7 +71,6 @@ import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
-import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
@@ -79,19 +78,19 @@ import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import FitnessScoreDetailSheet from '@/components/dashboard/FitnessScoreDetailSheet'
 import HeroGaugeConcept from '@/components/dashboard/HeroGaugeConcept'
-import HighlightsRow from '@/components/dashboard/HighlightsRow'
 
+// ฟีดแบ็ก (Information Hierarchy review) — "Dashboard มีข้อมูลเยอะเกินไป ควร Simplify → Prioritize →
+// Action ไม่ใช่ Add → Add → Add" — ย้าย WeeklyMuscleHeatmap/WeeklyVolume/ConsistencyStrip ออกจากหน้านี้
+// ไปที่ /stats (รายละเอียดเต็มยังอยู่ครบที่นั่น) แทนที่ด้วย WeeklyInsightsCard การ์ดสรุปสั้นๆ เดียว —
+// WeeklyCardioVolume ตัดออกเฉยๆ ไม่ต้องย้ายไปเพิ่มที่ไหน เพราะมีหน้าของตัวเองอยู่แล้วที่ /cardio
+// (app/(app)/cardio/page.tsx เรียก component เดียวกันนี้อยู่แล้ว) HighlightsRow เอาออกด้วย (ข้อมูล
+// streak/consistency ยังอยู่ในการ์ด Training This Week/Hero ด้านบนอยู่แล้ว ไม่ต้องพูดซ้ำอีกแถว)
+//
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
 // first paint of the hero card on their JS or their network round-trip.
-const WeeklyMuscleHeatmap = dynamic(() => import('@/components/WeeklyMuscleHeatmap'), {
-  loading: () => <Skeleton className="h-80 w-full rounded-card" />,
-})
-const WeeklyVolume = dynamic(() => import('@/components/WeeklyVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-card" />,
-})
-const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-card" />,
+const WeeklyInsightsCard = dynamic(() => import('@/components/dashboard/WeeklyInsightsCard'), {
+  loading: () => <Skeleton className="h-32 w-full rounded-card" />,
 })
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
@@ -2031,8 +2030,17 @@ export default function DashboardPage() {
                         ตัวคนให้ sync ด้วยแล้ว */}
                     <div className="flex-1 min-w-0 space-y-1.5">
                     {(() => {
+                      // ฟีดแบ็ก (Information Hierarchy review) — "หน้า Home ไม่ควรแสดงทุก muscle group
+                      // แบบเต็มตั้งแต่แรก อยาก top ~3 พอ + ลิงก์ดูรายละเอียด" — เดิม notReadyMuscles โชว์
+                      // ทุกกลุ่มที่ยังไม่ฟื้นตัวเต็มที่ (อาจได้ถึง 5-6 กลุ่ม ถ้าเพิ่งฝึกหนักมาหลายวัน) เรียง
+                      // ตามลำดับ RECOVERY_MUSCLES คงที่ ไม่ใช่ตามความเร่งด่วน — เรียงตาม pct น้อยสุดก่อน
+                      // (ฟื้นตัวน้อยสุด = เร่งด่วนสุดที่ควรรู้) แล้วตัดเหลือ 3 กลุ่มแรกเป็นค่าเริ่มต้น ปุ่ม
+                      // "แสดงทั้งหมด" เดิมด้านล่างยังกดดูครบ 7 กลุ่มได้เหมือนเดิม ไม่เสียข้อมูล แค่ไม่บังคับ
+                      // เห็นทุกกลุ่มตั้งแต่แรก (การ์ดทั้งใบเป็นลิงก์ไป /recovery อยู่แล้วด้วยสำหรับรายละเอียดเต็ม)
                       const notReadyMuscles = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT)
-                      const displayedMuscles = showAllRecovery ? RECOVERY_MUSCLES : notReadyMuscles
+                        .slice()
+                        .sort((a, b) => recoveryPctMap[a] - recoveryPctMap[b])
+                      const displayedMuscles = showAllRecovery ? RECOVERY_MUSCLES : notReadyMuscles.slice(0, 3)
                       if (displayedMuscles.length === 0) {
                         // ฟีดแบ็ก "Recovery 100% ไม่ควรแปลว่า 'ทุกกล้ามเนื้อพร้อมฝึก' — ผู้ใช้อาจตีความเป็น
                         // 'พร้อมฝึก = ควรฝึก' ทั้งที่ Weekly Volume บางกลุ่มอาจเกินเป้าไปแล้ว" — เดิมข้อความนี้
@@ -2126,12 +2134,14 @@ export default function DashboardPage() {
                     })()}
                     </div>
                   </div>
-                  {/* toggle ระหว่างลิสต์ย่อ (เฉพาะกลุ่มที่ยังไม่พร้อม) กับลิสต์เต็ม 7 กลุ่ม — โชว์เฉพาะตอน
-                      มีอะไรให้สลับจริง (บางกลุ่มถูกซ่อนอยู่) กันปุ่มลอยอยู่เฉยๆ ตอนทุกกลุ่มพร้อมหรือทุกกลุ่ม
-                      ยังไม่พร้อมพร้อมกันหมด (ซึ่งลิสต์สั้น/ยาวจะเท่ากันอยู่แล้วในสองเคสนั้น) */}
+                  {/* toggle ระหว่างลิสต์ย่อ (top 3 ที่ยังไม่พร้อม เร่งด่วนสุดก่อน) กับลิสต์เต็ม 7 กลุ่ม —
+                      โชว์เฉพาะตอนมีอะไรให้สลับจริง (ตอนนี้ลิสต์ย่อ cap ไว้แค่ 3 เสมอ — ถ้ามีกลุ่มที่ยังไม่
+                      พร้อมอย่างน้อย 1 กลุ่ม แปลว่ากดขยายแล้วจะเห็นเพิ่มแน่ๆ ไม่ว่าจะเป็นกลุ่มไม่พร้อมที่เหลือ
+                      หรือกลุ่มที่ฟื้นตัวเต็มที่แล้ว) กันปุ่มลอยอยู่เฉยๆ ตอนทุกกลุ่มพร้อมหมดแล้ว (ข้อความ
+                      "ฟื้นตัวดีทุกกลุ่มกล้ามเนื้อ ✅" ด้านบนสื่อสารครบอยู่แล้ว ไม่ต้องมีปุ่มขยายเพิ่ม) */}
                   {(() => {
                     const notReadyCount = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT).length
-                    if (notReadyCount === 0 || notReadyCount === RECOVERY_MUSCLES.length) return null
+                    if (notReadyCount === 0) return null
                     return (
                       <button
                         type="button"
@@ -2390,7 +2400,6 @@ export default function DashboardPage() {
           สูงขึ้นเองตามเนื้อหาใหม่ ทุกอย่างด้านล่างขยับตามอัตโนมัติ — ไม่เอา "Quick Action" คู่จากมอคอัพมา
           ด้วย เพราะซ้ำกับแถว QuickAction ที่มีอยู่แล้วตรงนี้ (คนละลิงก์กัน จะสับสน) */}
       <div className="hidden lg:flex lg:flex-col lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3">
-        <HighlightsRow streak={data.streak} bestVolumeIncrease={data.bestVolumeIncrease} weeklyConsistencyPct={data.weeklyConsistencyPct} />
         <div className={`grid gap-3 ${data.hasAnyHistory ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
           <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
@@ -2400,39 +2409,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* full width (lg+): below-the-fold charts, insights, quick actions
-          Order follows a "what happened -> am I on track -> what's next" reading flow:
-          full graphic heatmap + weekly volume (side by side, lined up with AI Coach) ->
-          today's trained-muscle heatmap -> muscle share card -> consistency calendar
-          (recent workouts / PRs per day) -> next-up + quick actions last.
-          Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
-          leaves room 10-12 for the AI Coach card. */}
-      <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-3">
-          <WeeklyMuscleHeatmap />
-        </div>
-        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-3">
-          <WeeklyVolume />
-        </div>
+      {/* ฟีดแบ็ก (Information Hierarchy review) — "Weekly Volume/Muscle Balance เป็นตัวเลขดิบ ควรสรุปเป็น
+          insight ที่ actionable เลย" — เดิมตรงนี้เป็น WeeklyMuscleHeatmap (col-span-6) + WeeklyVolume
+          (col-span-3) วางคู่กัน ทั้งคู่ย้ายไปอยู่ /stats แล้ว (รายละเอียดเต็มยังอยู่ครบที่นั่น) แทนที่ด้วย
+          WeeklyInsightsCard การ์ดสรุปสั้นๆ เดียว เต็มความกว้าง (col-span-9 เท่าแถว QuickAction ด้านบน —
+          ไม่ชนคอลัมน์ AI Coach ที่ row-span 2 คร่อมแถวนี้อยู่ที่คอลัมน์ 10-12) */}
+      <div className="lg:col-start-1 lg:col-span-9 lg:row-start-3">
+        <WeeklyInsightsCard />
       </div>
       </div>
       {/* end cards cluster sub-grid */}
-
-      {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
-          weeks, weekly volume, weekly exercise count) render beside the calendar grid inside
-          ConsistencyStrip itself (two-column on lg+), matching the reference layout instead
-          of duplicating streak/PR numbers in separate cards next to it. */}
-      <div className="lg:col-span-12 lg:order-15">
-        <ConsistencyStrip />
-      </div>
-
-      {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — การ์ด "Next up" เดี่ยวๆ
-          ที่เคยอยู่ตรงนี้ย้ายไปรวมกับ Weekly Goal แล้ว (ดู comment "Next →" ในการ์ด Weekly Goal ด้านบน)
-          กันไม่ให้ "เซสชันถัดไป" ถูกพูดซ้ำสองที่บนหน้าเดียวกัน */}
-
-      <div className="lg:col-span-12 lg:order-21">
-        <WeeklyCardioVolume />
-      </div>
 
       {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-9 above */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:hidden">
