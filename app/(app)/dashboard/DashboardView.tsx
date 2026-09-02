@@ -71,7 +71,6 @@ import OnboardingBanner from '@/components/OnboardingBanner'
 import ErrorState from '@/components/ErrorState'
 import Skeleton from '@/components/Skeleton'
 import BodyMetricsRow from '@/components/BodyMetricsRow'
-import ConsistencyStrip from '@/components/ConsistencyStrip'
 import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
@@ -79,19 +78,21 @@ import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import FitnessScoreDetailSheet from '@/components/dashboard/FitnessScoreDetailSheet'
 import HeroGaugeConcept from '@/components/dashboard/HeroGaugeConcept'
-import HighlightsRow from '@/components/dashboard/HighlightsRow'
 
+// ฟีดแบ็ก (Information Hierarchy review, รอบที่ 3) — "Highlights ซ้ำกับ Training This Week (89%
+// Consistency โผล่ทั้ง 2 การ์ด) ควรเป็น 'Weekly Insights' ที่วิเคราะห์ให้จริง (Streak + กลุ่มไหนเกิน/ขาด
+// เป้า) ส่วนด้านล่าง Heatmap/Weekly Volume/Consistency/Cardio/HR Zone ยังยาวเกินไปสำหรับ Home ควรย้าย
+// ไป /stats ให้หมด เหลือแค่ Weekly Insights เป็นจุดจบของหน้า" — ย้าย WeeklyMuscleHeatmap/WeeklyVolume/
+// ConsistencyStrip ออกจากหน้านี้ไปที่ /stats (รายละเอียดเต็มยังอยู่ครบที่นั่น) แทนที่ HighlightsRow เดิม
+// ด้วย WeeklyInsightsCard ใหม่ (รวม Streak + insight volume, มีลิงก์ "ดูการวิเคราะห์ทั้งหมด →" ไป /stats
+// ในตัวอยู่แล้ว ไม่ต้องเพิ่มปุ่มแยกท้ายหน้าอีก) — WeeklyCardioVolume ตัดออกเฉยๆ ไม่ต้องย้ายไปเพิ่มที่ไหน
+// เพราะมีหน้าของตัวเองอยู่แล้วที่ /cardio (app/(app)/cardio/page.tsx เรียก component เดียวกันนี้อยู่แล้ว)
+//
 // Below-the-fold widgets are code-split out of the initial dashboard bundle.
 // Each fetches its own data independently, so there's no reason to block
 // first paint of the hero card on their JS or their network round-trip.
-const WeeklyMuscleHeatmap = dynamic(() => import('@/components/WeeklyMuscleHeatmap'), {
-  loading: () => <Skeleton className="h-80 w-full rounded-card" />,
-})
-const WeeklyVolume = dynamic(() => import('@/components/WeeklyVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-card" />,
-})
-const WeeklyCardioVolume = dynamic(() => import('@/components/WeeklyCardioVolume'), {
-  loading: () => <Skeleton className="h-56 w-full rounded-card" />,
+const WeeklyInsightsCard = dynamic(() => import('@/components/dashboard/WeeklyInsightsCard'), {
+  loading: () => <Skeleton className="h-40 w-full rounded-card" />,
 })
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
@@ -2393,15 +2394,8 @@ export default function DashboardPage() {
           above/below (quick-start + log/templates/stats) stay as-is; at xl they're both
           hidden and replaced by this single deduplicated row so the 12-col grid doesn't
           show the same "บันทึก"/"เทมเพลต" shortcuts twice. Narrowed to col-span-9 (from 12)
-          so it sits beside the AI Coach card instead of running underneath it.
-          ฟีดแบ็ก "ลองเอาไปแทรกของจริง" (Highlights จากหน้า preview /dashboard-concept) — วาง
-          HighlightsRow ซ้อนอยู่เหนือแถว QuickAction เดิมในกริดเซลล์เดียวกัน (col-start-1/col-span-9/
-          row-start-2 ย้ายไปอยู่ที่ div ห่อนี้แทน) ไม่ต้องแก้ row-start ของ AI Coach/Heatmap/Volume ที่
-          เหลือเลย เพราะ grid นี้ไม่ได้ fix ความสูงแถวตายตัว (auto-size ตามเนื้อหา) แถว row-start-2 แค่
-          สูงขึ้นเองตามเนื้อหาใหม่ ทุกอย่างด้านล่างขยับตามอัตโนมัติ — ไม่เอา "Quick Action" คู่จากมอคอัพมา
-          ด้วย เพราะซ้ำกับแถว QuickAction ที่มีอยู่แล้วตรงนี้ (คนละลิงก์กัน จะสับสน) */}
+          so it sits beside the AI Coach card instead of running underneath it. */}
       <div className="hidden lg:flex lg:flex-col lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3">
-        <HighlightsRow streak={data.streak} bestVolumeIncrease={data.bestVolumeIncrease} weeklyConsistencyPct={data.weeklyConsistencyPct} />
         <div className={`grid gap-3 ${data.hasAnyHistory ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
           <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
@@ -2411,39 +2405,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* full width (lg+): below-the-fold charts, insights, quick actions
-          Order follows a "what happened -> am I on track -> what's next" reading flow:
-          full graphic heatmap + weekly volume (side by side, lined up with AI Coach) ->
-          today's trained-muscle heatmap -> muscle share card -> consistency calendar
-          (recent workouts / PRs per day) -> next-up + quick actions last.
-          Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
-          leaves room 10-12 for the AI Coach card. */}
-      <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-3">
-          <WeeklyMuscleHeatmap />
-        </div>
-        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-3">
-          <WeeklyVolume />
-        </div>
+      {/* ฟีดแบ็ก (Information Hierarchy review, รอบที่ 3) — จุดจบของ Home คือ Weekly Insights (ดู
+          คอมเมนต์ที่ import ด้านบน) เดิมตรงนี้เป็น WeeklyMuscleHeatmap (col-span-6) + WeeklyVolume
+          (col-span-3) วางคู่กัน ทั้งคู่ย้ายไปอยู่ /stats แล้ว (รายละเอียดเต็มยังอยู่ครบที่นั่น) แทนที่ด้วย
+          WeeklyInsightsCard เต็มความกว้าง (col-span-9 เท่าแถว QuickAction ด้านบน — ไม่ชนคอลัมน์ AI Coach
+          ที่ row-span 2 คร่อมแถวนี้อยู่ที่คอลัมน์ 10-12) */}
+      <div className="lg:col-start-1 lg:col-span-9 lg:row-start-3">
+        <WeeklyInsightsCard streak={data.streak} />
       </div>
       </div>
       {/* end cards cluster sub-grid */}
-
-      {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
-          weeks, weekly volume, weekly exercise count) render beside the calendar grid inside
-          ConsistencyStrip itself (two-column on lg+), matching the reference layout instead
-          of duplicating streak/PR numbers in separate cards next to it. */}
-      <div className="lg:col-span-12 lg:order-15">
-        <ConsistencyStrip />
-      </div>
-
-      {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — การ์ด "Next up" เดี่ยวๆ
-          ที่เคยอยู่ตรงนี้ย้ายไปรวมกับ Weekly Goal แล้ว (ดู comment "Next →" ในการ์ด Weekly Goal ด้านบน)
-          กันไม่ให้ "เซสชันถัดไป" ถูกพูดซ้ำสองที่บนหน้าเดียวกัน */}
-
-      <div className="lg:col-span-12 lg:order-21">
-        <WeeklyCardioVolume />
-      </div>
 
       {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-9 above */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:hidden">
