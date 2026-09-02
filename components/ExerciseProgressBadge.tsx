@@ -22,12 +22,14 @@ export default function ExerciseProgressBadge({
     )
   }
   if (progress.kind === 'bestVolume') {
+    // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิมมีบรรทัด "Top {topPercent}%" ต่อท้าย — topPercent คำนวณ
+    // ออกมาเป็น 1 เสมอโดยโครงสร้าง (ดู comment ที่ computeExerciseProgress ใน lib/workoutDisplay.ts) ไม่ได้
+    // สื่อข้อมูลอะไรเพิ่มเติมจาก "🏆 Best Volume" ด้านบนเลย — ตัดออก ให้เหลือแค่ป้ายเดียวที่สื่อความหมายจริง
     return (
       <div className="text-right shrink-0 leading-tight">
         <span className="inline-block rounded-full bg-violetdim px-2.5 py-1">
           <p className="text-[12px] font-semibold text-violet">🏆 Best Volume</p>
         </span>
-        {progress.topPercent !== null && <p className="text-[9px] text-muted mt-1">Top {progress.topPercent}%</p>}
       </div>
     )
   }

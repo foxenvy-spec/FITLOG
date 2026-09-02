@@ -99,10 +99,16 @@ describe('computeExerciseProgress', () => {
   it('flags best volume when weight is not a PR but volume is', () => {
     const prior = [makeWorkout({ id: 'p1', performed_at: '2026-07-10', weight_kg: 40, sets: 3, reps: 8, total_volume_kg: 960 })]
     const today = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 40, sets: 5, reps: 8, total_volume_kg: 1600 })
-    expect(computeExerciseProgress(today, prior)).toEqual({ kind: 'bestVolume', topPercent: null })
+    expect(computeExerciseProgress(today, prior)).toEqual({ kind: 'bestVolume' })
   })
 
-  it('computes a topPercent for best volume once there is enough history', () => {
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิม ExerciseProgress กิ่ง 'bestVolume' มี topPercent ต่อท้าย
+  // (จาก volumeTopPercent) แต่ branch นี้เข้าได้เฉพาะตอน thisVolume ชนะทุกแถวใน prior อยู่แล้ว ทำให้
+  // เปอร์เซ็นไทล์ที่คำนวณออกมาเป็น 100% คงที่เสมอ (ผลลัพธ์หลัง clamp คือ "Top 1%" ทุกครั้งไม่ว่าข้อมูล
+  // ย้อนหลังจะเป็นอย่างไร) — ตัด topPercent ออกทั้งหมด (ดู ExerciseProgress ใน lib/workoutDisplay.ts) เทสต์
+  // นี้เดิมชื่อ "computes a topPercent..." ยืนยันพฤติกรรมที่เป็นบั๊ก เปลี่ยนมายืนยันแค่ว่ายัง flag bestVolume
+  // ถูกต้องแม้มีประวัติยาว (จำนวน prior เยอะกว่าเทสต์ข้างบน) แทน
+  it('still flags best volume correctly with a longer prior history', () => {
     const prior = [
       makeWorkout({ id: 'p1', performed_at: '2026-06-01', weight_kg: 40, total_volume_kg: 500 }),
       makeWorkout({ id: 'p2', performed_at: '2026-06-08', weight_kg: 40, total_volume_kg: 700 }),
@@ -110,7 +116,7 @@ describe('computeExerciseProgress', () => {
       makeWorkout({ id: 'p4', performed_at: '2026-06-22', weight_kg: 40, total_volume_kg: 950 }),
     ]
     const today = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 40, total_volume_kg: 1600 })
-    expect(computeExerciseProgress(today, prior)).toEqual({ kind: 'bestVolume', topPercent: 1 })
+    expect(computeExerciseProgress(today, prior)).toEqual({ kind: 'bestVolume' })
   })
 
   it('flags up/down relative to the most recent session when neither is a record', () => {

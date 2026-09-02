@@ -32,6 +32,7 @@ import {
   computeTodaysRecommendation,
   computeDashboardNotifications,
   computeTrainingBalance,
+  computeMuscleBalance,
   trainingBalanceInsight,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
@@ -856,6 +857,31 @@ describe('computeDashboardNotifications', () => {
 })
 
 const ALL_MUSCLES = ['อก', 'หลัง', 'ขา', 'น่อง', 'ไหล่', 'แขน', 'แกนกลางลำตัว']
+
+describe('computeMuscleBalance', () => {
+  it('returns 100 when all groups share an equal amount', () => {
+    expect(computeMuscleBalance([10, 10, 10, 10, 10, 10, 10])).toBe(100)
+  })
+
+  it('returns 0 for an empty or all-zero input', () => {
+    expect(computeMuscleBalance([])).toBe(0)
+    expect(computeMuscleBalance([0, 0, 0, 0, 0, 0, 0])).toBe(0)
+  })
+
+  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิมกรองกลุ่มที่ share === 0 ออกก่อนคำนวณ ทำให้ฝึกกลุ่มเดียว
+  // ทั้งสัปดาห์ (6 ใน 7 กลุ่มไม่ถูกฝึกเลย) ได้คะแนน 100 ("สมดุลดี") ทั้งที่เป็นกรณีไม่สมดุลที่สุดที่เป็นไปได้
+  it('scores training only one muscle group as maximally unbalanced, not "perfectly balanced"', () => {
+    const score = computeMuscleBalance([100, 0, 0, 0, 0, 0, 0])
+    expect(score).toBe(0)
+  })
+
+  it('penalizes leaving one group completely untrained even when the rest are perfectly even', () => {
+    // 6 กลุ่มฝึกเท่ากันเป๊ะ + 1 กลุ่มไม่ถูกฝึกเลย — ควรได้คะแนนต่ำกว่า 100 ชัดเจน (ไม่ใช่ตกกลับไปคำนวณ
+    // เฉพาะ 6 กลุ่มที่มีข้อมูลเหมือนเดิม)
+    const score = computeMuscleBalance([10, 10, 10, 10, 10, 10, 0])
+    expect(score).toBe(59)
+  })
+})
 
 describe('computeTrainingBalance', () => {
   it('returns null when there is no volume data at all', () => {

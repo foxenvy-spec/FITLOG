@@ -928,11 +928,19 @@ export function optimalVolumeRange(target: number): VolumeRange {
 // variation) ของสัดส่วน แล้วแปลงกลับเป็น 0-100 (100 = กระจายเท่ากันทุกกลุ่มเป๊ะ, ต่ำ = กระจุกตัว)
 // เป็นตัวชี้วัดคร่าวๆ ให้เห็นภาพรวม ไม่ใช่คำแนะนำทางการแพทย์/โภชนาการ
 // (เดิมอยู่ใน MuscleShareCard.tsx — ย้ายมาไว้ตรงกลางเพื่อให้ WeeklyVolume เรียกใช้ได้ด้วย)
+// บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิมกรอง (filter) กลุ่มที่ไม่มีเซ็ตเลย (share === 0) ออกก่อน
+// คำนวณ — ถ้าฝึกแค่กลุ่มเดียวทั้งสัปดาห์ (nonZero.length === 1) สูตรจะคืน 100 ("สมดุลดี") ทั้งที่เป็นกรณี
+// ไม่สมดุลที่สุดที่เป็นไปได้ (6 ใน 7 กลุ่มไม่ถูกฝึกเลย) — สาเหตุคือกลุ่มที่ไม่มีเซ็ตถูกกันออกจากการคำนวณ
+// ค่าเบี่ยงเบนไปเลย ไม่ได้ถูกนับเป็น "เบี่ยงเบนจากค่าเฉลี่ยมากที่สุด" ตามที่ควรจะเป็น — เปลี่ยนมาคำนวณจาก
+// shares ทั้งชุดตรงๆ (รวมกลุ่มที่เป็น 0 ด้วย) ให้กลุ่มที่ไม่ถูกฝึกเลยถูกนับเป็นส่วนหนึ่งของค่าเบี่ยงเบนจริง
+// ผลคือ Balance % จะขยับสำหรับทุกคน ไม่ใช่แค่เคส edge case นี้ (เดิมกรณีฝึกไม่ครบทุกกลุ่มจะได้คะแนนสูงเกิน
+// จริงเสมอ เพราะกลุ่มที่ขาดไปไม่เคยถูกนับเป็นความไม่สมดุลเลย) — ยังคง guard mean<=0 กันหารด้วยศูนย์ตอน
+// ไม่มีข้อมูลเลย (shares ทุกตัวเป็น 0)
 export function computeMuscleBalance(shares: number[]): number {
-  const nonZero = shares.filter((s) => s > 0)
-  if (nonZero.length <= 1) return nonZero.length === 0 ? 0 : 100
-  const mean = nonZero.reduce((a, b) => a + b, 0) / nonZero.length
-  const variance = nonZero.reduce((a, b) => a + (b - mean) ** 2, 0) / nonZero.length
+  if (shares.length === 0) return 0
+  const mean = shares.reduce((a, b) => a + b, 0) / shares.length
+  if (mean <= 0) return 0
+  const variance = shares.reduce((a, b) => a + (b - mean) ** 2, 0) / shares.length
   const cv = Math.sqrt(variance) / mean
   return Math.max(0, Math.round(100 - cv * 100))
 }
