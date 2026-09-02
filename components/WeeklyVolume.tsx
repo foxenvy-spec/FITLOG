@@ -228,9 +228,9 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
                   ...(isHighlighted ? { boxShadow: `0 0 0 1.5px ${color}`, backgroundColor: `${color}26` } : undefined),
                 }}
               >
-                <div className="flex items-center gap-2 px-2.5 pt-2">
+                <div className="flex flex-wrap items-center gap-2 px-2.5 pt-2">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                  <span className="text-xs text-ink flex-1 min-w-0 truncate">{mg}</span>
+                  <span className="text-xs text-ink flex-1">{mg}</span>
                   <span className="text-[12px] font-mono text-muted shrink-0">
                     {sets}
                     <span className="text-muted/60"> / {target} เซ็ต</span>
