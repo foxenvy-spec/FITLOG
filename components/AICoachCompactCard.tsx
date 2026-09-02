@@ -328,7 +328,8 @@ export default function AICoachCompactCard({
               11px/uppercase/muted" — เดิม 10px/8px (ป้ายชื่อ/timestamp) เล็กกว่าที่ขอ ขยับขึ้นตามสเปค */}
           <div className="flex items-center justify-between gap-2">
             <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 min-w-0" style={{ color: TEXT.body }}>
-              <span aria-hidden="true">✨</span> MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}
+              <span aria-hidden="true" className="shrink-0">✨</span>
+              <span className="truncate">MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}</span>
             </p>
             <span className="flex items-center gap-1 text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
