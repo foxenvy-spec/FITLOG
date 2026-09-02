@@ -2308,23 +2308,20 @@ export default function DashboardPage() {
           {/* ฟีดแบ็ก "Volume/Consistency อยู่ชิดด้านล่างมาก ดูเหมือนข้อมูลประกอบเล็กๆ — อยากให้เป็น
               Secondary Metrics ที่อ่านง่ายขึ้น: ตัวเลขใหญ่ + label ใต้ตัวเลข แบบเดียวกับ 97 Sets/Weekly
               Volume, 47%/Consistency" — เดิมเป็นบรรทัดเดียวความสูง text-[11px] ("Volume 97 เซ็ต · Consistency
-              47%") อ่านเป็น caption ประกอบ ไม่ใช่ metric จริง เปลี่ยนเป็น 2-column stat block (ตัวเลขใหญ่
-              font-mono font-bold ด้านบน + label ตัวพิมพ์เล็กจางด้านล่าง) รูปแบบเดียวกับแถว Exercises/Sets/
-              นาที ในการ์ด Today's Workout ด้านบน — ตัวเลข/สูตรคำนวณไม่เปลี่ยน (ยังเป็น weeklyTotalSets/
-              weeklyConsistencyPct ชุดเดียวกับ WeeklyVolume/ConsistencyStrip เป๊ะ) */}
-          <div className="grid grid-cols-2 gap-3 mt-3.5 pt-3 border-t border-white/5">
-            <div>
-              <p className="font-mono font-bold text-base text-ink leading-none">
-                {data.weeklyTotalSets} <span className="text-[12px] font-sans font-normal text-muted">sets</span>
-              </p>
-              <p className="text-[12px] text-muted mt-1">Weekly Volume</p>
-            </div>
-            {data.weeklyConsistencyPct != null && (
-              <div>
-                <p className="font-mono font-bold text-base text-ink leading-none">{data.weeklyConsistencyPct}%</p>
-                <p className="text-[12px] text-muted mt-1">Consistency</p>
-              </div>
-            )}
+              47%") อ่านเป็น caption ประกอบ ไม่ใช่ metric จริง เปลี่ยนเป็น stat block (ตัวเลขใหญ่ font-mono
+              font-bold ด้านบน + label ตัวพิมพ์เล็กจางด้านล่าง) รูปแบบเดียวกับแถว Exercises/Sets/นาที ในการ์ด
+              Today's Workout ด้านบน — ตัวเลข/สูตรคำนวณไม่เปลี่ยน (ยังเป็น weeklyTotalSets ชุดเดียวกับ
+              WeeklyVolume เป๊ะ)
+              ฟีดแบ็ก (Information Hierarchy review) — "Training This Week กับ Consistency ด้านล่างพูด
+              89% Consistency ซ้ำกัน — ตัด Consistency ออกจากการ์ดนี้ เหลือแค่ที่เดียว" — ตัวเลข
+              weeklyConsistencyPct เดียวกันนี้ยังเป็น hero metric ของ ConsistencyStrip.tsx ด้านล่างอยู่
+              (ไม่ได้หายไปจากหน้า แค่ไม่พูดซ้ำ 2 จุด) — เปลี่ยนจาก grid-cols-2 (Volume คู่กับ Consistency)
+              เหลือ Volume บล็อกเดียว */}
+          <div className="mt-3.5 pt-3 border-t border-white/5">
+            <p className="font-mono font-bold text-base text-ink leading-none">
+              {data.weeklyTotalSets} <span className="text-[12px] font-sans font-normal text-muted">sets</span>
+            </p>
+            <p className="text-[12px] text-muted mt-1">Weekly Volume</p>
           </div>
 
           {/* ฟีดแบ็ก "ทำปุ่ม Share สรุปประจำสัปดาห์ออกมาเป็นภาพสไตล์ Spotify Wrapped แชร์ลง IG Story ได้"

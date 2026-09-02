@@ -387,9 +387,16 @@ export default function WeeklyMuscleHeatmap() {
           </div>
           <div className="text-right shrink-0 pt-0.5">
             {/* ฟีดแบ็ก "เพิ่ม '6 กลุ่มยังขาด Volume' เป็นบรรทัดสนับสนุน ก่อนคำแนะนำ action เดียว" —
-                ใช้ balanceIssues.under.length ตัวเดียวกับที่ใช้คำนวณ balanceSummary ด้านล่างอยู่แล้ว */}
+                ใช้ balanceIssues.under.length ตัวเดียวกับที่ใช้คำนวณ balanceSummary ด้านล่างอยู่แล้ว
+                ฟีดแบ็ก (รอบถัดมา) "46% · สถานะ / N กลุ่มขาด Volume / ⚠️ คำแนะนำ — 3 บรรทัดแข่งกัน อยากให้
+                เหลือ ⚠️ คำแนะนำ เป็นข้อความหลักจุดเดียว ส่วน N กลุ่มขาด Volume เป็น metadata เล็กๆ พอ" —
+                เดิมทั้ง 3 บรรทัดใช้ text-[12px] สีเดียวกัน (text-muted) ทำให้ดูเป็น list ข้อเท็จจริงน้ำหนัก
+                เท่ากัน — คง text-[12px] ไว้ (ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง ตามเกณฑ์ที่ยึดมาตลอดทั้งแอป)
+                แต่ลด opacity ลงอีกขั้น (text-muted/70) ให้จางกว่าบรรทัดอื่นอย่างเห็นได้ชัด สื่อว่าเป็นตัวเลข
+                สนับสนุน ไม่ใช่ insight หลัก — ⚠️ ด้านล่างยังเป็น text-[12px] font-medium สีเต็มเหมือนเดิม
+                (ไม่แตะ) ให้เด่นกว่าเห็นชัด — ไม่ได้ตัดข้อมูลออก แค่ลดน้ำหนักภาพ (typography hierarchy) */}
             {balanceIssues.under.length > 0 && (
-              <p className="text-[12px] text-muted">{balanceIssues.under.length} กลุ่มยังขาด Volume</p>
+              <p className="text-[12px] text-muted/70">{balanceIssues.under.length} กลุ่มยังขาด Volume</p>
             )}
             {balanceSummary && (
               <p className="text-[12px] font-sans font-medium leading-snug mt-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>

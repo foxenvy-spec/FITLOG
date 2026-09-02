@@ -20,14 +20,13 @@ const DISPLAY_ORDER = ['อก', 'หลัง', 'ไหล่', 'แขน', '�
 // ฟีดแบ็ก "สีคล้ายกันจนต้องอ่านตัวเลขก่อนถึงจะเข้าใจ — อยาก 🔴 ต่ำกว่าเป้ามาก (ต้องสนใจ) / 🟡 สูงกว่าเป้า
 // (ควรระวัง) / 🟢 อยู่ในเป้าหมาย (ดี) ชัดกว่านี้" — เดิมใช้ steel/moss/rust 3 เฉด (บางเฉดใกล้เคียงกันจน
 // ต้องอ่านตัวเลขก่อนถึงจะรู้ว่าดีหรือไม่ดี) เปลี่ยนเป็น 3 สีจริงที่แยกกันชัดเจน (rust แดง/yellow เหลือง/
-// moss เขียว) ตาม VolumeBucket (lib/dashboardStats.ts, ตัวเดียวกับที่ WeeklyInsightsCard.tsx ใช้ กันสี/
-// emoji ไม่ตรงกันข้ามการ์ด) — ไม่มีการไล่เฉดความเข้ม-อ่อนภายในกลุ่มอีกต่อไป (เดิม behind/met มีเฉดอ่อน
-// กว่า onTrack/high) เพราะเป็นสาเหตุที่ทำให้ "ต้องอ่านตัวเลขก่อน" ตามฟีดแบ็ก — badge กับแท่ง progress ใน
-// แถวเดียวกันตอนนี้ใช้สีเดียวกันเป๊ะเสมอ ไม่มีจุดไหนสีไม่ตรงกันอีก
-const BUCKET_META: Record<VolumeBucket, { emoji: string; label: string; color: string }> = {
-  under: { emoji: '🔴', label: 'ต่ำกว่าเป้า', color: COLORS.rust },
-  onTarget: { emoji: '🟢', label: 'ในเป้า', color: COLORS.moss },
-  over: { emoji: '🟡', label: 'เกินเป้า', color: COLORS.yellow },
+// moss เขียว) ตาม VolumeBucket (lib/dashboardStats.ts) — ไม่มีการไล่เฉดความเข้ม-อ่อนภายในกลุ่มอีกต่อไป
+// (เดิม behind/met มีเฉดอ่อนกว่า onTrack/high) เพราะเป็นสาเหตุที่ทำให้ "ต้องอ่านตัวเลขก่อน" ตามฟีดแบ็ก —
+// badge กับแท่ง progress ในแถวเดียวกันตอนนี้ใช้สีเดียวกันเป๊ะเสมอ ไม่มีจุดไหนสีไม่ตรงกันอีก
+const BUCKET_META: Record<VolumeBucket, { emoji: string; color: string }> = {
+  under: { emoji: '🔴', color: COLORS.rust },
+  onTarget: { emoji: '🟢', color: COLORS.moss },
+  over: { emoji: '🟡', color: COLORS.yellow },
 }
 
 export default function WeeklyVolume() {
@@ -214,22 +213,21 @@ export default function WeeklyVolume() {
                   <span className="w-px h-4 bg-line shrink-0" />
                   {/* ฟีดแบ็ก "ขา 24/18 sets +6 sets · OVER TARGET จะอ่านง่ายกว่าแค่ตัวเลขสีเขียว" — เดิมมี
                       แค่ตัวเลข diff/% เฉยๆ ต่อแถว (สถานะ 3 กลุ่มมีแค่ในสรุปท้ายการ์ดรวม ไม่ได้อยู่ติดแต่ละแถว)
-                      เพิ่มป้ายคำสั้นๆ กำกับใต้ตัวเลขต่อแถวเลย */}
-                  {/* w-16 -> w-24: ป้ายสถานะ (ต่ำกว่าเป้า/ในเป้า/เกินเป้า) ขยับจาก text-[8px] เป็น
-                      text-[12px] ตามพื้นล่างฟอนต์ใหม่ (ฟีดแบ็ก "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง")
-                      คอลัมน์เดิมแคบเกินจะรองรับตัวอักษรไทยที่ใหญ่ขึ้นโดยไม่ตัดคำ ขยับอีกครั้งเป็น w-24 เพื่อรองรับ
-                      emoji นำหน้าป้าย — emoji/label มาจาก BUCKET_META เดียวกับป้ายสรุปด้านบนเป๊ะ (ดูคอมเมนต์
-                      ที่ BUCKET_META) ไม่ได้ hardcode แยกเป็นอิสระเหมือนเดิมแล้ว */}
-                  <span className="flex flex-col items-end shrink-0 w-24">
+                      เพิ่มป้ายคำสั้นๆ กำกับใต้ตัวเลขต่อแถวเลย
+                      ฟีดแบ็ก (รอบถัดมา) "Weekly Volume ยังดูเป็นรายงานมากกว่า insight — ตัดป้ายคำ (ต่ำกว่า
+                      เป้า/ในเป้า/เกินเป้า) ต่อแถวออก ให้เหลือแค่ตัวเลข" — ตัดคำออกแต่ "ไม่ตัด emoji"
+                      (เหลือแค่ 🔴/🟡/🟢 นำหน้าตัวเลข) เพื่อไม่ให้พึ่งสีอย่างเดียวในการสื่อสถานะ (คนตาบอดสี/
+                      จอมือถือแสงจ้าจะอ่านสีล้วนๆ ยากกว่ามี emoji กำกับ) ยุบจาก 2 บรรทัด (ตัวเลข/คำ) เหลือ
+                      บรรทัดเดียว (emoji+ตัวเลข) คอลัมน์แคบลงตาม (w-24 -> w-20) — emoji มาจาก BUCKET_META
+                      เดียวกับป้ายสรุปด้านบนเป๊ะ (ดูคอมเมนต์ที่ BUCKET_META) ไม่ได้ hardcode แยกอิสระ */}
+                  <span className="flex items-center justify-end gap-1 shrink-0 w-20">
+                    <span aria-hidden="true">{meta.emoji}</span>
                     <span className="text-[12px] font-mono font-bold" style={{ color }}>
                       {status === 'behind'
                         ? `${diff} เซ็ต`
                         : status === 'high' || status === 'veryHigh'
                           ? `+${diff} เซ็ต`
                           : `${pct}%`}
-                    </span>
-                    <span className="text-[12px] tracked uppercase" style={{ color }}>
-                      {meta.emoji} {meta.label}
                     </span>
                   </span>
                 </div>
