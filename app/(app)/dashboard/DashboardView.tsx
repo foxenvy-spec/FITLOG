@@ -650,6 +650,14 @@ export default function DashboardPage() {
   // ฟื้นตัวเต็มที่พร้อมกันหมด (badge "EXCELLENT" ซ้ำ 7 ครั้ง ไม่มีข้อมูลใหม่ให้อ่านเลย) — ดีฟอลต์ย่อเหลือ
   // เฉพาะกลุ่มที่ยังไม่พร้อม (< FULLY_RECOVERED_PCT) ให้เห็นแต่สิ่งที่ต้องตัดสินใจ พร้อม toggle ดูครบทั้งหมด
   const [showAllRecovery, setShowAllRecovery] = useState(false)
+  // ฟีดแบ็ก "โน้ตบุ๊ก 14 นิ้วไม่ควรเลื่อนเกิน 1-2 หน้าจอ ของสำคัญควรเห็นทันที" — ส่วนล่างสุด (Muscle
+  // Heatmap รายละเอียด, Weekly Sets, ปฏิทิน Consistency, Weekly Cardio Volume) เป็นข้อมูลเชิงลึก/ย้อนหลัง
+  // ไม่ใช่ "ต้องทำอะไรวันนี้" — ยุบซ่อนไว้หลังปุ่มโดย default แทนการย้ายออกไปหน้า /stats แบบ 2 รอบก่อนหน้า
+  // ที่เคย revert กลับ (ย้ายข้ามไฟล์เสี่ยงกว่ามาก ต้องคำนวณ grid row-start/order ใหม่ทั้งชุดโดยไม่มีทาง
+  // เห็นผลจริงในเบราว์เซอร์) — ข้อมูลยังอยู่หน้าเดิมทั้งหมด แค่คลิกเดียวก็เห็นครบ ไม่ได้ตัดอะไรออกจริง
+  // ส่วน Insight banner (heatmapInsight) ยังคำนวณ/โชว์ตามปกติเสมอไม่ว่าจะยุบหรือไม่ เพราะ WeeklyMuscleHeatmap
+  // ยัง mount อยู่เบื้องหลัง (ใช้ CSS ซ่อน ไม่ได้ unmount component)
+  const [showMoreSections, setShowMoreSections] = useState(false)
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — เปิด/ปิด WarmupGuideSheet
   const [warmupOpen, setWarmupOpen] = useState(false)
   // ฟีดแบ็ก "40 Moderate ผู้ใช้ยังไม่รู้ว่า 'ทำไม?' ถ้าคลิกแล้วเปิดรายละเอียดได้จะดีมาก" — เดสก์ท็อปเดิม
@@ -2536,21 +2544,33 @@ export default function DashboardPage() {
       })()}
 
       <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-4">
+        <div className={`lg:col-start-1 lg:col-span-6 lg:row-start-4 ${showMoreSections ? '' : 'hidden'}`}>
           <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} onActiveGroupChange={setActiveHeatmapGroup} />
         </div>
-        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-4">
+        <div className={`lg:col-start-7 lg:col-span-3 lg:row-start-4 ${showMoreSections ? '' : 'hidden'}`}>
           <WeeklyVolume highlightGroup={activeHeatmapGroup} />
         </div>
       </div>
       </div>
       {/* end cards cluster sub-grid */}
 
+      {/* ปุ่มขยาย/ยุบส่วนเชิงลึก/ย้อนหลังด้านล่าง (ดู comment ที่ showMoreSections ด้านบน) */}
+      <div className="lg:col-span-12 lg:order-10 flex justify-center py-1">
+        <button
+          type="button"
+          onClick={() => setShowMoreSections((v) => !v)}
+          className="text-[12px] font-display tracked uppercase text-muted hover:text-ink border border-line rounded-full px-4 py-2 transition flex items-center gap-1.5"
+        >
+          {showMoreSections ? 'ซ่อนรายละเอียดเพิ่มเติม' : 'ดูรายละเอียดเพิ่มเติม'}
+          <span aria-hidden="true">{showMoreSections ? '↑' : '↓'}</span>
+        </button>
+      </div>
+
       {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
           weeks, weekly volume, weekly exercise count) render beside the calendar grid inside
           ConsistencyStrip itself (two-column on lg+), matching the reference layout instead
           of duplicating streak/PR numbers in separate cards next to it. */}
-      <div className="lg:col-span-12 lg:order-15">
+      <div className={`lg:col-span-12 lg:order-15 ${showMoreSections ? '' : 'hidden'}`}>
         <ConsistencyStrip />
       </div>
 
@@ -2558,7 +2578,7 @@ export default function DashboardPage() {
           ที่เคยอยู่ตรงนี้ย้ายไปรวมกับ Weekly Goal แล้ว (ดู comment "Next →" ในการ์ด Weekly Goal ด้านบน)
           กันไม่ให้ "เซสชันถัดไป" ถูกพูดซ้ำสองที่บนหน้าเดียวกัน */}
 
-      <div className="lg:col-span-12 lg:order-21">
+      <div className={`lg:col-span-12 lg:order-21 ${showMoreSections ? '' : 'hidden'}`}>
         <WeeklyCardioVolume />
       </div>
 
