@@ -388,8 +388,11 @@ export default function MetricCard({
               fontSize: compact ? dashboardSpec.metricCard.labelFontSize : 11,
             }}
           >
+            {/* ฟีดแบ็ก (P1.2, Information Hierarchy review) "Icon ใน Metric Card ลดขนาดประมาณ 10-15%
+                ให้เป็น accent เล็กๆ ไม่ใช่จุดเด่น" — เดสก์ท็อป (!compact) เท่านั้น 42px -> 37px (-12%),
+                ไอคอนด้านใน 38 -> 33 (-13%) มือถือ (compact) ไม่แตะ (22px/17px เดิม) */}
             <span
-              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[22px] h-[22px]' : 'w-[42px] h-[42px]'}`}
+              className={`relative shrink-0 inline-flex items-center justify-center rounded-[10px] overflow-hidden ${compact ? 'w-[22px] h-[22px]' : 'w-[37px] h-[37px]'}`}
               style={{
                 // ฐานเป็นกระจกเข้มเป็นกลาง ไล่จาก "มุมบนสว่างกว่า" ไป "มุมล่างเข้มกว่า" ชัดเจนขึ้น (180deg ตรงๆ
                 // แทน 145deg เดิมที่ contrast น้อยไป) ให้ความรู้สึกกระจกโค้งแบบ Apple Vision Pro
@@ -423,8 +426,8 @@ export default function MetricCard({
               <span
                 className="relative block"
                 style={{
-                  width: compact ? 17 : 38,
-                  height: compact ? 17 : 38,
+                  width: compact ? 17 : 33,
+                  height: compact ? 17 : 33,
                   backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${theme.main} 65%, white), color-mix(in srgb, ${theme.main} 85%, black))`,
                   WebkitMaskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
                   maskImage: `url(${METRIC_ICON_IMAGES[icon]})`,
@@ -516,7 +519,10 @@ export default function MetricCard({
                     มันทับ") ทั้งที่เป็นข้อมูลเดียวกันเป๊ะ (ลูกศร+ช่วงเวลา ซ้ำกับบรรทัดเดลต้าเต็มด้านล่างที่มี
                     ทั้งค่า+ช่วงเวลาอยู่แล้ว) — ตัดออก เหลือแค่ Sparkline เดี่ยวๆ ฝั่งขวา บรรทัดเดลต้าเต็ม
                     ด้านล่างการ์ดยังอยู่เหมือนเดิมทุกประการ ไม่กระทบ */}
-                <div className="shrink-0">
+                {/* ฟีดแบ็ก (P1.1, Information Hierarchy review) "ลด opacity ของ sparkline ประมาณ
+                    20-30% ให้ตัวเลขหลักเป็นจุดเด่น sparkline เป็นแค่ context ประกอบ" — wrapper opacity
+                    เดียว (ไม่แก้ Sparkline.tsx เอง กันกระทบจุดเรียกอื่นที่ใช้ component เดียวกัน) */}
+                <div className="shrink-0" style={{ opacity: 0.72 }}>
                   <Sparkline series={series} color={theme.main} height={30} width={64} endpointColor={theme.main} glowEndpoint areaFill />
                 </div>
               </div>

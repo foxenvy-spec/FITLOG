@@ -1221,7 +1221,10 @@ export default function DashboardPage() {
         style={{
           // v41: "Version 3 (Minimal Dark Titanium)" — glow เดิม 14px/40 alpha เข้มไป ลดลงให้ Hero
           // ยังเด่นอยู่ (การ์ดเดียวที่ควรมี glow ตามกฎ "Hero มีแค่ใบเดียว") แต่ไม่จัดจ้านเท่าเดิม
-          boxShadow: `0 0 8px ${withAlpha(COLORS.amber, '26')}, 0 0 1px ${withAlpha(COLORS.amber, '66')}`,
+          // v42: ฟีดแบ็ก (P1.3, Information Hierarchy review) "ลด glow ของขอบการ์ด" (ส่วนหนึ่งของการลด
+          // จุดที่แย่งสายตาในการ์ดนี้ คู่กับการลดความสว่างรูป/ความเด่นวง 0% ด้านล่าง) — ลด alpha ~30%
+          // (26 -> 1B, 66 -> 47) ขอบยังพอเห็นเป็น Hero การ์ดเดียวของหน้า แค่ไม่จัดจ้านเท่าเดิม
+          boxShadow: `0 0 8px ${withAlpha(COLORS.amber, '1B')}, 0 0 1px ${withAlpha(COLORS.amber, '47')}`,
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
         onMouseMove={handleHeroMouseMove}
@@ -1286,7 +1289,11 @@ export default function DashboardPage() {
                   // บรรยากาศพื้นหลังชัดเจนขึ้น ไม่แย่งสายตาจากข้อความ — saturate ลดตามสัดส่วนเดียวกันเล็กน้อย
                   // (1.25 -> 1.2) กัน contrast ที่ลดลงทำให้สีดูซีดขึ้นสวนทาง (คงความอุ่นไว้) brightness 1.02 ->
                   // 1.0 (เดิมชดเชย overlay มืดที่ตัดไปเยอะแล้วจาก v56 ไม่จำเป็นต้องชดเชยเพิ่มอีก)
-                  filter: 'blur(0.7px) contrast(0.95) sepia(0.15) saturate(1.2) hue-rotate(-6deg) brightness(1.0)',
+                  // v63: ฟีดแบ็ก (P1.3, Information Hierarchy review) "ลดความสว่าง background image ของ
+                  // Today's Workout ประมาณ 15-20% เพราะรูป Dumbbell ดึงสายตาค่อนข้างแรง" — เหตุผลเดียวกับ
+                  // v62 เป๊ะ (text ควรเป็น hero รูปเป็น supporting) แต่รอบนี้ระบุตัวเลขชัดเจน — brightness
+                  // 1.0 -> 0.82 (-18%, อยู่ในช่วงที่ขอ)
+                  filter: 'blur(0.7px) contrast(0.95) sepia(0.15) saturate(1.2) hue-rotate(-6deg) brightness(0.82)',
                 }}
                 priority
               />
@@ -1482,6 +1489,10 @@ export default function DashboardPage() {
             พื้น, HUD outer ring, bead orbit, ring จริง) ขึ้นพร้อมกัน +8px คงระยะห่างสัมพัทธ์ระหว่างกันทุกจุด
             เท่าเดิมทุกประการ (bottom-4 -> bottom-6 ของ ring จริง/bead orbit, -14 -> -6 / -3 -> 5 ของ glow/
             outer ring ตามกัน) ไม่แตะแกน right เลย เพราะฟีดแบ็กพูดถึงแค่แนวตั้ง */}
+        {/* v63: ฟีดแบ็ก (P1.3, Information Hierarchy review) "ลดความเด่นของวงกลม 0% progress ใน Today's
+            Workout" — ลด alpha ของ HUD ทั้งชุด (glow ellipse/dashed outer ring/ring drop-shadow) ลง ~30%
+            ให้เข้าชุดเดียวกับที่ Fitness Score/Recovery header ลดไปแล้ว (ดู GlowLayers ใน
+            HeroGaugeConcept.tsx) — ไม่ลบวง/ตัวเลข/label "ความพร้อม" หรือ bead orbit ออกเลย แค่จางลง */}
         <div
           className="absolute pointer-events-none"
           style={{
@@ -1489,14 +1500,14 @@ export default function DashboardPage() {
             right: -10,
             width: 140,
             height: 50,
-            background: `radial-gradient(ellipse 55% 100% at 50% 50%, ${withAlpha(COLORS.amber, '4D')}, transparent 72%)`,
+            background: `radial-gradient(ellipse 55% 100% at 50% 50%, ${withAlpha(COLORS.amber, '36')}, transparent 72%)`,
             filter: 'blur(3px)',
           }}
           aria-hidden="true"
         />
         <div
           className="absolute rounded-full pointer-events-none hud-outer-ring"
-          style={{ bottom: 5, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '40')}` }}
+          style={{ bottom: 5, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '2D')}` }}
           aria-hidden="true"
         />
         <div className="absolute bottom-6 right-4 pointer-events-none hud-bead-orbit" style={{ width: 64, height: 64 }} aria-hidden="true">
@@ -1506,8 +1517,9 @@ export default function DashboardPage() {
           />
         </div>
         {/* v60: ฟีดแบ็ก "วงแหวนตอนนี้ดูดีแล้ว แต่ถ้า Glow เบาลงอีก 10% จะดูแพงขึ้น (Apple ชอบทำ Glow บางมาก)"
-            — drop-shadow alpha '40' (25.1%) ลด ~10% เชิงสัมพัทธ์ -> '3A' (22.7%) */}
-        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '3A')})` }}>
+            — drop-shadow alpha '40' (25.1%) ลด ~10% เชิงสัมพัทธ์ -> '3A' (22.7%)
+            v63: ฟีดแบ็ก (P1.3) ลดต่ออีก ~30% ตามที่ขอ -> '29' (16.1%) */}
+        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '29')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
             size={64}
@@ -2057,7 +2069,19 @@ export default function DashboardPage() {
                       }
                       return displayedMuscles.map((mg) => {
                       const pct = recoveryPctMap[mg]
-                      const color = recoveryStatusColor(pct)
+                      // ฟีดแบ็ก (P1.4, Information Hierarchy review) "Progress bar ไม่ต้องใช้สีสดทุกแถว
+                      // ใช้ Rest -> muted, Recovering -> accent, Ready -> green" — เดิม color มาจาก
+                      // recoveryStatusColor(pct) ตรงๆ (4 เฉดเต็มจาก RECOVERY_TIERS: Excellent/Good/
+                      // Recovering/Rest คนละสีชัดเจน) ซึ่งเป็นฟังก์ชันกลางที่ /recovery, /coach, AI Coach
+                      // ใช้ร่วมกันทั้งแอป — ฟีดแบ็กนี้ระบุชัดว่า "แก้เฉพาะ visual" ของการ์ดนี้จุดเดียว จึงไม่
+                      // แก้ recoveryStatusColor()/RECOVERY_TIERS กลาง (จะกระทบทุกจุดที่ใช้ร่วมกันโดยไม่ได้
+                      // ตั้งใจ) แต่ทำ mapping ท้องถิ่นแค่ตรงนี้แทน: Rest -> เทาจาง (NEUTRAL.mutedIcon),
+                      // Recovering -> accent เดียว (COLORS.amber ตัวเดียวกับสีหลักของแอป แทนที่จะเป็น
+                      // FIRE_ACCENT สดจัด), Excellent+Good รวมกันเป็น "Ready" -> เขียว (COLORS.moss) — ป้าย
+                      // ข้อความ (Excellent/Good/Recovering/Rest) ด้านล่างยังคงเดิมทุกคำ ไม่ได้รวมข้อความ
+                      // แค่สีพื้น/แท่ง/badge ที่ลดความสดลง
+                      const tierLabel = recoveryTier(pct).labelEn
+                      const color = tierLabel === 'Rest' ? NEUTRAL.mutedIcon : tierLabel === 'Recovering' ? COLORS.amber : COLORS.moss
                       const isHovered = mg === hoveredRecoveryGroup
                       return (
                         <div

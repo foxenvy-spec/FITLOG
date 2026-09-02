@@ -95,20 +95,23 @@ function GlowLayers({ size, color }: { size: number; color: string }) {
   return (
     <>
       {/* Fog/Bloom/Core — ชุดเดียวกับที่ FitnessScore.tsx (มือถือ) ใช้กับวง Fitness Score อยู่แล้ว
-          (tuned alpha ไว้แล้วหลายรอบ ไม่ได้คิดค่าใหม่) เอามาใช้ซ้ำกับทั้งสองวงในนี้ */}
+          (tuned alpha ไว้แล้วหลายรอบ ไม่ได้คิดค่าใหม่) เอามาใช้ซ้ำกับทั้งสองวงในนี้
+          ฟีดแบ็ก (P1.1, Information Hierarchy review) "ลด glow ของ Fitness Score/Recovery ประมาณ
+          30-40% — ไม่ต้องลบวง/ตัวเลข แค่ลดสิ่งที่แย่งสายตา" — ลด alpha ทั้ง 3 ชั้นลง ~35% (11->0B,
+          20->15, 36->23) วงยังอยู่ครบ แค่เรืองแสงจางลง ไม่กระทบ GoalRing/DialText/ตัวเลขใดๆ */}
       <div
         className="absolute rounded-full pointer-events-none"
-        style={{ width: size * 2.6, height: size * 2.6, background: `radial-gradient(circle, ${color}11, transparent 60%)` }}
+        style={{ width: size * 2.6, height: size * 2.6, background: `radial-gradient(circle, ${color}0B, transparent 60%)` }}
         aria-hidden="true"
       />
       <div
         className="absolute rounded-full pointer-events-none"
-        style={{ width: size * 1.7, height: size * 1.7, background: `radial-gradient(circle, ${color}20, transparent 65%)` }}
+        style={{ width: size * 1.7, height: size * 1.7, background: `radial-gradient(circle, ${color}15, transparent 65%)` }}
         aria-hidden="true"
       />
       <div
         className="absolute rounded-full pointer-events-none"
-        style={{ width: size * 1.05, height: size * 1.05, background: `radial-gradient(circle, ${color}36, transparent 55%)` }}
+        style={{ width: size * 1.05, height: size * 1.05, background: `radial-gradient(circle, ${color}23, transparent 55%)` }}
         aria-hidden="true"
       />
       {/* ขอบกระจก 2 ชั้น (glass bezel) — วงบางรอบนอกสุด 2 เส้น จำลองขอบกระจกโค้งซ้อนกัน */}
