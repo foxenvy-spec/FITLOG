@@ -2554,16 +2554,29 @@ export default function DashboardPage() {
       </div>
       {/* end cards cluster sub-grid */}
 
-      {/* ปุ่มขยาย/ยุบส่วนเชิงลึก/ย้อนหลังด้านล่าง (ดู comment ที่ showMoreSections ด้านบน) */}
+      {/* ฟีดแบ็ก "แทนที่จะพับ ทำเป็นสลับหน้า 1/2 แทนดีกว่าไหม" — เปลี่ยนจากปุ่มขยาย/ยุบเดี่ยว เป็น
+          segmented control 2 แท็บ (รูปแบบเดียวกับปุ่ม "ปริมาณ/ความสมดุล" ใน Graphic Muscle Heatmap
+          ด้านบน) หน้า 1 = ภาพรวม/สิ่งที่ต้องทำวันนี้ (ค่าเริ่มต้น) หน้า 2 = รายละเอียดเชิงลึก/ย้อนหลัง —
+          กลไกเบื้องหลัง (showMoreSections + CSS hidden, ไม่ unmount) เหมือนเดิมทุกประการ */}
       <div className="lg:col-span-12 lg:order-10 flex justify-center py-1">
-        <button
-          type="button"
-          onClick={() => setShowMoreSections((v) => !v)}
-          className="text-[12px] font-display tracked uppercase text-muted hover:text-ink border border-line rounded-full px-4 py-2 transition flex items-center gap-1.5"
-        >
-          {showMoreSections ? 'ซ่อนรายละเอียดเพิ่มเติม' : 'ดูรายละเอียดเพิ่มเติม'}
-          <span aria-hidden="true">{showMoreSections ? '↑' : '↓'}</span>
-        </button>
+        <div className="inline-flex items-center gap-1 rounded-full border border-line p-1">
+          <button
+            type="button"
+            onClick={() => setShowMoreSections(false)}
+            aria-pressed={!showMoreSections}
+            className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${!showMoreSections ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+          >
+            1 · ภาพรวม
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowMoreSections(true)}
+            aria-pressed={showMoreSections}
+            className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${showMoreSections ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+          >
+            2 · รายละเอียด
+          </button>
+        </div>
       </div>
 
       {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
