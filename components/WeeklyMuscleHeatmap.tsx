@@ -105,7 +105,17 @@ function intensityOpacity(pct: number): number {
   return Math.min(1, 0.12 + (pct / 35) * 0.88)
 }
 
-export default function WeeklyMuscleHeatmap() {
+interface WeeklyMuscleHeatmapProps {
+  // ฟีดแบ็ก (P2, Information Hierarchy review) "Insight ควรมี 'หัวหน้า' เดียว — ยก ⚠️ balanceSummary
+  // ออกมาเป็น Insight Banner แยกต่างหาก เต็มความกว้าง เหนือ Muscle Balance + Weekly Volume (ซึ่งกลายเป็น
+  // 'Evidence' รองลงมา)" — callback นี้ยกค่า balanceSummary ที่คำนวณอยู่แล้วภายในคอมโพเนนต์นี้ขึ้นไปให้
+  // parent (DashboardView.tsx) render banner แยกแทน ไม่ต้อง query/คำนวณซ้ำเป็นคอมโพเนนต์ใหม่ (เสี่ยงสูตร
+  // หลุด sync) — component นี้ยังเป็น single source of truth ของ balanceSummary เหมือนเดิม แค่ "รายงาน"
+  // ค่าขึ้นไปด้วย ไม่ระบุ prop นี้ (เช่นตอนใช้ใน /stats) = พฤติกรรมเดิมทุกประการ (⚠️ ยังโชว์ในการ์ดเอง)
+  onInsight?: (insight: { text: string; color: string } | null) => void
+}
+
+export default function WeeklyMuscleHeatmap({ onInsight }: WeeklyMuscleHeatmapProps = {}) {
   const supabase = createClient()
   const { start, end } = getWeekRange()
   const { toDisplay, unit } = useWeightUnit()
@@ -300,6 +310,14 @@ export default function WeeklyMuscleHeatmap() {
     return null
   }, [balanceIssues])
 
+  // รายงาน balanceSummary ขึ้นไปให้ parent (ถ้ามี onInsight — ดูคอมเมนต์ที่ prop) แทนที่จะโชว์แค่ในการ์ด
+  // นี้เองอย่างเดียว — ทำใน useEffect (ไม่ใช่ระหว่าง render ตรงๆ) เพราะเป็นการเรียก callback ออกไปนอก
+  // component ต้องรอ render เสร็จก่อนตามกฎ React
+  useEffect(() => {
+    if (!onInsight) return
+    onInsight(balanceSummary && balance ? { text: balanceSummary, color: BALANCE_COLOR[balance.tier] } : null)
+  }, [onInsight, balanceSummary, balance])
+
   // กลุ่มเด่น/ด้อย — จัดอันดับตาม % ส่วนแบ่งเซ็ตของสัปดาห์นี้ (สมมติฐาน: เด่น = 3 อันดับบนสุด,
   // ด้อย = 2 อันดับล่างสุด — ถ้าต้องการเกณฑ์อื่น เช่น เทียบกับเป้าหมายต่อกลุ่มแทน แจ้งได้)
   const { topGroups, bottomGroups } = useMemo(() => {
@@ -398,7 +416,11 @@ export default function WeeklyMuscleHeatmap() {
             {balanceIssues.under.length > 0 && (
               <p className="text-[12px] text-muted/70">{balanceIssues.under.length} กลุ่มยังขาด Volume</p>
             )}
-            {balanceSummary && (
+            {/* P2: onInsight ระบุมา (เช่น Dashboard) แปลว่า parent เอา balanceSummary ไปโชว์เป็น Insight
+                Banner แยกต่างหากแล้ว (ดูคอมเมนต์ที่ prop) — ไม่โชว์ซ้ำในการ์ดนี้อีก กันปัญหา "insight พูด
+                ซ้ำ 2 ที่" เดียวกับที่เจอใน Weekly Volume/AI Coach มาก่อน — ตอนใช้แบบเดิม (เช่น /stats,
+                ไม่ส่ง onInsight) ยังโชว์ในการ์ดเองเหมือนเดิมทุกประการ */}
+            {balanceSummary && !onInsight && (
               <p className="text-[12px] font-sans font-medium leading-snug mt-0.5" style={{ color: BALANCE_COLOR[balance.tier] }}>
                 ⚠️ {balanceSummary}
               </p>

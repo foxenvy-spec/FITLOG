@@ -647,6 +647,14 @@ export default function DashboardPage() {
   // ใหม่/ยัดบรรทัดเพิ่มเข้าไปในพื้นที่ pill แคบๆ ที่ tune ความสูงมาหลายรอบแล้ว
   const [showFitnessScoreDetail, setShowFitnessScoreDetail] = useState(false)
 
+  // ฟีดแบ็ก (P2, Information Hierarchy review) "Insight ควรมี 'หัวหน้า' เดียว — เอา ⚠️ balanceSummary ที่
+  // ฝังอยู่มุมการ์ด Muscle Heatmap ยกออกมาเป็น Insight Banner แยกต่างหาก เต็มความกว้าง อยู่เหนือ Muscle
+  // Balance + Weekly Volume (ซึ่งกลายเป็น 'Evidence' รองลงมา)" — WeeklyMuscleHeatmap.tsx คำนวณ
+  // balanceSummary ไว้แล้วภายในตัวเอง (จาก balanceIssues.over/under) ไม่อยาก query/คำนวณซ้ำเป็นคอมโพเนนต์
+  // แยกใหม่ (เสี่ยงสูตรหลุด sync กัน) — ใช้ callback prop onInsight ยกค่าขึ้นมาเก็บที่นี่แทน (component เดิม
+  // ยังเป็น single source of truth อยู่) แล้ว render banner จากค่านี้ในหัวหน้าคอมโพเนนต์
+  const [heatmapInsight, setHeatmapInsight] = useState<{ text: string; color: string } | null>(null)
+
   // v46: "Titanium Reflection — แสงวิ่งบน Card เวลาขยับ Mouse" — จุดสว่างจางๆ ตามตำแหน่งเมาส์บน Hero
   // Card (การ์ดเดียวที่ควรมี effect ใหม่ตามกฎ "Hero มีแค่ใบเดียว") จำลองแสงสะท้อนผิวโลหะเปลี่ยนมุมตามที่
   // มองจริง — ใช้ ref เขียน style ตรงๆ ตอน mousemove แทน useState (กัน re-render ทั้ง component ทุก
@@ -2444,11 +2452,39 @@ export default function DashboardPage() {
           (recent workouts / PRs per day) -> next-up + quick actions last.
           Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
           leaves room 10-12 for the AI Coach card. */}
-      <div className="grid grid-cols-1 gap-6 items-start lg:contents">
-        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-3">
-          <WeeklyMuscleHeatmap />
+      {/* ฟีดแบ็ก (P2, Information Hierarchy review) "Insight ควรมีหัวหน้าเดียว — ⚠️ balanceSummary จาก
+          Muscle Heatmap ยกออกมาเป็น Insight Banner เต็มความกว้าง เหนือ Muscle Balance/Weekly Volume ซึ่ง
+          กลายเป็น Evidence รองลงมา" — heatmapInsight มาจาก WeeklyMuscleHeatmap ผ่าน onInsight callback
+          ด้านล่าง (ค่าเดียวกันเป๊ะ ไม่คำนวณซ้ำ) col-span-9 เท่าแถว QuickAction ด้านบน ไม่ชนคอลัมน์ AI Coach
+          (row-span 2 คร่อมแถว 2-3 อยู่ที่คอลัมน์ 10-12) — ไม่โชว์ถ้ายังไม่มี insight จริง (ไม่มโนคำแนะนำ) */}
+      {heatmapInsight && (
+        <div className="lg:col-start-1 lg:col-span-9 lg:row-start-3 rounded-card border border-line bg-surface2/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-start gap-3 min-w-0">
+            <span className="text-lg leading-none shrink-0" aria-hidden="true">
+              🔴
+            </span>
+            <div className="min-w-0">
+              <p className="text-[12px] tracked uppercase text-muted">Insight</p>
+              <p className="font-display font-semibold text-sm leading-snug mt-0.5" style={{ color: heatmapInsight.color }}>
+                {heatmapInsight.text}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/coach"
+            className="shrink-0 text-[12px] font-display tracked uppercase rounded-full px-3 py-2 transition active:scale-[0.98]"
+            style={{ backgroundColor: withAlpha(heatmapInsight.color, '22'), color: heatmapInsight.color }}
+          >
+            ดู Workout ที่แนะนำ →
+          </Link>
         </div>
-        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-3">
+      )}
+
+      <div className="grid grid-cols-1 gap-6 items-start lg:contents">
+        <div className="lg:col-start-1 lg:col-span-6 lg:row-start-4">
+          <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} />
+        </div>
+        <div className="lg:col-start-7 lg:col-span-3 lg:row-start-4">
           <WeeklyVolume />
         </div>
       </div>
