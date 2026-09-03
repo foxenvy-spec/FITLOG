@@ -256,14 +256,18 @@ export default function CalendarPage() {
   // error ให้เห็นเลย — เช็ค error ก่อน apply optimistic update เสมอ ไม่สำเร็จก็ไม่แตะ state และโชว์ข้อความ
   const [goalActionError, setGoalActionError] = useState<string | null>(null)
 
-  async function handleDeleteGoal(id: string) {
-    const { error } = await supabase.from('goals').delete().eq('id', id)
+  // ฟีดแบ็ก (design review, P2) "ลบ ควรมี confirmation ก่อนลบ" — ลบเป้าหมายเป็น destructive action ที่ย้อน
+  // กลับไม่ได้ (ไม่มี undo) กด confirm() ของเบราว์เซอร์ธรรมดาก่อนลบจริง (ไม่มี dialog แบบกำหนดเองในแอปนี้ที่
+  // ไหนเลยตอนนี้ ตรงกับที่ขอ "ไม่ต้องเพิ่ม dialog ที่ซับซ้อนเกินจำเป็น") ยกเลิกแล้วไม่ทำอะไรต่อ
+  async function handleDeleteGoal(goal: Goal) {
+    if (!window.confirm(`ลบเป้าหมาย "${goal.title}" ใช่หรือไม่?`)) return
+    const { error } = await supabase.from('goals').delete().eq('id', goal.id)
     if (error) {
       setGoalActionError('ลบเป้าหมายไม่สำเร็จ ลองใหม่อีกครั้ง')
       return
     }
     setGoalActionError(null)
-    setGoals((prev) => prev.filter((g) => g.id !== id))
+    setGoals((prev) => prev.filter((g) => g.id !== goal.id))
   }
 
   async function handleToggleDone(goal: Goal) {
@@ -525,7 +529,7 @@ export default function CalendarPage() {
                       )}
                       <button
                         type="button"
-                        onClick={() => handleDeleteGoal(g.id)}
+                        onClick={() => handleDeleteGoal(g)}
                         className="text-xs text-muted hover:text-rust focus:text-rust transition"
                       >
                         ลบ
