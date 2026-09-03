@@ -150,7 +150,11 @@ export function computeTrainingLoad(
 // ไม่งั้นวันแรกๆ ของกราฟจะเห็น recovery 100% เกินจริงเพราะไม่รู้ว่าเคยฝึกมาก่อนหน้านั้น
 export interface RecoveryHistoryPoint {
   date: string
-  overallPct: number
+  // ฟีดแบ็ก (design review) "กลุ่มที่ 'ยังไม่มีประวัติ' ถูกเอาไปเฉลี่ยเป็น 100% หรือไม่ ควรมี rule ชัดเจน
+  // ว่าเอาเฉพาะ muscle groups ที่มีข้อมูลจริง" — ตรวจแล้วยืนยันว่าใช่ (ดู comment ที่ pcts ด้านล่าง) —
+  // null เมื่อวันนั้นยังไม่มีกลุ่มกล้ามเนื้อไหนเคยถูกฝึกมาก่อนเลย (เฉลี่ยไม่ได้จริงๆ ไม่ใช่ "เฉลี่ยได้ 100%")
+  // กราฟ (Recharts Line, connectNulls ปิดโดย default) จะเว้นช่วงตรงจุดนี้แทนการวาดเส้นเท็จ
+  overallPct: number | null
 }
 
 export function computeRecoveryHistory(
@@ -197,16 +201,21 @@ export function computeRecoveryHistory(
       lastTrained[mg] = date
     })
 
+    // ฟีดแบ็ก (design review) "กลุ่มที่ยังไม่มีประวัติไม่ควรถูกนับเป็น 100% Recovery แล้วเอาไปเฉลี่ยรวม —
+    // เป็นเพราะ 'ไม่มีข้อมูล' ไม่ใช่ 'พร้อมเต็มที่'" — เดิม !last (ยังไม่เคยฝึกกลุ่มนี้เลย ณ วันที่นี้ในกราฟ)
+    // return 100 ตรงๆ ทำให้ overallPct ของ user ที่เพิ่งเริ่มฝึกไม่กี่กลุ่มถูกดันสูงเทียมจากกลุ่มที่ไม่เคย
+    // แตะเลย — เปลี่ยนเป็น null (ไม่นับกลุ่มนี้เข้าไปในค่าเฉลี่ยของวันนั้นแทน) เหตุผล/แพทเทิร์นเดียวกับที่
+    // แก้ computeMuscleBalance() ใน lib/dashboardStats.ts ไปแล้วก่อนหน้านี้ในเซสชันนี้
     const pcts = RECOVERY_MUSCLES.map((mg) => {
       const last = lastTrained[mg]
-      if (!last) return 100
+      if (!last) return null
       const daysSince = Math.round(
         (new Date(date + 'T00:00:00').getTime() - new Date(last + 'T00:00:00').getTime()) / 86400000
       )
       const windowDays = RECOVERY_WINDOW_DAYS[mg] ?? 2
       return Math.max(0, Math.min(100, Math.round((daysSince / windowDays) * 100)))
-    })
-    const overallPct = Math.round(pcts.reduce((s, p) => s + p, 0) / pcts.length)
+    }).filter((p): p is number => p !== null)
+    const overallPct = pcts.length > 0 ? Math.round(pcts.reduce((s, p) => s + p, 0) / pcts.length) : null
     return { date, overallPct }
   })
 }

@@ -120,15 +120,19 @@ describe('computeTrainingLoad', () => {
 })
 
 describe('computeRecoveryHistory', () => {
-  it('shows full recovery before any training history and drops to 0% on the day trained', () => {
+  // ฟีดแบ็ก (design review) "กลุ่มที่ยังไม่มีประวัติไม่ควรถูกนับเป็น 100% Recovery แล้วเอาไปเฉลี่ยรวม" —
+  // เทสต์นี้เดิมล็อกพฤติกรรมบั๊กไว้เป็น spec (วันที่ไม่มีกลุ่มไหนเคยฝึกเลย = "เต็ม 100% ทุกกลุ่ม") อัปเดต
+  // ให้ตรงกับพฤติกรรมที่ถูกต้อง: ไม่มีกลุ่มไหนมีข้อมูลให้เฉลี่ยเลย = null (ไม่ใช่ "เฉลี่ยได้ 100%")
+  it('has no average before any training history exists, and reflects only the trained group afterward', () => {
     const reference = new Date('2026-07-18T00:00:00')
     const logs = [{ muscle_group: 'อก', performed_at: '2026-07-18' }]
     const points = computeRecoveryHistory(logs, 5, reference)
     expect(points).toHaveLength(5)
-    // วันแรกของกราฟ (2026-07-14) ยังไม่มีประวัติฝึกอกเลย -> เต็ม 100% ทุกกลุ่ม
-    expect(points[0].overallPct).toBe(100)
-    // วันสุดท้าย (2026-07-18) เพิ่งฝึกอกวันนี้ -> ค่าเฉลี่ยรวมต้องลดลงจาก 100%
-    expect(points[points.length - 1].overallPct).toBeLessThan(100)
+    // วันแรกของกราฟ (2026-07-14) ไม่มีกลุ่มไหนเคยถูกฝึกเลยสักกลุ่ม -> เฉลี่ยไม่ได้จริงๆ (null ไม่ใช่ 100)
+    expect(points[0].overallPct).toBeNull()
+    // วันสุดท้าย (2026-07-18) เพิ่งฝึกอกวันนี้ (กลุ่มอื่นยังไม่เคยฝึกเลย ไม่ถูกนับ) -> เฉลี่ยมาจากอกกลุ่ม
+    // เดียว ซึ่งเพิ่งฝึกวันนี้พอดี (recovery 0%)
+    expect(points[points.length - 1].overallPct).toBe(0)
   })
 
   it('uses training history from before the window to avoid an inflated first day', () => {
