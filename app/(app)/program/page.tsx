@@ -28,6 +28,15 @@ export default function ProgramPage() {
   const [error, setError] = useState<string | null>(null)
   const [logging, setLogging] = useState(false)
   const [logMessage, setLogMessage] = useState<string | null>(null)
+  // ฟีดแบ็ก (design review) "'บันทึกเข้า Log วันนี้ทั้งหมด' กดซ้ำ/กดตอนวันนี้ล็อกไปแล้วบางส่วน ต้องไม่กลาย
+  // เป็น log ซ้ำ (6+6=12 ท่า) แบบเงียบๆ" — ตรวจโค้ดแล้วยืนยันว่าเป็นช่องโหว่จริง (handleLogAllToday เดิม
+  // insert() ตรงๆ ไม่เช็คว่าวันนี้มี log อยู่แล้วหรือยัง) — เพิ่มการเช็คก่อน insert จริง ถ้าพบว่าวันนี้มี
+  // 'workouts' ประเภท strength อยู่แล้ว (ไม่ว่าจะ log ผ่านช่องทางไหน) ให้หยุดแล้วโชว์แถบยืนยันก่อน (รูปแบบ
+  // เดียวกับแถบยืนยันลบทั้งหมด/ลบวันนี้/ลบที่เลือกที่มีอยู่แล้วในไฟล์นี้ ไม่ใช่ window.confirm แบบหน้า
+  // Calendar เพื่อความสม่ำเสมอภายในไฟล์เดียวกัน) กดยืนยันแล้วค่อย insert จริง — ไม่มี log วันนี้เลยไม่ต้อง
+  // ถามอะไร ทำต่อทันทีเหมือนเดิม
+  const [confirmLogDuplicate, setConfirmLogDuplicate] = useState(false)
+  const [checkingLogDuplicate, setCheckingLogDuplicate] = useState(false)
   const [addingExercise, setAddingExercise] = useState(false)
   // เลือกจากเทมเพลต — โหลดแบบ lazy (แค่ตอนกดเปิด picker ครั้งแรก) กันไม่ต้อง query ตารางเทมเพลตทุกครั้ง
   // ที่เข้าหน้านี้ทั้งที่ผู้ใช้ส่วนใหญ่อาจไม่ได้ใช้ปุ่มนี้เลย
@@ -162,8 +171,47 @@ export default function ProgramPage() {
     }
   }
 
+  // เช็คก่อนว่าวันนี้มี log (ประเภท strength) อยู่แล้วหรือยัง (ไม่ว่าจะ log ผ่านช่องทางไหนมาก่อนก็ตาม —
+  // /log, /session, หรือกดปุ่มนี้มาก่อนแล้ว) ถ้ามี ให้หยุดแล้วโชว์แถบยืนยันก่อน กันกดซ้ำแล้ว log ซ้อนทับ
+  // เงียบๆ (ดู comment ที่ confirmLogDuplicate state ด้านบน)
+  async function handleLogAllTodayClick() {
+    if (!currentDay || currentExercises.length === 0) return
+    setCheckingLogDuplicate(true)
+    setError(null)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setError('กรุณาเข้าสู่ระบบใหม่')
+        return
+      }
+      const { data: existing, error: checkErr } = await supabase
+        .from('workouts')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('type', 'strength')
+        .eq('performed_at', todayStr())
+        .limit(1)
+      if (checkErr) {
+        setError(`ตรวจสอบ Log วันนี้ไม่สำเร็จ: ${checkErr.message}`)
+        return
+      }
+      if (existing && existing.length > 0) {
+        setConfirmLogDuplicate(true)
+        return
+      }
+      await handleLogAllToday()
+    } catch (err) {
+      setError(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
+    } finally {
+      setCheckingLogDuplicate(false)
+    }
+  }
+
   async function handleLogAllToday() {
     if (!currentDay || currentExercises.length === 0) return
+    setConfirmLogDuplicate(false)
     setLogging(true)
     setLogMessage(null)
     setError(null)
@@ -760,10 +808,46 @@ export default function ProgramPage() {
             </div>
           )}
 
+          {confirmLogDuplicate && (
+            <div className="px-4 py-2.5 border-b border-white/5 bg-amber/10 flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[12px]" style={{ color: '#E8A33D' }}>
+                วันนี้มี Log อยู่แล้ว — เพิ่ม {currentExercises.length} ท่านี้เข้าไปอีกหรือไม่? (อาจได้ท่าซ้ำถ้าเคย log ท่าเดียวกันไปแล้ว)
+              </p>
+              <div className="flex gap-3 shrink-0">
+                <button onClick={() => setConfirmLogDuplicate(false)} className="text-[12px] text-muted hover:text-ink">
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleLogAllToday}
+                  disabled={logging}
+                  className="text-[12px] text-bg bg-amber rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                >
+                  {logging ? '...' : 'เพิ่มเข้า Log'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {currentExercises.length > 0 && !selectMode && (
             <div className="px-4 pb-4">
-              <Button type="button" onClick={handleLogAllToday} disabled={logging} size="md" className="w-full">
-                {logging ? 'กำลังบันทึก...' : `บันทึกเข้า Log วันนี้ทั้งหมด (${currentExercises.length} ท่า)`}
+              {/* ฟีดแบ็ก (design review, P1) "'เริ่มเซสชัน'/'บันทึกเข้า Log' น้ำหนักภาพเท่ากันเกินไป —
+                  เริ่มเซสชันควรเป็น Primary CTA ของหน้า ส่วนบันทึกเข้า Log เป็น secondary (สร้าง log
+                  จาก program โดยไม่เข้า live session)" — ทั้งคู่เดิมไม่ส่ง variant มา = ใช้ default
+                  'primary' (glow CTA) เหมือนกันทั้งคู่จริง ปุ่มนี้เปลี่ยนเป็น variant="secondary" (มีอยู่
+                  แล้วใน Button.tsx) ปุ่ม "เริ่มเซสชันแบบเรียลไทม์" ด้านบนไม่แตะ ยังเป็น primary เหมือนเดิม */}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleLogAllTodayClick}
+                disabled={logging || checkingLogDuplicate}
+                size="md"
+                className="w-full"
+              >
+                {logging
+                  ? 'กำลังบันทึก...'
+                  : checkingLogDuplicate
+                    ? 'กำลังตรวจสอบ...'
+                    : `บันทึกเข้า Log วันนี้ทั้งหมด (${currentExercises.length} ท่า)`}
               </Button>
             </div>
           )}
