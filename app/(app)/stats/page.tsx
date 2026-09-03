@@ -370,11 +370,65 @@ export default function StatsPage() {
     return [...set].sort()
   }, [workouts])
 
+  // ท่าที่ log ไว้แต่ไม่มี weight/reps (เช่นท่า bodyweight) ยังโผล่ใน selector ให้เลือกเองได้ตามปกติ แค่ไม่
+  // ถูกพิจารณาเป็นตัวเลือก default อัตโนมัติ — default ควรเป็นท่าที่ "คำนวณ 1RM ได้จริง" และฝึกล่าสุด ไม่ใช่
+  // เรียงตามตัวอักษร (ก่อนหน้านี้เป็น A-Z ล้วนๆ ซึ่งสุ่มเกินไป ไม่สื่อว่าผู้ใช้กำลังสนใจท่าไหนอยู่)
+  const latestExerciseWithData = useMemo(() => {
+    const latestByName = new Map<string, string>()
+    workouts
+      .filter((w) => w.type === 'strength' && w.exercise_name && w.weight_kg && w.reps)
+      .forEach((w) => {
+        const prev = latestByName.get(w.exercise_name!)
+        if (!prev || w.performed_at > prev) latestByName.set(w.exercise_name!, w.performed_at)
+      })
+    let best: string | null = null
+    let bestDate = ''
+    latestByName.forEach((date, name) => {
+      if (date > bestDate) {
+        bestDate = date
+        best = name
+      }
+    })
+    return best
+  }, [workouts])
+
   const [selectedExercise, setSelectedExercise] = useState('')
 
   useEffect(() => {
-    if (!selectedExercise && exerciseNames.length > 0) setSelectedExercise(exerciseNames[0])
-  }, [exerciseNames, selectedExercise])
+    if (!selectedExercise && exerciseNames.length > 0) {
+      setSelectedExercise(latestExerciseWithData ?? exerciseNames[0])
+    }
+  }, [exerciseNames, latestExerciseWithData, selectedExercise])
+
+  // combobox ค้นหาท่าสำหรับ Estimated 1RM Trend — แทน native <select> เดิมที่ไม่รองรับการพิมพ์กรองรายชื่อ
+  // (มีปัญหาชัดเมื่อคลังท่าโตขึ้น) แยก state ค้นหาออกจาก selectedExercise เอง ไม่กรอง exerciseNames ที่ใช้
+  // แสดงในลิสต์ตาม query — แค่กรองตอน render รายการตัวเลือก
+  const [exerciseQuery, setExerciseQuery] = useState('')
+  const [exercisePickerOpen, setExercisePickerOpen] = useState(false)
+  const exerciseBlurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const filteredExerciseNames = useMemo(() => {
+    const q = exerciseQuery.trim().toLowerCase()
+    if (!q) return exerciseNames
+    return exerciseNames.filter((name) => name.toLowerCase().includes(q))
+  }, [exerciseNames, exerciseQuery])
+
+  function openExercisePicker() {
+    if (exerciseBlurTimeout.current) clearTimeout(exerciseBlurTimeout.current)
+    setExerciseQuery('')
+    setExercisePickerOpen(true)
+  }
+
+  function scheduleCloseExercisePicker() {
+    // ดีเลย์ปิดเล็กน้อยให้ click ที่ตัวเลือกในลิสต์ทำงานก่อน blur จะสั่งปิด (แพทเทิร์นเดียวกับ ExercisePicker)
+    exerciseBlurTimeout.current = setTimeout(() => setExercisePickerOpen(false), 150)
+  }
+
+  function pickExercise(name: string) {
+    setSelectedExercise(name)
+    setExercisePickerOpen(false)
+    setExerciseQuery('')
+  }
 
   const oneRmTrend = useMemo(() => {
     if (!selectedExercise) return []
@@ -639,17 +693,52 @@ export default function StatsPage() {
             <h2 className="font-display text-sm tracked uppercase text-muted">Estimated 1RM Trend</h2>
             {/* dropdown เลือกท่าไม่มีความหมายในรายงานที่พิมพ์แล้ว (แก้ไม่ได้อยู่ดี) — ซ่อนแล้วโชว์ชื่อท่า
                 ที่เลือกไว้ ณ ตอนพิมพ์เป็นข้อความแทน ให้ยังรู้ว่ากราฟข้างล่างเป็นของท่าไหน */}
-            <select
-              value={selectedExercise}
-              onChange={(e) => setSelectedExercise(e.target.value)}
-              className="print:hidden bg-surface2 border border-line rounded-full text-xs px-3 py-1 text-ink outline-none"
-            >
-              {exerciseNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
+            <div className="relative print:hidden">
+              <button
+                type="button"
+                onClick={() => (exercisePickerOpen ? setExercisePickerOpen(false) : openExercisePicker())}
+                className="flex items-center gap-1.5 max-w-[170px] bg-surface2 border border-line rounded-full text-xs px-3 py-1 text-ink outline-none"
+              >
+                <span className="truncate">{selectedExercise || 'เลือกท่า'}</span>
+                <span className="shrink-0 text-muted text-[10px]">▾</span>
+              </button>
+              {exercisePickerOpen && (
+                <div className="absolute z-30 right-0 mt-1.5 w-56 rounded-lg bg-surface2 border border-line shadow-lg overflow-hidden">
+                  <input
+                    autoFocus
+                    value={exerciseQuery}
+                    onChange={(e) => setExerciseQuery(e.target.value)}
+                    onBlur={scheduleCloseExercisePicker}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setExercisePickerOpen(false)
+                    }}
+                    placeholder="ค้นหาท่า..."
+                    autoComplete="off"
+                    className="w-full bg-transparent border-b border-line px-3 py-2 text-xs text-ink outline-none placeholder:text-muted"
+                  />
+                  <ul className="max-h-52 overflow-y-auto">
+                    {filteredExerciseNames.length === 0 ? (
+                      <li className="px-3 py-3 text-xs text-muted text-center">ไม่พบท่านี้</li>
+                    ) : (
+                      filteredExerciseNames.map((name) => (
+                        <li key={name}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => pickExercise(name)}
+                            className={`w-full text-left px-3 py-2 text-xs transition hover:bg-surface truncate ${
+                              name === selectedExercise ? 'text-amber' : 'text-ink'
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
             <span className="hidden print:inline text-xs text-ink">{selectedExercise}</span>
           </div>
           {oneRmTrend.length > 1 ? (
