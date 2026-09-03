@@ -1,4 +1,4 @@
-import type { DaySummary } from '@/lib/workoutDisplay'
+import type { DaySummary, DayPRBreakdown } from '@/lib/workoutDisplay'
 import { formatDuration } from '@/lib/workoutDisplay'
 import type { WeightUnit } from '@/lib/weightUnit'
 
@@ -7,12 +7,12 @@ import type { WeightUnit } from '@/lib/weightUnit'
 // เล็กๆ เดิม) ให้หน้า Calendar/History ดูสมบูรณ์และสแกนตัวเลขสำคัญได้เร็วขึ้น
 export default function DaySummaryHeader({
   summary,
-  prCount,
+  prBreakdown,
   unit,
   toDisplay,
 }: {
   summary: DaySummary
-  prCount: number
+  prBreakdown: DayPRBreakdown
   unit: WeightUnit
   toDisplay: (kg: number) => number
 }) {
@@ -44,9 +44,22 @@ export default function DaySummaryHeader({
           </div>
         ))}
       </div>
-      {(prCount > 0 || summary.muscleGroups.length > 0) && (
+      {/* ฟีดแบ็ก (design review) "'PR +5' รวม PR น้ำหนักจริงกับ Best Volume เป็นเลขเดียว สื่อความหมายผิด" —
+          แยกป้ายตามประเภทจริง (prBreakdown, ดู lib/workoutDisplay.ts) แทนตัวเลขรวมตัวเดียว: "N PRs" /
+          "M Best Volume" / "N PRs · M Best Volume" แล้วแต่ว่าวันนั้นมีประเภทไหนบ้าง ไม่โชว์ฝั่งที่เป็น 0 */}
+      {(prBreakdown.prs > 0 || prBreakdown.bestVolume > 0 || summary.muscleGroups.length > 0) && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 pt-2.5 border-t border-line px-2 text-xs">
-          {prCount > 0 && <span className="text-violet">🏆 PR +{prCount}</span>}
+          {(prBreakdown.prs > 0 || prBreakdown.bestVolume > 0) && (
+            <span className="text-violet">
+              🏆{' '}
+              {[
+                prBreakdown.prs > 0 ? `${prBreakdown.prs} PR${prBreakdown.prs > 1 ? 's' : ''}` : null,
+                prBreakdown.bestVolume > 0 ? `${prBreakdown.bestVolume} Best Volume` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
           {summary.muscleGroups.length > 0 && <span className="text-muted">💪 {summary.muscleGroups.join(' • ')}</span>}
         </div>
       )}

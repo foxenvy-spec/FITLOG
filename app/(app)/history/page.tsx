@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutSet } from '@/lib/types'
 import { getErrorMessage } from '@/lib/errors'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
-import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown } from '@/lib/workoutDisplay'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
@@ -301,7 +301,7 @@ function HistoryPageInner() {
               <p className="text-xs font-mono tracked text-muted mb-2 uppercase">{formatThaiDate(date)}</p>
               <DaySummaryHeader
                 summary={computeDaySummary(grouped[date])}
-                prCount={countDayPRs(
+                prBreakdown={countDayPRsBreakdown(
                   grouped[date].filter((w) => w.type === 'strength'),
                   workouts
                 )}

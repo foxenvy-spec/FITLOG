@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, GoalStatus, GoalType, ProgramDay, ProgramExercise, Workout, WorkoutSet } from '@/lib/types'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
-import { computeDaySummary, computeExerciseProgress, countDayPRs } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown } from '@/lib/workoutDisplay'
 import { computeCurrentStreak } from '@/lib/dashboardStats'
 import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
@@ -406,11 +406,11 @@ export default function CalendarPage() {
             <>
               {(() => {
                 const summary = computeDaySummary(selectedWorkouts)
-                const prCount = countDayPRs(
+                const prBreakdown = countDayPRsBreakdown(
                   selectedWorkouts.filter((w) => w.type === 'strength'),
                   allWorkouts
                 )
-                return <DaySummaryHeader summary={summary} prCount={prCount} unit={unit} toDisplay={toDisplay} />
+                return <DaySummaryHeader summary={summary} prBreakdown={prBreakdown} unit={unit} toDisplay={toDisplay} />
               })()}
 
               {selectedWorkouts.filter((w) => w.type === 'strength').length > 1 && (

@@ -32,12 +32,33 @@ export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
   return { exerciseCount: dayWorkouts.length, totalSets, totalVolumeKg, caloriesKcal, muscleGroups, durationMin }
 }
 
-// ท่านี้ตัวไหนคือ "สถิติใหม่" ของวันนั้น (นับทั้ง pr น้ำหนักและ bestVolume) — ใช้โชว์ตัวนับ 🏆 PR ในสรุปวัน
+// ท่านี้ตัวไหนคือ "สถิติใหม่" ของวันนั้น (นับทั้ง pr น้ำหนักและ bestVolume) — ใช้เช็คตัวจุด/badge ที่แค่ต้องรู้
+// "มี record ไหมวันนี้" (>0) เช่น WorkoutHeatmap.tsx ไม่ได้ต้องแยกละเอียดว่าเป็น pr หรือ bestVolume กี่รายการ
 export function countDayPRs(dayWorkouts: Workout[], priorPool: Workout[]): number {
   return dayWorkouts.filter((w) => {
     const p = computeExerciseProgress(w, priorPool)
     return p.kind === 'pr' || p.kind === 'bestVolume'
   }).length
+}
+
+export interface DayPRBreakdown {
+  prs: number
+  bestVolume: number
+}
+
+// ฟีดแบ็ก (design review) "'🏆 PR +5' รวม PR น้ำหนักจริงกับ Best Volume เข้าด้วยกันเป็นเลขเดียว — user เห็น
+// 'PR +5' มีโอกาสเข้าใจว่ามี PR (สถิติน้ำหนัก) 5 รายการ ทั้งที่จริงมีแค่ 2 อีก 3 เป็น Best Volume คนละ
+// ความหมาย" — countDayPRs() เดิม (ด้านบน) ยังคงไว้เหมือนเดิมสำหรับจุดที่ต้องการแค่ boolean/ตัวเลขรวม
+// (WorkoutHeatmap.tsx) เพิ่มฟังก์ชันนี้แยกต่างหากให้ DaySummaryHeader.tsx ใช้แสดงแยกประเภทให้ตรงความจริง
+export function countDayPRsBreakdown(dayWorkouts: Workout[], priorPool: Workout[]): DayPRBreakdown {
+  let prs = 0
+  let bestVolume = 0
+  dayWorkouts.forEach((w) => {
+    const p = computeExerciseProgress(w, priorPool)
+    if (p.kind === 'pr') prs++
+    else if (p.kind === 'bestVolume') bestVolume++
+  })
+  return { prs, bestVolume }
 }
 
 export function formatDuration(min: number): string {
