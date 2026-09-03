@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as Sentry from '@sentry/nextjs'
 import {
   ResponsiveContainer,
@@ -214,7 +214,55 @@ export default function RecoveryPage() {
     [strengthLogs, historyRangeDays]
   )
 
+  // ฟีดแบ็ก (design review) "หน้า Recovery ต้องเลื่อน 3 สกรีน ลองทำ 1 หน้าจอได้ไหม" — เหตุผล/วิธีเดียวกับที่
+  // ทำใน Dashboard: carousel ปัด/ลากได้จริง (scroll-snap ธรรมดา, เทคนิคเดียวกับ InsightCarousel.tsx) แบ่ง
+  // เป็นหน้า 1 = สิ่งที่ต้อง action วันนี้ (banner แนะนำ + การ์ดกล้ามเนื้อ 9 ใบ + ปุ่มบันทึกการฝึก) กับ
+  // หน้า 2 = ข้อมูลวิเคราะห์/ย้อนหลัง (กราฟ Recovery Score History) — ต่างจาก Dashboard ตรงที่หน้านี้เป็น
+  // single-column ธรรมดา (space-y-5 ล้วน ไม่มี 12-col grid/row-start ให้ต้องระวัง) จึงครอบทั้งหน้าเป็น
+  // carousel ได้ตรงๆ โดยไม่มีความเสี่ยงแบบที่ Dashboard มี
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [pageIndex, setPageIndex] = useState(0)
+  function scrollToPage(index: number) {
+    const el = trackRef.current
+    if (!el) return
+    el.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' })
+  }
+  function handleTrackScroll() {
+    const el = trackRef.current
+    if (!el || el.clientWidth === 0) return
+    const index = Math.round(el.scrollLeft / el.clientWidth)
+    setPageIndex(Math.max(0, Math.min(1, index)))
+  }
+
   return (
+    <>
+    <div className="flex justify-center pb-3">
+      <div className="inline-flex items-center gap-1 rounded-full border border-line p-1">
+        <button
+          type="button"
+          onClick={() => scrollToPage(0)}
+          aria-pressed={pageIndex === 0}
+          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${pageIndex === 0 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+        >
+          1 · ภาพรวม
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollToPage(1)}
+          aria-pressed={pageIndex === 1}
+          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${pageIndex === 1 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+        >
+          2 · รายละเอียด
+        </button>
+      </div>
+    </div>
+    <div
+      ref={trackRef}
+      onScroll={handleTrackScroll}
+      className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar items-start"
+      style={{ scrollBehavior: 'smooth' }}
+    >
+    <div className="shrink-0 w-full snap-center">
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl tracked uppercase">Recovery</h1>
@@ -339,6 +387,15 @@ export default function RecoveryPage() {
         </div>
       )}
 
+      <a href="/log" className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2">
+        ✚ บันทึกการฝึกวันนี้ →
+      </a>
+    </div>
+    </div>
+    {/* end page 1 (สิ่งที่ต้อง action วันนี้) */}
+
+    <div className="shrink-0 w-full snap-center">
+    <div className="space-y-5">
       {!loading && !error && strengthLogs.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -395,10 +452,11 @@ export default function RecoveryPage() {
           </p>
         </section>
       )}
-
-      <a href="/log" className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2">
-        ✚ บันทึกการฝึกวันนี้ →
-      </a>
     </div>
+    </div>
+    {/* end page 2 (ข้อมูลวิเคราะห์/ย้อนหลัง) */}
+    </div>
+    {/* end carousel track */}
+    </>
   )
 }
