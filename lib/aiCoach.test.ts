@@ -114,14 +114,51 @@ describe('computeProgressiveOverload', () => {
     expect(plan?.targetReps).toBe(9)
   })
 
-  it('suggests a deload when recent RPE is consistently very high', () => {
+  it('suggests a deload when recent RPE is consistently very high, snapped down to a loadable increment', () => {
     const entries = [
       makeWorkout({ id: 'a', performed_at: '2026-06-01', weight_kg: 60, reps: 5, rpe: 9 }),
       makeWorkout({ id: 'b', performed_at: '2026-06-08', weight_kg: 60, reps: 5, rpe: 9.5 }),
     ]
     const plan = computeProgressiveOverload('Bench Press', entries)
     expect(plan?.action).toBe('deload')
-    expect(plan?.targetWeight).toBe(54)
+    // 60 * 0.9 = 54 ซึ่งไม่ใช่จำนวนที่ตั้งจานได้จริงเป็นทวีคูณของ 2.5kg (54/2.5 = 21.6) — ปัดลงเป็น 21*2.5
+    // = 52.5 (ปัดลงเสมอ ไม่ปัดขึ้น กันไม่ให้ deload หนักเกินเป้าหมายเดิม)
+    expect(plan?.targetWeight).toBe(52.5)
+  })
+
+  it('returns null instead of a suggestion when the logged weight is 0 (a bodyweight-only entry)', () => {
+    const bodyweightEntries = [
+      makeWorkout({ id: 'a', performed_at: '2026-06-01', weight_kg: 0, reps: 10, rpe: 7 }),
+    ]
+    expect(computeProgressiveOverload('Pull Up', bodyweightEntries)).toBeNull()
+
+    const highRpeEntries = [
+      makeWorkout({ id: 'a', performed_at: '2026-06-01', weight_kg: 0, reps: 10, rpe: 9.5 }),
+    ]
+    expect(computeProgressiveOverload('Pull Up', highRpeEntries)).toBeNull()
+  })
+
+  it('snaps a deload target down to the dumbbell increment, not the barbell one', () => {
+    const entries = [
+      makeWorkout({ id: 'a', exercise_name: 'Dumbbell Bench Press', performed_at: '2026-06-01', weight_kg: 22, reps: 5, rpe: 9 }),
+      makeWorkout({ id: 'b', exercise_name: 'Dumbbell Bench Press', performed_at: '2026-06-08', weight_kg: 22, reps: 5, rpe: 9.5 }),
+    ]
+    const exercises = [
+      {
+        id: 'dumbbell-bench-press',
+        name: 'Dumbbell Bench Press',
+        nameTh: 'ดัมเบลเบนช์เพรส',
+        muscleGroup: 'อก' as const,
+        secondaryMuscles: [],
+        equipment: 'ดัมเบล' as const,
+        icon: '🏋️',
+        aliases: [],
+        instructions: [],
+      },
+    ]
+    const plan = computeProgressiveOverload('Dumbbell Bench Press', entries, exercises)
+    // 22 * 0.9 = 19.8 -> ปัดลงตาม increment ของดัมเบล (1kg) = 19
+    expect(plan?.targetWeight).toBe(19)
   })
 
   it('uses a smaller increment for dumbbell exercises', () => {

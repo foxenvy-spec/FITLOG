@@ -95,6 +95,17 @@ const RPE_LOW_THRESHOLD = 7
 const RPE_HIGH_THRESHOLD = 9
 const RECENT_SESSION_COUNT = 3
 
+// ปัดน้ำหนักลงให้ตรงกับ increment ที่ใช้ได้จริง (จาน/ดัมเบล) เสมอ — ใช้เฉพาะจุดที่คำนวณด้วยการคูณ
+// เศษส่วน (เช่น deload ×0.9) ซึ่งมีโอกาสได้เลขที่ตั้งน้ำหนักจริงไม่ได้ (เช่น 56.25kg) ปัด "ลง" เท่านั้น ไม่ปัด
+// ขึ้น เพราะจุดประสงค์ของ deload คือให้เบากว่าที่คำนวณดิบเสมอ ไม่ใช่หนักกว่า — ต่างจาก increase_weight ที่
+// บวก weightIncrement ตรงๆ (เป็นค่า clean อยู่แล้ว ไม่ผ่าน helper นี้ ไม่งั้นจะปัดตำแหน่งเพี้ยนไปจาก
+// currentWeight เดิม)
+function snapDownToIncrement(weightKg: number, incrementKg: number): number {
+  if (incrementKg <= 0) return Math.round(weightKg * 10) / 10
+  const steps = Math.floor(weightKg / incrementKg + 1e-9)
+  return Math.round(steps * incrementKg * 10) / 10
+}
+
 // allEntries ควรเป็น workouts ทั้งหมดของ exerciseName นั้น (type='strength') — เรียงลำดับใหม่ในฟังก์ชันนี้เอง
 export function computeProgressiveOverload(exerciseName: string, allEntries: Workout[], exercises: ExerciseDef[] = []): OverloadPlan | null {
   const sorted = allEntries
@@ -108,6 +119,11 @@ export function computeProgressiveOverload(exerciseName: string, allEntries: Wor
   const last = sorted[sorted.length - 1]
   const currentWeight = last.weight_kg ?? 0
   const currentReps = last.reps ?? 0
+
+  // น้ำหนัก 0 (หรือติดลบ ซึ่งไม่ควรเกิดแต่กันไว้) หมายถึงท่า bodyweight ล้วนๆ ที่ log ไว้โดยไม่มีน้ำหนักภายนอก
+  // — engine นี้ไม่รู้ว่าท่านี้ควรมีน้ำหนักภายนอกหรือไม่ จึงไม่ควรเดา "เพิ่ม/ลดน้ำหนัก" ให้เลย (เทียบ
+  // suggestNextLoad ใน lib/progressiveOverload.ts ที่มี guard เดียวกันนี้อยู่แล้วสำหรับจุดอื่น)
+  if (currentWeight <= 0) return null
 
   const recent = sorted.slice(-RECENT_SESSION_COUNT)
   const rpeValues = recent.map((w) => w.rpe).filter((r): r is number => r !== null && r !== undefined)
@@ -148,7 +164,7 @@ export function computeProgressiveOverload(exerciseName: string, allEntries: Wor
       action: 'deload',
       currentWeight,
       currentReps,
-      targetWeight: Math.round(currentWeight * 0.9 * 10) / 10,
+      targetWeight: snapDownToIncrement(currentWeight * 0.9, weightIncrement),
       targetReps: currentReps,
       avgRpe,
       rationale: `RPE เฉลี่ย ${avgRpe} จาก ${recent.length} ครั้งล่าสุด หนักต่อเนื่อง — ลดน้ำหนักลงเล็กน้อยเพื่อพักฟื้นและกันบาดเจ็บ`,
