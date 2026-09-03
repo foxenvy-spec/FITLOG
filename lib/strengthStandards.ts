@@ -66,7 +66,10 @@ function ratioToPct(ratio: number, tiers: TierRatios): number {
 }
 
 export interface StrengthAxisResult {
-  pct: number
+  // null = ไม่มีข้อมูลให้คำนวณเลย (ยังไม่เคยฝึกท่านี้ หรือยังไม่ตั้งน้ำหนักตัว) ต้องแยกจาก 0 ซึ่งหมายถึง
+  // "มีข้อมูลจริง แต่ 1RM/น้ำหนักตัวต่ำกว่าเกณฑ์ novice" — ไม่งั้นกราฟเรดาร์จะปนกันว่า "ไม่มีข้อมูล" กับ
+  // "แข็งแรงน้อยที่สุด" เป็นค่าเดียวกัน
+  pct: number | null
   best1RMKg: number | null
   ratio: number | null
 }
@@ -88,7 +91,7 @@ export function computeStrengthAxis(
   bodyWeightKg: number | null,
   sex: Sex
 ): StrengthAxisResult {
-  if (!bodyWeightKg || bodyWeightKg <= 0) return { pct: 0, best1RMKg: null, ratio: null }
+  if (!bodyWeightKg || bodyWeightKg <= 0) return { pct: null, best1RMKg: null, ratio: null }
 
   const keywords = AXIS_KEYWORDS[axis]
   let best1RM = 0
@@ -100,7 +103,7 @@ export function computeStrengthAxis(
     if (oneRM > best1RM) best1RM = oneRM
   })
 
-  if (best1RM <= 0) return { pct: 0, best1RMKg: null, ratio: null }
+  if (best1RM <= 0) return { pct: null, best1RMKg: null, ratio: null }
 
   const tiers = sex === 'male' || sex === 'female' ? RATIOS[axis][sex] : averagedRatios(axis)
   const ratio = best1RM / bodyWeightKg

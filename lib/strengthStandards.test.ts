@@ -28,9 +28,16 @@ describe('computeStrengthAxis', () => {
     expect(result.best1RMKg).toBeCloseTo(116.7, 1) // จาก Squat 100kg x5 เท่านั้น ไม่ใช่ Leg Press
   })
 
-  it('returns a zeroed result when nothing matches or bodyweight is missing', () => {
-    expect(computeStrengthAxis('pull', workouts, 80, 'male')).toEqual({ pct: 0, best1RMKg: null, ratio: null })
-    expect(computeStrengthAxis('push', workouts, null, 'male')).toEqual({ pct: 0, best1RMKg: null, ratio: null })
+  it('returns null pct (not 0) when nothing matches or bodyweight is missing — "no data" is not "score 0"', () => {
+    expect(computeStrengthAxis('pull', workouts, 80, 'male')).toEqual({ pct: null, best1RMKg: null, ratio: null })
+    expect(computeStrengthAxis('push', workouts, null, 'male')).toEqual({ pct: null, best1RMKg: null, ratio: null })
+  })
+
+  it('returns pct 0 (not null) when the lift exists but the 1RM/bodyweight ratio is below the novice tier', () => {
+    const weakWorkouts = [mkWorkout({ exercise_name: 'Bench Press', weight_kg: 1, reps: 1 })]
+    const result = computeStrengthAxis('push', weakWorkouts, 100, 'male')
+    expect(result.pct).toBe(0)
+    expect(result.best1RMKg).not.toBeNull()
   })
 
   it('scores lower against male-only standards than against the (lower) sex-averaged fallback at the same ratio', () => {
@@ -38,7 +45,9 @@ describe('computeStrengthAxis', () => {
     // ต้องได้ pct ต่ำกว่า — ไม่ได้ตั้งค่าเพศ (ใช้ค่าเฉลี่ย ต่ำกว่าเกณฑ์ชาย) จึงควรได้ pct สูงกว่าเกณฑ์ชายล้วน
     const male = computeStrengthAxis('push', workouts, 80, 'male')
     const unset = computeStrengthAxis('push', workouts, 80, null)
-    expect(unset.pct).toBeGreaterThan(male.pct)
+    expect(unset.pct).not.toBeNull()
+    expect(male.pct).not.toBeNull()
+    expect(unset.pct!).toBeGreaterThan(male.pct!)
   })
 
   it('caps at 100 for a ratio at or beyond the elite threshold', () => {

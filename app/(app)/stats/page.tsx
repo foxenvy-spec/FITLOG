@@ -336,18 +336,23 @@ export default function StatsPage() {
     const vo2max = computeVO2Max(profile?.max_heart_rate ?? null, profile?.resting_heart_rate ?? null)
     const endurance = vo2MaxToPct(vo2max)
 
+    // pct: null = ไม่มีข้อมูลให้คำนวณแกนนี้เลย (ต้องแยกจาก 0 ซึ่งคือ "มีข้อมูลจริงแต่คะแนนต่ำ") — value คือค่า
+    // ตัวเลขจริงที่ส่งให้ RadarChart วาดกราฟ (Recharts วาดรูปหลายเหลี่ยมปิด ไม่มีแนวคิด "ข้ามแกนนี้" แบบ
+    // connectNulls ของ LineChart ถ้าใส่ null ตรงๆ จุดยอดจะกลายเป็น NaN ทำให้รูปทรงพัง) จึงใช้ 0 แทนตำแหน่ง
+    // แต่แยกแสดงผลด้วย pct (null) ผ่าน custom dot + tooltip แทน
     return [
-      { axis: 'Push', pct: push.pct },
-      { axis: 'Pull', pct: pull.pct },
-      { axis: 'Legs', pct: legs.pct },
-      { axis: 'Core', pct: core },
-      { axis: 'Endurance', pct: endurance },
+      { axis: 'Push', pct: push.pct, value: push.pct ?? 0 },
+      { axis: 'Pull', pct: pull.pct, value: pull.pct ?? 0 },
+      { axis: 'Legs', pct: legs.pct, value: legs.pct ?? 0 },
+      { axis: 'Core', pct: core, value: core },
+      { axis: 'Endurance', pct: endurance, value: endurance },
     ]
   }, [workouts, bodyWeightKg, profile, totals.totalVolume])
 
-  // มีข้อมูลจริงพอให้กราฟมีความหมายไหม — ต้องมีอย่างน้อย 1 แกนที่ไม่ใช่ 0 (ไม่งั้นกราฟจะเป็นจุดเดียวตรง
+  // มีข้อมูลจริงพอให้กราฟมีความหมายไหม — ต้องมีอย่างน้อย 1 แกนที่ไม่ใช่ null/0 (ไม่งั้นกราฟจะเป็นจุดเดียวตรง
   // กลางที่ไม่สื่อความหมายอะไร ดูเหมือนบั๊กมากกว่าข้อมูลจริง)
-  const hasStrengthBalanceData = strengthBalance.some((a) => a.pct > 0)
+  const hasStrengthBalanceData = strengthBalance.some((a) => (a.pct ?? 0) > 0)
+  const noDataAxes = strengthBalance.filter((a) => a.pct === null).map((a) => a.axis)
 
   const topExercises = useMemo(() => {
     const map = new Map<string, number>()
@@ -579,16 +584,43 @@ export default function StatsPage() {
               <RadarChart data={strengthBalance} outerRadius="70%">
                 <PolarGrid stroke={NEUTRAL.chipInactive} />
                 <PolarAngleAxis dataKey="axis" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 11 }} />
-                <Radar dataKey="pct" stroke={COLORS.violet} fill={COLORS.violet} fillOpacity={0.35} />
+                <Radar
+                  dataKey="value"
+                  stroke={COLORS.violet}
+                  fill={COLORS.violet}
+                  fillOpacity={0.35}
+                  dot={(dotProps: any) => {
+                    const { cx, cy, payload, key } = dotProps
+                    const noData = payload?.pct === null
+                    return (
+                      <circle
+                        key={key}
+                        cx={cx}
+                        cy={cy}
+                        r={3}
+                        fill={noData ? NEUTRAL.chipInactive : COLORS.violet}
+                        stroke={noData ? NEUTRAL.mutedIcon : COLORS.violet}
+                        strokeWidth={noData ? 1 : 0}
+                      />
+                    )
+                  }}
+                />
                 <Tooltip
                   contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
                   labelStyle={{ color: NEUTRAL.mutedIcon }}
                   itemStyle={{ color: '#F3F0E8' }}
-                  formatter={(v: number) => [`${v}%`, 'ระดับ']}
+                  formatter={(v: number, _name: string, entry: any) =>
+                    entry?.payload?.pct === null ? ['ไม่มีข้อมูล', 'ระดับ'] : [`${v}%`, 'ระดับ']
+                  }
                 />
               </RadarChart>
             </ResponsiveContainer>
           </PremiumCard>
+          {noDataAxes.length > 0 && (
+            <p className="text-[12px] text-muted mt-1.5">
+              ยังไม่มีข้อมูล: {noDataAxes.join(', ')}
+            </p>
+          )}
           {/* ฟีดแบ็ก "คำอธิบายยาวเป็นพรืดและตัวเล็ก อ่านเหมือน text หลุดกรอบ" — ใส่กรอบ info box จางๆ
               ให้แยกจากเนื้อหาอื่นชัดเจนขึ้น ไม่แตะเนื้อหา/ความยาวข้อความเลย แค่เปลี่ยน container */}
           <p
