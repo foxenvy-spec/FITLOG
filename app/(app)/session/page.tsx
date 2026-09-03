@@ -145,6 +145,14 @@ export default function SessionPage() {
   const [loggingSet, setLoggingSet] = useState(false)
   const [summaryExtras, setSummaryExtras] = useState<SummaryExtras | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
+  // ฟีดแบ็ก (design review) "หน้า Session Complete โชว์ '00:00 เวลาที่ใช้' กับ '0 kcal' ทั้งที่ทำครบ 8/8
+  // ท่า 27 เซ็ตจริง — bug หรือแค่ไม่มีข้อมูล?" — ตรวจแล้วพบว่าไม่ใช่บั๊กการคำนวณ แต่เป็นเพราะ totalElapsedMs
+  // มาจาก stopwatch ที่เริ่มนับเฉพาะตอน phase เข้าสถานะ 'active' เท่านั้น (ดู useEffect ด้านล่าง) — ถ้า
+  // workout วันนี้ถูกบันทึกผ่านช่องทางอื่นที่ไม่ใช่ live session ในหน้านี้ (MINT Coach quick-start ที่
+  // insert ตรงเข้า DB, /log, import) แล้ว allFinished เช็คแล้วข้ามตรงไปหน้า 'done' เลย (ไม่เคยผ่าน 'active'
+  // เลยสักครั้ง) stopwatch จึงไม่เคยเริ่มนับจริงๆ เวลา/แคลอรี่ที่ประมาณจากเวลาจึงไม่มีข้อมูลจริงให้แสดง —
+  // ธงนี้ true เฉพาะเคสนั้น ใช้โชว์ "—" แทน "00:00"/"0 kcal" ที่สื่อความหมายผิดว่า "ใช้เวลา 0 นาทีจริงๆ"
+  const [noLiveDuration, setNoLiveDuration] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
   // ผลงาน "ครั้งก่อน" ต่อชื่อท่า — เดิมเป็นแค่ตัวแปร local ใน load() ใช้ตั้งค่าเริ่มต้น reps/น้ำหนักเฉยๆ
   // แล้วทิ้ง ตอนนี้เก็บไว้ใน state ด้วยเพื่อใช้คำนวณคำแนะนำ Progressive Overload (ดู suggestNextLoad)
@@ -393,6 +401,9 @@ export default function SessionPage() {
     const allFinished = combinedExercises.length > 0 && combinedExercises.every((ex) => adjustedStates[ex.id]?.logged)
     if (allFinished) {
       if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
+      // ดู comment ที่ noLiveDuration state ด้านบน — ไปหน้า 'done' ตรงนี้โดยไม่เคยผ่าน 'active' เลย
+      // stopwatch เลยไม่มีทางเริ่มนับจริง เวลา/แคลอรี่ที่จะโชว์ในหน้าสรุปจึงไม่มีข้อมูลจริงให้อ้างอิง
+      setNoLiveDuration(true)
       setPhase('done')
       return
     }
@@ -945,7 +956,9 @@ export default function SessionPage() {
     const skipped = getSkippedExercises(exercises, states)
     const lines = [
       `🏋️ ${day?.title ?? 'Workout'} เสร็จแล้ว!`,
-      `⏱ ${formatClock(totalElapsedMs)} · ${summary.exerciseCount}/${exercises.length} ท่า · ${summary.totalSets} เซ็ต`,
+      noLiveDuration
+        ? `${summary.exerciseCount}/${exercises.length} ท่า · ${summary.totalSets} เซ็ต`
+        : `⏱ ${formatClock(totalElapsedMs)} · ${summary.exerciseCount}/${exercises.length} ท่า · ${summary.totalSets} เซ็ต`,
     ]
     if (summary.totalVolumeKg > 0) lines.push(`💪 วอลุ่มรวม ${Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString()} ${unit}`)
     if (skipped.length > 0) lines.push(`⏭️ ข้ามไป: ${skipped.map((s) => s.exerciseName).join(', ')}`)
@@ -1010,7 +1023,15 @@ export default function SessionPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-2.5">
-          <GlowStatCell icon={<ClockIcon />} color={COLORS.amber} value={formatClock(totalElapsedMs)} label="เวลาที่ใช้" />
+          {/* ดู comment ที่ noLiveDuration state ด้านบนของไฟล์ — "00:00" สื่อว่าใช้เวลาศูนย์นาทีจริง ทั้งที่
+              จริงๆ คือไม่เคยมี stopwatch ให้นับเลย ใช้ "–" (เครื่องหมายเดียวกับที่วอลุ่มรวม/แคลอรี่ข้างล่าง
+              ใช้อยู่แล้วเวลาไม่มีข้อมูล) แทนให้สื่อความหมายตรงกับความจริง */}
+          <GlowStatCell
+            icon={<ClockIcon />}
+            color={COLORS.amber}
+            value={noLiveDuration ? '–' : formatClock(totalElapsedMs)}
+            label="เวลาที่ใช้"
+          />
           <GlowStatCell
             icon={<DumbbellIcon />}
             color={COLORS.steel}
@@ -1027,10 +1048,16 @@ export default function SessionPage() {
             value={summary.totalVolumeKg > 0 ? Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString() : '–'}
             label={`วอลุ่มรวม (${unit})`}
           />
+          {/* ฟีดแบ็ก (design review) "0 kcal ดูเหมือนระบบคำนวณแล้วพบว่าเผาผลาญ 0 จริง ทั้งที่ไม่น่าเป็นไปได้
+              สำหรับ workout 66 นาที" — estimateCaloriesToday() (lib/dashboardStats.ts) รวม cardioKcal
+              (จากข้อมูลคาร์ดิโอจริงถ้ามี) + strengthKcal (0 ถ้าไม่มี duration ให้อ้างอิง — ดู noLiveDuration
+              ด้านบน) ผลรวมเป็น 0 จริงๆ เฉพาะตอนไม่มีทั้งคาร์ดิโอและ duration ที่เชื่อถือได้เลย ไม่ใช่บั๊ก
+              การคำนวณ แต่ "0 kcal" สื่อความหมายผิด — โชว์ "–" แทนเฉพาะตอนผลลัพธ์เป็น 0 เป๊ะ (ไม่กระทบตอนมี
+              คาร์ดิโอจริงที่ทำให้ผลรวม > 0) */}
           <GlowStatRow
             icon={<BoltIcon />}
             color={COLORS.green}
-            value={summaryLoading ? '…' : summaryExtras ? `${summaryExtras.calories} kcal` : '–'}
+            value={summaryLoading ? '…' : summaryExtras && summaryExtras.calories > 0 ? `${summaryExtras.calories} kcal` : '–'}
             label="แคลอรี่ (ประมาณ)"
           />
         </div>
