@@ -157,7 +157,14 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[12px] font-medium text-muted">อยู่ในเป้าหมาย</p>
+              {/* ฟีดแบ็ก (design review) "11/18 เซ็ต ยังไม่ถึง 100% แต่ขึ้น 🟢 'อยู่ในเป้าหมาย' — ทำไม? ถ้า
+                  logic คือ 'อยู่ใน acceptable range เทียบสัดส่วนวันที่ผ่านไปของสัปดาห์' (ดู volumeStatus()/
+                  onTrack ใน lib/dashboardStats.ts) ต้องสื่อให้ user รู้" — ตรวจ logic แล้วยืนยันว่าถูกต้อง
+                  ตามที่ตั้งใจ (onTrack ไม่ได้แปลว่า "ถึงเป้าเต็มแล้ว" แต่แปลว่า "กำลังไปตามจังหวะ ยังไม่ครบ
+                  สัปดาห์") ไม่แตะสูตร/threshold ใดๆ เลย — แก้แค่คำที่ทำให้เข้าใจผิดว่า "ถึงเป้าแล้ว" เป็น
+                  "ตามแผน" แทน (คำเดียวกับที่การ์ด Consistency ใช้อยู่แล้วสำหรับความหมาย "เป็นไปตามจังหวะที่
+                  วางไว้" เป๊ะ — ไม่ได้คิดคำใหม่ ใช้คำที่มีอยู่แล้วในหน้าเดียวกัน) */}
+              <p className="text-[12px] font-medium text-muted">ตามแผน</p>
               <p className="font-mono text-sm text-ink mt-0.5">
                 {onTargetCount} <span className="text-[12px] text-muted font-sans">/ {rows.length} กลุ่ม</span>
               </p>
@@ -165,13 +172,14 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
           </div>
 
           {/* ป้ายสรุปใช้ BUCKET_META เดียวกับ badge ต่อแถว (ดูคอมเมนต์ด้านบน) — สี/emoji ตรงกันเป๊ะเสมอ
-              ไม่มีทางขัดกันข้ามจุดแบบที่เคยเจอบั๊กมาก่อน (ป้ายสรุปหนึ่งสี แถวจริงอีกสี) */}
+              ไม่มีทางขัดกันข้ามจุดแบบที่เคยเจอบั๊กมาก่อน (ป้ายสรุปหนึ่งสี แถวจริงอีกสี) — "ในเป้าหมาย" ->
+              "ตามแผน" เหตุผลเดียวกับป้ายสรุปด้านบน */}
           <div className="flex items-center justify-center gap-3 mt-2 text-[12px]">
             <span style={{ color: BUCKET_META.under.color }}>
               {BUCKET_META.under.emoji} ต่ำกว่าเป้า {underTargetCount}
             </span>
             <span style={{ color: BUCKET_META.onTarget.color }}>
-              {BUCKET_META.onTarget.emoji} ในเป้าหมาย {onTargetCount}
+              {BUCKET_META.onTarget.emoji} ตามแผน {onTargetCount}
             </span>
             <span style={{ color: BUCKET_META.over.color }}>
               {BUCKET_META.over.emoji} เกินเป้า {overTargetCount}
