@@ -207,7 +207,10 @@ export default function TemplatesPage() {
     setExpandedId(created.id)
   }
 
-  async function handleDeleteTemplate(id: string) {
+  async function handleDeleteTemplate(id: string, title: string) {
+    // ฟีดแบ็ก (Final Production Audit — CTA behavior) เทมเพลตอาจมีหลายท่าอยู่ข้างใน ลบทีเดียวหายทั้งชุด
+    // ย้อนกลับไม่ได้ — ต้องมี confirmation เหมือนจุดอื่นที่แก้ไปแล้ว
+    if (!window.confirm(`ลบเทมเพลต "${title}" ใช่หรือไม่? ท่าออกกำลังกายทั้งหมดในเทมเพลตนี้จะหายไปด้วย`)) return
     setError(null)
     const { error: err } = await supabase.from('workout_templates').delete().eq('id', id)
     if (err) {
@@ -858,7 +861,7 @@ export default function TemplatesPage() {
                     >
                       ⬇ Export
                     </button>
-                    <button onClick={() => handleDeleteTemplate(t.id)} className="text-xs text-muted hover:text-rust transition">
+                    <button onClick={() => handleDeleteTemplate(t.id, t.title)} className="text-xs text-muted hover:text-rust transition">
                       ลบเทมเพลตนี้
                     </button>
                   </div>

@@ -4946,6 +4946,10 @@ function PhotosTab({
   }
 
   async function handleDelete(photo: ProgressPhoto) {
+    // ฟีดแบ็ก (Final Production Audit — CTA behavior) ลบรูปไม่มี confirmation เลย ทั้งที่ไฟล์หายจริงถาวร
+    // (ลบทั้ง storage และแถวใน DB) — เพิ่ม confirmation เหมือนจุดอื่นที่แก้ไปแล้ว
+    const photoLabel = photo.label ? `"${photo.label}"` : `วันที่ ${photo.taken_at}`
+    if (!window.confirm(`ลบรูป ${photoLabel} ใช่หรือไม่?`)) return
     // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิมไม่เช็ค error ของทั้งสองคำสั่งเลย ต่างจาก handleUpload
     // ด้านบนในฟังก์ชันเดียวกันที่เช็ค insertError แล้วโชว์ error ให้เห็น — ถ้าลบพัง (RLS/เน็ตหลุด)
     // onChanged() ยังถูกเรียกเหมือนสำเร็จ (แค่ refetch state เดิมกลับมา ไม่ error ให้ผู้ใช้เห็นเลยว่าทำไม

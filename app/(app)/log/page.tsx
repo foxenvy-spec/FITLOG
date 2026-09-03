@@ -445,7 +445,10 @@ function LogPageInner() {
     loadToday()
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, label: string) {
+    // ฟีดแบ็ก (Final Production Audit — CTA behavior) "ลบ workout ไม่มี confirmation เลย ทั้งที่ย้อนกลับไม่ได้"
+    // — ใช้ window.confirm แบบเดียวกับที่ Calendar (ลบเป้าหมาย) ใช้อยู่แล้ว ไม่ต้องสร้างระบบ dialog ใหม่
+    if (!window.confirm(`ลบ "${label}" ใช่หรือไม่?`)) return
     const { error: err } = await supabase.from('workouts').delete().eq('id', id)
     if (err) {
       setError(`ลบไม่สำเร็จ: ${err.message}`)
@@ -933,7 +936,7 @@ function LogPageInner() {
                     แก้ไข
                   </button>
                   <button
-                    onClick={() => handleDelete(w.id)}
+                    onClick={() => handleDelete(w.id, w.type === 'strength' ? (w.exercise_name ?? 'ท่านี้') : (w.cardio_type ?? 'รายการนี้'))}
                     className="text-muted hover:text-rust text-xs"
                     aria-label="ลบรายการ"
                   >

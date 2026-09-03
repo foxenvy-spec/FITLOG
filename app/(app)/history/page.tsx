@@ -92,7 +92,9 @@ function HistoryPageInner() {
     load()
   }, [load])
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, label: string) {
+    // ฟีดแบ็ก (Final Production Audit — CTA behavior) เหมือน log/page.tsx — เพิ่ม confirmation ก่อนลบ
+    if (!window.confirm(`ลบ "${label}" ใช่หรือไม่?`)) return
     setActionError(null)
     setDeletingId(id)
     const { error } = await supabase.from('workouts').delete().eq('id', id)
@@ -329,7 +331,7 @@ function HistoryPageInner() {
                           แก้ไข
                         </a>
                         <button
-                          onClick={() => handleDelete(w.id)}
+                          onClick={() => handleDelete(w.id, w.type === 'strength' ? (w.exercise_name ?? 'ท่านี้') : (w.cardio_type ?? 'รายการนี้'))}
                           disabled={deletingId === w.id}
                           className="text-muted hover:text-rust text-xs disabled:opacity-50"
                           aria-label="ลบรายการ"
