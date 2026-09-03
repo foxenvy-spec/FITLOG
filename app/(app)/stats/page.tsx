@@ -466,7 +466,11 @@ export default function StatsPage() {
         <StatCard label="เซสชันเวท" value={totals.strengthCount} unit="ครั้ง" accent="moss" />
         <StatCard label="ระยะทางคาร์ดิโอรวม" value={totals.totalDistance} unit="กม." accent="rust" decimals={1} />
         <StatCard label="แคลอรี่ที่เผาผลาญรวม" value={totals.totalCalories} unit="kcal" accent="amber" />
-        <StatCard label="เวลาเฉลี่ย/วัน" value={totals.avgDurationMin} unit="นาที" accent="steel" />
+        {/* ฟีดแบ็ก (design review, P0) "'เวลาเฉลี่ย/วัน' ต้องนิยามชัดว่าหารด้วยวันฝึกหรือวันปฏิทิน" — ตรวจ
+            สูตรแล้วยืนยันว่า avgDurationMin หารด้วย activeDays (ตัวเดียวกับ "วันที่ออกกำลังกาย" ด้านบน —
+            นับเฉพาะวันที่มี workout จริง) อยู่แล้ว ไม่ใช่จำนวนวันทั้งหมดในช่วงเวลา — ตรงกับที่แนะนำว่า
+            semantic ที่ useful กว่าคือ "ต่อวันฝึก" ไม่ต้องแก้สูตร แก้แค่ label ให้สื่อความหมายที่คำนวณจริง */}
+        <StatCard label="เวลาเฉลี่ย/วันฝึก" value={totals.avgDurationMin} unit="นาที" accent="steel" />
       </div>
 
       <section>
