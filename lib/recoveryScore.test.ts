@@ -53,17 +53,56 @@ describe('computeSessionMuscleRecovery', () => {
     expect(back.pct).toBeLessThan(100) // recently trained, not fully rested
   })
 
-  it('treats an untouched muscle with no history as fully ready', () => {
+  it('treats an untouched muscle with no history as fully ready (per-muscle pct only, not counted in the overall average)', () => {
     const { byMuscle } = computeSessionMuscleRecovery({}, {})
     const legs = byMuscle.find((m) => m.muscleGroup === 'ขา')!
     expect(legs.trainedToday).toBe(false)
     expect(legs.pct).toBe(100)
+    expect(legs.hasHistory).toBe(false)
   })
 
-  it('averages all tracked muscle groups into an overall score', () => {
-    const { overall, byMuscle } = computeSessionMuscleRecovery({}, {})
+  // ฟีดแบ็ก (Final Production Audit — Scoring consistency) "no data ≠ 100% เมื่อ aggregate" เหมือนที่แก้ไปแล้ว
+  // ใน computeRecoveryHistory (lib/trends.ts) — pct 100 ของกลุ่มที่ไม่เคยฝึกเลยยังถูกต้องอยู่ ระดับรายกลุ่ม
+  // (แค่แปลว่า "พร้อม") แต่ไม่ควรถูกนับรวมเข้า overall เพราะไม่ใช่ตัวเลขที่มาจากข้อมูลจริง
+  it('averages the overall score only across muscle groups with real history, when every group has some', () => {
+    const priorLastTrainedDate = {
+      อก: '2026-07-16',
+      หลัง: '2026-07-15',
+      ขา: '2026-07-14',
+      น่อง: '2026-07-13',
+      ไหล่: '2026-07-17',
+      แขน: '2026-07-12',
+      แกนกลางลำตัว: '2026-07-16',
+    }
+    const { overall, byMuscle } = computeSessionMuscleRecovery({}, priorLastTrainedDate)
+    expect(byMuscle.every((m) => m.hasHistory)).toBe(true)
     const expectedAvg = Math.round(byMuscle.reduce((s, m) => s + m.pct, 0) / byMuscle.length)
     expect(overall).toBe(expectedAvg)
-    expect(overall).toBe(100) // nothing trained, nothing recent -> fully ready across the board
+  })
+
+  it('excludes muscle groups with no history from the overall average, instead of counting their 100% (regression test)', () => {
+    // อก มีประวัติจริง (เพิ่งฝึกเมื่อวาน จึง pct ต่ำกว่า 100) ส่วนกลุ่มอื่นทั้งหมดไม่เคยมีประวัติเลย (pct 100
+    // แต่ hasHistory: false) — overall ต้องเท่ากับ pct ของอกอย่างเดียว ไม่ใช่ค่าเฉลี่ยที่ถูกกลุ่ม "ไม่มีข้อมูล"
+    // ถ่วงขึ้นไปใกล้ 100
+    const { overall, byMuscle } = computeSessionMuscleRecovery({}, { อก: '2026-07-17' })
+    const chest = byMuscle.find((m) => m.muscleGroup === 'อก')!
+    expect(chest.hasHistory).toBe(true)
+    expect(chest.pct).toBeLessThan(100)
+    expect(byMuscle.filter((m) => m.muscleGroup !== 'อก').every((m) => m.hasHistory === false && m.pct === 100)).toBe(true)
+    expect(overall).toBe(chest.pct)
+  })
+
+  it('returns overall null when no muscle group has any history at all (nothing meaningful to average)', () => {
+    const { overall, byMuscle } = computeSessionMuscleRecovery({}, {})
+    expect(byMuscle.every((m) => m.hasHistory === false)).toBe(true)
+    expect(overall).toBeNull()
+  })
+
+  it('counts a muscle trained today toward the overall average via its fatigue-based pct', () => {
+    const { overall, byMuscle } = computeSessionMuscleRecovery({ อก: { sets: 12, avgRpe: 9 } }, {})
+    const chest = byMuscle.find((m) => m.muscleGroup === 'อก')!
+    expect(chest.trainedToday).toBe(true)
+    expect(chest.hasHistory).toBe(true)
+    expect(overall).toBe(chest.pct) // กลุ่มอื่นไม่มีประวัติเลย ถูกกรองออกหมด เหลือแค่อกกลุ่มเดียวในค่าเฉลี่ย
   })
 })

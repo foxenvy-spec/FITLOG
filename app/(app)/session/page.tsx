@@ -122,7 +122,7 @@ interface PRHit {
 interface SummaryExtras {
   calories: number
   prs: PRHit[]
-  recovery: { overall: number; byMuscle: MuscleRecoveryScore[] }
+  recovery: { overall: number | null; byMuscle: MuscleRecoveryScore[] }
   // Priority 5 — เดิม "หน้า Complete" ไม่มีคะแนนสรุปเซสชันหรือบรรทัด insight เทียบกับสัปดาห์ที่แล้วเลย
   workoutScore: number
   volumeIncrease: VolumeIncrease | null
@@ -1115,9 +1115,13 @@ export default function SessionPage() {
           <PremiumCard className="px-4 py-4 text-left space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-[12px] tracked uppercase text-muted">ความพร้อมกล้ามเนื้อโดยรวม</p>
-              <ProgressRing value={summaryExtras.recovery.overall} size={46} strokeWidth={5} gradientStops={ringStopsForPct(summaryExtras.recovery.overall)}>
-                <span className="font-mono text-xs text-ink">{summaryExtras.recovery.overall}%</span>
-              </ProgressRing>
+              {summaryExtras.recovery.overall !== null ? (
+                <ProgressRing value={summaryExtras.recovery.overall} size={46} strokeWidth={5} gradientStops={ringStopsForPct(summaryExtras.recovery.overall)}>
+                  <span className="font-mono text-xs text-ink">{summaryExtras.recovery.overall}%</span>
+                </ProgressRing>
+              ) : (
+                <span className="text-xs text-muted">ยังไม่มีข้อมูล</span>
+              )}
             </div>
             <div className="space-y-2.5">
               {summaryExtras.recovery.byMuscle.map((m) => {

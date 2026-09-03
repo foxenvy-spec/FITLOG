@@ -22,6 +22,11 @@ export interface MuscleRecoveryScore {
   pct: number
   tier: RecoveryTier
   trainedToday: boolean
+  // false = ไม่เคยมีประวัติการฝึกกลุ่มนี้เลย (pct ที่ได้คือค่าตั้งต้น "พร้อมฝึก" ของ computeRecoveryPct(null,
+  // ...) ไม่ใช่ตัวเลขที่คำนวณจากข้อมูลจริง) — ใช้แยก "ไม่มีข้อมูล" ออกจาก "มีข้อมูลจริงแล้วพร้อม 100%" ตอน
+  // รวมเป็น overall ด้านล่าง เพื่อไม่ให้กลุ่มที่ไม่เคยฝึกไปหน่วงค่าเฉลี่ยขึ้นเทียม (เหมือน pct รายกลุ่มยังคง
+  // ถูกต้อง ไม่แตะ — แค่ aggregation ต้องกรองออก)
+  hasHistory: boolean
 }
 
 /**
@@ -34,7 +39,7 @@ export interface MuscleRecoveryScore {
 export function computeSessionMuscleRecovery(
   trainedToday: Record<string, MuscleSessionLoad>,
   priorLastTrainedDate: Record<string, string | null>
-): { overall: number; byMuscle: MuscleRecoveryScore[] } {
+): { overall: number | null; byMuscle: MuscleRecoveryScore[] } {
   const byMuscle: MuscleRecoveryScore[] = RECOVERY_MUSCLES.map((mg) => {
     const load = trainedToday[mg]
 
@@ -45,14 +50,19 @@ export function computeSessionMuscleRecovery(
       const intensityFactor = Math.min(1, Math.max(0.5, (load.avgRpe ?? 7) / 10))
       const fatigue = Math.min(90, Math.max(15, loadRatio * 100 * intensityFactor))
       const pct = Math.round(Math.min(100, Math.max(10, 100 - fatigue)))
-      return { muscleGroup: mg, pct, tier: tierForPct(pct), trainedToday: true }
+      return { muscleGroup: mg, pct, tier: tierForPct(pct), trainedToday: true, hasHistory: true }
     }
 
-    const pct = computeRecoveryPct(priorLastTrainedDate[mg] ?? null, mg)
-    return { muscleGroup: mg, pct, tier: tierForPct(pct), trainedToday: false }
+    const lastDate = priorLastTrainedDate[mg] ?? null
+    const pct = computeRecoveryPct(lastDate, mg)
+    return { muscleGroup: mg, pct, tier: tierForPct(pct), trainedToday: false, hasHistory: lastDate !== null }
   })
 
-  const overall = byMuscle.length > 0 ? Math.round(byMuscle.reduce((sum, m) => sum + m.pct, 0) / byMuscle.length) : 100
+  // เฉลี่ยเฉพาะกลุ่มที่มีประวัติจริง (ฝึกวันนี้ หรือเคยฝึกมาก่อน) — กลุ่มที่ไม่เคยฝึกเลย (hasHistory: false)
+  // ไม่ควรถูกนับเป็น "พร้อม 100%" แล้วไปหน่วงค่าเฉลี่ยรวมขึ้นเทียม (no data ≠ 100% เมื่อ aggregate — เหมือน
+  // computeRecoveryHistory ใน lib/trends.ts) ถ้าไม่มีกลุ่มไหนมีประวัติเลยสักกลุ่ม overall = null (เฉลี่ยไม่ได้จริง)
+  const withHistory = byMuscle.filter((m) => m.hasHistory)
+  const overall = withHistory.length > 0 ? Math.round(withHistory.reduce((sum, m) => sum + m.pct, 0) / withHistory.length) : null
 
   return { overall, byMuscle }
 }
