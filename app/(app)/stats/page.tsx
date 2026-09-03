@@ -645,7 +645,16 @@ export default function StatsPage() {
                   fillOpacity={0.35}
                   dot={(dotProps: any) => {
                     const { cx, cy, payload, key } = dotProps
-                    const noData = payload?.pct === null
+                    // บั๊ก (เจอตอนไล่เช็คโค้ดวันนี้): Radar ของ Recharts ส่ง dotProps.payload เป็น "Point"
+                    // ภายในของมันเอง (มี x/y/cx/cy/name/value/angle/radius) ไม่ใช่ raw data row ที่ส่งเข้า
+                    // <RadarChart data={strengthBalance}> ตรงๆ — raw row จริงอยู่ที่ payload.payload อีกชั้น
+                    // (ตรวจจาก node_modules/recharts/lib/polar/Radar.js: renderDots() ทำ payload: entry โดย
+                    // entry = points[i] ซึ่งตัวมันเองมี .payload = raw row อยู่ข้างใน) เดิมอ่าน payload?.pct
+                    // ตรงๆ เลยได้ undefined เสมอ (ไม่มี key "pct" ที่ชั้นนี้) ทำให้ noData เป็น false ตลอด จุด
+                    // "ไม่มีข้อมูล" ที่ควรเป็นวงกลมจางๆ เลยกลายเป็นสีม่วงทึบเหมือนมีข้อมูลจริงทุกจุด — ต้อง
+                    // อ่านผ่าน payload.payload.pct (Tooltip formatter ด้านล่างไม่ติดปัญหานี้ เพราะ Tooltip
+                    // ของ Recharts ดึง payload จาก raw data row โดยตรงอยู่แล้ว คนละ code path กับ dot)
+                    const noData = payload?.payload?.pct === null
                     return (
                       <circle
                         key={key}
