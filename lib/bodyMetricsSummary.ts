@@ -120,6 +120,10 @@ export interface BodyMetricsSummary {
   bodyFatPct: MetricDelta
   skeletalMuscleKg: MetricDelta
   fatMassKg: MetricDelta
+  // ฟีดแบ็ก "เพิ่มการ์ดที่ 5 ให้ Body Overview บนเดสก์ท็อป (grid ตั้งไว้ 5 ช่องแต่มีแค่ 4 การ์ด)" —
+  // เลือก Visceral Fat แทน Fat Mass (เคยถูกตัดออกจาก BodyMetricsRow.tsx ไปแล้วเพราะซ้ำกับ Body Fat %
+  // — ดู comment ที่ METRIC_THEME ในไฟล์นั้น) Visceral Fat เป็นมิติข้อมูลคนละแบบ ไม่ซ้ำกับ 4 การ์ดเดิม
+  visceralFat: MetricDelta
   bmi: number | null
   // ข้อความช่วงเวลาที่ใช้เทียบ delta ด้านบน (เทียบกับเอนทรีก่อนหน้าจริง ไม่ใช่กรอบ 7 วันคงที่)
   // ใช้ label เดียวกันกับทุกการ์ด เพราะทุกตัวเทียบกับเอนทรีก่อนหน้าตัวเดียวกัน
@@ -151,6 +155,7 @@ export function computeBodyMetricsSummary(
     // ด้านบน) — skeletal_muscle_kg กับ muscle_kg เป็นคนละตัวชี้วัดกันจริงๆ ไม่ใช่แค่ชื่อคอลัมน์ต่างกัน
     skeletalMuscleKg: metricDeltaWithFallbackFields(metrics, previous, [(m) => m.skeletal_muscle_kg, (m) => m.muscle_kg], true),
     fatMassKg: metricDelta(metrics, previous, fatMassOf, false),
+    visceralFat: metricDelta(metrics, previous, (m) => m.visceral_fat_grade, false),
     bmi: bmiOf(latest?.weight_kg ?? null, heightCm),
     periodLabel: periodLabelOf(latest, previous),
   }

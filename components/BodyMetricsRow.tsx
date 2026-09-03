@@ -49,6 +49,10 @@ const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
   muscle: { main: '#3B82F6', second: '#2563EB', glow: 6 },
   fatMass: { main: '#22C55E', second: '#16A34A', glow: 5 },
   bmi: { main: '#1b8cff', second: '#3f6cff', glow: 6 },
+  // ฟีดแบ็ก "เพิ่มการ์ดที่ 5 (Visceral Fat) ให้เต็ม grid 5 ช่องบนเดสก์ท็อป" — สีส้มแดง แยกจากสีที่ใช้
+  // แล้วทั้งหมด (weight ใช้ส้มอำพันไปแล้ว) ให้รู้สึกเป็น "ตัวชี้วัดความเสี่ยง" ต่างจาก 4 การ์ดองค์ประกอบ
+  // ร่างกายทั่วไปที่เหลือ
+  visceralFat: { main: '#F97316', second: '#EA580C', glow: 7 },
 }
 
 // exported so DashboardView's AI Coach card can reuse the exact same query (react-query
@@ -194,6 +198,7 @@ export default function BodyMetricsRow({
     metrics[0]?.skeletal_muscle_kg != null ? (m) => m.skeletal_muscle_kg : (m) => m.muscle_kg
   const muscleSeries = seriesFor(latestMuscleField)
   const bmiSeries = seriesFor((m) => bmiOf(m.weight_kg, heightCm))
+  const visceralFatSeries = seriesFor((m) => m.visceral_fat_grade)
 
   // เป้าหมาย active ล่าสุดต่อประเภท (ตาราง goals รองรับแค่ weight/body_fat — เหมือนหน้า /health)
   const weightGoal = goals.find((g) => g.goal_type === 'weight')
@@ -264,6 +269,23 @@ export default function BodyMetricsRow({
       deltaColor: summary.bmi != null ? bmiCategoryColor(summary.bmi) : NEUTRAL.mutedIcon,
       deltaDir: null,
       series: bmiSeries,
+      goal: null,
+    },
+    // ฟีดแบ็ก "grid ตั้งไว้ 5 ช่อง (lg:grid-cols-5) แต่มีแค่ 4 การ์ด เหลือช่องว่าง — เพิ่มการ์ดที่ 5 ให้เต็ม"
+    // — เลือก Visceral Fat แทน Fat Mass (Fat Mass เคยถูกตัดออกไปแล้วเพราะซ้ำกับ Body Fat % ดู comment ที่
+    // METRIC_THEME ด้านบน) ต่อท้ายลิสต์นี้เป็นตัวสุดท้ายโดยตั้งใจ — มือถือ (MobileDashboardView.tsx) ส่ง
+    // maxCards={4} มาตัดที่ 4 การ์ดแรกอยู่แล้ว การ์ดนี้จึงไม่โผล่บนมือถือ เห็นเฉพาะเดสก์ท็อป (DashboardView.tsx
+    // ไม่ส่ง maxCards เลย = โชว์ทุกใบ) ตามที่ขอ
+    {
+      key: 'visceralFat',
+      icon: 'visceralFat',
+      label: 'Visceral Fat',
+      valueText: summary.visceralFat.value != null ? `${summary.visceralFat.value} ระดับ` : '—',
+      deltaText: summary.visceralFat.delta != null ? `${fmtSigned(summary.visceralFat.delta, 0, ' ระดับ')} ${period}` : null,
+      deltaColor:
+        summary.visceralFat.isGood == null ? NEUTRAL.mutedIcon : summary.visceralFat.isGood ? COLORS.deltaGood : COLORS.rust,
+      deltaDir: summary.visceralFat.delta == null ? null : summary.visceralFat.delta > 0 ? 'up' : summary.visceralFat.delta < 0 ? 'down' : null,
+      series: visceralFatSeries,
       goal: null,
     },
   ]

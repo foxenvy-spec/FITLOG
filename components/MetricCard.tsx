@@ -18,7 +18,7 @@ import {
 } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
-export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi'
+export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi' | 'visceralFat'
 
 // ไอคอนรูปจริงชุดเดียวกับหน้าสุขภาพ (health/page.tsx: STAT_ICON_IMAGES) แทนไอคอนเส้น SVG เดิม
 // เพื่อให้การ์ดสรุปด้านบนสุดของหน้า Dashboard ใช้ภาษาภาพเดียวกับหน้าสุขภาพ
@@ -28,6 +28,7 @@ export const METRIC_ICON_IMAGES: Record<MetricIconImageKey, string> = {
   muscle: '/icons/skeletal-muscle.png',
   fatMass: '/icons/fat-mass.png',
   bmi: '/icons/bmi.png',
+  visceralFat: '/icons/visceral-fat.png',
 }
 
 export interface MetricCardTheme {
