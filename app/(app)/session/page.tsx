@@ -360,12 +360,23 @@ export default function SessionPage() {
     // initSessionStates เดา logged=true จากการมีแถว workouts อยู่เฉยๆ ซึ่งตอนนี้ไม่จริงเสมอไปแล้ว
     // (persistSets เขียนทุกเซ็ตทันที ไม่รอจบท่า) — เชื่อ logged=true เฉพาะท่าที่กดจบท่าจริงเท่านั้น
     // (อยู่ใน finishedIds) ท่าที่ยังทำไม่ครบจะถูกดึงกลับมาเปิดต่อที่เดิมพร้อม setsLog เดิมที่บันทึกไว้แล้ว
+    // บั๊ก (ฟีดแบ็ก "กด 'ดูสรุปวันนี้' ตอนเทรนเสร็จแล้ว แต่กลับไปหน้าทำท่าปกติ (ท่าที่ 1) แทนหน้าสรุป") —
+    // finishedIds อยู่ใน localStorage ของเบราว์เซอร์ล้วนๆ ผูกกับปุ่ม "จบท่า" ในหน้านี้เท่านั้น ถ้า workout
+    // วันนี้ถูกบันทึกผ่านช่องทางอื่น (ปุ่ม "เริ่ม [กล้ามเนื้อ]" ใน MINT Coach ที่ insert ตรงเข้า DB, หน้า
+    // /log, import ฯลฯ) โดยไม่เคยกดปุ่ม "จบท่า" ในหน้านี้เลยสักครั้ง finishedIds จะว่างเปล่า ทำให้ทุกท่า
+    // ถูกบังคับเป็น logged=false หมด ทั้งที่ log ครบทุกเซ็ตจริงแล้ว — เพิ่มเงื่อนไขที่สอง: ถือว่าเชื่อถือได้
+    // ด้วยถ้าจำนวนเซ็ตที่ log ไว้ (setsLog.length) ถึงเป้าหมายจำนวนเซ็ตของท่านั้น (ex.sets) แล้ว ไม่ต้องพึ่ง
+    // finishedIds อย่างเดียว — เคสเดิมที่ตั้งใจแก้ (log ไปครึ่งทางแล้วออกจากหน้า) ยังทำงานถูกต้องเหมือนเดิม
+    // เพราะ setsLog.length < ex.sets ในเคสนั้น
     const finishedIds = readFinishedExerciseIds()
+    const targetSetsById = new Map(combinedExercises.map((ex) => [ex.id, ex.sets]))
     const adjustedStates = Object.fromEntries(
-      Object.entries(initialStates).map(([id, state]) => [
-        id,
-        state.logged && !finishedIds.has(id) ? { ...state, logged: false } : state,
-      ])
+      Object.entries(initialStates).map(([id, state]) => {
+        const targetSets = targetSetsById.get(id)
+        const meetsTargetSets = targetSets != null && targetSets > 0 && state.setsLog.length >= targetSets
+        const trustLogged = finishedIds.has(id) || meetsTargetSets
+        return [id, state.logged && !trustLogged ? { ...state, logged: false } : state]
+      })
     )
 
     setDay(dayRow as ProgramDay)
