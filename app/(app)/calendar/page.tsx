@@ -498,18 +498,35 @@ export default function CalendarPage() {
                         {g.target_date && ` · ${new Date(g.target_date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}`}
                       </p>
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleDone(g)}
-                        className="text-xs text-muted hover:text-amber"
-                      >
-                        {g.status === 'done' ? 'เปิดใหม่' : 'สำเร็จ'}
-                      </button>
+                    {/* ฟีดแบ็ก (design review, P2) "'สำเร็จ'/'ลบ' น้ำหนักภาพเท่ากันเกินไป — ลบควรเป็น
+                        destructive action ที่ understated ไม่ใช่ปุ่มเท่ากับ 'สำเร็จ'" — ทั้งคู่เดิมเป็น
+                        text-xs/text-muted/hover สี amber-rust อยู่แล้ว (ตรงกับสเปกที่ขอ) เพิ่ม focus state
+                        คู่กับ hover (เดิมไม่มีเลยทั้งไฟล์) + เว้นระยะห่างขึ้นอีกนิด (gap-2 -> gap-3) — เป้าหมาย
+                        ที่ "สำเร็จ" แล้ว เปลี่ยนจากปุ่ม toggle น้ำหนักเท่า "ลบ" เป็นสถานะ "✓ สำเร็จแล้ว" สีเขียว
+                        (moss) ที่เบาลง แทนคำว่า "เปิดใหม่" เดิม — ยังกดเปิดใหม่ได้เหมือนเดิม (onClick เดิม
+                        ไม่เปลี่ยน) แค่ไม่ใช่ action ระดับเดียวกับ "ลบ" อีกต่อไปตามที่ขอ */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      {g.status === 'done' ? (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleDone(g)}
+                          className="text-[12px] text-moss hover:text-ink focus:text-ink transition"
+                        >
+                          ✓ สำเร็จแล้ว
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleDone(g)}
+                          className="text-xs text-muted hover:text-amber focus:text-amber transition"
+                        >
+                          สำเร็จ
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleDeleteGoal(g.id)}
-                        className="text-xs text-muted hover:text-rust"
+                        className="text-xs text-muted hover:text-rust focus:text-rust transition"
                       >
                         ลบ
                       </button>
