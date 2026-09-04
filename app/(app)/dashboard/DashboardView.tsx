@@ -2685,7 +2685,14 @@ export default function DashboardPage() {
                     🔴
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[12px] tracked uppercase text-muted">Insight</p>
+                    {/* ฟีดแบ็ก (design review, crop screenshot จริง) "หลังย้ายมาอยู่แท็บ 2·รายละเอียด แล้ว
+                        การ์ดนี้ใช้ eyebrow 'INSIGHT' ซ้ำกับ InsightCarousel ด้านบนเป๊ะ วางติดกัน อ่านเหมือน
+                        item ซ้ำทั้งที่คนละแหล่งข้อมูล (เทรนด์/คำแนะนำ vs สรุป Muscle Balance)" — เปลี่ยนเป็น
+                        "BALANCE" ให้ตรงกับ section "Muscle Balance" ที่ derive มาจริง (heatmapInsight มาจาก
+                        WeeklyMuscleHeatmap's balance summary) แยก hierarchy ชัดว่า INSIGHT = สิ่งที่ระบบ
+                        วิเคราะห์/ตีความ, BALANCE = สิ่งที่มาจาก training distribution โดยเฉพาะ — ไม่แตะสี/
+                        layout/ข้อมูลอื่นเลย เปลี่ยนแค่ label คำเดียว */}
+                    <p className="text-[12px] tracked uppercase text-muted">Balance</p>
                     <p className="font-display font-semibold text-sm leading-snug mt-0.5" style={{ color: heatmapInsight.color }}>
                       {textNode}
                     </p>
