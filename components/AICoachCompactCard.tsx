@@ -401,8 +401,12 @@ export default function AICoachCompactCard({
             // ใช้ pattern เดียวกับ isRestDay ด้านบน (secondary link ไปดูรายละเอียดแทน CTA เด่น) กัน headline
             // กับปุ่มขัดกันเอง — chosen/handleStart ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ recovery ขยับข้าม
             // เกณฑ์ระหว่างเซสชัน ไม่ได้ถูกเสนอเป็น action หลักแค่ตอนยังอยู่ tier "Rest" เท่านั้น
+            //
+            // ฟีดแบ็ก "หัวการ์ดบอก MINT Coach แต่ปุ่มเขียน 'ดูคำแนะนำ Recovery' ทำให้รู้สึกว่าปุ่มพาไปหน้า
+            // Recovery มากกว่า Coach" — เปลี่ยนเป็น "ดูคำแนะนำเพิ่มเติม →" (สั้น ไม่ซ้ำคำว่า MINT Coach ที่
+            // อยู่ในหัวการ์ดอยู่แล้ว) — href ยังพาไปหน้าเดิม (/coach) ไม่เปลี่ยน แค่คำที่ปุ่มพูด
             <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
-              ดูคำแนะนำ Recovery →
+              ดูคำแนะนำเพิ่มเติม →
             </Button>
           ) : templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />
