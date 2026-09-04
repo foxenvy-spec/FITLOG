@@ -24,10 +24,22 @@ export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
   const muscleGroups = Array.from(new Set(strength.map((w) => w.muscle_group).filter((m): m is string => !!m)))
 
   // ไม่มีฟิลด์ duration ต่อวันเก็บตรงๆ — ประมาณจากช่วงเวลา created_at แรกสุดถึงล่าสุดของวันนั้น
-  // (ใกล้เคียงเวลาที่ใช้ในเซสชันจริง เพราะแต่ละท่าถูกบันทึกทันทีตอนกดเสร็จระหว่างเทรน)
+  // (ใกล้เคียงเวลาที่ใช้ในเซสชันจริง เพราะแต่ละท่าถูกบันทึกทันทีตอนกดเสร็จระหว่างเทรน) — สมมติฐานนี้ใช้ได้
+  // เฉพาะตอน log แบบ real-time ต่อเนื่องเท่านั้น
+  // บั๊ก (design review — "28h9m ของวันหนึ่งดูผิดธรรมชาติ") "created_at" (เวลา insert แถวจริง) กับ
+  // "performed_at" (วันที่ของ workout ที่ผู้ใช้เลือกเอง) เป็นคนละฟิลด์ที่ตั้งอิสระกันได้ — แอปเองรองรับ
+  // workflow ที่ทำให้สองค่านี้ห่างกันข้ามวันได้ปกติ (แก้ไข/เพิ่มรายการย้อนหลังผ่านหน้า History, ลืม log
+  // ระหว่างเทรนแล้วมา log ย้อนหลังวันถัดไปแต่ตั้ง performed_at เป็นวันที่ออกกำลังกายจริง, import ข้อมูล)
+  // ทำให้ max(created_at)-min(created_at) พองจนกลายเป็นหลักชั่วโมง/ข้ามวันได้ ทั้งที่ไม่ใช่ session เดียวกัน
+  // จริง — ไม่มีทางแยกแยะ "ห่างเพราะ log ข้ามวัน" กับ "ห่างเพราะเทรนจริงนานขนาดนั้น" จากข้อมูลที่มีได้เป๊ะ
+  // แต่เซสชันเทรนจริงแทบไม่มีทางเกิน ~6 ชม. — ใส่เพดานสมเหตุสมผล เกินนี้ถือว่าค่าที่ได้ไม่น่าเชื่อถือ ตกกลับ
+  // เป็น null (ไม่โชว์เวลาเลย) แทนที่จะโชว์ตัวเลขที่ผิดธรรมชาติชัดเจน (ตาม pattern "ไม่ใช้ข้อมูลสมมติ" ที่
+  // ยึดมาตลอด — ไม่โชว์ดีกว่าโชว์ผิด) ไม่แตะ exerciseCount/totalSets/totalVolumeKg/caloriesKcal เลย
+  const DURATION_SANITY_CAP_MIN = 6 * 60
   const timestamps = dayWorkouts.map((w) => new Date(w.created_at).getTime()).filter((t) => !Number.isNaN(t))
-  const durationMin =
+  const rawDurationMin =
     timestamps.length >= 2 ? Math.round((Math.max(...timestamps) - Math.min(...timestamps)) / 60000) : null
+  const durationMin = rawDurationMin !== null && rawDurationMin <= DURATION_SANITY_CAP_MIN ? rawDurationMin : null
 
   return { exerciseCount: dayWorkouts.length, totalSets, totalVolumeKg, caloriesKcal, muscleGroups, durationMin }
 }

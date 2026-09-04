@@ -73,6 +73,27 @@ describe('computeDaySummary', () => {
     expect(computeDaySummary([makeWorkout()]).durationMin).toBeNull()
     expect(computeDaySummary([]).durationMin).toBeNull()
   })
+
+  it('regression: falls back to null when created_at spans an unrealistic gap (backfilled/edited entries, not a real single session)', () => {
+    // จำลองบั๊ก "28h9m" จริง — รายการแรก log เช้าวันที่ 20, รายการสุดท้าย log/แก้ไขเช้าวันถัดไป
+    // (ข้าม day boundary) ทั้งที่ performed_at ตั้งเป็นวันเดียวกัน (20) ทั้งคู่ — ไม่ใช่ session จริง
+    const summary = computeDaySummary([
+      makeWorkout({ id: 'a', performed_at: '2026-07-20', created_at: '2026-07-20T06:00:00Z' }),
+      makeWorkout({ id: 'b', performed_at: '2026-07-20', created_at: '2026-07-21T10:09:00Z' }),
+    ])
+    expect(summary.durationMin).toBeNull()
+    // stat อื่นไม่ถูกกระทบเลย — sanity cap แตะแค่ durationMin
+    expect(summary.exerciseCount).toBe(2)
+    expect(summary.totalSets).toBe(6)
+  })
+
+  it('keeps a real same-session gap under the 6h sanity cap', () => {
+    const summary = computeDaySummary([
+      makeWorkout({ id: 'a', created_at: '2026-07-20T06:00:00Z' }),
+      makeWorkout({ id: 'b', created_at: '2026-07-20T11:30:00Z' }), // 5.5h — plausible long session
+    ])
+    expect(summary.durationMin).toBe(330)
+  })
 })
 
 describe('formatDuration', () => {
