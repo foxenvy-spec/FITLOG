@@ -33,7 +33,6 @@ import {
   computeTrainingBalance,
   trainingBalanceInsight,
   recommendationInsight,
-  recoveryRecommendationLabel,
   computeBestVolumeIncrease,
   computeGreetingContext,
   computeWorkoutMotivationLabel,
@@ -912,10 +911,6 @@ export default function DashboardPage() {
   // จากจำนวนเซ็ต (ราว 1.5 นาที/เซ็ต รวมพักระหว่างเซ็ต) แค่ให้พอเห็นภาพ ไม่ใช่ตัวเลขแม่นยำ
   const estimatedMinutes = Math.max(10, Math.round((plannedTotalSets * 1.5) / 5) * 5)
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
-  // % ความคืบหน้าที่ใช้กับข้อความแนะนำกล้ามเนื้อ (recoveryRecommendationLabel) — เหมือน progressPct
-  // ของ ring ด้านบน แต่ถ้าวันนี้ไม่มีแผนกำหนดไว้ (บันทึกอิสระ) ให้ถือว่า 100% เมื่อมี log อย่างน้อย 1 รายการ
-  const recoveryLabelPct =
-    progressPct !== null ? progressPct : (data?.todayWorkouts.length ?? 0) > 0 ? 100 : null
 
   // Priority 14 (Notifications Actionable) — รวม 4 สัญญาณที่คำนวณไว้แล้วทั่วหน้านี้ (ตารางวันนี้/
   // recovery/เทรนด์ body fat/เป้าหมาย) เป็นรายการแจ้งเตือนที่กดแล้วไปหน้าที่เกี่ยวข้องได้จริง แทนที่
@@ -2084,61 +2079,34 @@ export default function DashboardPage() {
               const recommendation = data.todaysRecommendation
               return (
                 <>
+    {/* ฟีดแบ็ก (design review — "Recovery มีข้อมูลซ้ำกับ MINT Coach 3 รอบ") "Recovery card ควรเป็นเจ้าของแค่
+                      'ตอนนี้ร่างกายพร้อมแค่ไหน?' (สถานะ) ส่วน 'ควรทำอะไรต่อ' เป็นหน้าที่ของ MINT Coach ล้วนๆ" —
+                      ตัด 2 บรรทัดที่ซ้ำความหมายกับ MINT Coach ออก: (1) "ครั้งหน้าแนะนำเล่น {muscleGroup}"
+                      (recoveryRecommendationLabel + muscleGroup) ซ้ำกับ headline/subtitle ของ MINT Coach
+                      ตรงๆ (อ่านจาก data.todaysRecommendation object เดียวกัน) (2) "⚠️ ฟื้นตัวยังไม่เต็มที่
+                      แนะนำลดความหนักหรือเลื่อนออกไปก่อน" (lowRecoveryCaution) ซ้ำความหมายกับ advice bullet
+                      ของ MINT Coach (มาจาก recoveryTier(pct).adviceTh) — เก็บ scheduleOverriddenFrom ไว้
+                      ("ตามตารางคือ X แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว") เพราะเป็นข้อมูลที่ไม่มีที่ไหนอื่น
+                      พูดถึงเลย (MINT Coach ไม่แสดงข้อมูลนี้) ไม่ใช่การซ้ำ และเก็บ badge "พร้อมลุย" ไว้เหมือนกัน
+                      (เป็นแค่สถานะ ไม่ใช่ recommendation) — banner ทั้งก้อนเลยโชว์เฉพาะตอนมีอะไรจริงให้พูด
+                      (scheduleOverriddenFrom หรือ isFullyReady) แทนที่จะโชว์กล่องว่างๆ ตอนไม่มีทั้งคู่ */}
                   {recommendation &&
                     (() => {
-                      // v45: ฟีดแบ็ก "Recovery เป็นสีเขียว แต่ Ring เป็นฟ้า อยากได้ Palette เดียวกัน" —
-                      // ป้ายแนะนำ + badge "พร้อมลุย" เดิมใช้ recoveryStatusColor() (เขียว/เหลือง/แดงตาม %)
-                      // ขณะที่วงแหวน "ฟื้นตัวรวม" ด้านล่าง fix เป็นฟ้าไซแอนคงที่ตามธีมการ์ดนี้อยู่แล้ว —
-                      // เปลี่ยนป้ายให้ใช้สีฟ้าไซแอนเดียวกับวงแหวนแทน ให้ทั้งการ์ดเป็นโทนเดียวกัน (เฉพาะ
-                      // 2 จุดนี้ — จุดสีเขียว/เหลือง/แดงในลิสต์รายกลุ่มกล้ามเนื้อด้านล่างยังคงไว้ เพราะเป็น
-                      // สัญญาณข้อมูลจริงว่ากลุ่มไหนพร้อม/ไม่พร้อม ไม่ใช่แค่สีตกแต่ง)
                       const recColor = COLORS.cyan
                       const isFullyReady = recommendation.pct >= FULLY_RECOVERED_PCT
+                      if (!recommendation.scheduleOverriddenFrom && !isFullyReady) return null
                       return (
-                        // v49: ฟีดแบ็ก "แถบ Notification สูงเกิน กินพื้นที่เกือบ 20% ทั้งที่ข้อความสั้น
-                        // อยากลดความสูงประมาณ 20%" — py-2 (8px) -> py-1.5 (6px) และไอคอน 💪 text-sm (14px)
-                        // -> text-xs (12px) ให้ line-height สูงสุดในแถวลดลงด้วย (ไม่ใช่แค่ padding อย่าง
-                        // เดียว) รวมกันลดความสูงจริงประมาณ 20% ตามที่ขอ
                         <div
                           className="flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 mb-3"
                           style={{ backgroundColor: withAlpha(recColor, '1A') }}
                         >
                           <span className="flex items-center gap-2 min-w-0">
                             <span className="text-xs shrink-0" aria-hidden="true">💪</span>
-                            {/* ฟีดแบ็ก "MINT Coach/Recovery/Insights มี AI recommendation ซ้ำกันเยอะ" — ตัด
-                                "— ฟื้นตัวแล้ว {pct}% · เหลืออีก N เซ็ตถึงเป้าหมาย" ท้ายป้ายนี้ออก ตัวเลขชุดนี้
-                                ซ้ำถึง 2 ที่อยู่แล้ว: (1) การ์ด MINT Coach ข้างๆ กัน (Muscle Recovery bar +
-                                "เหลืออีก N เซ็ต") และ (2) แถวรายกลุ่มกล้ามเนื้อในลิสต์ด้านล่างของการ์ดนี้เอง
-                                (ถ้ากลุ่มนี้ยังไม่ฟื้นตัวเต็มที่ ก็จะโผล่ในลิสต์ default อยู่แล้วพร้อม % ของมัน)
-                                ป้ายนี้เหลือแค่ "แนะนำกลุ่มไหน" ให้ MINT Coach เป็นเจ้าของ "ทำไม"/ตัวเลขไปเลย
-                                ตามการแบ่งหน้าที่ที่ตั้งใจไว้แล้ว (ดู comment v69 ใน TodaysWorkoutCompactCard.tsx) —
-                                scheduleOverriddenFrom/lowRecoveryCaution ด้านล่างยังคงไว้ เพราะเป็นข้อมูลที่
-                                ไม่มีที่ไหนอื่นพูดถึง ไม่ใช่การซ้ำ */}
-                            {/* ฟีดแบ็ก "ข้อความด้านบน Recovery Card ยังแน่น สายตาต้องประมวลผลเยอะ" — เดิม
-                                2 บรรทัดของ recoveryRecommendationLabel (🟢 progress / 🎯 แนะนำ) ใช้
-                                leading ปกติ ชิดกับ scheduleOverriddenFrom/lowRecoveryCaution ด้านล่าง
-                                (mt-0.5) จนอ่านเหมือนก้อนเดียว — เพิ่ม leading-relaxed ให้ 2 บรรทัดใน label
-                                เอง ห่างขึ้น และเพิ่มช่องไฟ mt-0.5 -> mt-1 ระหว่างบรรทัดถัดๆ ไป ไม่แตะ
-                                recoveryRecommendationLabel() เอง (ใช้ร่วมกับหน้า /recovery ด้วย) แค่ปรับ
-                                การแสดงผลตรงจุดนี้เท่านั้น */}
-                            <p className="text-xs text-ink whitespace-pre-line leading-relaxed">
-                              {recoveryRecommendationLabel(recoveryLabelPct, data.isRecommendationForToday)}{' '}
-                              <span className="font-display tracked uppercase" style={{ color: recColor }}>
-                                {recommendation.muscleGroup}
-                              </span>
-                            </p>
                             {/* ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — บอกเหตุผลตรงๆ เมื่อ suggestMuscleToTrain
                                 แนะนำกลุ่มนี้แทนกลุ่มตามตารางเพราะ Volume ของกลุ่มตามตารางเกินเป้าไปแล้ว */}
                             {recommendation.scheduleOverriddenFrom && (
-                              <p className="text-[12px] text-muted mt-1">
+                              <p className="text-[12px] text-muted">
                                 ตามตารางคือ{recommendation.scheduleOverriddenFrom} แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว
-                              </p>
-                            )}
-                            {/* ฟีดแบ็ก "Recovery ต่ำ + Volume ยังไม่ถึงเป้า → เตือน" — เคสที่ 3 ใน
-                                Recommendation Engine decision table (ยังแนะนำกลุ่มเดิม แต่ร่างกายยังไม่พร้อมเต็มที่) */}
-                            {recommendation.lowRecoveryCaution && (
-                              <p className="text-[12px] mt-1" style={{ color: COLORS.amber }}>
-                                ⚠️ ฟื้นตัวยังไม่เต็มที่ แนะนำลดความหนักหรือเลื่อนออกไปก่อน
                               </p>
                             )}
                           </span>
