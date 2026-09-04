@@ -275,7 +275,20 @@ export default function HeroGaugeConcept({
           />
         </button>
 
-        {/* Recovery — เฉพาะตอนมีข้อมูลจริง (ดูคอมเมนต์ recoveryPct? ใน props ด้านบน) */}
+        {/* Recovery — เฉพาะตอนมีข้อมูลจริง (ดูคอมเมนต์ recoveryPct? ใน props ด้านบน)
+            ฟีดแบ็ก (design review) "Recovery 29% (วงนี้) vs Muscle Recovery 33% (การ์ด AI Coach) อยู่ใกล้
+            กันมาก ผู้ใช้อาจสงสัยว่าทำไมตัวเลขไม่ตรงกัน" — วงนี้คือค่าเฉลี่ยข้าม "ทุก" กลุ่มกล้ามเนื้อที่เคย
+            ฝึก (fitnessScoreRecoveryPct) ส่วน AI Coach คือ % ของกลุ่มที่แนะนำวันนี้ "กลุ่มเดียว" — คนละ
+            ขอบเขตกันโดยตั้งใจ ไม่ใช่บั๊ก (เหตุผลเดียวกับที่ MobileDashboardView.tsx/FitnessScoreDetailSheet.tsx
+            เคยแยกไว้แล้ว ใช้คำว่า "Recovery (Avg)" คู่กับ "Muscle Recovery") — ลองใช้คำเดียวกัน "Recovery
+            (Avg)" ตรงนี้ก่อน แต่วงนี้เล็กกว่ามาก (76px จริงบน Dashboard ไม่ใช่ 124px ของหน้า preview) พิสูจน์
+            ด้วย screenshot จริงแล้วว่าตกบรรทัดเป็น 2 บรรทัด แล้วไปชนกับ tier/advice ด้านล่าง (บั๊ก overflow
+            แบบเดียวกับที่ advice เคยเจอมาก่อน — ดู comment ที่ adviceFontSize ใน DialText) เปลี่ยนเป็น
+            "Overall" คำเดียวแทน (สั้นกว่า "Recovery" เดิมด้วยซ้ำ ไม่มีความเสี่ยงตกบรรทัดเพิ่มจากเดิมเลย) —
+            จับคู่กับ "Fitness Score" ฝั่งซ้าย + สี cyan + tier label (Excellent/Good/...) + advice ที่เป็น
+            ประโยคเกี่ยวกับการฟื้นตัวอยู่แล้ว บริบทรอบข้างพอให้เข้าใจว่าเป็นภาพรวม ไม่ใช่กลุ่มกล้ามเนื้อเดียว
+            โดยไม่ต้องเขียนคำว่า "Recovery" ซ้ำกับคำว่า "Overall" ในพื้นที่ที่ไม่พอ (aria-label ด้านล่างยังพูด
+            "Recovery X% — Label" เต็มๆ สำหรับ screen reader อยู่) */}
         {recoveryPct != null && recoveryLabel && (
           <div className="relative flex items-center justify-center shrink-0" style={{ width: recoveryRingSize, height: recoveryRingSize }}>
             <GlowLayers size={recoveryRingSize} color={COLORS.cyan} />
@@ -289,7 +302,7 @@ export default function HeroGaugeConcept({
               ariaLabel={`Recovery ${recoveryPct}% — ${recoveryLabel}`}
             />
             <DialText
-              eyebrow="Recovery"
+              eyebrow="Overall"
               value={`${recoveryPct}%`}
               tierLabel={recoveryLabel}
               color={COLORS.cyan}
