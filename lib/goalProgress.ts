@@ -28,10 +28,24 @@ export function goalProgressPct(
 // (คำนวณไว้แล้วจากฝั่งเรียก เช่น Math.abs(target - current) ในหน่วยที่แสดงผลจริง) ต่อท้ายด้วย " · เหลืออีก
 // X" ต่อจากป้ายเดิม (เริ่มต้นเป้าหมาย/N% Progress) ให้มีตัวเลขที่มีความหมายให้ดูแม้ตอน progress ยังเป็น 0
 // ไม่ระบุ = พฤติกรรมเดิมทุกประการ (แค่ป้าย progress เฉยๆ)
-export function goalProgressLabel(pct: number, remainingText?: string | null): string {
+//
+// ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "การ์ด Body Goal ตอนนี้ '7% Progress · เหลืออีก 6.5 kg'
+// เป็นประโยคเดียวความหนาแน่นเท่ากันหมด อยากให้ Progress % เด่นเป็น visual hierarchy ชัดกว่านี้ ไม่ต้องเพิ่ม
+// ข้อมูลใหม่" — แยกข้อความเป็น 2 ส่วน (headline = ตัวเลข %/ป้าย "เริ่มต้นเป้าหมาย", detail = ส่วนที่เหลือ)
+// ให้ผู้เรียกใช้ (DashboardView.tsx) ไปจัด hierarchy ทางภาพเอง (ตัวใหญ่/สีเด่น vs ตัวเล็ก/จาง) โดยไม่ต้อง
+// parse string ย้อนกลับ — goalProgressLabel() เดิมยังคงพฤติกรรม/string output เป๊ะทุกประการ (ประกอบจาก
+// parts นี้เอง) ไม่กระทบจุดเรียกใช้เดิมที่ยังต้องการ string เดียว (เช่น MobileDashboardView.tsx)
+export function goalProgressLabelParts(pct: number, remainingText?: string | null): { headline: string; detail: string } {
   const rounded = Math.round(Math.max(0, Math.min(100, pct)))
-  const base = rounded <= 0 ? 'เริ่มต้นเป้าหมาย' : `${rounded}% Progress`
-  return remainingText ? `${base} · เหลืออีก ${remainingText}` : base
+  if (rounded <= 0) {
+    return { headline: 'เริ่มต้นเป้าหมาย', detail: remainingText ? `· เหลืออีก ${remainingText}` : '' }
+  }
+  return { headline: `${rounded}%`, detail: remainingText ? `Progress · เหลืออีก ${remainingText}` : 'Progress' }
+}
+
+export function goalProgressLabel(pct: number, remainingText?: string | null): string {
+  const { headline, detail } = goalProgressLabelParts(pct, remainingText)
+  return detail ? `${headline} ${detail}` : headline
 }
 
 export interface GoalEtaEntry {

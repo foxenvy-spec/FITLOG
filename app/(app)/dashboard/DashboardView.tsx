@@ -53,7 +53,7 @@ import {
   type SessionVolumeChange,
 } from '@/lib/dashboardStats'
 import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
-import { goalProgressPct, goalProgressLabel, estimateGoalEtaWeeks } from '@/lib/goalProgress'
+import { goalProgressPct, goalProgressLabelParts, estimateGoalEtaWeeks } from '@/lib/goalProgress'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from '@/lib/bodyMetricsSummary'
@@ -1262,11 +1262,28 @@ export default function DashboardPage() {
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
                     </div>
-                    <p className="text-[12px] text-muted mt-1">
-                      {goalProgressLabel(
-                        weightPct,
-                        `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
-                      )}
+                    {/* ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "'7% Progress · เหลืออีก 6.5 kg'
+                        เป็นประโยคเดียวความหนาแน่นเท่ากันหมด อยากให้ Progress % เด่นเป็น visual hierarchy
+                        ชัดกว่านี้ ไม่ต้องเพิ่มข้อมูลใหม่" — แยก headline (ตัวเลข % หรือ "เริ่มต้นเป้าหมาย")
+                        ออกมาเป็น font-mono font-bold text-sm สีเดียวกับแท่ง progress (amber) ส่วนที่เหลือ
+                        ("Progress · เหลืออีก X") ยังเป็น text-[12px] text-muted เหมือนเดิม — ใช้
+                        goalProgressLabelParts() (lib/goalProgress.ts) แทน goalProgressLabel() ตัวเดียว
+                        ไม่ได้เปลี่ยนข้อความ/ตัวเลขที่แสดงเลยสักตัว แค่แยกชั้นทางภาพ */}
+                    <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
+                      {(() => {
+                        const parts = goalProgressLabelParts(
+                          weightPct,
+                          `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
+                        )
+                        return (
+                          <>
+                            <span className="font-mono font-bold text-sm" style={{ color: COLORS.amber }}>
+                              {parts.headline}
+                            </span>
+                            {parts.detail && <span>{parts.detail}</span>}
+                          </>
+                        )
+                      })()}
                     </p>
                     {/* ฟีดแบ็ก "อยากเห็นคาดว่าจะถึงเป้าหมายเมื่อไหร่" — โชว์เฉพาะตอนข้อมูลนิ่งพอจริงๆ
                         (ดูเกณฑ์ใน estimateGoalEtaWeeks) null = ไม่โชว์บรรทัดนี้เลย ไม่เดา/ไม่ประมาณคร่าวๆ */}
@@ -1289,11 +1306,23 @@ export default function DashboardPage() {
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                     </div>
-                    <p className="text-[12px] text-muted mt-1">
-                      {goalProgressLabel(
-                        bodyFatPct,
-                        `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
-                      )}
+                    {/* เหตุผลเดียวกับบล็อกน้ำหนักด้านบน — แยก headline/detail เหมือนกัน สีตามแท่ง progress
+                        ของบล็อกนี้เอง (moss ไม่ใช่ amber) */}
+                    <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
+                      {(() => {
+                        const parts = goalProgressLabelParts(
+                          bodyFatPct,
+                          `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
+                        )
+                        return (
+                          <>
+                            <span className="font-mono font-bold text-sm" style={{ color: COLORS.moss }}>
+                              {parts.headline}
+                            </span>
+                            {parts.detail && <span>{parts.detail}</span>}
+                          </>
+                        )
+                      })()}
                     </p>
                     {data.bodyFatEtaWeeks !== null && (
                       <p className="text-[12px] mt-0.5" style={{ color: COLORS.moss }}>

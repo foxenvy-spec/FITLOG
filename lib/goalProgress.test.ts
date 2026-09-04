@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { goalProgressLabel, estimateGoalEtaWeeks } from './goalProgress'
+import { goalProgressLabel, goalProgressLabelParts, estimateGoalEtaWeeks } from './goalProgress'
 
 describe('goalProgressLabel', () => {
   it('shows "เริ่มต้นเป้าหมาย" instead of "0% Progress" when there is no progress yet', () => {
@@ -29,6 +29,45 @@ describe('goalProgressLabel', () => {
   it('omits the remaining suffix when not provided', () => {
     expect(goalProgressLabel(32.4, null)).toBe('32% Progress')
     expect(goalProgressLabel(32.4)).toBe('32% Progress')
+  })
+})
+
+describe('goalProgressLabelParts', () => {
+  it('splits headline (%) from detail (Progress · remaining) once there is real progress', () => {
+    expect(goalProgressLabelParts(32.4, '7.1 kg')).toEqual({ headline: '32%', detail: 'Progress · เหลืออีก 7.1 kg' })
+  })
+
+  it('detail is just "Progress" when no remaining amount given', () => {
+    expect(goalProgressLabelParts(32.4)).toEqual({ headline: '32%', detail: 'Progress' })
+  })
+
+  it('headline is "เริ่มต้นเป้าหมาย" (not a %) at 0 or negative pct', () => {
+    expect(goalProgressLabelParts(0)).toEqual({ headline: 'เริ่มต้นเป้าหมาย', detail: '' })
+    expect(goalProgressLabelParts(-5)).toEqual({ headline: 'เริ่มต้นเป้าหมาย', detail: '' })
+  })
+
+  it('detail carries just the remaining suffix (no "Progress" word) at 0 pct', () => {
+    expect(goalProgressLabelParts(0, '7.1 kg')).toEqual({ headline: 'เริ่มต้นเป้าหมาย', detail: '· เหลืออีก 7.1 kg' })
+  })
+
+  it('caps headline at 100%', () => {
+    expect(goalProgressLabelParts(140).headline).toBe('100%')
+  })
+
+  it('reassembling headline + detail reproduces goalProgressLabel() exactly, across all cases', () => {
+    const cases: [number, string | null | undefined][] = [
+      [0, undefined],
+      [-5, undefined],
+      [32.4, undefined],
+      [140, undefined],
+      [32.4, '7.1 kg'],
+      [0, '7.1 kg'],
+    ]
+    cases.forEach(([pct, remaining]) => {
+      const { headline, detail } = goalProgressLabelParts(pct, remaining)
+      const reassembled = detail ? `${headline} ${detail}` : headline
+      expect(reassembled).toBe(goalProgressLabel(pct, remaining))
+    })
   })
 })
 
