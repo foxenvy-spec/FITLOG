@@ -253,6 +253,20 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
                       จอมือถือแสงจ้าจะอ่านสีล้วนๆ ยากกว่ามี emoji กำกับ) ยุบจาก 2 บรรทัด (ตัวเลข/คำ) เหลือ
                       บรรทัดเดียว (emoji+ตัวเลข) คอลัมน์แคบลงตาม (w-24 -> w-20) — emoji มาจาก BUCKET_META
                       เดียวกับป้ายสรุปด้านบนเป๊ะ (ดูคอมเมนต์ที่ BUCKET_META) ไม่ได้ hardcode แยกอิสระ */}
+                  {/* ฟีดแบ็ก (design review — "89% 🟢 ตามแผน") "16/18 เซ็ต = 89% แต่สถานะเขียว 'ตามแผน' — ผู้ใช้
+                      อาจอ่าน 89% เป็นตัว status เอง (เกือบครบ 100% แต่ยังไม่ครบ ทำไมเขียว?) ทั้งที่ 89% คือ
+                      progress เทียบเป้าเต็มสัปดาห์ ส่วนสีเขียว/ตามแผน มาจาก prorated target ตามวันที่ผ่านมา
+                      ของสัปดาห์ (volumeStatus()) คนละแกนกัน ไม่ขัดแย้งกัน" — ยืนยันแล้วว่า logic/prorated
+                      target/สีถูกต้องตามที่ตั้งใจทุกจุด (ไม่แตะ volumeStatus()/volumeBucket() เลย) ปัญหาคือ
+                      presentation ล้วนๆ: onTrack เป็นกรณีเดียวที่ตัวเลข % เปลือยๆ (ไม่มี diff ต่อท้ายแบบ
+                      behind/high/veryHigh) แล้วตัวเลขนั้น < 100% เสมอด้วย (ดู volumeStatus() — onTrack เกิด
+                      ได้ก็ต่อเมื่อ setsDone < weeklyTarget เท่านั้น ถึง met ขึ้นไปจึงจะ >= 100%) จึงอ่านกำกวม
+                      ได้ง่ายที่สุด — เติม " · ตามแผน" ต่อท้ายเฉพาะเคส onTrack (คำเดียวกับป้ายสรุปด้านบน/การ์ด
+                      Consistency ไม่ได้คิดคำใหม่) แยกด้วย "·" ให้อ่านเป็น 2 ค่าคนละแกน (Progress · Status)
+                      ไม่ใช่ "89% = เกณฑ์ของตามแผน" — เจตนาเลือกไม่ใช้ "เหลือ N%" (จะกลายเป็นพูดเรื่อง sets ที่
+                      เหลือ ทั้งที่ status จริงเป็นเรื่อง proration ตามเวลา ไม่ใช่เป้าที่เหลือ) และไม่ใช้คำ
+                      คุณภาพเช่น "ดี" (จะทำให้ status กลายเป็นคะแนนแทนสถานะตามแผน) — met/high/veryHigh ไม่แตะ
+                      (met ก็ % เปลือยเหมือนกัน แต่ >= 100% อยู่แล้วจึงไม่กำกวมแบบเดียวกัน) */}
                   <span className="flex items-center gap-1 shrink-0">
                     <span aria-hidden="true">{meta.emoji}</span>
                     <span className="text-[12px] font-mono font-bold" style={{ color }}>
@@ -260,7 +274,9 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
                         ? `${diff} เซ็ต`
                         : status === 'high' || status === 'veryHigh'
                           ? `+${diff} เซ็ต`
-                          : `${pct}%`}
+                          : status === 'onTrack'
+                            ? `${pct}% · ตามแผน`
+                            : `${pct}%`}
                     </span>
                   </span>
                 </div>
