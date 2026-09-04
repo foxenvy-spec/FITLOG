@@ -360,9 +360,10 @@ export default function AICoachCompactCard({
                   % ฟื้นตัวของกลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว ไม่ใช่คะแนนรวมวันนี้ — จับคู่กับ
                   "Recovery (Avg)" ที่เปลี่ยนชื่อคู่กันใน breakdown ของ Training Readiness
                   (MobileDashboardView.tsx/FitnessScoreDetailSheet.tsx)
-                  v65: ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ยังขัดกัน" — เปลี่ยนจาก muscleRecommendation.pct
-                  (กล้ามเนื้อเดี่ยวที่แนะนำ) เป็น displayPct (กล้ามเนื้อหลักของเทมเพลตที่ปุ่มจะเริ่มจริง —
-                  ดู comment ที่ displayMg ด้านบน) ให้ % นี้สอดคล้องกับ headline/subtitle ด้านบนเสมอ */}
+                  v65: ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ยังขัดกัน" — เปลี่ยนจาก muscleRecommendation.pct ตรงๆ
+                  เป็น displayPct (= resolved.recoveryPct) ให้ผ่าน resolveRecommendationDisplay() เสมอ ไม่
+                  อ่านค่าดิบข้าม field — ตัวเลขยังเป็น Recommendation Identity เป๊ะ (ไม่ใช่ของเทมเพลต ดู
+                  comment ที่ resolved ด้านบน) แค่รับประกันว่า headline/recovery% มาจาก resolve เดียวกันเสมอ */}
               {/* ฟีดแบ็ก "MUSCLE RECOVERY ควรเป็น label เล็ก/muted ส่วนตัวเลข % ควรเด่นเป็น 18px/700/
                   functional color แยกชั้นชัดเจน แทนที่จะเป็นตัวเลขเล็กๆ ต่อท้ายแท่งบาร์" — จัดใหม่เป็น
                   label+value แถวบน (baseline, รูปแบบเดียวกับที่การ์ด Body Goal ใช้อยู่แล้ว: label ซ้าย/
