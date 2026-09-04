@@ -2596,7 +2596,6 @@ export default function DashboardPage() {
             muscleRecommendation={data.todaysRecommendation}
             href="/coach"
             lastUpdatedAt={dataUpdatedAt}
-            recoveryDates={data.recoveryDates}
             isRecommendationForToday={data.isRecommendationForToday}
             todayWorkoutTitle={workoutTitle}
           />

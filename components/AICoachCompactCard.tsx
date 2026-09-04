@@ -17,13 +17,12 @@ import {
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
-import { recoveryStatusColor, recoveryTier, recoveryVerdictEmoji, computeRecoveryPct, type TodaysRecommendation } from '@/lib/dashboardStats'
-import { describeMuscleFocus, formatRelatedGroups, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
+import { recoveryTier, recoveryVerdictEmoji, type TodaysRecommendation } from '@/lib/dashboardStats'
+import { describeMuscleFocus, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
 import { resolveRecommendationDisplay } from '@/lib/recommendationDisplay'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
-import AnimatedBarFill from './AnimatedBarFill'
 
 interface AICoachCompactCardProps {
   message: string
@@ -45,12 +44,6 @@ interface AICoachCompactCardProps {
    * ในหน้า Dashboard) — ใช้แสดง "อัปเดตล่าสุด Xนาทีที่แล้ว" แบบมีข้อมูลจริงรองรับ ไม่ใช่ป้ายลอยๆ ที่ไม่มี
    * ความหมาย ไม่ระบุ = ยังโชว์ป้าย "อัปเดตล่าสุด" เฉยๆ แบบเดิม (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
   lastUpdatedAt?: number
-  /** วันที่ฝึกล่าสุดของแต่ละกลุ่มกล้ามเนื้อ (data.recoveryDates จาก DashboardView.tsx) — ใช้เฉพาะคำนวณ
-   * "worstOtherRecovery"/แถบเตือน "⚠️ X ยัง Recovery ต่ำ — หลีกเลี่ยงวันนี้" ด้านล่าง Recovery bar เท่านั้น
-   * (ดู comment ที่ worstOtherRecovery ด้านล่าง) ไม่เกี่ยวกับ headline/recovery% หลักอีกต่อไป — ค่านั้นมาจาก
-   * resolveRecommendationDisplay() (resolved.recoveryPct) ตรงๆ เสมอ ไม่ว่าจะส่ง recoveryDates มาหรือไม่
-   * ไม่ระบุ = ไม่มีแถบเตือนกลุ่มอื่นให้โชว์ (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
-  recoveryDates?: Record<string, string | null>
   /** true เมื่อ muscleRecommendation คือกล้ามเนื้อของ "วันนี้" จริงๆ (data.isRecommendationForToday จาก
    * DashboardView.tsx) — ฟีดแบ็ก "Today's Focus บอก DAY 5 — LOWER, AI Coach ก็บอก DAY 5 — LOWER แล้วทำไม
    * ป้ายเขียน '· Next'? ถ้ายังไม่เริ่ม Workout วันนี้ ควรเป็น '· Today'" — เดิมป้าย "· Next" hardcode
@@ -140,7 +133,6 @@ export default function AICoachCompactCard({
   isRestDay = false,
   href = '/coach',
   lastUpdatedAt,
-  recoveryDates,
   isRecommendationForToday = false,
   todayWorkoutTitle = null,
 }: AICoachCompactCardProps) {
@@ -193,26 +185,6 @@ export default function AICoachCompactCard({
   // ซ้ำใน component นี้อีกแล้ว — ตัวเลขเดียวกับที่ Insight ใช้เป๊ะ ไม่มีโอกาสเพี้ยนจาก recoveryDates ที่อาจ
   // ไม่ sync กับตอนที่ recommendation engine คำนวณ pct ไว้
   const displayPct = resolved.recoveryPct ?? 0
-  const barColor = muscleRecommendation ? recoveryStatusColor(displayPct) : COLORS.amber
-
-  // ฟีดแบ็ก "AI Coach ควรเป็น Decision Engine ไม่ใช่แค่รายงาน — เพิ่ม 'Legs ยัง Recovery ต่ำ →
-  // หลีกเลี่ยงวันนี้' นอกจากบอกว่าควรเล่นอะไร" — เกณฑ์เดียวกับ lowRecoveryCaution ที่การ์ด Recovery
-  // (DashboardView.tsx) ใช้อยู่แล้ว (tier 'Recovering'/'Rest') ไม่คิดเกณฑ์ใหม่แยกต่างหาก — หา "แย่ที่สุด"
-  // ในบรรดากลุ่มที่ "เคยเทรนมาก่อนจริง" เท่านั้น (กรอง pct < 100 ออก กันกลุ่มที่ไม่เคยแตะเลยซึ่งได้ 100%
-  // อัตโนมัติจาก computeRecoveryPct(null, mg) ไม่ใช่ "ต่ำ" จริง) ไม่รวมกลุ่มที่แนะนำอยู่แล้ว (mg — Recommendation
-  // Identity ไม่ใช่ Action Identity อีกต่อไป)
-  // ไม่มี recoveryDates ส่งมา (จุดเรียกใช้อื่นที่ไม่ใช่ Dashboard) หรือไม่มีกลุ่มไหนแย่พอ = ไม่โชว์เลย
-  const worstOtherRecovery = recoveryDates
-    ? RECOVERY_MUSCLES.filter((g) => g !== mg)
-        .map((g) => ({ group: g, pct: computeRecoveryPct(recoveryDates[g] ?? null, g) }))
-        .filter((r) => r.pct < 100)
-        .sort((a, b) => a.pct - b.pct)[0] ?? null
-    : null
-  const avoidCaution =
-    worstOtherRecovery &&
-    (recoveryTier(worstOtherRecovery.pct).labelEn === 'Recovering' || recoveryTier(worstOtherRecovery.pct).labelEn === 'Rest')
-      ? worstOtherRecovery
-      : null
 
   async function handleStart() {
     if (!chosen || chosenExercises.length === 0) return
@@ -370,69 +342,16 @@ export default function AICoachCompactCard({
                 </p>
               )}
 
-              {/* v58: ฟีดแบ็ก "Training Readiness 48 vs Recovery 100% ดูขัดกัน — ถ้าเป็นคนละ Metric ต้อง
-                  อธิบายให้ชัด" — ป้าย "Recovery" เดิมสั้นเกินจนอ่านเหมือนจะเป็นตัวเดียวกับ Training Readiness
-                  ที่อยู่บน Header (คนละการ์ด แต่ใช้คำเดียวกัน) — เปลี่ยนเป็น "Muscle Recovery" ให้ชัดว่าเป็น
-                  % ฟื้นตัวของกลุ่มกล้ามเนื้อที่แนะนำวันนี้กลุ่มเดียว ไม่ใช่คะแนนรวมวันนี้ — จับคู่กับ
-                  "Recovery (Avg)" ที่เปลี่ยนชื่อคู่กันใน breakdown ของ Training Readiness
-                  (MobileDashboardView.tsx/FitnessScoreDetailSheet.tsx)
-                  v65: ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ยังขัดกัน" — เปลี่ยนจาก muscleRecommendation.pct ตรงๆ
-                  เป็น displayPct (= resolved.recoveryPct) ให้ผ่าน resolveRecommendationDisplay() เสมอ ไม่
-                  อ่านค่าดิบข้าม field — ตัวเลขยังเป็น Recommendation Identity เป๊ะ (ไม่ใช่ของเทมเพลต ดู
-                  comment ที่ resolved ด้านบน) แค่รับประกันว่า headline/recovery% มาจาก resolve เดียวกันเสมอ */}
-              {/* ฟีดแบ็ก "MUSCLE RECOVERY ควรเป็น label เล็ก/muted ส่วนตัวเลข % ควรเด่นเป็น 18px/700/
-                  functional color แยกชั้นชัดเจน แทนที่จะเป็นตัวเลขเล็กๆ ต่อท้ายแท่งบาร์" — จัดใหม่เป็น
-                  label+value แถวบน (baseline, รูปแบบเดียวกับที่การ์ด Body Goal ใช้อยู่แล้ว: label ซ้าย/
-                  value ใหญ่ขวา) แล้วแท่ง progress อยู่แถวล่างเต็มความกว้าง — ตัวเลขขยับจาก 10px เป็น 16px
-                  font-bold (ไม่เต็ม 18px ตามสเปค เพื่อคุมความสูงการ์ดนี้ที่ผ่านการลดขนาดมาหลายรอบก่อนหน้า) */}
-              <div className="mt-1.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.secondary }}>Muscle Recovery</p>
-                  <p className="font-mono font-bold shrink-0" style={{ fontSize: 16, color: barColor }}>
-                    {displayPct}%
-                  </p>
-                </div>
-                <div className="h-1 rounded-full overflow-hidden mt-1" style={{ background: 'rgba(255,255,255,.08)' }}>
-                  <AnimatedBarFill pct={displayPct} color={barColor} />
-                </div>
-              </div>
-              {/* v70: ฟีดแบ็ก "AI Coach ควรอธิบายเหตุผลสั้นๆ 1-2 บรรทัด เช่น 'เหมาะกับการฝึกระดับปานกลาง
-                  วันนี้' แทนที่จะโชว์แค่ % เฉยๆ" — ดึงจาก recoveryTier().adviceTh (เกณฑ์/รอยต่อเดียวกับสี
-                  ของแท่ง Recovery ด้านบนเป๊ะ ไม่คิดเกณฑ์ใหม่แยกต่างหาก กันข้อความกับสีขัดกันเอง) ไม่โชว์ตอน
-                  Rest Day (มีข้อความอธิบายของตัวเองอยู่แล้วว่าเป็นวันพัก ไม่ใช่คำแนะนำระดับความหนัก) */}
-              {/* ฟีดแบ็ก "ข้อความ adviceTh ('กล้ามเนื้อกลุ่มนี้พร้อมเต็มที่ เพิ่ม...') ถูกตัดด้วย ... ทั้งที่
-                  เป็นประโยคสำคัญ" — truncate (บรรทัดเดียว) เดิมตัดประโยคที่ยาวกว่าคอลัมน์แคบของการ์ดนี้จน
-                  อ่านไม่ครบ เปลี่ยนเป็น line-clamp-2 ให้ขึ้นบรรทัดที่ 2 ได้แทนที่จะตัดทิ้งทันทีที่บรรทัดแรก
-                  เต็ม (ยัง ellipsis ถ้ายาวเกิน 2 บรรทัดจริงๆ กันการ์ดสูงขึ้นไม่จำกัด) */}
-              {/* ฟีดแบ็ก "อยากเห็น 'เหตุผล' เป็น bullet list สั้นๆ แทนย่อหน้ายาว" — รวม adviceTh/
-                  setsRemaining/avoidCaution (ตรรกะ/เงื่อนไขเดิมทุกจุด ไม่ตัดอะไรออก) เป็น <ul> แทนย่อหน้า
-                  แยก 2 ก้อนแบบเดิม */}
-              {/* ฟีดแบ็ก "Text เล็กมากในการ์ด — เพิ่มขนาด 1px" — 10px -> 11px ทั้ง 2 bullet (เป็นข้อความ
-                  ที่ User ต้องอ่านเพื่อทำความเข้าใจคำแนะนำ) คงสีตามความหมายเดิมไว้ (barColor/amber ผูกกับ
-                  tier ของแท่ง Recovery ด้านบนเป๊ะ ไม่ใช่เทาแบนราบ — สีที่นี่คือ "Important" ไม่ใช่ "Supporting") */}
-              {!isRestDay && (
-                <ul className="mt-1.5 space-y-0.5">
-                  <li className="flex gap-1" style={{ fontSize: 11, color: barColor, lineHeight: 1.35 }}>
-                    <span aria-hidden="true">•</span>
-                    <span className="line-clamp-2">
-                      {recoveryTier(displayPct).adviceTh}
-                      {/* v: เชื่อม Weekly Volume Engine เข้ากับคำแนะนำนี้ — เฉพาะตอนยังเหลือโควตาจริง
-                          (setsRemaining > 0) เหมือน desktop's Recovery banner ไม่โชว์ตอนเกินเป้าแล้ว */}
-                      {muscleRecommendation && muscleRecommendation.setsRemaining > 0 && (
-                        <span style={{ color: TEXT.body }}> · เหลืออีก {muscleRecommendation.setsRemaining} เซ็ตถึงเป้าหมาย</span>
-                      )}
-                    </span>
-                  </li>
-                  {avoidCaution && (
-                    <li className="flex gap-1" style={{ fontSize: 11, color: COLORS.amber, lineHeight: 1.35 }}>
-                      <span aria-hidden="true">•</span>
-                      <span className="line-clamp-1">
-                        ⚠️ {avoidCaution.group} ยัง Recovery ต่ำ ({avoidCaution.pct}%) — หลีกเลี่ยงวันนี้
-                      </span>
-                    </li>
-                  )}
-                </ul>
-              )}
+              {/* ฟีดแบ็ก (design review — "MINT Coach ยังมีข้อมูล Recovery ซ้ำอยู่ภายในตัวเอง") "Recovery
+                  card ด้านบนบอกสถานะแล้ว (29% Rest + รายชื่อกล้ามเนื้อ) MINT Coach ควรตอบแค่ 'วันนี้ควรทำ
+                  อะไร' ไม่ใช่ตอบซ้ำว่า 'ทำไมถึงควรทำแบบนั้น'" — ตัด "Muscle Recovery {pct}%" bar (v58/v65)
+                  และ bullet list ทั้งก้อน (adviceTh + เหลืออีก N เซ็ต + avoidCaution "X ยัง Recovery ต่ำ")
+                  ออกทั้งหมด — verdict บรรทัดเดียวด้านบน (readinessVerdict) ยังคงบอก "ควรทำอะไร" ครบอยู่แล้ว
+                  รายละเอียดเหตุผล/ตัวเลขละเอียดยกให้ Recovery card (สถานะรายกลุ่ม) และ /coach (รายละเอียดเต็ม)
+                  แทน — barColor/worstOtherRecovery/avoidCaution ไม่มีจุดใช้อื่นเหลือแล้ว ลบทิ้งทั้งหมด (ดู
+                  comment ที่จุดประกาศตัวแปรเดิม) recoveryDates prop ก็เลยไม่มีจุดใช้เหลือ ลบออกจาก interface/
+                  จุดเรียกใช้ทั้งสองที่ด้วย (DashboardView.tsx/MobileDashboardView.tsx) แทนที่จะปล่อยเป็น
+                  prop ที่ไม่มีใครอ่านค้างไว้ */}
             </>
           ) : (
             <p className="text-xs text-ink mt-1 truncate">{message}</p>
@@ -473,6 +392,17 @@ export default function AICoachCompactCard({
             // Recovery/AI Coach แทน ไม่ใช่ CTA เด่นแบบ "เริ่ม" เพราะ Rest Day ไม่ควรมี action ที่เด่นกว่า "พัก"
             <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
               ดู Recovery →
+            </Button>
+          ) : muscleRecommendation?.lowRecoveryCaution ? (
+            // ฟีดแบ็ก (design review — "MINT Coach บอกควรพัก แต่ปุ่มก็ให้เริ่มเล่น ขัดกันเอง") "ผู้ใช้ตีความ
+            // ได้ว่า 'ระบบบอกให้พัก แต่ปุ่มก็ให้เริ่มเล่น'" — readinessVerdict tier "Rest" (recovery <35% ของ
+            // กล้ามเนื้อที่แนะนำเอง ดู lowRecoveryCaution ใน suggestMuscleToTrain, lib/dashboardStats.ts) กับ
+            // ปุ่ม "เริ่ม X" เดิมไม่เคยเช็คเงื่อนไขนี้เลย (เช็คแค่ isRestDay/templatesLoading/มีเทมเพลตไหม) —
+            // ใช้ pattern เดียวกับ isRestDay ด้านบน (secondary link ไปดูรายละเอียดแทน CTA เด่น) กัน headline
+            // กับปุ่มขัดกันเอง — chosen/handleStart ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ recovery ขยับข้าม
+            // เกณฑ์ระหว่างเซสชัน ไม่ได้ถูกเสนอเป็น action หลักแค่ตอนยังอยู่ tier "Rest" เท่านั้น
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
+              ดูคำแนะนำ Recovery →
             </Button>
           ) : templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />

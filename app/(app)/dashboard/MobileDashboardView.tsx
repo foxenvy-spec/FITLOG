@@ -546,7 +546,6 @@ export default function MobileDashboardView() {
           muscleRecommendation={muscleRecommendation}
           isRestDay={workoutCardVariant === 'restDay'}
           lastUpdatedAt={dataUpdatedAt}
-          recoveryDates={data.recoveryDates}
           isRecommendationForToday={data.isRecommendationForToday}
           todayWorkoutTitle={workoutTitle}
         />
