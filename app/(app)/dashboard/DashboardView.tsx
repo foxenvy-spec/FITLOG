@@ -1190,25 +1190,13 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* body composition snapshot — weight/body fat/skeletal muscle/fat mass/BMI with
-          week-over-week deltas, pulled from the same body_metrics rows as the /health page.
-          Sits above the fold since it's the first thing a user checks each morning.
-          ฟีดแบ็ก (Information Hierarchy review) — "บริเวณ MINT → Fitness Score/Recovery → Body Overview
-          มีพื้นที่ว่างค่อนข้างมาก ลด vertical spacing ตรงนี้ลงประมาณ 10-15%" — เพิ่ม lg:-mt-0.5 (-2px)
-          เฉพาะจุดนี้ (ไม่แตะ lg:gap-4 ของ grid หลักที่ใช้ร่วมกับคู่อื่นทั้งหน้า เช่น Body Goal -> การ์ด
-          คลัสเตอร์ ด้านล่าง) ให้ระยะจาก header แถวบนสุดเหลือ 14px จาก 16px เดิม (-12.5%, อยู่ในช่วงที่ขอ)
-          กระทบแค่คู่ header->Body Overview คู่เดียวเท่านั้น */}
-      <div className="lg:col-span-12 lg:order-3 lg:-mt-0.5 animate-rise" style={{ animationDelay: '15ms' }}>
-        {/* v41: ฟีดแบ็ก "ทำเป็น Version 3 (Minimal Dark Titanium)" — เดสก์ท็อปเคยใช้ชุดสีนีออนอิ่มตัวเต็มที่
-            แยกต่างหากจากมือถือ (ผ่าน colorScheme="vibrant") — สลับมาใช้ชุดสี/glow เดียวกับมือถือแล้ว
-            (compact ยังเป็น false ตามเดิม — โครงเลย์เอาต์ 5 คอลัมน์ของเดสก์ท็อปไม่กระทบ แค่สี/ความเข้ม glow
-            เปลี่ยน) v43: prop colorScheme ตัดออกทั้งหมดแล้ว (ไม่มีจุดไหนใช้ "default" อีกเลย ดู
-            BodyMetricsRow.tsx) เหลือแค่ชุดสีเดียวเป็นดีฟอลต์ ไม่ต้องส่ง prop นี้อีกต่อไป
-            ฟีดแบ็ก "แถวปุ่มเลือกช่วงเวลากินพื้นที่แค่มุมขวา เหลือพื้นที่ว่างซ้าย-กลาง 80% ก่อนถึงการ์ด" —
-            เดสก์ท็อปไม่เคยมีหัวข้อ section เหนือการ์ดชุดนี้เลยตั้งแต่แรก (ต่างจากมือถือที่มี "ภาพรวมร่างกาย"
-            อยู่แล้ว) ใส่ title ให้แถว pill selector สมดุลซ้าย-ขวาเหมือนกับที่แก้ฝั่งมือถือ */}
-        <BodyMetricsRow title="ภาพรวมร่างกาย" />
-      </div>
+      {/* ฟีดแบ็ก (design review — "Information Density สูงเกินไป") "หน้าแรกควรตอบแค่ 'วันนี้ฉันเป็น
+          อย่างไร และควรทำอะไรต่อ?' ไม่ใช่ Dashboard+Analytics+Workout Center ในหน้าเดียว" — ย้าย
+          BodyMetricsRow (5 การ์ด weight/bodyFat/muscle/bmi/visceralFat, "ภาพรวมร่างกาย") ไปอยู่ที่แท็บ
+          "2 · รายละเอียด" แทน (ดูจุดที่ย้ายไปอยู่ ต้นๆ ของ slide 2 ด้านล่าง — เนื้อหา/สูตรคำนวณไม่เปลี่ยน
+          เลยสักตัว แค่ย้ายตำแหน่งหน้า) Body Goal ด้านล่างนี้ "ไม่ย้าย" ตามที่คอนเฟิร์มไว้ชัดเจน (แยกคนละ
+          การ์ดกับ BodyMetricsRow — Body Goal ตอบ "ไปถึงเป้าหมายหรือยัง" ซึ่งเป็นคำตอบของ "ควรทำอะไรต่อ"
+          ยังอยู่ในขอบเขตของ Overview) */}
 
       {/* ฟีดแบ็ก "Body Composition ควรมี 'Goal Progress' อยู่ใน Dashboard — User ที่มี Goal ต้องตอบได้ว่า
           กำลังไปถึงเป้าหมายหรือยัง" — ใช้ goalProgressPct ตัวเดียวกับหน้า /health (ไม่คำนวณสูตรแยกใหม่)
@@ -2505,27 +2493,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* card 5 (optional): AI coach — sits under Weekly Goal in the rightmost column and
-          spans down alongside the quick-actions/heatmap rows (lg:row-span-2 — the cluster is
-          now only 3 rows tall since the standalone "today muscle" row was folded into the
-          hero card above).
+      {/* card 5 (optional): AI coach — sits under Weekly Goal in the rightmost column, single row
+          (row-start-2 only) beside the quick-actions row.
           v42: ฟีดแบ็ก "Version 3" มอคอัพมี AI Coach panel เป็นทรง ring-avatar + headline + recovery bar
           + gradient CTA เหมือนกับที่มือถือมี AICoachCompactCard อยู่แล้ว (ไม่ใช่ list InsightCard เฉยๆ
           แบบเดิม) — สลับมาใช้ AICoachCompactCard ตัวเดียวกับมือถือตรงๆ (รับ props message/
-          muscleRecommendation ชุดเดียวกับที่ MobileDashboardView ส่งอยู่แล้ว ไม่ต้องเขียนใหม่) เป็นชิ้นบนสุด
-          — insight list เดิม (เทรนด์ไขมัน/กล้ามเนื้อ/วอลุ่ม ฯลฯ) ยังเก็บไว้ครบ วางต่อท้ายด้านล่างแทนที่จะ
-          ทิ้ง เพราะเป็นข้อมูลที่ AICoachCompactCard เองไม่ได้ครอบคลุม — เอา wrapper กรอบ/พื้นหลังเดิมออก
-          (bg-surface2/40 border) เพราะ AICoachCompactCard มีกรอบไทเทเนียม+badge "อัปเดตล่าสุด" ของตัวเอง
-          อยู่แล้ว ซ้อนกรอบซ้ำจะกลายเป็นการ์ดในการ์ด ส่วน InsightCard เองก็มีกรอบตัวเองอยู่แล้วเช่นกัน —
-          ป้าย "อัปเดต" เดิมตรงนี้ตัดออกด้วย (ซ้ำกับ badge ในตัว AICoachCompactCard) เช่นเดียวกับ fallback
-          block เดิม (ไม่มี insight) เพราะ AICoachCompactCard เองมี fallback แสดง message อยู่แล้วในตัว —
-          ส่วนบล็อกสรุปสถิติรายสัปดาห์ที่เคยอยู่ใน fallback นั้นตัดออกเพราะซ้ำกับการ์ด Weekly Goal ที่อยู่
-          เหนือขึ้นไปแล้ว (ครั้งที่ฝึกสัปดาห์นี้ + weeklyGoalPct) */}
+          muscleRecommendation ชุดเดียวกับที่ MobileDashboardView ส่งอยู่แล้ว ไม่ต้องเขียนใหม่)
+          ฟีดแบ็ก (design review — "Information Density สูงเกินไป") "MINT Coach/Insight Carousel/Balance
+          banner สามใบต่างพูดเรื่อง 'ควรทำอะไรต่อ' ซ้อนกันอยู่ในหน้า Overview เดียว — ให้ MINT Coach เป็น
+          เจ้าของคำถามนี้ใบเดียวพอ" — ตัด InsightCarousel ที่เคยวางต่อท้ายใต้การ์ดนี้ออก (ย้ายไปแท็บ
+          "2 · รายละเอียด" แทน พร้อม heatmapInsight banner ที่เคยอยู่แถวถัดไป — ดูจุดที่ย้ายไปอยู่ในต้นๆ
+          ของ slide 2 ด้านล่าง เนื้อหา/สูตรคำนวณไม่เปลี่ยนเลย แค่ย้ายตำแหน่งหน้า) การ์ดนี้เลยไม่ต้อง
+          row-span-2 อีกต่อไป (เดิมยืดเพื่อเทียบความสูงกับคอลัมน์ซ้ายที่มี HighlightsRow+Balance banner
+          ซึ่งย้ายออกไปแล้วเช่นกัน) เหลือแค่ row-start-2 แถวเดียวคู่กับ Quick Actions ข้างๆ */}
       {prefs.showAICoach && (
-        <div
-          className="flex flex-col gap-3 animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2 lg:row-span-2"
-          style={{ animationDelay: '360ms' }}
-        >
+        <div className="animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2" style={{ animationDelay: '360ms' }}>
           <AICoachCompactCard
             message={data.aiDailySummary}
             muscleRecommendation={data.todaysRecommendation}
@@ -2535,27 +2517,19 @@ export default function DashboardPage() {
             isRecommendationForToday={data.isRecommendationForToday}
             todayWorkoutTitle={workoutTitle}
           />
-          {/* v48: ฟีดแบ็ก "Insight มี 2 ใบ วางซ้อนกันแนวตั้งกินพื้นที่ ทำเป็น Carousel จะดีกว่า" —
-              เดิม map วาง InsightCard เรียงต่อกัน space-y-2 (สูงเท่าจำนวนใบรวมกัน) เปลี่ยนเป็น
-              InsightCarousel ปัดแนวนอนทีละใบแทน สูงคงที่แค่ 1 ใบเสมอไม่ว่าจะมีกี่ insight */}
-          <InsightCarousel insights={combinedInsights} imageFor={(insight) => INSIGHT_IMAGE[`${insight.id}|${insight.kind}`]} />
         </div>
       )}
       </div>
 
-      {/* merged quick actions — lg only. Below lg, the two original quick-action groups
-          above/below (quick-start + log/templates/stats) stay as-is; at xl they're both
-          hidden and replaced by this single deduplicated row so the 12-col grid doesn't
-          show the same "บันทึก"/"เทมเพลต" shortcuts twice. Narrowed to col-span-9 (from 12)
-          so it sits beside the AI Coach card instead of running underneath it.
-          ฟีดแบ็ก "ลองเอาไปแทรกของจริง" (Highlights จากหน้า preview /dashboard-concept) — วาง
-          HighlightsRow ซ้อนอยู่เหนือแถว QuickAction เดิมในกริดเซลล์เดียวกัน (col-start-1/col-span-9/
-          row-start-2 ย้ายไปอยู่ที่ div ห่อนี้แทน) ไม่ต้องแก้ row-start ของ AI Coach/Heatmap/Volume ที่
-          เหลือเลย เพราะ grid นี้ไม่ได้ fix ความสูงแถวตายตัว (auto-size ตามเนื้อหา) แถว row-start-2 แค่
-          สูงขึ้นเองตามเนื้อหาใหม่ ทุกอย่างด้านล่างขยับตามอัตโนมัติ — ไม่เอา "Quick Action" คู่จากมอคอัพมา
-          ด้วย เพราะซ้ำกับแถว QuickAction ที่มีอยู่แล้วตรงนี้ (คนละลิงก์กัน จะสับสน) */}
-      <div className="hidden lg:flex lg:flex-col lg:col-start-1 lg:col-span-9 lg:row-start-2 gap-3">
-        <HighlightsRow streak={data.streak} bestVolumeIncrease={data.bestVolumeIncrease} weeklyConsistencyPct={data.weeklyConsistencyPct} />
+      {/* quick actions — lg only. Below lg, the two original quick-action groups above/below
+          (quick-start + log/templates/stats) stay as-is; at xl they're both hidden and replaced
+          by this single deduplicated row so the 12-col grid doesn't show the same "บันทึก"/
+          "เทมเพลต" shortcuts twice. Narrowed to col-span-9 (from 12) so it sits beside the AI
+          Coach card instead of running underneath it.
+          ฟีดแบ็ก (design review — "Information Density สูงเกินไป") — HighlightsRow ที่เคยวางเหนือแถวนี้
+          ย้ายไปแท็บ "2 · รายละเอียด" แล้ว (ดูเหตุผลที่ comment ของการ์ด MINT Coach ด้านบน) เหลือแค่ Quick
+          Actions เดี่ยวๆ ในเซลล์นี้ ไม่ต้องห่อ flex-col อีกต่อไป (มีแค่ grid เดียวไม่ได้ stack กับอะไร) */}
+      <div className="hidden lg:block lg:col-start-1 lg:col-span-9 lg:row-start-2">
         <div className={`grid gap-3 ${data.hasAnyHistory ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
           <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
@@ -2565,66 +2539,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* full width (lg+): below-the-fold charts, insights, quick actions
-          Order follows a "what happened -> am I on track -> what's next" reading flow:
-          full graphic heatmap + weekly volume (side by side, lined up with AI Coach) ->
-          today's trained-muscle heatmap -> muscle share card -> consistency calendar
-          (recent workouts / PRs per day) -> next-up + quick actions last.
-          Narrowed to col-span-9 (from 12), same reason as the quick-actions row above —
-          leaves room 10-12 for the AI Coach card. */}
-      {/* ฟีดแบ็ก (P2, Information Hierarchy review) "Insight ควรมีหัวหน้าเดียว — ⚠️ balanceSummary จาก
-          Muscle Heatmap ยกออกมาเป็น Insight Banner เต็มความกว้าง เหนือ Muscle Balance/Weekly Volume ซึ่ง
-          กลายเป็น Evidence รองลงมา" — heatmapInsight มาจาก WeeklyMuscleHeatmap ผ่าน onInsight callback
-          ด้านล่าง (ค่าเดียวกันเป๊ะ ไม่คำนวณซ้ำ) col-span-9 เท่าแถว QuickAction ด้านบน ไม่ชนคอลัมน์ AI Coach
-          (row-span 2 คร่อมแถว 2-3 อยู่ที่คอลัมน์ 10-12) — ไม่โชว์ถ้ายังไม่มี insight จริง (ไม่มโนคำแนะนำ) */}
-      {heatmapInsight && (() => {
-        // ฟีดแบ็ก (P2, "เชื่อม Muscle Heatmap ↔ Insight") — กลุ่มที่ hover/แตะอยู่ตอนนี้ ถ้าอยู่ในประโยคนี้
-        // จริง ไฮไลต์ทั้งกล่อง (border/glow เข้มขึ้นด้วยสีเดียวกับ insight) + ไฮไลต์ชื่อกลุ่มนั้นในข้อความ
-        // เป็น chip เล็กๆ ให้เห็นการเชื่อมโยงชัดโดยไม่ต้องเพิ่ม card ใหม่
-        const isMatched = !!activeHeatmapGroup && heatmapInsight.groups.includes(activeHeatmapGroup)
-        const idx = isMatched ? heatmapInsight.text.indexOf(activeHeatmapGroup!) : -1
-        const textNode =
-          idx >= 0 ? (
-            <>
-              {heatmapInsight.text.slice(0, idx)}
-              <span className="rounded px-1" style={{ backgroundColor: withAlpha(heatmapInsight.color, '33') }}>
-                {activeHeatmapGroup}
-              </span>
-              {heatmapInsight.text.slice(idx + activeHeatmapGroup!.length)}
-            </>
-          ) : (
-            heatmapInsight.text
-          )
-        return (
-          <div
-            className="lg:col-start-1 lg:col-span-9 lg:row-start-3 rounded-card border border-line bg-surface2/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap transition-shadow"
-            style={
-              isMatched
-                ? { borderColor: heatmapInsight.color, boxShadow: `0 0 0 1px ${heatmapInsight.color}, 0 0 16px ${withAlpha(heatmapInsight.color, '33')}` }
-                : undefined
-            }
-          >
-            <div className="flex items-start gap-3 min-w-0">
-              <span className="text-lg leading-none shrink-0" aria-hidden="true">
-                🔴
-              </span>
-              <div className="min-w-0">
-                <p className="text-[12px] tracked uppercase text-muted">Insight</p>
-                <p className="font-display font-semibold text-sm leading-snug mt-0.5" style={{ color: heatmapInsight.color }}>
-                  {textNode}
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/coach"
-              className="shrink-0 text-[12px] font-display tracked uppercase rounded-full px-3 py-2 transition active:scale-[0.98]"
-              style={{ backgroundColor: withAlpha(heatmapInsight.color, '22'), color: heatmapInsight.color }}
-            >
-              ดู Workout ที่แนะนำ →
-            </Link>
-          </div>
-        )
-      })()}
+      {/* ฟีดแบ็ก (design review — "Information Density สูงเกินไป") — InsightCarousel และ heatmapInsight
+          balance banner (เคยอยู่ตรงนี้ทั้งคู่) ย้ายไปแท็บ "2 · รายละเอียด" แล้ว (ดูเหตุผลที่ comment ของ
+          การ์ด MINT Coach ด้านบน — ให้ MINT Coach เป็นเจ้าของคำถาม "ควรทำอะไรต่อ" ใบเดียวในหน้า Overview
+          ไม่ซ้อนกับอีก 2 ใบที่พูดเรื่องเดียวกัน) เนื้อหา/สูตรคำนวณไม่เปลี่ยนเลย แค่ย้ายตำแหน่งหน้า */}
 
       </div>
       {/* end cards cluster sub-grid */}
@@ -2644,6 +2562,79 @@ export default function DashboardPage() {
           grid entirely into their own self-contained stack (no longer needs lg:col-start/row-start) */}
       <div className="shrink-0 w-full snap-center">
         <div className="space-y-6 px-1">
+          {/* ฟีดแบ็ก (design review — "Information Density สูงเกินไปในหน้า Overview") — BodyMetricsRow
+              (5 การ์ด weight/bodyFat/muscle/bmi/visceralFat, "ภาพรวมร่างกาย") ย้ายมาจากแท็บ "1 · ภาพรวม"
+              (ดู comment ที่จุดเดิมของมัน ต้นๆ ของ slide 1 ด้านบน) เนื้อหา/สูตรคำนวณไม่เปลี่ยนเลย แค่ย้าย
+              ตำแหน่งหน้า — ไม่มี grid 12-col ให้ span ในสไลด์นี้ (เป็น vertical stack ธรรมดา) เลยไม่ต้องใส่
+              className พิเศษเหมือนตอนอยู่ใน Overview */}
+          <BodyMetricsRow title="ภาพรวมร่างกาย" />
+          {/* ฟีดแบ็ก (design review เดียวกัน) — HighlightsRow ย้ายมาจากแท็บ "1 · ภาพรวม" เช่นกัน (เคยวาง
+              เหนือแถว Quick Actions ในคอลัมน์เดียวกับ AI Coach — ดู comment ที่จุดเดิม) วางต่อจาก
+              BodyMetricsRow ให้เนื้อหา "สรุปสัปดาห์นี้" ทั้งสองกลุ่มอยู่ด้วยกัน */}
+          <HighlightsRow streak={data.streak} bestVolumeIncrease={data.bestVolumeIncrease} weeklyConsistencyPct={data.weeklyConsistencyPct} />
+          {/* ฟีดแบ็ก (design review เดียวกัน) — InsightCarousel (เทรนด์ไขมัน/กล้ามเนื้อ/ความถี่ฝึก/
+              คำแนะนำวันนี้ ฯลฯ) ย้ายมาจากแท็บ "1 · ภาพรวม" เช่นกัน (เคยวางต่อท้ายใต้การ์ด MINT Coach —
+              ดู comment ที่จุดเดิม) MINT Coach เหลือเป็นเจ้าของคำถาม "ควรทำอะไรต่อ" ใบเดียวใน Overview
+              ส่วน insight ชุดเต็ม (รวม recommendationInsight ที่ก็อยู่ใน combinedInsights นี้ด้วย) มาอยู่
+              ที่นี่เป็นรายละเอียดประกอบ ไม่ใช่การลบทิ้ง */}
+          <InsightCarousel insights={combinedInsights} imageFor={(insight) => INSIGHT_IMAGE[`${insight.id}|${insight.kind}`]} />
+          {/* ฟีดแบ็ก (P2, Information Hierarchy review) "Insight ควรมีหัวหน้าเดียว — ⚠️ balanceSummary จาก
+              Muscle Heatmap ยกออกมาเป็น Insight Banner เต็มความกว้าง เหนือ Muscle Balance/Weekly Volume ซึ่ง
+              กลายเป็น Evidence รองลงมา" — heatmapInsight มาจาก WeeklyMuscleHeatmap ผ่าน onInsight callback
+              ด้านล่าง (ค่าเดียวกันเป๊ะ ไม่คำนวณซ้ำ) — ไม่โชว์ถ้ายังไม่มี insight จริง (ไม่มโนคำแนะนำ)
+              ฟีดแบ็ก (design review — "Information Density สูงเกินไปในหน้า Overview") — บล็อกนี้ย้ายมาจาก
+              แท็บ "1 · ภาพรวม" เช่นกัน (เคยอยู่ถัดจากแถว Quick Actions) วางไว้เหนือ Heatmap+Weekly Volume
+              ทันทีที่นี่แทน เพราะเป็นสรุปของข้อมูลชุดเดียวกับที่อยู่ถัดไปพอดี (ตัดคลาส lg:col-start-1/
+              lg:col-span-9/lg:row-start-3 ที่ผูกกับ grid 12-col ของ Overview ออก เพราะสไลด์นี้เป็น
+              vertical stack ธรรมดา ไม่มี grid ให้ span) */}
+          {heatmapInsight && (() => {
+            // ฟีดแบ็ก (P2, "เชื่อม Muscle Heatmap ↔ Insight") — กลุ่มที่ hover/แตะอยู่ตอนนี้ ถ้าอยู่ในประโยคนี้
+            // จริง ไฮไลต์ทั้งกล่อง (border/glow เข้มขึ้นด้วยสีเดียวกับ insight) + ไฮไลต์ชื่อกลุ่มนั้นในข้อความ
+            // เป็น chip เล็กๆ ให้เห็นการเชื่อมโยงชัดโดยไม่ต้องเพิ่ม card ใหม่
+            const isMatched = !!activeHeatmapGroup && heatmapInsight.groups.includes(activeHeatmapGroup)
+            const idx = isMatched ? heatmapInsight.text.indexOf(activeHeatmapGroup!) : -1
+            const textNode =
+              idx >= 0 ? (
+                <>
+                  {heatmapInsight.text.slice(0, idx)}
+                  <span className="rounded px-1" style={{ backgroundColor: withAlpha(heatmapInsight.color, '33') }}>
+                    {activeHeatmapGroup}
+                  </span>
+                  {heatmapInsight.text.slice(idx + activeHeatmapGroup!.length)}
+                </>
+              ) : (
+                heatmapInsight.text
+              )
+            return (
+              <div
+                className="rounded-card border border-line bg-surface2/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap transition-shadow"
+                style={
+                  isMatched
+                    ? { borderColor: heatmapInsight.color, boxShadow: `0 0 0 1px ${heatmapInsight.color}, 0 0 16px ${withAlpha(heatmapInsight.color, '33')}` }
+                    : undefined
+                }
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className="text-lg leading-none shrink-0" aria-hidden="true">
+                    🔴
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[12px] tracked uppercase text-muted">Insight</p>
+                    <p className="font-display font-semibold text-sm leading-snug mt-0.5" style={{ color: heatmapInsight.color }}>
+                      {textNode}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/coach"
+                  className="shrink-0 text-[12px] font-display tracked uppercase rounded-full px-3 py-2 transition active:scale-[0.98]"
+                  style={{ backgroundColor: withAlpha(heatmapInsight.color, '22'), color: heatmapInsight.color }}
+                >
+                  ดู Workout ที่แนะนำ →
+                </Link>
+              </div>
+            )
+          })()}
           <div className="grid grid-cols-1 md:grid-cols-9 gap-3 items-start">
             <div className="md:col-span-6">
               <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} onActiveGroupChange={setActiveHeatmapGroup} />
