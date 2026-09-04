@@ -15,15 +15,18 @@ export interface PlateBreakdown {
 const PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25]
 const PLATES_LB = [45, 35, 25, 10, 5, 2.5]
 
-// น้ำหนักบาร์เปล่ามาตรฐาน — Olympic barbell 20kg / 45lb (ค่าคงที่ทั่วไปที่สุด ไม่ได้ให้ผู้ใช้ปรับเอง
-// เพราะแอปไม่มีข้อมูลบาร์เฉพาะทาง เช่น EZ-bar/trap bar ต่อท่า)
-const BAR_WEIGHT: Record<WeightUnit, number> = { kg: 20, lb: 45 }
+// น้ำหนักบาร์เปล่ามาตรฐาน — Olympic barbell 20kg / 45lb (ค่าเริ่มต้น ใช้เป็นฐานให้ผู้ใช้ปรับเองได้ต่อ
+// เซสชันผ่าน barWeightOverride ของ calculatePlates ด้านล่าง เพราะบาร์แต่ละยิมจริงๆ ไม่เท่ากันเสมอไป)
+export const BAR_WEIGHT: Record<WeightUnit, number> = { kg: 20, lb: 45 }
 
 // คำนวณแผ่นน้ำหนักที่ต้องใส่ต่อข้างของบาร์เบล จากน้ำหนักรวมเป้าหมาย — ใช้วิธี greedy (ไล่จากแผ่นใหญ่สุด
 // ไปเล็กสุดตามชุดแผ่นมาตรฐานของหน่วยนั้นๆ) targetWeight ต้องเป็นหน่วยเดียวกับ unit ที่ส่งมา (หน้าจอเป็น
 // คนแปลง kg<->lb ก่อนเรียกฟังก์ชันนี้เอง เหมือน dropSetWeightKg)
-export function calculatePlates(targetWeight: number, unit: WeightUnit): PlateBreakdown {
-  const barWeight = BAR_WEIGHT[unit]
+// barWeightOverride: บาร์จริงบางที่ไม่ใช่ 20kg/45lb มาตรฐาน (ฟีดแบ็ก "บาร์บางที่หนักไม่เท่ากัน") —
+// หน่วยเดียวกับ targetWeight/unit ที่ส่งเข้ามา ไม่ระบุ = ใช้ค่ามาตรฐานตามหน่วยเหมือนเดิม (targetWeight
+// ยังหมายถึงน้ำหนักรวมทั้งหมดเสมอ ไม่กระทบ 1RM/Volume/PR ที่คำนวณจากน้ำหนักรวมอยู่แล้ว)
+export function calculatePlates(targetWeight: number, unit: WeightUnit, barWeightOverride?: number): PlateBreakdown {
+  const barWeight = barWeightOverride ?? BAR_WEIGHT[unit]
   const plates = unit === 'lb' ? PLATES_LB : PLATES_KG
   const perSideTarget = Math.max(0, (targetWeight - barWeight) / 2)
   const EPSILON = 0.01

@@ -55,7 +55,7 @@ import {
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { dropSetWeightKg } from '@/lib/weightUnit'
 import { suggestNextLoad } from '@/lib/progressiveOverload'
-import { calculatePlates } from '@/lib/plateCalculator'
+import { calculatePlates, BAR_WEIGHT } from '@/lib/plateCalculator'
 import { useToast } from '@/components/Toast'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import { computeSessionMuscleRecovery, tierForPct, type MuscleRecoveryScore } from '@/lib/recoveryScore'
@@ -154,6 +154,18 @@ export default function SessionPage() {
   // ธงนี้ true เฉพาะเคสนั้น ใช้โชว์ "—" แทน "00:00"/"0 kcal" ที่สื่อความหมายผิดว่า "ใช้เวลา 0 นาทีจริงๆ"
   const [noLiveDuration, setNoLiveDuration] = useState(false)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
+  // ฟีดแบ็ก "บาร์บางที่หนักไม่เท่ากัน อยากปรับน้ำหนักบาร์ในหน้าเซสชันได้เลย" — ปรับได้ทันทีต่อเซสชัน ไม่
+  // persist ข้ามเซสชัน/อุปกรณ์ (ต่างจากส่วนสูง/เพศในโปรไฟล์ที่เป็นค่าประจำตัว บาร์ที่ใช้จริงเปลี่ยนไปตามยิม
+  // ได้) หน่วยเดียวกับ unit ที่กำลังแสดงอยู่ตอนนั้น — สลับหน่วย kg/lb ระหว่างเซสชันแล้วรีเซ็ตกลับค่ามาตรฐาน
+  // เพราะเลขที่ตั้งไว้ในหน่วยเดิมไม่ใช่ค่าเดียวกันพอดีในอีกหน่วย (20kg ปัดเป็น 45lb พอดี แต่บาร์ custom เช่น
+  // 15kg ไม่มีเลข lb ที่ตรงกันเป๊ะ) ไม่กระทบ weightKg ที่กรอกซึ่งยังหมายถึงน้ำหนักรวมเหมือนเดิม (1RM/Volume/
+  // PR ไม่กระทบ) แค่เปลี่ยนตัวเลขที่ใช้ลบออกก่อนคำนวณแผ่น
+  const [barWeightOverride, setBarWeightOverride] = useState<number | null>(null)
+  const [editingBarWeight, setEditingBarWeight] = useState(false)
+  useEffect(() => {
+    setBarWeightOverride(null)
+    setEditingBarWeight(false)
+  }, [unit])
   // ผลงาน "ครั้งก่อน" ต่อชื่อท่า — เดิมเป็นแค่ตัวแปร local ใน load() ใช้ตั้งค่าเริ่มต้น reps/น้ำหนักเฉยๆ
   // แล้วทิ้ง ตอนนี้เก็บไว้ใน state ด้วยเพื่อใช้คำนวณคำแนะนำ Progressive Overload (ดู suggestNextLoad)
   // ในหน้าจอด้วย — addExercise/swapCurrentExercise อัปเดตเข้า map นี้เพิ่มตอนดึงท่าที่ไม่อยู่ในแผนด้วย
@@ -459,7 +471,7 @@ export default function SessionPage() {
   const currentEquipment = current ? findExerciseByName(exerciseLibrary, current.exercise_name)?.equipment : undefined
   const plateBreakdown =
     currentEquipment === 'บาร์เบล' && (currentState?.weightKg ?? 0) > 0
-      ? calculatePlates(toDisplay(currentState!.weightKg!), unit)
+      ? calculatePlates(toDisplay(currentState!.weightKg!), unit, barWeightOverride ?? undefined)
       : null
 
   function updateCurrent(patch: Partial<SessionSetState>) {
@@ -1504,13 +1516,56 @@ export default function SessionPage() {
 
           {/* Plate Calculator — เฉพาะท่าอุปกรณ์บาร์เบล (ดู plateBreakdown ด้านบน) บอกว่าต้องใส่แผ่น
               อะไรต่อข้างบ้างถึงจะได้น้ำหนักรวมตามที่กรอกไว้ ไม่ต้องคำนวณเลขในหัวเองระหว่างเทรน —
-              ใช้บาร์มาตรฐาน 20kg/45lb ตายตัว (ไม่มีข้อมูลบาร์เฉพาะทางต่อท่าในระบบให้ปรับ) */}
+              น้ำหนักบาร์ปรับได้ทันที (ดู barWeightOverride ด้านบนของไฟล์ — ค่าเริ่มต้น 20kg/45lb
+              มาตรฐาน กดที่ label เพื่อแก้เมื่อบาร์จริงไม่เท่ากับมาตรฐาน) */}
           {plateBreakdown && (
             <div className="rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap" style={{ background: 'rgba(255,255,255,.04)' }}>
-              <span className="text-[12px] tracked uppercase text-muted shrink-0">
-                แผ่น/ข้าง (บาร์ {plateBreakdown.barWeight}{unit})
-              </span>
-              {plateBreakdown.perSide.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => setEditingBarWeight((v) => !v)}
+                className="text-[12px] tracked uppercase text-muted hover:text-amber transition shrink-0"
+              >
+                แผ่น/ข้าง (บาร์ {plateBreakdown.barWeight}{unit}) ✎
+              </button>
+              {editingBarWeight ? (
+                <div className="flex items-center gap-2 basis-full">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBarWeightOverride(Math.max(0, (barWeightOverride ?? BAR_WEIGHT[unit]) - (unit === 'lb' ? 5 : 2.5)))
+                    }
+                    className="w-7 h-7 rounded-full bg-surface2 border border-line text-ink text-sm active:scale-[0.98]"
+                  >
+                    −
+                  </button>
+                  <span className="font-mono text-[12px] text-ink w-14 text-center">
+                    {plateBreakdown.barWeight}{unit}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setBarWeightOverride((barWeightOverride ?? BAR_WEIGHT[unit]) + (unit === 'lb' ? 5 : 2.5))}
+                    className="w-7 h-7 rounded-full bg-surface2 border border-line text-ink text-sm active:scale-[0.98]"
+                  >
+                    +
+                  </button>
+                  {barWeightOverride !== null && (
+                    <button
+                      type="button"
+                      onClick={() => setBarWeightOverride(null)}
+                      className="text-[12px] text-muted hover:text-amber transition"
+                    >
+                      รีเซ็ต
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEditingBarWeight(false)}
+                    className="text-[12px] text-muted hover:text-ink transition ml-auto"
+                  >
+                    เสร็จ
+                  </button>
+                </div>
+              ) : plateBreakdown.perSide.length === 0 ? (
                 <span className="text-[12px] font-mono" style={{ color: '#CFD4DE' }}>บาร์เปล่า</span>
               ) : (
                 plateBreakdown.perSide.map((p) => (
@@ -1523,7 +1578,7 @@ export default function SessionPage() {
                   </span>
                 ))
               )}
-              {plateBreakdown.leftoverPerSide > 0 && (
+              {!editingBarWeight && plateBreakdown.leftoverPerSide > 0 && (
                 <span className="text-[12px] tracked text-muted">
                   (แบ่งแผ่นไม่ลงตัว เหลือ {plateBreakdown.leftoverPerSide}{unit}/ข้าง)
                 </span>

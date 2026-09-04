@@ -43,4 +43,15 @@ describe('calculatePlates', () => {
     expect(result.leftoverPerSide).toBeCloseTo(0.25, 2)
     expect(result.achievedWeight).toBeLessThan(63)
   })
+
+  it('uses a custom bar weight instead of the 20kg/45lb standard when barWeightOverride is given', () => {
+    // 60kg รวม, บาร์จริง 15kg (ไม่ใช่มาตรฐาน 20kg) -> เหลือ 45kg แบ่ง 2 ข้าง = 22.5kg/ข้าง = 20 + 2.5
+    const result = calculatePlates(60, 'kg', 15)
+    expect(result.barWeight).toBe(15)
+    expect(result.perSide).toEqual([
+      { plate: 20, count: 1 },
+      { plate: 2.5, count: 1 },
+    ])
+    expect(result.achievedWeight).toBe(60)
+  })
 })
