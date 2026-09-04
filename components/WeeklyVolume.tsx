@@ -1,15 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, volumeStatus, volumeBucket, optimalVolumeRange, type VolumeBucket } from '@/lib/dashboardStats'
-import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
+import { useQueryClient } from '@tanstack/react-query'
+import { volumeStatus, volumeBucket, optimalVolumeRange, type VolumeBucket } from '@/lib/dashboardStats'
+import type { WeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { VOLUME_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { COLORS } from '@/lib/theme'
 import AnimatedBarFill from './AnimatedBarFill'
-import Skeleton from './Skeleton'
 import VolumeTargetsSettings from './VolumeTargetsSettings'
 import PremiumCard from './ui/PremiumCard'
 
@@ -36,58 +34,32 @@ interface WeeklyVolumeProps {
   // ไดอะแกรมกับ Insight Banner ไปแล้ว) ให้ครบ 3 จุด: ไดอะแกรม -> Insight -> แถว Weekly Sets เดียวกัน ไม่ระบุ
   // prop นี้ (เช่นตอนไม่มี parent ส่งมา) = ไม่ไฮไลต์อะไรเลย พฤติกรรมเดิมทุกประการ
   highlightGroup?: MuscleGroup | null
+  // ฟีดแบ็ก (design review — "ขา 16/18 ตามแผน" ขัดกับ Recovery/MINT Coach ที่บอก "ขาเกินเป้าแล้ว" พร้อมกัน)
+  // — ต้นตอคือการ์ดนี้เคยยิง query ของตัวเอง (['weekly-volume']/['weekly-volume-targets']) แยกจาก
+  // ['dashboard'] ที่ Recovery/MINT Coach/Insight ใช้คำนวณ todaysRecommendation ทั้งที่เป็นข้อมูลชุดเดียวกัน
+  // เป๊ะ (ตาราง workouts, week range, filter เดียวกัน) — สอง query cache invalidate ไม่พร้อมกันเสมอ (เพิ่ม
+  // จุด log workout บางเส้นทางไม่ invalidate อะไรเลยด้วยซ้ำ) ทำให้เลข desync กันได้เรื่อยๆ ไม่ว่าจะไล่ปะ
+  // invalidate เพิ่มกี่จุดก็ตาม — รับ setsByMuscle/targets เป็น prop จากข้อมูลที่ fetchDashboardData()
+  // คำนวณไว้แล้ว (thisWeekSets/weeklyVolumeTargets) แทน ตัดความเป็นไปได้ที่จะ desync กันไปเลยที่ต้นเหตุ
+  // (WeeklyVolume ใช้ที่เดียวในแอปทั้งหมด คือ DashboardView.tsx จึงไม่กระทบจุดเรียกอื่น)
+  setsByMuscle: Record<string, number>
+  targets: WeeklyVolumeTargets
 }
 
-export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {}) {
-  const supabase = createClient()
+export default function WeeklyVolume({ highlightGroup, setsByMuscle, targets }: WeeklyVolumeProps) {
   const queryClient = useQueryClient()
-  const { start, end } = getWeekRange()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  const { data: setsByMuscle = {}, isLoading: loadingSets } = useQuery({
-    queryKey: ['weekly-volume', start, end],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('workouts')
-        .select('muscle_group, sets')
-        .eq('type', 'strength')
-        .gte('performed_at', start)
-        .lte('performed_at', end)
-
-      const totals: Record<string, number> = {}
-      ;((data as { muscle_group: string | null; sets: number | null }[]) ?? []).forEach((r) => {
-        if (!r.muscle_group) return
-        totals[r.muscle_group] = (totals[r.muscle_group] ?? 0) + (r.sets ?? 0)
-      })
-      return totals
-    },
-    staleTime: 60_000,
-  })
-
-  // เป้าหมายของผู้ใช้เอง (ตั้งได้ต่อคนใน weekly_volume_targets) — ถ้ายังไม่เคยตั้ง จะได้ค่า
-  // default กลับมาแทน (ดู lib/weeklyVolumeTargets.ts)
-  const { data: targets = null, isLoading: loadingTargets } = useQuery({
-    queryKey: ['weekly-volume-targets'],
-    queryFn: () => fetchWeeklyVolumeTargets(supabase),
-    staleTime: 60_000,
-  })
-
-  const loading = loadingSets || loadingTargets || !targets
-
   const dayOfWeek1to7 = ((todayDayOfWeek() + 6) % 7) + 1
-  const maxSets = targets
-    ? Math.max(1, ...VOLUME_MUSCLES.map((mg) => setsByMuscle[mg] ?? 0), ...Object.values(targets))
-    : 1
+  const maxSets = Math.max(1, ...VOLUME_MUSCLES.map((mg) => setsByMuscle[mg] ?? 0), ...Object.values(targets))
 
-  const rows = targets
-    ? DISPLAY_ORDER.map((mg) => {
-        const sets = setsByMuscle[mg] ?? 0
-        const target = targets[mg]
-        const status = volumeStatus(sets, target, dayOfWeek1to7)
-        return { mg, sets, target, status }
-      })
-    : []
+  const rows = DISPLAY_ORDER.map((mg) => {
+    const sets = setsByMuscle[mg] ?? 0
+    const target = targets[mg]
+    const status = volumeStatus(sets, target, dayOfWeek1to7)
+    return { mg, sets, target, status }
+  })
 
   // สรุปท้ายการ์ด — รวมเซ็ตทั้งหมด + จำนวนกลุ่มที่ถึงเป้าหมายแล้ว (เดิมมี Balance Score ตรงนี้ด้วย
   // แต่ซ้ำกับ Balance % ในการ์ด Graphic Muscle Heatmap ที่คำนวณจากเซ็ตต่อกลุ่มชุดเดียวกัน จนบางสัปดาห์
@@ -144,8 +116,7 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
           หัวข้อการ์ดทันที ก่อนลิสต์รายกลุ่ม) ให้เห็น "สรุปแล้วว่าดีไหม" ก่อน ไม่ได้ตัดลิสต์ 7 แถวหรือข้อมูล
           ไหนออกเลย แค่สลับลำดับให้ insight นำหน้า data (ปุ่ม "ดูรายละเอียดทั้งหมด" ยังอยู่ท้ายลิสต์เหมือนเดิม
           เพราะเป็นตัวควบคุมคำอธิบายต่อแถว ไม่ใช่ส่วนหนึ่งของสรุปนี้) */}
-      {!loading && (
-        <div className="px-4 pb-2">
+      <div className="px-4 pb-2">
           <div className="grid grid-cols-2 gap-2">
             {/* ฟีดแบ็ก (P0, Typography รอบล่าสุด) "รวมสัปดาห์นี้/อยู่ในเป้าหมาย ยังดูเบาไป — เพิ่ม font
                 weight" — font-medium เฉพาะ label คู่นี้ (ทำหน้าที่อธิบายตัวเลขข้างล่างโดยตรง ไม่ใช่แค่
@@ -192,20 +163,9 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
             </p>
           )}
         </div>
-      )}
 
       <div className="px-4 pb-2 space-y-1.5">
-        {loading ? (
-          DISPLAY_ORDER.map((mg) => (
-            <div key={mg} className="rounded-md bg-surface2 px-2.5 py-2">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-3 w-12" />
-                <Skeleton className="h-3 w-14" />
-              </div>
-            </div>
-          ))
-        ) : (
-          rows.map(({ mg, sets, target, status }) => {
+        {rows.map(({ mg, sets, target, status }) => {
             const barPct = Math.min(100, (sets / maxSets) * 100)
             const targetPct = Math.min(100, (target / maxSets) * 100)
             const pct = target > 0 ? Math.round((sets / target) * 100) : 0
@@ -303,12 +263,10 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
                 )}
               </div>
             )
-          })
-        )}
+          })}
       </div>
 
-      {!loading && (
-        <div className="px-4 pb-3.5 flex justify-end pt-2 border-t border-white/5">
+      <div className="px-4 pb-3.5 flex justify-end pt-2 border-t border-white/5">
           <button
             type="button"
             onClick={() => setDetailsOpen((v) => !v)}
@@ -318,23 +276,20 @@ export default function WeeklyVolume({ highlightGroup }: WeeklyVolumeProps = {})
             {detailsOpen ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียดทั้งหมด'} {detailsOpen ? '↑' : '→'}
           </button>
         </div>
-      )}
 
-      {targets && (
-        <VolumeTargetsSettings
+      <VolumeTargetsSettings
           open={settingsOpen}
           targets={targets}
           onClose={() => setSettingsOpen(false)}
           onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ['weekly-volume-targets'] })
-            // 'dashboard' query's weeklyGoalPct also depends on these targets — invalidate by
-            // key prefix rather than the exact ['dashboard', today] key, since this component
-            // doesn't know today's date string.
+            // ['weekly-volume']/['weekly-volume-targets'] เดิมไม่มีให้ invalidate แล้ว (การ์ดนี้ไม่มี query
+            // ของตัวเองอีกต่อไป — ดู comment ที่ WeeklyVolumeProps ด้านบน) invalidate 'dashboard' ที่เดียว
+            // ก็พอ ('dashboard' query's weeklyGoalPct/thisWeekSets/weeklyVolumeTargets ก็ผูกกับตารางนี้
+            // อยู่แล้ว รีเฟรชแล้วค่าใหม่จะไหลกลับมาเป็น setsByMuscle/targets prop ของการ์ดนี้เองอัตโนมัติ)
             queryClient.invalidateQueries({ queryKey: ['dashboard'] })
             setSettingsOpen(false)
           }}
         />
-      )}
     </PremiumCard>
   )
 }

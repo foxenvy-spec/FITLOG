@@ -51,7 +51,7 @@ import {
   type LatestPR,
   type SessionVolumeChange,
 } from '@/lib/dashboardStats'
-import { fetchWeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
+import { fetchWeeklyVolumeTargets, type WeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
 import { goalProgressPct, goalProgressLabelParts, estimateGoalEtaWeeks } from '@/lib/goalProgress'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
@@ -198,6 +198,13 @@ export interface DashboardData {
   // เต็มยังคงอยู่ที่การ์ดเดิมเหมือนเดิม จุดนี้แค่เพิ่มสรุปสั้นๆ ให้เชื่อมกัน
   weeklyTotalSets: number
   weeklyConsistencyPct: number | null
+  // ฟีดแบ็ก (design review — desync ระหว่าง Recovery/MINT Coach/Insight กับ Weekly Sets การ์ด) — เดิม
+  // WeeklyVolume.tsx ยิง query ของตัวเองแยกจากที่นี่ ทั้งที่เป็นข้อมูลชุดเดียวกันเป๊ะ ทำให้เลข desync กันได้
+  // (ดู comment เต็มที่ WeeklyVolumeProps ใน components/WeeklyVolume.tsx) — เปิด thisWeekSets/
+  // weeklyVolumeTargets (คำนวณไว้แล้วด้านล่างสำหรับ todaysRecommendation/weeklyGoalPct อยู่แล้ว) ออกมาเป็น
+  // ส่วนหนึ่งของ DashboardData ให้ WeeklyVolume ใช้ชุดเดียวกันนี้แทนการ query ซ้ำเอง
+  thisWeekSets: Record<string, number>
+  weeklyVolumeTargets: WeeklyVolumeTargets
 }
 
 export async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
@@ -611,6 +618,8 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     last7DaysTrainedCount,
     weeklyTotalSets,
     weeklyConsistencyPct,
+    thisWeekSets,
+    weeklyVolumeTargets,
   }
 }
 
@@ -2721,7 +2730,7 @@ export default function DashboardPage() {
               <WeeklyMuscleHeatmap onInsight={setHeatmapInsight} onActiveGroupChange={setActiveHeatmapGroup} />
             </div>
             <div className="md:col-span-3">
-              <WeeklyVolume highlightGroup={activeHeatmapGroup} />
+              <WeeklyVolume highlightGroup={activeHeatmapGroup} setsByMuscle={data.thisWeekSets} targets={data.weeklyVolumeTargets} />
             </div>
           </div>
           {/* Consistency card is full-width here — its own 4 stat tiles (workout days, streak
