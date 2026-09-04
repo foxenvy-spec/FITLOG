@@ -165,7 +165,9 @@ function DialText({
   // ที่วงขนาดจริง (76-88px) ลด floor ลงอีกขั้น + บังคับ whitespace-nowrap กันไม่ให้ตกบรรทัดจนดันความสูง
   // ทั้งก้อนเกินเส้นผ่านศูนย์กลางวง (ต้นเหตุจริงของการล้น ไม่ใช่แค่ความกว้าง) ประโยคนี้สั้นลงมากแล้วด้วย
   // (ดู recoveryOverallAdviceTh v2) แต่กันไว้สองชั้นเผื่อจอ/ฟอนต์ที่กว้างกว่าเฉลี่ย
-  const adviceFontSize = Math.max(6, Math.round(ringSize * 0.06))
+  // v2: ฟีดแบ็ก (สกรีนช็อตจริง รอบถัดมา) "Light Training ชิดขอบล่างวงมาก แน่นเกินไป" — ลดขนาดลงอีก ~15%
+  // (floor 6 -> 5, multiplier 0.06 -> 0.052) ทั้ง Fitness/Recovery ใช้ตัวแปรเดียวกันนี้ร่วมกัน
+  const adviceFontSize = Math.max(5, Math.round(ringSize * 0.052))
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
       <span className="tracked uppercase" style={{ fontSize: eyebrowFontSize, color: TEXT.secondary, letterSpacing: '0.1em' }}>
@@ -182,8 +184,10 @@ function DialText({
           {diff}
         </span>
       )}
+      {/* ฟีดแบ็ก (สกรีนช็อตจริง รอบถัดมา) "ขยับ advice ขึ้นประมาณ 2-4px ให้ไม่ชิดขอบล่างวง" — mt-0.5 (+2px)
+          เดิมยิ่งดันข้อความลงไปใกล้ขอบมากขึ้น เปลี่ยนเป็น marginTop ติดลบแทน (ดึงขึ้นชิด tierLabel ด้านบน) */}
       {advice && (
-        <span className="font-medium mt-0.5 leading-none whitespace-nowrap" style={{ fontSize: adviceFontSize, color: TEXT.secondary }}>
+        <span className="font-medium leading-none whitespace-nowrap" style={{ fontSize: adviceFontSize, color: TEXT.secondary, marginTop: -3 }}>
           {advice}
         </span>
       )}

@@ -358,12 +358,15 @@ export function recoveryStatusColor(pct: number): string {
 // v2: ฟีดแบ็ก (สกรีนช็อตจริง) "ควรพักหรือลดความหนัก ตกบรรทัดล้นออกนอกวง" — วงที่ใช้จริง (HeroGaugeConcept
 // header) เล็กแค่ 76-88px ประโยคยาวเกินไปไม่พอดี ตัดให้สั้นเหลือคำเดียว/วลีสั้นสุดที่ยังสื่อความหมายได้
 // ไม่ตกบรรทัด (เทียบกับฝั่ง Fitness Score ที่ใช้ aiCoachStatus ซึ่งสั้นอยู่แล้วโดยธรรมชาติของภาษาอังกฤษ)
+// v3: ฟีดแบ็กรอบถัดมา — ระดับ Rest (สำคัญสุด มักเจอบ่อย) ขอคำที่เป็นธรรมชาติกว่า "ควรพัก" เฉยๆ โดยยังสั้น
+// พอสำหรับวงเล็ก ("พัก / ลดความหนัก") — DialText มี whitespace-nowrap กันตกบรรทัดอยู่แล้ว (ดู
+// HeroGaugeConcept.tsx) จึงไม่เสี่ยงล้นซ้ำแบบประโยคเต็มเดิม แม้จะยาวกว่า 3 ระดับที่เหลือเล็กน้อย
 export function recoveryOverallAdviceTh(pct: number): string {
   const tier = recoveryTier(pct).labelEn
   if (tier === 'Excellent') return 'ฝึกหนักได้เลย'
   if (tier === 'Good') return 'ฝึกได้ตามปกติ'
   if (tier === 'Recovering') return 'ฝึกเบาๆ'
-  return 'ควรพัก'
+  return 'พัก / ลดความหนัก'
 }
 
 // ฟีดแบ็ก (จากการตรวจสัญลักษณ์สีทั้งแอปตาม UX deck "เขียว=พร้อม/เหลือง=ระวัง/แดง=หยุด ต้องตรงกันทุกหน้า")

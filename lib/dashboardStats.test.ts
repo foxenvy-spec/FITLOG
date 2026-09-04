@@ -380,7 +380,7 @@ describe('recoveryOverallAdviceTh', () => {
     expect(recoveryOverallAdviceTh(95)).toBe('ฝึกหนักได้เลย')
     expect(recoveryOverallAdviceTh(70)).toBe('ฝึกได้ตามปกติ')
     expect(recoveryOverallAdviceTh(40)).toBe('ฝึกเบาๆ')
-    expect(recoveryOverallAdviceTh(10)).toBe('ควรพัก')
+    expect(recoveryOverallAdviceTh(10)).toBe('พัก / ลดความหนัก')
   })
 })
 
