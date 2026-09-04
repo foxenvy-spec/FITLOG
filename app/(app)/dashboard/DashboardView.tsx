@@ -676,30 +676,6 @@ export default function DashboardPage() {
     const index = Math.round(el.scrollLeft / el.clientWidth)
     setDetailPageIndex(Math.max(0, Math.min(1, index)))
   }
-  // ฟีดแบ็ก (design review) "สโครลลงในแท็บ 'ภาพรวม' แล้วเจอพื้นที่ว่างเยอะมากด้านล่าง" — บั๊กจริง เกิดหนักขึ้น
-  // ชัดเจนหลังย้าย BodyMetricsRow/HighlightsRow/InsightCarousel/Balance banner เข้าไปอยู่ในแท็บ "รายละเอียด"
-  // (ทำให้แท็บนั้นสูงขึ้นมาก ในขณะที่ "ภาพรวม" สั้นลงมาก) — ต้นตอ: track ด้านล่าง (detailTrackRef) เป็น
-  // display:flex แถวเดียว ครอบทั้ง 2 สไลด์เป็น flex sibling กัน ความสูงของ flex container แบบ row จะยึดตาม
-  // "ลูกที่สูงที่สุด" เสมอตามสเปค CSS (items-start คุมแค่การจัดตำแหน่งลูกภายในความสูงนั้น ไม่ได้ทำให้ container
-  // สูงตามลูกที่ active เท่านั้น) — สไลด์ "ภาพรวม" (สั้น) เลยโดนบังคับให้มีพื้นที่เท่าสไลด์ "รายละเอียด" (สูง
-  // กว่ามาก) ทั้งที่เนื้อหาจริงจบไปนานแล้ว ผู้ใช้เลยสโครลเข้าไปในพื้นที่ที่ "จองไว้เผื่อ" อีกสไลด์โดยไม่มีอะไร
-  // จริงอยู่ตรงนั้นเลย — วัดความสูงจริงของสไลด์ที่ active อยู่ (ผ่าน ResizeObserver กัน stale ตอนเนื้อหาโหลด
-  // เสร็จทีหลัง/รูปโหลดช้า) แล้ว set เป็น inline height ของ track ตรงๆ แทนที่จะปล่อยให้ flex default ยึดตาม
-  // ลูกที่สูงสุด — undefined ก่อนวัดครั้งแรก = fallback กลับไปพฤติกรรม auto เดิมชั่วคราว ไม่กระทบ initial paint
-  const slide1Ref = useRef<HTMLDivElement>(null)
-  const slide2Ref = useRef<HTMLDivElement>(null)
-  const [detailTrackHeight, setDetailTrackHeight] = useState<number | undefined>(undefined)
-  useEffect(() => {
-    const activeEl = detailPageIndex === 0 ? slide1Ref.current : slide2Ref.current
-    if (!activeEl) return
-    setDetailTrackHeight(activeEl.scrollHeight)
-    const ro = new ResizeObserver((entries) => {
-      const entry = entries[0]
-      if (entry) setDetailTrackHeight(entry.target.scrollHeight)
-    })
-    ro.observe(activeEl)
-    return () => ro.disconnect()
-  }, [detailPageIndex])
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — เปิด/ปิด WarmupGuideSheet
   const [warmupOpen, setWarmupOpen] = useState(false)
   // ฟีดแบ็ก "40 Moderate ผู้ใช้ยังไม่รู้ว่า 'ทำไม?' ถ้าคลิกแล้วเปิดรายละเอียดได้จะดีมาก" — เดสก์ท็อปเดิม
@@ -772,6 +748,46 @@ export default function DashboardPage() {
     queryKey: ['dashboard', today],
     queryFn: () => fetchDashboardData(supabase),
   })
+
+  // ฟีดแบ็ก (design review) "สโครลลงในแท็บ 'ภาพรวม' แล้วเจอพื้นที่ว่างเยอะมากด้านล่าง" — บั๊กจริง เกิดหนักขึ้น
+  // ชัดเจนหลังย้าย BodyMetricsRow/HighlightsRow/InsightCarousel/Balance banner เข้าไปอยู่ในแท็บ "รายละเอียด"
+  // (ทำให้แท็บนั้นสูงขึ้นมาก ในขณะที่ "ภาพรวม" สั้นลงมาก) — ต้นตอ: track ด้านล่าง (detailTrackRef) เป็น
+  // display:flex แถวเดียว ครอบทั้ง 2 สไลด์เป็น flex sibling กัน ความสูงของ flex container แบบ row จะยึดตาม
+  // "ลูกที่สูงที่สุด" เสมอตามสเปค CSS (items-start คุมแค่การจัดตำแหน่งลูกภายในความสูงนั้น ไม่ได้ทำให้ container
+  // สูงตามลูกที่ active เท่านั้น) — สไลด์ "ภาพรวม" (สั้น) เลยโดนบังคับให้มีพื้นที่เท่าสไลด์ "รายละเอียด" (สูง
+  // กว่ามาก) ทั้งที่เนื้อหาจริงจบไปนานแล้ว ผู้ใช้เลยสโครลเข้าไปในพื้นที่ที่ "จองไว้เผื่อ" อีกสไลด์โดยไม่มีอะไร
+  // จริงอยู่ตรงนั้นเลย — วัดความสูงจริงของสไลด์ที่ active อยู่ (ผ่าน ResizeObserver กัน stale ตอนเนื้อหาโหลด
+  // เสร็จทีหลัง/รูปโหลดช้า) แล้ว set เป็น inline height ของ track ตรงๆ แทนที่จะปล่อยให้ flex default ยึดตาม
+  // ลูกที่สูงสุด — undefined ก่อนวัดครั้งแรก = fallback กลับไปพฤติกรรม auto เดิมชั่วคราว ไม่กระทบ initial paint
+  //
+  // บั๊ก (screenshot จริงจากผู้ใช้ — พื้นที่ว่างยังอยู่แม้แก้แล้วรอบแรก) รอบแรก useEffect นี้เคยอยู่เหนือจุดที่
+  // isLoading/data destructure (บรรทัด useQuery ด้านบน) — ทำให้ effect ยังเห็น isLoading/data ผ่าน closure
+  // ได้ (JS hoisting ของ const ยังใช้งานได้ถ้าไม่ได้ "เรียกก่อนถึงบรรทัดประกาศในการรันจริง") แต่จริงๆ แล้ว
+  // ปัญหาลึกกว่านั้น: "isLoading || !data" ที่ if-return DashboardSkeleton อยู่ "ก่อน" JSX จริงของ track/
+  // slide1Ref/slide2Ref เสมอ — รอบแรกที่ยัง loading อยู่ effect นี้รันตาม Rules of Hooks ปกติ แต่
+  // slide1Ref.current เป็น null เพราะ DOM จริงที่มี ref นี้ยังไม่ mount เลย (มีแต่ DashboardSkeleton) เลย
+  // bail out ทันที ไม่ตั้ง ResizeObserver — พอโหลดเสร็จ component re-render ด้วย JSX จริง (ref mount แล้ว
+  // จริง) แต่ deps เดิม [detailPageIndex] ไม่เปลี่ยนค่า (ยังเป็น 0 เหมือนเดิม) effect เลย "ไม่รันซ้ำ" ให้จับ
+  // ref ที่เพิ่ง mount ได้ทัน — detailTrackHeight ค้างเป็น undefined ตลอดไป (fallback กลับไปพฤติกรรม flex
+  // เดิมที่เป็นบั๊กอยู่ดี ทั้งที่โค้ดดูเหมือนแก้แล้ว) — เพิ่ม isLoading เป็น dependency ให้ effect รันซ้ำอีกครั้ง
+  // ทันทีที่โหลดเสร็จ (loading true->false ครั้งเดียว) จับ ref ที่เพิ่ง mount ได้ถูกจังหวะ — ย้ายทั้ง block
+  // นี้มาอยู่ "หลัง" จุดที่ isLoading/data destructure แล้ว (เดิมอยู่ก่อนหน้ามาก) เพราะ tsc จับได้ว่า
+  // "isLoading" ถูกใช้ก่อนถึงบรรทัดประกาศจริงๆ (TS2448/TS2454 — TDZ ของ const ในฟังก์ชันเดียวกัน) ต้องย้าย
+  // มาอยู่หลังจุดประกาศจริง ไม่ใช่แค่เพิ่ม dependency เฉยๆ
+  const slide1Ref = useRef<HTMLDivElement>(null)
+  const slide2Ref = useRef<HTMLDivElement>(null)
+  const [detailTrackHeight, setDetailTrackHeight] = useState<number | undefined>(undefined)
+  useEffect(() => {
+    const activeEl = detailPageIndex === 0 ? slide1Ref.current : slide2Ref.current
+    if (!activeEl) return
+    setDetailTrackHeight(activeEl.scrollHeight)
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) setDetailTrackHeight(entry.target.scrollHeight)
+    })
+    ro.observe(activeEl)
+    return () => ro.disconnect()
+  }, [detailPageIndex, isLoading])
 
   function updatePrefs(next: DashboardPrefs) {
     setPrefs(next)
