@@ -1052,14 +1052,19 @@ export default function DashboardPage() {
               marginBottom (ช่องว่างระหว่างเส้นคั่นกับบรรทัด insight ด้านล่าง) 10 -> 18 (+8px) ไม่แตะ
               marginTop (ช่องว่างระหว่างชื่อกับเส้นคั่น) เพราะฟีดแบ็กพูดถึงช่องว่างรวมก่อนถึงบรรทัด Body Fat
               ฟีดแบ็ก "อยากให้หน้าภาพรวมพอดี 1 จอ" (รอบต่อเนื่อง) — ยอม -6px กลับคืน (18 -> 12) เพื่อประหยัด
-              พื้นที่รวม ยังเว้นช่องว่างมากกว่าค่าเดิมก่อน v60 (10) อยู่ */}
+              พื้นที่รวม ยังเว้นช่องว่างมากกว่าค่าเดิมก่อน v60 (10) อยู่
+              ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "Header ยังใช้พื้นที่มากไปนิด ควร compress
+              ~10-15%" — ความสูงรวมของแถว header ถูกกำหนดโดยฝั่งชื่อ/badge นี้ (ไม่ใช่ฝั่งวงแหวนที่ปรับแล้ว
+              ด้านล่าง ดู comment ที่ HeroGaugeConcept) ลด marginBottom อีกขั้น 12 -> 8 (-4px จุดเดียวที่ตั้งใจ
+              ลดรอบนี้ — ไม่แตะ marginTop/ขนาดชื่อ/ขนาด badge เพื่อไม่ให้กระทบ hierarchy ของชื่อที่ยืนยันไว้
+              หลายรอบแล้วว่าต้องใหญ่เด่นสุดของหน้า) */}
           <div
             aria-hidden="true"
             style={{
               width: 70,
               height: 3,
               marginTop: 8,
-              marginBottom: 12,
+              marginBottom: 8,
               borderRadius: 2,
               background: 'linear-gradient(90deg, rgba(255,255,255,.5), transparent)',
             }}
@@ -1143,7 +1148,14 @@ export default function DashboardPage() {
             ที่ไม่มีข้อมูล recovery เลย (บัญชีใหม่/ฝึกแต่คาร์ดิโอ) เสีย Fitness Score widget ทั้งก้อนไปด้วย
             ทั้งที่ fitnessScore คำนวณได้เองอยู่แล้วไม่ต้องพึ่ง recovery — คืน gate เดิม (แค่ fitnessScore)
             แล้วส่ง recoveryPct/recoveryLabel เป็น undefined ถ้ายังไม่มีข้อมูลจริง (HeroGaugeConcept เอง
-            อัปเดตให้ 2 props นี้เป็น optional แล้ว — ไม่โชว์วง Recovery แทนที่จะโชว์ค่าสมมติ) */}
+            อัปเดตให้ 2 props นี้เป็น optional แล้ว — ไม่โชว์วง Recovery แทนที่จะโชว์ค่าสมมติ)
+            ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "Header ยังใช้พื้นที่มากไปนิด — วงกลม Fitness
+            Score/Overall เล็กลงอีกนิดได้ ควร compress ~10-15%" — ตรวจแล้วว่าความสูงรวมของแถว header นี้จริงๆ
+            ถูกกำหนดโดยฝั่งชื่อ/badge ซ้ายมือ (~113px: ชื่อ 36px + เส้นคั่น + แถว badge) ไม่ใช่ฝั่งวงแหวน (88px
+            เดิม) — ลดขนาดวงแหวนอย่างเดียวจึงไม่ลดความสูงรวมของแถวลงเท่าไหร่ แต่ยังทำตามที่ขอตรงๆ (ลด "ความ
+            หนาแน่น"/น้ำหนักภาพของฝั่งวงแหวนลงจริง) 88/76 -> 76/66 (~13-14%, อยู่ในช่วง 10-15% ที่ขอ) ไม่แตะ
+            ขนาดตัวอักษรชื่อ (36px, เป็น hero identity ที่ยืนยันไว้หลายรอบก่อนหน้าว่าต้องใหญ่กว่า section
+            อื่นชัดเจน) หรือขนาดตัวอักษร badge (ความอ่านง่าย) เลย */}
         {fitnessScore && (
           <div className="hidden md:flex flex-1 justify-center items-center self-center">
             <HeroGaugeConcept
@@ -1152,8 +1164,8 @@ export default function DashboardPage() {
               recoveryLabel={fitnessScoreRecoveryPct != null ? recoveryTier(fitnessScoreRecoveryPct).labelEn : undefined}
               fitnessAdvice={fitnessScore.aiCoachStatus}
               recoveryAdvice={fitnessScoreRecoveryPct != null ? recoveryOverallAdviceTh(fitnessScoreRecoveryPct) : undefined}
-              fitnessRingSize={88}
-              recoveryRingSize={76}
+              fitnessRingSize={76}
+              recoveryRingSize={66}
               wrapped={false}
               onFitnessScoreClick={() => setShowFitnessScoreDetail(true)}
             />
