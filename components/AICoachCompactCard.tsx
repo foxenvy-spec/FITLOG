@@ -18,7 +18,7 @@ import {
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import { recoveryStatusColor, recoveryTier, recoveryVerdictEmoji, computeRecoveryPct, type TodaysRecommendation } from '@/lib/dashboardStats'
-import { describeMuscleFocus, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
+import { describeMuscleFocus, formatRelatedGroups, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { resolveRecommendationDisplay } from '@/lib/recommendationDisplay'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
@@ -183,7 +183,7 @@ export default function AICoachCompactCard({
   // todayWorkoutTitle prop ด้านบน
   const specificDetail =
     isRecommendationForToday && todayWorkoutTitle ? splitTitleDetail(todayWorkoutTitle).detail : null
-  const relatedGroupsText = specificDetail ?? relatedGroups.join(' • ')
+  const relatedGroupsText = specificDetail ?? formatRelatedGroups(relatedGroups)
   // startLabel ตอนนี้คือ Action Identity (resolved.actionLabel: ชื่อเทมเพลตจริง > กล้ามเนื้อหลักของท่าที่
   // จะ insert > muscleGroup ของคำแนะนำเป็นทางเลือกสุดท้าย) ไม่ใช่กล้ามเนื้อที่ headline บอกอีกต่อไป — ปุ่ม
   // "เริ่ม X" กับข้อความสำเร็จ "บันทึก X เข้า Log" ต้องอธิบายสิ่งที่ handleStart() insert จริง ไม่ใช่สิ่งที่

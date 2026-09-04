@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS_EN, muscleGroupLabel, guessSecondaryMuscles, dominantMuscleGroup } from './muscle-groups'
+import {
+  MUSCLE_GROUPS,
+  MUSCLE_GROUP_LABELS_EN,
+  muscleGroupLabel,
+  guessSecondaryMuscles,
+  dominantMuscleGroup,
+  describeMuscleFocus,
+  formatRelatedGroups,
+  MUSCLE_GROUP_BODY_REGION,
+} from './muscle-groups'
 
 describe('muscleGroupLabel', () => {
   it('returns the Thai muscle group name unchanged for lang=th', () => {
@@ -18,6 +27,22 @@ describe('muscleGroupLabel', () => {
     MUSCLE_GROUPS.forEach((mg) => {
       expect(MUSCLE_GROUP_LABELS_EN[mg]).toBeTruthy()
     })
+  })
+})
+
+describe('formatRelatedGroups — regression: "ขา" secondary crosses region boundary', () => {
+  it('joins primary + secondary muscle groups with "+" instead of a flat "•" list', () => {
+    expect(formatRelatedGroups(['อก', 'ไหล่', 'แขน'])).toBe('อก + ไหล่ + แขน')
+    expect(formatRelatedGroups(['ขา'])).toBe('ขา')
+  })
+
+  it('regression: ขา (Lower Body region) pairs with แกนกลางลำตัว (Core region) — formatting must not imply แกนกลางลำตัว is part of Lower Body', () => {
+    const focus = describeMuscleFocus('ขา')
+    expect(focus.region).toBe('Lower Body')
+    expect(MUSCLE_GROUP_BODY_REGION['แกนกลางลำตัว']).toBe('Core')
+    expect(MUSCLE_GROUP_BODY_REGION['แกนกลางลำตัว']).not.toBe(focus.region)
+    // ยังคง data เดิมทุกประการ (ไม่ตัด แกนกลางลำตัว ออก) แค่เปลี่ยนตัวเชื่อมตอนแสดงผล
+    expect(formatRelatedGroups(focus.relatedGroups)).toBe('ขา + แกนกลางลำตัว')
   })
 })
 

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { cncCornerClipPath } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { describeMuscleFocus, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
+import { describeMuscleFocus, dominantMuscleGroup, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
 import PremiumCard from './ui/PremiumCard'
 
 interface TodaysFocusCardProps {
@@ -61,7 +61,7 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
       : mg
         ? (() => {
             const focus = describeMuscleFocus(mg)
-            return { main: focus.region, detail: focus.relatedGroups.join(' • ') }
+            return { main: focus.region, detail: formatRelatedGroups(focus.relatedGroups) }
           })()
         // ฟีดแบ็ก "'ยังไม่ได้ตั้งโปรแกรม' อ่านยากกว่า 'ยังไม่มี Workout วันนี้'" (ตัวเดียวกับ DashboardView.tsx)
         : { main: 'ยังไม่มี Workout วันนี้', detail: null }

@@ -146,6 +146,21 @@ export function describeMuscleFocus(mg: MuscleGroup): { region: string; relatedG
   return { region: MUSCLE_GROUP_BODY_REGION[mg], relatedGroups: [mg, ...DEFAULT_SECONDARY_BY_PRIMARY[mg]] }
 }
 
+// ฟีดแบ็ก (design review — "Taxonomy hierarchy") "Lower Body → ขา • แกนกลางลำตัว → Hamstring/Glute เป็น
+// 3 ชั้นที่ตอบคนละคำถามจริงหรือเปล่า" — ตรวจแล้วว่าใช่ (region/muscle-group/template-title คนละ taxonomy
+// กันจริง ไม่ควรรวมคำ) แต่เจอเคสเดียวที่ relatedGroups ข้าม region ของ headline ไปเลย: DEFAULT_SECONDARY_
+// BY_PRIMARY['ขา'] = ['แกนกลางลำตัว'] แต่ MUSCLE_GROUP_BODY_REGION['แกนกลางลำตัว'] = 'Core' ไม่ใช่ 'Lower
+// Body' (ทุกกลุ่มอื่น เช่น อก→ไหล่/แขน ยังอยู่ Upper Body region เดียวกันหมด ไม่มีปัญหานี้) — เดิม join(' • ')
+// ตรงๆ ทำให้ headline "LOWER BODY" ตามด้วย "ขา • แกนกลางลำตัว" แบบ list เรียบๆ ไม่มีคำเชื่อม อ่านเผินๆ
+// เหมือนแกนกลางลำตัวเป็นส่วนหนึ่งของ Lower Body ทั้งที่ตาราง region ของแอปเองแยกไว้คนละกลุ่ม — เปลี่ยนเป็น
+// "+" แทน "•" ให้สื่อว่า "กลุ่มหลัก บวก กลุ่มรองที่มักฝึกคู่กัน" (ไม่ใช่ breakdown ของ region เดียวกัน) รวม
+// เป็นฟังก์ชันเดียวที่นี่ ให้ AICoachCompactCard/TodaysFocusCard ใช้ร่วมกัน (เดิมต่างคนต่าง join(' • ') เอง
+// คนละจุด เสี่ยง diverge แบบเดียวกับที่ describeMuscleFocus() เองถูกรวมมาแล้วครั้งหนึ่ง) ไม่แตะ data/logic
+// การเลือกกลุ่มกล้ามเนื้อใดๆ เลย แค่เปลี่ยนตัวเชื่อมตอนแสดงผล
+export function formatRelatedGroups(relatedGroups: MuscleGroup[]): string {
+  return relatedGroups.join(' + ')
+}
+
 // กล้ามเนื้อที่มีท่ามากที่สุดในชุดท่า (เทมเพลต/แผนวันนี้ ฯลฯ) — ใช้แทน "ท่าแรกที่ตรง mg" หรือ mg เดี่ยวๆ
 // เมื่อต้องบอกว่ากลุ่มกล้ามเนื้อไหนเป็น "โฟกัสหลักจริงๆ" ของชุดท่าทั้งชุด (ดู AICoachCompactCard.tsx —
 // เลือกเทมเพลตที่จะเริ่มจริง แล้วต้องคำนวณ headline จากกล้ามเนื้อหลักของเทมเพลตนั้น ไม่ใช่ mg ที่แนะนำแยกมา)
