@@ -161,9 +161,13 @@ function DialText({
   const eyebrowFontSize = Math.max(7, Math.round(ringSize * 0.065))
   const tierFontSize = Math.max(8, Math.round(ringSize * 0.08))
   const diffFontSize = Math.max(7, Math.round(ringSize * 0.065))
-  const adviceFontSize = Math.max(7, Math.round(ringSize * 0.065))
+  // ฟีดแบ็ก (สกรีนช็อตจริง) "ควรพักหรือลดความหนัก ตกบรรทัดล้นออกนอกวง" — floor เดิม 7px ยังไม่พอกันตกบรรทัด
+  // ที่วงขนาดจริง (76-88px) ลด floor ลงอีกขั้น + บังคับ whitespace-nowrap กันไม่ให้ตกบรรทัดจนดันความสูง
+  // ทั้งก้อนเกินเส้นผ่านศูนย์กลางวง (ต้นเหตุจริงของการล้น ไม่ใช่แค่ความกว้าง) ประโยคนี้สั้นลงมากแล้วด้วย
+  // (ดู recoveryOverallAdviceTh v2) แต่กันไว้สองชั้นเผื่อจอ/ฟอนต์ที่กว้างกว่าเฉลี่ย
+  const adviceFontSize = Math.max(6, Math.round(ringSize * 0.06))
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4 text-center">
+    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
       <span className="tracked uppercase" style={{ fontSize: eyebrowFontSize, color: TEXT.secondary, letterSpacing: '0.1em' }}>
         {eyebrow}
       </span>
@@ -179,7 +183,7 @@ function DialText({
         </span>
       )}
       {advice && (
-        <span className="font-medium mt-1 leading-tight" style={{ fontSize: adviceFontSize, color: TEXT.secondary }}>
+        <span className="font-medium mt-0.5 leading-none whitespace-nowrap" style={{ fontSize: adviceFontSize, color: TEXT.secondary }}>
           {advice}
         </span>
       )}

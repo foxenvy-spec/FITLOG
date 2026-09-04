@@ -376,11 +376,11 @@ describe('recoveryTier', () => {
 })
 
 describe('recoveryOverallAdviceTh', () => {
-  it('matches the same tier thresholds as recoveryTier, with wording for an averaged score', () => {
-    expect(recoveryOverallAdviceTh(95)).toBe('พร้อมฝึกหนักได้เต็มที่')
-    expect(recoveryOverallAdviceTh(70)).toBe('ฝึกความหนักปกติได้')
-    expect(recoveryOverallAdviceTh(40)).toBe('ฝึกเบาถึงปานกลาง')
-    expect(recoveryOverallAdviceTh(10)).toBe('ควรพักหรือลดความหนัก')
+  it('matches the same tier thresholds as recoveryTier, with short one-line wording for an averaged score', () => {
+    expect(recoveryOverallAdviceTh(95)).toBe('ฝึกหนักได้เลย')
+    expect(recoveryOverallAdviceTh(70)).toBe('ฝึกได้ตามปกติ')
+    expect(recoveryOverallAdviceTh(40)).toBe('ฝึกเบาๆ')
+    expect(recoveryOverallAdviceTh(10)).toBe('ควรพัก')
   })
 })
 

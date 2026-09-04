@@ -355,12 +355,15 @@ export function recoveryStatusColor(pct: number): string {
 // คำแนะนำสั้นสำหรับ Recovery แบบ "ภาพรวม" (ค่าเฉลี่ยข้ามกล้ามเนื้อ เช่นวงที่ Header/Hero widget) ใช้รอยต่อ
 // เดียวกับ RECOVERY_TIERS เป๊ะ (ไม่คิดเกณฑ์ใหม่) — เขียนแยกจาก adviceTh ของ recoveryTier() ด้านบน เพราะ
 // adviceTh พูดถึง "กล้ามเนื้อกลุ่มนี้" (เอกพจน์ ใช้กับรายกลุ่มในลิสต์) ไม่เหมาะกับบริบทค่าเฉลี่ยรวมทุกกลุ่ม
+// v2: ฟีดแบ็ก (สกรีนช็อตจริง) "ควรพักหรือลดความหนัก ตกบรรทัดล้นออกนอกวง" — วงที่ใช้จริง (HeroGaugeConcept
+// header) เล็กแค่ 76-88px ประโยคยาวเกินไปไม่พอดี ตัดให้สั้นเหลือคำเดียว/วลีสั้นสุดที่ยังสื่อความหมายได้
+// ไม่ตกบรรทัด (เทียบกับฝั่ง Fitness Score ที่ใช้ aiCoachStatus ซึ่งสั้นอยู่แล้วโดยธรรมชาติของภาษาอังกฤษ)
 export function recoveryOverallAdviceTh(pct: number): string {
   const tier = recoveryTier(pct).labelEn
-  if (tier === 'Excellent') return 'พร้อมฝึกหนักได้เต็มที่'
-  if (tier === 'Good') return 'ฝึกความหนักปกติได้'
-  if (tier === 'Recovering') return 'ฝึกเบาถึงปานกลาง'
-  return 'ควรพักหรือลดความหนัก'
+  if (tier === 'Excellent') return 'ฝึกหนักได้เลย'
+  if (tier === 'Good') return 'ฝึกได้ตามปกติ'
+  if (tier === 'Recovering') return 'ฝึกเบาๆ'
+  return 'ควรพัก'
 }
 
 // ฟีดแบ็ก (จากการตรวจสัญลักษณ์สีทั้งแอปตาม UX deck "เขียว=พร้อม/เหลือง=ระวัง/แดง=หยุด ต้องตรงกันทุกหน้า")
