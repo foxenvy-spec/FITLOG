@@ -322,10 +322,15 @@ export default function AICoachCompactCard({
               — เปลี่ยนเป็น flex-wrap แทน: กว้างพอ (การ์ดกว้าง/จอใหญ่) สองฝั่งยังอยู่บรรทัดเดียวกันเหมือนเดิม
               ทุกประการ แคบไม่พอ timestamp ตกไปบรรทัดใหม่แทนที่จะถูกบีบจนหาย — ทั้งคู่เห็นเต็มเสมอ ไม่มีฝั่งไหน
               ถูกตัดคำเลย (ตัด min-w-0/truncate ออกทั้งคู่ ไม่จำเป็นอีกต่อไปเมื่อใช้ wrap แทน) */}
+          {/* ฟีดแบ็ก (design review) "'· Next' ลอยๆ ไม่ชัดว่าเป็น badge ตกแต่งหรือมีความหมาย — ถ้าตั้งใจสื่อ
+              'Next Session' ควรใช้คำที่ชัดกว่านี้" — ตรวจ comment ประวัติ (v61/v69 ด้านบน) ยืนยันว่ามีความหมาย
+              จริง ไม่ใช่ metadata ตกแต่ง: สลับตาม isRecommendationForToday บอกว่าคำแนะนำนี้เป็นของ "วันนี้ที่
+              ยังไม่เริ่ม" (Today) หรือ "เซสชันถัดไป" (เดิม Next เฉยๆ) — เปลี่ยนเป็น "Next Session" ให้อ่านชัด
+              ว่าหมายถึงอะไรโดยไม่ต้องเดา (Today ไม่แตะ อ่านชัดอยู่แล้วในบริบท) */}
           <div className="flex items-center justify-between gap-x-2 gap-y-0.5 flex-wrap">
             <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0" style={{ color: TEXT.body }}>
               <span aria-hidden="true" className="shrink-0">✨</span>
-              <span className="whitespace-nowrap">MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}</span>
+              <span className="whitespace-nowrap">MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}</span>
             </p>
             <span className="flex items-center gap-1 text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
