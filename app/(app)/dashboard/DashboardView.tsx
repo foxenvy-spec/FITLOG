@@ -1328,7 +1328,14 @@ export default function DashboardPage() {
         // v49: ฟีดแบ็ก "แต่ละ Card ใช้ Radius คนละแบบ" — เดิม rounded-lg (8px) ต่างจาก PremiumCard/
         // AICoachCompactCard/WeeklyVolume ที่ 24px มาก เปลี่ยนเป็น rounded-card (token เดียวกัน) ให้
         // มุมโค้งตรงกันทั้งแอป — border/shadow-hero ยังคงไว้เหมือนเดิม (จุดเด่นเฉพาะ Hero การ์ดเดียว)
-        className={`relative rounded-card border border-amber/30 shadow-hero overflow-hidden hero-card-cq lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
+        // ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "Workout มี ภาพ+glow+orange border+ring+CTA
+        // ช่วยกันดึงสายตาจน Recovery ดูเบากว่าที่ควร ให้ Workout ยังเป็น Primary Action แต่ Recovery เป็น
+        // Primary Decision Signal ที่ควรมี visual weight ใกล้เคียงกัน — ลด visual noise ของ Workout ลง
+        // 10-15% เน้นที่ glow/border/ring/CTA ไม่ใช่ขยาย Recovery" — border-amber/30 -> /25 (-16.7%, ขั้น
+        // ต่ำสุดของ Tailwind opacity scale ที่ใกล้ -13% ที่สุด) ไม่แตะรูปดัมเบล/filter สี (blur/contrast/
+        // sepia/saturate/hue-rotate/brightness) ที่ผ่านการปรับละเอียดมาหลายรอบแล้วเลย (เสี่ยงทำลายงานที่
+        // verify แล้ว ตามคอมเมนต์เดิมด้านล่างในการ์ดนี้)
+        className={`relative rounded-card border border-amber/25 shadow-hero overflow-hidden hero-card-cq lg:col-start-1 lg:col-span-5 lg:row-start-1 ${
           totals.entryCount === 0 ? 'animate-hero-enter' : 'animate-rise'
         }`}
         style={{
@@ -1337,7 +1344,9 @@ export default function DashboardPage() {
           // v42: ฟีดแบ็ก (P1.3, Information Hierarchy review) "ลด glow ของขอบการ์ด" (ส่วนหนึ่งของการลด
           // จุดที่แย่งสายตาในการ์ดนี้ คู่กับการลดความสว่างรูป/ความเด่นวง 0% ด้านล่าง) — ลด alpha ~30%
           // (26 -> 1B, 66 -> 47) ขอบยังพอเห็นเป็น Hero การ์ดเดียวของหน้า แค่ไม่จัดจ้านเท่าเดิม
-          boxShadow: `0 0 8px ${withAlpha(COLORS.amber, '1B')}, 0 0 1px ${withAlpha(COLORS.amber, '47')}`,
+          // ฟีดแบ็ก (design review, micro-polish หลังปิด P1) — ลดต่ออีก ~13% (1B/27dec -> 18/24dec,
+          // 47/71dec -> 3E/62dec) ต่อเนื่องจาก v42 ตามเหตุผลเดียวกับ border ด้านบน
+          boxShadow: `0 0 8px ${withAlpha(COLORS.amber, '18')}, 0 0 1px ${withAlpha(COLORS.amber, '3E')}`,
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
         onMouseMove={handleHeroMouseMove}
@@ -1605,7 +1614,10 @@ export default function DashboardPage() {
         {/* v63: ฟีดแบ็ก (P1.3, Information Hierarchy review) "ลดความเด่นของวงกลม 0% progress ใน Today's
             Workout" — ลด alpha ของ HUD ทั้งชุด (glow ellipse/dashed outer ring/ring drop-shadow) ลง ~30%
             ให้เข้าชุดเดียวกับที่ Fitness Score/Recovery header ลดไปแล้ว (ดู GlowLayers ใน
-            HeroGaugeConcept.tsx) — ไม่ลบวง/ตัวเลข/label "ความพร้อม" หรือ bead orbit ออกเลย แค่จางลง */}
+            HeroGaugeConcept.tsx) — ไม่ลบวง/ตัวเลข/label "ความพร้อม" หรือ bead orbit ออกเลย แค่จางลง
+            ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "Recovery ควรมี visual weight ใกล้เคียง
+            Workout มากขึ้น — ลด glow/ring ของ Workout ลง 10-15%" — ลดต่ออีก ~13% (36/54dec -> 2F/47dec,
+            2D/45dec -> 27/39dec) ต่อเนื่องจาก v63 */}
         <div
           className="absolute pointer-events-none"
           style={{
@@ -1613,14 +1625,14 @@ export default function DashboardPage() {
             right: -10,
             width: 140,
             height: 50,
-            background: `radial-gradient(ellipse 55% 100% at 50% 50%, ${withAlpha(COLORS.amber, '36')}, transparent 72%)`,
+            background: `radial-gradient(ellipse 55% 100% at 50% 50%, ${withAlpha(COLORS.amber, '2F')}, transparent 72%)`,
             filter: 'blur(3px)',
           }}
           aria-hidden="true"
         />
         <div
           className="absolute rounded-full pointer-events-none hud-outer-ring"
-          style={{ bottom: 5, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '2D')}` }}
+          style={{ bottom: 5, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '27')}` }}
           aria-hidden="true"
         />
         <div className="absolute bottom-6 right-4 pointer-events-none hud-bead-orbit" style={{ width: 64, height: 64 }} aria-hidden="true">
@@ -1631,8 +1643,10 @@ export default function DashboardPage() {
         </div>
         {/* v60: ฟีดแบ็ก "วงแหวนตอนนี้ดูดีแล้ว แต่ถ้า Glow เบาลงอีก 10% จะดูแพงขึ้น (Apple ชอบทำ Glow บางมาก)"
             — drop-shadow alpha '40' (25.1%) ลด ~10% เชิงสัมพัทธ์ -> '3A' (22.7%)
-            v63: ฟีดแบ็ก (P1.3) ลดต่ออีก ~30% ตามที่ขอ -> '29' (16.1%) */}
-        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '29')})` }}>
+            v63: ฟีดแบ็ก (P1.3) ลดต่ออีก ~30% ตามที่ขอ -> '29' (16.1%)
+            ฟีดแบ็ก (design review, micro-polish หลังปิด P1) — ลดต่ออีก ~13% ตามเหตุผลเดียวกับ HUD ด้านบน
+            -> '24' (14.1%) */}
+        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '24')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
             size={64}
@@ -1830,7 +1844,11 @@ export default function DashboardPage() {
                   inset shadow มืดด้านบน/สว่างจางด้านล่างให้ผิวปุ่มดูนูน ไม่ใช่แบนเรืองแสง — ไม่แตะ
                   AMBER_GLOW_SHADOW เดิมหรือ Button.tsx เลย (ฟีดแบ็กพูดถึงปุ่มนี้ปุ่มเดียว เหมือน cta-sweep
                   ด้านบน) — hover:-translate-y-0.5 (Tailwind, -2px) ยกปุ่มขึ้นตอน hover ใช้ transition
-                  ที่ Button.tsx มีอยู่แล้ว (ครอบคลุม transform) ไม่ต้องเพิ่ม utility ใหม่ */}
+                  ที่ Button.tsx มีอยู่แล้ว (ครอบคลุม transform) ไม่ต้องเพิ่ม utility ใหม่
+                  ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "Recovery ควรมี visual weight ใกล้เคียง
+                  Workout — ลด glow ของ Workout ลง 10-15%" — ลดต่ออีก ~13% เฉพาะเลเยอร์ glow ที่มองเห็นชัด
+                  (.48->.42, .28->.24, .10->.09) ไม่แตะ inset shadow ทั้ง 2 ชั้น (เป็นผิวนูนของปุ่ม ไม่ใช่
+                  glow) เหมือนกันทั้ง 3 สถานะปุ่มด้านล่าง (todayCompleted/scheduledDay/fallback) */}
               {/* ระบบ 3 สถานะของ Hero Card ตามฟีดแบ็ก "Today's Workout ต้องเป็น Hero ที่ฉลาดกว่านี้":
                   State C (todayCompleted) เสร็จแล้ววันนี้ → ปุ่มพาไปดูสรุป ไม่ใช่ "เริ่ม/ไปต่อ" อีกต่อไป
                   State A (มี scheduledDay) → ปุ่มเริ่ม/ไปต่อเหมือนเดิม
@@ -1844,7 +1862,7 @@ export default function DashboardPage() {
                   className="mt-4 cta-sweep hover:-translate-y-0.5"
                   style={{
                     boxShadow:
-                      '0 0 2px rgba(255,255,255,.48), 0 0 8px rgba(255,210,120,.48), 0 0 22px rgba(255,150,20,.28), 0 0 60px rgba(255,130,0,.10), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
+                      '0 0 2px rgba(255,255,255,.42), 0 0 8px rgba(255,210,120,.42), 0 0 22px rgba(255,150,20,.24), 0 0 60px rgba(255,130,0,.09), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
                   }}
                 >
                   ดูสรุปวันนี้ <span aria-hidden="true">▶</span>
@@ -1857,7 +1875,7 @@ export default function DashboardPage() {
                   className="mt-4 cta-sweep hover:-translate-y-0.5"
                   style={{
                     boxShadow:
-                      '0 0 2px rgba(255,255,255,.48), 0 0 8px rgba(255,210,120,.48), 0 0 22px rgba(255,150,20,.28), 0 0 60px rgba(255,130,0,.10), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
+                      '0 0 2px rgba(255,255,255,.42), 0 0 8px rgba(255,210,120,.42), 0 0 22px rgba(255,150,20,.24), 0 0 60px rgba(255,130,0,.09), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
                   }}
                 >
                   {totals.entryCount > 0 ? 'ไปต่อ' : 'เริ่มเทรนเลย'} <span aria-hidden="true">▶</span>
@@ -1870,7 +1888,7 @@ export default function DashboardPage() {
                   className="mt-4 cta-sweep hover:-translate-y-0.5"
                   style={{
                     boxShadow:
-                      '0 0 2px rgba(255,255,255,.48), 0 0 8px rgba(255,210,120,.48), 0 0 22px rgba(255,150,20,.28), 0 0 60px rgba(255,130,0,.10), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
+                      '0 0 2px rgba(255,255,255,.42), 0 0 8px rgba(255,210,120,.42), 0 0 22px rgba(255,150,20,.24), 0 0 60px rgba(255,130,0,.09), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
                   }}
                 >
                   🤖 ให้ MINT แนะนำ <span aria-hidden="true">▶</span>
