@@ -315,18 +315,21 @@ export default function AICoachCompactCard({
               truncation จริง ไม่ใช่ screenshot บีบอัด" — ตรวจแล้วพบสาเหตุจริง: แถวนี้เป็น justify-between,
               ฝั่งป้าย MINT Coach เดิมมี min-w-0+truncate (ยอมหดได้) ส่วนฝั่ง timestamp มี shrink-0 (ห้ามหด
               เด็ดขาด) — พอพื้นที่แคบ (การ์ดคอลัมน์ col-span-3) การหดทั้งหมดเลยตกไปที่ฝั่งป้ายแบรนด์ล้วนๆ จนเหลือ
-              แค่ "M" สลับ priority ตามที่ขอ: "MINT Coach · Today/Next" ห้ามหด (shrink-0 + whitespace-nowrap
-              บนตัวข้อความ แทน min-w-0+truncate เดิม) ส่วน timestamp เปลี่ยนเป็นฝั่งที่ยอมหด/ตัด (min-w-0 บน
-              container + truncate บนตัวข้อความเอง แทน shrink-0 เดิม) — เหตุผล: ชื่อ component/brand สำคัญกว่า
-              timestamp ที่เป็นแค่ metadata เสริม ไม่ใช่ identity */}
-          <div className="flex items-center justify-between gap-2">
+              แค่ "M" — รอบแรกลองสลับ priority (MINT Coach shrink-0, timestamp min-w-0+truncate) แต่ crop
+              screenshot ยืนยันว่า timestamp หดจนเหลือ 0 (แค่จุดสีมอสลอย ไม่มีตัวอักษร "อัปเดต..." เหลือเลย) —
+              ขัดกับที่ขอไว้ชัดเจนว่า "อย่าเอา 'อัปเดต...' ออก" ปัญหาจริงคือ single-row justify-between
+              คำนวณไม่ลงตัวเลยไม่ว่าจะสลับ priority ยังไง (พื้นที่รวมไม่พอทั้งคู่จริงๆ ไม่ใช่แค่ลำดับความสำคัญผิด)
+              — เปลี่ยนเป็น flex-wrap แทน: กว้างพอ (การ์ดกว้าง/จอใหญ่) สองฝั่งยังอยู่บรรทัดเดียวกันเหมือนเดิม
+              ทุกประการ แคบไม่พอ timestamp ตกไปบรรทัดใหม่แทนที่จะถูกบีบจนหาย — ทั้งคู่เห็นเต็มเสมอ ไม่มีฝั่งไหน
+              ถูกตัดคำเลย (ตัด min-w-0/truncate ออกทั้งคู่ ไม่จำเป็นอีกต่อไปเมื่อใช้ wrap แทน) */}
+          <div className="flex items-center justify-between gap-x-2 gap-y-0.5 flex-wrap">
             <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0" style={{ color: TEXT.body }}>
               <span aria-hidden="true" className="shrink-0">✨</span>
               <span className="whitespace-nowrap">MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next'}</span>
             </p>
-            <span className="flex items-center gap-1 text-[12px] tracked uppercase min-w-0" style={{ color: TEXT.body }} aria-hidden="true">
+            <span className="flex items-center gap-1 text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
-              <span className="truncate">{lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}</span>
+              <span className="whitespace-nowrap">{lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}</span>
             </span>
           </div>
           {muscleRecommendation ? (
