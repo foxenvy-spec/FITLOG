@@ -45,11 +45,11 @@ interface AICoachCompactCardProps {
    * ในหน้า Dashboard) — ใช้แสดง "อัปเดตล่าสุด Xนาทีที่แล้ว" แบบมีข้อมูลจริงรองรับ ไม่ใช่ป้ายลอยๆ ที่ไม่มี
    * ความหมาย ไม่ระบุ = ยังโชว์ป้าย "อัปเดตล่าสุด" เฉยๆ แบบเดิม (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
   lastUpdatedAt?: number
-  /** วันที่ฝึกล่าสุดของแต่ละกลุ่มกล้ามเนื้อ (data.recoveryDates จาก DashboardView.tsx — คำนวณ
-   * recoveryPctForSummary/muscleRecommendation.pct มาจากชุดนี้อยู่แล้วฝั่ง server) ส่งมาด้วยเพื่อให้การ์ด
-   * นี้คำนวณ % ฟื้นตัวของ "กลุ่มกล้ามเนื้อหลักของเทมเพลตที่จะเริ่มจริง" เองได้ (ดู comment ที่ displayMg
-   * ด้านล่าง — แก้ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ต้องเป็นเรื่องเดียวกัน") ไม่ระบุ = ใช้
-   * muscleRecommendation.pct เดิมตรงๆ เหมือนก่อนหน้า (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
+  /** วันที่ฝึกล่าสุดของแต่ละกลุ่มกล้ามเนื้อ (data.recoveryDates จาก DashboardView.tsx) — ใช้เฉพาะคำนวณ
+   * "worstOtherRecovery"/แถบเตือน "⚠️ X ยัง Recovery ต่ำ — หลีกเลี่ยงวันนี้" ด้านล่าง Recovery bar เท่านั้น
+   * (ดู comment ที่ worstOtherRecovery ด้านล่าง) ไม่เกี่ยวกับ headline/recovery% หลักอีกต่อไป — ค่านั้นมาจาก
+   * resolveRecommendationDisplay() (resolved.recoveryPct) ตรงๆ เสมอ ไม่ว่าจะส่ง recoveryDates มาหรือไม่
+   * ไม่ระบุ = ไม่มีแถบเตือนกลุ่มอื่นให้โชว์ (เผื่อจุดอื่นเรียกใช้การ์ดนี้โดยไม่มีค่านี้ส่งมา) */
   recoveryDates?: Record<string, string | null>
   /** true เมื่อ muscleRecommendation คือกล้ามเนื้อของ "วันนี้" จริงๆ (data.isRecommendationForToday จาก
    * DashboardView.tsx) — ฟีดแบ็ก "Today's Focus บอก DAY 5 — LOWER, AI Coach ก็บอก DAY 5 — LOWER แล้วทำไม
