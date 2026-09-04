@@ -2492,8 +2492,15 @@ export default function DashboardPage() {
           {/* ฟีดแบ็ก (Information Hierarchy review) "'Weekly Volume' + 'N sets' ผิด terminology —
               Volume ≠ Sets เสมอไป" — เหตุผลเดียวกับ WeeklyVolume.tsx ทุกประการ (ดูคอมเมนต์ที่นั่น) เปลี่ยน
               ป้ายให้ตรงกับสิ่งที่วัดจริง (นับจำนวนเซ็ต ไม่ใช่ kg x reps x sets) ไม่แตะตัวเลข/สูตรคำนวณ */}
+          {/* ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "การ์ดนี้มี 4/5 ครั้ง, 91% Set Goal, 5 วัน
+              ต่อเนื่อง, 105 sets รวมกันแล้วเริ่มแน่น — อยากให้ 4/5 ครั้ง เป็นพระเอก แล้วลด prominence ของ
+              105 sets ลง เพราะเป็น secondary metric" — ตรวจแล้วว่า Weekly Sets ใช้ text-base font-bold
+              (16px) เท่ากับ "N/เป้า ครั้ง" ด้านบนเป๊ะ (บรรทัด ~2406) สองตัวเลขแข่งกันเป็น hero พร้อมกันจริง
+              — ลดเฉพาะ Weekly Sets: text-base -> text-sm (16px -> 14px), font-bold -> font-semibold
+              (น้ำหนักเบาลง 1 ขั้น) ไม่แตะตัวเลข/สูตรคำนวณ/label ด้านล่าง หรือ "N/เป้า ครั้ง"/GoalRing ด้านบน
+              เลยสักจุด — "N/เป้า ครั้ง" ยังเป็น hero ตัวเดียวของการ์ดนี้ */}
           <div className="mt-3.5 pt-3 border-t border-white/5">
-            <p className="font-mono font-bold text-base text-ink leading-none">
+            <p className="font-mono font-semibold text-sm text-ink leading-none">
               {data.weeklyTotalSets} <span className="text-[12px] font-sans font-normal text-muted">sets</span>
             </p>
             <p className="text-[12px] text-muted mt-1">Weekly Sets</p>
