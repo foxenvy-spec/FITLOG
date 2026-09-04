@@ -32,6 +32,7 @@ import {
   computeDashboardNotifications,
   computeTrainingBalance,
   trainingBalanceInsight,
+  recommendationInsight,
   recoveryRecommendationLabel,
   computeBestVolumeIncrease,
   computeGreetingContext,
@@ -768,6 +769,11 @@ export default function DashboardPage() {
   // การ์ด AI Coach: รวม insight เทรนด์สัดส่วนร่างกาย (ไขมัน/กล้ามเนื้อ) + ความถี่การฝึก
   // เข้ากับ insight เดิม (volume/imbalance/missed) — สามตัวแรกมาก่อนเพราะเป็นภาพรวมระดับ
   // "ก้าวหน้าไหม" ที่ผู้ใช้อยากเห็นทันที ส่วนที่เหลือเป็นรายละเอียดระดับกล้ามเนื้อย่อย
+  // ฟีดแบ็ก (design review — "Recommendation Consistency") เพิ่ม recommendationInsight (แปลจาก
+  // data.todaysRecommendation ตัวเดียวกับที่การ์ด Coach ใช้ ดู comment ที่ computeTodaysRecommendation
+  // ใน lib/dashboardStats.ts) ให้มีการ์ด Insight อย่างน้อย 1 ใบที่พูดตรงกับ Coach เสมอ — วางไว้ท้าย extra
+  // (ก่อน data.insights) ตามลำดับความสำคัญที่ตั้งใจไว้เดิม (เทรนด์ภาพรวมก่อน แล้วค่อยคำแนะนำระดับ
+  // กล้ามเนื้อ) ไม่แตะ trainingBalanceInsight ใน data.insights เลย — คนละคำถาม อยู่ carousel เดียวกันได้
   const combinedInsights = useMemo(() => {
     if (!data) return []
     const { bodyMetricsSummary } = data
@@ -777,6 +783,7 @@ export default function DashboardPage() {
       bodyFatTrendInsight(bodyMetricsSummary.bodyFatPct, bodyMetricsSummary.periodLabel),
       muscleMassTrendInsight(bodyMetricsSummary.skeletalMuscleKg, bodyMetricsSummary.periodLabel, muscleDeltaDisplay, unit),
       workoutFrequencyInsight(data.thisWeekWorkoutDays, data.weeklyWorkoutGoal, dow),
+      recommendationInsight(data.todaysRecommendation),
     ].filter((i): i is Insight => i != null)
     return [...extra, ...data.insights].slice(0, 4)
   }, [data, toDisplay, unit, dow])

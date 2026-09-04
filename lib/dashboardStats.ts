@@ -499,6 +499,18 @@ export interface TodaysRecommendation extends MuscleRecommendation {
 // รวมคำแนะนำจาก suggestMuscleToTrain (recovery ล้วนๆ) เข้ากับ Weekly Volume Engine (เป้าหมายเซ็ต/
 // สัปดาห์ต่อกลุ่ม) ให้คำแนะนำตอบทั้ง "พร้อมฝึกไหม" และ "ยังขาดอีกเท่าไหร่ถึงเป้าหมาย" ในคำแนะนำเดียว
 // แทนที่จะให้ผู้ใช้เปิดดูการ์ด Weekly Volume แยกเองว่ากลุ่มที่แนะนำเหลือโควตาอีกเท่าไหร่
+//
+// *** Source of Truth ของ "คำแนะนำการฝึกวันนี้" ทั้งแอป *** (ฟีดแบ็ก design review — trace dependency
+// ของ 5 widget บน Dashboard พบว่า Training This Week/Weekly Sets/Balance ตอบคนละคำถาม ไม่ควรถูกบังคับ
+// ให้ใช้ engine เดียวกัน แต่ "อะไรคือกล้ามเนื้อที่ควรฝึกวันนี้" ต้องมีคำตอบเดียว) — ทุก widget ที่ตอบคำถามนี้
+// (ตอนนี้คือ Coach/AICoachCompactCard และ recommendationInsight ด้านล่าง) ต้อง consume ผลลัพธ์จากฟังก์ชัน
+// นี้โดยตรง ห้ามคำนวณ "ควรฝึกกลุ่มไหน" ขึ้นใหม่เองอิสระ — ป้องกัน drift แบบเดียวกับที่เคยเจอ (emoji สถานะ
+// recovery ที่เคยเขียนแยก 3 จุดจนขัดกันเอง) แต่ละ widget ยัง "แปลผล" เป็นข้อความของตัวเองได้อิสระ
+// (format ต่างกัน) ตราบใดที่ข้อมูลต้นทาง (muscleGroup/pct/setsRemaining/scheduleOverriddenFrom/
+// lowRecoveryCaution) มาจากก้อนเดียวกันนี้เท่านั้น — ตรงข้ามกับ engine อื่นที่ตอบคำถามคนละแบบและควรแยก
+// อิสระต่อไป: findNextProgramDay (Schedule: "วันถัดไปตามโปรแกรมคืออะไร"), volumeStatus (Status: "กลุ่มนี้
+// ถึงเป้าหมายเซ็ตหรือยัง"), computeMuscleBalance/computeTrainingBalance (Analytics: "กระจาย volume สมดุล
+// ไหม") — 3 engine นี้ไม่ต้องและไม่ควรถูกรวมเข้ากับ Recommendation Engine นี้
 export function computeTodaysRecommendation(
   recommendation: MuscleRecommendation | null,
   setsByMuscle: Record<string, number>,
@@ -1054,6 +1066,36 @@ export function trainingBalanceInsight(balance: TrainingBalance | null): Insight
       balance.recommendedMuscles.length > 0
         ? `Training Balance ${balance.score}% (${BALANCE_STATUS_LABEL[balance.tier]}) — แนะนำเพิ่ม ${balance.recommendedMuscles.join(' + ')} สัปดาห์นี้`
         : `Training Balance ${balance.score}% (${BALANCE_STATUS_LABEL[balance.tier]})`,
+  }
+}
+
+// ฟีดแบ็ก (design review — "Recommendation Consistency") "ตกลงวันนี้ฉันควรทำ Lower หรือพัก?" — carousel
+// Insight เดิมไม่มีการ์ดไหนพูดตรงกับสิ่งที่ Coach แนะนำเป๊ะๆ เลย (trainingBalanceInsight ด้านบนตอบคนละ
+// คำถาม: "สัดส่วนบน/ล่างเอียงไหม" ไม่ใช่ "วันนี้ควรฝึกอะไร") — การ์ดนี้แปล TodaysRecommendation (Source of
+// Truth เดียวกับที่ Coach ใช้ ดู comment เต็มที่ computeTodaysRecommendation) เป็น Insight โดยตรง ไม่คำนวณ
+// เลือกกล้ามเนื้อใหม่เอง (format ข้อความต่างจาก Coach ได้ ก้อนข้อมูลต้นทางต้องมาจากที่เดียวกันเท่านั้น)
+// ตั้งใจ "ไม่แตะ" trainingBalanceInsight เดิมเลย — สองการ์ดตอบคนละคำถามและอยู่ carousel เดียวกันได้โดยไม่
+// ขัดแย้งกัน (ถ้าการ์ดนี้บอก "วันนี้แนะนำ: ขา" ส่วนอีกการ์ดบอก "สัดส่วนขาเยอะไป เพิ่มฝั่งบน" ทั้งคู่ถูกทั้งคู่)
+export function recommendationInsight(rec: TodaysRecommendation | null): Insight | null {
+  if (!rec) return null
+  if (rec.lowRecoveryCaution) {
+    return {
+      id: 'todays-recommendation',
+      kind: 'warning',
+      icon: '🛌',
+      title: `${rec.muscleGroup} ยังฟื้นตัวไม่เต็มที่`,
+      detail: `ฟื้นตัวแล้ว ${rec.pct}% — แนะนำลดความหนักหรือเลื่อนออกไปก่อน`,
+    }
+  }
+  const remainingText = rec.setsRemaining > 0 ? `เหลืออีก ${rec.setsRemaining} เซ็ตถึงเป้าหมายสัปดาห์นี้` : 'ถึงเป้าหมายสัปดาห์นี้แล้ว'
+  return {
+    id: 'todays-recommendation',
+    kind: 'positive',
+    icon: '🎯',
+    title: `วันนี้แนะนำ: ${rec.muscleGroup}`,
+    detail: rec.scheduleOverriddenFrom
+      ? `ตามตารางคือ${rec.scheduleOverriddenFrom} แต่ฝึกเกินเป้าแล้ว — ${remainingText}`
+      : `ฟื้นตัวแล้ว ${rec.pct}% — ${remainingText}`,
   }
 }
 

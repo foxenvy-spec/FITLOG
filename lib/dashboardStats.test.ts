@@ -35,6 +35,7 @@ import {
   computeTrainingBalance,
   computeMuscleBalance,
   trainingBalanceInsight,
+  recommendationInsight,
   getScheduledMuscleForDay,
   getNextScheduledMuscle,
   computeLatestPR,
@@ -960,6 +961,136 @@ describe('trainingBalanceInsight', () => {
       title: 'สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว',
       detail: 'Training Balance 58% (ปานกลาง) — แนะนำเพิ่ม อก + หลัง สัปดาห์นี้',
     })
+  })
+})
+
+describe('recommendationInsight', () => {
+  it('returns null when there is no recommendation', () => {
+    expect(recommendationInsight(null)).toBeNull()
+  })
+
+  it('turns a ready-to-train recommendation into a positive, actionable Insight', () => {
+    const insight = recommendationInsight({ muscleGroup: 'น่อง', pct: 90, setsCurrent: 4, setsTarget: 8, setsRemaining: 4 })
+    expect(insight).toEqual({
+      id: 'todays-recommendation',
+      kind: 'positive',
+      icon: '🎯',
+      title: 'วันนี้แนะนำ: น่อง',
+      detail: 'ฟื้นตัวแล้ว 90% — เหลืออีก 4 เซ็ตถึงเป้าหมายสัปดาห์นี้',
+    })
+  })
+
+  it('turns a low-recovery recommendation into a warning Insight instead of a training suggestion', () => {
+    const insight = recommendationInsight({
+      muscleGroup: 'น่อง',
+      pct: 20,
+      setsCurrent: 8,
+      setsTarget: 8,
+      setsRemaining: 0,
+      lowRecoveryCaution: true,
+    })
+    expect(insight).toEqual({
+      id: 'todays-recommendation',
+      kind: 'warning',
+      icon: '🛌',
+      title: 'น่อง ยังฟื้นตัวไม่เต็มที่',
+      detail: 'ฟื้นตัวแล้ว 20% — แนะนำลดความหนักหรือเลื่อนออกไปก่อน',
+    })
+  })
+
+  it('mentions the schedule override when the recommendation swapped away from the scheduled muscle', () => {
+    const insight = recommendationInsight({
+      muscleGroup: 'อก',
+      pct: 80,
+      setsCurrent: 2,
+      setsTarget: 10,
+      setsRemaining: 8,
+      scheduleOverriddenFrom: 'ขา',
+    })
+    expect(insight?.detail).toBe('ตามตารางคือขา แต่ฝึกเกินเป้าแล้ว — เหลืออีก 8 เซ็ตถึงเป้าหมายสัปดาห์นี้')
+  })
+})
+
+// ฟีดแบ็ก (design review — "Recommendation Consistency") — trace dependency ของ 5 widget บน Dashboard
+// (Training This Week/Insight/Weekly Sets/Balance/Coach) พบว่าไม่มี Single Source of Truth เดียวจริง ควร
+// มี 3 domain แยกกัน: Schedule (findNextProgramDay/getScheduledMuscleForDay), Status (volumeStatus),
+// Recommendation (computeTodaysRecommendation — ดู comment เต็มที่ฟังก์ชันนั้น) — เทสต์ชุดนี้พิสูจน์ว่าแต่ละ
+// domain "เป็นอิสระต่อกันได้อย่างถูกต้อง" ไม่ใช่พิสูจน์ว่าทุกจุดต้องตอบเหมือนกัน (บาง case ตั้งใจให้ตอบ
+// ต่างกัน และนั่นคือพฤติกรรมที่ถูกต้องตามหน้าที่ของแต่ละ domain)
+describe('Recommendation Consistency — Schedule vs Status vs Recommendation domains', () => {
+  it('Case A: behind target + good recovery -> Schedule, Coach/Insight and Weekly Sets all point to the same muscle', () => {
+    const programDays = [{ day_of_week: 1, title: 'น่อง' }]
+    const setsByMuscle = { น่อง: 4 }
+    const targetsByMuscle = { น่อง: 8 }
+    const recoveryPctByMuscle = { น่อง: 90 }
+
+    const scheduledMuscle = getScheduledMuscleForDay(programDays, 1, MUSCLE_GROUPS)
+    const muscleRec = suggestMuscleToTrain(recoveryPctByMuscle, scheduledMuscle, setsByMuscle, targetsByMuscle)
+    const todaysRec = computeTodaysRecommendation(muscleRec, setsByMuscle, targetsByMuscle)
+    const insight = recommendationInsight(todaysRec)
+
+    expect(scheduledMuscle).toBe('น่อง')
+    expect(todaysRec?.muscleGroup).toBe('น่อง')
+    expect(todaysRec?.lowRecoveryCaution).toBeUndefined()
+    expect(insight?.kind).toBe('positive')
+    // Weekly Sets/Balance ใช้ volumeStatus ตัวเดียวกัน — dayOfWeek1to7=7 (ปลายสัปดาห์) ให้ prorated
+    // target เต็ม 8 ตัว 4/8 ยังไม่ถึง 80% ของ prorated เลยควรเป็น 'behind'
+    expect(volumeStatus(4, 8, 7)).toBe('behind')
+  })
+
+  it('Case B: target met + low recovery -> Weekly Sets stops flagging it, but Coach/Insight still caution rest (Status != Recommendation, by design)', () => {
+    const programDays = [{ day_of_week: 1, title: 'น่อง' }]
+    const setsByMuscle = { น่อง: 8 }
+    const targetsByMuscle = { น่อง: 8 }
+    const recoveryPctByMuscle = { น่อง: 20 }
+
+    const scheduledMuscle = getScheduledMuscleForDay(programDays, 1, MUSCLE_GROUPS)
+    const muscleRec = suggestMuscleToTrain(recoveryPctByMuscle, scheduledMuscle, setsByMuscle, targetsByMuscle)
+    const todaysRec = computeTodaysRecommendation(muscleRec, setsByMuscle, targetsByMuscle)
+    const insight = recommendationInsight(todaysRec)
+
+    // Weekly Sets/Balance: ถึงเป้าแล้ว ไม่ควรขึ้น "behind" อีกต่อไป
+    expect(volumeStatus(8, 8, 7)).not.toBe('behind')
+    // Coach/Insight: recovery ต่ำ ต้องเตือนพัก แม้ Schedule ยังบอกให้ฝึกกลุ่มนี้อยู่ (schedule ไม่เปลี่ยน)
+    expect(scheduledMuscle).toBe('น่อง')
+    expect(todaysRec?.muscleGroup).toBe('น่อง')
+    expect(todaysRec?.lowRecoveryCaution).toBe(true)
+    expect(insight?.kind).toBe('warning')
+    expect(insight?.title).toBe('น่อง ยังฟื้นตัวไม่เต็มที่')
+  })
+
+  it('Case C: "Next" (Schedule domain) never reacts to recovery/volume data — a rest recommendation today does not change what tomorrow\'s program says', () => {
+    // findNextProgramDay ไม่รับ recovery/volume เป็น parameter เลย (ดู signature) — พรุ่งนี้ (dow 2) ตาม
+    // ตารางคือ "Lower" ไม่ว่าวันนี้ recovery จะต่ำแค่ไหนก็ตาม ทั้งสองคำตอบถูกต้องพร้อมกัน
+    const programDays: ProgramDay[] = [{ id: '1', user_id: 'u', day_of_week: 2, title: 'Day X — Lower', created_at: '' }]
+    const next = findNextProgramDay(programDays, 1) // วันนี้ = จันทร์ (dow 1)
+    expect(next?.day.title).toBe('Day X — Lower')
+
+    // วันนี้ recovery ต่ำมาก — Coach แนะนำพัก
+    const restRec = suggestMuscleToTrain({ น่อง: 15 }, 'น่อง', { น่อง: 8 }, { น่อง: 8 })
+    expect(restRec?.lowRecoveryCaution).toBe(true)
+
+    // Training This Week ("Next → Lower") ไม่ได้ถูกกระทบจาก restRec เลยแม้แต่น้อย
+    expect(next?.day.title).toBe('Day X — Lower')
+  })
+
+  it('Case D: Balance Insight can recommend the opposite region from Coach — both correct, as long as Balance stays internally consistent with its own region warning', () => {
+    const LOWER_BODY_MUSCLES_TEST = ['ขา', 'น่อง']
+    // ขา+น่อง ครองสัดส่วนเซ็ตเกินอุดมคติมาก (fixture เดียวกับเทสต์ computeTrainingBalance ด้านบน)
+    const legHeavy = { อก: 5, หลัง: 5, ขา: 30, น่อง: 30, ไหล่: 5, แขน: 5, แกนกลางลำตัว: 20 }
+    const balance = computeTrainingBalance(legHeavy, ALL_MUSCLES)
+    const balanceInsight = trainingBalanceInsight(balance)
+
+    expect(balance?.regionWarning).toBe('สัดส่วนกล้ามเนื้อขา/น่องสูงกว่าฝั่งบนลำตัว')
+    // Balance ต้องไม่ขัดแย้งกับตัวเอง: เตือนว่าขา/น่องเยอะไปแล้ว ต้องไม่แนะนำเพิ่มขา/น่องในการ์ดเดียวกัน
+    expect(balance?.recommendedMuscles.some((mg) => LOWER_BODY_MUSCLES_TEST.includes(mg))).toBe(false)
+    expect(balanceInsight?.detail).toContain('แนะนำเพิ่ม')
+
+    // Coach ตอบคนละคำถาม (พร้อมฝึกกลุ่มไหนวันนี้ ไม่ใช่จะแก้สัดส่วนยังไง) — แนะนำ "ขา" ต่อได้เลยถ้ายังไม่
+    // ถึงเป้าและ recovery ดี ทั้งที่ Balance เพิ่งเตือนว่าขาเยอะไปแล้ว — ทั้งคู่ถูกต้องพร้อมกัน ไม่ต้องบังคับ
+    // ให้ตรงกัน (คนละคำถาม: "ควรฝึกอะไรวันนี้" vs "กระจาย volume สมดุลไหม")
+    const coachRec = suggestMuscleToTrain({ ขา: 90 }, 'ขา', { ขา: 4 }, { ขา: 12 })
+    expect(coachRec?.muscleGroup).toBe('ขา')
   })
 })
 
