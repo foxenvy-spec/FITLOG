@@ -9,6 +9,7 @@ import {
   daysSinceLastTrained,
   recoveryStatusColor,
   recoveryTier,
+  recoveryOverallAdviceTh,
   recoveryVerdictEmoji,
   computeRecoveryReadyInHours,
   estimateCaloriesToday,
@@ -371,6 +372,15 @@ describe('recoveryTier', () => {
     ;[0, 40, 70, 95].forEach((pct) => {
       expect(recoveryTier(pct).adviceTh.length).toBeGreaterThan(0)
     })
+  })
+})
+
+describe('recoveryOverallAdviceTh', () => {
+  it('matches the same tier thresholds as recoveryTier, with wording for an averaged score', () => {
+    expect(recoveryOverallAdviceTh(95)).toBe('พร้อมฝึกหนักได้เต็มที่')
+    expect(recoveryOverallAdviceTh(70)).toBe('ฝึกความหนักปกติได้')
+    expect(recoveryOverallAdviceTh(40)).toBe('ฝึกเบาถึงปานกลาง')
+    expect(recoveryOverallAdviceTh(10)).toBe('ควรพักหรือลดความหนัก')
   })
 })
 

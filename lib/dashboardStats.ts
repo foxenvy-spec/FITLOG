@@ -351,6 +351,18 @@ export function recoveryStatusColor(pct: number): string {
   return recoveryTier(pct).color
 }
 
+// ฟีดแบ็ก (design review) "Fitness Score 59/Recovery 29% เด่นมาก แต่ยังไม่บอกทันทีว่าวันนี้ควรทำอะไร" —
+// คำแนะนำสั้นสำหรับ Recovery แบบ "ภาพรวม" (ค่าเฉลี่ยข้ามกล้ามเนื้อ เช่นวงที่ Header/Hero widget) ใช้รอยต่อ
+// เดียวกับ RECOVERY_TIERS เป๊ะ (ไม่คิดเกณฑ์ใหม่) — เขียนแยกจาก adviceTh ของ recoveryTier() ด้านบน เพราะ
+// adviceTh พูดถึง "กล้ามเนื้อกลุ่มนี้" (เอกพจน์ ใช้กับรายกลุ่มในลิสต์) ไม่เหมาะกับบริบทค่าเฉลี่ยรวมทุกกลุ่ม
+export function recoveryOverallAdviceTh(pct: number): string {
+  const tier = recoveryTier(pct).labelEn
+  if (tier === 'Excellent') return 'พร้อมฝึกหนักได้เต็มที่'
+  if (tier === 'Good') return 'ฝึกความหนักปกติได้'
+  if (tier === 'Recovering') return 'ฝึกเบาถึงปานกลาง'
+  return 'ควรพักหรือลดความหนัก'
+}
+
 // ฟีดแบ็ก (จากการตรวจสัญลักษณ์สีทั้งแอปตาม UX deck "เขียว=พร้อม/เหลือง=ระวัง/แดง=หยุด ต้องตรงกันทุกหน้า")
 // — เจอ tier -> 🟢/🟡/🔴 emoji ตัวเดียวกันเป๊ะ (Excellent/Good -> 🟢, Recovering -> 🟡, Rest -> 🔴) ถูกเขียน
 // แยกเป็น inline ternary ซ้ำกัน 3 จุดอิสระ (DashboardView.tsx "ทำไมวันนี้?", coach/page.tsx เหตุผล,

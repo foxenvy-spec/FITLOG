@@ -36,6 +36,12 @@ interface HeroGaugeConceptProps {
   recoveryLabel?: string
   fitnessScoreDiff?: string
   recoveryDiff?: string
+  // ฟีดแบ็ก (design review) "เห็นตัวเลข/tier แล้วต้องตีความเองว่าวันนี้ควรทำอะไร" — บรรทัดคำแนะนำสั้นๆ
+  // เพิ่มเติมจาก diff (diff เดิมออกแบบไว้สำหรับตัวเลข delta สี rust/moss ตายตัว ไม่เหมาะกับข้อความแนะนำ
+  // เฉยๆ ที่ไม่ได้บอกทิศทางดี/แย่) แสดงด้วยสีกลาง (TEXT.secondary) แยกชั้นจาก diff ชัดเจน ไม่ระบุ = ไม่
+  // แสดงบรรทัดนี้เลย (พฤติกรรมเดิมทุกประการ)
+  fitnessAdvice?: string
+  recoveryAdvice?: string
   fitnessRingSize?: number
   recoveryRingSize?: number
   wrapped?: boolean
@@ -139,6 +145,7 @@ function DialText({
   color,
   diff,
   diffColor,
+  advice,
   ringSize,
 }: {
   eyebrow: string
@@ -147,12 +154,14 @@ function DialText({
   color: string
   diff?: string
   diffColor: string
+  advice?: string
   ringSize: number
 }) {
   const valueFontSize = Math.max(14, Math.round(ringSize * 0.24))
   const eyebrowFontSize = Math.max(7, Math.round(ringSize * 0.065))
   const tierFontSize = Math.max(8, Math.round(ringSize * 0.08))
   const diffFontSize = Math.max(7, Math.round(ringSize * 0.065))
+  const adviceFontSize = Math.max(7, Math.round(ringSize * 0.065))
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4 text-center">
       <span className="tracked uppercase" style={{ fontSize: eyebrowFontSize, color: TEXT.secondary, letterSpacing: '0.1em' }}>
@@ -169,6 +178,11 @@ function DialText({
           {diff}
         </span>
       )}
+      {advice && (
+        <span className="font-medium mt-1 leading-tight" style={{ fontSize: adviceFontSize, color: TEXT.secondary }}>
+          {advice}
+        </span>
+      )}
     </div>
   )
 }
@@ -179,6 +193,8 @@ export default function HeroGaugeConcept({
   recoveryLabel,
   fitnessScoreDiff,
   recoveryDiff,
+  fitnessAdvice,
+  recoveryAdvice,
   fitnessRingSize = 140,
   recoveryRingSize = 124,
   wrapped = true,
@@ -246,6 +262,7 @@ export default function HeroGaugeConcept({
             color={fitnessScore.color}
             diff={fitnessScoreDiff}
             diffColor={COLORS.rust}
+            advice={fitnessAdvice}
             ringSize={fitnessRingSize}
           />
         </button>
@@ -270,6 +287,7 @@ export default function HeroGaugeConcept({
               color={COLORS.cyan}
               diff={recoveryDiff}
               diffColor={COLORS.moss}
+              advice={recoveryAdvice}
               ringSize={recoveryRingSize}
             />
           </div>

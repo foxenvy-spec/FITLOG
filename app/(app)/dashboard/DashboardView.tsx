@@ -20,6 +20,7 @@ import {
   recoveryStatusColor,
   recoveryTier,
   recoveryVerdictEmoji,
+  recoveryOverallAdviceTh,
   FULLY_RECOVERED_PCT,
   findNextProgramDay,
   getWeekRange,
@@ -1142,6 +1143,8 @@ export default function DashboardPage() {
               fitnessScore={fitnessScore}
               recoveryPct={fitnessScoreRecoveryPct ?? undefined}
               recoveryLabel={fitnessScoreRecoveryPct != null ? recoveryTier(fitnessScoreRecoveryPct).labelEn : undefined}
+              fitnessAdvice={fitnessScore.aiCoachStatus}
+              recoveryAdvice={fitnessScoreRecoveryPct != null ? recoveryOverallAdviceTh(fitnessScoreRecoveryPct) : undefined}
               fitnessRingSize={88}
               recoveryRingSize={76}
               wrapped={false}
