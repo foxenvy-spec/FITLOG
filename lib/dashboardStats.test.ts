@@ -969,18 +969,16 @@ describe('recommendationInsight', () => {
     expect(recommendationInsight(null)).toBeNull()
   })
 
-  it('turns a ready-to-train recommendation into a positive, actionable Insight', () => {
+  // ฟีดแบ็ก (design review — "MINT Coach กับ Insight ยังพูดเรื่องเดียวกัน 2 ครั้ง") — ทั้งกรณี "ready to
+  // train" ธรรมดา และกรณี "low recovery caution" ตอนนี้ MINT Coach (AICoachCompactCard.tsx) พูดครบทุกคำ
+  // อยู่แล้ว (headline + recovery% + เซ็ตที่เหลือ / advice bullet) Insight จึงไม่มีอะไรใหม่ให้พูดเพิ่ม —
+  // คืน null แทนพูดซ้ำ ดู comment เต็มที่ recommendationInsight() ใน lib/dashboardStats.ts
+  it('returns null for a plain ready-to-train recommendation — MINT Coach already owns that message', () => {
     const insight = recommendationInsight({ muscleGroup: 'น่อง', pct: 90, setsCurrent: 4, setsTarget: 8, setsRemaining: 4 })
-    expect(insight).toEqual({
-      id: 'todays-recommendation',
-      kind: 'positive',
-      icon: '🎯',
-      title: 'วันนี้แนะนำ: น่อง',
-      detail: 'ฟื้นตัวแล้ว 90% — เหลืออีก 4 เซ็ตถึงเป้าหมายสัปดาห์นี้',
-    })
+    expect(insight).toBeNull()
   })
 
-  it('turns a low-recovery recommendation into a warning Insight instead of a training suggestion', () => {
+  it('returns null for a low-recovery caution — MINT Coach already owns that message', () => {
     const insight = recommendationInsight({
       muscleGroup: 'น่อง',
       pct: 20,
@@ -989,16 +987,10 @@ describe('recommendationInsight', () => {
       setsRemaining: 0,
       lowRecoveryCaution: true,
     })
-    expect(insight).toEqual({
-      id: 'todays-recommendation',
-      kind: 'warning',
-      icon: '🛌',
-      title: 'น่อง ยังฟื้นตัวไม่เต็มที่',
-      detail: 'ฟื้นตัวแล้ว 20% — แนะนำลดความหนักหรือเลื่อนออกไปก่อน',
-    })
+    expect(insight).toBeNull()
   })
 
-  it('mentions the schedule override when the recommendation swapped away from the scheduled muscle', () => {
+  it('explains the reason when the recommendation swapped away from the scheduled muscle — the one thing MINT Coach does not say', () => {
     const insight = recommendationInsight({
       muscleGroup: 'อก',
       pct: 80,
@@ -1007,7 +999,13 @@ describe('recommendationInsight', () => {
       setsRemaining: 8,
       scheduleOverriddenFrom: 'ขา',
     })
-    expect(insight?.detail).toBe('ตามตารางคือขา แต่ฝึกเกินเป้าแล้ว — เหลืออีก 8 เซ็ตถึงเป้าหมายสัปดาห์นี้')
+    expect(insight).toEqual({
+      id: 'todays-recommendation',
+      kind: 'positive',
+      icon: '🎯',
+      title: 'ขาควรลด Volume วันนี้',
+      detail: 'ตามตารางคือขา แต่ Volume การฝึกที่ผ่านมาเพียงพอแล้ว',
+    })
   })
 })
 
@@ -1032,13 +1030,15 @@ describe('Recommendation Consistency — Schedule vs Status vs Recommendation do
     expect(scheduledMuscle).toBe('น่อง')
     expect(todaysRec?.muscleGroup).toBe('น่อง')
     expect(todaysRec?.lowRecoveryCaution).toBeUndefined()
-    expect(insight?.kind).toBe('positive')
+    // ไม่มี schedule override — MINT Coach พูดเรื่องนี้ครบอยู่แล้ว Insight จึงไม่มีการ์ดซ้ำ (ดู comment
+    // เต็มที่ recommendationInsight() ใน lib/dashboardStats.ts)
+    expect(insight).toBeNull()
     // Weekly Sets/Balance ใช้ volumeStatus ตัวเดียวกัน — dayOfWeek1to7=7 (ปลายสัปดาห์) ให้ prorated
     // target เต็ม 8 ตัว 4/8 ยังไม่ถึง 80% ของ prorated เลยควรเป็น 'behind'
     expect(volumeStatus(4, 8, 7)).toBe('behind')
   })
 
-  it('Case B: target met + low recovery -> Weekly Sets stops flagging it, but Coach/Insight still caution rest (Status != Recommendation, by design)', () => {
+  it('Case B: target met + low recovery -> Weekly Sets stops flagging it, Coach cautions rest, Insight stays silent (MINT Coach already owns that message)', () => {
     const programDays = [{ day_of_week: 1, title: 'น่อง' }]
     const setsByMuscle = { น่อง: 8 }
     const targetsByMuscle = { น่อง: 8 }
@@ -1051,12 +1051,12 @@ describe('Recommendation Consistency — Schedule vs Status vs Recommendation do
 
     // Weekly Sets/Balance: ถึงเป้าแล้ว ไม่ควรขึ้น "behind" อีกต่อไป
     expect(volumeStatus(8, 8, 7)).not.toBe('behind')
-    // Coach/Insight: recovery ต่ำ ต้องเตือนพัก แม้ Schedule ยังบอกให้ฝึกกลุ่มนี้อยู่ (schedule ไม่เปลี่ยน)
+    // Coach: recovery ต่ำ ต้องเตือนพัก แม้ Schedule ยังบอกให้ฝึกกลุ่มนี้อยู่ (schedule ไม่เปลี่ยน)
     expect(scheduledMuscle).toBe('น่อง')
     expect(todaysRec?.muscleGroup).toBe('น่อง')
     expect(todaysRec?.lowRecoveryCaution).toBe(true)
-    expect(insight?.kind).toBe('warning')
-    expect(insight?.title).toBe('น่อง ยังฟื้นตัวไม่เต็มที่')
+    // Insight: ไม่พูดซ้ำคำเตือนที่ MINT Coach พูดอยู่แล้ว (headline + adviceTh ครบแล้ว)
+    expect(insight).toBeNull()
   })
 
   it('Case C: "Next" (Schedule domain) never reacts to recovery/volume data — a rest recommendation today does not change what tomorrow\'s program says', () => {

@@ -1076,26 +1076,27 @@ export function trainingBalanceInsight(balance: TrainingBalance | null): Insight
 // เลือกกล้ามเนื้อใหม่เอง (format ข้อความต่างจาก Coach ได้ ก้อนข้อมูลต้นทางต้องมาจากที่เดียวกันเท่านั้น)
 // ตั้งใจ "ไม่แตะ" trainingBalanceInsight เดิมเลย — สองการ์ดตอบคนละคำถามและอยู่ carousel เดียวกันได้โดยไม่
 // ขัดแย้งกัน (ถ้าการ์ดนี้บอก "วันนี้แนะนำ: ขา" ส่วนอีกการ์ดบอก "สัดส่วนขาเยอะไป เพิ่มฝั่งบน" ทั้งคู่ถูกทั้งคู่)
+//
+// ฟีดแบ็ก (design review รอบใหม่ — "MINT Coach กับ Insight ยังพูดเรื่องเดียวกัน 2 ครั้ง") "แต่ละการ์ดควรมี
+// หน้าที่ของตัวเอง: Recovery = สถานะ, MINT Coach = action ('วันนี้ควรทำอะไร'), Insight = เหตุผล/observation
+// ไม่ใช่พูดซ้ำคำแนะนำ, Balance = volume" — เดิมทั้ง 2 branch ของฟังก์ชันนี้พูดซ้ำสิ่งที่ MINT Coach
+// (AICoachCompactCard.tsx) พูดอยู่แล้วทุกคำ: lowRecoveryCaution branch ซ้ำกับ headline "ควรพักหรือฝึกเบา
+// มากๆ" + recoveryTier().adviceTh ("กล้ามเนื้อกลุ่มนี้ยังล้าอยู่ แนะนำพักหรือเล่นเบามากๆ") เป๊ะ ส่วน branch
+// ปกติซ้ำกับ headline "Next session · X" + "เหลืออีก N เซ็ตถึงเป้าหมาย" ของ MINT Coach เป๊ะเช่นกัน — ทั้งสอง
+// กรณีนี้ Insight จึงไม่มี "ของแถม" อะไรใหม่ให้พูดจริง คืน null แทน (MINT Coach เป็นเจ้าของคำแนะนำ/สถานะพวกนี้
+// แต่เพียงผู้เดียว) เหลือไว้แค่กรณีเดียวที่ Insight ยังมีเนื้อหาที่ไม่มีใครพูดถึง: ตอน scheduleOverriddenFrom
+// มีค่า (ตารางถูกสลับ) — ใส่กรอบเป็น "เหตุผล" ของกลุ่มตามตารางเดิม (ทำไมถึงควรลด Volume วันนี้) แทนที่จะพูดซ้ำ
+// ว่า "วันนี้แนะนำ: X" (นั่นเป็นหน้าที่ MINT Coach เต็มๆ อยู่แล้ว)
 export function recommendationInsight(rec: TodaysRecommendation | null): Insight | null {
   if (!rec) return null
-  if (rec.lowRecoveryCaution) {
-    return {
-      id: 'todays-recommendation',
-      kind: 'warning',
-      icon: '🛌',
-      title: `${rec.muscleGroup} ยังฟื้นตัวไม่เต็มที่`,
-      detail: `ฟื้นตัวแล้ว ${rec.pct}% — แนะนำลดความหนักหรือเลื่อนออกไปก่อน`,
-    }
-  }
-  const remainingText = rec.setsRemaining > 0 ? `เหลืออีก ${rec.setsRemaining} เซ็ตถึงเป้าหมายสัปดาห์นี้` : 'ถึงเป้าหมายสัปดาห์นี้แล้ว'
+  if (rec.lowRecoveryCaution) return null
+  if (!rec.scheduleOverriddenFrom) return null
   return {
     id: 'todays-recommendation',
     kind: 'positive',
     icon: '🎯',
-    title: `วันนี้แนะนำ: ${rec.muscleGroup}`,
-    detail: rec.scheduleOverriddenFrom
-      ? `ตามตารางคือ${rec.scheduleOverriddenFrom} แต่ฝึกเกินเป้าแล้ว — ${remainingText}`
-      : `ฟื้นตัวแล้ว ${rec.pct}% — ${remainingText}`,
+    title: `${rec.scheduleOverriddenFrom}ควรลด Volume วันนี้`,
+    detail: `ตามตารางคือ${rec.scheduleOverriddenFrom} แต่ Volume การฝึกที่ผ่านมาเพียงพอแล้ว`,
   }
 }
 
