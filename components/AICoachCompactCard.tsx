@@ -17,8 +17,9 @@ import {
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
-import { recoveryStatusColor, recoveryTier, recoveryVerdictEmoji, computeRecoveryPct } from '@/lib/dashboardStats'
-import { describeMuscleFocus, dominantMuscleGroup, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
+import { recoveryStatusColor, recoveryTier, recoveryVerdictEmoji, computeRecoveryPct, type TodaysRecommendation } from '@/lib/dashboardStats'
+import { describeMuscleFocus, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
+import { resolveRecommendationDisplay } from '@/lib/recommendationDisplay'
 import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
@@ -32,7 +33,7 @@ interface AICoachCompactCardProps {
   /** setsRemaining: เซ็ตที่เหลือถึงเป้าหมายรายสัปดาห์ของ muscleGroup นี้ (จาก Weekly Volume Engine,
    * computeTodaysRecommendation ใน lib/dashboardStats.ts) — ติดลบได้ถ้าเกินเป้าแล้ว ใช้ต่อท้าย
    * advice line ด้านล่างเมื่อยังเหลือโควตาจริง (ดู comment ที่จุดโชว์ adviceTh) */
-  muscleRecommendation: { muscleGroup: string; pct: number; setsRemaining: number } | null
+  muscleRecommendation: TodaysRecommendation | null
   /** true เมื่อวันนี้เป็น Rest Day จริง (workoutCardVariant==='restDay' ใน MobileDashboardView.tsx —
    * ค่าเดียวกับที่ TodaysWorkoutEmptyCard/TodaysFocusCard ใช้) — muscleRecommendation คำนวณจาก recovery %
    * ล้วนๆ ไม่รู้จัก concept "วันนี้พัก" เลย เดิมการ์ดนี้เลยยังโชว์ "UPPER BODY" + ปุ่ม "เริ่ม DAY 4" ต่อไป
@@ -155,41 +156,26 @@ export default function AICoachCompactCard({
     staleTime: 60_000,
   })
 
-  const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
-
-  // จับคู่เทมเพลตที่มีท่าตรงกับกล้ามเนื้อที่แนะนำวันนี้ — ตรรกะเดิม (RecommendedProgramCard เก่า) หา
-  // เทมเพลต "ตัวแรก" ที่มีท่าใดท่าหนึ่งตรงกับ mg เท่านั้น ไม่สนสัดส่วน — ทำให้เทมเพลตที่โฟกัสกล้ามเนื้ออื่น
-  // แต่มีท่า mg ปนอยู่แค่ท่าเดียวก็ถูกจับคู่ได้ (เช่น mg=Core ไปจับคู่กับ "Day 5 — Lower" เพราะมีท่า core
-  // ปนอยู่ 1 ท่า) และถ้าไม่มีเทมเพลตไหนตรงเลย เดิม fallback ไปที่เทมเพลต "ล่าสุดที่สร้าง" (templates[0])
-  // ซึ่งไม่เกี่ยวอะไรกับ mg เลย — ผลคือ headline/tag ด้านบน ("CORE", มาจาก program_days/recovery) กับ
-  // ปุ่ม CTA ด้านล่าง ("เริ่ม Day 5 — Lower", มาจาก workout_templates คนละตาราง) ขัดกันได้จริง (ฟีดแบ็ก
-  // "CORE กับ DAY 5 — LOWER ต้องแน่ใจว่า Next Session จริงๆ คืออะไร") — แก้โดย (1) เลือกเทมเพลตที่มี
-  // "จำนวนท่า" ตรงกับ mg มากที่สุด แทนตัวแรกที่เจอ ลดโอกาสจับคู่กับเทมเพลตที่ mg แค่ปนอยู่ท่าเดียว (2) ตัด
-  // fallback ไปเทมเพลตล่าสุดที่ไม่เกี่ยวข้องออก — ไม่มีเทมเพลตไหนมีท่าตรงกับ mg เลยจริงๆ ให้ chosen เป็น
-  // undefined แล้วปุ่มด้านล่างเปลี่ยนไปโชว์ "ดูเทมเพลตทั้งหมด" แทนที่จะแอบใช้ชื่อเทมเพลตที่ไม่เกี่ยวข้อง
+  // ฟีดแบ็ก (design review — "Recommendation Consistency") "displayMg เดิมตอบ 2 คำถามปนกัน: ระบบแนะนำ
+  // กล้ามเนื้ออะไร vs กดปุ่มนี้แล้วจะ insert ท่าของกล้ามเนื้อไหนจริง — เคยเอา dominant muscle ของเทมเพลตไป
+  // ทับ headline/recovery% ของคำแนะนำเอง ทำให้ Coach กับ Insight (ซึ่งอ่าน TodaysRecommendation ตรงๆ)
+  // พูดคนละกล้ามเนื้อกันได้ ร้ายกว่านั้นคือปุ่ม 'เริ่ม X' เคยใช้ชื่อเดียวกับ headline ทั้งที่ exercises ที่
+  // insert จริงมาจากเทมเพลต ไม่ใช่กล้ามเนื้อที่ headline บอก (correctness bug จริง ไม่ใช่แค่ UX — ข้อความ
+  // สำเร็จเคยอธิบายผิดว่าบันทึกอะไรลง log)" — resolveRecommendationDisplay() (lib/recommendationDisplay.ts)
+  // แยก 2 คำตอบออกจากกันเป็น field คนละตัวชัดเจน: muscleGroup/recoveryPct/... (Recommendation Identity —
+  // คัดลอกจาก TodaysRecommendation ตรงๆ ไม่คำนวณซ้ำ ใช้กับ headline/recovery bar/reason — Insight ก็อ่าน
+  // จากค่าเดียวกันนี้ผ่าน TodaysRecommendation ตรงๆ เช่นกัน การันตีว่า Coach กับ Insight พูดกล้ามเนื้อ
+  // เดียวกันเสมอ) กับ template/exercises/actionLabel (Action Identity — ตอบ "กดปุ่มนี้แล้วจะเกิดอะไรขึ้น
+  // จริง" ใช้กับปุ่ม/ข้อความสำเร็จ/handleStart เท่านั้น อาจเป็นกล้ามเนื้อคนละกลุ่มกับ muscleGroup ได้ถ้าไม่มี
+  // เทมเพลตไหนโฟกัสกลุ่มนั้นเป๊ะๆ — legitimate ถ้า UI สื่อสารตรงไปตรงมาว่ากำลังจะเริ่มอะไร ไม่ใช่บั๊ก)
   const templates = templateData?.templates ?? []
   const exercisesByTemplate = templateData?.exercisesByTemplate ?? {}
-  const bestTemplateFor = (targetMg: MuscleGroup) =>
-    templates.reduce<WorkoutTemplate | undefined>((best, t) => {
-      const count = (exercisesByTemplate[t.id] ?? []).filter((ex) => ex.muscle_group === targetMg).length
-      if (count === 0) return best
-      const bestCount = best ? (exercisesByTemplate[best.id] ?? []).filter((ex) => ex.muscle_group === targetMg).length : 0
-      return count > bestCount ? t : best
-    }, undefined)
-  const chosen = mg ? bestTemplateFor(mg) : templates[0]
-  const chosenExercises = chosen ? exercisesByTemplate[chosen.id] ?? [] : []
+  const resolved = resolveRecommendationDisplay(muscleRecommendation, templates, exercisesByTemplate)
+  const mg = resolved.muscleGroup as MuscleGroup | null
+  const chosen = resolved.template
+  const chosenExercises = resolved.exercises
 
-  // ฟีดแบ็ก "CORE กับ DAY 5 — LOWER ยังขัดกัน" — การจับคู่เทมเพลตที่แม่นขึ้นด้านบน (bestTemplateFor)
-  // แก้แค่ "เลือกเทมเพลตผิด" แต่หัวข้อ/แท็กด้านบน (region/relatedGroups) ยังคำนวณจาก mg ตรงๆ อยู่ดี ซึ่ง
-  // เป็นกล้ามเนื้อ "เดี่ยว" ที่ recovery สูงสุด/ตารางกำหนด ไม่ใช่กล้ามเนื้อหลักของเทมเพลตที่ปุ่มจะเริ่มจริง —
-  // ถ้าเทมเพลตที่จับคู่ได้ (chosen) โฟกัสกล้ามเนื้อกลุ่มอื่นเป็นหลัก (เช่น เทมเพลต "Day 5 — Lower" ที่มีท่า
-  // ขา 5 ท่า + ท่า core ปนอยู่ 1 ท่าที่ทำให้จับคู่ได้) หัวข้อก็ยังจะขึ้น "CORE" ต่อไปทั้งที่ปุ่มพาไปเริ่ม
-  // เซสชันขา — แก้โดยหากล้ามเนื้อที่มีท่ามากที่สุดในเทมเพลตที่เลือกจริง (dominantMg) แล้วใช้ตัวนั้นแทน mg
-  // ในการคำนวณ headline/subtitle/recovery % ทั้งหมด รับประกันว่าสิ่งที่เห็นบนการ์ดตรงกับสิ่งที่ปุ่มจะทำเป๊ะ
-  // เสมอ — ไม่มีเทมเพลตที่เลือกได้ (Rest Day/ไม่มีเทมเพลตตรงเลย) ไม่มีปุ่มให้ต้องสอดคล้องด้วย จึงกลับไปใช้ mg
-  // เดิมตามปกติ (คำแนะนำล้วนๆ ไม่ผูกกับ action ไหน)
-  const displayMg = dominantMuscleGroup(chosenExercises) ?? mg
-  const focus = displayMg ? describeMuscleFocus(displayMg) : null
+  const focus = mg ? describeMuscleFocus(mg) : null
   const region = focus?.region ?? null
   const relatedGroups = focus?.relatedGroups ?? []
   // ใช้ชื่อโปรแกรมจริงของวันนี้แทนตาราง generic ด้านบน เมื่อมีชื่อโปรแกรมจริงและเป็นคำแนะนำของวันนี้
@@ -198,27 +184,26 @@ export default function AICoachCompactCard({
   const specificDetail =
     isRecommendationForToday && todayWorkoutTitle ? splitTitleDetail(todayWorkoutTitle).detail : null
   const relatedGroupsText = specificDetail ?? relatedGroups.join(' • ')
-  // ฟีดแบ็ก "ทำไม AI บอกว่าเป็น Day 2 ทั้งที่ตารางจริงเป็น Day 4 แล้ว" — chosen.title มาจาก
-  // workout_templates (คลังเทมเพลตแยกต่างหาก ไม่ผูกกับ program_days ที่หน้าโปรแกรมใช้เลย) บังเอิญตั้งชื่อ
-  // เทมเพลตด้วยคำนำหน้า "Day N" แบบเดียวกับเลขวันในตารางโปรแกรมจริง ทำให้ผู้ใช้เข้าใจผิดว่าเป็นเลขวัน
-  // เดียวกัน — ใช้ชื่อกล้ามเนื้อหลัก (displayMg) แทน chosen.title ทั้งปุ่มเริ่ม/ข้อความสำเร็จ/ข้อผิดพลาด
-  // ตัดคำว่า "Day N" ที่ไม่มีความหมายอะไรกับผู้ใช้ออกไปเลย
-  const startLabel = displayMg ?? 'ท่านี้'
-  const displayPct = displayMg
-    ? recoveryDates
-      ? computeRecoveryPct(recoveryDates[displayMg] ?? null, displayMg)
-      : (displayMg === mg ? muscleRecommendation?.pct : undefined) ?? 0
-    : 0
+  // startLabel ตอนนี้คือ Action Identity (resolved.actionLabel: ชื่อเทมเพลตจริง > กล้ามเนื้อหลักของท่าที่
+  // จะ insert > muscleGroup ของคำแนะนำเป็นทางเลือกสุดท้าย) ไม่ใช่กล้ามเนื้อที่ headline บอกอีกต่อไป — ปุ่ม
+  // "เริ่ม X" กับข้อความสำเร็จ "บันทึก X เข้า Log" ต้องอธิบายสิ่งที่ handleStart() insert จริง ไม่ใช่สิ่งที่
+  // ระบบ "แนะนำ" (สองอย่างนี้ต่างกันได้ตามที่อธิบายไว้ข้างบน)
+  const startLabel = resolved.actionLabel
+  // recoveryPct มาจาก TodaysRecommendation ตรงๆ (Recommendation Identity) ไม่คำนวณ computeRecoveryPct
+  // ซ้ำใน component นี้อีกแล้ว — ตัวเลขเดียวกับที่ Insight ใช้เป๊ะ ไม่มีโอกาสเพี้ยนจาก recoveryDates ที่อาจ
+  // ไม่ sync กับตอนที่ recommendation engine คำนวณ pct ไว้
+  const displayPct = resolved.recoveryPct ?? 0
   const barColor = muscleRecommendation ? recoveryStatusColor(displayPct) : COLORS.amber
 
   // ฟีดแบ็ก "AI Coach ควรเป็น Decision Engine ไม่ใช่แค่รายงาน — เพิ่ม 'Legs ยัง Recovery ต่ำ →
   // หลีกเลี่ยงวันนี้' นอกจากบอกว่าควรเล่นอะไร" — เกณฑ์เดียวกับ lowRecoveryCaution ที่การ์ด Recovery
   // (DashboardView.tsx) ใช้อยู่แล้ว (tier 'Recovering'/'Rest') ไม่คิดเกณฑ์ใหม่แยกต่างหาก — หา "แย่ที่สุด"
   // ในบรรดากลุ่มที่ "เคยเทรนมาก่อนจริง" เท่านั้น (กรอง pct < 100 ออก กันกลุ่มที่ไม่เคยแตะเลยซึ่งได้ 100%
-  // อัตโนมัติจาก computeRecoveryPct(null, mg) ไม่ใช่ "ต่ำ" จริง) ไม่รวมกลุ่มที่แนะนำอยู่แล้ว (displayMg)
+  // อัตโนมัติจาก computeRecoveryPct(null, mg) ไม่ใช่ "ต่ำ" จริง) ไม่รวมกลุ่มที่แนะนำอยู่แล้ว (mg — Recommendation
+  // Identity ไม่ใช่ Action Identity อีกต่อไป)
   // ไม่มี recoveryDates ส่งมา (จุดเรียกใช้อื่นที่ไม่ใช่ Dashboard) หรือไม่มีกลุ่มไหนแย่พอ = ไม่โชว์เลย
   const worstOtherRecovery = recoveryDates
-    ? RECOVERY_MUSCLES.filter((g) => g !== displayMg)
+    ? RECOVERY_MUSCLES.filter((g) => g !== mg)
         .map((g) => ({ group: g, pct: computeRecoveryPct(recoveryDates[g] ?? null, g) }))
         .filter((r) => r.pct < 100)
         .sort((a, b) => a.pct - b.pct)[0] ?? null
