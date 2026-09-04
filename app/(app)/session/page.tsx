@@ -952,9 +952,18 @@ export default function SessionPage() {
   // <a href> ธรรมดา (hard reload บังเอิญล้าง QueryClient ทั้งก้อน) ไม่ใช่ความตั้งใจ — ถ้าผู้ใช้กด "แชร์"
   // แล้วย้อนกลับ หรือกดลิงก์ "ดูประวัติทั้งหมด" แทน ก็จะไม่มีอะไรสั่ง refetch เลย ทำให้ Dashboard
   // ค้างข้อมูลเก่าถ้ากลับไปดูใน 30s (staleTime) โดยไม่รีเฟรชเต็มหน้า — invalidate ตรงๆ ทันทีที่เซสชันจบ
+  //
+  // ฟีดแบ็ก (design review) "Recovery การ์ดบอก 'ตามตารางคือขา แต่ Volume สัปดาห์นี้เกินเป้าหมายแล้ว' ทั้งที่
+  // Weekly Sets ยังโชว์ '16/18 89%'" — ตรวจแล้วไม่ใช่บั๊ก threshold/สูตร (isOverTarget กับ volumeStatus ตัด
+  // "ถึงเป้า" ที่จุดเดียวกันเป๊ะ) แต่เป็นเพราะ WeeklyVolume.tsx ยิง query ของตัวเองแยกต่างหาก
+  // (['weekly-volume', start, end], staleTime 60s) ไม่ใช่ query เดียวกับ ['dashboard'] ที่ใช้คำนวณ
+  // Recovery/MINT Coach/Insight — เดิม invalidate แค่ ['dashboard'] ตอนจบ session ทำให้ Recovery เห็นเลข
+  // ใหม่ทันทีแต่ Weekly Sets ยังค้างเลขเก่าได้นานถึง 60 วินาที เกิดภาพขัดแย้งกันชั่วคราว — เพิ่ม
+  // ['weekly-volume'] เข้าไป invalidate คู่กันตรงนี้ด้วย ให้ทั้งสองการ์ดรีเฟรชพร้อมกันเสมอ
   useEffect(() => {
     if (phase === 'done') {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['weekly-volume'] })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
