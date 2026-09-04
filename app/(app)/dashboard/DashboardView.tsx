@@ -676,6 +676,30 @@ export default function DashboardPage() {
     const index = Math.round(el.scrollLeft / el.clientWidth)
     setDetailPageIndex(Math.max(0, Math.min(1, index)))
   }
+  // ฟีดแบ็ก (design review) "สโครลลงในแท็บ 'ภาพรวม' แล้วเจอพื้นที่ว่างเยอะมากด้านล่าง" — บั๊กจริง เกิดหนักขึ้น
+  // ชัดเจนหลังย้าย BodyMetricsRow/HighlightsRow/InsightCarousel/Balance banner เข้าไปอยู่ในแท็บ "รายละเอียด"
+  // (ทำให้แท็บนั้นสูงขึ้นมาก ในขณะที่ "ภาพรวม" สั้นลงมาก) — ต้นตอ: track ด้านล่าง (detailTrackRef) เป็น
+  // display:flex แถวเดียว ครอบทั้ง 2 สไลด์เป็น flex sibling กัน ความสูงของ flex container แบบ row จะยึดตาม
+  // "ลูกที่สูงที่สุด" เสมอตามสเปค CSS (items-start คุมแค่การจัดตำแหน่งลูกภายในความสูงนั้น ไม่ได้ทำให้ container
+  // สูงตามลูกที่ active เท่านั้น) — สไลด์ "ภาพรวม" (สั้น) เลยโดนบังคับให้มีพื้นที่เท่าสไลด์ "รายละเอียด" (สูง
+  // กว่ามาก) ทั้งที่เนื้อหาจริงจบไปนานแล้ว ผู้ใช้เลยสโครลเข้าไปในพื้นที่ที่ "จองไว้เผื่อ" อีกสไลด์โดยไม่มีอะไร
+  // จริงอยู่ตรงนั้นเลย — วัดความสูงจริงของสไลด์ที่ active อยู่ (ผ่าน ResizeObserver กัน stale ตอนเนื้อหาโหลด
+  // เสร็จทีหลัง/รูปโหลดช้า) แล้ว set เป็น inline height ของ track ตรงๆ แทนที่จะปล่อยให้ flex default ยึดตาม
+  // ลูกที่สูงสุด — undefined ก่อนวัดครั้งแรก = fallback กลับไปพฤติกรรม auto เดิมชั่วคราว ไม่กระทบ initial paint
+  const slide1Ref = useRef<HTMLDivElement>(null)
+  const slide2Ref = useRef<HTMLDivElement>(null)
+  const [detailTrackHeight, setDetailTrackHeight] = useState<number | undefined>(undefined)
+  useEffect(() => {
+    const activeEl = detailPageIndex === 0 ? slide1Ref.current : slide2Ref.current
+    if (!activeEl) return
+    setDetailTrackHeight(activeEl.scrollHeight)
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) setDetailTrackHeight(entry.target.scrollHeight)
+    })
+    ro.observe(activeEl)
+    return () => ro.disconnect()
+  }, [detailPageIndex])
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — เปิด/ปิด WarmupGuideSheet
   const [warmupOpen, setWarmupOpen] = useState(false)
   // ฟีดแบ็ก "40 Moderate ผู้ใช้ยังไม่รู้ว่า 'ทำไม?' ถ้าคลิกแล้วเปิดรายละเอียดได้จะดีมาก" — เดสก์ท็อปเดิม
@@ -1002,10 +1026,10 @@ export default function DashboardPage() {
     <div
       ref={detailTrackRef}
       onScroll={handleDetailScroll}
-      className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar items-start"
-      style={{ scrollBehavior: 'smooth' }}
+      className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory no-scrollbar items-start"
+      style={{ scrollBehavior: 'smooth', height: detailTrackHeight, transition: 'height 200ms ease' }}
     >
-    <div className="shrink-0 w-full snap-center">
+    <div ref={slide1Ref} className="shrink-0 w-full snap-center">
     {/* ฟีดแบ็ก "อยากให้หน้าภาพรวมพอดี 1 จอ 14 นิ้ว" — gap ระหว่าง section หลัก 16px -> 12px (เดิมมี
         comment เก่าที่บอกว่า "ไม่แตะ lg:gap-4 ของ grid หลัก" แต่นั่นคือตอนอยากลดแค่คู่ header->Body
         Overview คู่เดียว ไม่ใช่ทุกคู่ — รอบนี้อยากลดทุกคู่พร้อมกันจริงๆ เพื่อประหยัดความสูงรวม จึงแก้ตรงนี้
@@ -2626,7 +2650,7 @@ export default function DashboardPage() {
 
       {/* slide 2 — Muscle Heatmap/Weekly Sets/Consistency/Cardio Volume, moved out of the 12-col
           grid entirely into their own self-contained stack (no longer needs lg:col-start/row-start) */}
-      <div className="shrink-0 w-full snap-center">
+      <div ref={slide2Ref} className="shrink-0 w-full snap-center">
         <div className="space-y-6 px-1">
           {/* ฟีดแบ็ก (design review — "Information Density สูงเกินไปในหน้า Overview") — BodyMetricsRow
               (5 การ์ด weight/bodyFat/muscle/bmi/visceralFat, "ภาพรวมร่างกาย") ย้ายมาจากแท็บ "1 · ภาพรวม"
