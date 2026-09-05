@@ -274,7 +274,6 @@ export default function StatsPage() {
     const cardioCount = workouts.filter((w) => w.type === 'cardio').length
     const totalDistance = workouts.reduce((s, w) => s + (w.distance_km ?? 0), 0)
     const activeDays = new Set(workouts.map((w) => w.performed_at)).size
-    const thisWeekVolume = weeklyVolume.length > 0 ? weeklyVolume[weeklyVolume.length - 1].value : 0
 
     // Duration/Calories คำนวณเป็นรายวัน (เหมือนที่ dashboard เคยทำกับ "วันนี้") แล้วรวมข้าม
     // ทุกวันในช่วง — ใช้ computeTodayTotals/estimateCaloriesToday ตัวเดียวกัน ไม่ต้องคิดสูตรซ้ำ
@@ -300,11 +299,10 @@ export default function StatsPage() {
       cardioCount,
       totalDistance,
       activeDays,
-      thisWeekVolume,
       totalCalories,
       avgDurationMin,
     }
-  }, [workouts, weeklyVolume, actualRepsByWorkout, bodyWeightKg])
+  }, [workouts, actualRepsByWorkout, bodyWeightKg])
 
   const muscleDistribution = useMemo(() => {
     const map = new Map<string, number>()
@@ -406,6 +404,11 @@ export default function StatsPage() {
   const [exerciseQuery, setExerciseQuery] = useState('')
   const [exercisePickerOpen, setExercisePickerOpen] = useState(false)
   const exerciseBlurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // ฟีดแบ็ก (design review — "KPI ด้านบนเยอะเกินไป (8 ตัว) บนมือถือกลายเป็น dashboard ของตัวเลข") — เหลือ
+  // 4 ตัวหลักที่มองแวบเดียวแล้วเข้าใจภาพรวมทันที (Total Volume/เซสชันเวท/วันที่ออกกำลังกาย/ระยะทางคาร์ดิโอ)
+  // ย้าย Total Reps/แคลอรี่/เวลาเฉลี่ย ไปซ่อนหลัง toggle นี้แทน (pattern เดียวกับ "ดูรายละเอียดทั้งหมด" ใน
+  // WeeklyVolume.tsx ฝั่ง Dashboard) ไม่ตัดข้อมูลออกเลย แค่ลด default density
+  const [moreStatsOpen, setMoreStatsOpen] = useState(false)
 
   const filteredExerciseNames = useMemo(() => {
     const q = exerciseQuery.trim().toLowerCase()
@@ -517,57 +520,93 @@ export default function StatsPage() {
         {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Total Volume" value={Math.round(toDisplay(totals.totalVolume))} unit={unit} accent="steel" />
-        <StatCard label="Total Reps" value={totals.totalReps} unit="ครั้ง" accent="amber" />
-        <StatCard label="Volume สัปดาห์นี้" value={Math.round(toDisplay(totals.thisWeekVolume))} unit={unit} accent="rust" />
-        <StatCard label="วันที่ออกกำลังกาย" value={totals.activeDays} unit="วัน" accent="moss" />
         <StatCard label="เซสชันเวท" value={totals.strengthCount} unit="ครั้ง" accent="moss" />
+        <StatCard label="วันที่ออกกำลังกาย" value={totals.activeDays} unit="วัน" accent="moss" />
         <StatCard label="ระยะทางคาร์ดิโอรวม" value={totals.totalDistance} unit="กม." accent="rust" decimals={1} />
-        <StatCard label="แคลอรี่ที่เผาผลาญรวม" value={totals.totalCalories} unit="kcal" accent="amber" />
-        {/* ฟีดแบ็ก (design review, P0) "'เวลาเฉลี่ย/วัน' ต้องนิยามชัดว่าหารด้วยวันฝึกหรือวันปฏิทิน" — ตรวจ
-            สูตรแล้วยืนยันว่า avgDurationMin หารด้วย activeDays (ตัวเดียวกับ "วันที่ออกกำลังกาย" ด้านบน —
-            นับเฉพาะวันที่มี workout จริง) อยู่แล้ว ไม่ใช่จำนวนวันทั้งหมดในช่วงเวลา — ตรงกับที่แนะนำว่า
-            semantic ที่ useful กว่าคือ "ต่อวันฝึก" ไม่ต้องแก้สูตร แก้แค่ label ให้สื่อความหมายที่คำนวณจริง */}
-        <StatCard label="เวลาเฉลี่ย/วันฝึก" value={totals.avgDurationMin} unit="นาที" accent="steel" />
       </div>
 
+      <button
+        type="button"
+        onClick={() => setMoreStatsOpen((v) => !v)}
+        className="text-[12px] font-display tracked uppercase text-amber -mt-4 self-start"
+      >
+        {moreStatsOpen ? 'ซ่อนสถิติเพิ่มเติม ↑' : 'ดูสถิติเพิ่มเติม →'}
+      </button>
+
+      {moreStatsOpen && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 -mt-4">
+          <StatCard label="Total Reps" value={totals.totalReps} unit="ครั้ง" accent="amber" />
+          <StatCard label="แคลอรี่ที่เผาผลาญรวม" value={totals.totalCalories} unit="kcal" accent="amber" />
+          {/* ฟีดแบ็ก (design review, P0) "'เวลาเฉลี่ย/วัน' ต้องนิยามชัดว่าหารด้วยวันฝึกหรือวันปฏิทิน" — ตรวจ
+              สูตรแล้วยืนยันว่า avgDurationMin หารด้วย activeDays (ตัวเดียวกับ "วันที่ออกกำลังกาย" ด้านบน —
+              นับเฉพาะวันที่มี workout จริง) อยู่แล้ว ไม่ใช่จำนวนวันทั้งหมดในช่วงเวลา — ตรงกับที่แนะนำว่า
+              semantic ที่ useful กว่าคือ "ต่อวันฝึก" ไม่ต้องแก้สูตร แก้แค่ label ให้สื่อความหมายที่คำนวณจริง */}
+          <StatCard label="เวลาเฉลี่ย/วันฝึก" value={totals.avgDurationMin} unit="นาที" accent="steel" />
+        </div>
+      )}
+
+      {/* ฟีดแบ็ก (design review) "Weekly Volume ควรเป็นพระเอกของหน้า — คือข้อมูลที่ผู้ใช้เปิด Stats มาดูบ่อย
+          ที่สุด ไม่ใช่แค่ section เฉยๆ เท่าๆ กับอันอื่น" — เดิมมีแค่ h2 เล็กๆ (เท่ากับหัวข้อ section อื่นทุก
+          จุด) นำหน้ากราฟ ไม่มีตัวเลขสรุป/เทียบสัปดาห์ก่อนให้เห็นทันที — เพิ่มตัวเลข "วอลุ่มสัปดาห์นี้" ตัวใหญ่
+          + ป้ายเทียบกับสัปดาห์ก่อน (เครื่องหมาย/สีเป็นกลาง ไม่ตัดสินว่าวอลุ่มขึ้น=ดีเสมอไป เพราะเทรนหนักขึ้น
+          กับ overtraining ก็ทำให้วอลุ่มขึ้นเหมือนกัน) นำหน้ากราฟเดิม (ไม่แตะกราฟ/ข้อมูล 8 สัปดาห์เลย) */}
       <section>
-        <h2 className="font-display text-sm tracked uppercase text-muted mb-3">
-          Weekly Volume ({WEEKS_SHOWN} สัปดาห์ล่าสุด, {unit})
-        </h2>
-        <PremiumCard className="h-48 p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeklyVolume.map((b) => ({ ...b, value: Math.round(toDisplay(b.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
-              <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
-              <XAxis
-                dataKey="label"
-                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
-                axisLine={{ stroke: NEUTRAL.chipInactive }}
-                tickLine={false}
-              />
-              {/* บั๊ก (ฟีดแบ็กพร้อมสกรีนช็อต) — ตัวเลขแกน Y โดนตัดขอบซ้ายเหลือแค่ "00" เมื่อวอลุ่มสะสม
-                  ขึ้นไปถึงหลักหมื่น (เช่น "40,000") margin.left ติดลบเดิม (-20) บีบพื้นที่แกนจนตัวเลข
-                  5-6 หลักไม่พอที่ใส่ — ลด margin ติดลบลง (-20 -> -4) + เพิ่ม tickFormatter ย่อเป็น "40k"
-                  แทน "40,000" กันปัญหาเดิมซ้ำอีกแม้วอลุ่มจะโตขึ้นไปอีกในอนาคต */}
-              <YAxis
-                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-                width={44}
-                tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
-              />
-              <Tooltip
-                cursor={{ fill: 'rgba(108,140,168,0.08)' }}
-                contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: NEUTRAL.mutedIcon }}
-                itemStyle={{ color: '#F3F0E8' }}
-                formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
-              />
-              <Bar dataKey="value" fill={COLORS.steel} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </PremiumCard>
+        {(() => {
+          const thisWeek = weeklyVolume.length > 0 ? weeklyVolume[weeklyVolume.length - 1].value : 0
+          const prevWeek = weeklyVolume.length > 1 ? weeklyVolume[weeklyVolume.length - 2].value : null
+          const pctChange = prevWeek !== null && prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100) : null
+          const trendColor = pctChange === null || pctChange === 0 ? NEUTRAL.mutedIcon : pctChange > 0 ? COLORS.moss : COLORS.rust
+          return (
+            <PremiumCard className="p-4">
+              <h2 className="font-display text-sm tracked uppercase text-muted">Training Volume</h2>
+              <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                <p className="font-mono font-bold text-2xl text-ink">
+                  {Math.round(toDisplay(thisWeek)).toLocaleString()} <span className="text-sm text-muted font-sans">{unit} สัปดาห์นี้</span>
+                </p>
+                {pctChange !== null && (
+                  <span className="font-mono font-semibold text-[12px]" style={{ color: trendColor }}>
+                    {pctChange > 0 ? '↑' : pctChange < 0 ? '↓' : ''} {Math.abs(pctChange)}% จากสัปดาห์ก่อน
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] text-muted mt-2">{WEEKS_SHOWN} สัปดาห์ล่าสุด ({unit})</p>
+              <div className="h-40 mt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyVolume.map((b) => ({ ...b, value: Math.round(toDisplay(b.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
+                    <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                      axisLine={{ stroke: NEUTRAL.chipInactive }}
+                      tickLine={false}
+                    />
+                    {/* บั๊ก (ฟีดแบ็กพร้อมสกรีนช็อต) — ตัวเลขแกน Y โดนตัดขอบซ้ายเหลือแค่ "00" เมื่อวอลุ่มสะสม
+                        ขึ้นไปถึงหลักหมื่น (เช่น "40,000") margin.left ติดลบเดิม (-20) บีบพื้นที่แกนจนตัวเลข
+                        5-6 หลักไม่พอที่ใส่ — ลด margin ติดลบลง (-20 -> -4) + เพิ่ม tickFormatter ย่อเป็น "40k"
+                        แทน "40,000" กันปัญหาเดิมซ้ำอีกแม้วอลุ่มจะโตขึ้นไปอีกในอนาคต */}
+                    <YAxis
+                      tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={44}
+                      tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(108,140,168,0.08)' }}
+                      contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: NEUTRAL.mutedIcon }}
+                      itemStyle={{ color: '#F3F0E8' }}
+                      formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
+                    />
+                    <Bar dataKey="value" fill={COLORS.steel} radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </PremiumCard>
+          )
+        })()}
       </section>
 
       {muscleDistribution.length > 0 && (
