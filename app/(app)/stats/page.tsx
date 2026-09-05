@@ -90,6 +90,20 @@ function repsOf(w: Workout, actualReps?: Map<string, number>) {
   return (w.sets ?? 0) * (w.reps ?? 0)
 }
 
+// ฟีดแบ็ก (design review) "Strength Balance ดูเหมือน tab ธรรมดา — อยากเห็น Push/Pull/Legs เป็นระดับ
+// (Novice/Intermediate/Advanced/Elite) ให้เข้าใจง่ายกว่าตีความ % เอง" — ใช้ breakpoint 25/50/75/100 เดียวกับ
+// ที่ ratioToPct() ใน lib/strengthStandards.ts คำนวณไว้อยู่แล้วเป๊ะ (novice=25/intermediate=50/advanced=75/
+// elite=100) ไม่คิดเกณฑ์ใหม่ — เฉพาะ Push/Pull/Legs เท่านั้น (เทียบ bodyweight strength standard จริง) ไม่ใช้
+// กับ Core (สัดส่วนวอลุ่ม) หรือ Endurance (VO2max) ซึ่งคนละสูตร/คนละความหมายกันเลย ใส่ label เดียวกันจะสื่อผิด
+// ว่าเป็นมาตรฐานเดียวกัน — null (ยังไม่มีข้อมูลให้คำนวณ) คืน null แยกจาก "Novice" (มีข้อมูลจริงแต่ต่ำสุด)
+function strengthTierLabel(pct: number | null): string | null {
+  if (pct === null) return null
+  if (pct >= 75) return 'Elite'
+  if (pct >= 50) return 'Advanced'
+  if (pct >= 25) return 'Intermediate'
+  return 'Novice'
+}
+
 export default function StatsPage() {
   const supabase = createClient()
   const { unit, toDisplay, format } = useWeightUnit()
@@ -713,6 +727,29 @@ export default function StatsPage() {
       {hasStrengthBalanceData && (
         <section>
           <h2 className="font-display text-sm tracked uppercase text-muted mb-3">Strength Balance</h2>
+          {/* ฟีดแบ็ก (design review) "Strength Balance เป็น feature ที่ดีแต่ดูเหมือน tab ธรรมดา — อยากเห็น
+              Push/Pull/Legs เป็นระดับ (Novice/Intermediate/Advanced/Elite) ให้เข้าใจง่ายกว่าตีความ % เอง" —
+              เฉพาะ 3 แกนแรก (เทียบ bodyweight strength standard จริง) ไม่รวม Core/Endurance (คนละสูตร คนละ
+              ความหมาย ใส่ระดับเดียวกันจะสื่อผิด — ยังโชว์ครบใน Radar Chart ด้านล่างเหมือนเดิมทุกแกน) */}
+          <PremiumCard className="p-4 mb-3">
+            <p className="text-[12px] text-muted">Push / Pull / Legs</p>
+            <p className="text-[12px] text-muted/70 mb-2.5">Compared with bodyweight strength standards</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { label: 'Push', axis: strengthBalance[0] },
+                  { label: 'Pull', axis: strengthBalance[1] },
+                  { label: 'Legs', axis: strengthBalance[2] },
+                ] as const
+              ).map(({ label, axis }) => (
+                <div key={label} className="rounded-lg bg-surface2 px-2 py-2.5 text-center">
+                  <p className="text-[12px] tracked uppercase text-muted">{label}</p>
+                  <p className="font-display text-sm text-ink mt-1">{strengthTierLabel(axis.pct) ?? '—'}</p>
+                  <p className="text-[12px] font-mono text-muted mt-0.5">{axis.pct !== null ? `${axis.pct}%` : 'ไม่มีข้อมูล'}</p>
+                </div>
+              ))}
+            </div>
+          </PremiumCard>
           <PremiumCard className="h-64 p-3">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={strengthBalance} outerRadius="70%">
@@ -770,7 +807,7 @@ export default function StatsPage() {
             className="text-[12px] text-muted mt-2 px-3 py-2 rounded-lg border"
             style={{ backgroundColor: 'rgba(255,255,255,.03)', borderColor: NEUTRAL.chipInactive }}
           >
-            Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว (Novice–Elite){profile?.sex ? '' : ' — ตั้งค่าเพศในโปรไฟล์เพื่อความแม่นยำขึ้น'}
+            Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว{profile?.sex ? '' : ' — ตั้งค่าเพศในโปรไฟล์เพื่อความแม่นยำขึ้น'}
             {' · '}Core จากสัดส่วนวอลุ่มฝึกจริงของกล้ามเนื้อแกนกลาง · Endurance จาก VO2max ประมาณ (ต้องตั้งค่าชีพจรในโปรไฟล์)
           </p>
         </section>
