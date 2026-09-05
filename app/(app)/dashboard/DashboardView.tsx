@@ -2514,20 +2514,36 @@ export default function DashboardPage() {
               {/* ฟีดแบ็ก "Weekly Goal ดีมากแล้ว แต่ควรเชื่อมกับ Action ทันที เช่น 'Next → Lower Body'" —
                   ใช้ `next` ตัวเดียวกับที่การ์ด "Next up" แยกต่างหากด้านล่างเคยใช้ (ย้ายมารวมที่นี่แทน ตัด
                   การ์ดแยกทิ้ง — ฟีดแบ็กข้อ 17 บอกว่า Weekly Goal/Volume/Consistency "แยกกันมากจนรู้สึกเหมือน
-                  3 ระบบ" นี่คือก้าวแรกที่รวมชิ้นที่เกี่ยวข้องกันจริงๆ เข้าด้วยกัน) truncate กัน title ยาว
-                  (เช่น "Day 5 — Lower (Hamstring/Glute)") ล้นการ์ดแคบๆ นี้
+                  3 ระบบ" นี่คือก้าวแรกที่รวมชิ้นที่เกี่ยวข้องกันจริงๆ เข้าด้วยกัน)
                   บั๊ก (ฟีดแบ็ก "วันนี้วันอังคารมีตารางฝึกอยู่และยังไม่ได้ฝึก แต่การ์ดขึ้น Next → วันพฤหัส
                   ข้ามวันนี้ไปเลย"): findNextProgramDay เริ่มนับจาก offset=1 เสมอ (ข้ามวันนี้ไม่ว่าจะฝึก
                   ไปแล้วหรือยัง) ทำให้ตอนวันนี้เองมีตารางฝึกอยู่แต่ยังไม่เสร็จ กลับข้ามไปโชว์วันถัดไปแทนที่จะ
                   เตือนวันนี้ก่อน — ใช้ scheduledDay/todayCompleted ตัวเดียวกับที่การ์ด Today's Workout hero
-                  ด้านบนใช้อยู่แล้ว: มีตารางวันนี้ + ยังไม่เสร็จ = โชว์ "Today →" แทน ไม่ข้ามไปวันอื่น */}
+                  ด้านบนใช้อยู่แล้ว: มีตารางวันนี้ + ยังไม่เสร็จ = โชว์ "Today →" แทน ไม่ข้ามไปวันอื่น
+                  ฟีดแบ็ก (design review) "'Next → จันทร์ - Lowe...' ถูกตัดจนอ่านไม่จบ ทั้งที่การ์ดยังมี
+                  พื้นที่เหลือ" — เดิม label+ชื่อโปรแกรม+intensity badge (" · หนัก/เบา") ทั้งหมดอยู่ใน
+                  <p truncate> บรรทัดเดียวกัน ทำให้ badge แย่งพื้นที่บรรทัดเดียวกับชื่อโปรแกรม เป็นสาเหตุจริง
+                  ที่ทำให้ตัดชื่อสั้นกว่าที่ควร (ไม่ใช่แค่ "ชื่อยาวไป") — แก้เป็น flex row: "Next →"/"Today →"
+                  (shrink-0 ไม่ยอมถูกบีบ) + ชื่อโปรแกรม (flex-1 min-w-0 truncate เป็น fallback เผื่อชื่อยาว
+                  จริงๆ เท่านั้น) — ส่วน intensity เปลี่ยนจากข้อความเป็นจุดสีเล็ก (6px, shrink-0, ไม่แย่งพื้นที่
+                  ชื่อโปรแกรมอีกต่อไป) ยังคงข้อมูล/สีตาม tier เดิมทุกประการ (ไม่ได้ตัดข้อมูลทิ้ง แค่เปลี่ยนรูป
+                  แบบการแสดงผลให้กระชับ) role="img" + aria-label ให้ screen reader ยังอ่านคำเต็มได้เหมือนเดิม
+                  ไม่เพิ่มความสูง/ความกว้างการ์ดเลย */}
               {scheduledDay && !todayCompleted ? (
                 (() => {
                   const intensity = muscleIntensityFor(todayScheduledMuscleGroup)
                   return (
-                    <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
-                      Today → {splitTitleDetail(scheduledDay.title).main}
-                      {intensity && <span style={{ color: intensity.color }}> · {intensity.label}</span>}
+                    <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: COLORS.amber }}>
+                      <span className="shrink-0">Today →</span>
+                      <span className="min-w-0 flex-1 truncate">{splitTitleDetail(scheduledDay.title).main}</span>
+                      {intensity && (
+                        <span
+                          className="shrink-0 w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: intensity.color }}
+                          role="img"
+                          aria-label={intensity.label}
+                        />
+                      )}
                     </p>
                   )
                 })()
@@ -2536,9 +2552,17 @@ export default function DashboardPage() {
                 (() => {
                   const intensity = muscleIntensityFor(nextScheduledMuscleGroup)
                   return (
-                    <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
-                      Next → {splitTitleDetail(next.day.title).main}
-                      {intensity && <span style={{ color: intensity.color }}> · {intensity.label}</span>}
+                    <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: COLORS.amber }}>
+                      <span className="shrink-0">Next →</span>
+                      <span className="min-w-0 flex-1 truncate">{splitTitleDetail(next.day.title).main}</span>
+                      {intensity && (
+                        <span
+                          className="shrink-0 w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: intensity.color }}
+                          role="img"
+                          aria-label={intensity.label}
+                        />
+                      )}
                     </p>
                   )
                 })()
@@ -2863,8 +2887,13 @@ function QuickAction({
         >
           {icon}
         </span>
+        {/* ฟีดแบ็ก (design review) "'เลือกโปรแก...'/'วิเคราะห์ร่าง...' ถูกตัดคำ ทั้งที่ label เป็น
+            terminology มาตรฐานของแอปอยู่แล้ว (ใช้คำเดียวกันนี้ที่อื่นในหน้า /health, /templates ฯลฯ) — เดิม
+            truncate บังคับบรรทัดเดียวเสมอ ทั้งที่คอลัมน์ grid-cols-5 นี้มีความสูงเหลือพอให้ label ยาวขึ้น
+            บรรทัดที่ 2 ได้โดยไม่ต้องขยายการ์ด/เปลี่ยนคำ — ตัด truncate ออก ปล่อยให้ wrap ตามความกว้างจริงของ
+            คอลัมน์แทน (leading-tight กันบรรทัดที่ 2 ดันความสูงเกินจำเป็น) */}
         <span
-          className={`text-[12px] font-display tracked uppercase truncate ${weight === 'primary' ? 'font-semibold text-ink' : weight === 'tertiary' ? 'text-muted' : 'text-ink'}`}
+          className={`text-[12px] font-display tracked uppercase leading-tight ${weight === 'primary' ? 'font-semibold text-ink' : weight === 'tertiary' ? 'text-muted' : 'text-ink'}`}
         >
           {label}
         </span>
