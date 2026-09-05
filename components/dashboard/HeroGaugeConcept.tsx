@@ -148,7 +148,7 @@ function DialText({
   advice,
   ringSize,
 }: {
-  eyebrow: string
+  eyebrow?: string
   value: string
   tierLabel: string
   color: string
@@ -170,10 +170,12 @@ function DialText({
   const adviceFontSize = Math.max(5, Math.round(ringSize * 0.052))
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
-      <span className="tracked uppercase" style={{ fontSize: eyebrowFontSize, color: TEXT.secondary, letterSpacing: '0.1em' }}>
-        {eyebrow}
-      </span>
-      <span className="font-mono font-extrabold leading-none mt-1" style={{ fontSize: valueFontSize, color: TEXT.title }}>
+      {eyebrow && (
+        <span className="tracked uppercase" style={{ fontSize: eyebrowFontSize, color: TEXT.secondary, letterSpacing: '0.1em' }}>
+          {eyebrow}
+        </span>
+      )}
+      <span className={`font-mono font-extrabold leading-none ${eyebrow ? 'mt-1' : ''}`} style={{ fontSize: valueFontSize, color: TEXT.title }}>
         {value}
       </span>
       <span className="font-display font-bold tracked uppercase mt-1" style={{ fontSize: tierFontSize, color }}>
@@ -280,37 +282,42 @@ export default function HeroGaugeConcept({
             กันมาก ผู้ใช้อาจสงสัยว่าทำไมตัวเลขไม่ตรงกัน" — วงนี้คือค่าเฉลี่ยข้าม "ทุก" กลุ่มกล้ามเนื้อที่เคย
             ฝึก (fitnessScoreRecoveryPct) ส่วน AI Coach คือ % ของกลุ่มที่แนะนำวันนี้ "กลุ่มเดียว" — คนละ
             ขอบเขตกันโดยตั้งใจ ไม่ใช่บั๊ก (เหตุผลเดียวกับที่ MobileDashboardView.tsx/FitnessScoreDetailSheet.tsx
-            เคยแยกไว้แล้ว ใช้คำว่า "Recovery (Avg)" คู่กับ "Muscle Recovery") — ลองใช้คำเดียวกัน "Recovery
-            (Avg)" ตรงนี้ก่อน แต่วงนี้เล็กกว่ามาก (76px จริงบน Dashboard ไม่ใช่ 124px ของหน้า preview) พิสูจน์
-            ด้วย screenshot จริงแล้วว่าตกบรรทัดเป็น 2 บรรทัด แล้วไปชนกับ tier/advice ด้านล่าง (บั๊ก overflow
-            แบบเดียวกับที่ advice เคยเจอมาก่อน — ดู comment ที่ adviceFontSize ใน DialText) เปลี่ยนเป็น
-            "Overall" คำเดียวแทน (สั้นกว่า "Recovery" เดิมด้วยซ้ำ ไม่มีความเสี่ยงตกบรรทัดเพิ่มจากเดิมเลย) —
-            จับคู่กับ "Fitness Score" ฝั่งซ้าย + สี cyan + tier label (Excellent/Good/...) + advice ที่เป็น
-            ประโยคเกี่ยวกับการฟื้นตัวอยู่แล้ว บริบทรอบข้างพอให้เข้าใจว่าเป็นภาพรวม ไม่ใช่กลุ่มกล้ามเนื้อเดียว
-            โดยไม่ต้องเขียนคำว่า "Recovery" ซ้ำกับคำว่า "Overall" ในพื้นที่ที่ไม่พอ (aria-label ด้านล่างยังพูด
-            "Recovery X% — Label" เต็มๆ สำหรับ screen reader อยู่) */}
+            เคยแยกไว้แล้ว ใช้คำว่า "Recovery (Avg)" คู่กับ "Muscle Recovery")
+            ฟีดแบ็ก (design review รอบถัดมา) "'Overall' ข้างวงกำกวม ไม่รู้ว่า overall ของอะไร ทั้งที่ข้างล่าง
+            การ์ดก็มีคำว่า Recovery อยู่แล้ว" — ปัญหาเดิมคือ "Recovery" คำเดียวเคยลองใส่ในวงนี้มาก่อนแล้ว
+            (ดู git history) แต่ตกบรรทัดชนกับ tier/advice ด้านล่างเพราะพื้นที่ในวง (76px) แคบเกินกว่าคำ 8
+            ตัวอักษร — แก้ต้นตอด้วยการย้าย label ออกไปไว้นอกวงแทนที่จะพยายามยัดคำเข้าไปในพื้นที่จำกัดเดิม:
+            ตัด eyebrow="Overall" ออกจาก DialText ไปเลย (ให้ value/tier/advice ในวงมีพื้นที่มากขึ้นด้วย) แล้ว
+            เพิ่มป้าย "Recovery" เป็น caption แยกอยู่ใต้วงนี้โดยเฉพาะ (ไม่ใช่ลอยกลางระหว่าง 2 วง กันเข้าใจผิด
+            ว่าอธิบายทั้งคู่) — ไม่แตะวง Fitness Score ฝั่งซ้าย (eyebrow "Fitness Score" เดิมไม่เคยมีปัญหา
+            overflow เลย ไม่ควรแก้สิ่งที่ยังไม่พัง) aria-label ด้านล่างยังพูด "Recovery X% — Label" เต็มๆ
+            สำหรับ screen reader เหมือนเดิม (ตอนนี้ตรงกับ label ที่เห็นบนจอด้วยพอดี) */}
         {recoveryPct != null && recoveryLabel && (
-          <div className="relative flex items-center justify-center shrink-0" style={{ width: recoveryRingSize, height: recoveryRingSize }}>
-            <GlowLayers size={recoveryRingSize} color={COLORS.cyan} />
-            <GoalRing
-              pct={recoveryPct}
-              size={recoveryRingSize}
-              strokeWidth={recoveryStrokeWidth}
-              color={COLORS.cyan}
-              valueLabel=" "
-              innerDiscColor={INNER_DISC}
-              ariaLabel={`Recovery ${recoveryPct}% — ${recoveryLabel}`}
-            />
-            <DialText
-              eyebrow="Overall"
-              value={`${recoveryPct}%`}
-              tierLabel={recoveryLabel}
-              color={COLORS.cyan}
-              diff={recoveryDiff}
-              diffColor={COLORS.moss}
-              advice={recoveryAdvice}
-              ringSize={recoveryRingSize}
-            />
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <div className="relative flex items-center justify-center shrink-0" style={{ width: recoveryRingSize, height: recoveryRingSize }}>
+              <GlowLayers size={recoveryRingSize} color={COLORS.cyan} />
+              <GoalRing
+                pct={recoveryPct}
+                size={recoveryRingSize}
+                strokeWidth={recoveryStrokeWidth}
+                color={COLORS.cyan}
+                valueLabel=" "
+                innerDiscColor={INNER_DISC}
+                ariaLabel={`Recovery ${recoveryPct}% — ${recoveryLabel}`}
+              />
+              <DialText
+                value={`${recoveryPct}%`}
+                tierLabel={recoveryLabel}
+                color={COLORS.cyan}
+                diff={recoveryDiff}
+                diffColor={COLORS.moss}
+                advice={recoveryAdvice}
+                ringSize={recoveryRingSize}
+              />
+            </div>
+            <span className="tracked uppercase leading-none" style={{ fontSize: 10, color: TEXT.secondary, letterSpacing: '0.1em' }}>
+              Recovery
+            </span>
           </div>
         )}
       </div>
