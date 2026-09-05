@@ -18,9 +18,15 @@ import {
 } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
 import type { Workout, Profile } from '@/lib/types'
-import { MUSCLE_GROUP_COLORS } from '@/lib/muscle-groups'
+import { MUSCLE_GROUP_COLORS, VOLUME_MUSCLES } from '@/lib/muscle-groups'
 import { todayStr, daysAgoStr } from '@/lib/weekdays'
-import { computeTodayTotals, estimateCaloriesToday } from '@/lib/dashboardStats'
+import {
+  computeTodayTotals,
+  estimateCaloriesToday,
+  computeTrainingBalance,
+  BALANCE_STATUS_LABEL,
+  type BalanceStatusTier,
+} from '@/lib/dashboardStats'
 import { computeProgressiveOverload, type OverloadPlan } from '@/lib/aiCoach'
 import { computeStrengthAxis, vo2MaxToPct, coreVolumeToPct } from '@/lib/strengthStandards'
 import { computeVO2Max } from '@/lib/vo2max'
@@ -316,6 +322,22 @@ export default function StatsPage() {
     const max = entries.length > 0 ? entries[0][1] : 0
     return entries.map(([name, value]) => ({ name, value: Math.round(value), pct: max === 0 ? 0 : value / max }))
   }, [workouts])
+
+  // ฟีดแบ็ก (design review) "Muscle Distribution อ่านเป็นตัวเลข kg มากเกินไป — บอกว่า 'ขาเยอะ' แต่ไม่บอก
+  // ทันทีว่าสมดุลหรือไม่ ผมชอบแนวทาง Dashboard มากกว่า: Balance 41% · ต้องปรับสมดุล แล้วค่อย breakdown ต่อ"
+  // — computeTrainingBalance() (lib/dashboardStats.ts, ใช้กับ Dashboard's WeeklyMuscleHeatmap อยู่แล้ว)
+  // ไม่ได้ผูกกับ "เซ็ต/สัปดาห์นี้" จริงๆ (แค่พารามิเตอร์ชื่อ setsByMuscle) — เป็นแค่สัดส่วน (share) ของแต่ละ
+  // กลุ่มเทียบผลรวม เทียบกับสัดส่วนอุดมคติ (100/จำนวนกลุ่ม%) ล้วนๆ ไม่สนใจหน่วย/ช่วงเวลา จึงใช้กับ kg-volume
+  // ของช่วงเวลาที่เลือกได้ตรงๆ (30D/90D/...) โดยไม่ต้องคิดสูตรใหม่ — สูตร/เกณฑ์เดียวกับ Dashboard เป๊ะ ไม่มี
+  // ทางขัดกันเอง (ใช้ map เดียวกับ muscleDistribution ด้านบนแทนการวนซ้ำ workouts รอบที่สอง)
+  const muscleBalance = useMemo(() => {
+    if (muscleDistribution.length === 0) return null
+    const map: Record<string, number> = {}
+    muscleDistribution.forEach((m) => {
+      map[m.name] = m.value
+    })
+    return computeTrainingBalance(map, VOLUME_MUSCLES)
+  }, [muscleDistribution])
 
   // Strength Balance radar — 5 แกน: Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว (ดู
   // lib/strengthStandards.ts), Core จากสัดส่วนวอลุ่มจริงของกล้ามเนื้อแกนกลางเทียบวอลุ่มรวม (ไม่มีเกณฑ์
@@ -613,6 +635,25 @@ export default function StatsPage() {
         <section>
           <h2 className="font-display text-sm tracked uppercase text-muted mb-3">Muscle Distribution (วอลุ่มรวม)</h2>
           <PremiumCard className="p-4 space-y-3">
+            {/* ฟีดแบ็ก (design review) "ควรเน้น trend/comparison มากกว่า raw volume — Balance 41% ·
+                ต้องปรับสมดุล แล้วค่อย breakdown ต่อ" — hero metric เดียวกับ Dashboard's WeeklyMuscleHeatmap
+                (สูตร/สี/ป้ายเดียวกันเป๊ะ ผ่าน computeTrainingBalance/BALANCE_STATUS_LABEL) นำหน้า breakdown
+                รายกลุ่มเดิมที่ยังอยู่ครบด้านล่าง ไม่ได้ตัดตัวเลข kg ออกเลย แค่ให้ insight มาก่อนตัวเลขดิบ */}
+            {muscleBalance && (
+              <div className="pb-3 border-b border-white/5">
+                <p className="font-mono font-bold text-2xl leading-none" style={{ color: BALANCE_TIER_COLOR[muscleBalance.tier] }}>
+                  {muscleBalance.score}%
+                  <span className="font-sans font-bold text-sm ml-1.5 align-middle">
+                    · {BALANCE_STATUS_LABEL[muscleBalance.tier]}
+                  </span>
+                </p>
+                {muscleBalance.regionWarning ? (
+                  <p className="text-[12px] text-muted mt-1">{muscleBalance.regionWarning}</p>
+                ) : muscleBalance.recommendedMuscles.length > 0 ? (
+                  <p className="text-[12px] text-muted mt-1">แนะนำเพิ่ม {muscleBalance.recommendedMuscles.join(' + ')}</p>
+                ) : null}
+              </div>
+            )}
             {muscleDistribution.map((m) => (
               <div key={m.name}>
                 <div className="flex items-center justify-between text-xs mb-1">
@@ -965,6 +1006,14 @@ const STAT_ACCENT_HEX = {
   moss: COLORS.moss,
   violet: COLORS.violet,
 } as const
+
+// สีเดียวกับ BALANCE_COLOR ใน components/WeeklyMuscleHeatmap.tsx เป๊ะ (good=moss/ok=amber/poor=rust) —
+// ไม่ export จากที่นั่นเลยประกาศแยกที่นี่ แต่ค่าตรงกันเพราะดึงจาก COLORS ตัวเดียวกัน ไม่ใช่ hex คงที่แยกอิสระ
+const BALANCE_TIER_COLOR: Record<BalanceStatusTier, string> = {
+  good: COLORS.moss,
+  ok: COLORS.amber,
+  poor: COLORS.rust,
+}
 
 function StatCard({
   label,
