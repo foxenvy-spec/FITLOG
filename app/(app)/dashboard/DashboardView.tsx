@@ -1758,14 +1758,19 @@ export default function DashboardPage() {
             v63: ฟีดแบ็ก (P1.3) ลดต่ออีก ~30% ตามที่ขอ -> '29' (16.1%)
             ฟีดแบ็ก (design review, micro-polish หลังปิด P1) — ลดต่ออีก ~13% ตามเหตุผลเดียวกับ HUD ด้านบน
             -> '24' (14.1%) */}
+        {/* ฟีดแบ็ก (design review) "วง 0% นี้ label 'ความพร้อม' ชนความหมายกับ Recovery 100% ที่โชว์อยู่แล้ว
+            บนหน้าเดียวกัน — ผู้ใช้อ่านว่าทั้งคู่คือ physiological readiness ทั้งที่วงนี้จริงๆ คือ progressPct
+            (% ท่าตามแผนวันนี้ที่ทำเสร็จแล้ว ไม่เกี่ยวกับการฟื้นตัวเลย)" — เปลี่ยนแค่คำ label/aria-label ให้
+            ตรงกับสิ่งที่ค่าจริงวัด ("ความคืบหน้า" ของแผนวันนี้) ไม่แตะสูตร progressPct/ขนาดวง/ตำแหน่ง/
+            Recovery ใดๆ เลย */}
         <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '24')})` }}>
           <GoalRing
             pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
             size={64}
             strokeWidth={5}
             color={COLORS.amber}
-            label={<span className="text-[7px]">ความพร้อม</span>}
-            ariaLabel="ความพร้อมของวันนี้"
+            label={<span className="text-[7px]">ความคืบหน้า</span>}
+            ariaLabel="ความคืบหน้าของแผนวันนี้"
             glow
           />
         </div>
