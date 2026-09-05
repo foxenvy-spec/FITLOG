@@ -205,6 +205,16 @@ export interface DashboardData {
   // ส่วนหนึ่งของ DashboardData ให้ WeeklyVolume ใช้ชุดเดียวกันนี้แทนการ query ซ้ำเอง
   thisWeekSets: Record<string, number>
   weeklyVolumeTargets: WeeklyVolumeTargets
+  // ฟีดแบ็ก (design review — "Training This Week บอก 'Next → จันทร์ — Lower Body' แต่ MINT Coach แนะนำ
+  // 'อก + ไหล่ + แขน' พร้อมปุ่ม 'เริ่ม พฤหัสบดี - Core/Abs' — คนละวันคนละกล้ามเนื้อกันเลย") — สาเหตุคือ
+  // findNextProgramDay (ใช้กับ "Next →" ในการ์ดนี้) กับ getNextScheduledMuscle (ใช้ป้อน suggestMuscleToTrain
+  // ของ MINT Coach) เป็นคนละฟังก์ชันที่ตั้งใจแยกโดเมนกันจริง (ดู "Recommendation Consistency — Schedule vs
+  // Status vs Recommendation domains" ใน lib/dashboardStats.test.ts) — "ทั้งสองคำตอบถูกต้องพร้อมกัน" ตาม
+  // เจตนาเดิม ไม่ใช่บั๊กที่ต้องรวม 2 ระบบเป็นอันเดียว (คงไว้ตามเดิมทุกจุดตามที่ยืนยันสโคปแล้ว) — แต่ MINT
+  // Coach's ปุ่ม "เริ่ม X" (workout_templates, คนละระบบกับ program_days อีกชั้น) ไม่ควรชวนกดเริ่มเซสชันที่
+  // ดูเหมือนเป็น "Next Session" แต่จริงๆ ไม่ตรงกับ Next ของตารางเลย — เปิด map วัน→กล้ามเนื้อของโปรแกรม
+  // (คำนวณไว้แล้วเป็น scheduledDaysWithMuscle ด้านล่าง) ออกมาให้ component เทียบกับกล้ามเนื้อที่แนะนำได้ตรงๆ
+  programDayMuscleGroups: Record<number, string | null>
 }
 
 export async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
@@ -497,6 +507,12 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     title: d.title,
     muscleGroup: dominantMuscleGroup(exercisesByDayId[d.id] ?? []),
   }))
+  // ใช้เทียบกับกล้ามเนื้อที่ MINT Coach แนะนำ (ดู comment เต็มที่ programDayMuscleGroups ใน DashboardData
+  // ด้านบน) — เก็บเป็น map ตาม day_of_week ให้หาได้ตรงๆ จาก next.day.day_of_week (findNextProgramDay)
+  const programDayMuscleGroups: Record<number, string | null> = {}
+  scheduledDaysWithMuscle.forEach((d) => {
+    programDayMuscleGroups[d.day_of_week] = d.muscleGroup ?? null
+  })
 
   // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) แทนที่จะดู recovery % สูงสุดล้วนๆ
   // เพื่อไม่ให้แนะนำสวนทางกับตาราง เช่น ตารางบอกวันนี้เป็นวันขา แต่ recovery ของอกดันสูงกว่า
@@ -620,6 +636,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     weeklyConsistencyPct,
     thisWeekSets,
     weeklyVolumeTargets,
+    programDayMuscleGroups,
   }
 }
 
@@ -848,6 +865,10 @@ export default function DashboardPage() {
   // ควรได้ข้อความชวนตั้งโปรแกรมแบบเดิม ไม่ใช่ badge นี้
   const isScheduledRestDay = !scheduledDay && (data?.programDays.length ?? 0) > 0
   const next = useMemo(() => (data ? findNextProgramDay(data.programDays, dow) : null), [data, dow])
+  // ฟีดแบ็ก (design review) — กล้ามเนื้อของ "Next →" ตัวจริงตามตาราง (คนละ lookup กับที่ MINT Coach ใช้แนะนำ
+  // ตั้งใจแล้ว ดู comment เต็มที่ programDayMuscleGroups ใน DashboardData) ส่งเข้า AICoachCompactCard เพื่อ
+  // เทียบกับกล้ามเนื้อที่แนะนำเท่านั้น — ไม่ใช้เปลี่ยน recommendation logic ใดๆ
+  const nextScheduledMuscleGroup = next ? (data?.programDayMuscleGroups[next.day.day_of_week] ?? null) : null
   // ประโยคทักทายแบบมีบริบท — ลองมีเรื่อง "วันนี้ทำอะไรต่อ" ก่อน ถ้าไม่มีค่อยลองมี "อะไรดีขึ้นบ้างสัปดาห์นี้"
   const greetingContext = useMemo(
     () =>
@@ -2622,6 +2643,7 @@ export default function DashboardPage() {
             lastUpdatedAt={dataUpdatedAt}
             isRecommendationForToday={data.isRecommendationForToday}
             todayWorkoutTitle={workoutTitle}
+            nextScheduledMuscleGroup={nextScheduledMuscleGroup}
           />
         </div>
       )}

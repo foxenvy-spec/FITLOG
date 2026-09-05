@@ -58,6 +58,15 @@ interface AICoachCompactCardProps {
    * คำแนะนำของ "วันนี้" จริง (ไม่ใช่ Next session ของวันอื่น) ใช้ข้อความในวงเล็บของชื่อโปรแกรมแทนตาราง
    * generic เดิม ไม่ระบุ/ไม่มีวงเล็บ = fallback กลับไปใช้ relatedGroups เดิมทุกประการ */
   todayWorkoutTitle?: string | null
+  /** กล้ามเนื้อของ "Next →" ตัวจริงตามตารางโปรแกรม (findNextProgramDay + program_exercises ของวันนั้น จาก
+   * DashboardView.tsx) — คนละ lookup กับที่การ์ดนี้ใช้แนะนำ (getNextScheduledMuscle/suggestMuscleToTrain,
+   * ตั้งใจแยกโดเมนกัน ดู "Recommendation Consistency" ใน lib/dashboardStats.test.ts) ใช้เทียบอย่างเดียว
+   * เพื่อกันปุ่ม "เริ่ม X" ชวนเริ่มเซสชันที่ดูเหมือนเป็น Next Session แต่จริงๆ ไม่ตรงกับ "Next →" ของการ์ด
+   * Training This Week เลย (ฟีดแบ็ก "Training This Week บอกจันทร์-Lower Body แต่ Coach แนะนำอก+ไหล่+แขน
+   * พร้อมปุ่มเริ่มพฤหัส-Core/Abs คนละวันคนละกล้ามเนื้อ") — ไม่ใช้เปลี่ยน headline/recovery%/recommendation
+   * logic ใดๆ เลย แค่ตัดสินใจว่าจะโชว์ปุ่ม "เริ่ม X" หรือ "ดูคำแนะนำเพิ่มเติม" เท่านั้น ไม่ระบุ = ไม่เช็ค
+   * (พฤติกรรมเดิมทุกประการ เผื่อจุดเรียกใช้อื่นที่ไม่มีข้อมูลนี้ส่งมา เช่น MobileDashboardView.tsx) */
+  nextScheduledMuscleGroup?: string | null
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -135,6 +144,7 @@ export default function AICoachCompactCard({
   lastUpdatedAt,
   isRecommendationForToday = false,
   todayWorkoutTitle = null,
+  nextScheduledMuscleGroup = null,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -170,6 +180,13 @@ export default function AICoachCompactCard({
   const focus = mg ? describeMuscleFocus(mg) : null
   const region = focus?.region ?? null
   const relatedGroups = focus?.relatedGroups ?? []
+  // ฟีดแบ็ก "Training This Week บอกจันทร์-Lower Body แต่ Coach แนะนำอก+ไหล่+แขน พร้อมปุ่มเริ่มพฤหัส-
+  // Core/Abs — คนละวันคนละกล้ามเนื้อกันเลย" — isRecommendationForToday=true รับประกันอยู่แล้วว่า mg ตรงกับ
+  // ตารางวันนี้เป๊ะ (ดู comment ที่ isRecommendationForToday ใน DashboardView.tsx) จึงเช็คเฉพาะกรณี "Next
+  // session" (isRecommendationForToday=false) ที่ไม่มีการันตีแบบนั้น — mismatch ก็ต่อเมื่อมีข้อมูลทั้งสอง
+  // ฝั่งจริง (ไม่ใช่แค่หาไม่เจอฝั่งใดฝั่งหนึ่ง) และต่างกันจริง ไม่ใช่แค่ไม่แน่ใจ
+  const nextRecommendationMismatch =
+    !isRecommendationForToday && !!mg && !!nextScheduledMuscleGroup && mg !== nextScheduledMuscleGroup
   // ใช้ชื่อโปรแกรมจริงของวันนี้แทนตาราง generic ด้านบน เมื่อมีชื่อโปรแกรมจริงและเป็นคำแนะนำของวันนี้
   // จริง (ไม่ใช่ Next session ของวันอื่นที่ todayWorkoutTitle ไม่ได้อธิบายอยู่แล้ว) — ดู comment ที่
   // todayWorkoutTitle prop ด้านบน
@@ -405,6 +422,18 @@ export default function AICoachCompactCard({
             // ฟีดแบ็ก "หัวการ์ดบอก MINT Coach แต่ปุ่มเขียน 'ดูคำแนะนำ Recovery' ทำให้รู้สึกว่าปุ่มพาไปหน้า
             // Recovery มากกว่า Coach" — เปลี่ยนเป็น "ดูคำแนะนำเพิ่มเติม →" (สั้น ไม่ซ้ำคำว่า MINT Coach ที่
             // อยู่ในหัวการ์ดอยู่แล้ว) — href ยังพาไปหน้าเดิม (/coach) ไม่เปลี่ยน แค่คำที่ปุ่มพูด
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
+              ดูคำแนะนำเพิ่มเติม →
+            </Button>
+          ) : nextRecommendationMismatch ? (
+            // ฟีดแบ็ก (design review — "Training This Week บอกจันทร์-Lower Body แต่ Coach แนะนำอก+ไหล่+แขน
+            // พร้อมปุ่มเริ่มพฤหัส-Core/Abs — คนละวันคนละกล้ามเนื้อกันเลย ผู้ใช้จะสงสัยว่าอะไรคือ Next Session
+            // จริง") — ตั้งใจคง 2 โดเมนแยกกันตามเดิม (Schedule ตาราง vs Recommendation จากร่างกาย/volume —
+            // ดู "Recommendation Consistency" ใน lib/dashboardStats.test.ts ยืนยันว่าทั้งคู่ถูกพร้อมกันได้)
+            // ไม่แตะ suggestMuscleToTrain/getNextScheduledMuscle/findNextProgramDay เลย — แก้เฉพาะปุ่มเดียว:
+            // ไม่เสนอปุ่ม "เริ่ม X" (จาก workout_templates ซึ่งเป็นคนละระบบกับ program_days อีกชั้น) ให้กด
+            // เริ่มเซสชันที่ดูเหมือนเป็น "Next Session" แต่จริงๆ ไม่ตรงกับ "Next →" ของการ์ด Training This
+            // Week เลย — สลับไปดูรายละเอียดที่ /coach แทน (เหมือน pattern isRestDay/lowRecoveryCaution ด้านบน)
             <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
               ดูคำแนะนำเพิ่มเติม →
             </Button>
