@@ -947,31 +947,23 @@ export default function DashboardPage() {
   // "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" เดิมซึ่งเป็นสรุปสถิติเฉยๆ กดแล้วไปไหนไม่ได้
   const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && (data?.todayWorkouts.length ?? 0) > 0)
   // ฟีดแบ็ก (design review — "Training This Week บอก 'Next → Day 5 — Lower' แต่ MINT Coach บอก 'ควรพัก
-  // หรือฝึกเบามากๆ' พร้อมกัน — ขัดกันเอง ไม่เด็ดขาด") — todaysRecommendation.lowRecoveryCaution=true "และ"
-  // ไม่มี scheduleOverriddenFrom (กลุ่มที่แนะนำยังเป็นกลุ่มตามตารางเดิม ไม่ถูกสลับ — ดู withRecoveryCaution
-  // ใน suggestMuscleToTrain, lib/dashboardStats.ts) รับประกันว่าเป็นกลุ่มกล้ามเนื้อ "เดียวกันเป๊ะ" กับที่
-  // scheduledDay/next ด้านล่างกำลังชี้อยู่เสมอ (ไม่ใช่กรณี fallback ไปแนะนำกลุ่มอื่นที่ไม่เกี่ยวกับตาราง) —
-  // ปลอดภัยที่จะต่อท้ายด้วยระดับความหนักให้ Training This Week กับ MINT Coach พูดตรงกันแทนที่จะขัดแย้งกัน
-  //
-  // ฟีดแบ็ก (รอบถัดมา) "'· Light' คำเดียวใช้กับทั้ง Recovering (35-64%) และ Rest (0-34%) — severity ไม่ตรง
-  // กับ MINT Coach ที่แยกคำพูดสอง tier นี้อยู่แล้ว (readinessVerdict(): Recovering = 'ฝึกได้ แต่ควรลดความหนัก
-  // ลง', Rest = 'ควรพักหรือฝึกเบามากๆ' — รุนแรงกว่ากันชัดเจน)" — แยกป้ายตาม tier เดียวกันนี้เป๊ะ ไม่คิดเกณฑ์
-  // ใหม่: Recovering -> "Light", Rest -> "Very Light" — ไม่แตะ/ลดความเข้มข้อความ MINT Coach เลย (ตั้งใจให้
-  // UI สะท้อน severity ที่ระบบคำนวณไว้อยู่แล้ว ไม่ใช่ลดข้อความให้เข้ากับ UI)
-  //
-  // ฟีดแบ็ก (รอบถัดมาอีก) "วันพักตามแผน + Recovery 100% Excellent ไม่ควรใส่ Light/Very Light เลย แต่ก็ไม่
-  // ควรปล่อยว่างเฉยๆ — อยาก Normal/Light/Very Light ครบ 3 tier โชว์เสมอ ไม่ใช่ Normal เป็น implicit state
-  // ต่างจาก Light/Very Light ที่ explicit" — ขยายจาก boolean (lowRecoveryCaution เท่านั้น) เป็น 3 ค่า
-  // ครอบคลุมทุก tier ของ recoveryTier() เอง (Excellent/Good -> "Normal") เงื่อนไข "ไม่มี scheduleOverriddenFrom"
-  // ยังคงอยู่เหมือนเดิม (กันกรณี rec.pct เป็นของกล้ามเนื้อที่ถูกสลับ ไม่ใช่ของวันตามตารางอีกต่อไป)
-  const scheduledMuscleIntensity: 'Normal' | 'Light' | 'Very Light' | null = (() => {
-    const rec = data?.todaysRecommendation
-    if (!rec || rec.scheduleOverriddenFrom) return null
-    const tier = recoveryTier(rec.pct).labelEn
-    if (tier === 'Rest') return 'Very Light'
-    if (tier === 'Recovering') return 'Light'
-    return 'Normal'
-  })()
+  // หรือฝึกเบามากๆ' พร้อมกัน — ขัดกันเอง ไม่เด็ดขาด") จนถึง "Recovery 100% Excellent ควรโชว์ · Normal ให้
+  // Training This Week ด้วย ไม่ใช่แค่ Light/Very Light ตอนมีปัญหา" — เดิมอิง data.todaysRecommendation.pct
+  // (ตัดกรณี scheduleOverriddenFrom ทิ้งไปเลยเพราะ pct ตอนนั้นเป็นของกล้ามเนื้อที่ถูกสลับ ไม่ใช่ของวันตาราง
+  // จริง — ทำให้เคส "ตารางบอกขา แต่ Volume ขาเกินเป้า ถูกสลับไปแนะนำอก" ไม่โชว์ suffix อะไรเลยทั้งที่ขาเอง
+  // อาจฟื้นตัว 100% Excellent จริงก็ได้ ระบบสลับเพราะ Volume ไม่ใช่เพราะ recovery) — เปลี่ยนมาคำนวณ tier ของ
+  // "กล้ามเนื้อตามตารางวันนั้นเอง" ตรงๆ จาก recoveryDates/programDayMuscleGroups (ข้อมูลเดียวกับที่การ์ด
+  // Recovery ใช้อยู่แล้ว) แทนที่จะพึ่ง todaysRecommendation.pct เลย — ทำให้ถูกต้องไม่ว่าคำแนะนำของ MINT Coach
+  // จะถูกสลับไปกลุ่มอื่นหรือไม่ก็ตาม (Training This Week กับ MINT Coach ยังคงเป็นคนละคำถามกันเหมือนเดิม ดู
+  // "Recommendation Consistency" ใน lib/dashboardStats.test.ts — ไม่แตะ recommendation engine ใดๆ)
+  const muscleIntensityFor = (muscleGroup: string | null): { label: 'Normal' | 'Light' | 'Very Light'; color: string } | null => {
+    if (!muscleGroup || !data) return null
+    const pct = computeRecoveryPct(data.recoveryDates[muscleGroup] ?? null, muscleGroup)
+    const tier = recoveryTier(pct)
+    const label = tier.labelEn === 'Rest' ? 'Very Light' : tier.labelEn === 'Recovering' ? 'Light' : 'Normal'
+    return { label, color: tier.color }
+  }
+  const todayScheduledMuscleGroup = scheduledDay ? (data?.programDayMuscleGroups[scheduledDay.day_of_week] ?? null) : null
   // ฟีดแบ็ก "Today's Workout มีหลายอย่างแย่งความสนใจ (0 Exercises, 0 Sets, ~10 นาที, AI reasoning, ปุ่ม,
   // ข้อความ) — User ไม่รู้ว่าควรกดอะไรใน 1-2 วินาทีแรก ตอนยังไม่มี Workout วันนี้เลย ให้เหลือแค่ Hero
   // Message + CTA เดียว" — true เฉพาะตอนไม่มีทั้งโปรแกรม (scheduledDay) และยังไม่ได้ log อะไรเลยวันนี้
@@ -2530,21 +2522,26 @@ export default function DashboardPage() {
                   เตือนวันนี้ก่อน — ใช้ scheduledDay/todayCompleted ตัวเดียวกับที่การ์ด Today's Workout hero
                   ด้านบนใช้อยู่แล้ว: มีตารางวันนี้ + ยังไม่เสร็จ = โชว์ "Today →" แทน ไม่ข้ามไปวันอื่น */}
               {scheduledDay && !todayCompleted ? (
-                <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
-                  Today → {splitTitleDetail(scheduledDay.title).main}
-                  {scheduledMuscleIntensity && (
-                    <span style={{ color: recoveryTier(data.todaysRecommendation?.pct ?? 0).color }}> · {scheduledMuscleIntensity}</span>
-                  )}
-                </p>
+                (() => {
+                  const intensity = muscleIntensityFor(todayScheduledMuscleGroup)
+                  return (
+                    <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
+                      Today → {splitTitleDetail(scheduledDay.title).main}
+                      {intensity && <span style={{ color: intensity.color }}> · {intensity.label}</span>}
+                    </p>
+                  )
+                })()
               ) : (
-                next && (
-                  <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
-                    Next → {splitTitleDetail(next.day.title).main}
-                    {scheduledMuscleIntensity && (
-                      <span style={{ color: recoveryTier(data.todaysRecommendation?.pct ?? 0).color }}> · {scheduledMuscleIntensity}</span>
-                    )}
-                  </p>
-                )
+                next &&
+                (() => {
+                  const intensity = muscleIntensityFor(nextScheduledMuscleGroup)
+                  return (
+                    <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
+                      Next → {splitTitleDetail(next.day.title).main}
+                      {intensity && <span style={{ color: intensity.color }}> · {intensity.label}</span>}
+                    </p>
+                  )
+                })()
               )}
             </div>
           </div>
