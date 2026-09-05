@@ -426,13 +426,79 @@ export default function StatsPage() {
     return best
   }, [workouts])
 
+  // ฟีดแบ็ก (design review) "Russian Twist ไม่ใช่ท่าที่เหมาะสื่อ strength progression เท่า compound lift —
+  // ควร default เป็น Bench Press หรือให้ระบบเลือกท่าที่มี progression data ดีที่สุด" — เลือกแบบหลัง (ไม่
+  // hard-code ชื่อท่าเฉพาะ) เพราะผู้ใช้บางคนอาจมีข้อมูล Leg Press/Lat Pulldown/RDL มากกว่า compound หลัก
+  // จริง — เกณฑ์ 5 ข้อที่ยืนยันแล้ว (ทุกตัวเลข confirm กับผู้ใช้แล้ว ไม่ใช่ค่าที่เดาเอง):
+  //   1. ต้องมี ≥3 รายการที่มี weight+reps (MIN_ENTRIES เดียวกับ estimateGoalEtaWeeks ใน lib/goalProgress.ts
+  //      — "พอสำหรับดู trend" ไม่ใช่เกณฑ์ใหม่ที่คิดขึ้นแยก)
+  //   2. รายการล่าสุดต้องอยู่ในช่วง 30 วันจากวันนี้ (ยังเป็นท่าที่ฝึกอยู่จริง ไม่ใช่ท่าที่เลิกฝึกไปนานแล้ว)
+  //   3. ไม่มีคู่รายการติดกันไหนที่ 1RM เปลี่ยนเกิน 50% (กันท่าที่มีข้อมูลผิดพลาด/พิมพ์ผิดหลุดเข้ามา) — เจอ
+  //      แม้จุดเดียวก็ตัดทั้งท่าทิ้ง ไม่ใช่แค่ไม่นับจุดนั้น
+  //   4. slope ของเส้นแนวโน้ม least-squares (สูตรเดียวกับ estimateGoalEtaWeeks) ใช้ตัดสินแค่ "ทิศทาง"
+  //      (ไม่ติดลบ vs ติดลบ) ไม่เอาค่า slope จริงมาเทียบข้ามท่ากันตรงๆ เพราะสเกลน้ำหนักแต่ละท่าไม่เท่ากัน
+  //      (เช่น Leg Press +0.5 kg/สัปดาห์ เทียบ Curl +0.5 kg/สัปดาห์ คนละความหมายกันเลย)
+  //   5. เสมอกัน (ทิศทาง slope เดียวกัน) ตัดสินด้วยจำนวนรายการเยอะกว่าก่อน แล้วค่อยวันที่ล่าสุดใหม่กว่า
+  // ไม่มีท่าไหนผ่านเกณฑ์ 1-3 เลย = คืน null ให้ตกกลับไปใช้ latestExerciseWithData (พฤติกรรมเดิม) แทน —
+  // dropdown ยังเปลี่ยนท่าเองได้ตามปกติทุกกรณี นี่แค่เลือกค่าเริ่มต้นให้ฉลาดขึ้นเท่านั้น
+  const MIN_1RM_ENTRIES = 3
+  const MAX_STALE_DAYS = 30
+  const MAX_JUMP_PCT = 50
+  const bestProgressionExercise = useMemo(() => {
+    const todayMs = new Date(`${todayStr()}T00:00:00`).getTime()
+    type Candidate = { name: string; slopeNonNegative: boolean; count: number; latestDate: string }
+    const candidates: Candidate[] = []
+
+    exerciseNames.forEach((name) => {
+      const entries = workouts
+        .filter((w) => w.type === 'strength' && w.exercise_name === name && w.weight_kg && w.reps)
+        .map((w) => ({ date: w.performed_at, oneRM: w.weight_kg! * (1 + w.reps! / 30) }))
+        .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+
+      if (entries.length < MIN_1RM_ENTRIES) return
+
+      const latestDate = entries[entries.length - 1].date
+      const daysSinceLatest = (todayMs - new Date(`${latestDate}T00:00:00`).getTime()) / 86_400_000
+      if (daysSinceLatest > MAX_STALE_DAYS) return
+
+      for (let i = 1; i < entries.length; i++) {
+        const prev = entries[i - 1].oneRM
+        const cur = entries[i].oneRM
+        if (prev <= 0) continue
+        if (Math.abs((cur - prev) / prev) * 100 > MAX_JUMP_PCT) return
+      }
+
+      const firstMs = new Date(`${entries[0].date}T00:00:00`).getTime()
+      const points = entries.map((e) => ({
+        x: (new Date(`${e.date}T00:00:00`).getTime() - firstMs) / 86_400_000,
+        y: e.oneRM,
+      }))
+      const n = points.length
+      const meanX = points.reduce((s, p) => s + p.x, 0) / n
+      const meanY = points.reduce((s, p) => s + p.y, 0) / n
+      const numerator = points.reduce((s, p) => s + (p.x - meanX) * (p.y - meanY), 0)
+      const denominator = points.reduce((s, p) => s + (p.x - meanX) ** 2, 0)
+      const slope = denominator === 0 ? 0 : numerator / denominator
+
+      candidates.push({ name, slopeNonNegative: slope >= 0, count: entries.length, latestDate })
+    })
+
+    if (candidates.length === 0) return null
+    candidates.sort((a, b) => {
+      if (a.slopeNonNegative !== b.slopeNonNegative) return a.slopeNonNegative ? -1 : 1
+      if (a.count !== b.count) return b.count - a.count
+      return a.latestDate < b.latestDate ? 1 : a.latestDate > b.latestDate ? -1 : 0
+    })
+    return candidates[0].name
+  }, [workouts, exerciseNames])
+
   const [selectedExercise, setSelectedExercise] = useState('')
 
   useEffect(() => {
     if (!selectedExercise && exerciseNames.length > 0) {
-      setSelectedExercise(latestExerciseWithData ?? exerciseNames[0])
+      setSelectedExercise(bestProgressionExercise ?? latestExerciseWithData ?? exerciseNames[0])
     }
-  }, [exerciseNames, latestExerciseWithData, selectedExercise])
+  }, [exerciseNames, bestProgressionExercise, latestExerciseWithData, selectedExercise])
 
   // combobox ค้นหาท่าสำหรับ Estimated 1RM Trend — แทน native <select> เดิมที่ไม่รองรับการพิมพ์กรองรายชื่อ
   // (มีปัญหาชัดเมื่อคลังท่าโตขึ้น) แยก state ค้นหาออกจาก selectedExercise เอง ไม่กรอง exerciseNames ที่ใช้
