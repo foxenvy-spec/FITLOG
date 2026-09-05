@@ -958,12 +958,20 @@ export default function DashboardPage() {
   // ลง', Rest = 'ควรพักหรือฝึกเบามากๆ' — รุนแรงกว่ากันชัดเจน)" — แยกป้ายตาม tier เดียวกันนี้เป๊ะ ไม่คิดเกณฑ์
   // ใหม่: Recovering -> "Light", Rest -> "Very Light" — ไม่แตะ/ลดความเข้มข้อความ MINT Coach เลย (ตั้งใจให้
   // UI สะท้อน severity ที่ระบบคำนวณไว้อยู่แล้ว ไม่ใช่ลดข้อความให้เข้ากับ UI)
-  const scheduledMuscleLightness: 'Light' | 'Very Light' | null =
-    data?.todaysRecommendation?.lowRecoveryCaution && !data?.todaysRecommendation?.scheduleOverriddenFrom
-      ? recoveryTier(data.todaysRecommendation.pct).labelEn === 'Rest'
-        ? 'Very Light'
-        : 'Light'
-      : null
+  //
+  // ฟีดแบ็ก (รอบถัดมาอีก) "วันพักตามแผน + Recovery 100% Excellent ไม่ควรใส่ Light/Very Light เลย แต่ก็ไม่
+  // ควรปล่อยว่างเฉยๆ — อยาก Normal/Light/Very Light ครบ 3 tier โชว์เสมอ ไม่ใช่ Normal เป็น implicit state
+  // ต่างจาก Light/Very Light ที่ explicit" — ขยายจาก boolean (lowRecoveryCaution เท่านั้น) เป็น 3 ค่า
+  // ครอบคลุมทุก tier ของ recoveryTier() เอง (Excellent/Good -> "Normal") เงื่อนไข "ไม่มี scheduleOverriddenFrom"
+  // ยังคงอยู่เหมือนเดิม (กันกรณี rec.pct เป็นของกล้ามเนื้อที่ถูกสลับ ไม่ใช่ของวันตามตารางอีกต่อไป)
+  const scheduledMuscleIntensity: 'Normal' | 'Light' | 'Very Light' | null = (() => {
+    const rec = data?.todaysRecommendation
+    if (!rec || rec.scheduleOverriddenFrom) return null
+    const tier = recoveryTier(rec.pct).labelEn
+    if (tier === 'Rest') return 'Very Light'
+    if (tier === 'Recovering') return 'Light'
+    return 'Normal'
+  })()
   // ฟีดแบ็ก "Today's Workout มีหลายอย่างแย่งความสนใจ (0 Exercises, 0 Sets, ~10 นาที, AI reasoning, ปุ่ม,
   // ข้อความ) — User ไม่รู้ว่าควรกดอะไรใน 1-2 วินาทีแรก ตอนยังไม่มี Workout วันนี้เลย ให้เหลือแค่ Hero
   // Message + CTA เดียว" — true เฉพาะตอนไม่มีทั้งโปรแกรม (scheduledDay) และยังไม่ได้ log อะไรเลยวันนี้
@@ -2524,16 +2532,16 @@ export default function DashboardPage() {
               {scheduledDay && !todayCompleted ? (
                 <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
                   Today → {splitTitleDetail(scheduledDay.title).main}
-                  {scheduledMuscleLightness && (
-                    <span style={{ color: recoveryTier(data.todaysRecommendation?.pct ?? 0).color }}> · {scheduledMuscleLightness}</span>
+                  {scheduledMuscleIntensity && (
+                    <span style={{ color: recoveryTier(data.todaysRecommendation?.pct ?? 0).color }}> · {scheduledMuscleIntensity}</span>
                   )}
                 </p>
               ) : (
                 next && (
                   <p className="text-[12px] mt-1 truncate" style={{ color: COLORS.amber }}>
                     Next → {splitTitleDetail(next.day.title).main}
-                    {scheduledMuscleLightness && (
-                      <span style={{ color: recoveryTier(data.todaysRecommendation?.pct ?? 0).color }}> · {scheduledMuscleLightness}</span>
+                    {scheduledMuscleIntensity && (
+                      <span style={{ color: recoveryTier(data.todaysRecommendation?.pct ?? 0).color }}> · {scheduledMuscleIntensity}</span>
                     )}
                   </p>
                 )
