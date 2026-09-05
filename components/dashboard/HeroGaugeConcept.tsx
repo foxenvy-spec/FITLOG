@@ -241,41 +241,54 @@ export default function HeroGaugeConcept({
 
       <div className="relative z-10 flex items-center justify-center gap-6 sm:gap-10">
         {/* Fitness Score — กดได้ถ้าส่ง onFitnessScoreClick มา (ใช้ตอนฝังใน header จริง เปิด
-            FitnessScoreDetailSheet เดิม) ไม่ส่งมา = แค่แสดงผลเฉยๆ เหมือนหน้า preview */}
-        <button
-          type="button"
-          onClick={onFitnessScoreClick}
-          disabled={!onFitnessScoreClick}
-          className={`relative flex items-center justify-center shrink-0 ${onFitnessScoreClick ? 'cursor-pointer hover:brightness-110 transition' : 'cursor-default'}`}
-          style={{ width: fitnessRingSize, height: fitnessRingSize }}
-          aria-haspopup={onFitnessScoreClick ? 'dialog' : undefined}
-          aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel}${onFitnessScoreClick ? ' — กดดูรายละเอียด' : ''}`}
-        >
-          <GlowLayers size={fitnessRingSize} color={fitnessScore.color} />
-          {/* ฟีดแบ็ก "ตรงที่มีอะไรวิ่งอยู่ในวงกลม ไม่เอาตรงนี้ได้ไหม" — glow=true เดิมเปิดจุดสว่างที่วิ่ง
-              วนรอบวง (.animate-ring-sweep-slow) + spark กะพริบ (.animate-ring-spark-flash) ใน
-              GoalRing.tsx ตัดออก (ไม่ระบุ glow = false ดีฟอลต์) เหลือแค่เส้น progress คงที่ — ไม่กระทบ
-              ออร่า/เรืองแสงรอบวง (GlowLayers ด้านบน คนละส่วนกัน ไม่ใช่ตัวที่ทำให้เกิดจุดวิ่ง) */}
-          <GoalRing
-            pct={fitnessScore.score}
-            size={fitnessRingSize}
-            strokeWidth={fitnessStrokeWidth}
-            color={fitnessScore.color}
-            valueLabel=" "
-            innerDiscColor={INNER_DISC}
-            ariaLabel={`Fitness Score ${fitnessScore.score}`}
-          />
-          <DialText
-            eyebrow="Fitness Score"
-            value={String(fitnessScore.score)}
-            tierLabel={fitnessScore.tierLabel}
-            color={fitnessScore.color}
-            diff={fitnessScoreDiff}
-            diffColor={COLORS.rust}
-            advice={fitnessAdvice}
-            ringSize={fitnessRingSize}
-          />
-        </button>
+            FitnessScoreDetailSheet เดิม) ไม่ส่งมา = แค่แสดงผลเฉยๆ เหมือนหน้า preview
+            ฟีดแบ็ก (design review) "Fitness Score 60 กับ Recovery 100% อาจทำให้ผู้ใช้สงสัยว่าเป็นคนละมิติ
+            กันจริงไหม" — เพิ่ม subtitle ไทยสั้นๆ อธิบายมิติของแต่ละวง (Fitness Score = ความฟิตโดยรวม/ระยะยาว,
+            Recovery = ความพร้อมวันนี้) โดยไม่แตะคำภาษาอังกฤษเดิม/สูตรคำนวณ/ariaLabel ใดๆ — ย้าย eyebrow
+            "Fitness Score" ออกจากในวงมาไว้นอกวงเป็น caption แบบเดียวกับที่ Recovery ใช้อยู่แล้ว (ให้ทั้งคู่
+            มี pattern เดียวกัน: วงโชว์แค่ value/tier/advice, ชื่อ metric+subtitle อยู่นอกวง) กันความเสี่ยง
+            wrap ซ้ำ (วงนี้เคยมีประวัติปัญหานี้กับ Recovery มาก่อน — ดู comment ที่วง Recovery ด้านล่าง) */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={onFitnessScoreClick}
+            disabled={!onFitnessScoreClick}
+            className={`relative flex items-center justify-center shrink-0 ${onFitnessScoreClick ? 'cursor-pointer hover:brightness-110 transition' : 'cursor-default'}`}
+            style={{ width: fitnessRingSize, height: fitnessRingSize }}
+            aria-haspopup={onFitnessScoreClick ? 'dialog' : undefined}
+            aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel}${onFitnessScoreClick ? ' — กดดูรายละเอียด' : ''}`}
+          >
+            <GlowLayers size={fitnessRingSize} color={fitnessScore.color} />
+            {/* ฟีดแบ็ก "ตรงที่มีอะไรวิ่งอยู่ในวงกลม ไม่เอาตรงนี้ได้ไหม" — glow=true เดิมเปิดจุดสว่างที่วิ่ง
+                วนรอบวง (.animate-ring-sweep-slow) + spark กะพริบ (.animate-ring-spark-flash) ใน
+                GoalRing.tsx ตัดออก (ไม่ระบุ glow = false ดีฟอลต์) เหลือแค่เส้น progress คงที่ — ไม่กระทบ
+                ออร่า/เรืองแสงรอบวง (GlowLayers ด้านบน คนละส่วนกัน ไม่ใช่ตัวที่ทำให้เกิดจุดวิ่ง) */}
+            <GoalRing
+              pct={fitnessScore.score}
+              size={fitnessRingSize}
+              strokeWidth={fitnessStrokeWidth}
+              color={fitnessScore.color}
+              valueLabel=" "
+              innerDiscColor={INNER_DISC}
+              ariaLabel={`Fitness Score ${fitnessScore.score}`}
+            />
+            <DialText
+              value={String(fitnessScore.score)}
+              tierLabel={fitnessScore.tierLabel}
+              color={fitnessScore.color}
+              diff={fitnessScoreDiff}
+              diffColor={COLORS.rust}
+              advice={fitnessAdvice}
+              ringSize={fitnessRingSize}
+            />
+          </button>
+          <span className="tracked uppercase leading-none" style={{ fontSize: 10, color: TEXT.secondary, letterSpacing: '0.1em' }}>
+            Fitness Score
+          </span>
+          <span className="leading-none" style={{ fontSize: 9, color: TEXT.secondary }}>
+            ความฟิตโดยรวม
+          </span>
+        </div>
 
         {/* Recovery — เฉพาะตอนมีข้อมูลจริง (ดูคอมเมนต์ recoveryPct? ใน props ด้านบน)
             ฟีดแบ็ก (design review) "Recovery 29% (วงนี้) vs Muscle Recovery 33% (การ์ด AI Coach) อยู่ใกล้
@@ -289,9 +302,13 @@ export default function HeroGaugeConcept({
             ตัวอักษร — แก้ต้นตอด้วยการย้าย label ออกไปไว้นอกวงแทนที่จะพยายามยัดคำเข้าไปในพื้นที่จำกัดเดิม:
             ตัด eyebrow="Overall" ออกจาก DialText ไปเลย (ให้ value/tier/advice ในวงมีพื้นที่มากขึ้นด้วย) แล้ว
             เพิ่มป้าย "Recovery" เป็น caption แยกอยู่ใต้วงนี้โดยเฉพาะ (ไม่ใช่ลอยกลางระหว่าง 2 วง กันเข้าใจผิด
-            ว่าอธิบายทั้งคู่) — ไม่แตะวง Fitness Score ฝั่งซ้าย (eyebrow "Fitness Score" เดิมไม่เคยมีปัญหา
-            overflow เลย ไม่ควรแก้สิ่งที่ยังไม่พัง) aria-label ด้านล่างยังพูด "Recovery X% — Label" เต็มๆ
-            สำหรับ screen reader เหมือนเดิม (ตอนนี้ตรงกับ label ที่เห็นบนจอด้วยพอดี) */}
+            ว่าอธิบายทั้งคู่) aria-label ด้านล่างยังพูด "Recovery X% — Label" เต็มๆ สำหรับ screen reader
+            เหมือนเดิม (ตอนนี้ตรงกับ label ที่เห็นบนจอด้วยพอดี)
+            ฟีดแบ็ก (design review รอบถัดมาอีก) "Fitness Score 60 / Recovery 100% ยังอาจดูเหมือนคนละคะแนน
+            ของ metric เดียวกัน" — เพิ่ม subtitle "ความพร้อมวันนี้" ต่อท้าย caption "Recovery" (ยังคงคำว่า
+            "Recovery" ไว้ตามเดิม ไม่ย้อนกลับไปใช้ "Readiness" ตามที่เคยพิจารณาแล้วตัดสินใจไม่ใช้ — แค่เสริม
+            คำไทยช่วยขยายความว่า 100% ตรงนี้หมายถึงความพร้อมฝึกของวันนี้ ไม่ใช่คะแนน Fitness ระยะยาว) วางนอก
+            วงเหมือน "Recovery" เดิมทุกประการ กันความเสี่ยง wrap ซ้ำ */}
         {recoveryPct != null && recoveryLabel && (
           <div className="flex flex-col items-center gap-1 shrink-0">
             <div className="relative flex items-center justify-center shrink-0" style={{ width: recoveryRingSize, height: recoveryRingSize }}>
@@ -317,6 +334,9 @@ export default function HeroGaugeConcept({
             </div>
             <span className="tracked uppercase leading-none" style={{ fontSize: 10, color: TEXT.secondary, letterSpacing: '0.1em' }}>
               Recovery
+            </span>
+            <span className="leading-none" style={{ fontSize: 9, color: TEXT.secondary }}>
+              ความพร้อมวันนี้
             </span>
           </div>
         )}
