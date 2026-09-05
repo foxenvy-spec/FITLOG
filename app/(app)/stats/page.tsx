@@ -112,7 +112,7 @@ export default function StatsPage() {
   const [actualRepsByWorkout, setActualRepsByWorkout] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [prs, setPrs] = useState<{ name: string; weight: number; reps: number | null; date: string }[]>([])
+  const [prs, setPrs] = useState<{ name: string; weight: number; reps: number | null; date: string; previousBest: number | null }[]>([])
   // ฟีดแบ็ก "อยากได้ Search Box ในส่วน Personal Records — พิมพ์ 'Bench'/'Squat' แล้วกรองได้เลย" —
   // filter ฝั่ง client ล้วนๆ (prs ทั้งหมดโหลดมาอยู่ในมือแล้ว ไม่ต้อง query ใหม่) จับคู่แบบ substring
   // ไม่สนตัวพิมพ์เล็ก-ใหญ่ ครอบคลุมทั้งชื่อท่าไทย/อังกฤษที่ผู้ใช้อาจพิมพ์มา
@@ -187,14 +187,34 @@ export default function StatsPage() {
         .not('weight_kg', 'is', null)
         .order('weight_kg', { ascending: false })
         .limit(500)
-      const seen = new Set<string>()
-      const top: { name: string; weight: number; reps: number | null; date: string }[] = []
+      // ฟีดแบ็ก (design review) "PR section ดี แต่ควรแสดง progress มากกว่าแค่ record — 'Leg Press 70 kg ×
+      // 15 ↑ +10 kg จาก PR เดิม' ให้รู้ทันทีว่าพัฒนาไปเท่าไร" — data มาจาก query เดิมเป๊ะ (500 แถวหนักสุด
+      // เรียงจากมากไปน้อย ไม่เพิ่ม query ใหม่) แค่ไม่ทิ้งแถวที่ 2 เป็นต้นไปของแต่ละท่าเหมือนเดิม (เดิมเจอชื่อ
+      // ซ้ำแล้ว skip ทิ้งเลย) — เก็บค่าที่ "หนักที่สุดรองลงมา" (ต้องน้อยกว่า PR จริงๆ ไม่ใช่แค่ไม่ใช่แถวแรก
+      // กันกรณีทำน้ำหนักเดิมซ้ำหลายครั้งแล้วนับเป็น "สถิติใหม่" ผิดๆ) ไว้เป็น previousBest — null เมื่อนี่คือ
+      // ครั้งแรกที่เคยบันทึกท่านี้เลย (ไม่มี "ของเดิม" ให้เทียบ ไม่ใช่ progress 0)
+      // ข้อจำกัดที่รู้อยู่แล้ว: previousBest หาไม่เจอถ้าแถวนั้นหลุดพ้น top 500 หนักสุดของทั้งบัญชี (เช่น ท่า
+      // isolation เบาๆ ที่มีแค่ 2 ครั้ง แต่ท่าอื่นหนักกว่าเบียดแถวจนหลุด limit) — ยอมรับได้ (ไม่โชว์ badge
+      // เฉยๆ ในเคสนั้น) ดีกว่ายิง query แยกรายท่า (N+1) เพื่อความสมบูรณ์แบบร้อยเปอร์เซ็นต์
+      const bestByName = new Map<string, { weight: number; reps: number | null; date: string }>()
+      const previousBestByName = new Map<string, number>()
       ;(data ?? []).forEach((row: { exercise_name: string | null; weight_kg: number | null; reps: number | null; performed_at: string }) => {
         const name = row.exercise_name
-        if (!name || row.weight_kg === null || seen.has(name)) return
-        seen.add(name)
-        top.push({ name, weight: row.weight_kg, reps: row.reps, date: row.performed_at })
+        if (!name || row.weight_kg === null) return
+        const existing = bestByName.get(name)
+        if (!existing) {
+          bestByName.set(name, { weight: row.weight_kg, reps: row.reps, date: row.performed_at })
+        } else if (row.weight_kg < existing.weight && !previousBestByName.has(name)) {
+          previousBestByName.set(name, row.weight_kg)
+        }
       })
+      const top = [...bestByName.entries()].map(([name, best]) => ({
+        name,
+        weight: best.weight,
+        reps: best.reps,
+        date: best.date,
+        previousBest: previousBestByName.get(name) ?? null,
+      }))
       setPrs(top.slice(0, 6))
     }
     loadPRs()
@@ -1044,8 +1064,17 @@ export default function StatsPage() {
                         </span>
                       )}
                     </span>
-                    <span className="font-mono text-sm text-violet">
-                      {format(p.weight)}{p.reps ? ` × ${p.reps}` : ''}
+                    <span className="text-right">
+                      <span className="font-mono text-sm text-violet block">
+                        {format(p.weight)}{p.reps ? ` × ${p.reps}` : ''}
+                      </span>
+                      {/* ฟีดแบ็ก "PR section ดี แต่ควรแสดง progress มากกว่าแค่ record" — เฉพาะตอนมีของเดิม
+                          ให้เทียบจริง (previousBest ไม่ null) ไม่โชว์อะไรตอนนี่คือครั้งแรกที่บันทึกท่านี้ */}
+                      {p.previousBest !== null && (
+                        <span className="text-[12px] font-mono text-moss block mt-0.5">
+                          ↑ +{format(p.weight - p.previousBest)} จาก PR เดิม
+                        </span>
+                      )}
                     </span>
                   </a>
                 )
