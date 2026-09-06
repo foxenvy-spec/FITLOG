@@ -1320,8 +1320,14 @@ export default function DashboardPage() {
                 ลงจาก Level 1" — Recovery/Training This Week (การ์ดข้างเคียงระดับเดียวกัน) ใช้ bg-surface2/40
                 ไม่มี shadow-elevated มาตั้งแต่ v41 ("การ์ดรอง ไม่ใช่ Hero") แต่การ์ดนี้หลุดไม่ได้ปรับตาม เลย
                 ดูหนักกว่า 2 ใบข้างๆ ที่ควรเป็นน้ำหนักภาพเท่ากัน — ปรับให้ตรงกัน */}
-            <div className="rounded-card bg-surface2/40 border border-line px-4 py-3">
-              <p className="text-[12px] tracked uppercase text-muted mb-2 flex items-center gap-1">
+            {/* ฟีดแบ็ก (design review รอบถัดมา, P2) "Body Goal card ดี แต่กินพื้นที่ค่อนข้างมากเทียบกับข้อมูล
+                ที่แสดง — compact ลง ~15-20% โดยไม่เปลี่ยน concept/ตัดข้อมูล" (คนละเรื่องกับ "#3" รอบก่อนที่เคย
+                ถูกยกเลิกไป — รอบนั้นเสนอรวม %/current→goal เป็นบรรทัดเดียวซึ่งจะเปลี่ยน concept, รอบนี้แค่ลด
+                padding/spacing เดิมทั้งชุดลง ไม่แตะ layout ของแต่ละบรรทัด) — py-3 -> py-2.5 (-17%), mb-2 ->
+                mb-1.5 (-25%, ใกล้เคียงช่วงที่ขอที่สุดในสเกล Tailwind ที่มี), gap-4 -> gap-3.5 (-12.5%, เผื่อ
+                กรณี viewport แคบที่ grid ตกเป็น 1 คอลัมน์ gap นี้ทำหน้าที่เป็นระยะห่างแนวตั้งระหว่าง 2 metric) */}
+            <div className="rounded-card bg-surface2/40 border border-line px-4 py-2.5">
+              <p className="text-[12px] tracked uppercase text-muted mb-1.5 flex items-center gap-1">
                 Body Goal
                 {/* ฟีดแบ็ก (P2, "Metric explanation") "Progress % (เช่น 37%) เพิ่ม ⓘ อธิบายว่าคำนวณจากอะไร" */}
                 <InfoTooltip
@@ -1329,7 +1335,7 @@ export default function DashboardPage() {
                   text="% ความคืบหน้าจากค่าที่บันทึกไว้ครั้งแรก (ไม่ใช่แค่ตอนตั้งเป้า) ไปจนถึงเป้าหมายที่ตั้งไว้ — 0% = เท่ากับจุดเริ่มต้น, 100% = ถึงเป้าหมายพอดี"
                 />
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {weightPct !== null && (
                   <div>
                     {/* ฟีดแบ็ก "Label ของ Card ควร Contrast ต่ำกว่าตัวเลขประมาณ 1 ระดับ (Label → Value

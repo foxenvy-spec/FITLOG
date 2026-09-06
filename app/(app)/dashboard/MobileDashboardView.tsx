@@ -458,10 +458,15 @@ export default function MobileDashboardView() {
                   detail ที่เหลือยังเป็น text-muted เหมือนเดิม — เพิ่มบรรทัด ETA (weightEtaWeeks/
                   bodyFatEtaWeeks) ที่ Desktop มีอยู่แล้วด้วย เพราะเป็นฟิลด์เดียวกันใน DashboardData ที่
                   fetchDashboardData คำนวณมาให้ทั้งสองฝั่งอยู่แล้ว (Mobile แค่ยังไม่เคยโชว์ ไม่ใช่ข้อมูลใหม่/
-                  สูตรใหม่) */}
-              <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3.5">
-                <p className="text-[12px] tracked uppercase text-muted mb-3">Body Goal</p>
-                <div className="space-y-3">
+                  สูตรใหม่)
+                  ฟีดแบ็ก (design review รอบถัดมา, P2) "Body Goal card ดี แต่กินพื้นที่ค่อนข้างมากเทียบกับ
+                  ข้อมูลที่แสดง — compact ลง ~15-20% โดยไม่เปลี่ยน concept/ตัดข้อมูล" (คนละเรื่องกับ "#3" รอบก่อน
+                  ที่เคยถูกยกเลิกไปเพราะจะรวมบรรทัด %/current→goal เข้าด้วยกัน เปลี่ยน concept — รอบนี้แค่ลด
+                  padding/spacing เดิมทั้งชุด ไม่แตะ layout ของแต่ละบรรทัดเลย) — py-3.5 -> py-3 (-14%), mb-3 ->
+                  mb-2.5 (-17%), space-y-3 (ระยะระหว่างบล็อกน้ำหนัก/Body Fat) -> space-y-2.5 (-17%) */}
+              <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3">
+                <p className="text-[12px] tracked uppercase text-muted mb-2.5">Body Goal</p>
+                <div className="space-y-2.5">
                   {weightPct !== null && (
                     <div>
                       <div className="flex items-baseline justify-between">
