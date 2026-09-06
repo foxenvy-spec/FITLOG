@@ -837,15 +837,23 @@ function LogPageInner() {
 
         {daySummary && (
           <div>
-            <p className="text-[12px] tracked uppercase text-muted mb-2">สรุปวันนี้</p>
+            {/* บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "การ์ดนี้เขียน 'สรุปวันนี้' ตายตัว ทั้งที่จริงสรุปของ date
+                ที่กำลังดูอยู่ (อาจไม่ใช่วันนี้ ถ้าเปิดผ่าน ?edit=<id> หรือแก้ date picker เพื่อ backfill
+                วันเก่า) — เปลี่ยนหัวข้อให้อิง date จริงแทน กันเข้าใจผิดว่าออกกำลังกาย 'วันนี้' ไปแล้ว */}
+            <p className="text-[12px] tracked uppercase text-muted mb-2">
+              {date === todayStr() ? 'สรุปวันนี้' : `สรุป ${shortDate(date)}`}
+            </p>
             <PremiumCard className="px-4 py-3.5 grid grid-cols-2 gap-3">
               <div>
                 <p className="text-lg font-display text-amber">{daySummary.totalSets}</p>
                 <p className="text-[12px] text-muted">เซ็ตรวม</p>
               </div>
               <div>
-                <p className="text-lg font-display text-amber">{Math.round(daySummary.totalVolumeKg).toLocaleString('th-TH')}</p>
-                <p className="text-[12px] text-muted">วอลุ่ม (kg)</p>
+                {/* บั๊ก "วอลุ่มไม่แปลงหน่วยตาม weight-unit preference" — จุดอื่นทุกจุดในหน้านี้ใช้
+                    toDisplay()/unit จาก useWeightUnit() (เหมือน DaySummaryHeader.tsx) มีแค่การ์ดนี้
+                    ที่โชว์ totalVolumeKg ดิบๆ พร้อม label "(kg)" ฝังตายตัว */}
+                <p className="text-lg font-display text-amber">{Math.round(toDisplay(daySummary.totalVolumeKg)).toLocaleString('th-TH')}</p>
+                <p className="text-[12px] text-muted">วอลุ่ม ({unit})</p>
               </div>
               {daySummary.durationMin !== null && (
                 <div>
