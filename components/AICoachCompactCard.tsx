@@ -16,6 +16,7 @@ import {
   CARD_BORDER_CSS,
   CARD_INSET_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
+  withAlpha,
 } from '@/lib/theme'
 import { recoveryTier, recoveryVerdictEmoji, type TodaysRecommendation } from '@/lib/dashboardStats'
 import { describeMuscleFocus, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
@@ -212,6 +213,12 @@ export default function AICoachCompactCard({
   // ซ้ำใน component นี้อีกแล้ว — ตัวเลขเดียวกับที่ Insight ใช้เป๊ะ ไม่มีโอกาสเพี้ยนจาก recoveryDates ที่อาจ
   // ไม่ sync กับตอนที่ recommendation engine คำนวณ pct ไว้
   const displayPct = resolved.recoveryPct ?? 0
+  // ฟีดแบ็ก (design review, P2) "Mint Coach ควรเด่นขึ้น แต่ CTA ต้องไม่มี glow (สงวนไว้ให้ Today's
+  // Workout hero เป็น glow-CTA เดียวของหน้าเท่านั้น)" — เพิ่มความเด่นด้วย contrast/น้ำหนักตัวอักษรแทน:
+  // border alpha ของปุ่ม secondary เดิม (40, ~25%) -> 66 (~40%) + font-semibold เฉพาะปุ่มในการ์ดนี้
+  // (ผ่าน style/className override เฉพาะจุดเรียกใช้ ไม่แตะ Button.tsx กลางซึ่งใช้ร่วมกับปุ่ม secondary
+  // อื่นทั่วแอป — เปลี่ยนตรงนั้นจะกระทบทุกจุดโดยไม่ตั้งใจ)
+  const ctaEmphasisStyle = { border: `1px solid ${withAlpha(COLORS.amber, '66')}` }
 
   async function handleStart() {
     if (!chosen || chosenExercises.length === 0) return
@@ -326,10 +333,18 @@ export default function AICoachCompactCard({
               จริง ไม่ใช่ metadata ตกแต่ง: สลับตาม isRecommendationForToday บอกว่าคำแนะนำนี้เป็นของ "วันนี้ที่
               ยังไม่เริ่ม" (Today) หรือ "เซสชันถัดไป" (เดิม Next เฉยๆ) — เปลี่ยนเป็น "Next Session" ให้อ่านชัด
               ว่าหมายถึงอะไรโดยไม่ต้องเดา (Today ไม่แตะ อ่านชัดอยู่แล้วในบริบท) */}
+          {/* ฟีดแบ็ก (design review, P2) "Mint Coach ควรเด่นขึ้นอีกนิด แต่ไม่ใช่ด้วยขนาด/glow (ผ่านการลด
+              มาหลายรอบแล้วโดยเจตนา) — ให้เล่นที่ hierarchy แทน" — แยก "MINT Coach" (ป้ายชื่อการ์ด ยังคง
+              น้ำหนัก/สี TEXT.body เดิม ไม่ใช่ action) ออกจาก "Today"/"Next Session" (ข้อมูลที่ actionable
+              จริง) ให้ส่วนหลังหนา+สว่างขึ้น (font-semibold, TEXT.title) แทนที่จะเท่ากันทั้งบรรทัดแบบเดิม —
+              ไม่แตะ glow/ขนาด/padding การ์ดใดๆ เลยตามที่ตกลง */}
           <div className="flex items-center justify-between gap-x-2 gap-y-0.5 flex-wrap">
-            <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0" style={{ color: TEXT.body }}>
+            <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0">
               <span aria-hidden="true" className="shrink-0">✨</span>
-              <span className="whitespace-nowrap">MINT Coach · {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}</span>
+              <span className="whitespace-nowrap" style={{ color: TEXT.body }}>MINT Coach ·</span>{' '}
+              <span className="whitespace-nowrap font-semibold" style={{ color: TEXT.title }}>
+                {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}
+              </span>
             </p>
             <span className="flex items-center gap-1 text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
@@ -365,7 +380,7 @@ export default function AICoachCompactCard({
                 // พอดี (ส่วนสำคัญที่สุดหายไป เหลือแต่เหตุผลนำหน้า)" — สลับลำดับให้คำแนะนำหลักขึ้นก่อนเสมอ
                 // (เหมือนข้อความเดิมก่อนรอบนี้ทุกตัวอักษร) แล้วต่อท้ายด้วยเหตุผล — ถ้าพื้นที่ไม่พอ ellipsis
                 // จะตัดส่วนเหตุผล (ส่วนเสริม) แทนที่จะตัดคำแนะนำหลัก (ส่วนจำเป็น)
-                <p className="truncate mt-0.5" style={{ fontSize: 11, color: TEXT.body }}>
+                <p className="truncate mt-0.5 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
                   {thisWeekWorkoutDays != null && thisWeekWorkoutDays > 0
                     ? `วันนี้เหมาะกับการพักและฟื้นตัว — ฝึกมา ${thisWeekWorkoutDays} วันในสัปดาห์นี้แล้ว`
                     : 'วันนี้เหมาะกับการพักและฟื้นตัว'}
@@ -425,7 +440,7 @@ export default function AICoachCompactCard({
             // (chosen/handleStart ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ isRestDay สลับเป็น false ระหว่าง
             // เซสชัน แต่จะไม่ถูกเสนอเป็น action หลักตอนวันนี้เป็นวันพัก) เปลี่ยนเป็นลิงก์เบาๆ ไปดู
             // Recovery/AI Coach แทน ไม่ใช่ CTA เด่นแบบ "เริ่ม" เพราะ Rest Day ไม่ควรมี action ที่เด่นกว่า "พัก"
-            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดู Recovery →
             </Button>
           ) : muscleRecommendation?.lowRecoveryCaution ? (
@@ -440,7 +455,7 @@ export default function AICoachCompactCard({
             // ฟีดแบ็ก "หัวการ์ดบอก MINT Coach แต่ปุ่มเขียน 'ดูคำแนะนำ Recovery' ทำให้รู้สึกว่าปุ่มพาไปหน้า
             // Recovery มากกว่า Coach" — เปลี่ยนเป็น "ดูคำแนะนำเพิ่มเติม →" (สั้น ไม่ซ้ำคำว่า MINT Coach ที่
             // อยู่ในหัวการ์ดอยู่แล้ว) — href ยังพาไปหน้าเดิม (/coach) ไม่เปลี่ยน แค่คำที่ปุ่มพูด
-            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดูคำแนะนำเพิ่มเติม →
             </Button>
           ) : nextRecommendationMismatch ? (
@@ -452,7 +467,7 @@ export default function AICoachCompactCard({
             // ไม่เสนอปุ่ม "เริ่ม X" (จาก workout_templates ซึ่งเป็นคนละระบบกับ program_days อีกชั้น) ให้กด
             // เริ่มเซสชันที่ดูเหมือนเป็น "Next Session" แต่จริงๆ ไม่ตรงกับ "Next →" ของการ์ด Training This
             // Week เลย — สลับไปดูรายละเอียดที่ /coach แทน (เหมือน pattern isRestDay/lowRecoveryCaution ด้านบน)
-            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0">
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดูคำแนะนำเพิ่มเติม →
             </Button>
           ) : templatesLoading ? (
@@ -468,7 +483,7 @@ export default function AICoachCompactCard({
             // Today's Workout hero (DashboardView.tsx) เป็น glow-CTA หลักของหน้าอยู่แล้ว ปุ่มนี้ (การ์ด
             // MINT Coach ซึ่งตั้งใจให้เป็น "Assistant Layer" ไม่แข่งกับ Dashboard ตามฟีดแบ็กรอบก่อนๆ)
             // เปลี่ยนเป็น variant="secondary" (กรอบอำพัน ไม่มี glow) แทน
-            <Button type="button" onClick={handleStart} disabled={starting} variant="secondary" className="flex-1 min-w-0">
+            <Button type="button" onClick={handleStart} disabled={starting} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               <span className="truncate">{starting ? '...' : `เริ่ม ${startLabel}`}</span>
               {!starting && <span aria-hidden="true">→</span>}
             </Button>
@@ -476,11 +491,11 @@ export default function AICoachCompactCard({
             // ฟีดแบ็ก "CORE กับ DAY 5 — LOWER" — กรณีมีเทมเพลตอยู่แล้วแต่ไม่มีตัวไหนมีท่าตรงกับ mg เลย
             // (bestTemplateFor คืน undefined) เดิมจะหลุดไปโชว์ "สร้างโปรแกรมแรก" ซึ่งผิด (มีเทมเพลตอยู่แล้ว)
             // และก่อนหน้านั้นยิ่งแย่กว่าคือแอบใช้เทมเพลตที่ไม่เกี่ยวข้องแทน — แยกเป็นข้อความที่ตรงความจริง
-            <Button as={Link} href="/templates" variant="secondary" className="flex-1 min-w-0">
+            <Button as={Link} href="/templates" variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดูเทมเพลตทั้งหมด →
             </Button>
           ) : (
-            <Button as={Link} href="/templates" variant="secondary" className="flex-1 min-w-0">
+            <Button as={Link} href="/templates" variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               สร้างโปรแกรมแรก
             </Button>
           )}
