@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { goalProgressLabel, goalProgressLabelParts, estimateGoalEtaWeeks } from './goalProgress'
 
 describe('goalProgressLabel', () => {
-  it('shows "เริ่มต้นเป้าหมาย" instead of "0% Progress" when there is no progress yet', () => {
+  it('shows "เริ่มต้นเป้าหมาย" instead of "0% ถึงเป้าหมาย" when there is no progress yet', () => {
     expect(goalProgressLabel(0)).toBe('เริ่มต้นเป้าหมาย')
   })
 
@@ -11,15 +11,15 @@ describe('goalProgressLabel', () => {
   })
 
   it('shows the rounded percentage once there is real progress', () => {
-    expect(goalProgressLabel(32.4)).toBe('32% Progress')
+    expect(goalProgressLabel(32.4)).toBe('32% ถึงเป้าหมาย')
   })
 
-  it('caps at 100% Progress', () => {
-    expect(goalProgressLabel(140)).toBe('100% Progress')
+  it('caps at 100% ถึงเป้าหมาย', () => {
+    expect(goalProgressLabel(140)).toBe('100% ถึงเป้าหมาย')
   })
 
   it('appends the remaining amount when provided', () => {
-    expect(goalProgressLabel(32.4, '7.1 kg')).toBe('32% Progress · เหลืออีก 7.1 kg')
+    expect(goalProgressLabel(32.4, '7.1 kg')).toBe('32% ถึงเป้าหมาย · เหลืออีก 7.1 kg')
   })
 
   it('appends the remaining amount to the "just started" label too', () => {
@@ -27,18 +27,18 @@ describe('goalProgressLabel', () => {
   })
 
   it('omits the remaining suffix when not provided', () => {
-    expect(goalProgressLabel(32.4, null)).toBe('32% Progress')
-    expect(goalProgressLabel(32.4)).toBe('32% Progress')
+    expect(goalProgressLabel(32.4, null)).toBe('32% ถึงเป้าหมาย')
+    expect(goalProgressLabel(32.4)).toBe('32% ถึงเป้าหมาย')
   })
 })
 
 describe('goalProgressLabelParts', () => {
-  it('splits headline (%) from detail (Progress · remaining) once there is real progress', () => {
-    expect(goalProgressLabelParts(32.4, '7.1 kg')).toEqual({ headline: '32%', detail: 'Progress · เหลืออีก 7.1 kg' })
+  it('splits headline (%) from detail (ถึงเป้าหมาย · remaining) once there is real progress', () => {
+    expect(goalProgressLabelParts(32.4, '7.1 kg')).toEqual({ headline: '32%', detail: 'ถึงเป้าหมาย · เหลืออีก 7.1 kg' })
   })
 
-  it('detail is just "Progress" when no remaining amount given', () => {
-    expect(goalProgressLabelParts(32.4)).toEqual({ headline: '32%', detail: 'Progress' })
+  it('detail is just "ถึงเป้าหมาย" when no remaining amount given', () => {
+    expect(goalProgressLabelParts(32.4)).toEqual({ headline: '32%', detail: 'ถึงเป้าหมาย' })
   })
 
   it('headline is "เริ่มต้นเป้าหมาย" (not a %) at 0 or negative pct', () => {
@@ -46,7 +46,7 @@ describe('goalProgressLabelParts', () => {
     expect(goalProgressLabelParts(-5)).toEqual({ headline: 'เริ่มต้นเป้าหมาย', detail: '' })
   })
 
-  it('detail carries just the remaining suffix (no "Progress" word) at 0 pct', () => {
+  it('detail carries just the remaining suffix (no "ถึงเป้าหมาย" word) at 0 pct', () => {
     expect(goalProgressLabelParts(0, '7.1 kg')).toEqual({ headline: 'เริ่มต้นเป้าหมาย', detail: '· เหลืออีก 7.1 kg' })
   })
 

@@ -35,12 +35,15 @@ export function goalProgressPct(
 // ให้ผู้เรียกใช้ (DashboardView.tsx) ไปจัด hierarchy ทางภาพเอง (ตัวใหญ่/สีเด่น vs ตัวเล็ก/จาง) โดยไม่ต้อง
 // parse string ย้อนกลับ — goalProgressLabel() เดิมยังคงพฤติกรรม/string output เป๊ะทุกประการ (ประกอบจาก
 // parts นี้เอง) ไม่กระทบจุดเรียกใช้เดิมที่ยังต้องการ string เดียว (เช่น MobileDashboardView.tsx)
+// ฟีดแบ็ก (design review, P2) "'7% Progress' ไม่ตอบว่า progress ของอะไร — 7% ของอะไรกันแน่?" — คำว่า
+// "Progress" เฉยๆ ไม่บอกทิศทาง (ถึงเป้าหมาย vs จากจุดเริ่มต้น) เปลี่ยนเป็น "ถึงเป้าหมาย" ให้ผู้ใช้อ่านแล้ว
+// เข้าใจทันทีว่า 7% คือระยะทางไปถึง goal ไปเท่าไรแล้ว (ไม่แตะเกณฑ์/ตัวเลข/headline % ใดๆ เลย แค่คำนี้คำเดียว)
 export function goalProgressLabelParts(pct: number, remainingText?: string | null): { headline: string; detail: string } {
   const rounded = Math.round(Math.max(0, Math.min(100, pct)))
   if (rounded <= 0) {
     return { headline: 'เริ่มต้นเป้าหมาย', detail: remainingText ? `· เหลืออีก ${remainingText}` : '' }
   }
-  return { headline: `${rounded}%`, detail: remainingText ? `Progress · เหลืออีก ${remainingText}` : 'Progress' }
+  return { headline: `${rounded}%`, detail: remainingText ? `ถึงเป้าหมาย · เหลืออีก ${remainingText}` : 'ถึงเป้าหมาย' }
 }
 
 export function goalProgressLabel(pct: number, remainingText?: string | null): string {
