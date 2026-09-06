@@ -337,12 +337,21 @@ export default function AICoachCompactCard({
               มาหลายรอบแล้วโดยเจตนา) — ให้เล่นที่ hierarchy แทน" — แยก "MINT Coach" (ป้ายชื่อการ์ด ยังคง
               น้ำหนัก/สี TEXT.body เดิม ไม่ใช่ action) ออกจาก "Today"/"Next Session" (ข้อมูลที่ actionable
               จริง) ให้ส่วนหลังหนา+สว่างขึ้น (font-semibold, TEXT.title) แทนที่จะเท่ากันทั้งบรรทัดแบบเดิม —
-              ไม่แตะ glow/ขนาด/padding การ์ดใดๆ เลยตามที่ตกลง */}
+              ไม่แตะ glow/ขนาด/padding การ์ดใดๆ เลยตามที่ตกลง
+              บั๊ก (production screenshot จริง, self-review) "'MINT COACH · NEXT' ถูกตัดคำแบบไม่มี '...'
+              หายไปทั้งคำว่า 'SESSION' ในการ์ดที่แคบ (คอลัมน์ท้ายแถวล่างสุดของเดสก์ท็อป)" — ต้นเหตุคือแยก
+              ข้อความเป็น 2 <span> แยกกันในคอนเทนเนอร์ flex เดียวกัน (<p> นี้) แต่ไม่ได้ใส่ shrink-0 ให้ทั้งคู่
+              เหมือนที่ span ไอคอน ✨ มีอยู่แล้ว — ค่า default flex-shrink:1 ทำให้ flexbox บีบ span ข้อความ
+              (white-space:nowrap) ให้แคบกว่าความกว้างจริงของตัวอักษรได้เมื่อพื้นที่ไม่พอ ล้นออกนอกกรอบ span
+              ตัวเอง แล้วโดน overflow-hidden ของ PremiumCard ที่ห่ออยู่ตัดทิ้งเงียบๆ (ไม่ใช่ text-overflow:
+              ellipsis จึงไม่มี "..." ให้เห็น) — เพิ่ม shrink-0 ให้ทั้ง 2 span ข้อความ เหมือนกับ span ไอคอน
+              บังคับให้ทั้งคู่คงความกว้างเดิมตามเนื้อหาเสมอ (ไม่ยอมถูกบีบ) เหมือนพฤติกรรมเดิมตอนยังเป็น
+              <span> เดียวรวมกันก่อนรอบนี้ */}
           <div className="flex items-center justify-between gap-x-2 gap-y-0.5 flex-wrap">
             <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0">
               <span aria-hidden="true" className="shrink-0">✨</span>
-              <span className="whitespace-nowrap" style={{ color: TEXT.body }}>MINT Coach ·</span>{' '}
-              <span className="whitespace-nowrap font-semibold" style={{ color: TEXT.title }}>
+              <span className="whitespace-nowrap shrink-0" style={{ color: TEXT.body }}>MINT Coach ·</span>{' '}
+              <span className="whitespace-nowrap shrink-0 font-semibold" style={{ color: TEXT.title }}>
                 {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}
               </span>
             </p>
