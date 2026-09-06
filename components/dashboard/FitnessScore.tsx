@@ -53,7 +53,7 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
       onClick={() => setOpen(true)}
       className="flex flex-col items-center gap-1"
       aria-haspopup="dialog"
-      aria-label={`Training Readiness ${score.score} จาก 100 — ${score.tierLabelTh} — ${isRestDay ? 'วันนี้เป็นวันพัก เน้น Recovery' : score.recommendation}`}
+      aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh} — ${isRestDay ? 'วันนี้เป็นวันพัก เน้น Recovery' : score.recommendation}`}
     >
       {/* v11: ฟีดแบ็ก "ทำให้ Fitness Score เข้าใจได้ใน 1 วินาที — ผู้ใช้ใหม่อาจถามว่า 48 ของอะไร"
           — ป้าย "Fitness Score" ถูกตัดออกไปตั้งแต่รอบลดความสูง Header ก่อนหน้านี้มาก (เหตุผลตอนนั้นคือ
@@ -62,9 +62,16 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
           v57: ฟีดแบ็ก "'Fitness Score' ตีความว่าคะแนนสุขภาพ/ฟิตเนสโดยรวม แต่ตัวเลขนี้จริงๆ วัดว่า
           'วันนี้ร่างกายพร้อมฝึกแค่ไหน' — ใช้ 'Training Readiness' จะตรงกว่า" — เปลี่ยนป้ายที่แสดงผลเท่านั้น
           (ชื่อฟังก์ชัน/ตัวแปร computeFitnessScore ฯลฯ ใน lib/fitnessScore.ts ไม่แตะ เพื่อไม่ให้กระทบ
-          จุดอื่นที่ import อยู่) */}
+          จุดอื่นที่ import อยู่)
+          ฟีดแบ็ก (design review รอบถัดมา, P4.1) "Desktop (HeroGaugeConcept.tsx) เพิ่งเลือกเรียกคะแนนตัว
+          เดียวกันนี้ว่า 'Fitness Score' (ความฟิตโดยรวม/ระยะยาว) แยกจาก 'Recovery' (ความพร้อมวันนี้) — แต่
+          Mobile เรียกมันว่า 'Training Readiness' ซึ่งฟังดูเหมือนวัด 'พร้อมฝึกวันนี้' อันเป็นความหมายที่
+          เพิ่งตกลงให้เป็นหน้าที่ของ Recovery ต่างหาก ทำให้ตัวเลขเดียวกันมีชื่อขัดกันคนละความหมายระหว่าง
+          2 แพลตฟอร์ม เป็น semantic inconsistency จริง ไม่ใช่แค่ cosmetic — เปลี่ยนกลับเป็น 'Fitness Score'
+          ให้ตรงกับ Desktop (ทั้ง label ที่เห็น + aria-label ด้านบน) ไม่แตะ score/tier/recommendation/
+          computeFitnessScore() ใดๆ เลย ตาม v57 ที่ระบุไว้เดิมว่าเปลี่ยนแค่ป้ายแสดงผล */}
       <p className="text-[8px] tracked uppercase leading-none" style={{ color: '#8A8E96', marginBottom: 2 }}>
-        Training Readiness
+        Fitness Score
       </p>
       {/* animate-pop-in (scale 0.6→1.1→1, keyframe ที่มีอยู่แล้วใน globals.css ใช้กับ badge/pill อื่นๆ
           ในแอป) — เดิมวงมาปุ๊บนิ่งเลยตอนโหลดหน้า ไม่มี entrance animation ของตัวเองต่างจากตัวเลข/เส้น

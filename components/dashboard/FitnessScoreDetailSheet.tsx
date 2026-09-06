@@ -76,7 +76,7 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Training Readiness"
+        aria-label="Fitness Score"
         className={`metric-sheet-panel ${closing ? 'is-closing' : ''} relative w-full max-w-md`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
@@ -85,9 +85,13 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
 
           <div className="flex items-center justify-between">
             {/* v2: "Fitness Score" -> "Training Readiness" — ฟีดแบ็ก "ตีความว่าคะแนนสุขภาพโดยรวม แต่
-                จริงๆ วัดความพร้อมฝึกวันนี้" (เหตุผลเดียวกับ FitnessScore.tsx) */}
+                จริงๆ วัดความพร้อมฝึกวันนี้" (เหตุผลเดียวกับ FitnessScore.tsx)
+                ฟีดแบ็ก (design review รอบถัดมา, P4.1) "Desktop เพิ่งเลือกเรียกคะแนนเดียวกันนี้ว่า
+                'Fitness Score' แยกความหมายจาก 'Recovery' ชัดเจนแล้ว — 'Training Readiness' บน Mobile
+                ขัดกับกรอบความหมายนั้นตรงๆ (ฟังดูเหมือนวัดความพร้อมวันนี้ ทั้งที่จริงเป็นภาพรวมระยะยาว)"
+                — เปลี่ยนกลับเป็น "Fitness Score" ให้ตรงกับ Desktop ไม่แตะ score/tier/breakdown ใดๆ */}
             <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body, fontWeight: 500 }}>
-              Training Readiness
+              Fitness Score
             </p>
             <button
               type="button"
