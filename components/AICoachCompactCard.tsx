@@ -67,6 +67,15 @@ interface AICoachCompactCardProps {
    * logic ใดๆ เลย แค่ตัดสินใจว่าจะโชว์ปุ่ม "เริ่ม X" หรือ "ดูคำแนะนำเพิ่มเติม" เท่านั้น ไม่ระบุ = ไม่เช็ค
    * (พฤติกรรมเดิมทุกประการ เผื่อจุดเรียกใช้อื่นที่ไม่มีข้อมูลนี้ส่งมา เช่น MobileDashboardView.tsx) */
   nextScheduledMuscleGroup?: string | null
+  /** ฟีดแบ็ก (design review, P4) "MINT Coach ตัดเหตุผลออกไปหมดแล้ว (ดู comment "MINT Coach ยังมีข้อมูล
+   * Recovery ซ้ำ" ด้านล่าง) เหลือแค่ 'Recovery Day / วันนี้เหมาะกับการพักและฟื้นตัว' ไม่รู้สึกว่า Coach
+   * วิเคราะห์ข้อมูลจริงแล้วแนะนำ — อยากได้เหตุผลสั้นๆ 1 บรรทัดที่อ้างอิงข้อมูลจริงกลับมา แต่ไม่เอา
+   * Recovery bar/bullet list เดิมกลับมา (จะซ้ำกับการ์ด Recovery อีก)" — จำนวนวันที่ฝึกแล้วในสัปดาห์นี้
+   * (data.thisWeekWorkoutDays ตัวเดียวกับที่การ์ด Training This Week ใช้อยู่แล้ว ไม่คำนวณซ้ำ) ใช้เฉพาะ
+   * โชว์เหตุผลของ Rest Day เท่านั้น ("ฝึกมา N วันแล้ว — วันนี้เหมาะกับการพัก") ไม่ระบุ/เป็น 0 = ไม่มีข้อมูล
+   * พอสนับสนุนเหตุผลนี้ ไม่โชว์อะไรเพิ่ม (คงข้อความเดิมเฉยๆ ตามที่ตกลง "ไม่มีข้อมูลพอ = ไม่แสดง ดีกว่า
+   * แสดง generic filler") */
+  thisWeekWorkoutDays?: number | null
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -145,6 +154,7 @@ export default function AICoachCompactCard({
   isRecommendationForToday = false,
   todayWorkoutTitle = null,
   nextScheduledMuscleGroup = null,
+  thisWeekWorkoutDays = null,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -350,7 +360,9 @@ export default function AICoachCompactCard({
                   Day ไม่มี verdict ให้รวมด้วยอยู่แล้ว (ข้อความอธิบายวันพักของตัวเองยังแยกบรรทัดเดิม) */}
               {isRestDay ? (
                 <p className="truncate mt-0.5" style={{ fontSize: 11, color: TEXT.body }}>
-                  วันนี้เหมาะกับการพักและฟื้นตัว
+                  {thisWeekWorkoutDays != null && thisWeekWorkoutDays > 0
+                    ? `ฝึกมา ${thisWeekWorkoutDays} วันในสัปดาห์นี้ — วันนี้เหมาะกับการพักและฟื้นตัว`
+                    : 'วันนี้เหมาะกับการพักและฟื้นตัว'}
                 </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
