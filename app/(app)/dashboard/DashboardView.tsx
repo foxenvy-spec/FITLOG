@@ -1738,50 +1738,60 @@ export default function DashboardPage() {
             ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "Recovery ควรมี visual weight ใกล้เคียง
             Workout มากขึ้น — ลด glow/ring ของ Workout ลง 10-15%" — ลดต่ออีก ~13% (36/54dec -> 2F/47dec,
             2D/45dec -> 27/39dec) ต่อเนื่องจาก v63 */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            bottom: -6,
-            right: -10,
-            width: 140,
-            height: 50,
-            background: `radial-gradient(ellipse 55% 100% at 50% 50%, ${withAlpha(COLORS.amber, '2F')}, transparent 72%)`,
-            filter: 'blur(3px)',
-          }}
-          aria-hidden="true"
-        />
-        <div
-          className="absolute rounded-full pointer-events-none hud-outer-ring"
-          style={{ bottom: 5, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '27')}` }}
-          aria-hidden="true"
-        />
-        <div className="absolute bottom-6 right-4 pointer-events-none hud-bead-orbit" style={{ width: 64, height: 64 }} aria-hidden="true">
-          <span
-            className="absolute rounded-full"
-            style={{ left: '50%', top: -1, width: 4, height: 4, transform: 'translateX(-50%)', background: '#FFF4E0', boxShadow: '0 0 6px 2px rgba(255,184,74,.8)' }}
-          />
-        </div>
-        {/* v60: ฟีดแบ็ก "วงแหวนตอนนี้ดูดีแล้ว แต่ถ้า Glow เบาลงอีก 10% จะดูแพงขึ้น (Apple ชอบทำ Glow บางมาก)"
-            — drop-shadow alpha '40' (25.1%) ลด ~10% เชิงสัมพัทธ์ -> '3A' (22.7%)
-            v63: ฟีดแบ็ก (P1.3) ลดต่ออีก ~30% ตามที่ขอ -> '29' (16.1%)
-            ฟีดแบ็ก (design review, micro-polish หลังปิด P1) — ลดต่ออีก ~13% ตามเหตุผลเดียวกับ HUD ด้านบน
-            -> '24' (14.1%) */}
-        {/* ฟีดแบ็ก (design review) "วง 0% นี้ label 'ความพร้อม' ชนความหมายกับ Recovery 100% ที่โชว์อยู่แล้ว
-            บนหน้าเดียวกัน — ผู้ใช้อ่านว่าทั้งคู่คือ physiological readiness ทั้งที่วงนี้จริงๆ คือ progressPct
-            (% ท่าตามแผนวันนี้ที่ทำเสร็จแล้ว ไม่เกี่ยวกับการฟื้นตัวเลย)" — เปลี่ยนแค่คำ label/aria-label ให้
-            ตรงกับสิ่งที่ค่าจริงวัด ("ความคืบหน้า" ของแผนวันนี้) ไม่แตะสูตร progressPct/ขนาดวง/ตำแหน่ง/
-            Recovery ใดๆ เลย */}
-        <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '24')})` }}>
-          <GoalRing
-            pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
-            size={64}
-            strokeWidth={5}
-            color={COLORS.amber}
-            label={<span className="text-[7px]">ความคืบหน้า</span>}
-            ariaLabel="ความคืบหน้าของแผนวันนี้"
-            glow
-          />
-        </div>
+        {/* ฟีดแบ็ก (design review, P2) "0% ความคืบหน้า ยังโชว์อยู่แม้เป็นวันพักตามแผน (isScheduledRestDay)
+            ทำให้ดูเหมือนวันนี้ 'ทำไม่สำเร็จ' ทั้งที่จริงๆ ไม่มีอะไรให้ทำตามแผนเลยวันนี้ — progress ring ไม่มี
+            ความหมายตอนไม่มี workout ให้วัดความคืบหน้า" — ซ่อนวง ring assembly ทั้งชุด (glow ellipse/dashed
+            outer ring/bead orbit/ตัว ring เอง) เฉพาะตอน isScheduledRestDay เท่านั้น (ไม่กระทบ State อื่น
+            เลย — ยังไม่มีโปรแกรมเลย/มีโปรแกรมแต่ยังไม่เริ่ม/ทำเสร็จแล้ว ยังเห็น ring เหมือนเดิมทุกประการ) —
+            ไม่แตะ CTA/ปุ่มด้านล่างตามที่ตกลง (ลด scope ไม่แตะ handleStart/state ของปุ่ม) */}
+        {!isScheduledRestDay && (
+          <>
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                bottom: -6,
+                right: -10,
+                width: 140,
+                height: 50,
+                background: `radial-gradient(ellipse 55% 100% at 50% 50%, ${withAlpha(COLORS.amber, '2F')}, transparent 72%)`,
+                filter: 'blur(3px)',
+              }}
+              aria-hidden="true"
+            />
+            <div
+              className="absolute rounded-full pointer-events-none hud-outer-ring"
+              style={{ bottom: 5, right: -3, width: 70, height: 70, border: `1px dashed ${withAlpha(COLORS.amber, '27')}` }}
+              aria-hidden="true"
+            />
+            <div className="absolute bottom-6 right-4 pointer-events-none hud-bead-orbit" style={{ width: 64, height: 64 }} aria-hidden="true">
+              <span
+                className="absolute rounded-full"
+                style={{ left: '50%', top: -1, width: 4, height: 4, transform: 'translateX(-50%)', background: '#FFF4E0', boxShadow: '0 0 6px 2px rgba(255,184,74,.8)' }}
+              />
+            </div>
+            {/* v60: ฟีดแบ็ก "วงแหวนตอนนี้ดูดีแล้ว แต่ถ้า Glow เบาลงอีก 10% จะดูแพงขึ้น (Apple ชอบทำ Glow บางมาก)"
+                — drop-shadow alpha '40' (25.1%) ลด ~10% เชิงสัมพัทธ์ -> '3A' (22.7%)
+                v63: ฟีดแบ็ก (P1.3) ลดต่ออีก ~30% ตามที่ขอ -> '29' (16.1%)
+                ฟีดแบ็ก (design review, micro-polish หลังปิด P1) — ลดต่ออีก ~13% ตามเหตุผลเดียวกับ HUD ด้านบน
+                -> '24' (14.1%) */}
+            {/* ฟีดแบ็ก (design review) "วง 0% นี้ label 'ความพร้อม' ชนความหมายกับ Recovery 100% ที่โชว์อยู่แล้ว
+                บนหน้าเดียวกัน — ผู้ใช้อ่านว่าทั้งคู่คือ physiological readiness ทั้งที่วงนี้จริงๆ คือ progressPct
+                (% ท่าตามแผนวันนี้ที่ทำเสร็จแล้ว ไม่เกี่ยวกับการฟื้นตัวเลย)" — เปลี่ยนแค่คำ label/aria-label ให้
+                ตรงกับสิ่งที่ค่าจริงวัด ("ความคืบหน้า" ของแผนวันนี้) ไม่แตะสูตร progressPct/ขนาดวง/ตำแหน่ง/
+                Recovery ใดๆ เลย */}
+            <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '24')})` }}>
+              <GoalRing
+                pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
+                size={64}
+                strokeWidth={5}
+                color={COLORS.amber}
+                label={<span className="text-[7px]">ความคืบหน้า</span>}
+                ariaLabel="ความคืบหน้าของแผนวันนี้"
+                glow
+              />
+            </div>
+          </>
+        )}
 
         {/* ฟีดแบ็ก "Today's Workout ใหญ่เกินไปตอนยังไม่มีโปรแกรม — Visual Weight > Information Value"
             — เดิม padding คงที่ py-6 ทุกสถานะ ทั้งที่ State B (ไม่มีโปรแกรม) มีข้อมูลจริงให้แสดงน้อยกว่า
@@ -1837,7 +1847,15 @@ export default function DashboardPage() {
                 // ฟีดแบ็ก "'ยังไม่ได้ตั้งโปรแกรม' อ่านยากกว่า 'ยังไม่มี Workout วันนี้'" — เปลี่ยนหัวข้อใหญ่
                 // ตรงนี้ ส่วนย่อหน้าอธิบายด้านล่าง ("ยังไม่ได้ตั้งโปรแกรมวันนี้ — เลือกโปรแกรมเพื่อ...")
                 // ยังคงคำเดิมไว้ตามจุดประสงค์ของมัน (อธิบายเหตุผล ไม่ใช่หัวข้อ) ไม่ซ้ำคำเป๊ะกันอีกต่อไป
-                const title = workoutTitle ?? 'ยังไม่มี Workout วันนี้'
+                // ฟีดแบ็ก (design review รอบถัดมา, P2) "'ยังไม่มี Workout วันนี้' เป็น headline เดียวกันทั้ง
+                // 'ยังไม่เคยตั้งโปรแกรมเลย' และ 'มีโปรแกรมแต่วันนี้เป็นวันพักตามแผน' (isScheduledRestDay) —
+                // อ่านเหมือน 'ทำไม่สำเร็จ' ทั้งที่วันพักตามแผนไม่ใช่ความล้มเหลว ทั้งที่ย่อหน้าด้านล่างการ์ด
+                // (บรรทัด '🛌 วันพักผ่อนตามแผน') ก็แยกความหมายนี้ไว้อยู่แล้ว แค่ headline ใหญ่ยังไม่ตามด้วย —
+                // Mobile (TodaysWorkoutEmptyCard.tsx) แยก headline 'Rest Day' ออกจาก 'No Workout Planned'
+                // อยู่แล้ว ให้ Desktop ตรงกัน: isScheduledRestDay ใช้ 'Rest Day' แทน default เดิม (ring
+                // 0% ที่เคยโชว์คู่กันก็ซ่อนไปแล้วสำหรับ state นี้โดยเฉพาะ — ดู comment ที่ ring ด้านบน — CTA
+                // ไม่แตะตามที่ตกลง ลด scope)
+                const title = isScheduledRestDay ? 'Rest Day' : (workoutTitle ?? 'ยังไม่มี Workout วันนี้')
                 const splitAt = title.search(/\s[—-]\s/)
                 const dayLabel = splitAt >= 0 ? title.slice(0, splitAt) : null
                 const restLabel = splitAt >= 0 ? title.slice(splitAt + 3) : title
