@@ -6,12 +6,18 @@ export function bmiOf(weightKg: number | null | undefined, heightCm: number | nu
   return weightKg / (h * h)
 }
 
-// เกณฑ์สากลทั่วไป (WHO general cutoffs) — ให้ตรงกับหน้า Health/ObesityAnalysisChart
+// เกณฑ์สากลทั่วไป (WHO general cutoffs) — เกณฑ์ตัวเลข (18.5/25/30) ให้ตรงกับหน้า Health/
+// ObesityAnalysisChart แต่ wording เป็นคนละชุดกัน (bmiCategory() ใช้เฉพาะใน BodyMetricsRow.tsx/
+// Dashboard เท่านั้น ไม่ได้แชร์ตัวคำกับหน้า /health)
+// ฟีดแบ็ก (design review) "'ท้วม' ไม่เหมาะกับระดับ UI นี้ ดูแปลกเมื่อเทียบกับ Moderate/Excellent/
+// Recovery Day ที่เป็นโทน coaching ไม่ตัดสิน" — เปลี่ยนเป็น "เกินมาตรฐาน" (อธิบายค่าที่วัดได้ ไม่ตัดสิน
+// ตัวบุคคล) และเปลี่ยน "อ้วน" (≥30) เป็น "สูงกว่ามาตรฐานมาก" ให้เป็น pattern ระดับความรุนแรงเดียวกัน
+// (ไม่ใช้คำว่า "อ้วนมาก" เพราะฟังเหมือนบอกลักษณะคน ไม่ใช่บอกสถานะค่า BMI) — เกณฑ์ตัวเลขไม่แตะเลย
 export function bmiCategory(bmi: number): string {
   if (bmi < 18.5) return 'น้ำหนักน้อยกว่าเกณฑ์'
   if (bmi < 25) return 'อยู่ในเกณฑ์มาตรฐาน'
-  if (bmi < 30) return 'ท้วม'
-  return 'อ้วน'
+  if (bmi < 30) return 'เกินมาตรฐาน'
+  return 'สูงกว่ามาตรฐานมาก'
 }
 
 // เขียวเมื่ออยู่ในเกณฑ์ปกติ, อำพันเมื่อสูง/ต่ำกว่าเล็กน้อย, แดงเมื่อเสี่ยง
