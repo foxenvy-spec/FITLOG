@@ -247,17 +247,22 @@ export default function HeroGaugeConcept({
             Recovery = ความพร้อมวันนี้) โดยไม่แตะคำภาษาอังกฤษเดิม/สูตรคำนวณ/ariaLabel ใดๆ — ย้าย eyebrow
             "Fitness Score" ออกจากในวงมาไว้นอกวงเป็น caption แบบเดียวกับที่ Recovery ใช้อยู่แล้ว (ให้ทั้งคู่
             มี pattern เดียวกัน: วงโชว์แค่ value/tier/advice, ชื่อ metric+subtitle อยู่นอกวง) กันความเสี่ยง
-            wrap ซ้ำ (วงนี้เคยมีประวัติปัญหานี้กับ Recovery มาก่อน — ดู comment ที่วง Recovery ด้านล่าง) */}
-        <div className="flex flex-col items-center gap-1 shrink-0">
-          <button
-            type="button"
-            onClick={onFitnessScoreClick}
-            disabled={!onFitnessScoreClick}
-            className={`relative flex items-center justify-center shrink-0 ${onFitnessScoreClick ? 'cursor-pointer hover:brightness-110 transition' : 'cursor-default'}`}
-            style={{ width: fitnessRingSize, height: fitnessRingSize }}
-            aria-haspopup={onFitnessScoreClick ? 'dialog' : undefined}
-            aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel}${onFitnessScoreClick ? ' — กดดูรายละเอียด' : ''}`}
-          >
+            wrap ซ้ำ (วงนี้เคยมีประวัติปัญหานี้กับ Recovery มาก่อน — ดู comment ที่วง Recovery ด้านล่าง)
+            บั๊ก (self-review หลังพอร์ต subtitle) "ย้าย eyebrow ออกนอก <button> แล้วพื้นที่กดหายไปด้วย" — ตอน
+            ย้าย caption ออกจากในวง เผลอให้ <button> ครอบแค่ตัววงอย่างเดียว (เหมือนเดิมตอน eyebrow ยังอยู่
+            ข้างในซึ่งตอนนั้น "ในวง" กับ "ในปุ่ม" คือพื้นที่เดียวกันพอดี) ทำให้พื้นที่กดเปิด
+            FitnessScoreDetailSheet เล็กลงจริง (แตะตรงคำว่า "Fitness Score"/"ความฟิตโดยรวม" ใต้วงไม่เปิด sheet
+            อีกต่อไป) — ย้าย <button> ขึ้นมาครอบทั้งกลุ่ม (วง+caption ทั้งสองบรรทัด) แทน ให้พื้นที่กดกลับมา
+            เท่าของเดิมก่อนรอบนี้ */}
+        <button
+          type="button"
+          onClick={onFitnessScoreClick}
+          disabled={!onFitnessScoreClick}
+          className={`flex flex-col items-center gap-1 shrink-0 ${onFitnessScoreClick ? 'cursor-pointer hover:brightness-110 transition' : 'cursor-default'}`}
+          aria-haspopup={onFitnessScoreClick ? 'dialog' : undefined}
+          aria-label={`Fitness Score ${fitnessScore.score} — ${fitnessScore.tierLabel}${onFitnessScoreClick ? ' — กดดูรายละเอียด' : ''}`}
+        >
+          <div className="relative flex items-center justify-center shrink-0" style={{ width: fitnessRingSize, height: fitnessRingSize }}>
             <GlowLayers size={fitnessRingSize} color={fitnessScore.color} />
             {/* ฟีดแบ็ก "ตรงที่มีอะไรวิ่งอยู่ในวงกลม ไม่เอาตรงนี้ได้ไหม" — glow=true เดิมเปิดจุดสว่างที่วิ่ง
                 วนรอบวง (.animate-ring-sweep-slow) + spark กะพริบ (.animate-ring-spark-flash) ใน
@@ -281,14 +286,14 @@ export default function HeroGaugeConcept({
               advice={fitnessAdvice}
               ringSize={fitnessRingSize}
             />
-          </button>
+          </div>
           <span className="tracked uppercase leading-none" style={{ fontSize: 10, color: TEXT.secondary, letterSpacing: '0.1em' }}>
             Fitness Score
           </span>
           <span className="leading-none" style={{ fontSize: 9, color: TEXT.secondary }}>
             ความฟิตโดยรวม
           </span>
-        </div>
+        </button>
 
         {/* Recovery — เฉพาะตอนมีข้อมูลจริง (ดูคอมเมนต์ recoveryPct? ใน props ด้านบน)
             ฟีดแบ็ก (design review) "Recovery 29% (วงนี้) vs Muscle Recovery 33% (การ์ด AI Coach) อยู่ใกล้
