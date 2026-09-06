@@ -1167,7 +1167,15 @@ export default function DashboardPage() {
                       <p className="text-sm"> เดียวกัน ขนาดเท่ากันหมด แยก "ยอดเยี่ยม! 🎉" ออกมาเป็น text-xs
                       (เล็กกว่า) ให้เห็นชัดว่าเป็นความรู้สึก/ฟีดแบ็กเสริม ไม่ใช่ข้อมูลหลักระดับเดียวกับตัวเลข
                       ห่อทั้งคู่ใน div เดียวกัน (แทนที่จะเป็น flex sibling แยกของ icon) กันสองบรรทัดเรียง
-                      แนวนอนแทนที่จะซ้อนกันแนวตั้ง */}
+                      แนวนอนแทนที่จะซ้อนกันแนวตั้ง
+                      ฟีดแบ็ก (design review รอบถัดมา, P3) "'Body Fat ↓0.4%' ตรงนี้ไม่มี timeframe กำกับ
+                      ทั้งที่การ์ด Body Overview ด้านล่าง (BodyMetricsRow.tsx) โชว์ delta ของ metric เดียวกัน
+                      พร้อม 'จาก N วัน/สัปดาห์/เดือนก่อน' เทียบกันแล้วดูเหมือนขัดกัน (ทิศทาง/ตัวเลขต่างกัน)
+                      ทั้งที่จริงๆ คนละช่วงเวลากันเพราะจุดนี้เทียบกับ 'เอนทรีก่อนหน้าล่าสุด' เสมอ (timeframe=null
+                      ที่ส่งเข้า computeBodyMetricsSummary ด้านบนของไฟล์) ไม่ใช่กรอบเวลาคงที่แบบที่ผู้ใช้เลือก
+                      ในการ์ด Body Overview — เพิ่ม periodLabel (คำนวณมาแล้วใน bodyMetricsSummary ก้อนเดียวกัน
+                      นี้เอง ใช้ซ้ำกับที่ bodyFatTrendInsight ใช้อยู่แล้วด้านล่างไฟล์ ไม่คำนวณซ้ำ) ต่อท้าย
+                      "ยอดเยี่ยม! 🎉" ให้เห็นฐานเวลาที่เทียบชัดเจน ไม่แตะตัวเลข/สูตร/isGood ใดๆ เลย */}
                   <div>
                     <p className="text-sm">
                       <span className="font-display uppercase tracked text-ink">Body Fat</span>{' '}
@@ -1176,7 +1184,7 @@ export default function DashboardPage() {
                       </span>
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: COLORS.deltaGood }}>
-                      ยอดเยี่ยม! 🎉
+                      ยอดเยี่ยม! 🎉{data.bodyMetricsSummary.periodLabel ? ` · ${data.bodyMetricsSummary.periodLabel}` : ''}
                     </p>
                   </div>
                 </div>
