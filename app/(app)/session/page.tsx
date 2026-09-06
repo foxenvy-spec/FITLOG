@@ -390,14 +390,32 @@ export default function SessionPage() {
     // เพราะ setsLog.length < ex.sets ในเคสนั้น
     const finishedIds = readFinishedExerciseIds()
     const targetSetsById = new Map(combinedExercises.map((ex) => [ex.id, ex.sets]))
+    const exercisesById = new Map(combinedExercises.map((ex) => [ex.id, ex]))
+    // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "log ครบทุกเซ็ตของท่าสุดท้ายแล้วปิดแท็บโดยไม่กด 'จบท่า' — พอเปิดหน้า
+    // นี้กลับมาใหม่ meetsTargetSets ด้านบนเชื่อว่า logged แล้ว ถ้าทุกท่าอื่น finished ครบพอดี allFinished
+    // จะข้ามตรงไปหน้า 'done' เลยโดยไม่มีทางกลับมากดปุ่ม 'จบท่า' ของท่านั้นได้อีก" — recordProgramCompletion
+    // (เขียนแถว program_completions) ถูกเรียกจากปุ่ม 'จบท่า' เท่านั้น (logCurrentExercise) ไม่เคยถูกเรียก
+    // ตอน trust มาจาก meetsTargetSets เลย แถว completion เลยหายถาวร (บั๊ก class เดียวกับ "7/8" ที่เคยแก้ผ่าน
+    // migration 042/043 มาก่อน) — backfill ให้เองตรงนี้เฉพาะท่าที่ trust มาจาก meetsTargetSets ล้วนๆ (ยังไม่
+    // เคยกดปุ่ม "จบท่า" จริง) และมี workoutId ให้ผูกแล้วเท่านั้น
+    const completionBackfills: { ex: ProgramExercise; workoutId: string }[] = []
     const adjustedStates = Object.fromEntries(
       Object.entries(initialStates).map(([id, state]) => {
         const targetSets = targetSetsById.get(id)
         const meetsTargetSets = targetSets != null && targetSets > 0 && state.setsLog.length >= targetSets
         const trustLogged = finishedIds.has(id) || meetsTargetSets
+        if (meetsTargetSets && !finishedIds.has(id) && state.workoutId) {
+          const ex = exercisesById.get(id)
+          if (ex) completionBackfills.push({ ex, workoutId: state.workoutId })
+        }
         return [id, state.logged && !trustLogged ? { ...state, logged: false } : state]
       })
     )
+    if (completionBackfills.length > 0) {
+      await Promise.all(
+        completionBackfills.map(({ ex, workoutId }) => recordProgramCompletion(user.id, ex, workoutId).catch(() => {}))
+      )
+    }
 
     setDay(dayRow as ProgramDay)
     setExercises(combinedExercises)

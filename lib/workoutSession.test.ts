@@ -344,4 +344,8 @@ describe('computeWorkoutScore', () => {
   it('clamps the score to 0-100', () => {
     expect(computeWorkoutScore({ exerciseCount: 0, totalExercises: 5, avgRpe: null, prCount: 0 })).toBeGreaterThanOrEqual(0)
   })
+
+  it('scores a zero-effort session (nothing logged) as 0, not the neutral-RPE fallback', () => {
+    expect(computeWorkoutScore({ exerciseCount: 0, totalExercises: 5, avgRpe: null, prCount: 0 })).toBe(0)
+  })
 })

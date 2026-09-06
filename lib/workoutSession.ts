@@ -327,6 +327,10 @@ export interface WorkoutScoreInput {
 // คะแนนลดลงเท่ากัน) ไม่มี RPE เลยไม่หักคะแนน (neutral 70) เพราะผู้ใช้จำนวนมากไม่ได้กรอก RPE ทุกท่า
 // บวกโบนัสเล็กน้อย +15 ถ้าทำสถิติใหม่ (PR) อย่างน้อย 1 ท่า (ไม่ทบเกิน 1 ครั้ง กันโบนัสเฟ้อ)
 export function computeWorkoutScore(input: WorkoutScoreInput): number {
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "กด 'จบก่อน' ทันทีโดยไม่ log อะไรเลยสักท่า ยังเห็น Workout Score 25"
+  // — neutral 70 ด้านล่างตั้งใจไว้สำหรับเคส "ทำจริงแต่ไม่กรอก RPE" เท่านั้น ไม่ควรมาช่วยยกคะแนนเคส
+  // "ไม่ได้ทำอะไรเลย" (exerciseCount=0) ที่ avgRpe เป็น null เพราะไม่มีเซ็ตให้คำนวณเช่นกัน แยกเคสนี้ออกก่อน
+  if (input.exerciseCount <= 0) return 0
   const completionPct = input.totalExercises > 0 ? Math.min(100, (input.exerciseCount / input.totalExercises) * 100) : 0
   const intensityScore = input.avgRpe === null ? 70 : Math.max(0, 100 - Math.abs(input.avgRpe - 7.5) * 20)
   const base = completionPct * 0.65 + intensityScore * 0.35
