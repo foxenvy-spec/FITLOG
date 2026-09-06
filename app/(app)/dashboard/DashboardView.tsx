@@ -2704,9 +2704,18 @@ export default function DashboardPage() {
           ซึ่งย้ายออกไปแล้วเช่นกัน) เหลือแค่ row-start-2 แถวเดียวคู่กับ Quick Actions ข้างๆ */}
       {prefs.showAICoach && (
         <div className="animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2" style={{ animationDelay: '360ms' }}>
+          {/* บั๊ก (code-review sweep ทั้งแอป) "Desktop ไม่เคยส่ง isRestDay เข้าการ์ดนี้เลย — ตอนเป็นวันพัก
+              ตามแผน (isScheduledRestDay) การ์ด Today's Workout hero ด้านบนบอก 'Rest Day' ถูกต้องแล้ว (แก้
+              ไปแล้วใน 27f6bfc) แต่การ์ด MINT Coach ข้างๆ ยังคงแนะนำกลุ่มกล้ามเนื้อ + ปุ่ม 'เริ่ม X' เหมือน
+              วันฝึกปกติ ขัดกันเองในหน้าเดียว — Mobile (MobileDashboardView.tsx) ส่ง
+              isRestDay={'{'}workoutCardVariant === 'restDay'{'}'} มาตั้งแต่แรกอยู่แล้ว มีแค่ Desktop ที่ตกหล่น
+              จุดนี้เป็นบั๊กคลาสเดียวกับที่ comment ของ prop นี้ใน AICoachCompactCard.tsx ระบุไว้ตรงๆ ว่า
+              'REST DAY กับ UPPER BODY + ปุ่มเริ่ม ไม่ควรเกิดพร้อมกัน' — ส่ง isScheduledRestDay (คำนวณไว้แล้ว
+              ด้านบนไฟล์นี้ ตัวเดียวกับที่การ์ด Today's Workout ใช้) เข้าไปให้ตรงกัน ไม่แตะ prop อื่นเลย */}
           <AICoachCompactCard
             message={data.aiDailySummary}
             muscleRecommendation={data.todaysRecommendation}
+            isRestDay={isScheduledRestDay}
             href="/coach"
             lastUpdatedAt={dataUpdatedAt}
             isRecommendationForToday={data.isRecommendationForToday}
