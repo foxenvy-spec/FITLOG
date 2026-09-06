@@ -473,12 +473,12 @@ export default function MobileDashboardView() {
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
                       </div>
+                      {/* ฟีดแบ็ก (design review, #3) "'· เหลืออีก 6.5 kg' ซ้ำกับ 81.5 → 75.0 kg ที่อยู่แถว
+                          บนอยู่แล้ว — ตัดออก เหลือแค่ 'Progress'" (เหตุผลเดียวกับ Desktop, ดู DashboardView.tsx)
+                          — ไม่ส่ง remainingText เข้า goalProgressLabelParts() อีกต่อไป */}
                       <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
                         {(() => {
-                          const parts = goalProgressLabelParts(
-                            weightPct,
-                            `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
-                          )
+                          const parts = goalProgressLabelParts(weightPct)
                           return (
                             <>
                               <span className="font-mono font-bold text-sm" style={{ color: COLORS.amber }}>
@@ -507,12 +507,10 @@ export default function MobileDashboardView() {
                       <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
                         <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                       </div>
+                      {/* เหตุผลเดียวกับบล็อกน้ำหนักด้านบน — ตัด "· เหลืออีก X%" ออก เหลือแค่ "Progress" */}
                       <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
                         {(() => {
-                          const parts = goalProgressLabelParts(
-                            bodyFatPct,
-                            `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
-                          )
+                          const parts = goalProgressLabelParts(bodyFatPct)
                           return (
                             <>
                               <span className="font-mono font-bold text-sm" style={{ color: COLORS.moss }}>

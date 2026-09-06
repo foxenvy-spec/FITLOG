@@ -1351,13 +1351,17 @@ export default function DashboardPage() {
                         ออกมาเป็น font-mono font-bold text-sm สีเดียวกับแท่ง progress (amber) ส่วนที่เหลือ
                         ("Progress · เหลืออีก X") ยังเป็น text-[12px] text-muted เหมือนเดิม — ใช้
                         goalProgressLabelParts() (lib/goalProgress.ts) แทน goalProgressLabel() ตัวเดียว
-                        ไม่ได้เปลี่ยนข้อความ/ตัวเลขที่แสดงเลยสักตัว แค่แยกชั้นทางภาพ */}
+                        ไม่ได้เปลี่ยนข้อความ/ตัวเลขที่แสดงเลยสักตัว แค่แยกชั้นทางภาพ
+                        ฟีดแบ็ก (design review รอบถัดมา, #3) "'· เหลืออีก 6.5 kg' เป็นข้อมูลซ้ำกับ 81.5 →
+                        75.0 kg ที่อยู่แถวบนอยู่แล้ว (ผู้ใช้คำนวณเองได้จาก current→target) เป็น secondary
+                        info ที่เพิ่มความสูง/ความหนาแน่นมากกว่าคุณค่าที่ได้ — ตัดแค่ส่วน '· เหลืออีก X' นี้
+                        ออก เหลือแค่ 'Progress' เฉยๆ (ไม่ตัดคำว่า Progress ทั้งคำ ไม่รวมบรรทัด/ลด metric ใดๆ
+                        Current→Goal/%/ETA ทั้งหมดยังอยู่ครบ)" — ไม่ผ่านค่า remainingText เข้า
+                        goalProgressLabelParts() อีกต่อไป (ฟังก์ชันเดิมคืน detail="Progress" เฉยๆ อยู่แล้ว
+                        เมื่อไม่มี remainingText — ไม่ต้องแก้ lib/goalProgress.ts เลย) */}
                     <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
                       {(() => {
-                        const parts = goalProgressLabelParts(
-                          weightPct,
-                          `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
-                        )
+                        const parts = goalProgressLabelParts(weightPct)
                         return (
                           <>
                             <span className="font-mono font-bold text-sm" style={{ color: COLORS.amber }}>
@@ -1390,13 +1394,11 @@ export default function DashboardPage() {
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                     </div>
                     {/* เหตุผลเดียวกับบล็อกน้ำหนักด้านบน — แยก headline/detail เหมือนกัน สีตามแท่ง progress
-                        ของบล็อกนี้เอง (moss ไม่ใช่ amber) */}
+                        ของบล็อกนี้เอง (moss ไม่ใช่ amber) — เหตุผลเดียวกับ #3 ด้านบนด้วย: ตัด "· เหลืออีก X%"
+                        ออก เหลือแค่ "Progress" */}
                     <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
                       {(() => {
-                        const parts = goalProgressLabelParts(
-                          bodyFatPct,
-                          `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
-                        )
+                        const parts = goalProgressLabelParts(bodyFatPct)
                         return (
                           <>
                             <span className="font-mono font-bold text-sm" style={{ color: COLORS.moss }}>
