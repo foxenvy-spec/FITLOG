@@ -113,8 +113,12 @@ export function computeStrengthAxis(
 // Endurance — ใช้เกณฑ์เดียวกับ classifyVO2Max (lib/vo2max.ts) แปลงเป็นสเกล 0-100 แบบ interpolate เพื่อให้
 // อยู่บนมาตราส่วนเดียวกับแกนอื่นในกราฟเรดาร์ ไม่ได้คิดเกณฑ์ใหม่แยกต่างหาก (จุดตัด 25/35/45/55 ตรงกับ
 // classifyVO2Max เป๊ะ)
-export function vo2MaxToPct(vo2max: number | null): number {
-  if (vo2max === null || vo2max <= 0) return 0
+// บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "ไม่มีข้อมูลชีพจรในโปรไฟล์ (computeVO2Max คืน null) ถูกยุบเป็น 0 ที่นี่
+// แทนที่จะเป็น null — ทำให้แกน Endurance ไม่มีทาง 'ไม่มีข้อมูล' ได้เลยเหมือนแกน Push/Pull/Legs (pct: null
+// เมื่อไม่มี bodyweight) ทั้งที่ noData dot/footnote ในหน้า /stats ออกแบบมารองรับ pct===null อยู่แล้ว —
+// คืน null ตรงๆ เมื่อไม่มีค่าให้คำนวณ แยกจาก "วัดได้จริงแต่คะแนนต่ำ"
+export function vo2MaxToPct(vo2max: number | null): number | null {
+  if (vo2max === null || vo2max <= 0) return null
   const anchors: [number, number][] = [
     [0, 0],
     [25, 25],

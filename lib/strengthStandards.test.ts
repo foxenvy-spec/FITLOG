@@ -70,9 +70,9 @@ describe('vo2MaxToPct', () => {
     expect(vo2MaxToPct(30)).toBe(38)
   })
 
-  it('returns 0 for null or non-positive input', () => {
-    expect(vo2MaxToPct(null)).toBe(0)
-    expect(vo2MaxToPct(0)).toBe(0)
+  it('returns null (not 0) for null or non-positive input — no data, not a measured zero', () => {
+    expect(vo2MaxToPct(null)).toBeNull()
+    expect(vo2MaxToPct(0)).toBeNull()
   })
 
   it('caps at 100 above the top threshold', () => {

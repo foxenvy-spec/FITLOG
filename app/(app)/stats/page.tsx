@@ -185,7 +185,11 @@ export default function StatsPage() {
         .eq('type', 'strength')
         .not('exercise_name', 'is', null)
         .not('weight_kg', 'is', null)
+        // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "ไม่มี secondary sort เวลาน้ำหนักเท่ากันเป๊ะหลายแถว — Postgres
+        // ไม่การันตีลำดับของแถวที่ tie กัน ทำให้ bestByName เลือกแถวไหนมาเป็น 'PR' (และ date ที่ใช้เช็ค
+        // badge 🆕) ไม่ deterministic" — เพิ่ม performed_at ล่าสุดก่อนเป็น tiebreaker ไม่กระทบ primary sort
         .order('weight_kg', { ascending: false })
+        .order('performed_at', { ascending: false })
         .limit(500)
       // ฟีดแบ็ก (design review) "PR section ดี แต่ควรแสดง progress มากกว่าแค่ record — 'Leg Press 70 kg ×
       // 15 ↑ +10 kg จาก PR เดิม' ให้รู้ทันทีว่าพัฒนาไปเท่าไร" — data มาจาก query เดิมเป๊ะ (500 แถวหนักสุด
@@ -280,15 +284,21 @@ export default function StatsPage() {
   }, [workouts, days28])
 
   // ---- weekly volume: last WEEKS_SHOWN weeks, each bucket = 7 days ending today ----
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "กราฟนี้ loop คำนวณ WEEKS_SHOWN=8 สัปดาห์ย้อนหลังเสมอ ไม่ว่า timeframe
+  // selector ด้านบนจะเลือกช่วงสั้นแค่ไหน (เช่น 30 วัน) — workouts ที่ query มาไม่ครอบคลุมสัปดาห์ที่เก่ากว่า
+  // ช่วงที่เลือกเลย แท่งกราฟของสัปดาห์นอกช่วงจึงโชว์ 0 kg หลอกๆ (ไม่ใช่ 'ไม่ได้ฝึก' จริง แค่ไม่มีข้อมูลให้เช็ค)
+  // — ตัดบักเก็ตที่ (ทั้งสัปดาห์) อยู่ก่อนวันที่เก่าสุดที่ query มาจริงทิ้งไปเลย แทนที่จะโชว์เป็น 0
   const weeklyVolume = useMemo(() => {
     const now = new Date()
     now.setHours(0, 0, 0, 0)
+    const earliestFetched = timeframe === 'all' ? null : new Date(lastNDays(timeframe)[0] + 'T00:00:00')
     const buckets: { start: Date; end: Date; label: string; value: number }[] = []
     for (let i = WEEKS_SHOWN - 1; i >= 0; i--) {
       const end = new Date(now)
       end.setDate(now.getDate() - i * 7)
       const start = new Date(end)
       start.setDate(end.getDate() - 6)
+      if (earliestFetched && start < earliestFetched) continue
       buckets.push({
         start,
         end,
@@ -304,7 +314,7 @@ export default function StatsPage() {
         if (bucket) bucket.value += volumeOf(w)
       })
     return buckets.map((b) => ({ label: b.label, value: Math.round(b.value) }))
-  }, [workouts])
+  }, [workouts, timeframe])
 
   const totals = useMemo(() => {
     const strengthWorkouts = workouts.filter((w) => w.type === 'strength')
@@ -399,7 +409,7 @@ export default function StatsPage() {
       { axis: 'Pull', pct: pull.pct, value: pull.pct ?? 0 },
       { axis: 'Legs', pct: legs.pct, value: legs.pct ?? 0 },
       { axis: 'Core', pct: core, value: core },
-      { axis: 'Endurance', pct: endurance, value: endurance },
+      { axis: 'Endurance', pct: endurance, value: endurance ?? 0 },
     ]
   }, [workouts, bodyWeightKg, profile, totals.totalVolume])
 
