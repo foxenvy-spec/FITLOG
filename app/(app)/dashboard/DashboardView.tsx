@@ -43,6 +43,7 @@ import {
   computeSessionVolumeChange,
   daysSinceLastTrained,
   computePlannedConsistency,
+  STREAK_WALK_MAX_DAYS,
   type Insight,
   type MuscleRecommendation,
   type TodaysRecommendation,
@@ -231,8 +232,9 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // Streak นับต่อเนื่องจะขาดทันทีถ้าเว้นเกิน 1 วัน (ดู computeCurrentStreak) ดังนั้นย้อนหลัง
   // 400 วัน (เกินหนึ่งปี) ก็เกินพอสำหรับ streak ที่มีความหมายจริง — กัน query โตไม่จำกัดตาม
   // อายุการใช้งานของผู้ใช้ (ก่อนหน้านี้ query นี้ดึง performed_at ของทุกแถวที่เคยบันทึกทั้งหมด)
-  const STREAK_LOOKBACK_DAYS = 400
-  const streakCutoff = daysAgoStr(STREAK_LOOKBACK_DAYS)
+  // ใช้ STREAK_WALK_MAX_DAYS ตัวเดียวกับที่ computeCurrentStreak เดินสายโซ่ได้ไกลสุด (lib/dashboardStats.ts)
+  // ตรงๆ แทนการ hardcode เลขแยก — กัน mismatch แบบที่เคยเจอใน calendar/page.tsx (hardcode 365 แยกจากนี้)
+  const streakCutoff = daysAgoStr(STREAK_WALK_MAX_DAYS)
 
   const [
     { data: todayRows },

@@ -193,8 +193,13 @@ export default function HealthPage() {
       data: { user },
     } = await supabase.auth.getUser()
 
+    // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "goalEarliestTrackedValue() ด้านล่างต้องการค่าเก่าที่สุดที่มีบันทึกจริง
+    // ทั้งหมด แต่ query นี้จำกัดแค่ 60 แถวล่าสุด — ผู้ใช้ที่ log เกิน 60 ครั้ง จะได้ 'ค่าเก่าที่สุด' ที่ไม่ใช่
+    // ค่าเก่าที่สุดจริง (แค่แถวที่ 60 นับจากปัจจุบัน) ทำให้ % คืบหน้าเป้าหมายต่างจาก /calendar ที่ query แบบ
+    // ไม่จำกัดอยู่แล้ว (ไล่แก้ตรงกันข้ามจะยิ่งทำให้ /calendar ผิดตามไปด้วย เพราะ 'earliest' ต้องเป็นค่าจริง
+    // ไม่ใช่ query window ที่จำกัดไว้เพื่อความเร็วเฉยๆ)" — เอา limit ออก ให้ทั้งสองหน้าเห็นประวัติชุดเดียวกัน
     const [metricsRes, profileRes, photosRes, goalsRes] = await Promise.all([
-      supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(60),
+      supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }),
       supabase.from('profiles').select('*').maybeSingle(),
       supabase.from('progress_photos').select('*').order('taken_at', { ascending: false }),
       supabase.from('goals').select('*').in('goal_type', ['weight', 'body_fat']).eq('status', 'active'),

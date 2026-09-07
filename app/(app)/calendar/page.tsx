@@ -6,7 +6,7 @@ import type { BodyMetric, Goal, GoalStatus, GoalType, ProgramDay, ProgramExercis
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
 import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown } from '@/lib/workoutDisplay'
-import { computeCurrentStreak } from '@/lib/dashboardStats'
+import { computeCurrentStreak, STREAK_WALK_MAX_DAYS } from '@/lib/dashboardStats'
 import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
@@ -84,8 +84,12 @@ export default function CalendarPage() {
   }, [supabase, monthStart, monthEnd])
 
   const loadGoalsData = useCallback(async () => {
+    // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "hardcode 365 วันแยกจาก STREAK_WALK_MAX_DAYS (400) ที่ computeCurrentStreak
+    // เดินสายโซ่ได้ไกลสุด — คนที่มี streak ยาวเกิน 365 วันจะเห็นเลขต่ำกว่า Dashboard (query 400 วัน) ทั้งที่
+    // ใช้สูตร computeCurrentStreak ตัวเดียวกันแล้ว (ดู comment ที่ streak useMemo ด้านล่าง)" — ใช้ constant
+    // เดียวกับ Dashboard ตรงๆ แทน hardcode เลขแยก
     const since = new Date()
-    since.setDate(since.getDate() - 365)
+    since.setDate(since.getDate() - STREAK_WALK_MAX_DAYS)
     const [goalsRes, workoutsRes, metricRes, metricHistoryRes] = await Promise.all([
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
       supabase.from('workouts').select('*').gte('performed_at', toIsoDate(since)),
@@ -254,7 +258,11 @@ export default function CalendarPage() {
   // เลย — ถ้าลบ/อัปเดตพัง (RLS/เน็ตหลุด) UI จะยัง optimistic-update state ว่าสำเร็จ (เป้าหมายหายไปจากลิสต์/
   // สถานะเปลี่ยน) ทั้งที่แถวจริงในฐานข้อมูลไม่เปลี่ยน แล้ว "ย้อนกลับ" เงียบๆ ตอนโหลดหน้าใหม่ครั้งถัดไปโดยไม่มี
   // error ให้เห็นเลย — เช็ค error ก่อน apply optimistic update เสมอ ไม่สำเร็จก็ไม่แตะ state และโชว์ข้อความ
-  const [goalActionError, setGoalActionError] = useState<string | null>(null)
+  // v2: บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "goalActionError เดิมเป็น string เดียวใช้ร่วมกันทุกเป้าหมาย — ลบ
+  // เป้าหมาย A พังโชว์ error ค้างอยู่ แล้วกด 'สำเร็จ' ของเป้าหมาย B ที่ไม่เกี่ยวกันสำเร็จ จะ setGoalActionError
+  // (null) ทับ error ของ A ทิ้งเงียบๆ ทั้งที่ A ยังไม่ถูกลบจริง" — ผูก error กับ goalId ที่แท้จริง เคลียร์ได้
+  // เฉพาะตอนที่ action ล่าสุดที่สำเร็จเป็นของเป้าหมายเดียวกับที่ error ค้างอยู่เท่านั้น
+  const [goalActionError, setGoalActionError] = useState<{ goalId: string; message: string } | null>(null)
 
   // ฟีดแบ็ก (design review, P2) "ลบ ควรมี confirmation ก่อนลบ" — ลบเป้าหมายเป็น destructive action ที่ย้อน
   // กลับไม่ได้ (ไม่มี undo) กด confirm() ของเบราว์เซอร์ธรรมดาก่อนลบจริง (ไม่มี dialog แบบกำหนดเองในแอปนี้ที่
@@ -263,10 +271,10 @@ export default function CalendarPage() {
     if (!window.confirm(`ลบเป้าหมาย "${goal.title}" ใช่หรือไม่?`)) return
     const { error } = await supabase.from('goals').delete().eq('id', goal.id)
     if (error) {
-      setGoalActionError('ลบเป้าหมายไม่สำเร็จ ลองใหม่อีกครั้ง')
+      setGoalActionError({ goalId: goal.id, message: `ลบเป้าหมาย "${goal.title}" ไม่สำเร็จ ลองใหม่อีกครั้ง` })
       return
     }
-    setGoalActionError(null)
+    setGoalActionError((prev) => (prev?.goalId === goal.id ? null : prev))
     setGoals((prev) => prev.filter((g) => g.id !== goal.id))
   }
 
@@ -274,10 +282,10 @@ export default function CalendarPage() {
     const nextStatus: GoalStatus = goal.status === 'done' ? 'active' : 'done'
     const { error } = await supabase.from('goals').update({ status: nextStatus }).eq('id', goal.id)
     if (error) {
-      setGoalActionError('อัปเดตเป้าหมายไม่สำเร็จ ลองใหม่อีกครั้ง')
+      setGoalActionError({ goalId: goal.id, message: `อัปเดตเป้าหมาย "${goal.title}" ไม่สำเร็จ ลองใหม่อีกครั้ง` })
       return
     }
-    setGoalActionError(null)
+    setGoalActionError((prev) => (prev?.goalId === goal.id ? null : prev))
     setGoals((prev) => prev.map((g) => (g.id === goal.id ? { ...g, status: nextStatus } : g)))
   }
 
@@ -466,7 +474,7 @@ export default function CalendarPage() {
           </button>
         </div>
 
-        {goalActionError && <p className="text-[12px] text-rusttext">{goalActionError}</p>}
+        {goalActionError && <p className="text-[12px] text-rusttext">{goalActionError.message}</p>}
 
         {showGoalForm && (
           <GoalForm

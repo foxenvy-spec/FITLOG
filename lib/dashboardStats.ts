@@ -4,9 +4,12 @@ import type { ExerciseDef } from './exerciseLibrary'
 import { COLORS, FIRE_ACCENT } from './theme'
 import { workoutVolumeKg } from './workoutDisplay'
 
-// STREAK_LOOKBACK_DAYS เดียวกับที่ DashboardView.tsx ใช้จำกัด query performedDates (400 วัน) — ใช้
-// เป็นเพดานลูปกันเผื่อกรณีขอบ (เช่น ตั้งโปรแกรมแบบไม่มี weekday ไหนเป็นวันฝึกเลย) ไม่ให้วนไม่มีที่สิ้นสุด
-const STREAK_WALK_MAX_DAYS = 400
+// เพดานลูปกันเผื่อกรณีขอบ (เช่น ตั้งโปรแกรมแบบไม่มี weekday ไหนเป็นวันฝึกเลย) ไม่ให้วนไม่มีที่สิ้นสุด — export
+// ออกไปให้ทุกจุดที่ query workouts เพื่อป้อนเข้า computeCurrentStreak/computeLongestStreak (DashboardView.tsx,
+// calendar/page.tsx) ใช้เป็น lookback window เดียวกันตรงๆ แทนการ hardcode เลขซ้ำแยกกัน — บั๊ก (ไล่ตรวจทั้ง
+// โปรเจครอบใหม่) "calendar/page.tsx เคย hardcode 365 วันแยกจากตัวนี้ ทำให้คนที่มี streak ยาวเกิน 365 วันเห็น
+// เลขต่ำกว่า Dashboard (query 400 วัน) ทั้งที่ตั้งใจใช้สูตรเดียวกันแล้ว"
+export const STREAK_WALK_MAX_DAYS = 400
 
 // วันที่ในรูป "YYYY-MM-DD" บวก/ลบจำนวนวัน — ยึด UTC เที่ยงคืนเสมอ (เหมือน todayDayOfWeek() ใน
 // lib/weekdays.ts) ไม่ใช่ local time ของเครื่องที่รันโค้ด กัน bug เดิมที่เจอมาแล้ว (server รันเป็น UTC
