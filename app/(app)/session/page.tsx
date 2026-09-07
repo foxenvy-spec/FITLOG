@@ -1244,6 +1244,11 @@ export default function SessionPage() {
           เซ็ต
         </p>
         <div className="flex items-center gap-3">
+          {/* Product Audit /session — ฟีดแบ็ก "WeightUnitToggle เดิมอยู่คั่นกลาง core input flow (ระหว่าง
+              รายการเซ็ตที่ทำแล้วกับช่อง reps/น้ำหนัก) ทั้งที่เป็นแค่ session-level setting ไม่เกี่ยวกับท่า
+              ปัจจุบันตรงหน้าเลย" — ย้ายมาไว้แถว meta บนสุดคู่กับนาฬิกา/"จบก่อน" ซึ่งเป็น session-level
+              controls อยู่แล้ว ไม่กระทบขนาดการ์ดหลัก/behavior ใดๆ */}
+          <WeightUnitToggle />
           <p className="text-[12px] font-mono text-muted tabular">{formatClock(totalElapsedMs)}</p>
           <button
             type="button"
@@ -1489,10 +1494,6 @@ export default function SessionPage() {
               ))}
             </ul>
           )}
-
-          <div className="flex justify-end">
-            <WeightUnitToggle />
-          </div>
 
           {/* Progressive Overload — โชว์เฉพาะก่อนกดเซ็ตแรกของท่านี้ในเซสชันนี้ (ดู overloadSuggestion
               ด้านบน) เทียบผลงานครั้งก่อนกับช่วง reps เป้าหมาย แล้วแนะนำน้ำหนัก/reps ของวันนี้ตามหลัก
