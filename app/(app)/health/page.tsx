@@ -1257,8 +1257,12 @@ export default function HealthPage() {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
+              // Product Audit /health — ฟีดแบ็ก "แท็บ 'Photo' active ใช้ bg-rust แยกจากอีก 3 แท็บ (bg-steel)
+              // โดยไม่มี comment อธิบายเหตุผลเลย ต่างจาก /log ที่ steel/rust มีระบบสมมาตรชัดเจน (2 ตัวเลือก
+              // จับคู่ความหมาย type) ที่นี่ไม่มี pattern แบบนั้น — unify เป็น steel ทั้ง 4 แท็บ ให้ tab bar
+              // อ่านเป็น navigation กลุ่มเดียวกัน (ไม่แตะ inactive state/behavior/OCR flow ใดๆ)
               className={`flex-1 py-2.5 rounded-full text-[12px] sm:text-sm font-display tracked uppercase transition ${
-                tab === t.key ? (t.key === 'photos' ? 'bg-rust text-ink' : 'bg-steel text-bg') : 'text-muted'
+                tab === t.key ? 'bg-steel text-bg' : 'text-muted'
               }`}
             >
               {t.label}
