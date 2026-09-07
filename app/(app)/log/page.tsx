@@ -21,6 +21,7 @@ import { classifyHRZone, HR_ZONES, DEFAULT_MAX_HEART_RATE } from '@/lib/heartRat
 import { cadenceUnitFor, cadenceUnitLabel, cadenceFieldLabel } from '@/lib/cadence'
 import { computeDaySummary } from '@/lib/workoutDisplay'
 import RestTimer from '@/components/timers/RestTimer'
+import { useIsMobile } from '@/lib/useIsMobile'
 import PremiumCard from '@/components/ui/PremiumCard'
 // บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): เดิมหน้านี้มี todayStr() ของตัวเอง คำนวณจาก timezone เครื่อง ต่างจาก
 // todayStr() กลางใน lib/weekdays.ts ที่ยึด Asia/Bangkok เสมอ (performed_at ทุกแถวอื่นในแอปใช้ตัวนั้น) —
@@ -51,6 +52,13 @@ function LogPageInner() {
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const { showToast } = useToast()
   const { data: exercises = [] } = useExerciseLibrary()
+  // Product Audit /log — ฟีดแบ็ก "Rest Timer อยู่ล่างสุดของฟอร์มบนมือถือ ต้อง scroll ผ่านทั้งฟอร์มถึงจะถึง
+  // ทั้งที่ comment เดิมของฝั่งขวานี้บอกเองว่าตั้งใจแก้ปัญหา 'อยู่ล่างสุดของฟอร์ม ต้อง scroll สลับไปมา' แต่
+  // ระบุไว้ชัดว่าแก้เฉพาะ 'บนจอใหญ่' เท่านั้น" — ใช้ useIsMobile (breakpoint lg เดียวกับ container นี้เอง)
+  // เพื่อ render RestTimer แค่ที่เดียวเสมอ (ไม่ mount ซ้อนสองจุด เพราะ RestTimer มี stopwatch state ภายใน
+  // ตัวเอง ถ้า mount 2 อินสแตนซ์พร้อมกันจะกลายเป็นนาฬิกาคนละเรือนที่ไม่ sync กัน) — มือถือ: ย้ายมาไว้ใกล้
+  // ต้นฟอร์ม (ไม่ต้อง scroll ผ่านทั้งฟอร์มก่อนถึง) / จอใหญ่: อยู่ตำแหน่งเดิมในคอลัมน์ขวาเหมือนเดิมทุกประการ
+  const isMobile = useIsMobile()
 
   // ใช้จัด Heart Rate Zone ของชีพจรเฉลี่ยที่กรอก/นำเข้ามา — ค่าเดียวกับที่ตั้งไว้ใน Weekly Cardio Volume
   // (ดู components/HeartRateSettings.tsx) ถ้ายังไม่เคยตั้งจะได้ค่าประมาณมาตรฐานแทน
@@ -560,6 +568,15 @@ function LogPageInner() {
         </button>
       </div>
 
+      {isMobile && (
+        <div>
+          <p className="text-[12px] tracked uppercase text-muted mb-2">พักระหว่างเซ็ต</p>
+          <PremiumCard className="px-4 py-4">
+            <RestTimer voiceEnabled={false} />
+          </PremiumCard>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -825,15 +842,18 @@ function LogPageInner() {
       </form>
       </div>
 
-      {/* ฝั่งขวา ~42% — Rest Timer + สรุปสด + รายการวันนี้ (เดิมอยู่ล่างสุดของฟอร์ม ต้อง scroll สลับ
-          ไปมาตอนบันทึกหลายท่า — ย้ายมาไว้คู่กันให้เห็นตลอดบนจอใหญ่) */}
+      {/* ฝั่งขวา ~42% — สรุปสด + รายการวันนี้ (เดิมอยู่ล่างสุดของฟอร์ม ต้อง scroll สลับไปมาตอนบันทึกหลายท่า —
+          ย้ายมาไว้คู่กันให้เห็นตลอดบนจอใหญ่) — Rest Timer ย้ายไปแสดงใกล้ต้นฟอร์มแทนบนมือถือ (ดู isMobile
+          ด้านบนของไฟล์) จอใหญ่ยังอยู่ตำแหน่งเดิมตรงนี้เหมือนเดิมทุกประการ */}
       <div className="space-y-6 lg:col-span-5">
-        <div>
-          <p className="text-[12px] tracked uppercase text-muted mb-2">พักระหว่างเซ็ต</p>
-          <PremiumCard className="px-4 py-4">
-            <RestTimer voiceEnabled={false} />
-          </PremiumCard>
-        </div>
+        {!isMobile && (
+          <div>
+            <p className="text-[12px] tracked uppercase text-muted mb-2">พักระหว่างเซ็ต</p>
+            <PremiumCard className="px-4 py-4">
+              <RestTimer voiceEnabled={false} />
+            </PremiumCard>
+          </div>
+        )}
 
         {daySummary && (
           <div>
