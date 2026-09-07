@@ -316,7 +316,14 @@ export default function CalendarPage() {
             <div className="flex items-center justify-between mb-3">
               <button
                 type="button"
-                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+                // Product Audit /calendar — ฟีดแบ็ก "เปลี่ยนเดือนแล้ว selectedDate ค้างเป็นวันที่ของเดือนเก่า
+                // ทั้งที่ monthWorkouts ถูกแทนที่ด้วยข้อมูลเดือนใหม่แล้ว — แผงรายละเอียดยังโชว์หัวข้อวันที่เก่า
+                // แต่ selectedWorkouts กรองจากข้อมูลเดือนใหม่ไม่เจอ กลายเป็น 'ไม่มีรายการวันนี้' ผิดๆ ทั้งที่
+                // วันนั้นมี log จริง" — reset selectedDate ทันทีที่กดเปลี่ยนเดือน กันข้อความไม่ตรงกับข้อมูลจริง
+                onClick={() => {
+                  setSelectedDate(null)
+                  setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))
+                }}
                 className="w-9 h-9 rounded-full bg-surface2 border border-line text-ink"
               >
                 ‹
@@ -326,7 +333,10 @@ export default function CalendarPage() {
               </p>
               <button
                 type="button"
-                onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+                onClick={() => {
+                  setSelectedDate(null)
+                  setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))
+                }}
                 className="w-9 h-9 rounded-full bg-surface2 border border-line text-ink"
               >
                 ›
