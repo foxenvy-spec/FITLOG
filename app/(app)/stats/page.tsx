@@ -135,6 +135,12 @@ export default function StatsPage() {
   // เลือกที่แสดงอยู่ — ใช้ token ref แบบเดียวกับที่แก้ใน exercises/[name]/page.tsx (load ยังต้องเรียกซ้ำได้
   // จากปุ่ม "ลองใหม่" ของ ErrorState ด้วย เก็บเป็น useCallback เดิม)
   const loadTokenRef = useRef(0)
+  // Product Audit /stats — ฟีดแบ็ก "เปลี่ยน timeframe แล้วทั้งหน้ารวมถึงตัวเลือก timeframe เองหายไปเป็น
+  // LoadingState เปล่าๆ ทุกครั้ง ทั้งที่ควรรู้สึกเหมือน filter เบาๆ ไม่ใช่หน้ารีโหลดใหม่" — แยก "โหลดครั้ง
+  // แรก" (ยังไม่เคยมีข้อมูลให้โชว์เลย จำเป็นต้องเต็มจอ) ออกจาก "refetch หลังเปลี่ยน timeframe" (มีข้อมูล
+  // เก่าโชว์ค้างอยู่แล้ว คงหน้า header/selector ไว้ พอ) — ใช้ ref ไม่ใช่ state เพราะแค่ต้องอ่านค่าตอน render
+  // ไม่ต้อง trigger re-render เอง (loading state เดิมทำหน้าที่นั้นอยู่แล้ว)
+  const hasLoadedOnceRef = useRef(false)
 
   const load = useCallback(async () => {
     const token = ++loadTokenRef.current
@@ -170,6 +176,7 @@ export default function StatsPage() {
       setActualRepsByWorkout(new Map())
     }
 
+    hasLoadedOnceRef.current = true
     setLoading(false)
   }, [supabase, timeframe])
 
@@ -575,7 +582,7 @@ export default function StatsPage() {
       }))
   }, [workouts, selectedExercise, toDisplay])
 
-  if (loading) {
+  if (loading && !hasLoadedOnceRef.current) {
     return <LoadingState />
   }
 
@@ -607,7 +614,12 @@ export default function StatsPage() {
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h1 className="font-display text-2xl tracked uppercase">สถิติ · {timeframeLabel}</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="font-display text-2xl tracked uppercase">สถิติ · {timeframeLabel}</h1>
+            {/* Product Audit /stats — เปลี่ยน timeframe แล้วคง header/selector ไว้เหมือนเดิม แค่โชว์
+                ตัวบอกสถานะเล็กๆ ระหว่าง refetch แทนการสลับทั้งหน้าเป็น LoadingState เปล่าๆ */}
+            {loading && <span className="text-[12px] text-muted animate-pulse">กำลังอัปเดต...</span>}
+          </div>
           {timeframeSelector}
         </div>
         <EmptyState
@@ -633,7 +645,10 @@ export default function StatsPage() {
           1RM Trend, Strength Balance, PRs) เหมาะเป็นรายงานความคืบหน้าอยู่แล้วโดยไม่ต้องสร้างหน้าใหม่
           แยกต่างหาก — ปุ่มเองก็ print:hidden (ไม่ต้องปรากฏในรายงานที่พิมพ์ออกมา) */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h1 className="font-display text-2xl tracked uppercase">สถิติ · {timeframeLabel}</h1>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="font-display text-2xl tracked uppercase">สถิติ · {timeframeLabel}</h1>
+          {loading && <span className="text-[12px] text-muted animate-pulse">กำลังอัปเดต...</span>}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           {timeframeSelector}
           <button
