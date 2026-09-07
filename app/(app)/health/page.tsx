@@ -26,7 +26,7 @@ import { zoneOf, classifyMetric, computeHealthTrendInsights, type Direction, typ
 import { computeHealthScore, type HealthScoreRanges, type HealthScoreResult, type ScoreDirection } from '@/lib/healthScore'
 import { periodLabelOf } from '@/lib/bodyMetricsSummary'
 import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
-import { saveAge } from '@/lib/profile'
+import { saveAge, isValidAge, isValidHeightCm, AGE_RANGE, HEIGHT_CM_RANGE } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
 import PremiumCard from '@/components/ui/PremiumCard'
 import BeforeAfterSlider from '@/components/BeforeAfterSlider'
@@ -241,6 +241,13 @@ export default function HealthPage() {
 
   const saveHeight = useCallback(
     async (heightCm: number) => {
+      // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่ — Final Invariant Check C) "onHeightExtracted (= ฟังก์ชันนี้) ถูกเรียก
+      // ทั้งจาก handleHeightBlur (มี bounds check ของตัวเองอยู่แล้วก่อนเรียก) และจาก handleExtracted (OCR
+      // อ่านรูปเครื่องชั่ง — ไม่มี bounds check เลยสักจุด) — เช็คตรงนี้ (write boundary จริงที่ทั้งสองทางเข้า
+      // มาบรรจบกัน) กันทางเข้า OCR เขียนค่าที่เป็นไปไม่ได้ลง DB ตรงๆ โดยไม่ต้องเพิ่ม check แยกที่ handleExtracted
+      if (!isValidHeightCm(heightCm)) {
+        throw new Error(`ส่วนสูงต้องอยู่ระหว่าง ${HEIGHT_CM_RANGE.min}-${HEIGHT_CM_RANGE.max} ซม.`)
+      }
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -4558,8 +4565,8 @@ function MetricForm({
     if (!trimmed || !onHeightExtracted) return
     const num = Math.round(Number(trimmed))
     if (!Number.isFinite(num) || num === profile?.height_cm) return
-    if (num < 50 || num > 250) {
-      setError('ส่วนสูงต้องอยู่ระหว่าง 50-250 ซม.')
+    if (!isValidHeightCm(num)) {
+      setError(`ส่วนสูงต้องอยู่ระหว่าง ${HEIGHT_CM_RANGE.min}-${HEIGHT_CM_RANGE.max} ซม.`)
       return
     }
     try {
@@ -4574,8 +4581,8 @@ function MetricForm({
     if (!trimmed || !onAgeChanged) return
     const num = Math.round(Number(trimmed))
     if (!Number.isFinite(num) || num === profile?.age) return
-    if (num < 1 || num > 120) {
-      setError('อายุต้องอยู่ระหว่าง 1-120 ปี')
+    if (!isValidAge(num)) {
+      setError(`อายุต้องอยู่ระหว่าง ${AGE_RANGE.min}-${AGE_RANGE.max} ปี`)
       return
     }
     try {

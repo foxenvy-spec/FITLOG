@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, Workout } from '@/lib/types'
-import { saveAge, saveHeightCm, saveSex } from '@/lib/profile'
+import { saveAge, saveHeightCm, saveSex, isValidAge, isValidHeightCm, AGE_RANGE, HEIGHT_CM_RANGE } from '@/lib/profile'
 import { computeAchievementStats, buildBadges, type Badge } from '@/lib/achievements'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import SignOutButton from '@/components/SignOutButton'
@@ -294,8 +294,8 @@ function PersonalInfoCard({
       setAgeInput(profile.age ? String(profile.age) : '')
       return
     }
-    if (num < 1 || num > 120) {
-      setAgeError('อายุต้องอยู่ระหว่าง 1-120 ปี')
+    if (!isValidAge(num)) {
+      setAgeError(`อายุต้องอยู่ระหว่าง ${AGE_RANGE.min}-${AGE_RANGE.max} ปี`)
       return
     }
     if (num === profile.age) return
@@ -321,8 +321,8 @@ function PersonalInfoCard({
       setHeightInput(profile.height_cm ? String(profile.height_cm) : '')
       return
     }
-    if (num < 50 || num > 250) {
-      setHeightError('ส่วนสูงต้องอยู่ระหว่าง 50-250 ซม.')
+    if (!isValidHeightCm(num)) {
+      setHeightError(`ส่วนสูงต้องอยู่ระหว่าง ${HEIGHT_CM_RANGE.min}-${HEIGHT_CM_RANGE.max} ซม.`)
       return
     }
     if (num === profile.height_cm) return

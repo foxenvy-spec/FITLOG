@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getWeekRange, computePlannedConsistency, computeCurrentStreakDates, computeLongestStreak } from '@/lib/dashboardStats'
+import {
+  getWeekRange,
+  computePlannedConsistency,
+  computeCurrentStreakDates,
+  computeLongestStreak,
+  STREAK_WALK_MAX_DAYS,
+} from '@/lib/dashboardStats'
 import { daysAgoStr, bangkokParts } from '@/lib/weekdays'
 import { workoutVolumeKg } from '@/lib/workoutDisplay'
 import { buildDisplaySets } from '@/components/ExerciseCard'
@@ -68,7 +74,10 @@ async function fetchConsistencyData(supabase: ReturnType<typeof createClient>) {
   const prevWindowStart = new Date(prevWindowEnd)
   prevWindowStart.setUTCDate(prevWindowStart.getUTCDate() - (WINDOW_DAYS - 1))
   const { start: weekStart, end: weekEnd } = getWeekRange()
-  const streakCutoff = daysAgoStr(400)
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่ — Final Invariant Check B) "เดิม hardcode 400 แยกจาก STREAK_WALK_MAX_DAYS
+  // ที่ computeCurrentStreak เดินสายโซ่ได้ไกลสุด — ค่าตรงกันโดยบังเอิญ ไม่ได้ผูกกันจริง เสี่ยง drift แบบ
+  // เดียวกับที่เจอใน calendar/page.tsx (hardcode 365 แยกจากตัวเดียวกันนี้)" — ใช้ constant เดียวกันตรงๆ
+  const streakCutoff = daysAgoStr(STREAK_WALK_MAX_DAYS)
 
   const [{ data: windowRows }, { data: prevWindowRows }, { data: weekRows }, { data: programDayRows }, { data: streakRows }] =
     await Promise.all([

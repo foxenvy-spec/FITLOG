@@ -275,11 +275,14 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     // ฟีดแบ็ก "Body Goal โชว์ '0% Progress'/'เริ่มต้นเป้าหมาย' ทั้งที่จริงๆ ลดมาใกล้เป้าหมายมากแล้ว —
     // ควรคำนวณจาก starting weight จริง" — /health page แก้ปัญหานี้ไปแล้วตั้งแต่ v62 (ใช้
     // earliestTrackedValue จากประวัติทั้งหมด แทน goal.starting_value ที่แช่แข็งไว้ตอนสร้างเป้าหมายเฉยๆ)
-    // แต่ Dashboard นี้ไม่เคยพอร์ตตามมาด้วย (ยัง limit(2) เดิม ไม่พอหาค่าเก่าสุดจริง) — เพิ่ม limit เป็น 60
-    // แถวเดียวกับที่ /health ใช้ (ดู goalEarliestTrackedValue ใน app/(app)/health/page.tsx) พอสำหรับหา
-    // earliestTracked* ด้านล่าง ยังใช้แถวเดียวกันนี้คำนวณ bodyMetricsSummary/insight เทรนด์เดิมได้ปกติ
-    // (ฟังก์ชันพวกนั้นสนใจแค่ 2 แถวล่าสุดอยู่ดี ไม่กระทบจากแถวเพิ่ม)
-    supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(60),
+    // แต่ Dashboard นี้ไม่เคยพอร์ตตามมาด้วย (ยัง limit(2) เดิม ไม่พอหาค่าเก่าสุดจริง)
+    // v2: บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่ — Final Invariant Check B) "เดิมตั้งใจให้ .limit(60) ตรงกับที่
+    // /health เคยใช้ แต่ /health ถูกแก้เอา limit ออกไปแล้ว (ต้องการ earliestTrackedValue ที่เป็นค่าเก่าที่สุด
+    // จริง ไม่ใช่แค่ในหน้าต่าง 60 แถว — ดูคอมเมนต์ที่ query เดียวกันใน health/page.tsx) ทำให้ Dashboard
+    // (ยัง 60 แถว) กับ Health/Calendar (ไม่จำกัดแล้ว) เห็น 'ค่าเก่าที่สุด' ไม่ตรงกันอีกสำหรับผู้ใช้ที่ log
+    // เกิน 60 ครั้ง — เอา limit ออกให้ตรงกับอีก 2 หน้า (ฟังก์ชัน bodyMetricsSummary/insight เทรนด์ยังสนใจแค่
+    // 2 แถวล่าสุดอยู่ดี ไม่กระทบจากแถวเพิ่ม)
+    supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }),
     // เป้าหมายน้ำหนัก/Body Fat ที่ตั้งไว้ (ถ้ามี) — ใช้คำนวณ "เหลือเท่าไหร่ถึงเป้าหมาย" สำหรับ
     // การแจ้งเตือนหมวด Goal (ดู computeDashboardNotifications) ตารางเดียวกับที่ /health และ
     // BodyMetricsRow.tsx ใช้อยู่แล้ว
