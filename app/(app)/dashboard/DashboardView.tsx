@@ -2330,7 +2330,27 @@ export default function DashboardPage() {
                         // ("พร้อมฝึกแล้ว") ฟังดูเหมือนคำแนะนำ (recommendation) ทั้งที่จริงเป็นแค่สถานะร่างกาย
                         // (recovery) ล้วนๆ — ตัดคำว่า "พร้อมฝึก" ออก เหลือแค่สถานะการฟื้นตัวเฉยๆ ไม่ชี้นำว่า
                         // ควรทำอะไรต่อ (ดูคำแนะนำจริงได้จากป้าย "ครั้งหน้าแนะนำ.../วันนี้ควรเล่น..." ด้านบนแทน)
-                        return <p className="text-[12px] text-muted text-center py-2">ฟื้นตัวดีทุกกลุ่มกล้ามเนื้อ ✅</p>
+                        // ฟีดแบ็ก (design review, screenshot จริง) "ตอน fully recovered ring ใหญ่ฝั่งซ้ายชน
+                        // ข้อความบรรทัดเดียวลอยกลางฝั่งขวา เหลือพื้นที่ว่างเยอะ ดูเหมือนยังโหลดไม่เสร็จ" —
+                        // ข้อความเดิม ไม่เปลี่ยนคำสักตัว แค่ห่อเป็น row เดียวกับสไตล์แถวกล้ามเนื้อปกติ (bg
+                        // #171A20 เดียวกับแถวด้านล่าง, rounded-md เดียวกัน) + ไอคอน check แยกช่องซ้ายแทน emoji
+                        // ท้ายประโยค ให้เป็น "บล็อกเดียว" ที่จับคู่กับความสูงของ ring ได้ ไม่ใช่ caption ลอยตัว
+                        // — ไม่เพิ่มข้อมูลใหม่ ไม่แตะ logic ของเงื่อนไขนี้เลย
+                        return (
+                          <div
+                            className="rounded-md px-3 py-2.5 flex items-center gap-2.5"
+                            style={{ backgroundColor: '#171A20' }}
+                          >
+                            <span
+                              className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px]"
+                              style={{ backgroundColor: withAlpha(COLORS.moss, '26'), color: COLORS.moss }}
+                              aria-hidden="true"
+                            >
+                              ✓
+                            </span>
+                            <p className="text-[12px] text-muted leading-snug">ฟื้นตัวดีทุกกลุ่มกล้ามเนื้อ</p>
+                          </div>
+                        )
                       }
                       return displayedMuscles.map((mg) => {
                       const pct = recoveryPctMap[mg]
