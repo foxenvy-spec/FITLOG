@@ -1680,14 +1680,20 @@ export default function SessionPage() {
         >
           ข้ามท่านี้
         </button>
-        {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — ปุ่มนี้เป็น CTA หลักที่กดบ่อยที่สุดใน
-            flow เวิร์กเอาต์สด เดิม bg-amber เรียบๆ ไม่มี glow เปลี่ยนมาใช้ Button component กลาง —
-            size="md" (ไม่ใช่ดีฟอลต์ sm) เพื่อรักษาพื้นที่แตะใกล้เคียงของเดิม (py-3 เดิม vs md py-2.5) เพราะ
-            เป็นปุ่มที่กดถี่ที่สุดในทั้งแอป ลด touch target ลงไม่คุ้มความเสี่ยง */}
+        {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-amber เรียบๆ ไม่มี glow เปลี่ยนมาใช้
+            Button component กลาง variant="primary" (glow) — size="md" (ไม่ใช่ดีฟอลต์ sm) เพื่อรักษาพื้นที่
+            แตะใกล้เคียงของเดิม (py-3 เดิม vs md py-2.5)
+            v53: Product Audit /session — ฟีดแบ็ก "หน้า Active Workout มี glow-CTA แข่งกัน 2 ปุ่มพร้อมกัน
+            (ปุ่มเขียว 'เซ็ตนี้เสร็จแล้ว' ด้านบน + ปุ่มนี้) ขัดกับกฎที่ Button.tsx เขียนไว้เองว่า variant
+            primary ควรเป็น glow-CTA เดียวของหน้า" — เทียบ interaction frequency แล้วปุ่ม "เซ็ตนี้เสร็จแล้ว"
+            ถูกกดถี่กว่ามาก (ทุกเซ็ต) ส่วนปุ่มนี้กดแค่ตอนจบท่าเท่านั้น (ครั้งเดียวต่อท่า) — ให้ glow อยู่กับ
+            ปุ่มเขียวแทน เปลี่ยนปุ่มนี้เป็น variant="secondary" (กรอบอำพัน ไม่มี glow) คง size="md" เดิมไว้
+            (ไม่กระทบ touch target/behavior ใดๆ) */}
         <Button
           type="button"
           onClick={logCurrentExercise}
           disabled={saving || currentState.setsLog.length === 0}
+          variant="secondary"
           size="md"
           className="flex-[2]"
         >
