@@ -478,19 +478,27 @@ export default function TemplatesPage() {
     }))
   }
 
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่ — grep หา pattern เดียวกับที่เจอใน /program) "เดิม update local state
+  // ก่อนยิง DB แล้วไม่มี rollback ถ้าพัง — ต่างจาก handleDeleteExercise ด้านบนที่ await/เช็ค error ก่อนค่อย
+  // update state เสมอ" — สลับเป็น DB สำเร็จก่อนค่อย update state เหมือนกัน
   async function handleUpdateExercise(ex: WorkoutTemplateExercise, patch: Partial<WorkoutTemplateExercise>) {
     setError(null)
+    const { error: err } = await supabase.from('workout_template_exercises').update(patch).eq('id', ex.id)
+    if (err) {
+      setError(`แก้ไขท่าไม่สำเร็จ: ${err.message}`)
+      return
+    }
     setExercisesByTemplate((prev) => ({
       ...prev,
       [ex.template_id]: (prev[ex.template_id] ?? []).map((e) => (e.id === ex.id ? { ...e, ...patch } : e)),
     }))
-    const { error: err } = await supabase.from('workout_template_exercises').update(patch).eq('id', ex.id)
-    if (err) {
-      setError(`แก้ไขท่าไม่สำเร็จ: ${err.message}`)
-    }
   }
 
+  // reorder ต้องรู้สึกทันทีตอนลาก (ต่างจาก handleUpdateExercise ด้านบนที่รอ DB ก่อนได้ ไม่กระทบ interaction)
+  // — คง optimistic update ไว้ แต่เก็บลำดับเดิมไว้ rollback ถ้า DB เขียนพัง แทนที่จะปล่อยให้ UI ค้างลำดับใหม่
+  // ทั้งที่ DB ยังเป็นลำดับเก่า (หรือ update สำเร็จแค่บางท่าเพราะเป็นหลาย write ใน Promise.all เดียว)
   async function handleReorderExercises(templateId: string, reordered: WorkoutTemplateExercise[]) {
+    const previous = exercisesByTemplate[templateId] ?? []
     setExercisesByTemplate((prev) => ({ ...prev, [templateId]: reordered }))
     const { error: err } = await Promise.all(
       reordered.map((ex, i) => supabase.from('workout_template_exercises').update({ position: i }).eq('id', ex.id))
@@ -500,6 +508,7 @@ export default function TemplatesPage() {
     )
     if (err) {
       setError(`เรียงลำดับท่าไม่สำเร็จ: ${getErrorMessage(err)}`)
+      setExercisesByTemplate((prev) => ({ ...prev, [templateId]: previous }))
     }
   }
 
@@ -1211,7 +1220,13 @@ function AddExerciseForm({
         value={name}
         onChange={(v) => {
           setName(v)
-          setExerciseLibraryId(null) // พิมพ์เอง ไม่ได้เลือกจาก dropdown — เคลียร์ FK เดิมทิ้ง
+          // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่ — grep หา pattern เดียวกับที่เจอใน /program) "เดิมเคลียร์แค่
+          // exerciseLibraryId — เลือก suggestion แล้วแก้ชื่อต่อ muscleGroup/secondaryMuscles ของท่าที่เลือก
+          // ไว้ตอนแรกยังค้างอยู่ ทั้งที่ชื่อไม่ตรงกับท่านั้นแล้ว (ฟอร์มนี้ไม่มี UI ให้แก้ secondaryMuscles เลย)
+          // — ต้อง reset ทั้งคู่กลับเป็นค่าเริ่มต้นพร้อมกับ FK
+          setExerciseLibraryId(null)
+          setMuscleGroup('อื่นๆ')
+          setSecondaryMuscles([])
         }}
         onSelect={(ex: ExerciseDef) => {
           setMuscleGroup(ex.muscleGroup)
