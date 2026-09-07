@@ -9,6 +9,7 @@ import WeightUnitToggle from '@/components/WeightUnitToggle'
 import SignOutButton from '@/components/SignOutButton'
 import PremiumCard from '@/components/ui/PremiumCard'
 import ErrorState from '@/components/ErrorState'
+import LoadingState from '@/components/LoadingState'
 import { COLORS, CARD_GRADIENT_CSS, withAlpha } from '@/lib/theme'
 import { computeBmr } from '@/lib/bmr'
 
@@ -38,11 +39,13 @@ export default function ProfileView() {
   const [highlightBadges, setHighlightBadges] = useState<Badge[]>([])
   const [profileError, setProfileError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
 
     async function loadProfile() {
+      setLoading(true)
       setProfileError(null)
       try {
         const {
@@ -83,6 +86,8 @@ export default function ProfileView() {
         setHighlightBadges(unlocked.slice(-4))
       } catch (err) {
         if (active) setProfileError(err instanceof Error ? err.message : 'โหลดโปรไฟล์ไม่สำเร็จ')
+      } finally {
+        if (active) setLoading(false)
       }
     }
 
@@ -94,6 +99,8 @@ export default function ProfileView() {
   }, [supabase, reloadToken])
 
   const name = displayName || emailDisplayName(email) || 'นักกีฬา'
+
+  if (loading) return <LoadingState />
 
   // จอใหญ่ (lg+): แบ่ง 2 คอลัมน์ ซ้าย 4/12 (ข้อมูลสรีระ+Sign Out) ขวา 8/12 (เมนู+สำรองข้อมูล+ตั้งค่า)
   // แทนคอลัมน์เดี่ยวกลางจอเดิมที่เหลือพื้นที่ว่างสองข้างเยอะเกินไปบนจอกว้าง — มือถือยังคงคอลัมน์เดี่ยว
