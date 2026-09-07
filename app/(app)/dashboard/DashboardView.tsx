@@ -882,7 +882,18 @@ export default function DashboardPage() {
         : { headline: null, detail: null },
     [data, scheduledDay]
   )
-  const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
+  // ฟีดแบ็ก "ทำแผนวันจันทร์ชดเชยวันพุธ แต่การ์ด Today's Workout ของวันพุธโชว์ Exercises/Sets ปนกับของ
+  // จันทร์" — computeTodayTotals เดิมนับจาก data.todayWorkouts ทุกแถวเท่ากันหมด ไม่สนใจว่า workout นั้น
+  // ทำเพื่อแผนไหน (program_day_id) กรองออกเฉพาะแถวที่ระบุไว้ชัดเจนแล้วว่าเป็นของแผน "อื่น" ไม่ใช่แผนจริง
+  // ของวันนี้ (scheduledDay) ก่อนนับ — เหลือ null (workout อิสระไม่ผูกแผน) กับที่ตรงกับ scheduledDay พอดี
+  // ไว้เหมือนเดิมทุกประการ ไม่กระทบ TodayMuscleChips/recovery/weekly volume ที่ยังต้องนับกล้ามเนื้อที่ฝึก
+  // จริงวันนี้ครบทุกแหล่งที่มา (ถูกต้องอยู่แล้ว ไม่ใช่จุดที่มีปัญหา)
+  const totals = useMemo(() => {
+    const relevantWorkouts = (data?.todayWorkouts ?? []).filter(
+      (w) => !w.program_day_id || w.program_day_id === scheduledDay?.id
+    )
+    return computeTodayTotals(relevantWorkouts)
+  }, [data?.todayWorkouts, scheduledDay])
 
   // v47: ฟีดแบ็ก "Workout Card ฝั่งซ้ายล่างยังว่างอยู่บ้าง อยากได้ Calories เติม" — ใช้สูตรประมาณเดียวกับ
   // หน้า Session/Stats (estimateCaloriesToday ใน lib/dashboardStats.ts) ไม่ใช่ตัวเลขสมมติ — น้ำหนักตัวใช้

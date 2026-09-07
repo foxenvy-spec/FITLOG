@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
-import { todayDayOfWeek, todayStr } from '@/lib/weekdays'
+import { todayDayOfWeek, todayStr, WEEKDAYS } from '@/lib/weekdays'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { findExerciseByName } from '@/lib/exercises'
@@ -138,6 +138,8 @@ export default function SessionPage() {
   const [phase, setPhase] = useState<Phase>('loading')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [day, setDay] = useState<ProgramDay | null>(null)
+  // true เมื่อเข้ามาทำแผนของวันอื่น (ผ่าน ?day=<id> จาก /program) แทนวันจริงตามปฏิทินวันนี้ — "เซสชันชดเชย"
+  const [isMakeupSession, setIsMakeupSession] = useState(false)
   const [exercises, setExercises] = useState<ProgramExercise[]>([])
   const [states, setStates] = useState<Record<string, SessionSetState>>({})
   const [index, setIndex] = useState(0)
@@ -218,11 +220,15 @@ export default function SessionPage() {
     }
 
     const dow = todayDayOfWeek()
-    const { data: dayRow, error: dayErr } = await supabase
-      .from('program_days')
-      .select('*')
-      .eq('day_of_week', dow)
-      .maybeSingle()
+    // ฟีดแบ็ก "ป่วยวันจันทร์ หายป่วยวันพุธ อยากทำแผนจันทร์ชดเชย" — เดิม /session ล็อกกับ todayDayOfWeek()
+    // เท่านั้น ไม่มีทางเริ่มแผนวันอื่นได้เลย — เพิ่ม query param ?day=<program_day_id> ให้เลือกแผนวันไหนก็ได้
+    // มาทำ "ชดเชย" วันนี้แทน (entry point จริงอยู่ที่ /program ดูจุดที่ลิงก์มาที่นี่) อ่านจาก
+    // window.location ตรงๆ แทน useSearchParams (หน้านี้เป็น client component ล้วนอยู่แล้ว ทุก query/state
+    // รันหลัง mount เสมอ — เลี่ยง Suspense boundary requirement ของ useSearchParams ที่ไม่จำเป็นตรงนี้)
+    const makeupDayId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('day') : null
+    const { data: dayRow, error: dayErr } = await (makeupDayId
+      ? supabase.from('program_days').select('*').eq('id', makeupDayId).maybeSingle()
+      : supabase.from('program_days').select('*').eq('day_of_week', dow).maybeSingle())
 
     if (dayErr) {
       setErrorMsg(dayErr.message)
@@ -234,6 +240,11 @@ export default function SessionPage() {
       setPhase('empty')
       return
     }
+
+    // true เฉพาะตอนเลือกแผนของวันอื่น (ไม่ใช่วันจริงตามปฏิทินวันนี้) มาทำ — ใช้โชว์ banner "โหมดชดเชย"
+    // กันสับสนกับแผนจริงของวันนี้ ไม่ใช่ธงที่ persist ลง DB (แค่ derive จาก day_of_week ที่โหลดมาเทียบ dow)
+    const isMakeup = makeupDayId != null && (dayRow as ProgramDay).day_of_week !== dow
+    setIsMakeupSession(isMakeup)
 
     const { data: exRows, error: exErr } = await supabase
       .from('program_exercises')
@@ -278,12 +289,20 @@ export default function SessionPage() {
     // ท่าที่อยู่ในแผน เพราะท่าที่กด "เพิ่มท่า" เองระหว่างเซสชันก็ต้องรอดจากการรีเฟรชด้วยเหมือนกัน
     const { data: workoutRows } = await supabase
       .from('workouts')
-      .select('id, exercise_name, muscle_group, rpe')
+      .select('id, exercise_name, muscle_group, rpe, program_day_id')
       .eq('user_id', user.id)
       .eq('type', 'strength')
       .eq('performed_at', todayStr())
 
-    const typedWorkoutRows = (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null })[]) ?? []
+    // บั๊ก (ฟีดแบ็ก "ทำแผนวันจันทร์ชดเชยวันพุธ แต่ /session ของวันพุธจริงกลับเห็นท่าจันทร์ปนมาเป็น ad-hoc
+    // 19 ท่า") — เดิมกรองแค่ performed_at วันนี้ ไม่สนใจว่า workout แถวนั้นทำเพื่อแผนวันไหน ทำให้เซสชัน
+    // ชดเชยของแผนอื่น (program_day_id ไม่ตรงกับแผนที่กำลังเปิดอยู่ตอนนี้) ถูกดึงมาปนเป็นท่า ad-hoc ของ
+    // แผนนี้ไปด้วย — กรองออกเฉพาะแถวที่ระบุ program_day_id ไว้ชัดเจนแล้วว่าเป็นของแผน "อื่น" (ไม่ใช่แผนที่
+    // กำลังเปิดอยู่) เหลือไว้แค่ null (workout อิสระแท้ๆ ไม่ผูกแผนไหนเลย ยังต้องรอดจากการรีเฟรชเหมือนเดิม)
+    // กับที่ตรงกับแผนนี้พอดี (ทำแผนเดียวกันซ้ำ/resume เซสชันชดเชยเดิมที่ยังไม่จบ)
+    const typedWorkoutRows = (
+      (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null; program_day_id: string | null })[]) ?? []
+    ).filter((w) => w.program_day_id == null || w.program_day_id === (dayRow as ProgramDay).id)
 
     // ท่าที่ log ไปแล้ววันนี้แต่ไม่ได้อยู่ในแผน = ท่าที่เคย "เพิ่มท่า" เองมาก่อน — สร้างเป็นท่า ad-hoc
     // ต่อท้ายรายการท่าตามแผน ไม่งั้นรีเฟรชแล้วท่านี้จะหายไปทั้งที่บันทึกจริงอยู่แล้ว
@@ -594,6 +613,10 @@ export default function SessionPage() {
       rpe: state.rpe,
       notes: ex.rationale,
       total_volume_kg: totalVolumeKg,
+      // ex.program_day_id เป็น '' (sentinel ว่าง) สำหรับท่า ad-hoc ที่เพิ่ม/สลับเองกลางเซสชัน (ดู
+      // makeAdhocExercise) — แปลงเป็น null ให้ตรงกับความหมายจริง "ไม่ผูกแผนไหนเลย" แทนสตริงว่าง ท่าตามแผน
+      // ปกติ (ทั้งโหมดปกติและโหมดชดเชย) จะได้ id ของแผนที่กำลังเปิดอยู่จริงเสมอ
+      program_day_id: ex.program_day_id || null,
     }
 
     // ถ้าเคยบันทึกท่านี้ไปแล้ว (เซ็ตก่อนหน้าในท่าเดียวกัน หรือกลับมาแก้ผ่าน progress chips)
@@ -1232,6 +1255,21 @@ export default function SessionPage() {
   return (
     <div className="lg:max-w-5xl lg:mx-auto lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
       <div className="space-y-4">
+      {/* ฟีดแบ็ก "ป่วยวันจันทร์ หายป่วยวันพุธ อยากทำแผนจันทร์ชดเชย" — เซสชันชดเชย (เข้ามาผ่าน ?day=<id> ที่
+          ไม่ตรงกับวันจริงตามปฏิทินวันนี้) ต้องบอกผู้ใช้ตรงๆ ว่ากำลังทำแผนของวันไหนอยู่ กันสับสนกับแผนจริง
+          ของวันนี้ (ซึ่งยังคงอยู่ครบ ไม่ได้ถูกแทนที่ — ดูรายละเอียดที่ program_day_id ใน persistSets) */}
+      {isMakeupSession && day && (
+        <div
+          className="rounded-md px-3 py-2 flex items-center gap-2"
+          style={{ backgroundColor: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '33')}` }}
+        >
+          <span className="text-xs shrink-0" aria-hidden="true">🔁</span>
+          <p className="text-[12px] text-muted">
+            <span className="text-amber font-medium">โหมดชดเชย</span> — กำลังทำแผน &quot;{day.title}&quot; (ปกติตรงกับวัน
+            {' '}{WEEKDAYS[day.day_of_week]}) บันทึกด้วยวันที่จริงวันนี้
+          </p>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <p className="text-[12px] tracked uppercase text-muted">
           ท่าที่ <span className="text-ink font-mono">{index + 1}</span>/{exercises.length}

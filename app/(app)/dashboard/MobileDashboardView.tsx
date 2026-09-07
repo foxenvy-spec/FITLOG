@@ -138,7 +138,14 @@ export default function MobileDashboardView() {
     () => data?.programDays.find((d) => d.day_of_week === dow) ?? null,
     [data?.programDays, dow]
   )
-  const totals = useMemo(() => computeTodayTotals(data?.todayWorkouts ?? []), [data?.todayWorkouts])
+  // เหตุผลเดียวกับ DashboardView.tsx (เดสก์ท็อป) — กรอง workout ที่ระบุ program_day_id ของแผน "อื่น"
+  // (เซสชันชดเชย) ออกก่อนนับ ไม่ให้ปนกับสถิติ Exercises/Sets ของแผนจริงวันนี้
+  const totals = useMemo(() => {
+    const relevantWorkouts = (data?.todayWorkouts ?? []).filter(
+      (w) => !w.program_day_id || w.program_day_id === scheduledDay?.id
+    )
+    return computeTodayTotals(relevantWorkouts)
+  }, [data?.todayWorkouts, scheduledDay])
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
   // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน

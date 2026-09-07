@@ -43,6 +43,7 @@ function makeWorkout(overrides: Partial<Workout>): Workout {
     notes: null,
     created_at: '2026-07-18T09:00:00',
     total_volume_kg: null,
+    program_day_id: null,
     ...overrides,
   }
 }

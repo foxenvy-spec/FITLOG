@@ -27,6 +27,10 @@ export interface Workout {
   // ผลรวม volume ที่แม่นยำจากการรวมทีละเซ็ตจริง (reps x weight_kg ต่อเซ็ตที่ติ๊กเสร็จ)
   // null สำหรับแถวเก่าที่ยังไม่มี workout_sets แนบอยู่ — ให้ fallback ไปใช้ sets*reps*weight_kg แทน
   total_volume_kg: number | null
+  // แผนวันไหนที่เซ็ตนี้ทำเพื่อ (แยกจาก performed_at ซึ่งคือวันที่ฝึก "จริง") — null สำหรับ workout
+  // อิสระที่ไม่ผูกแผนเลย (เช่นจาก /log ทั่วไป) ใช้แยก "เซสชันชดเชย" (program_day_id ไม่ตรงกับวันจริง
+  // ของ performed_at) ออกจากเซสชันปกติ/ท่า ad-hoc ที่เพิ่มเองกลางเซสชัน
+  program_day_id: string | null
 }
 
 // เซ็ตแต่ละเซ็ตของ workouts หนึ่งแถว — ทำให้ reps/น้ำหนักต่างกันได้ในแต่ละเซ็ต (เช่น drop set)

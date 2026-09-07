@@ -247,6 +247,10 @@ export default function ProgramPage() {
         weight_kg: ex.default_weight_kg,
         rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
         notes: ex.rationale,
+        // ปุ่มนี้บันทึกแผนของ "วันที่กำลังดูอยู่" (currentDay, อาจไม่ใช่วันจริงตามปฏิทินวันนี้ — ดู banner
+        // "กำลังดูแผนของวัน...") เข้า Log ของวันนี้เสมอ — แท็ก program_day_id ไว้เหมือนกับที่ /session ทำ
+        // (persistSets) กัน Dashboard/session ของวันจริงเห็นท่าพวกนี้ปนเป็น ad-hoc/สถิติของวันนี้ผิดๆ
+        program_day_id: currentDay.id,
       }))
 
       const { error: wErr } = await supabase.from('workouts').insert(payload)
@@ -631,6 +635,18 @@ export default function ProgramPage() {
       {isToday && currentDay && currentExercises.length > 0 && (
         <Button as="a" href="/session" size="md" className="w-full">
           ▶ เริ่มเซสชันแบบเรียลไทม์
+        </Button>
+      )}
+      {/* ฟีดแบ็ก "ป่วยวันจันทร์ หายป่วยวันพุธ อยากทำแผนจันทร์ชดเชย" — เดิมวันที่ไม่ใช่วันนี้มีแค่ "บันทึกแผน
+          นี้เข้า Log วันนี้" (bulk log ตรงเข้า workouts ไม่ผ่าน guided flow) ให้ทางเลือกเดียว ทำให้ผู้ใช้ที่
+          อยากได้ rest timer/target-sets tracking แบบปกติต้องยอมแลกกับหน้า /session ของวันนี้ปนกัน 2 แผน —
+          เพิ่มปุ่มเริ่มเซสชันจริงสำหรับ "ชดเชย" แผนวันอื่นด้วย ผ่าน ?day=<id> (session/page.tsx อ่าน
+          param นี้แทน todayDayOfWeek() และแท็ก program_day_id ให้ตรงกับแผนนี้เสมอ กัน /session ของวันจริง
+          ปนกับท่าที่ชดเชยมา — ดูรายละเอียดที่ isMakeupSession ใน session/page.tsx) ไม่แตะปุ่ม/behavior เดิม
+          ของ isToday หรือ "บันทึกแผนนี้เข้า Log วันนี้" เลยสักจุด แค่เพิ่มทางเลือกที่สาม */}
+      {!isToday && currentDay && currentExercises.length > 0 && (
+        <Button as="a" href={`/session?day=${currentDay.id}`} size="md" className="w-full">
+          🔁 เริ่มเซสชันชดเชย (แบบเรียลไทม์)
         </Button>
       )}
 
