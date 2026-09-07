@@ -1105,20 +1105,27 @@ function ExerciseRow({
               />
               <BlurField label="พัก" value={exercise.rest ?? ''} onBlur={(v) => onUpdate({ rest: v || null })} />
             </div>
-            <label className="block">
-              <span className="block text-[12px] tracked uppercase text-muted mb-0.5">กลุ่มกล้ามเนื้อ</span>
-              <select
-                value={(exercise.muscle_group as MuscleGroup) ?? 'อื่นๆ'}
-                onChange={(e) => onUpdate({ muscle_group: e.target.value })}
-                className="w-full bg-surface2 text-ink text-xs rounded px-2 py-1.5 border border-line outline-none focus:border-amber"
-              >
+            {/* Product Audit /program+/templates — เปลี่ยนจาก native <select> เป็น chip row แบบเดียวกับ
+                /log ให้เลือกกลุ่มกล้ามเนื้อด้วยวิธีเดียวกันทั้งแอป (ไม่แตะ state/logic ใดๆ) */}
+            <div>
+              <p className="text-[12px] tracked uppercase text-muted mb-1">กลุ่มกล้ามเนื้อ</p>
+              <div className="flex flex-wrap gap-1.5">
                 {MUSCLE_GROUPS.map((mg) => (
-                  <option key={mg} value={mg}>
+                  <button
+                    key={mg}
+                    type="button"
+                    onClick={() => onUpdate({ muscle_group: mg })}
+                    className={`text-xs px-2.5 py-1.5 rounded-full border transition ${
+                      ((exercise.muscle_group as MuscleGroup) ?? 'อื่นๆ') === mg
+                        ? 'bg-steel text-bg border-steel'
+                        : 'bg-surface2 border-line text-muted hover:text-ink hover:border-amber/50'
+                    }`}
+                  >
                     {mg}
-                  </option>
+                  </button>
                 ))}
-              </select>
-            </label>
+              </div>
+            </div>
             <BlurTextArea label="Rationale (คำแนะนำในการเล่น)" value={exercise.notes ?? ''} onBlur={(v) => onUpdate({ notes: v || null })} />
           </div>
         )}
@@ -1241,17 +1248,28 @@ function AddExerciseForm({
         <MiniField label="Target RIR" value={rir} onChange={setRir} />
         <MiniField label="พัก" value={rest} onChange={setRest} />
       </div>
-      <select
-        value={muscleGroup}
-        onChange={(e) => setMuscleGroup(e.target.value as MuscleGroup)}
-        className="w-full bg-surface text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-amber"
-      >
-        {MUSCLE_GROUPS.map((mg) => (
-          <option key={mg} value={mg}>
-            {mg}
-          </option>
-        ))}
-      </select>
+      {/* Product Audit /program+/templates — ฟีดแบ็ก "เลือกกลุ่มกล้ามเนื้อด้วย native <select> ต่างจาก
+          /log ที่ใช้ chip row สำหรับงานเดียวกันเป๊ะ (MUSCLE_GROUPS ชุดเดียวกัน)" — เปลี่ยนเป็น chip row
+          แบบเดียวกับ /log ให้ทั้งแอปเลือกกลุ่มกล้ามเนื้อด้วยวิธีเดียวกัน (ไม่แตะ state/logic ใดๆ) */}
+      <div>
+        <p className="text-[12px] tracked uppercase text-muted mb-1">กลุ่มกล้ามเนื้อ</p>
+        <div className="flex flex-wrap gap-1.5">
+          {MUSCLE_GROUPS.map((mg) => (
+            <button
+              key={mg}
+              type="button"
+              onClick={() => setMuscleGroup(mg)}
+              className={`text-xs px-2.5 py-1.5 rounded-full border transition ${
+                muscleGroup === mg
+                  ? 'bg-steel text-bg border-steel'
+                  : 'bg-surface2 border-line text-muted hover:text-ink hover:border-amber/50'
+              }`}
+            >
+              {mg}
+            </button>
+          ))}
+        </div>
+      </div>
       <label className="block">
         <span className="block text-[12px] tracked uppercase text-muted mb-0.5">Rationale (คำแนะนำในการเล่น)</span>
         <textarea

@@ -969,20 +969,28 @@ function ExerciseRow({
               value={exercise.default_weight_kg != null ? String(toDisplay(exercise.default_weight_kg)) : ''}
               onBlur={(v) => onUpdate({ default_weight_kg: v ? toKg(Number(v)) : null })}
             />
-            <label className="block">
-              <span className="block text-[12px] tracked uppercase text-muted mb-0.5">กลุ่มกล้ามเนื้อ</span>
-              <select
-                value={(exercise.muscle_group as MuscleGroup) ?? 'อื่นๆ'}
-                onChange={(e) => onUpdate({ muscle_group: e.target.value })}
-                className="w-full bg-surface2 text-ink text-xs rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
-              >
-                {MUSCLE_GROUPS.map((mg) => (
-                  <option key={mg} value={mg}>
-                    {mg}
-                  </option>
-                ))}
-              </select>
-            </label>
+          </div>
+          {/* Product Audit /program+/templates — ดึงออกมาจาก grid-cols-2 ด้านบน (9 กลุ่มกล้ามเนื้อพันกัน
+              เป็น chip แถวยาวอยู่ในครึ่งคอลัมน์จะแน่นเกินไป) แทนที่ native <select> ด้วย chip row แบบเดียว
+              กับ /log ให้เลือกกลุ่มกล้ามเนื้อด้วยวิธีเดียวกันทั้งแอป (ไม่แตะ state/logic ใดๆ) */}
+          <div>
+            <p className="text-[12px] tracked uppercase text-muted mb-1">กลุ่มกล้ามเนื้อ</p>
+            <div className="flex flex-wrap gap-1.5">
+              {MUSCLE_GROUPS.map((mg) => (
+                <button
+                  key={mg}
+                  type="button"
+                  onClick={() => onUpdate({ muscle_group: mg })}
+                  className={`text-xs px-2.5 py-1.5 rounded-full border transition ${
+                    ((exercise.muscle_group as MuscleGroup) ?? 'อื่นๆ') === mg
+                      ? 'bg-steel text-bg border-steel'
+                      : 'bg-surface2 border-line text-muted hover:text-ink hover:border-amber/50'
+                  }`}
+                >
+                  {mg}
+                </button>
+              ))}
+            </div>
           </div>
           <button onClick={onDelete} className="text-[12px] text-rusttext hover:underline">
             ลบท่านี้
@@ -1145,17 +1153,28 @@ function AddExerciseForm({
         <MiniField label="Target RIR" value={rir} onBlur={setRir} />
         <MiniField label="พัก" value={rest} onBlur={setRest} />
       </div>
-      <select
-        value={muscleGroup}
-        onChange={(e) => setMuscleGroup(e.target.value as MuscleGroup)}
-        className="w-full bg-surface2 text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-amber"
-      >
-        {MUSCLE_GROUPS.map((mg) => (
-          <option key={mg} value={mg}>
-            {mg}
-          </option>
-        ))}
-      </select>
+      {/* Product Audit /program+/templates — ฟีดแบ็ก "เลือกกลุ่มกล้ามเนื้อด้วย native <select> ต่างจาก
+          /log ที่ใช้ chip row สำหรับงานเดียวกันเป๊ะ (MUSCLE_GROUPS ชุดเดียวกัน)" — เปลี่ยนเป็น chip row
+          แบบเดียวกับ /log ให้ทั้งแอปเลือกกลุ่มกล้ามเนื้อด้วยวิธีเดียวกัน (ไม่แตะ state/logic ใดๆ) */}
+      <div>
+        <p className="text-[12px] tracked uppercase text-muted mb-1">กลุ่มกล้ามเนื้อ</p>
+        <div className="flex flex-wrap gap-1.5">
+          {MUSCLE_GROUPS.map((mg) => (
+            <button
+              key={mg}
+              type="button"
+              onClick={() => setMuscleGroup(mg)}
+              className={`text-xs px-2.5 py-1.5 rounded-full border transition ${
+                muscleGroup === mg
+                  ? 'bg-steel text-bg border-steel'
+                  : 'bg-surface2 border-line text-muted hover:text-ink hover:border-amber/50'
+              }`}
+            >
+              {mg}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="flex gap-2">
         <button
           onClick={onCancel}
