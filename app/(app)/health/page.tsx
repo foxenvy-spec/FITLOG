@@ -4544,11 +4544,19 @@ function MetricForm({
     setAgeInput(profile?.age ? String(profile.age) : '')
   }, [profile?.age])
 
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "หน้า /profile มี bounds validation (อายุ 1-120, ส่วนสูง 50-250) ให้
+  // handleAgeBlur/handleHeightBlur ของตัวเองแล้ว แต่ profiles.height_cm/age เขียนได้จากอีกทาง (ฟอร์มนี้ที่
+  // หน้า /health) ด้วย ซึ่งยังเช็คแค่ Number.isFinite ไม่มีขอบเขตเลย — กรอกส่วนสูง/อายุที่เป็นไปไม่ได้จากที่นี่
+  // ก็ไหลเข้า computeBmr()/bmiOf() ผิดเพี้ยนได้เหมือนเดิม" — ใช้ bounds และข้อความ error เดียวกับ /profile
   async function handleHeightBlur() {
     const trimmed = heightCm.trim()
     if (!trimmed || !onHeightExtracted) return
-    const num = Number(trimmed)
+    const num = Math.round(Number(trimmed))
     if (!Number.isFinite(num) || num === profile?.height_cm) return
+    if (num < 50 || num > 250) {
+      setError('ส่วนสูงต้องอยู่ระหว่าง 50-250 ซม.')
+      return
+    }
     try {
       await onHeightExtracted(num)
     } catch (err) {
@@ -4561,6 +4569,10 @@ function MetricForm({
     if (!trimmed || !onAgeChanged) return
     const num = Math.round(Number(trimmed))
     if (!Number.isFinite(num) || num === profile?.age) return
+    if (num < 1 || num > 120) {
+      setError('อายุต้องอยู่ระหว่าง 1-120 ปี')
+      return
+    }
     try {
       await onAgeChanged(num)
     } catch (err) {

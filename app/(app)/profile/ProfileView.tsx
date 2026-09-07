@@ -62,8 +62,12 @@ export default function ProfileView() {
           supabase.from('program_days').select('day_of_week'),
         ])
         if (!active) return
-        if (profileRes.error) {
-          setProfileError(profileRes.error.message)
+        // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เช็คแค่ profileRes.error — ถ้า body_metrics/workouts/program_days
+        // query พัง (RLS/เน็ตหลุด) แต่ profiles ผ่าน จะไม่ error เลย แค่ latestWeightKg/highlightBadges
+        // เงียบๆ กลายเป็นค่าว่าง การ์ด BMR จะโชว์ 'กรอกข้อมูลให้ครบ' ทั้งที่ผู้ใช้กรอก/log ไปแล้วจริง"
+        const firstError = profileRes.error ?? weightRes.error ?? workoutsRes.error ?? dayRes.error
+        if (firstError) {
+          setProfileError(firstError.message)
           return
         }
         const row = profileRes.data as (Profile & { display_name: string | null }) | null
@@ -130,7 +134,11 @@ export default function ProfileView() {
             onRetry={() => setReloadToken((n) => n + 1)}
           />
         ) : (
-          <PersonalInfoCard profile={profile} weightKg={latestWeightKg} onSaved={(p) => setProfile(p)} />
+          <PersonalInfoCard
+            profile={profile}
+            weightKg={latestWeightKg}
+            onSaved={(updater) => setProfile((prev) => (prev ? updater(prev) : prev))}
+          />
         )}
 
         {highlightBadges.length > 0 && (
@@ -230,7 +238,13 @@ function PersonalInfoCard({
 }: {
   profile: Profile | null
   weightKg: number | null
-  onSaved: (p: Profile) => void
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เดิม onSaved รับ object ที่ spread จาก `profile` snapshot ตอนปิด
+  // closure ของ handler นั้นๆ — แก้อายุแล้วรีบแก้ส่วนสูงต่อก่อน save อายุจะเสร็จ (ยังไม่มี re-render คั่นให้
+  // profile prop อัปเดต) ถ้า network reorder ทำให้ save ที่เริ่มทีหลังเสร็จก่อน แล้ว save ที่เริ่มก่อนเสร็จ
+  // ทีหลังด้วย snapshot เก่า จะเขียนทับค่าที่เพิ่ง save สำเร็จกลับเป็นค่าเก่าใน local state (DB เองไม่พัง
+  // แค่ UI ไม่ตรงจนกว่าจะ reload)" — เปลี่ยนเป็น functional update ให้ parent merge กับ state ล่าสุดเสมอ
+  // แทนการปิดค่า profile เป็น snapshot ตรงๆ
+  onSaved: (updater: (prev: Profile) => Profile) => void
 }) {
   const supabase = createClient()
   const [ageInput, setAgeInput] = useState(profile?.age ? String(profile.age) : '')
@@ -252,7 +266,7 @@ function PersonalInfoCard({
     setSavingSex(sex)
     try {
       await saveSex(supabase, sex)
-      onSaved({ ...profile, sex })
+      onSaved((prev) => ({ ...prev, sex }))
     } catch (err) {
       console.error('บันทึกเพศไม่สำเร็จ', err)
     } finally {
@@ -268,9 +282,18 @@ function PersonalInfoCard({
   async function handleAgeBlur() {
     if (!profile) return
     const trimmed = ageInput.trim()
-    if (!trimmed) return
+    // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "ล้างช่องให้ว่างแล้ว blur — เดิม return เฉยๆ ไม่ save และไม่ sync
+    // กลับ ช่องเลยค้างว่างเปล่าทั้งที่ profile.age (และ BMR ที่คำนวณจากมัน) ไม่ได้เปลี่ยนเลย ดูเหมือนกรอก
+    // อะไรไปแล้วหาย — sync ค่าที่ยัง persist อยู่จริงกลับเข้าช่องเมื่อไม่มีอะไรให้ save"
+    if (!trimmed) {
+      setAgeInput(profile.age ? String(profile.age) : '')
+      return
+    }
     const num = Math.round(Number(trimmed))
-    if (!Number.isFinite(num)) return
+    if (!Number.isFinite(num)) {
+      setAgeInput(profile.age ? String(profile.age) : '')
+      return
+    }
     if (num < 1 || num > 120) {
       setAgeError('อายุต้องอยู่ระหว่าง 1-120 ปี')
       return
@@ -279,7 +302,7 @@ function PersonalInfoCard({
     setAgeError(null)
     try {
       await saveAge(supabase, num)
-      onSaved({ ...profile, age: num })
+      onSaved((prev) => ({ ...prev, age: num }))
     } catch (err) {
       console.error('บันทึกอายุไม่สำเร็จ', err)
       setAgeError('บันทึกไม่สำเร็จ ลองอีกครั้ง')
@@ -289,9 +312,15 @@ function PersonalInfoCard({
   async function handleHeightBlur() {
     if (!profile) return
     const trimmed = heightInput.trim()
-    if (!trimmed) return
+    if (!trimmed) {
+      setHeightInput(profile.height_cm ? String(profile.height_cm) : '')
+      return
+    }
     const num = Math.round(Number(trimmed))
-    if (!Number.isFinite(num)) return
+    if (!Number.isFinite(num)) {
+      setHeightInput(profile.height_cm ? String(profile.height_cm) : '')
+      return
+    }
     if (num < 50 || num > 250) {
       setHeightError('ส่วนสูงต้องอยู่ระหว่าง 50-250 ซม.')
       return
@@ -300,7 +329,7 @@ function PersonalInfoCard({
     setHeightError(null)
     try {
       await saveHeightCm(supabase, num)
-      onSaved({ ...profile, height_cm: num })
+      onSaved((prev) => ({ ...prev, height_cm: num }))
     } catch (err) {
       console.error('บันทึกส่วนสูงไม่สำเร็จ', err)
       setHeightError('บันทึกไม่สำเร็จ ลองอีกครั้ง')
