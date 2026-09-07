@@ -200,7 +200,9 @@ export default function HealthPage() {
       supabase.from('goals').select('*').in('goal_type', ['weight', 'body_fat']).eq('status', 'active'),
     ])
 
-    const firstError = metricsRes.error ?? profileRes.error ?? photosRes.error
+    // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "ไม่เช็ค goalsRes.error เลย — ถ้า query goals พังแต่อีก 3 query ผ่าน
+    // จะไม่ error เลย แค่ setGoals([]) เงียบๆ แยกไม่ออกจากเคส 'ยังไม่เคยตั้งเป้าหมาย' จริงๆ"
+    const firstError = metricsRes.error ?? profileRes.error ?? photosRes.error ?? goalsRes.error
     if (firstError) {
       setLoadError(firstError.message)
       setLoading(false)
@@ -1716,6 +1718,7 @@ export default function HealthPage() {
               <GoalsCard
                 goals={goals}
                 unit={unit}
+                toDisplay={toDisplay}
                 goalCurrentValue={goalCurrentValue}
                 goalProgressPct={goalProgressPct}
                 goalStartValue={(g) => goalEarliestTrackedValue(g) ?? g.starting_value ?? null}
@@ -1731,7 +1734,21 @@ export default function HealthPage() {
         <div className="space-y-6">
           <MetricForm
             profile={profile}
-            onSaved={(m) => setMetrics((prev) => [m, ...prev.filter((x) => x.id !== m.id)])}
+            onSaved={(m) =>
+              // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "prepend ตรงๆ โดยไม่ sort ซ้ำ — ถ้าบันทึกค่าย้อนหลัง (แก้
+              // ช่องวันที่เอง หรือ import รูปเก่า) แถวนั้นจะแซงมาเป็น metrics[0] ทันที ทั้งที่ latest/
+              // metrics[1] ทั้งหน้า (health score, BMI, delta ทุกตัว, goal progress) อ้าง index ตรงๆ
+              // ไม่ได้เช็ค measured_at เลย" — sort ใหม่ตาม measured_at (ใหม่สุดก่อน, เหมือน query ตอนโหลด
+              // หน้าครั้งแรก) ทุกครั้งหลัง prepend แทน — created_at เป็น tiebreaker เมื่อวันที่ซ้ำกัน (เอา
+              // รายการที่เพิ่งบันทึกล่าสุดเป็น "ล่าสุด" ของวันนั้น)
+              setMetrics((prev) =>
+                [m, ...prev.filter((x) => x.id !== m.id)].sort((a, b) =>
+                  a.measured_at !== b.measured_at
+                    ? b.measured_at.localeCompare(a.measured_at)
+                    : b.created_at.localeCompare(a.created_at)
+                )
+              )
+            }
             onHeightExtracted={saveHeight}
             onAgeChanged={handleAgeChanged}
           />
@@ -3526,12 +3543,14 @@ function HealthScoreCard({
 function GoalsCard({
   goals,
   unit,
+  toDisplay,
   goalCurrentValue,
   goalProgressPct,
   goalStartValue,
 }: {
   goals: Goal[]
   unit: string
+  toDisplay: (kg: number) => number
   goalCurrentValue: (g: Goal) => number | null
   goalProgressPct: (g: Goal) => number | null
   // ค่าเริ่มต้นที่ goalProgressPct ใช้จริง (earliestTrackedValue ?? starting_value — ดูคอมเมนต์ v62
@@ -3552,23 +3571,31 @@ function GoalsCard({
       ) : (
         <div className="space-y-5">
           {goals.map((g) => {
-            const current = goalCurrentValue(g)
+            const isWeight = g.goal_type === 'weight'
+            // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "การ์ดนี้แปะ label หน่วย (unit) ตามที่ผู้ใช้ตั้งไว้ แต่ค่าที่
+            // โชว์ (current/start/target) เป็น kg ดิบเสมอ ไม่ผ่าน toDisplay() เลย — ต่างจาก goalRows ในแท็บ
+            // Overview (เป้าหมายเดียวกัน) ที่แปลงถูกต้องอยู่แล้ว" — แปลงเฉพาะ goal น้ำหนัก (Body Fat เป็น %
+            // ไม่มีหน่วยให้แปลง) ก่อนคำนวณ remaining/แสดงผลต่อ — pct (ความคืบหน้า %) ไม่ต้องแปลง เพราะเป็น
+            // สัดส่วนที่ไม่ขึ้นกับหน่วยอยู่แล้ว
+            const rawCurrent = goalCurrentValue(g)
+            const rawStart = goalStartValue(g)
+            const current = rawCurrent !== null && isWeight ? toDisplay(rawCurrent) : rawCurrent
+            const start = rawStart !== null && isWeight ? toDisplay(rawStart) : rawStart
+            const target = g.target_value !== null && isWeight ? toDisplay(g.target_value) : g.target_value
             const pct = goalProgressPct(g)
-            const start = goalStartValue(g)
-            const label = g.goal_type === 'weight' ? `น้ำหนัก (${unit})` : 'Body Fat (%)'
-            const fmt = (n: number) => (g.goal_type === 'weight' ? n.toFixed(1) : `${n.toFixed(1)}%`)
-            const remaining =
-              current !== null && g.target_value !== null ? Math.abs(current - g.target_value) : null
+            const label = isWeight ? `น้ำหนัก (${unit})` : 'Body Fat (%)'
+            const fmt = (n: number) => (isWeight ? n.toFixed(1) : `${n.toFixed(1)}%`)
+            const remaining = current !== null && target !== null ? Math.abs(current - target) : null
             // v: mockup "Current -> Goal ระยะทาง" ขอภาพเส้นสไลเดอร์ (start...goal, ลูกศรปัจจุบันตาม %)
             // แทนแถบเติมสีธรรมดาเดิม — ต้องมีทั้ง start/target/pct ครบถึงวาดเส้นได้ (ไม่งั้น fallback เป็น
             // แถบธรรมดาแบบเดิม เช่น ยังไม่เคยบันทึกค่าเลยสักครั้ง)
-            const canShowSlider = start !== null && g.target_value !== null && pct !== null
+            const canShowSlider = start !== null && target !== null && pct !== null
             return (
               <div key={g.id}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="text-ink">{label}</span>
                   <span className="font-mono text-muted">
-                    {current !== null ? current.toFixed(1) : '—'} / {g.target_value?.toFixed(1) ?? '—'}
+                    {current !== null ? current.toFixed(1) : '—'} / {target !== null ? target.toFixed(1) : '—'}
                     {/* pct มาจาก sharedGoalProgressPct ซึ่ง clamp 0-100 เสมอ — ถ้าถึง/เกินเป้าหมายแล้ว pct
                         จะเป็น 100 พอดี แต่ remaining (Math.abs ตรงๆ) ยังเป็นค่าไม่เป็นศูนย์ได้ถ้าเกินเป้าไปแล้ว
                         (เช่น เป้าลดน้ำหนักเหลือ 70kg แต่ตอนนี้ 68kg) ทำให้ขึ้น "เหลือ 2.0kg" ทั้งที่แถบข้างล่าง
@@ -3595,7 +3622,7 @@ function GoalsCard({
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-[12px] text-muted">{fmt(start!)}</span>
-                      <span className="text-[12px] text-muted">{fmt(g.target_value!)}</span>
+                      <span className="text-[12px] text-muted">{fmt(target!)}</span>
                     </div>
                   </div>
                 ) : (
@@ -4954,9 +4981,17 @@ function PhotosTab({
     // ด้านบนในฟังก์ชันเดียวกันที่เช็ค insertError แล้วโชว์ error ให้เห็น — ถ้าลบพัง (RLS/เน็ตหลุด)
     // onChanged() ยังถูกเรียกเหมือนสำเร็จ (แค่ refetch state เดิมกลับมา ไม่ error ให้ผู้ใช้เห็นเลยว่าทำไม
     // รูปยังไม่หายไป) — เช็ค error ทั้งสองจุด ใช้ setError ตัวเดียวกับ handleUpload
-    const { error: storageErr } = await supabase.storage.from('progress-photos').remove([photo.storage_path])
+    // v2: ลำดับเดิมลบ storage ก่อน DB — ถ้า storage ลบสำเร็จแต่ DB พังต่อ จะเหลือแถว progress_photos
+    // ค้างชี้ไฟล์ที่ไม่มีจริงแล้ว (url=undefined เรนเดอร์ไม่ได้ ลบซ้ำก็เสี่ยง fail แบบเดิมอีก) — สลับเป็น
+    // ลบ DB ก่อนแทน ถ้า DB ลบพังให้หยุดทันที (ไฟล์ storage ยังอยู่ครบ ไม่เสียหาย) ถ้า DB ลบสำเร็จแต่ storage
+    // ลบพัง แค่เหลือไฟล์ค้างเปลืองพื้นที่เฉยๆ ไม่กระทบ UI เพราะไม่มีแถว DB อ้างถึงมันแล้ว
     const { error: dbErr } = await supabase.from('progress_photos').delete().eq('id', photo.id)
-    if (storageErr || dbErr) {
+    if (dbErr) {
+      setError('ลบรูปไม่สำเร็จ ลองใหม่อีกครั้ง')
+      return
+    }
+    const { error: storageErr } = await supabase.storage.from('progress-photos').remove([photo.storage_path])
+    if (storageErr) {
       setError('ลบรูปไม่สำเร็จ ลองใหม่อีกครั้ง')
       return
     }
