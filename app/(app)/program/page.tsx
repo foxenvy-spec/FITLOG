@@ -147,27 +147,36 @@ export default function ProgramPage() {
     } = await supabase.auth.getUser()
     if (!user) return
 
+    // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เดิม flip completedIds ก่อนยิง DB แล้วไม่มี rollback ถ้าพัง — ต่างจาก
+    // handleBulkDelete/handleDeleteAll ด้านล่างที่ update state หลังยืนยันสำเร็จเท่านั้น" — สลับเป็น DB
+    // สำเร็จก่อนค่อย update state เหมือนกัน
     if (done) {
-      setCompletedIds((prev) => new Set(prev).add(exerciseId))
       const { error: err } = await supabase
         .from('program_completions')
         .upsert(
           { user_id: user.id, program_exercise_id: exerciseId, completed_at: todayStr() },
           { onConflict: 'user_id,program_exercise_id,completed_at' }
         )
-      if (err) setError(err.message)
+      if (err) {
+        setError(err.message)
+        return
+      }
+      setCompletedIds((prev) => new Set(prev).add(exerciseId))
     } else {
-      setCompletedIds((prev) => {
-        const next = new Set(prev)
-        next.delete(exerciseId)
-        return next
-      })
       const { error: err } = await supabase
         .from('program_completions')
         .delete()
         .eq('program_exercise_id', exerciseId)
         .eq('completed_at', todayStr())
-      if (err) setError(err.message)
+      if (err) {
+        setError(err.message)
+        return
+      }
+      setCompletedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(exerciseId)
+        return next
+      })
     }
   }
 
@@ -456,22 +465,33 @@ export default function ProgramPage() {
     setAddingExercise(false)
   }
 
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เดิม update local state ก่อนยิง DB แล้วไม่มี rollback ถ้าพัง — ต่างจาก
+  // handleBulkDelete/handleDeleteAll ด้านล่างที่ update state หลังยืนยันสำเร็จเท่านั้นเสมอ" — สลับเป็น DB
+  // สำเร็จก่อนค่อย update state เหมือนกัน กันหน้าจอค้างโชว์ค่าที่ยังไม่ persist จริง
   async function handleUpdateExercise(ex: ProgramExercise, patch: Partial<ProgramExercise>) {
+    const { error: err } = await supabase.from('program_exercises').update(patch).eq('id', ex.id)
+    if (err) {
+      setError(err.message)
+      return
+    }
     setExercisesByDay((prev) => ({
       ...prev,
       [ex.program_day_id]: (prev[ex.program_day_id] ?? []).map((e) => (e.id === ex.id ? { ...e, ...patch } : e)),
     }))
-    const { error: err } = await supabase.from('program_exercises').update(patch).eq('id', ex.id)
-    if (err) setError(err.message)
   }
 
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) — pattern เดียวกับ handleUpdateExercise ด้านบน: ลบ DB สำเร็จก่อนค่อยเอา
+  // แถวออกจาก state กันแถวที่ลบไม่สำเร็จหายไปจากหน้าจอทั้งที่ DB ยังมีอยู่จริง
   async function handleDeleteExercise(ex: ProgramExercise) {
+    const { error: err } = await supabase.from('program_exercises').delete().eq('id', ex.id)
+    if (err) {
+      setError(err.message)
+      return
+    }
     setExercisesByDay((prev) => ({
       ...prev,
       [ex.program_day_id]: (prev[ex.program_day_id] ?? []).filter((e) => e.id !== ex.id),
     }))
-    const { error: err } = await supabase.from('program_exercises').delete().eq('id', ex.id)
-    if (err) setError(err.message)
   }
 
   function exitSelectMode() {
@@ -522,10 +542,16 @@ export default function ProgramPage() {
     exitSelectMode()
   }
 
+  // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เดิม update local state ก่อนยิง DB แล้วไม่มี rollback ถ้าพัง" — สลับเป็น
+  // DB สำเร็จก่อนค่อย update state เหมือนจุดอื่นที่แก้ไปแล้วในไฟล์นี้ (call site เปลี่ยนไปเรียกตอน blur ผ่าน
+  // MiniField แทนที่จะยิงทุกตัวอักษร ดู comment ที่ input ชื่อวัน)
   async function handleRenameDay(day: ProgramDay, title: string) {
-    setDays((prev) => prev.map((d) => (d.id === day.id ? { ...d, title } : d)))
     const { error: err } = await supabase.from('program_days').update({ title }).eq('id', day.id)
-    if (err) setError(err.message)
+    if (err) {
+      setError(err.message)
+      return
+    }
+    setDays((prev) => prev.map((d) => (d.id === day.id ? { ...d, title } : d)))
   }
 
   // ลบวันนี้ออกจากตารางฝึกทั้งวัน (ต่างจาก handleDeleteAll ด้านบนที่ลบแค่ท่าในวัน แต่ตัวแถว program_days
@@ -659,11 +685,7 @@ export default function ProgramPage() {
       {currentDay && (
         <PremiumCard className="overflow-hidden">
           <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-            <input
-              value={currentDay.title}
-              onChange={(e) => handleRenameDay(currentDay, e.target.value)}
-              className="bg-transparent text-ink font-display tracked uppercase text-sm outline-none flex-1 min-w-0"
-            />
+            <DayTitleInput value={currentDay.title} onCommit={(v) => handleRenameDay(currentDay, v)} />
             {currentExercises.length > 0 && !selectMode && (
               <>
                 <button
@@ -987,6 +1009,23 @@ function MiniField({ label, value, onBlur }: { label: string; value: string; onB
   )
 }
 
+// บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "ช่องชื่อวันเดิมยิง handleRenameDay (เขียน program_days ตรงๆ ไม่มี
+// debounce) ทุกตัวอักษรที่พิมพ์ ต่างจากทุกช่องอื่นในไฟล์นี้ (MiniField ด้านบน) ที่ buffer local state แล้ว
+// ยิงแค่ตอน blur ทีเดียว" — ใช้เทคนิคเดียวกับ MiniField (local state + commit ตอน blur) แต่คง
+// style/ไม่มี label เดิมของช่องนี้ไว้ (แยก component จาก MiniField เพราะหน้าตาต่างกันมาก ไม่ใช่ mini field)
+function DayTitleInput({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
+  const [local, setLocal] = useState(value)
+  useEffect(() => setLocal(value), [value])
+  return (
+    <input
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => onCommit(local)}
+      className="bg-transparent text-ink font-display tracked uppercase text-sm outline-none flex-1 min-w-0"
+    />
+  )
+}
+
 function TemplatePickerPanel({
   templates,
   templateExercises,
@@ -1084,7 +1123,14 @@ function AddExerciseForm({
         value={name}
         onChange={(v) => {
           setName(v)
-          setExerciseLibraryId(null) // พิมพ์เอง ไม่ได้เลือกจาก dropdown — เคลียร์ FK เดิมทิ้ง
+          // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เดิมเคลียร์แค่ exerciseLibraryId — เลือก suggestion แล้วแก้ชื่อ
+          // ต่อ (พิมพ์เพิ่ม/แก้ typo) muscleGroup/secondaryMuscles ของท่าที่เลือกไว้ตอนแรกยังค้างอยู่ ทั้งที่
+          // ชื่อไม่ตรงกับท่านั้นแล้ว — ฟอร์มนี้ไม่มี UI ให้แก้ secondaryMuscles เลย ผู้ใช้ไม่มีทางรู้ตัวว่าค้าง
+          // อยู่ — ต้อง reset ทั้งคู่กลับเป็นค่าเริ่มต้นพร้อมกับ FK เพราะพิมพ์เองแล้วไม่ได้อ้างอิง library
+          // exercise เดิมอีกต่อไป
+          setExerciseLibraryId(null)
+          setMuscleGroup('อื่นๆ')
+          setSecondaryMuscles([])
         }}
         onSelect={(ex: ExerciseDef) => {
           setMuscleGroup(ex.muscleGroup)
