@@ -401,6 +401,17 @@ export default function AICoachCompactCard({
                     ? `วันนี้เหมาะกับการพักและฟื้นตัว — ฝึกมา ${thisWeekWorkoutDays} วันในสัปดาห์นี้แล้ว`
                     : 'วันนี้เหมาะกับการพักและฟื้นตัว'}
                 </p>
+              ) : hasMakeupToday ? (
+                // ฟีดแบ็ก (semantic review หลัง Makeup Session Smoke Test) "Today's Workout บอก '✅
+                // ฝึกไปแล้ววันนี้' แต่ MINT Coach ข้างๆ ยังพูด verdict readinessVerdict() เดิม ('🟢
+                // เหมาะสำหรับฝึกวันนี้') สองการ์ดขัดกันเองตรงๆ ผู้ใช้จะงงว่า 'บอกว่าฝึกแล้ว ทำไม Coach
+                // ยังบอกว่าเหมาะฝึกวันนี้อีก'" — readinessVerdict คำนวณจาก recovery % ล้วนๆ ไม่รู้จัก
+                // concept "ฝึกไปแล้ว (ชดเชย)" เลย เหมือนกับที่ isRestDay เคยเจอปัญหาเดียวกันมาก่อน (ดู
+                // comment ของ isRestDay ทั้ง prop และ branch นี้) ใช้วิธีเดียวกัน: แทนที่ verdict เป็น
+                // ข้อความสะท้อนสถานการณ์จริงแทน ไม่คำนวณ/เปลี่ยน readinessVerdict หรือ recovery logic ใดๆ
+                <p className="truncate mt-0.5 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
+                  วันนี้ฝึกแล้ว · พักได้ตามแผน
+                </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
                   {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text} ·{' '}
