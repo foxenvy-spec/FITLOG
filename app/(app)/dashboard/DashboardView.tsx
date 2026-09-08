@@ -2634,7 +2634,12 @@ export default function DashboardPage() {
                   const intensity = muscleIntensityFor(todayScheduledMuscleGroup)
                   return (
                     <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: COLORS.amber }}>
-                      <span className="shrink-0">Today →</span>
+                      {/* ฟีดแบ็ก (semantic review หลัง Makeup Session Smoke Test) "'Today →' อ่านเป็น
+                          'สิ่งที่ต้องทำวันนี้' ทั้งที่จริงทำแผนนี้ไปแล้วผ่านเซสชันชดเชย ทำให้ผู้ใช้สงสัยว่า
+                          ต้องไปทำ Pull อีกไหม" — hasMakeupToday true แปลว่าฝึกไปแล้ว (ผ่านการ์ด Today's
+                          Workout/MINT Coach ด้านบนที่แก้ไปแล้วเช่นกัน) เปลี่ยนลูกศร "→" (ชวนไปทำ) เป็น
+                          "· ✓" (บอกว่าเสร็จแล้ว) ไม่แตะโครงสร้าง/ขนาด card, ไม่เพิ่มข้อมูล/CTA ใดๆ */}
+                      <span className="shrink-0">{hasMakeupToday ? 'Today · ✓' : 'Today →'}</span>
                       <span className="min-w-0 flex-1 truncate">{splitTitleDetail(scheduledDay.title).main}</span>
                       {intensity && (
                         <span
