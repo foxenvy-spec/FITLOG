@@ -454,13 +454,16 @@ export default function AICoachCompactCard({
                 // ฟีดแบ็ก (live-test) "Today's Focus บอก Day 2 — Pull, การ์ดแผนที่พลาดบอก Day 1 — Push,
                 // แล้ว MINT Coach ยังพูดซ้ำคำแนะนำเดียวกับ Today's Focus อีกรอบพร้อมปุ่ม 'เริ่ม Day 2' —
                 // ผู้ใช้เห็น CTA 2 อันแข่งกัน ('เริ่มแผนที่พลาด' vs 'เริ่ม Day 2') ไม่รู้จะเลือกอันไหน" —
-                // ใช้ข้อความ conservative (ไม่ชี้นำว่าควรทำแผนไหนก่อน แค่บอกว่ามีอยู่ ให้ผู้ใช้ตัดสินใจเอง
-                // ตามหลัก "ไม่ encourage ≠ ไม่ allow") แทนคำแนะนำกล้ามเนื้อปกติ — ปุ่มเริ่มจริงอยู่ที่การ์ด
-                // แผนที่พลาดแล้ว (ดู MobileDashboardView.tsx) ไม่ต้องมีปุ่ม "เริ่ม X" ซ้ำที่นี่อีกจุด
+                // v2 (live-test รอบ 2) "'มีแผนที่พลาด N วัน · Day 1 — Push' แค่พูดซ้ำสิ่งที่การ์ดแผนที่พลาด
+                // บอกไปแล้ว (passive, ไม่ใช่ coaching) MINT Coach ควรทำหน้าที่ decision support จริงๆ ไม่ใช่
+                // อีกจุดบอกสถานะเฉยๆ" — เปลี่ยนเป็นคำแนะนำเชิงกระทำ ("แนะนำให้ทำ X ก่อน หากสะดวก") แทนการ
+                // ย้ำแค่ "มีอยู่" — ยังคง conservative (ไม่บังคับ แค่แนะนำ, "หากสะดวก" ให้สิทธิ์ตัดสินใจกับ
+                // ผู้ใช้เต็มที่ ตามหลัก "ไม่ encourage ≠ ไม่ allow") ปุ่มเริ่มจริงยังอยู่ที่การ์ดแผนที่พลาด
+                // เท่านั้น (MobileDashboardView.tsx) ไม่มีปุ่ม "เริ่ม X" ซ้ำที่นี่อีกจุด
                 <p className="truncate mt-0.5 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
                   {missedPlanCount === 1 && missedPlanTitle
-                    ? `มีแผนที่พลาด 1 วัน · ${missedPlanTitle}`
-                    : `มีแผนที่พลาด ${missedPlanCount} วัน`}
+                    ? `แนะนำให้ทำ ${missedPlanTitle} ก่อน หากสะดวก`
+                    : `มีแผนที่พลาดสะสม ${missedPlanCount} วัน — เลือกทำเมื่อสะดวก`}
                 </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
