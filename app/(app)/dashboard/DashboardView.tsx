@@ -1038,9 +1038,6 @@ export default function DashboardPage() {
     if (data.todayExercises.length > 0) return data.todayExercises.reduce((s, e) => s + (e.sets ?? 0), 0)
     return data.todayWorkouts.reduce((s, w) => s + (w.sets ?? 0), 0)
   }, [data])
-  // เวลาที่ใช้จริงยังไม่มีจนกว่าจะเริ่มบันทึก (totals.durationMin เป็น null) — ระหว่างนั้นประมาณคร่าวๆ
-  // จากจำนวนเซ็ต (ราว 1.5 นาที/เซ็ต รวมพักระหว่างเซ็ต) แค่ให้พอเห็นภาพ ไม่ใช่ตัวเลขแม่นยำ
-  const estimatedMinutes = Math.max(10, Math.round((plannedTotalSets * 1.5) / 5) * 5)
   const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
 
   // Priority 14 (Notifications Actionable) — รวม 4 สัญญาณที่คำนวณไว้แล้วทั่วหน้านี้ (ตารางวันนี้/
@@ -2049,12 +2046,16 @@ export default function DashboardPage() {
                   <p className="font-mono text-base text-ink leading-none">{Math.max(plannedTotalSets, totals.sets)}</p>
                   <p className="text-[12px] text-muted mt-0.5">Sets</p>
                 </div>
-                <div>
-                  <p className="font-mono text-base text-ink leading-none">
-                    {totals.durationMin !== null ? Math.round(totals.durationMin) : `~${estimatedMinutes}`}
-                  </p>
-                  <p className="text-[12px] text-muted mt-0.5">นาที</p>
-                </div>
+                {/* ฟีดแบ็ก (Smart Start live-test) "เวลาโดยประมาณ (~N นาที) ไม่แม่น — เวลาพักของแต่ละคน
+                    ต่างกันมาก ตัดออกดีกว่า เพราะเป้าหมายหลักคือให้ตัดสินใจเริ่ม ไม่ใช่วางแผนเวลา" — เดิม
+                    fallback ไป estimatedMinutes (~1.5 นาที/เซ็ต) ตอนยังไม่มี totals.durationMin จริง ตอนนี้
+                    ซ่อนช่องนี้ไปเลยจนกว่าจะมีเวลาที่วัดจริงจากการ log (ไม่ใช่เลขประมาณอีกต่อไป) */}
+                {totals.durationMin !== null && (
+                  <div>
+                    <p className="font-mono text-base text-ink leading-none">{Math.round(totals.durationMin)}</p>
+                    <p className="text-[12px] text-muted mt-0.5">นาที</p>
+                  </div>
+                )}
                 {/* v47: โชว์เฉพาะมีกิจกรรมจริงวันนี้แล้ว (ไม่เหมือน Exercises/Sets/นาทีด้านบนที่โชว์แผนได้แม้
                     ยังไม่เริ่ม) เพราะแคลอรี่คำนวณจาก workout ที่บันทึกจริงเท่านั้น โชว์ "0 kcal" ก่อนเริ่มจะดู
                     เหมือนบัคมากกว่าข้อมูลที่มีความหมาย */}
