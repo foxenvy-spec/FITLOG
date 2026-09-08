@@ -7,9 +7,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
-import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
+import { todayDayOfWeek, todayStr, daysAgoStr, WEEKDAYS } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
-import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications } from '@/lib/dashboardStats'
+import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications, getWeekRange } from '@/lib/dashboardStats'
 import { goalProgressPct, goalProgressLabelParts } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
@@ -256,6 +256,44 @@ export default function MobileDashboardView() {
     hasMakeupToday && !makeupSessionActive && totals.entryCount === 0
       ? { mark: '✓', heading: 'วันนี้ฝึกแล้ว', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.moss }
       : null
+  // ฟีดแบ็ก "ถ้าจันทร์ไม่ว่าง แต่อังคารสะดวก อยากเล่นแผนจันทร์ชดเชย — มือถือควรทำยังไง" — ทางเข้าเดิมมีแค่
+  // /program → เลือกวันจันทร์ → กด "เริ่มเซสชันชดเชย" เอง ผู้ใช้ต้องรู้ทางเข้านี้เอง ไม่มีทางลัดจากหน้าแรก
+  // เลย — หา "แผนที่พลาด" ของสัปดาห์นี้ (วันที่ day_of_week ผ่านมาแล้วในสัปดาห์นี้ + ยังไม่มี workout ผูก
+  // program_day_id นั้นเลยในสัปดาห์นี้ ไม่ว่าจะทำวันไหนก็ตาม) มาเสนอเป็นทางลัดกดครั้งเดียวเข้า /session?day=
+  // ตรงๆ — ตั้งใจแยก query นี้ไว้ต่างหาก ไม่ยุ่งกับ fetchDashboardData (DashboardView.tsx) ที่ BottomNav/
+  // เดสก์ท็อปใช้ร่วมกันอยู่ เพื่อไม่ให้กระทบ path อื่นที่ไม่เกี่ยวข้อง (มือถือเท่านั้นตามที่คุยกัน)
+  //
+  // เจตนาใช้คำว่า "แผนที่พลาด" ไม่ใช่ "ชดเชย" ตรงนี้ — "ชดเชย"/"โหมดชดเชย" เป็นคำที่ควรโผล่ตอนกำลังทำอยู่
+  // จริงเท่านั้น (session/page.tsx จัดการเองอยู่แล้วผ่าน isMakeupSession) ก่อนเริ่ม ผู้ใช้แค่ "เลือกทำแผนที่
+  // พลาด" ยังไม่ต้องเรียกว่าเป็นเซสชันชดเชย — เลี่ยง wording แบบ "พลาดการฝึก/ต้องชดเชย" ที่ให้ความรู้สึก
+  // เหมือนถูกตำหนิ ใช้ "แผนที่พลาด" (เป็นกลาง) + "เริ่มแผนที่พลาด →" (ผู้ใช้เป็นคนตัดสินใจเอง ไม่ใช่ระบบเร่ง)
+  const [missedDays, setMissedDays] = useState<{ id: string; day_of_week: number; title: string }[]>([])
+  useEffect(() => {
+    if (!data) {
+      setMissedDays([])
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const { start } = getWeekRange()
+      const { data: weekWorkoutRows } = await supabase
+        .from('workouts')
+        .select('program_day_id')
+        .gte('performed_at', start)
+        .not('program_day_id', 'is', null)
+      if (cancelled) return
+      const doneDayIds = new Set(((weekWorkoutRows as { program_day_id: string }[]) ?? []).map((w) => w.program_day_id))
+      const todayOffset = (todayDayOfWeek() + 6) % 7 // แปลง 0=อา..6=ส ให้เริ่มนับจากจันทร์=0 ให้ตรงกับ getWeekRange()
+      const missed = data.programDays.filter((d) => {
+        const offset = (d.day_of_week + 6) % 7
+        return offset < todayOffset && !doneDayIds.has(d.id)
+      })
+      setMissedDays(missed)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [data, supabase])
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
   // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน
@@ -519,6 +557,34 @@ export default function MobileDashboardView() {
           href={scheduledDay ? sessionHref : '/log'}
           todayExercises={data.todayExercises}
         />
+
+        {/* ทางลัด "แผนที่พลาด" — ดู comment เต็มที่จุดคำนวณ missedDays ด้านบน วางต่อจาก Today's Focus
+            ทันที (ไม่ปนเข้าไปในตัว TodaysFocusCard.tsx เอง — component นั้นใช้ร่วมกับเดสก์ท็อปด้วย และ
+            ฟีเจอร์นี้ตั้งใจทำเฉพาะมือถือตามที่คุยกัน) แสดงเฉพาะตอนมีแผนพลาดจริงอย่างน้อย 1 วัน */}
+        {missedDays.length > 0 && (
+          <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3">
+            <p className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: COLORS.amber }}>
+              <span aria-hidden="true">↩</span>{' '}
+              {missedDays.length === 1 ? 'แผนที่พลาด' : `${missedDays.length} แผนที่พลาด`}
+            </p>
+            <p className="text-[13px] text-ink mt-1">
+              {splitTitleDetail(missedDays[0].title).main} · {WEEKDAYS[missedDays[0].day_of_week]}
+            </p>
+            {missedDays.length === 1 ? (
+              <Link
+                href={`/session?day=${missedDays[0].id}`}
+                className="text-[12px] mt-1.5 inline-block hover:underline"
+                style={{ color: COLORS.amber }}
+              >
+                เริ่มแผนที่พลาด →
+              </Link>
+            ) : (
+              <Link href="/program" className="text-[12px] mt-1.5 inline-block hover:underline" style={{ color: COLORS.amber }}>
+                ดูแผนที่พลาดทั้งหมด →
+              </Link>
+            )}
+          </div>
+        )}
 
         {!data.hasAnyHistory && !bannerDismissed && <OnboardingBanner onDismiss={handleDismissBanner} />}
 
