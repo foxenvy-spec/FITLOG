@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
 import { todayDayOfWeek, todayStr, WEEKDAYS } from '@/lib/weekdays'
-import { setActiveMakeupDayId, clearActiveMakeupDayId } from '@/lib/activeMakeupSession'
+import { setActiveMakeupDayId, clearActiveMakeupDayId, getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { findExerciseByName } from '@/lib/exercises'
@@ -479,42 +479,37 @@ export default function SessionPage() {
     // "START WORKOUT หลัง Makeup จบไปแล้ว ไม่ควรพาเข้า Day 2 ทันทีแบบเงียบๆ" — ตรวจเฉพาะตอนเข้ามาแบบ
     // ไม่มี ?day= (ไม่ใช่ resume เซสชันชดเชย, !makeupDayId) และยังไม่แตะแผนวันนี้เองเลย (typedWorkoutRows
     // ว่างเปล่า — ตัวเดียวกับที่ Dashboard ใช้ตัดสิน "เริ่มแผนวันนี้หรือยัง") — หา workout วันนี้ที่ผูกกับ
-    // แผน "อื่น" จาก workoutRows ดิบ (ก่อนกรอง ต่างจาก typedWorkoutRows ที่กรองแผนอื่นทิ้งไปแล้ว) แล้ว
-    // ยืนยันกับ program_completions อีกชั้นว่าแผนนั้นทำครบจริง (ตรรกะเดียวกับ makeupSessionActive ใน
-    // DashboardView.tsx/MobileDashboardView.tsx — reuse แนวคิดเดิม ไม่สร้างเกณฑ์ตรวจ completion ใหม่)
-    // ก่อนเชื่อว่า "ฝึกแผนอื่นจบไปแล้วจริง" ไม่ใช่แค่ "มี workout ของแผนอื่น" (บั๊กคลาสเดียวกับที่เพิ่งแก้ไป
-    // ใน adhocCompletedCount — "มี workout" ≠ "session จบแล้ว")
+    // แผน "อื่น" จาก workoutRows ดิบ (ก่อนกรอง ต่างจาก typedWorkoutRows ที่กรองแผนอื่นทิ้งไปแล้ว)
+    //
+    // v2 (live-test จริง — บั๊ก) "เซสชันชดเชยที่เคย 'เปลี่ยนท่า' (swap) ก่อน log เซ็ตแรกของท่านั้น ทำให้ท่า
+    // เดิมในแผน (program_exercises) ไม่เคยมีทาง log ได้เลย (ท่าที่สลับเข้ามาไปนับ completion แยกทาง
+    // workout_id แทน — ดู comment ที่ swapCurrentExercise) ตัวนับ 'program_exercises ทั้งหมดของวันนั้น
+    // vs program_completions' รอบแรกเลยไม่มีทางเท่ากันได้อีกเลย (ค้าง N-1/N ถาวร) ทำให้ checkpoint ไม่โผล่
+    // แม้ผู้ใช้ทำเซสชันนั้นจบไปแล้วจริง — เปลี่ยนมาเชื่อ pointer แทน (lib/activeMakeupSession.ts) ตัวเดียว
+    // กับที่ Dashboard ใช้จริง (makeupSessionActive ของ Dashboard ก็เชื่อ "pointer หายไปแล้ว = จบแล้ว"
+    // เหมือนกันทุกประการ ไม่เคย query completion ซ้ำเมื่อ pointer ว่างอยู่แล้ว) — pointer ถูกเคลียร์เสมอทั้ง
+    // ตอนจบตามธรรมชาติ (allFinished ด้านบน) และกด "จบก่อน" (endSession) จึงเป็นสัญญาณที่เชื่อถือได้ว่า
+    // "ไม่มีเซสชันของแผนนั้นค้างอยู่แล้ว" โดยไม่ต้อง query DB ซ้ำเลย (ถูกต้องตามที่คุยกันไว้ — reuse
+    // completion state ที่มีอยู่แล้ว ไม่สร้างเกณฑ์ตรวจใหม่)
     if (!makeupDayId && typedWorkoutRows.length === 0) {
       const rawWorkoutRows =
         (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null; program_day_id: string | null })[]) ?? []
       const otherPlanWorkout = rawWorkoutRows.find(
         (w) => w.program_day_id && w.program_day_id !== (dayRow as ProgramDay).id
       )
-      if (otherPlanWorkout) {
-        const { data: otherExRows } = await supabase
-          .from('program_exercises')
-          .select('id')
-          .eq('program_day_id', otherPlanWorkout.program_day_id as string)
-        const otherExerciseIds = ((otherExRows as { id: string }[]) ?? []).map((r) => r.id)
-        if (otherExerciseIds.length > 0) {
-          const { data: otherCompletions } = await supabase
-            .from('program_completions')
-            .select('id')
-            .eq('completed_at', todayStr())
-            .in('program_exercise_id', otherExerciseIds)
-          const otherPlanFinished = (otherCompletions?.length ?? 0) >= otherExerciseIds.length
-          if (otherPlanFinished) {
-            const { data: otherDayRow } = await supabase
-              .from('program_days')
-              .select('*')
-              .eq('id', otherPlanWorkout.program_day_id as string)
-              .maybeSingle()
-            if (otherDayRow) {
-              setMakeupCheckpointOtherDay(otherDayRow as ProgramDay)
-              setPhase('makeupCheckpoint')
-              return
-            }
-          }
+      // pointer ยังชี้ไปที่แผนนี้อยู่ไหม — ถ้าใช่ แปลว่ายังมีเซสชันของแผนนั้นค้างไม่จบจริง (เช่น เข้า
+      // /session ตรงๆ โดยไม่ผ่าน BottomNav/Dashboard ระหว่างเซสชันชดเชยยังไม่จบ) ปล่อยผ่านไป Day 2 ตามปกติ
+      // ไม่ยุ่ง ให้ผู้ใช้กลับไปกดปุ่ม resume ที่ถูกต้องเอง
+      if (otherPlanWorkout && getActiveMakeupDayId() !== otherPlanWorkout.program_day_id) {
+        const { data: otherDayRow } = await supabase
+          .from('program_days')
+          .select('*')
+          .eq('id', otherPlanWorkout.program_day_id as string)
+          .maybeSingle()
+        if (otherDayRow) {
+          setMakeupCheckpointOtherDay(otherDayRow as ProgramDay)
+          setPhase('makeupCheckpoint')
+          return
         }
       }
     }
