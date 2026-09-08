@@ -655,6 +655,7 @@ export default function MobileDashboardView() {
           todayWorkoutTitle={workoutTitle}
           thisWeekWorkoutDays={data.thisWeekWorkoutDays}
           hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
+          makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
         />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม

@@ -83,6 +83,14 @@ interface AICoachCompactCardProps {
    * (คนไม่ฝึก 2 รอบเต็มในวันเดียว)" — ใช้ pattern เดียวกับ isRestDay/lowRecoveryCaution ด้านบน (secondary
    * link แทน CTA เด่น) ไม่แตะ headline/recommendation logic ใดๆ เลย ไม่ระบุ = พฤติกรรมเดิมทุกประการ */
   hasMakeupToday?: boolean
+  /** true เมื่อกำลังทำเซสชันชดเชยของแผนวันอื่นอยู่จริง (ยืนยันกับ DB แล้วว่ายังทำไม่ครบ — ดู
+   * makeupSessionActive ใน DashboardView.tsx/MobileDashboardView.tsx) ต่างจาก hasMakeupToday ตรงที่
+   * hasMakeupToday เป็นจริงทันทีที่มี workout แถวแรกถูก log (ไม่รู้ว่าจบหรือยัง) — ฟีดแบ็ก (screenshot จริง
+   * ระหว่างทำเซสชันชดเชยค้างอยู่ 4/23 เซ็ต) "การ์ด Today's Workout เปลี่ยนเป็น 'กำลังทำแผนชดเชย · ไปต่อ ▶'
+   * แล้ว แต่การ์ด MINT Coach ข้างๆ ยังเสนอปุ่ม 'เริ่ม Day 2 — Pull' อยู่เหมือนไม่มีอะไรเกิดขึ้น (สองการ์ด
+   * ขัดกันเอง ชวนฝึก 2 แผนพร้อมกัน)" — เมื่อ true ให้ใช้ pattern เดียวกับ isRestDay/hasMakeupToday ด้านล่าง
+   * (secondary link แทน CTA "เริ่ม X") ไม่เสนอเริ่มแผนอื่นซ้อนขณะที่แผนหนึ่งกำลังทำค้างอยู่ */
+  makeupSessionActive?: boolean
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -163,6 +171,7 @@ export default function AICoachCompactCard({
   nextScheduledMuscleGroup = null,
   thisWeekWorkoutDays = null,
   hasMakeupToday = false,
+  makeupSessionActive = false,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -401,6 +410,14 @@ export default function AICoachCompactCard({
                     ? `วันนี้เหมาะกับการพักและฟื้นตัว — ฝึกมา ${thisWeekWorkoutDays} วันในสัปดาห์นี้แล้ว`
                     : 'วันนี้เหมาะกับการพักและฟื้นตัว'}
                 </p>
+              ) : makeupSessionActive ? (
+                // ฟีดแบ็ก (screenshot จริง ระหว่างทำเซสชันชดเชยค้างอยู่ 4/23 เซ็ต) "การ์ด Today's Workout
+                // เปลี่ยนเป็น 'กำลังทำแผนชดเชย · ไปต่อ ▶' แล้ว แต่การ์ดนี้ยังพูด verdict readinessVerdict()
+                // เดิม ('เหมาะสำหรับฝึกวันนี้') ราวกับยังไม่ได้เริ่มอะไร" — เหมือน hasMakeupToday ด้านล่าง
+                // (ปัญหาเดียวกัน คนละช่วงเวลา) แทนที่ verdict เป็นข้อความสะท้อนว่ากำลังทำอยู่จริงแทน
+                <p className="truncate mt-0.5 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
+                  🔄 กำลังทำแผนชดเชยอยู่ · ยังไม่จบเซสชัน
+                </p>
               ) : hasMakeupToday ? (
                 // ฟีดแบ็ก (semantic review หลัง Makeup Session Smoke Test) "Today's Workout บอก '✅
                 // ฝึกไปแล้ววันนี้' แต่ MINT Coach ข้างๆ ยังพูด verdict readinessVerdict() เดิม ('🟢
@@ -469,6 +486,15 @@ export default function AICoachCompactCard({
             // Recovery/AI Coach แทน ไม่ใช่ CTA เด่นแบบ "เริ่ม" เพราะ Rest Day ไม่ควรมี action ที่เด่นกว่า "พัก"
             <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดู Recovery →
+            </Button>
+          ) : makeupSessionActive ? (
+            // ฟีดแบ็ก (screenshot จริง ระหว่างทำเซสชันชดเชยค้างอยู่ 4/23 เซ็ต) "การ์ด Today's Workout
+            // เปลี่ยนเป็น 'กำลังทำแผนชดเชย · ไปต่อ ▶' แล้ว แต่การ์ดนี้ยังเสนอปุ่ม 'เริ่ม Day 2 — Pull' อยู่
+            // เหมือนไม่มีอะไรเกิดขึ้น (สองการ์ดชวนฝึกคนละแผนพร้อมกัน)" — เหตุผลเดียวกับ hasMakeupToday ด้านล่าง
+            // (secondary link แทน CTA เด่น) ปุ่มกลับเข้าเซสชันเดิมอยู่ที่การ์ด Today's Workout แล้ว ไม่ต้อง
+            // ซ้ำที่นี่ ไม่แตะ headline/recommendation/chosen logic เลย
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
+              ดูคำแนะนำเพิ่มเติม →
             </Button>
           ) : hasMakeupToday ? (
             // ฟีดแบ็ก (ตรวจจากการใช้งานจริง, TC-10) "จบเซสชันชดเชยของแผนอื่นไปแล้ว แต่การ์ดนี้ยังเสนอปุ่ม

@@ -2877,6 +2877,7 @@ export default function DashboardPage() {
             todayWorkoutTitle={workoutTitle}
             nextScheduledMuscleGroup={nextScheduledMuscleGroup}
             hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
+            makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
           />
         </div>
       )}
