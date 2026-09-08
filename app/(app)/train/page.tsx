@@ -10,6 +10,7 @@ import { startTemplateAsWorkoutLog } from '@/lib/startTemplate'
 import { calculatePlates } from '@/lib/plateCalculator'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { getErrorMessage } from '@/lib/errors'
+import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
 import { COLORS, withAlpha } from '@/lib/theme'
 import PremiumCard from '@/components/ui/PremiumCard'
 import LoadingState from '@/components/LoadingState'
@@ -67,6 +68,13 @@ export default function TrainPage() {
   const [templateMessage, setTemplateMessage] = useState<string | null>(null)
   const [repeatingDate, setRepeatingDate] = useState<string | null>(null)
   const [repeatResult, setRepeatResult] = useState<{ date: string; message: string } | null>(null)
+  // บั๊กเดียวกับที่แก้ใน BottomNav.tsx/DashboardView.tsx/CommandPalette.tsx — /train เป็นทางเข้าหลักฝั่ง
+  // เดสก์ท็อป (แท็บ "เทรน" ใน SidebarNav.tsx) เทียบเท่าปุ่มลอย "START WORKOUT" ของ BottomNav บนมือถือ
+  // ปุ่ม CTA หลักของหน้านี้เอง (ด้านล่าง) เดิม hardcode href="/session" ตรงๆ เหมือนกัน
+  const [sessionHref, setSessionHref] = useState('/session')
+  useEffect(() => {
+    setSessionHref(sessionHrefWithMakeup())
+  }, [])
 
   const load = useCallback(async () => {
     setLoadError(null)
@@ -274,6 +282,7 @@ export default function TrainPage() {
       ) : (
         <TrainBody
           data={data}
+          sessionHref={sessionHref}
           startingTemplateId={startingTemplateId}
           templateMessage={templateMessage}
           repeatingDate={repeatingDate}
@@ -288,6 +297,7 @@ export default function TrainPage() {
 
 function TrainBody({
   data,
+  sessionHref,
   startingTemplateId,
   templateMessage,
   repeatingDate,
@@ -296,6 +306,7 @@ function TrainBody({
   onRepeatSession,
 }: {
   data: TrainData
+  sessionHref: string
   startingTemplateId: string | null
   templateMessage: string | null
   repeatingDate: string | null
@@ -349,7 +360,7 @@ function TrainBody({
           )}
 
           <a
-            href="/session"
+            href={sessionHref}
             className="flex items-center justify-center gap-2 rounded-xl bg-amber text-bg font-display text-sm tracked uppercase py-3 active:scale-[0.99] transition"
           >
             <span aria-hidden="true">▶</span> {ctaLabel}
