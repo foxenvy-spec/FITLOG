@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
@@ -96,6 +97,19 @@ function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean; is
 export default function BottomNav() {
   const pathname = usePathname()
   const { isRestDay, isCompleted, isInProgress } = useTodayWorkoutStatus()
+  // บั๊ก (ฟีดแบ็ก "เล่นเซสชันชดเชยอยู่ สลับไปหน้าอื่น แล้วกดปุ่ม START WORKOUT ลอยกลางอีกครั้ง — พาไปแผน
+  // จริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยเดิม") — ปุ่มนี้ผูกกับ '/session' เฉยๆ มาตั้งแต่ก่อนมีฟีเจอร์
+  // เซสชันชดเชย ไม่รู้จัก ?day= เลย อ่าน pointer ที่ session/page.tsx เขียนไว้ (activeMakeupDayKey) เพื่อ
+  // สร้าง href กลับเข้าเซสชันเดิมได้ถูกต้อง — re-read ทุกครั้งที่ pathname เปลี่ยน (สลับหน้าไปมา) เพราะ
+  // localStorage ไม่ reactive เอง ไม่มี pointer ค้าง = พฤติกรรมเดิมทุกประการ (ไป /session เฉยๆ)
+  const [activeMakeupDay, setActiveMakeupDay] = useState<string | null>(null)
+  useEffect(() => {
+    try {
+      setActiveMakeupDay(window.localStorage.getItem(`fitlog:active-makeup-day:${todayStr()}`))
+    } catch {
+      setActiveMakeupDay(null)
+    }
+  }, [pathname])
   // มุมตัด CNC เดียวกับลายเซ็นทั้งแอป (บนซ้าย 18px) — เฉพาะ 2 มุมบน (มุมล่างชิดขอบจอจริง ไม่มีอะไรให้ตัด)
   // minorCut=0 ให้มุมบนขวา/ล่างทั้งสองเหลี่ยมคม ตัดจริงแค่มุมเดียวตรงตามสัญลักษณ์ CNC ของแอป
   const navClipPath = cncCornerClipPath('tl', 18, 0)
@@ -162,7 +176,11 @@ export default function BottomNav() {
             // v55: วันพัก (isRestDay) ไม่พาไป /session (เริ่มเวิร์กเอาต์) อีกต่อไป — พาไปดู /coach
             // (Recovery) แทน ปุ่มเดียวกับที่ AI Coach ใช้ตอน isRestDay ("ดู Recovery →") ให้ปลายทางตรงกับ
             // ป้ายที่เห็นจริง ไม่ใช่แค่เปลี่ยนคำแต่กดแล้วยังพาไปเริ่มเวิร์กเอาต์เหมือนเดิม
-            const sessionHref = isRestDay ? '/coach' : '/session'
+            // pointer เซสชันชดเชยที่ยังไม่จบต้องมาก่อน isRestDay เสมอ — isRestDay มาจากสถานะแผนจริงของ
+            // วันนี้ (React Query cache) ซึ่งอาจยังเป็น true ได้ถ้าเพิ่งเริ่มเซสชันชดเชยแบบยังไม่ log
+            // เซ็ตไหนเลยสักเซ็ต (hasLoggedToday ยังเป็น false) กันปุ่มพาไป /coach ทั้งที่กำลังทำเซสชันชดเชย
+            // อยู่จริง
+            const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : isRestDay ? '/coach' : '/session'
             return (
               <Link
                 key={href}

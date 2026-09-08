@@ -113,6 +113,15 @@ function writeRestStartedAt(exerciseId: string) {
   window.localStorage.setItem(restStartedAtKey(exerciseId), String(Date.now()))
 }
 
+// บั๊ก (ฟีดแบ็ก "เล่นเซสชันชดเชยอยู่ สลับไปหน้าอื่น แล้วกดปุ่ม START WORKOUT ลอยกลาง Bottom Nav อีกครั้ง —
+// พาไปแผนจริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยเดิม" — BottomNav.tsx ผูกปุ่มกลางไว้กับ '/session' เฉยๆ
+// เสมอ (ไม่รู้จัก ?day=) เพราะสร้างมาก่อนฟีเจอร์เซสชันชดเชย จึง "ลืม" ว่ากำลังทำแผนไหนอยู่ทันทีที่ออกจาก
+// หน้านี้ไป — เก็บ id ของแผนที่กำลังทำ (ถ้าเป็นเซสชันชดเชย) ไว้ใน localStorage คีย์นี้ ให้ BottomNav.tsx
+// อ่านไปสร้าง href '/session?day=<id>' แทนได้ — คีย์ผูกกับวันที่จริง (todayStr()) กันค้างข้ามวัน
+function activeMakeupDayKey(): string {
+  return `fitlog:active-makeup-day:${todayStr()}`
+}
+
 interface PRHit {
   exerciseName: string
   weightKg: number
@@ -245,6 +254,13 @@ export default function SessionPage() {
     // กันสับสนกับแผนจริงของวันนี้ ไม่ใช่ธงที่ persist ลง DB (แค่ derive จาก day_of_week ที่โหลดมาเทียบ dow)
     const isMakeup = makeupDayId != null && (dayRow as ProgramDay).day_of_week !== dow
     setIsMakeupSession(isMakeup)
+    // จำไว้ว่ากำลังทำเซสชันชดเชยของแผนไหนอยู่ (ดู comment ที่ activeMakeupDayKey ด้านบนไฟล์) ให้
+    // BottomNav.tsx อ่านไปสร้าง href กลับเข้าเซสชันเดิมได้ถูกต้องแม้สลับหน้าไปมา — เซสชันปกติ (ไม่มี
+    // makeupDayId) เคลียร์ค่าทิ้ง เผื่อมี pointer ค้างจากเซสชันชดเชยก่อนหน้าที่ยังไม่จบ
+    if (typeof window !== 'undefined') {
+      if (isMakeup) window.localStorage.setItem(activeMakeupDayKey(), makeupDayId as string)
+      else window.localStorage.removeItem(activeMakeupDayKey())
+    }
 
     const { data: exRows, error: exErr } = await supabase
       .from('program_exercises')
@@ -449,7 +465,10 @@ export default function SessionPage() {
     // เซสชันทิ้งด้วยเหตุผลเดียวกับ endSession() — ไม่มีเซสชันที่กำลังนับเวลาอยู่จริงให้ resume ต่อ
     const allFinished = combinedExercises.length > 0 && combinedExercises.every((ex) => adjustedStates[ex.id]?.logged)
     if (allFinished) {
-      if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(sessionStorageKey)
+        window.localStorage.removeItem(activeMakeupDayKey())
+      }
       // ดู comment ที่ noLiveDuration state ด้านบน — ไปหน้า 'done' ตรงนี้โดยไม่เคยผ่าน 'active' เลย
       // stopwatch เลยไม่มีทางเริ่มนับจริง เวลา/แคลอรี่ที่จะโชว์ในหน้าสรุปจึงไม่มีข้อมูลจริงให้อ้างอิง
       setNoLiveDuration(true)
@@ -486,7 +505,10 @@ export default function SessionPage() {
   // เซสชันถัดไปในวันเดียวกัน (ถ้ามี) จะเห็น timestamp เก่าแล้วคำนวณ offset ผิด
   function endSession() {
     session.pause()
-    if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(sessionStorageKey)
+      window.localStorage.removeItem(activeMakeupDayKey())
+    }
     setPhase('done')
   }
 
