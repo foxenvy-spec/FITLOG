@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button'
 import InfoTooltip from '@/components/ui/InfoTooltip'
 import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
 import { todayDayOfWeek, todayStr, daysAgoStr, bangkokParts } from '@/lib/weekdays'
+import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import {
   computeCurrentStreakDates,
   computeLongestStreak,
@@ -903,6 +904,19 @@ export default function DashboardPage() {
   const hasMakeupToday = (data?.todayWorkouts ?? []).some(
     (w) => w.program_day_id && w.program_day_id !== scheduledDay?.id
   )
+
+  // บั๊ก (ฟีดแบ็ก "เริ่มเซสชันชดเชยแล้วยังไม่ได้ log เซ็ตไหนเลย สลับไปหน้า Dashboard แล้วกด 'เริ่มเทรนเลย'
+  // บนการ์ด Today's Workout — พาไปแผนจริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยที่ทำค้างอยู่") — hasMakeupToday
+  // ด้านบนดูจาก DB (workouts ที่ log ไปแล้ว) เท่านั้น ตรวจจับเคส "เริ่มแล้วแต่ยังไม่ log สักเซ็ต" ไม่ได้เลย
+  // (ยังไม่มีแถวใน DB ให้เห็น) — ต้องอ่าน pointer จาก localStorage เพิ่ม (lib/activeMakeupSession.ts, ตัว
+  // เดียวกับที่ BottomNav.tsx ใช้แก้บั๊กเดียวกันฝั่งปุ่มลอย) แยกออกจาก hasMakeupToday โดยเจตนา — ตัวนี้ใช้
+  // ตัดสิน "จะกด CTA แล้วไปที่ไหน" (navigation) ส่วน hasMakeupToday ใช้ตัดสิน "จะพูดว่าอะไร" (copy/สถานะ)
+  // คนละหน้าที่กัน แม้ทับซ้อนกันในเคสทั่วไป
+  const [activeMakeupDay, setActiveMakeupDay] = useState<string | null>(null)
+  useEffect(() => {
+    setActiveMakeupDay(getActiveMakeupDayId())
+  }, [])
+  const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : '/session'
 
   // v47: ฟีดแบ็ก "Workout Card ฝั่งซ้ายล่างยังว่างอยู่บ้าง อยากได้ Calories เติม" — ใช้สูตรประมาณเดียวกับ
   // หน้า Session/Stats (estimateCaloriesToday ใน lib/dashboardStats.ts) ไม่ใช่ตัวเลขสมมติ — น้ำหนักตัวใช้
@@ -2036,7 +2050,7 @@ export default function DashboardPage() {
               {todayCompleted ? (
                 <Button
                   as={Link}
-                  href="/session"
+                  href={sessionHref}
                   size="md"
                   className="mt-4 cta-sweep hover:-translate-y-0.5"
                   style={{
@@ -2067,7 +2081,7 @@ export default function DashboardPage() {
               ) : scheduledDay ? (
                 <Button
                   as={Link}
-                  href="/session"
+                  href={sessionHref}
                   size="md"
                   className="mt-4 cta-sweep hover:-translate-y-0.5"
                   style={{

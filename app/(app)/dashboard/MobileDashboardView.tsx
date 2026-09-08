@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
+import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications } from '@/lib/dashboardStats'
 import { goalProgressPct, goalProgressLabelParts } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
@@ -151,6 +152,17 @@ export default function MobileDashboardView() {
   const hasMakeupToday = (data?.todayWorkouts ?? []).some(
     (w) => w.program_day_id && w.program_day_id !== scheduledDay?.id
   )
+  // บั๊กเดียวกับที่แก้ใน DashboardView.tsx (เดสก์ท็อป) และ BottomNav.tsx — hasMakeupToday ข้างบนเป็น
+  // DB-driven ตรวจจับได้เฉพาะเซสชันชดเชยที่ log ไปแล้วอย่างน้อย 1 เซ็ต ถ้ากำลังทำเซสชันชดเชยอยู่แต่ยัง
+  // ไม่ได้ log อะไรเลย (0 sets) การ์ดนี้ยังคิดว่ายังไม่ได้เริ่ม แล้วปุ่ม/การ์ดที่ลิงก์ไป '/session' เฉยๆ
+  // จะพาไปแผนจริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยเดิม — ใช้ pointer เดียวกัน (localStorage, ไม่ใช่
+  // source of truth) แยกจาก hasMakeupToday โดยเจตนา: ตัวนี้ตัดสิน "จะพาไปที่ไหน" (navigation) ส่วน
+  // hasMakeupToday ตัดสิน "จะพูดว่าอะไร" (copy/สถานะ)
+  const [activeMakeupDay, setActiveMakeupDay] = useState<string | null>(null)
+  useEffect(() => {
+    setActiveMakeupDay(getActiveMakeupDayId())
+  }, [])
+  const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : '/session'
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
   // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน
@@ -410,7 +422,7 @@ export default function MobileDashboardView() {
           workoutTitle={workoutTitle}
           muscleRecommendation={muscleRecommendation}
           isRestDay={workoutCardVariant === 'restDay'}
-          href={scheduledDay ? '/session' : '/log'}
+          href={scheduledDay ? sessionHref : '/log'}
           todayExercises={data.todayExercises}
         />
 
@@ -566,7 +578,7 @@ export default function MobileDashboardView() {
             // data.completedCount ซึ่งนับเฉพาะท่าตามแผนที่ "จบท่า" จริง ไม่มีสัญญาณ "จบท่า" ของท่า ad-hoc
             // ให้ใช้ได้อย่างปลอดภัย การเดาจะเสี่ยงโชว์ผิดยิ่งกว่าเดิม เช่น 7/7 ทั้งที่ท่าที่ 7 ทำไปครึ่งเดียว)
             total={Math.max(data.todayExercises.length, totals.entryCount, 1)}
-            href={scheduledDay ? '/session' : '/log'}
+            href={scheduledDay ? sessionHref : '/log'}
             volumeChangePct={todayCompleted ? data.sessionVolumeChange?.changePct ?? null : null}
           />
         ) : (

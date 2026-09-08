@@ -17,6 +17,7 @@ import {
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { todayStr } from '@/lib/weekdays'
+import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import { createClient } from '@/lib/supabase/client'
 import { fetchDashboardData } from '@/app/(app)/dashboard/DashboardView'
 import FitnessRing from '@/components/dashboard/FitnessRing'
@@ -99,16 +100,12 @@ export default function BottomNav() {
   const { isRestDay, isCompleted, isInProgress } = useTodayWorkoutStatus()
   // บั๊ก (ฟีดแบ็ก "เล่นเซสชันชดเชยอยู่ สลับไปหน้าอื่น แล้วกดปุ่ม START WORKOUT ลอยกลางอีกครั้ง — พาไปแผน
   // จริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยเดิม") — ปุ่มนี้ผูกกับ '/session' เฉยๆ มาตั้งแต่ก่อนมีฟีเจอร์
-  // เซสชันชดเชย ไม่รู้จัก ?day= เลย อ่าน pointer ที่ session/page.tsx เขียนไว้ (activeMakeupDayKey) เพื่อ
-  // สร้าง href กลับเข้าเซสชันเดิมได้ถูกต้อง — re-read ทุกครั้งที่ pathname เปลี่ยน (สลับหน้าไปมา) เพราะ
-  // localStorage ไม่ reactive เอง ไม่มี pointer ค้าง = พฤติกรรมเดิมทุกประการ (ไป /session เฉยๆ)
+  // เซสชันชดเชย ไม่รู้จัก ?day= เลย อ่าน pointer ที่ session/page.tsx เขียนไว้ (lib/activeMakeupSession.ts)
+  // เพื่อสร้าง href กลับเข้าเซสชันเดิมได้ถูกต้อง — re-read ทุกครั้งที่ pathname เปลี่ยน (สลับหน้าไปมา)
+  // เพราะ localStorage ไม่ reactive เอง ไม่มี pointer ค้าง = พฤติกรรมเดิมทุกประการ (ไป /session เฉยๆ)
   const [activeMakeupDay, setActiveMakeupDay] = useState<string | null>(null)
   useEffect(() => {
-    try {
-      setActiveMakeupDay(window.localStorage.getItem(`fitlog:active-makeup-day:${todayStr()}`))
-    } catch {
-      setActiveMakeupDay(null)
-    }
+    setActiveMakeupDay(getActiveMakeupDayId())
   }, [pathname])
   // มุมตัด CNC เดียวกับลายเซ็นทั้งแอป (บนซ้าย 18px) — เฉพาะ 2 มุมบน (มุมล่างชิดขอบจอจริง ไม่มีอะไรให้ตัด)
   // minorCut=0 ให้มุมบนขวา/ล่างทั้งสองเหลี่ยมคม ตัดจริงแค่มุมเดียวตรงตามสัญลักษณ์ CNC ของแอป
