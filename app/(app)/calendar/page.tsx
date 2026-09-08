@@ -416,9 +416,21 @@ export default function CalendarPage() {
               year: 'numeric',
             })}
           </p>
-          {scheduledProgram && (
+          {scheduledProgram && (() => {
+            // ฟีดแบ็ก (semantic review, Makeup Session detail page) "'โปรแกรมที่ตั้งไว้ · Day 2 — Pull'
+            // ขัดกับรายการท่าที่ฝึกจริงด้านล่าง (อก/ไหล่/แขน) — ผู้ใช้จะสงสัยว่าระบบบันทึกผิดหรือเปล่า
+            // ทั้งที่จริงคือทำเซสชันชดเชยของอีกวันหนึ่ง" — ตรวจว่า workout ของวันนี้มี program_day_id ที่
+            // ไม่ตรงกับ scheduledProgram ของวันนี้ (ตามวันในสัปดาห์) ไหม ถ้าใช่ แปลว่าเป็นเซสชันชดเชย
+            // เปลี่ยนป้ายให้ตรงความจริง ไม่แตะ exercise list/PR/DaySummaryHeader ด้านล่างเลย (ถูกต้อง
+            // อยู่แล้วตามที่ยืนยัน)
+            const isMakeupDay = selectedWorkouts.some(
+              (w) => w.program_day_id && w.program_day_id !== scheduledProgram.day.id
+            )
+            return (
             <div className="bg-surface2 border border-line rounded-lg px-4 py-3 mb-3">
-              <p className="text-[12px] text-muted tracked uppercase mb-1.5">📋 โปรแกรมที่ตั้งไว้ · {scheduledProgram.day.title}</p>
+              <p className="text-[12px] text-muted tracked uppercase mb-1.5">
+                {isMakeupDay ? '📋 แผนที่ชดเชย' : '📋 โปรแกรมที่ตั้งไว้'} · {scheduledProgram.day.title}
+              </p>
               <ul className="space-y-1">
                 {scheduledProgram.exercises.map((ex) => (
                   <li key={ex.id} className="text-xs text-ink">
@@ -432,7 +444,8 @@ export default function CalendarPage() {
                 ))}
               </ul>
             </div>
-          )}
+            )
+          })()}
           {selectedWorkouts.length === 0 ? (
             <PremiumCard className="text-sm text-muted px-4 py-6 text-center">ไม่มีรายการวันนี้</PremiumCard>
           ) : (
