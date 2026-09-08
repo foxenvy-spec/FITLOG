@@ -1242,9 +1242,10 @@ export default function SessionPage() {
             {/* v4 (Final Polish): ฟีดแบ็ก "เพิ่ม label เล็กๆ TODAY เหนือ Day 2 ช่วยให้ scan ได้เร็วขึ้น" */}
             <p className="text-[10px] font-display tracked uppercase text-muted">TODAY</p>
             <p className="font-display text-lg tracked uppercase text-ink mt-1">{smartStartDayTitle}</p>
-            {/* v2 (P1): ลดน้ำหนัก subtitle ลง (text-sm -> text-xs) ให้ hierarchy กับ Hero ชัดขึ้น */}
-            <p className="text-xs text-muted mt-1">แผนวันนี้</p>
-            {smartStartDayDetail && <p className="text-xs text-muted mt-0.5">{smartStartDayDetail}</p>}
+            {/* v6 (Final Polish): ฟีดแบ็ก "'แผนวันนี้' กับ 'Back-focused' ซ้ำหน้าที่กันเล็กน้อย ตอนนี้ TODAY
+                (eyebrow ด้านบน) ทำหน้าที่บอก 'นี่คือวันนี้' ไปแล้ว ตัด 'แผนวันนี้' ออกไปเลย ดู premium/
+                confident กว่า" — ลบ subtitle "แผนวันนี้" ทิ้ง เหลือแค่ TODAY -> ชื่อวัน -> muscle detail */}
+            {smartStartDayDetail && <p className="text-xs text-muted mt-1">{smartStartDayDetail}</p>}
             <Button
               type="button"
               onClick={() => setPhase('active')}
@@ -1271,18 +1272,21 @@ export default function SessionPage() {
                 v4 (Final Polish): "ยังใหญ่เกินความสำคัญของ secondary action — ลดความสูงอีก ~20-25%" —
                 padding py-2.5 -> py-2, ป้ายหัวข้อ/ลิงก์ลดจาก text-sm -> text-xs (เหลือแค่ชื่อแผนที่พลาด
                 ที่ยังเป็น text-sm เพราะเป็นข้อมูลจำเป็นต่อการตัดสินใจ), ระยะห่างภายในบีบลง (mt-1 -> mt-0.5,
-                mt-2 -> mt-1) */}
+                mt-2 -> mt-1)
+                v6 (Final Polish): "ยังมีพื้นที่ว่างบน/ล่างค่อนข้างเยอะ ลดอีก ~10-15%" — padding py-2 ->
+                py-1.5, leading-tight ทุกบรรทัดกันบรรทัดสูงเกินจำเป็น, ระยะห่างภายในบีบอีก (mt-0.5 -> mt-0,
+                mt-1 -> mt-0.5) */}
             <div
-              className="rounded-2xl px-4 py-2"
+              className="rounded-2xl px-4 py-1.5"
               style={{ background: '#151515', border: `1px solid ${CARD_BORDER_CSS}` }}
             >
-              <p className="text-xs text-muted flex items-center justify-center gap-1.5">
+              <p className="text-xs text-muted leading-tight flex items-center justify-center gap-1.5">
                 <span aria-hidden="true">↩</span> มีแผนที่พลาด
               </p>
-              <p className="text-sm text-ink mt-0.5">
+              <p className="text-sm text-ink leading-tight mt-0">
                 {splitTitleDetail(smartStartMissedDay.title).main} · {WEEKDAYS[smartStartMissedDay.day_of_week]}
               </p>
-              <a href={`/session?day=${smartStartMissedDay.id}`} className="text-xs mt-1 inline-block hover:underline" style={{ color: COLORS.amber }}>
+              <a href={`/session?day=${smartStartMissedDay.id}`} className="text-xs leading-tight mt-0.5 inline-block hover:underline" style={{ color: COLORS.amber }}>
                 ชดเชยแทน <span aria-hidden="true">→</span>
               </a>
             </div>
