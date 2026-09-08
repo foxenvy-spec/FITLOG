@@ -1245,7 +1245,9 @@ export default function SessionPage() {
             >
               เริ่มวันนี้ <span aria-hidden="true">→</span>
             </Button>
-            <p className="text-xs text-muted mt-2">
+            {/* v3 (Final Polish): ฟีดแบ็ก "ระยะห่างระหว่าง CTA กับ Metadata ดูค่อนข้างน้อย อยากให้แยกกลุ่ม
+                ชัดขึ้น +4-6px" — mt-2 (8px) -> mt-3.5 (14px, +6px) */}
+            <p className="text-xs text-muted mt-3.5">
               {exercises.length} ท่า · {smartStartTotalSets} เซ็ต · ~{smartStartEstimatedMinutes} นาที
             </p>
           </div>
@@ -1254,9 +1256,11 @@ export default function SessionPage() {
           <>
             <div className="border-t border-line" />
             {/* v2 (P1): ฟีดแบ็ก "ทำ 'มีแผนที่พลาด' เป็น subtle card แทนลอยบนพื้นดำตรงๆ — พื้นหลังเข้ม
-                (~#151515) + border บางมาก ไม่ต้องใหญ่/เส้นขอบชัด" */}
+                (~#151515) + border บางมาก ไม่ต้องใหญ่/เส้นขอบชัด"
+                v3 (Final Polish): "Card อาจสูงไปนิด มีแค่ 3 บรรทัด ลดความสูงลง ~8-12px ให้รู้สึกเป็น
+                secondary information มากขึ้น" — py-3.5 (14px) -> py-2.5 (10px), ลด 8px รวม (4px ต่อด้าน) */}
             <div
-              className="rounded-2xl px-4 py-3.5"
+              className="rounded-2xl px-4 py-2.5"
               style={{ background: '#151515', border: `1px solid ${CARD_BORDER_CSS}` }}
             >
               <p className="text-sm text-muted flex items-center justify-center gap-1.5">
