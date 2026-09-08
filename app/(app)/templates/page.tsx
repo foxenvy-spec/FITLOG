@@ -133,7 +133,24 @@ function sanitizeSheetName(name: string, used: Set<string>): string {
 // ไม่ขัดกับความอ่านง่าย (ชื่อท่า/เซ็ต/Reps/RIR/พัก/เหตุผล) เพื่อให้แก้ไขแล้วนำเข้ากลับผ่านปุ่ม "⬆ Import"
 // ได้บางส่วน — กลุ่มกล้ามเนื้อ/กล้ามเนื้อรอง/น้ำหนักเริ่มต้น เป็นข้อมูลอ่านอย่างเดียว (parser ไม่มีคอลัมน์
 // รองรับ 3 อย่างนี้ ยังไงก็ไม่รอดตอนนำเข้ากลับอยู่ดี ไม่ใช่บั๊กจากไฟล์นี้)
-function buildTemplateSheet(exercises: WorkoutTemplateExercise[]) {
+//
+// v2 (บั๊กจริง เจอจากไฟล์ที่ผู้ใช้ตั้งใจจะ import กลับ — ตรวจสอบด้วยการรัน parseWorkoutExcel จริงก่อนแก้):
+// เดิม sheet เริ่มด้วยแถวหัวตาราง ('#','ชื่อท่า',...) เป็นแถวแรกสุดเลย ไม่มีแถวชื่อวันแยกต่างหาก — สำหรับ
+// ชีต "ตารางเดียว" (single-block ตามที่ parseWorkoutExcel เรียก คือ 1 ชีต 1 ตาราง แบบไฟล์นี้ทุกใบ) ตัว parser
+// (ดู parseDaySheets ใน importWorkoutExcel.ts) มีพฤติกรรมเดิม 2 จุดที่ต้องมีแถวคั่นระหว่างหัวตารางกับ
+// ข้อมูลจริงเสมอ (comment เดิม "ชีตตารางเดียวเว้น 1 แถวหลังหัวตารางก่อนเริ่มอ่านข้อมูล (พฤติกรรมเดิม)" — ตั้งใจ
+// ไว้แบบนี้อยู่ก่อนแล้ว ไม่ใช่บั๊กของ parser ที่ควรแก้ตรงนั้น เพราะกระทบไฟล์รูปแบบอื่นที่ต้องพึ่งพฤติกรรมนี้อยู่):
+// (1) ชื่อวัน (title) = เซลล์แรกที่ไม่ว่างของ "ทั้งชีต" — ถ้าไม่มีแถวชื่อวันแยกไว้ก่อนแถวหัวตาราง จะไปเจอ
+// เซลล์ "#" ของหัวตารางเข้าแทน ได้ title="#" ผิดทุกชีต (กระทบ handleImportExcel's title-match replace logic
+// ตรงๆ — "#" ไม่มีทางตรงกับชื่อเทมเพลตไหนเลย กลายเป็นสร้างเทมเพลตใหม่ชื่อ "#" ซ้ำกันหลายใบแทนที่จะแทนที่ถูกที่)
+// (2) dataStartRow = headerRowIdx + 2 เสมอ (ไม่ใช่ +1) สำหรับตารางเดียว — แถวที่ headerRowIdx+1 จึงถูกข้าม
+// เสมอ ถ้าแถวนั้นเป็นท่าออกกำลังกายจริง (อย่างที่เคยเป็น) ท่าแรกสุดของทุกวันจะหายไปเงียบๆ ทุกครั้งที่ import
+// — แก้โดยเพิ่มแถวชื่อเทมเพลตเต็ม (ไม่ตัดเหมือนชื่อ sheet tab ที่ยาวเกิน 31 ตัวจะโดนตัด) เป็นแถวแรกสุด แล้ว
+// ใส่แถวคำอธิบายสั้นๆ (ไม่ว่างเปล่า — isRowEmpty ของ parser เช็คว่า "ทุกเซลล์ว่าง" ถ้าปล่อยว่างจริงจะโดนตีความ
+// เป็นจุดจบตาราง (blockEnd) ทันทีที่แถวถัดจากหัวตาราง ทำให้ไม่เหลือข้อมูลเลยสักแถว) คั่นไว้แทนแถวที่ parser
+// ตั้งใจข้ามอยู่แล้ว — ยืนยันแก้ถูกจริงโดยรัน parseWorkoutExcel กับไฟล์รูปแบบใหม่นี้ตรงๆ ก่อนส่ง ได้ชื่อวัน/
+// จำนวนท่าตรงกับต้นฉบับครบทุกแถวแล้ว
+function buildTemplateSheet(title: string, exercises: WorkoutTemplateExercise[]) {
   const header = [
     '#',
     'ชื่อท่า',
@@ -158,7 +175,12 @@ function buildTemplateSheet(exercises: WorkoutTemplateExercise[]) {
     ex.default_weight_kg ?? '',
     ex.notes ?? '',
   ])
-  return XLSX.utils.aoa_to_sheet([header, ...rows])
+  return XLSX.utils.aoa_to_sheet([
+    [title],
+    header,
+    ['↓ รายละเอียดท่า (แก้ตัวเลขแล้ว Import ไฟล์นี้กลับเข้าแอปได้ที่ปุ่ม "⬆ Import")'],
+    ...rows,
+  ])
 }
 
 interface TemplateExport {
@@ -287,7 +309,7 @@ export default function TemplatesPage() {
       const usedSheetNames = new Set<string>()
       templates.forEach((t) => {
         const sheetName = sanitizeSheetName(t.title, usedSheetNames)
-        const ws = buildTemplateSheet(exercisesByTemplate[t.id] ?? [])
+        const ws = buildTemplateSheet(t.title, exercisesByTemplate[t.id] ?? [])
         XLSX.utils.book_append_sheet(wb, ws, sheetName)
       })
       XLSX.writeFile(wb, `fitlog-templates-${timestamp()}.xlsx`)
