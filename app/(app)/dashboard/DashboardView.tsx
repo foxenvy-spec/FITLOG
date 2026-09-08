@@ -473,12 +473,33 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // "ทำครบตามแผนหรือยัง" (ใช้ตัดสิน AI แนะนำกลุ่มกล้ามเนื้อถัดไป) ซึ่งไม่ควรถูกกระทบจากงานพิเศษนอกแผน —
   // การ์ด Hero (ทั้งเดสก์ท็อป/มือถือ) จะเอาสองค่านี้มาบวกกันเองตอน render แทน (ดู completedCount +
   // adhocCompletedCount ด้านล่างไฟล์นี้/MobileDashboardView.tsx)
+  //
+  // บั๊ก (live-test, ตรวจจากการใช้งานจริง — "Day 2 วันนี้ยังไม่แตะเลย แต่ BottomNav ขึ้น RESUME WORKOUT /
+  // มือถือขึ้น 1/6 EXERCISES") — query เดิมนับ workout_id-based completion "ทุกแถวที่ completed_at วันนี้"
+  // โดยไม่สนใจว่า workout แถวนั้นผูกกับแผนไหน ทำให้ท่า ad-hoc ที่สลับ/เพิ่มเข้ามาระหว่างเซสชันชดเชย (แผน
+  // อื่น ไม่ใช่แผนวันนี้) รั่วเข้ามานับเป็นความคืบหน้าของ "แผนวันนี้" ไปด้วย — join กลับไปที่ workouts.
+  // program_day_id (คอลัมน์เดียวกับที่ฟีเจอร์ Makeup Session ใช้แยกแผน) แล้วนับเฉพาะที่ตรงกับ currentDay.id
+  // (แผนวันนี้เอง) เท่านั้น — ไม่นับ ad-hoc ของแผนอื่น และไม่นับ workout อิสระที่ไม่ผูกแผนไหนเลย
+  // (program_day_id เป็น null เช่นที่ AICoachCompactCard's handleStart() insert ตรง — ไม่ถือว่าเป็น
+  // ความคืบหน้าของแผนวันนี้เช่นกัน เพราะไม่ได้ตั้งใจทำแผนวันนี้อยู่ดี) ไม่กระทบ Recovery/Weekly Volume
+  // (ยังนับการฝึกจริงทั้งหมดจาก workouts ตรงๆ เหมือนเดิมทุกจุด ไม่ได้ผ่าน adhocCompletedCount นี้เลย)
   const { data: adhocCompletions } = await supabase
     .from('program_completions')
-    .select('id')
+    .select('id, workout_id')
     .eq('completed_at', today)
     .not('workout_id', 'is', null)
-  const adhocCompletedCount = (adhocCompletions ?? []).length
+  const typedAdhocCompletions = (adhocCompletions as { id: string; workout_id: string }[]) ?? []
+  const adhocWorkoutIds = typedAdhocCompletions.map((c) => c.workout_id)
+  const { data: adhocWorkoutDays } =
+    adhocWorkoutIds.length > 0
+      ? await supabase.from('workouts').select('id, program_day_id').in('id', adhocWorkoutIds)
+      : { data: [] as { id: string; program_day_id: string | null }[] }
+  const adhocWorkoutDayById = new Map(
+    ((adhocWorkoutDays as { id: string; program_day_id: string | null }[]) ?? []).map((w) => [w.id, w.program_day_id])
+  )
+  const adhocCompletedCount = currentDay
+    ? typedAdhocCompletions.filter((c) => adhocWorkoutDayById.get(c.workout_id) === currentDay.id).length
+    : 0
 
   // % ความคืบหน้าของแผนวันนี้ ใช้ทั้งโชว์ตัวเลขในข้อความแนะนำ และตัดสินว่า "ฝึกวันนี้ไปแล้ว" หรือยัง
   // ถ้าวันนี้ไม่มีแผนกำหนดไว้ (บันทึกอิสระ) ให้ถือว่า 100% ถ้ามี log อย่างน้อย 1 รายการ ไม่งั้นเป็น null (ยังไม่ได้ฝึกอะไรเลย)
