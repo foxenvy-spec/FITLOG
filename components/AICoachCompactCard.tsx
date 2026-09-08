@@ -426,8 +426,16 @@ export default function AICoachCompactCard({
                 // concept "ฝึกไปแล้ว (ชดเชย)" เลย เหมือนกับที่ isRestDay เคยเจอปัญหาเดียวกันมาก่อน (ดู
                 // comment ของ isRestDay ทั้ง prop และ branch นี้) ใช้วิธีเดียวกัน: แทนที่ verdict เป็น
                 // ข้อความสะท้อนสถานการณ์จริงแทน ไม่คำนวณ/เปลี่ยน readinessVerdict หรือ recovery logic ใดๆ
+                //
+                // v2 (live-test รอบ 3, information architecture) "'วันนี้ฝึกแล้ว · พักได้ตามแผน' ซ้ำกับ
+                // ข้อความที่การ์ด Today's Workout พูดไปแล้ว (มือถือ: ack block ใหม่ / เดสก์ท็อป: Hero card)
+                // — ผู้ใช้เห็นคำว่า 'ฝึกแล้ว' 2-3 จุดติดกัน (Today's Workout, MINT Coach, Weekly Activity)
+                // โดยไม่ได้ข้อมูลใหม่เพิ่มเลย" — กำหนด semantic role ใหม่ให้ชัด: Today's Workout/Hero =
+                // แหล่งความจริงของ "สถานะการฝึกวันนี้", MINT Coach = แหล่งความจริงของ "คำแนะนำควรทำอะไรต่อ"
+                // เท่านั้น ไม่ต้องย้ำสถานะซ้ำอีก — ตัดสินใจนี้เป็นเรื่อง semantic role ของ MINT Coach เอง
+                // ไม่ใช่ responsive design จึงใช้ข้อความเดียวกันทั้ง Desktop/Mobile (component เดียวกันอยู่แล้ว)
                 <p className="truncate mt-0.5 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
-                  วันนี้ฝึกแล้ว · พักได้ตามแผน
+                  พักตามแผนได้เลย
                 </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
