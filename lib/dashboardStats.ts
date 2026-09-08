@@ -738,6 +738,24 @@ export function getWeekRange(reference: Date = new Date()): { start: string; end
   return { start: toIso(monday), end: toIso(sunday) }
 }
 
+// "แผนที่พลาด" ของสัปดาห์นี้ — program_days ที่วันตามปฏิทินผ่านไปแล้วในสัปดาห์นี้ (ก่อนวันนี้) แต่ยังไม่มี
+// workout ผูก program_day_id นั้นเลยสักแถวในสัปดาห์นี้ (ไม่ว่าจะทำวันไหนก็ตาม — สอดคล้องกับ Makeup Session
+// ทั้งฟีเจอร์ที่ performed_at ≠ program_day_id เสมอ) — ใช้ร่วมกันทั้ง MobileDashboardView.tsx (การ์ด "แผนที่
+// พลาด") และ session/page.tsx ("Smart Start" checkpoint) กันสองจุด derive ตรรกะเดียวกันแยกกันจนหลุด sync
+// doneDayIds มาจาก query workouts ภายนอก (ผู้เรียกกรอง .gte(performed_at, weekStart) เอง เพราะแต่ละจุดอาจ
+// query ต่างรูปแบบกัน — ฟังก์ชันนี้รับแค่ผลลัพธ์ที่กรองมาแล้วเป็น Set มาเทียบ ไม่ยุ่งกับ Supabase เอง)
+export function findMissedProgramDays<T extends { id: string; day_of_week: number }>(
+  programDays: T[],
+  doneDayIdsThisWeek: Set<string>,
+  todayDayOfWeek: number
+): T[] {
+  const todayOffset = (todayDayOfWeek + 6) % 7 // แปลง 0=อา..6=ส ให้เริ่มนับจากจันทร์=0 (ตรงกับ getWeekRange)
+  return programDays.filter((d) => {
+    const offset = (d.day_of_week + 6) % 7
+    return offset < todayOffset && !doneDayIdsThisWeek.has(d.id)
+  })
+}
+
 // สัปดาห์ก่อนหน้า ใช้เทียบวอลุ่มเพื่อดูเทรนด์ (สัปดาห์นี้ vs สัปดาห์ที่แล้ว)
 export function getPreviousWeekRange(reference: Date = new Date()): { start: string; end: string } {
   const { start } = getWeekRange(reference)

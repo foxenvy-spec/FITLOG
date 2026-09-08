@@ -9,7 +9,13 @@ import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr, daysAgoStr, WEEKDAYS } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
-import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications, getWeekRange } from '@/lib/dashboardStats'
+import {
+  computeTodayTotals,
+  computeRecoveryPct,
+  computeDashboardNotifications,
+  getWeekRange,
+  findMissedProgramDays,
+} from '@/lib/dashboardStats'
 import { goalProgressPct, goalProgressLabelParts } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
@@ -283,12 +289,7 @@ export default function MobileDashboardView() {
         .not('program_day_id', 'is', null)
       if (cancelled) return
       const doneDayIds = new Set(((weekWorkoutRows as { program_day_id: string }[]) ?? []).map((w) => w.program_day_id))
-      const todayOffset = (todayDayOfWeek() + 6) % 7 // แปลง 0=อา..6=ส ให้เริ่มนับจากจันทร์=0 ให้ตรงกับ getWeekRange()
-      const missed = data.programDays.filter((d) => {
-        const offset = (d.day_of_week + 6) % 7
-        return offset < todayOffset && !doneDayIds.has(d.id)
-      })
-      setMissedDays(missed)
+      setMissedDays(findMissedProgramDays(data.programDays, doneDayIds, todayDayOfWeek()))
     })()
     return () => {
       cancelled = true

@@ -44,6 +44,7 @@ import {
   aggregateMuscleTrainingQuality,
   type MuscleTrainingQualityRow,
   computePlannedConsistency,
+  findMissedProgramDays,
 } from './dashboardStats'
 import { MUSCLE_GROUPS } from './muscle-groups'
 
@@ -1493,5 +1494,33 @@ describe('computePlannedMuscleGroups', () => {
 
   it('returns an empty array when there is nothing planned or logged', () => {
     expect(computePlannedMuscleGroups([], [], validGroups)).toEqual([])
+  })
+})
+
+describe('findMissedProgramDays', () => {
+  // day_of_week: 0=อา..6=ส (JS getUTCDay convention) — offset จากจันทร์ที่ (dow+6)%7
+  const mon = { id: 'mon', day_of_week: 1 }
+  const wed = { id: 'wed', day_of_week: 3 }
+  const fri = { id: 'fri', day_of_week: 5 }
+  const days = [mon, wed, fri]
+
+  it('returns a day whose calendar date already passed this week with no workout logged', () => {
+    // วันนี้ = พุธ (3) — จันทร์ผ่านมาแล้ว ยังไม่มี workout เลย
+    expect(findMissedProgramDays(days, new Set(), 3)).toEqual([mon])
+  })
+
+  it('excludes a day already done this week regardless of which day it was performed on', () => {
+    expect(findMissedProgramDays(days, new Set(['mon']), 3)).toEqual([])
+  })
+
+  it('never includes today or future days in the same week', () => {
+    // วันนี้ = จันทร์ (1) — ยังไม่มีวันไหนผ่านมาก่อนหน้าในสัปดาห์นี้เลย
+    expect(findMissedProgramDays(days, new Set(), 1)).toEqual([])
+    // วันนี้ = พฤหัส (4) — จันทร์+พุธผ่านมาแล้ว ศุกร์ยังไม่ถึง ไม่นับ
+    expect(findMissedProgramDays(days, new Set(), 4)).toEqual([mon, wed])
+  })
+
+  it('returns an empty array when nothing is missed', () => {
+    expect(findMissedProgramDays(days, new Set(['mon', 'wed', 'fri']), 5)).toEqual([])
   })
 })

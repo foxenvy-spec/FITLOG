@@ -51,6 +51,7 @@ import {
   computeBestVolumeIncrease,
   computeRecoveryPct,
   recoveryTier,
+  findMissedProgramDays,
   type VolumeIncrease,
 } from '@/lib/dashboardStats'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
@@ -70,7 +71,7 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import { splitTitleDetail } from '@/components/TodaysFocusCard'
 
-type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'active' | 'done'
+type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 
 // ตั้งแต่ persistSets เขียนลง DB ทันทีทีละเซ็ต (ไม่รอจนกดจบท่า) แถว workouts ของท่านึงอาจมีอยู่แล้ว
 // ทั้งที่ผู้ใช้ยังไม่ได้กด "บันทึก & ท่าถัดไป" จริงๆ — initSessionStates (lib/workoutSession.ts) เดา
@@ -151,6 +152,10 @@ export default function SessionPage() {
   // เก็บ "แผนอื่นที่ฝึกไปแล้ว" ไว้แสดงในหน้า checkpoint (ชื่อวัน) แยกจาก `day` (ซึ่งคือ Day 2 — แผนที่กำลัง
   // จะเริ่ม ไม่ใช่แผนที่ฝึกไปแล้ว)
   const [makeupCheckpointOtherDay, setMakeupCheckpointOtherDay] = useState<ProgramDay | null>(null)
+  // ฟีดแบ็ก (product decision — "Smart Start") ดู comment เต็มที่จุดตรวจใน load() — เก็บแผนที่พลาดตัวแรก
+  // (findMissedProgramDays คืนมาหลายตัวได้ถ้าพลาดหลายวัน เอาแค่ตัวแรก/ใกล้วันนี้ที่สุดมาเสนอ ไม่ยัดทุกตัว
+  // มาให้เลือกในหน้านี้ — เหมือน MobileDashboardView.tsx's missedDays[0])
+  const [smartStartMissedDay, setSmartStartMissedDay] = useState<ProgramDay | null>(null)
   const [exercises, setExercises] = useState<ProgramExercise[]>([])
   const [states, setStates] = useState<Record<string, SessionSetState>>({})
   const [index, setIndex] = useState(0)
@@ -511,6 +516,35 @@ export default function SessionPage() {
           setPhase('makeupCheckpoint')
           return
         }
+      }
+    }
+
+    // ฟีดแบ็ก (product decision, live-test — "Smart Start") "กด START WORKOUT (BottomNav) ตรงๆ พาเข้า
+    // Day 2 ทันทีแบบเงียบๆ ทั้งที่มีแผนจากวันจันทร์พลาดอยู่ (ยังไม่เคยแตะเลยทั้งสัปดาห์ ไม่ใช่แค่วันนี้ —
+    // คนละเคสกับ makeupCheckpoint ด้านบนซึ่งเช็คเฉพาะแผนที่ทำ 'วันนี้' ไปแล้ว) — ผู้ใช้ที่ลืมว่ามี workout
+    // ค้างจะไม่มีทางรู้เลยถ้าไม่ได้สังเกตการ์ด 'แผนที่พลาด' บน Dashboard เอง" — ตรวจเฉพาะตอนเข้ามาแบบไม่มี
+    // ?day= และยังไม่แตะแผนวันนี้เองเลยเหมือนกัน (เงื่อนไขเดียวกับ makeupCheckpoint ด้านบน แต่ไปถึงจุดนี้ได้
+    // ก็ต่อเมื่อเช็คด้านบนไม่ trigger แล้วเท่านั้น — ไม่ทับซ้อนกัน) ใช้ findMissedProgramDays() ตัวเดียวกับ
+    // การ์ด "แผนที่พลาด" ใน MobileDashboardView.tsx เป๊ะ (lib/dashboardStats.ts) กันสองจุด deriveตรรกะ
+    // เดียวกันแยกกันจนหลุด sync — ไม่ block ("ไม่ encourage ≠ ไม่ allow"): Day 2 (แผนวันนี้) ยังเป็นตัวเลือก
+    // primary เสมอ เพราะผู้ใช้ที่กด START มี intent ชัดว่า "จะฝึกตอนนี้" MINT Coach ต่างหากที่ทำหน้าที่
+    //แนะนำว่าควรทำอันไหนก่อน (ดู AICoachCompactCard.tsx) — หน้านี้แค่ "แจ้งตัวเลือกอย่างรวดเร็ว" เท่านั้น
+    // ไม่ใช่ gate ที่ต้องเลือกก่อนถึงจะฝึกได้
+    if (!makeupDayId && typedWorkoutRows.length === 0) {
+      const { start } = getWeekRange()
+      const { data: weekWorkoutRows } = await supabase
+        .from('workouts')
+        .select('program_day_id')
+        .eq('user_id', user.id)
+        .gte('performed_at', start)
+        .not('program_day_id', 'is', null)
+      const doneDayIds = new Set(((weekWorkoutRows as { program_day_id: string }[]) ?? []).map((w) => w.program_day_id))
+      const { data: allProgramDayRows } = await supabase.from('program_days').select('*').order('day_of_week')
+      const missed = findMissedProgramDays((allProgramDayRows as ProgramDay[]) ?? [], doneDayIds, dow)
+      if (missed.length > 0) {
+        setSmartStartMissedDay(missed[0])
+        setPhase('smartStart')
+        return
       }
     }
 
@@ -1166,6 +1200,44 @@ export default function SessionPage() {
             กลับหน้าแรก
           </Button>
         </div>
+      </div>
+    )
+  }
+
+  if (phase === 'smartStart') {
+    // ฟีดแบ็ก (product decision — "Smart Start") ดู comment เต็มที่จุดตรวจใน load() — คนละเคสกับ
+    // makeupCheckpoint (นั่นคือ "ฝึกแผนอื่นจบไปแล้ววันนี้" ส่วนนี้คือ "มีแผนจากวันก่อนในสัปดาห์นี้ที่ยังไม่
+    // เคยแตะเลย ไม่ใช่แค่วันนี้") — Day 2 (แผนวันนี้) เป็นตัวเลือก primary เสมอ เพราะผู้ใช้ที่กด START
+    // WORKOUT มี intent ชัดว่า "จะฝึกตอนนี้" ไม่ใช่ MINT Coach/ระบบมาตัดสินแทนว่าควรทำแผนไหนก่อน (นั่นเป็น
+    // หน้าที่ของคำแนะนำใน AICoachCompactCard.tsx ต่างหาก ซึ่งเป็น suggestion ไม่ใช่ gate) — แผนที่พลาดเป็น
+    // ปุ่มรอง (secondary link ไม่ใช่ปุ่มเด่นเท่ากัน) กดแล้ว navigate ไป /session?day=<id> ของแผนนั้นตรงๆ
+    return (
+      <div className="space-y-5 text-center py-6">
+        {day && (
+          <div>
+            <p className="font-display text-lg tracked uppercase text-ink">{splitTitleDetail(day.title).main}</p>
+            <p className="text-sm text-muted mt-1">แผนวันนี้</p>
+            <Button type="button" onClick={() => setPhase('active')} size="md" className="mt-3">
+              เริ่มวันนี้ <span aria-hidden="true">→</span>
+            </Button>
+          </div>
+        )}
+        {smartStartMissedDay && (
+          <>
+            <div className="border-t border-line" />
+            <div>
+              <p className="text-sm text-muted flex items-center justify-center gap-1.5">
+                <span aria-hidden="true">↩</span> มีแผนที่พลาด
+              </p>
+              <p className="text-sm text-ink mt-1">
+                {splitTitleDetail(smartStartMissedDay.title).main} · {WEEKDAYS[smartStartMissedDay.day_of_week]}
+              </p>
+              <a href={`/session?day=${smartStartMissedDay.id}`} className="text-sm mt-2 inline-block hover:underline" style={{ color: COLORS.amber }}>
+                ชดเชยแทน <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </>
+        )}
       </div>
     )
   }
