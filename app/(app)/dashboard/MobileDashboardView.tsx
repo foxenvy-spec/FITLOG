@@ -222,6 +222,18 @@ export default function MobileDashboardView() {
   const otherPlanDayTitle = otherPlanWorkout
     ? (data?.programDays.find((d) => d.id === otherPlanWorkout.program_day_id)?.title ?? null)
     : null
+  // ฟีดแบ็ก (live-test) "ข้อมูลว่า 'ฝึกอะไรไปแล้ว' ถูกย่อเหลือแค่ acknowledgement — ผู้ใช้ไม่มีทางเห็น
+  // ผลลัพธ์ของ workout ที่เพิ่งทำจากหน้าแรกเลย" — สรุปสั้นๆ (เซ็ต/ท่า) ต่อท้าย ack — ทั้งคู่ไม่ต้อง query
+  // เพิ่ม: จำนวนท่า = นับแถว data.todayWorkouts ที่ตรงกับแผนนี้ (มีอยู่แล้ว), จำนวนเซ็ต = รวม w.sets ต่อแถว
+  // (persistSets เขียน sets: setsLog.length ทุกครั้งที่ save — ไม่ใช่ target ค่าคงที่ ดู session/page.tsx)
+  // ตั้งใจไม่ใส่ "N PRs"/kg รวมด้วย เพราะต้องคำนวณเทียบสถิติเก่าเหมือน DaySummaryHeader/calendar page ซึ่ง
+  // เป็นคนละ query/logic ชุดใหญ่กว่านี้มาก — ปล่อยให้ "ดูสรุป →" (ลิงก์ไปหน้า /calendar ที่มีอยู่แล้ว) ทำ
+  // หน้าที่นั้นแทน ไม่ต้องคำนวณซ้ำใน Dashboard
+  const otherPlanWorkoutsToday = otherPlanWorkout
+    ? (data?.todayWorkouts ?? []).filter((w) => w.program_day_id === otherPlanWorkout.program_day_id)
+    : []
+  const otherPlanExerciseCount = otherPlanWorkoutsToday.length
+  const otherPlanSetsCount = otherPlanWorkoutsToday.reduce((sum, w) => sum + (w.sets ?? 0), 0)
   const makeupDayTitleRaw = activeMakeupDayTitle ?? otherPlanDayTitle
   // ฟีดแบ็ก "'Day 1 — Push (Chest-focused) · แผนชดเชย' ยาวเกินไป และ '(Chest-focused)' ไม่มีประโยชน์ใน
   // acknowledgement บรรทัดนี้ (หน้าที่ของมันคือบอกว่า 'ฝึกอะไรไปแล้ว' ไม่ใช่อธิบายรายละเอียด workout)" —
@@ -709,6 +721,21 @@ export default function MobileDashboardView() {
                   {makeupAckLine.heading}
                 </p>
                 <p className="text-[11px] text-muted leading-tight mt-0.5">{makeupAckLine.detail}</p>
+                {/* ฟีดแบ็ก "ผู้ใช้ไม่มีทางเห็นผลลัพธ์ของ workout ที่เพิ่งทำจากหน้าแรกเลย" — สรุปสั้นๆ
+                    (เซ็ต/ท่า ไม่ใส่ kg/PR ตาม comment ที่จุดคำนวณ otherPlanSetsCount ด้านบน) + ลิงก์ไปหน้า
+                    /calendar ของวันนี้ (มีอยู่แล้ว แสดงรายละเอียดเต็ม รวม PR breakdown) แทนการคำนวณซ้ำที่นี่ */}
+                {otherPlanExerciseCount > 0 && (
+                  <p className="text-[11px] text-muted leading-tight mt-1">
+                    {otherPlanSetsCount} sets · {otherPlanExerciseCount} exercises
+                  </p>
+                )}
+                <Link
+                  href={`/calendar?date=${todayStr()}`}
+                  className="text-[11px] hover:underline mt-0.5 inline-block"
+                  style={{ color: COLORS.amber }}
+                >
+                  ดูสรุป →
+                </Link>
               </div>
             </div>
           </div>
