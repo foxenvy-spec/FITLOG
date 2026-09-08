@@ -2047,14 +2047,14 @@ export default function DashboardPage() {
                   ดูสรุปวันนี้ <span aria-hidden="true">▶</span>
                 </Button>
               ) : hasMakeupToday && scheduledDay && totals.entryCount === 0 ? (
-                <>
-                  <p className="text-[13px] text-moss mt-4 flex items-center gap-1.5">
-                    <span aria-hidden="true">✅</span> ฝึกไปแล้ววันนี้ (แผนชดเชย)
-                  </p>
-                  <Button as={Link} href="/session" size="md" variant="secondary" className="mt-2">
-                    เริ่ม {scheduledDay.title} เพิ่มไหม? <span aria-hidden="true">▶</span>
-                  </Button>
-                </>
+                // ฟีดแบ็ก (ตัดสินใจสุดท้ายหลังทดสอบจริง) "ไม่ควรมีปุ่ม 'เริ่ม Day 2 เพิ่มไหม?' เลย —
+                // วันนี้ฝึกไปแล้ว (ชดเชย) ระบบไม่ควรสร้าง decision ที่ผู้ใช้ไม่จำเป็นต้องตัดสินใจ (คนไม่ฝึก
+                // 2 รอบ) และถ้ามีปุ่มเริ่มเซสชันอยู่ที่นี่ จะขัดกับการ์ด MINT Coach ข้างๆ ที่เปลี่ยนไปเป็น
+                // 'ดูคำแนะนำเพิ่มเติม →' แล้ว (ไม่มีปุ่มเริ่มเหมือนกัน) เหลือแค่ข้อความรับทราบล้วนๆ ไม่มี
+                // action ใดๆ ในสล็อตนี้ — อยากเริ่มเทรนเพิ่มเองไปหน้า /program ได้เสมออยู่แล้ว
+                <p className="text-[13px] text-moss mt-4 flex items-center gap-1.5">
+                  <span aria-hidden="true">✅</span> ฝึกไปแล้ววันนี้ (แผนชดเชย)
+                </p>
               ) : scheduledDay ? (
                 <Button
                   as={Link}
@@ -2085,8 +2085,12 @@ export default function DashboardPage() {
 
               {/* ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่มเล็กๆ [ ดูท่าวอร์มอัป 3 นาที ] แนะนำท่ายืดเหยียดเฉพาะ
                   กล้ามเนื้อมัดที่จะเล่นวันนี้" — โชว์เฉพาะตอนมีแผนวันนี้จริง ยังไม่เสร็จ และยังไม่เริ่ม
-                  ล็อกเซ็ตเลย (totals.entryCount === 0 — "ก่อนเริ่มเซ็ตแรก" ตามที่ขอเป๊ะๆ ไม่ใช่ตลอดเซสชัน) */}
-              {scheduledDay && !todayCompleted && totals.entryCount === 0 && warmupMoves.length > 0 && (
+                  ล็อกเซ็ตเลย (totals.entryCount === 0 — "ก่อนเริ่มเซ็ตแรก" ตามที่ขอเป๊ะๆ ไม่ใช่ตลอดเซสชัน)
+                  — ฟีดแบ็ก (ตัดสินใจสุดท้ายหลังทดสอบจริง makeup session) เพิ่ม !hasMakeupToday: ถ้าฝึกไปแล้ว
+                  วันนี้ (ชดเชย) และการ์ดเปลี่ยนไปเป็นสถานะรับทราบล้วนๆ ไม่มี action ใดๆ แล้ว ไม่ควรมีลิงก์
+                  ชวนวอร์มอัปก่อนเริ่ม Day 2 โผล่ขึ้นมาขัดกัน (สื่อว่ายังต้องเริ่มอยู่ ทั้งที่ข้อความข้างบน
+                  บอกว่าฝึกไปแล้ว) */}
+              {scheduledDay && !todayCompleted && !hasMakeupToday && totals.entryCount === 0 && warmupMoves.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setWarmupOpen(true)}
