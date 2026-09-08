@@ -211,14 +211,18 @@ export default function MobileDashboardView() {
     ? (data?.programDays.find((d) => d.id === otherPlanWorkout.program_day_id)?.title ?? null)
     : null
   const makeupDayTitle = activeMakeupDayTitle ?? otherPlanDayTitle
-  // ฟีดแบ็ก "แสดง 7/7 ซ้ำในการ์ดนี้จะทำให้ความหมายพัง (ผู้ใช้จะคิดว่า Day 2 เสร็จ 7/7 ทั้งที่จริงคือ Day 1)"
-  // — โชว์แค่ชื่อแผน ไม่โชว์ตัวเลขซ้ำ (รายละเอียดเต็มอยู่ที่ History/Calendar) ใช้คำเดียวกับฝั่งเดสก์ท็อป
-  // (Hero card, DashboardView.tsx) เป๊ะ กันสองแพลตฟอร์มพูดคนละคำสำหรับสถานะเดียวกัน
+  // ฟีดแบ็ก (live-test รอบ 2) "'0/6 Exercises' กับ '✅ ฝึกไปแล้ววันนี้ (แผนชดเชย)' อยู่ติดกันเป็นบรรทัดเดี่ยว
+  // — ผู้ใช้ต้องตีความเองว่า 0/6 หมายถึง Day 2 ส่วน 'ฝึกไปแล้ว' หมายถึง Day 1 ซึ่งไม่ obvious พอ ดูเหมือน
+  // 'ฝึกไปแล้ว' เป็นสถานะของ Today's Workout เอง (ตัวการ์ด 0/6) ทั้งที่จริงพูดถึงแผนคนละอันเลย" — แยกเป็น
+  // 2 บรรทัดชัดเจน: heading ทั่วไป ("วันนี้ฝึกแล้ว"/"กำลังฝึกอยู่" — ไม่พูดถึงแผนไหนเจาะจง) + detail ระบุ
+  // ชื่อแผน + คำว่า "แผนชดเชย" ต่อท้ายเสมอ (กันเข้าใจผิดว่าเป็นแผนวันนี้) แยกออกจากตัวเลข 0/6 อย่างชัดเจน
+  // ไม่โชว์ตัวเลข 7/7 ซ้ำ (รายละเอียดเต็มอยู่ที่ History/Calendar) — heading ใช้คำเดียวกับฝั่งเดสก์ท็อป
+  // (Hero card, DashboardView.tsx) กันสองแพลตฟอร์มพูดคนละคำสำหรับสถานะเดียวกัน
   const makeupAckLine =
     makeupSessionActive && totals.entryCount === 0
-      ? { emoji: '🔄', text: `กำลังทำแผนชดเชย${makeupDayTitle ? ` · ${makeupDayTitle}` : ''}`, color: COLORS.amber }
+      ? { emoji: '🔄', heading: 'กำลังฝึกอยู่', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.amber }
       : hasMakeupToday && !makeupSessionActive && totals.entryCount === 0
-        ? { emoji: '✅', text: 'ฝึกไปแล้ววันนี้ (แผนชดเชย)', color: COLORS.moss }
+        ? { emoji: '✅', heading: 'วันนี้ฝึกแล้ว', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.moss }
         : null
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
@@ -643,14 +647,25 @@ export default function MobileDashboardView() {
           <TodaysWorkoutEmptyCard variant={workoutCardVariant} />
         )}
 
-        {/* ฟีดแบ็ก (live-test, มือถือ) "0/6 ถูกต้องแล้วสำหรับ Today's Plan แต่ต้องมี context ควบคู่ว่า
-            วันนี้ฝึกแผนอื่นไปแล้ว ไม่งั้นผู้ใช้จะรู้สึกว่าแอปไม่รู้ว่าตัวเองเพิ่งออกกำลังกายไป" — วางบรรทัดนี้
-            ติดกับการ์ด Today's Workout ทันที (ไม่ใช่ไปโผล่ไกลที่การ์ด MINT Coach เท่านั้นแบบเดิม) ให้เห็น
-            ทั้งสองข้อความคู่กันในสายตาเดียว: "0/6" (แผนวันนี้) + บรรทัดนี้ (สิ่งที่ฝึกไปแล้วจริง) */}
+        {/* ฟีดแบ็ก (live-test รอบ 2, มือถือ) "'0/6 Exercises' กับ '✅ ฝึกไปแล้ววันนี้ (แผนชดเชย)' เป็นบรรทัด
+            เดี่ยวติดกัน ผู้ใช้ต้องตีความเองว่า 0/6 = Day 2 ส่วนฝึกไปแล้ว = Day 1 ไม่ obvious พอ ดูเหมือนเป็น
+            สถานะของ Today's Workout เอง" — แยกเป็น 2 ก้อนชัดเจน: (1) บรรทัด "ยังไม่ได้เริ่มแผนวันนี้" ผูกกับ
+            0/6 ตรงๆ ให้รู้ทันทีว่า 0/6 หมายถึง "แผนวันนี้ยังไม่เริ่ม" ไม่ใช่ "ยังไม่ได้ฝึกอะไรเลยวันนี้" (2)
+            ก้อน ack แยกลงมา (heading ทั่วไป + ชื่อแผนอื่น + คำว่า "แผนชดเชย" ต่อท้ายเสมอ) ให้เห็นชัดว่าเป็น
+            คนละเรื่องกับตัวเลข 0/6 ด้านบน */}
         {workoutCardVariant === 'active' && makeupAckLine && (
-          <p className="text-[12px] flex items-center gap-1.5 px-1" style={{ color: makeupAckLine.color }}>
-            <span aria-hidden="true">{makeupAckLine.emoji}</span> {makeupAckLine.text}
-          </p>
+          <div className="px-1 flex flex-col gap-2">
+            <p className="text-[11px] text-muted">ยังไม่ได้เริ่มแผนวันนี้</p>
+            <div className="flex items-start gap-1.5">
+              <span aria-hidden="true" className="shrink-0">{makeupAckLine.emoji}</span>
+              <div className="min-w-0">
+                <p className="text-[12px] font-medium leading-tight" style={{ color: makeupAckLine.color }}>
+                  {makeupAckLine.heading}
+                </p>
+                <p className="text-[11px] text-muted leading-tight mt-0.5">{makeupAckLine.detail}</p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่มเล็กๆ [ ดูท่าวอร์มอัป 3 นาที ]" — โชว์เฉพาะตอนมีแผนวันนี้จริง
