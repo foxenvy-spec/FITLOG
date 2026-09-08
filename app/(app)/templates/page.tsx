@@ -437,13 +437,68 @@ export default function TemplatesPage() {
       return
     }
 
+    // ฟีดแบ็ก "อยาก import เข้าไปแทนเทมเพลตเดิมบางวันได้ไหม" — เดิม import สร้างเทมเพลตใหม่เสมอ (แม้ชื่อชีต
+    // จะซ้ำกับเทมเพลตที่มีอยู่แล้วเป๊ะ ก็ได้เทมเพลตใหม่แยกซ้ำอีกใบ ไม่เคยแทนที่ของเดิม) — เลือกจับคู่ด้วย
+    // "ชื่อ sheet ตรงกับชื่อเทมเพลตเป๊ะ" ตามที่ยืนยัน (workflow หลักคือ export ทั้งหมด -> แก้ในไฟล์เดิม (ไม่
+    // เปลี่ยนชื่อชีต) -> import กลับ) วันที่ชื่อไม่ตรงกับเทมเพลตไหนเลย ยังสร้างใหม่เหมือนพฤติกรรมเดิมทุกประการ
+    const nonEmptyDays = parsedResult.days.filter((d) => d.exercises.length > 0)
+    const existingByTitle = new Map(templates.map((t) => [t.title, t]))
+    let daysToReplace = nonEmptyDays.filter((d) => existingByTitle.has(d.title))
+    const daysToCreate = nonEmptyDays.filter((d) => !existingByTitle.has(d.title))
+
+    // แทนที่ = ลบท่าเดิมทั้งหมดของเทมเพลตนั้นทิ้งแล้วเขียนท่าจากไฟล์แทน ย้อนกลับไม่ได้ — ต้องถามยืนยันก่อน
+    // เหมือนจุดอื่นที่ลบข้อมูลถาวร (ดู handleDeleteTemplate) ถามครั้งเดียวรวมทุกชื่อที่ชนกัน ไม่ใช่ทีละชื่อ
+    // เพื่อไม่ให้กดยืนยันรัวๆ ตอนไฟล์มีหลายวัน — กด "ยกเลิก" แปลว่าข้ามเทมเพลตที่ชื่อตรงกันทั้งหมดไปเลย (ไม่
+    // สร้างซ้ำ ไม่แทนที่) เหลือแค่วันที่ชื่อใหม่จริงๆ ที่ยัง import ต่อได้ตามปกติ
+    if (daysToReplace.length > 0) {
+      const names = daysToReplace.map((d) => `"${d.title}"`).join(', ')
+      const confirmed = window.confirm(
+        `ไฟล์นี้มีชื่อชีตตรงกับเทมเพลตที่มีอยู่แล้ว ${daysToReplace.length} รายการ: ${names}\n\n` +
+          `กด "ตกลง" เพื่อแทนที่ท่าออกกำลังกายเดิมของเทมเพลตเหล่านี้ทั้งหมดด้วยข้อมูลจากไฟล์นี้ (ย้อนกลับไม่ได้)\n` +
+          `กด "ยกเลิก" เพื่อข้ามเทมเพลตที่ชื่อตรงกันไป แล้วนำเข้าเฉพาะเทมเพลตใหม่ที่เหลือแทน`
+      )
+      if (!confirmed) daysToReplace = []
+    }
+
     const createdTemplates: WorkoutTemplate[] = []
-    const createdExercisesByTemplate: Record<string, WorkoutTemplateExercise[]> = {}
-    let totalExercises = 0
+    const updatedExercisesByTemplate: Record<string, WorkoutTemplateExercise[]> = {}
+    let totalCreatedExercises = 0
+    let totalReplacedExercises = 0
 
-    for (const day of parsedResult.days) {
-      if (day.exercises.length === 0) continue
+    for (const day of daysToReplace) {
+      const target = existingByTitle.get(day.title)!
+      const { error: delErr } = await supabase.from('workout_template_exercises').delete().eq('template_id', target.id)
+      if (delErr) {
+        setError(`แทนที่เทมเพลต "${day.title}" ไม่สำเร็จ: ${delErr.message}`)
+        return
+      }
 
+      const payload = day.exercises.map((ex, i) => ({
+        template_id: target.id,
+        user_id: user.id,
+        position: i,
+        exercise_name: ex.name,
+        muscle_group: ex.muscleGroup,
+        secondary_muscles: ex.secondaryMuscles,
+        exercise_library_id: ex.matchedExerciseId,
+        sets: ex.sets,
+        target_reps: ex.targetRepsRaw ?? (ex.reps !== null ? String(ex.reps) : null),
+        target_rir: ex.targetRirRaw ?? (ex.rir !== null ? String(ex.rir) : null),
+        rest: ex.restRaw,
+        default_weight_kg: ex.weight_kg,
+        notes: ex.notes,
+      }))
+      const { data: exRows, error: exErr } = await supabase.from('workout_template_exercises').insert(payload).select('*')
+      if (exErr) {
+        setError(`บันทึกท่าของเทมเพลต "${day.title}" ไม่สำเร็จ: ${exErr.message}`)
+        return
+      }
+
+      updatedExercisesByTemplate[target.id] = exRows as WorkoutTemplateExercise[]
+      totalReplacedExercises += day.exercises.length
+    }
+
+    for (const day of daysToCreate) {
       const { data: newTemplate, error: tErr } = await supabase
         .from('workout_templates')
         .insert({ user_id: user.id, title: day.title })
@@ -477,17 +532,21 @@ export default function TemplatesPage() {
       }
 
       createdTemplates.push(created)
-      createdExercisesByTemplate[created.id] = exRows as WorkoutTemplateExercise[]
-      totalExercises += day.exercises.length
+      updatedExercisesByTemplate[created.id] = exRows as WorkoutTemplateExercise[]
+      totalCreatedExercises += day.exercises.length
     }
 
-    setTemplates((prev) => sortTemplates([...createdTemplates, ...prev]))
-    setExercisesByTemplate((prev) => ({ ...prev, ...createdExercisesByTemplate }))
-    if (createdTemplates.length === 1) setExpandedId(createdTemplates[0].id)
+    if (createdTemplates.length > 0) setTemplates((prev) => sortTemplates([...createdTemplates, ...prev]))
+    setExercisesByTemplate((prev) => ({ ...prev, ...updatedExercisesByTemplate }))
+    if (createdTemplates.length === 1 && daysToReplace.length === 0) setExpandedId(createdTemplates[0].id)
 
     // รวม warning จาก parser (fuzzy match/ไม่พบท่าในคลัง/แปลงหน่วยปอนด์) ต่อท้ายสรุปผล ให้ผู้ใช้รู้ว่าท่าไหน
     // ควรตรวจสอบเพิ่ม แทนที่จะดูเหมือนนำเข้าสำเร็จสมบูรณ์ 100% เงียบๆ
-    const summary = `นำเข้า ${createdTemplates.length} เทมเพลต (${totalExercises} ท่า) จาก "${file.name}" แล้ว`
+    const summaryParts: string[] = []
+    if (daysToReplace.length > 0) summaryParts.push(`แทนที่ ${daysToReplace.length} เทมเพลต (${totalReplacedExercises} ท่า)`)
+    if (createdTemplates.length > 0) summaryParts.push(`สร้างใหม่ ${createdTemplates.length} เทมเพลต (${totalCreatedExercises} ท่า)`)
+    const summary =
+      summaryParts.length > 0 ? `${summaryParts.join(' · ')} จาก "${file.name}" แล้ว` : `ไม่มีเทมเพลตถูกนำเข้าจาก "${file.name}"`
     setImportMessage(parsedResult.warnings.length > 0 ? `${summary} — ${parsedResult.warnings.join(' ')}` : summary)
   }
 
