@@ -33,7 +33,12 @@ export default function TodayMuscleChips({ todayWorkouts }: TodayMuscleChipsProp
 
   return (
     <div className="flex items-center flex-wrap gap-1.5 mt-3">
-      <span className="text-[12px] text-muted mr-0.5">วันนี้:</span>
+      {/* ฟีดแบ็ก (ตรวจจากภาพจริง, TC-10 Makeup Session) "การ์ดหัวเรื่องบอกแผนวันนี้ (เช่น 'Day 2 —
+          Pull/หลัง') แต่ชิปแถวนี้โชว์กล้ามเนื้อของเซสชันชดเชยที่ทำจริง (เช่น อก) ป้าย 'วันนี้:' เดิม
+          กำกวมจนดูเหมือนขัดแย้งกันเอง — เปลี่ยนเป็น 'ฝึกจริงวันนี้:' ให้ชัดว่าแถวนี้คือกล้ามเนื้อที่ log
+          จริงในวันนี้ (ทุกแหล่งที่มา รวม makeup session) แยกจากหัวเรื่องด้านบนซึ่งพูดถึงแผน ไม่แตะ logic
+          การนับกล้ามเนื้อเลย แก้แค่ป้ายให้ตรงกับความจริงเสมอ ไม่ว่าจะตรงกับแผนหรือไม่ก็ตาม */}
+      <span className="text-[12px] text-muted mr-0.5">ฝึกจริงวันนี้:</span>
       {trainedList.map((group) => {
         const color = MUSCLE_GROUP_COLORS[group]
         return (
