@@ -172,9 +172,16 @@ export default function MobileDashboardView() {
   // ของวันนี้แล้วจริงหรือยัง (ตรรกะเดียวกับ allFinished ใน session/page.tsx) null = ยังตรวจไม่เสร็จ/ไม่มี
   // เซสชันชดเชยค้างอยู่
   const [makeupSessionFinished, setMakeupSessionFinished] = useState<boolean | null>(null)
+  // ฟีดแบ็ก (product decision, live-test) "0/6 EXERCISES ระหว่างทำเซสชันชดเชยอยู่ยังดูเหมือนไม่ได้ฝึก
+  // อะไรเลย ทั้งที่กำลังฝึกอยู่จริง — ควรสลับให้ Today's Workout โชว์ความคืบหน้าจริงของ Makeup แทน Day 2
+  // เป็น primary content ตอนกำลังทำอยู่ (Day 2 ยังมี Today's Focus ด้านบนพูดถึงอยู่แล้ว ไม่ต้องพูดซ้ำ)" —
+  // เก็บจำนวนท่าทั้งหมดของแผนที่กำลังทำ (exerciseIds.length จาก query เดิมที่มีอยู่แล้ว ไม่ query เพิ่ม)
+  // ไว้ใช้เป็น "total" ของการ์ด แทนที่จะทิ้งไปหลังเช็ค finished เฉยๆ
+  const [makeupTotalExercises, setMakeupTotalExercises] = useState(0)
   useEffect(() => {
     if (!activeMakeupDay) {
       setMakeupSessionFinished(null)
+      setMakeupTotalExercises(0)
       return
     }
     let cancelled = false
@@ -182,8 +189,10 @@ export default function MobileDashboardView() {
     ;(async () => {
       const { data: exRows } = await supabase.from('program_exercises').select('id').eq('program_day_id', activeMakeupDay)
       const exerciseIds = ((exRows as { id: string }[]) ?? []).map((r) => r.id)
+      if (cancelled) return
+      setMakeupTotalExercises(exerciseIds.length)
       if (exerciseIds.length === 0) {
-        if (!cancelled) setMakeupSessionFinished(true)
+        setMakeupSessionFinished(true)
         return
       }
       const { data: compRows } = await supabase
@@ -199,6 +208,9 @@ export default function MobileDashboardView() {
     }
   }, [activeMakeupDay, supabase, today])
   const makeupSessionActive = !!activeMakeupDay && makeupSessionFinished === false
+  // ท่าที่ "แตะแล้ว" ของแผนชดเชยที่กำลังทำอยู่ — นับจาก workout ที่ log ไปแล้ววันนี้ (data.todayWorkouts,
+  // มีอยู่แล้ว ไม่ query เพิ่ม) ที่ผูกกับแผนนี้โดยตรง เหมือนวิธีเดียวกับ hasMakeupToday/otherPlanWorkout
+  const makeupExercisesCompleted = (data?.todayWorkouts ?? []).filter((w) => w.program_day_id === activeMakeupDay).length
   // ฟีดแบ็ก (live-test, มือถือ) "'0/6 EXERCISES' ถูกต้องสำหรับ Today's Plan (Day 2) แต่ผู้ใช้เพิ่งออกจาก
   // เซสชันชดเชย (Day 1) ที่ทำครบ 7/7 มาไม่กี่วินาทีก่อน เห็น 0/6 แล้วรู้สึกว่า 'เมื่อกี้ฉันเพิ่งออกกำลังกาย
   // ทำไมหน้าแรกบอก 0/6' — ถูกต้องด้าน data แต่ผิดด้าน communication บนมือถือ (จอแคบ ไม่มีที่ให้ Hero card
@@ -223,15 +235,15 @@ export default function MobileDashboardView() {
   // ให้รู้สึกเป็นคนละก้อนข้อมูลชัดเจนยิ่งขึ้น ไม่ใช่แค่สีต่างกัน
   // v2 (live-test รอบ 4) "เคยลองใส่ 'คุณ' ('วันนี้คุณฝึกแล้ว') ให้รู้สึกเป็นสถานะของผู้ใช้ทั้งวัน แต่พอวางใต้
   // Today's Workout จริงแล้วรู้สึกเป็นประโยคสนทนาเกินไป ('คุณ' = ระบบพูดกับผู้ใช้ตรงๆ) ทั้งที่ตำแหน่งนี้ควร
-  // เป็น status ของ dashboard สั้นๆ มากกว่า" — ตัด 'คุณ' ออก กลับไปที่ 'วันนี้ฝึกแล้ว'/'กำลังฝึกอยู่' เหมือน
-  // ก่อนหน้า v69 — ความกำกวมเดิม (0/6 vs ฝึกแล้ว) แก้ด้วยเส้นคั่น+โครงสร้าง 2 ก้อนอยู่แล้ว ไม่ต้องพึ่งคำว่า
-  // 'คุณ' มาช่วยแยกอีกชั้น
+  // เป็น status ของ dashboard สั้นๆ มากกว่า" — ตัด 'คุณ' ออก กลับไปที่ 'วันนี้ฝึกแล้ว' เหมือนก่อนหน้า v69
+  // v3 (product decision, live-test) "0/6 ระหว่างทำ Makeup อยู่ยังดูเหมือนไม่ได้ฝึกอะไรเลย" — เอา branch
+  // "active" ออกจากที่นี่ (เดิม 'กำลังฝึกอยู่' เป็น ack บรรทัดเดี่ยวใต้การ์ด) เพราะตอนนี้ active-makeup
+  // เปลี่ยนไปสลับเนื้อหาหลักของการ์ด Today's Workout เองแทน (ดูจุด render ด้านล่าง) — เหลือแค่ finished
+  // state ที่ยังต้องมี ack แยกต่างหาก (0/6 ของ Day 2 ยังถูกต้อง แค่ต้องบอกว่าฝึกแผนอื่นไปแล้ว)
   const makeupAckLine =
-    makeupSessionActive && totals.entryCount === 0
-      ? { mark: '🔄', heading: 'กำลังฝึกอยู่', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.amber }
-      : hasMakeupToday && !makeupSessionActive && totals.entryCount === 0
-        ? { mark: '✓', heading: 'วันนี้ฝึกแล้ว', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.moss }
-        : null
+    hasMakeupToday && !makeupSessionActive && totals.entryCount === 0
+      ? { mark: '✓', heading: 'วันนี้ฝึกแล้ว', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.moss }
+      : null
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
   // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน
@@ -633,7 +645,28 @@ export default function MobileDashboardView() {
           )
         })()}
 
-        {workoutCardVariant === 'active' ? (
+        {/* ฟีดแบ็ก (product decision, live-test) "0/6 EXERCISES ระหว่างทำเซสชันชดเชยอยู่จริงยังดูเหมือนไม่ได้
+            ฝึกอะไรเลย" — ระหว่างทำ Makeup อยู่ (ยังไม่แตะแผนวันนี้เอง) ให้การ์ด Today's Workout สลับไปโชว์
+            ความคืบหน้าจริงของ Makeup แทน Day 2 เป็น primary content (Day 2 มี Today's Focus ด้านบนพูดถึง
+            อยู่แล้ว ไม่ต้องพูดซ้ำในนี้ตามที่ตกลง) — ไม่แก้ TodaysWorkoutCompactCard.tsx เอง (ยังไม่มีชื่อ
+            แผนกำกับในตัวการ์ดเหมือนเดิมตาม v69) แค่เปลี่ยนตัวเลข completed/total ที่ส่งเข้าไป + เพิ่ม label
+            ชื่อแผนไว้ด้านบนการ์ดแทน (นอกการ์ด) ให้รู้ว่าตัวเลขนี้เป็นของแผนไหน */}
+        {workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0 ? (
+          <>
+            <div className="px-1 mb-1.5">
+              <p className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: COLORS.amber }}>
+                <span aria-hidden="true">🔄</span> กำลังฝึกอยู่
+              </p>
+              <p className="text-[11px] text-muted mt-0.5">{makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย</p>
+            </div>
+            <TodaysWorkoutCompactCard
+              completed={makeupExercisesCompleted}
+              total={Math.max(makeupTotalExercises, 1)}
+              href={sessionHref}
+              volumeChangePct={null}
+            />
+          </>
+        ) : workoutCardVariant === 'active' ? (
           <TodaysWorkoutCompactCard
             // ฟีดแบ็ก "แสดง 7/8 ทั้งๆที่ประวัติบันทึกไป 8 ท่า" — data.completedCount นับได้เฉพาะท่าตาม
             // แผนเท่านั้น (ดู comment เต็มที่จุดคำนวณ adhocCompletedCount ใน DashboardView.tsx) บวก
