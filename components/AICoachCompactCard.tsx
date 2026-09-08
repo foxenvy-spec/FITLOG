@@ -91,6 +91,17 @@ interface AICoachCompactCardProps {
    * ขัดกันเอง ชวนฝึก 2 แผนพร้อมกัน)" — เมื่อ true ให้ใช้ pattern เดียวกับ isRestDay/hasMakeupToday ด้านล่าง
    * (secondary link แทน CTA "เริ่ม X") ไม่เสนอเริ่มแผนอื่นซ้อนขณะที่แผนหนึ่งกำลังทำค้างอยู่ */
   makeupSessionActive?: boolean
+  /** จำนวนแผนที่พลาดของสัปดาห์นี้ที่ยังไม่ได้ทำ (ดู missedDays ใน MobileDashboardView.tsx — มือถือเท่านั้น
+   * ตอนนี้ ไม่ระบุ/0 = พฤติกรรมเดิมทุกประการ) — ฟีดแบ็ก (live-test) "Today's Focus บอก Day 2 — Pull, การ์ด
+   * แผนที่พลาดบอก Day 1 — Push, แล้ว MINT Coach ยังพูดซ้ำ Today's Focus อีกรอบพร้อมปุ่ม 'เริ่ม Day 2' — เกิด
+   * CTA 2 อันแข่งกัน ('เริ่มแผนที่พลาด' vs 'เริ่ม Day 2') ผู้ใช้ไม่รู้จะเลือกอันไหน" — เมื่อมีแผนพลาดและยัง
+   * ไม่แตะแผนวันนี้เองเลย (ผู้เรียกกรอง entryCount===0 มาก่อนแล้ว) MINT Coach ควรพูดถึงเรื่องนี้แทนที่จะย้ำ
+   * คำแนะนำเดียวกับ Today's Focus — ไม่มีปุ่ม "เริ่ม X" ซ้ำ (secondary link แทน ตาม pattern เดียวกับ
+   * isRestDay/hasMakeupToday ด้านบน) เพราะปุ่มเริ่มจริงอยู่ที่การ์ดแผนที่พลาดแล้ว ไม่ต้องมีจุดที่สอง */
+  missedPlanCount?: number
+  /** ชื่อแผนแรกที่พลาด (เช่น "Day 1 — Push") ใช้ประกอบข้อความเมื่อ missedPlanCount === 1 เท่านั้น —
+   * ไม่ระบุ = แสดงข้อความทั่วไปไม่เอ่ยชื่อแผน */
+  missedPlanTitle?: string | null
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -172,6 +183,8 @@ export default function AICoachCompactCard({
   thisWeekWorkoutDays = null,
   hasMakeupToday = false,
   makeupSessionActive = false,
+  missedPlanCount = 0,
+  missedPlanTitle = null,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -437,6 +450,18 @@ export default function AICoachCompactCard({
                 <p className="truncate mt-0.5 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
                   พักตามแผนได้เลย
                 </p>
+              ) : missedPlanCount > 0 ? (
+                // ฟีดแบ็ก (live-test) "Today's Focus บอก Day 2 — Pull, การ์ดแผนที่พลาดบอก Day 1 — Push,
+                // แล้ว MINT Coach ยังพูดซ้ำคำแนะนำเดียวกับ Today's Focus อีกรอบพร้อมปุ่ม 'เริ่ม Day 2' —
+                // ผู้ใช้เห็น CTA 2 อันแข่งกัน ('เริ่มแผนที่พลาด' vs 'เริ่ม Day 2') ไม่รู้จะเลือกอันไหน" —
+                // ใช้ข้อความ conservative (ไม่ชี้นำว่าควรทำแผนไหนก่อน แค่บอกว่ามีอยู่ ให้ผู้ใช้ตัดสินใจเอง
+                // ตามหลัก "ไม่ encourage ≠ ไม่ allow") แทนคำแนะนำกล้ามเนื้อปกติ — ปุ่มเริ่มจริงอยู่ที่การ์ด
+                // แผนที่พลาดแล้ว (ดู MobileDashboardView.tsx) ไม่ต้องมีปุ่ม "เริ่ม X" ซ้ำที่นี่อีกจุด
+                <p className="truncate mt-0.5 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
+                  {missedPlanCount === 1 && missedPlanTitle
+                    ? `มีแผนที่พลาด 1 วัน · ${missedPlanTitle}`
+                    : `มีแผนที่พลาด ${missedPlanCount} วัน`}
+                </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
                   {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text} ·{' '}
@@ -508,6 +533,13 @@ export default function AICoachCompactCard({
             // ฟีดแบ็ก (ตรวจจากการใช้งานจริง, TC-10) "จบเซสชันชดเชยของแผนอื่นไปแล้ว แต่การ์ดนี้ยังเสนอปุ่ม
             // 'เริ่ม X' ของแผนวันนี้เหมือนไม่มีอะไรเกิดขึ้น — คนไม่ฝึก 2 รอบเต็มในวันเดียว" — เหตุผลเดียวกับ
             // isRestDay ด้านบน (secondary link แทน CTA เด่น) ไม่แตะ headline/recommendation/chosen logic เลย
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
+              ดูคำแนะนำเพิ่มเติม →
+            </Button>
+          ) : missedPlanCount > 0 ? (
+            // ฟีดแบ็ก (live-test) "ปุ่ม 'เริ่ม Day 2' ที่นี่แข่งกับปุ่ม 'เริ่มแผนที่พลาด' บนการ์ดแผนที่พลาด
+            // ด้านบน (MobileDashboardView.tsx) ทำให้ผู้ใช้ไม่รู้จะกดอันไหน" — ปุ่มเริ่มจริงอยู่ที่การ์ด
+            // แผนที่พลาดแล้ว จุดนี้เหลือแค่ลิงก์รองไปหน้า /coach เหมือน pattern อื่นด้านบนทั้งหมด
             <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดูคำแนะนำเพิ่มเติม →
             </Button>

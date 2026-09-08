@@ -560,11 +560,18 @@ export default function MobileDashboardView() {
 
         {/* ทางลัด "แผนที่พลาด" — ดู comment เต็มที่จุดคำนวณ missedDays ด้านบน วางต่อจาก Today's Focus
             ทันที (ไม่ปนเข้าไปในตัว TodaysFocusCard.tsx เอง — component นั้นใช้ร่วมกับเดสก์ท็อปด้วย และ
-            ฟีเจอร์นี้ตั้งใจทำเฉพาะมือถือตามที่คุยกัน) แสดงเฉพาะตอนมีแผนพลาดจริงอย่างน้อย 1 วัน */}
+            ฟีเจอร์นี้ตั้งใจทำเฉพาะมือถือตามที่คุยกัน) แสดงเฉพาะตอนมีแผนพลาดจริงอย่างน้อย 1 วัน
+            ฟีดแบ็ก (live-test) "ควรเป็น secondary action ไม่ใช่ดูเหมือน card หลักอีกใบ" — ตัด
+            shadow-elevated/พื้นทึบแบบการ์ดหลักออก (เดิมใช้สไตล์เดียวกับ TodaysWorkout/Body Overview ซึ่ง
+            เป็นการ์ด "หลัก") เปลี่ยนพื้นเป็นโปร่งกว่า + ตัดกรอบทึบ ให้รู้สึกเป็นแถบข้อมูลรอง ไม่ใช่การ์ด
+            แข่งกับ Today's Focus ด้านบน — สีหัวข้อ "↩ แผนที่พลาด" ลดจาก amber ตัวหนาเต็มบรรทัด เหลือแค่ไอคอน
+            สีอำพัน + ข้อความสีเทา (text-muted) ให้เห็นชัดว่าเป็นข้อมูลเสริม สีอำพันเก็บไว้ที่ CTA จุดเดียว */}
         {missedDays.length > 0 && (
-          <div className="rounded-card bg-surface border border-line shadow-elevated px-4 py-3">
-            <p className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: COLORS.amber }}>
-              <span aria-hidden="true">↩</span>{' '}
+          <div className="rounded-card bg-surface2/60 px-3.5 py-2.5">
+            <p className="text-[12px] font-medium flex items-center gap-1.5 text-muted">
+              <span aria-hidden="true" style={{ color: COLORS.amber }}>
+                ↩
+              </span>
               {missedDays.length === 1 ? 'แผนที่พลาด' : `${missedDays.length} แผนที่พลาด`}
             </p>
             <p className="text-[13px] text-ink mt-1">
@@ -849,6 +856,8 @@ export default function MobileDashboardView() {
           thisWeekWorkoutDays={data.thisWeekWorkoutDays}
           hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
           makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
+          missedPlanCount={totals.entryCount === 0 ? missedDays.length : 0}
+          missedPlanTitle={missedDays.length > 0 ? splitTitleDetail(missedDays[0].title).main : null}
         />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม
