@@ -749,6 +749,11 @@ export function getWeekRange(reference: Date = new Date()): { start: string; end
 // ข้อ 2 คือ "ไม่เคยแตะเลย" ไม่ใช่ "ยังทำไม่ครบ" — วันที่เริ่มไปแล้วแต่ยังไม่จบ (เช่น 3/6 ท่า แล้วหยุด) มี
 // workout row เกิดขึ้นแล้วอย่างน้อย 1 แถว จึงไม่นับเป็น "พลาด" ตามฟังก์ชันนี้ (ปล่อยให้ activeMakeupSession
 // pointer/Resume ดูแลกรณี "เริ่มแล้วค้างอยู่" แทน — คนละกลไกคนละหน้าที่กัน ไม่ทับซ้อนกัน)
+//
+// นิยาม "touched" ให้ตรงเป๊ะ กันตีความผิดในอนาคต (เช่น "เปิดหน้า workout แล้ว"/"กด Start แล้ว"/"มี session
+// record แล้ว" ล้วนไม่ใช่ความหมายที่นี่): a program day is considered touched when any workout row
+// exists for that program_day_id, regardless of completion status — แค่นั้นเลย ไม่มีเงื่อนไขอื่นแอบแฝง
+// (incomplete ≠ missed เสมอ ตราบใดที่มี workout row อย่างน้อย 1 แถว)
 // doneDayIdsThisWeek มาจาก query workouts ภายนอก — ผู้เรียกเป็นคน .gte(performed_at, getWeekRange().start)
 // เอง (ฟังก์ชันนี้ไม่รู้จักวันที่จริงเลย รับแค่ผลลัพธ์ที่กรองสัปดาห์มาแล้วเป็น Set มาเทียบ ไม่ยุ่งกับ
 // Supabase หรือขอบเขตสัปดาห์เอง — ทั้งสองจุดเรียกต้องกรอง .gte(weekStart) เหมือนกันเพื่อให้ผลตรงกันเสมอ)
