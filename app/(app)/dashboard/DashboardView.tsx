@@ -895,6 +895,15 @@ export default function DashboardPage() {
     return computeTodayTotals(relevantWorkouts)
   }, [data?.todayWorkouts, scheduledDay])
 
+  // ฟีดแบ็ก (ตรวจจากการใช้งานจริง, TC-10) "จบเซสชันชดเชยของแผนอื่นไปแล้ว แต่กลับเข้ามาการ์ด Today's
+  // Workout ยังเร่งให้ 'เริ่มเทรนเลย' เหมือนไม่มีอะไรเกิดขึ้น — คนไม่ฝึก 2 รอบเต็มในวันเดียว" — ตรวจว่า
+  // วันนี้มี workout ที่แท็ก program_day_id ของแผน "อื่น" (ไม่ใช่ scheduledDay ของวันนี้) อยู่ไหม ใช้ตัดสิน
+  // ว่าจะเปลี่ยน CTA เป็นสถานะรับทราบว่าฝึกไปแล้วแทน (ดูจุดใช้งานที่ปุ่ม CTA หลักด้านล่าง) — ไม่บล็อกการ
+  // เริ่มแผนวันนี้เพิ่มเอง แค่ไม่ผลักดันด้วย glow CTA เหมือนไม่มีอะไรเกิดขึ้น
+  const hasMakeupToday = (data?.todayWorkouts ?? []).some(
+    (w) => w.program_day_id && w.program_day_id !== scheduledDay?.id
+  )
+
   // v47: ฟีดแบ็ก "Workout Card ฝั่งซ้ายล่างยังว่างอยู่บ้าง อยากได้ Calories เติม" — ใช้สูตรประมาณเดียวกับ
   // หน้า Session/Stats (estimateCaloriesToday ใน lib/dashboardStats.ts) ไม่ใช่ตัวเลขสมมติ — น้ำหนักตัวใช้
   // ค่าล่าสุดจาก body_metrics ที่มีอยู่แล้ว (bodyMetricsSummary.weight.value) ถ้ายังไม่เคยบันทึกน้ำหนักเลย
@@ -2016,8 +2025,11 @@ export default function DashboardPage() {
                   Workout — ลด glow ของ Workout ลง 10-15%" — ลดต่ออีก ~13% เฉพาะเลเยอร์ glow ที่มองเห็นชัด
                   (.48->.42, .28->.24, .10->.09) ไม่แตะ inset shadow ทั้ง 2 ชั้น (เป็นผิวนูนของปุ่ม ไม่ใช่
                   glow) เหมือนกันทั้ง 3 สถานะปุ่มด้านล่าง (todayCompleted/scheduledDay/fallback) */}
-              {/* ระบบ 3 สถานะของ Hero Card ตามฟีดแบ็ก "Today's Workout ต้องเป็น Hero ที่ฉลาดกว่านี้":
+              {/* ระบบสถานะของ Hero Card ตามฟีดแบ็ก "Today's Workout ต้องเป็น Hero ที่ฉลาดกว่านี้":
                   State C (todayCompleted) เสร็จแล้ววันนี้ → ปุ่มพาไปดูสรุป ไม่ใช่ "เริ่ม/ไปต่อ" อีกต่อไป
+                  State D (hasMakeupToday, ยังไม่แตะแผนวันนี้เลย) → รับทราบว่าฝึกไปแล้ว (แผนอื่น) แทนที่
+                  จะเร่งเหมือนไม่มีอะไรเกิดขึ้น — ปุ่มเริ่มแผนวันนี้ยังกดได้ แค่ไม่ใช้ glow (ไม่ใช่ hero
+                  action ของวันนี้อีกต่อไป ตามฟีดแบ็ก "คนไม่ฝึก 2 รอบเต็มในวันเดียว")
                   State A (มี scheduledDay) → ปุ่มเริ่ม/ไปต่อเหมือนเดิม
                   State B (ไม่มี scheduledDay) → ปุ่มเด่น "ให้ MINT แนะนำ" แทนที่ "เริ่มเทรนเลย" → /log เดิม
                   (เชื่อมกับ AI Coach ตามที่ขอ แทนที่จะพาไปหน้าบันทึกอิสระเฉยๆ) */}
@@ -2034,6 +2046,15 @@ export default function DashboardPage() {
                 >
                   ดูสรุปวันนี้ <span aria-hidden="true">▶</span>
                 </Button>
+              ) : hasMakeupToday && scheduledDay && totals.entryCount === 0 ? (
+                <>
+                  <p className="text-[13px] text-moss mt-4 flex items-center gap-1.5">
+                    <span aria-hidden="true">✅</span> ฝึกไปแล้ววันนี้ (แผนชดเชย)
+                  </p>
+                  <Button as={Link} href="/session" size="md" variant="secondary" className="mt-2">
+                    เริ่ม {scheduledDay.title} เพิ่มไหม? <span aria-hidden="true">▶</span>
+                  </Button>
+                </>
               ) : scheduledDay ? (
                 <Button
                   as={Link}
@@ -2757,6 +2778,7 @@ export default function DashboardPage() {
             isRecommendationForToday={data.isRecommendationForToday}
             todayWorkoutTitle={workoutTitle}
             nextScheduledMuscleGroup={nextScheduledMuscleGroup}
+            hasMakeupToday={hasMakeupToday && totals.entryCount === 0}
           />
         </div>
       )}

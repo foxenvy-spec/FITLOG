@@ -146,6 +146,11 @@ export default function MobileDashboardView() {
     )
     return computeTodayTotals(relevantWorkouts)
   }, [data?.todayWorkouts, scheduledDay])
+  // เหตุผลเดียวกับ DashboardView.tsx (เดสก์ท็อป) — จบเซสชันชดเชยของแผนอื่นไปแล้ว ไม่ควรถูกการ์ด AI Coach
+  // เร่งให้เริ่มแผนวันนี้อีกเหมือนไม่มีอะไรเกิดขึ้น (คนไม่ฝึก 2 รอบเต็มในวันเดียว)
+  const hasMakeupToday = (data?.todayWorkouts ?? []).some(
+    (w) => w.program_day_id && w.program_day_id !== scheduledDay?.id
+  )
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
   // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน
@@ -600,6 +605,7 @@ export default function MobileDashboardView() {
           isRecommendationForToday={data.isRecommendationForToday}
           todayWorkoutTitle={workoutTitle}
           thisWeekWorkoutDays={data.thisWeekWorkoutDays}
+          hasMakeupToday={hasMakeupToday && totals.entryCount === 0}
         />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม

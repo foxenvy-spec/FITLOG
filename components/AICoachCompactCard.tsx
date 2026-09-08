@@ -77,6 +77,12 @@ interface AICoachCompactCardProps {
    * พอสนับสนุนเหตุผลนี้ ไม่โชว์อะไรเพิ่ม (คงข้อความเดิมเฉยๆ ตามที่ตกลง "ไม่มีข้อมูลพอ = ไม่แสดง ดีกว่า
    * แสดง generic filler") */
   thisWeekWorkoutDays?: number | null
+  /** true เมื่อวันนี้มี workout ที่ log ไปแล้วสำหรับแผนวันอื่น (เซสชันชดเชย — program_day_id ไม่ตรงกับ
+   * scheduledDay ของวันนี้ ดู hasMakeupToday ใน DashboardView.tsx) และยังไม่ได้แตะแผนวันนี้เองเลย —
+   * ฟีดแบ็ก "จบเซสชันชดเชยไปแล้ว ไม่ควรกลับมาเจอปุ่ม 'เริ่ม X' เร่งให้ฝึกอีกรอบเหมือนไม่มีอะไรเกิดขึ้น
+   * (คนไม่ฝึก 2 รอบเต็มในวันเดียว)" — ใช้ pattern เดียวกับ isRestDay/lowRecoveryCaution ด้านบน (secondary
+   * link แทน CTA เด่น) ไม่แตะ headline/recommendation logic ใดๆ เลย ไม่ระบุ = พฤติกรรมเดิมทุกประการ */
+  hasMakeupToday?: boolean
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -156,6 +162,7 @@ export default function AICoachCompactCard({
   todayWorkoutTitle = null,
   nextScheduledMuscleGroup = null,
   thisWeekWorkoutDays = null,
+  hasMakeupToday = false,
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -451,6 +458,13 @@ export default function AICoachCompactCard({
             // Recovery/AI Coach แทน ไม่ใช่ CTA เด่นแบบ "เริ่ม" เพราะ Rest Day ไม่ควรมี action ที่เด่นกว่า "พัก"
             <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดู Recovery →
+            </Button>
+          ) : hasMakeupToday ? (
+            // ฟีดแบ็ก (ตรวจจากการใช้งานจริง, TC-10) "จบเซสชันชดเชยของแผนอื่นไปแล้ว แต่การ์ดนี้ยังเสนอปุ่ม
+            // 'เริ่ม X' ของแผนวันนี้เหมือนไม่มีอะไรเกิดขึ้น — คนไม่ฝึก 2 รอบเต็มในวันเดียว" — เหตุผลเดียวกับ
+            // isRestDay ด้านบน (secondary link แทน CTA เด่น) ไม่แตะ headline/recommendation/chosen logic เลย
+            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
+              ดูคำแนะนำเพิ่มเติม →
             </Button>
           ) : muscleRecommendation?.lowRecoveryCaution ? (
             // ฟีดแบ็ก (design review — "MINT Coach บอกควรพัก แต่ปุ่มก็ให้เริ่มเล่น ขัดกันเอง") "ผู้ใช้ตีความ
