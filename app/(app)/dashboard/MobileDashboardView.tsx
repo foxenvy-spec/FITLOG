@@ -163,6 +163,42 @@ export default function MobileDashboardView() {
     setActiveMakeupDay(getActiveMakeupDayId())
   }, [])
   const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : '/session'
+  const activeMakeupDayTitle = activeMakeupDay ? (data?.programDays.find((d) => d.id === activeMakeupDay)?.title ?? null) : null
+
+  // เหตุผลเดียวกับ DashboardView.tsx (เดสก์ท็อป) — hasMakeupToday เป็นจริงทันทีที่ log เซ็ตแรกของเซสชัน
+  // ชดเชย ทั้งที่ยังทำไม่จบเลย (เช่น 4/23 เซ็ต) ต้องแยกสถานะ "กำลังทำอยู่" ออกจาก "จบแล้ว" ให้ชัด — ไม่ใช้
+  // แค่ activeMakeupDay (pointer localStorage) เป็นตัวตัดสินเฉยๆ เพราะ pointer อาจค้างผิดจริงได้ (จบเซสชัน
+  // จากอีกแท็บ/อุปกรณ์หนึ่ง) ยืนยันกับ DB อีกชั้นว่าท่าตามแผนของวันที่ชดเชยนั้นติ๊กครบ program_completions
+  // ของวันนี้แล้วจริงหรือยัง (ตรรกะเดียวกับ allFinished ใน session/page.tsx) null = ยังตรวจไม่เสร็จ/ไม่มี
+  // เซสชันชดเชยค้างอยู่
+  const [makeupSessionFinished, setMakeupSessionFinished] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (!activeMakeupDay) {
+      setMakeupSessionFinished(null)
+      return
+    }
+    let cancelled = false
+    setMakeupSessionFinished(null)
+    ;(async () => {
+      const { data: exRows } = await supabase.from('program_exercises').select('id').eq('program_day_id', activeMakeupDay)
+      const exerciseIds = ((exRows as { id: string }[]) ?? []).map((r) => r.id)
+      if (exerciseIds.length === 0) {
+        if (!cancelled) setMakeupSessionFinished(true)
+        return
+      }
+      const { data: compRows } = await supabase
+        .from('program_completions')
+        .select('id')
+        .eq('completed_at', today)
+        .in('program_exercise_id', exerciseIds)
+      if (cancelled) return
+      setMakeupSessionFinished((compRows?.length ?? 0) >= exerciseIds.length)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [activeMakeupDay, supabase, today])
+  const makeupSessionActive = !!activeMakeupDay && makeupSessionFinished === false
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
   // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน
@@ -618,7 +654,7 @@ export default function MobileDashboardView() {
           isRecommendationForToday={data.isRecommendationForToday}
           todayWorkoutTitle={workoutTitle}
           thisWeekWorkoutDays={data.thisWeekWorkoutDays}
-          hasMakeupToday={hasMakeupToday && totals.entryCount === 0}
+          hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
         />
 
         {/* quick actions — แถวเลื่อนแนวนอน ไม่ใช่ grid ตายตัว กันปุ่มเล็กเกินไปเมื่อมีครบ 5 ปุ่ม

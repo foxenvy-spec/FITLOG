@@ -917,6 +917,47 @@ export default function DashboardPage() {
     setActiveMakeupDay(getActiveMakeupDayId())
   }, [])
   const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : '/session'
+  const activeMakeupDayTitle = activeMakeupDay ? (data?.programDays.find((d) => d.id === activeMakeupDay)?.title ?? null) : null
+
+  // ฟีดแบ็ก (ตรวจจากการใช้งานจริง) "'✅ ฝึกไปแล้ววันนี้ (แผนชดเชย)' ขึ้นทันทีที่ log เซ็ตแรกของเซสชันชดเชย
+  // ทั้งที่ยังทำไม่จบเลย (เช่น 4/23 เซ็ต, ท่าที่ 2/7) — ไม่มีทางกลับเข้าเซสชันจากการ์ดนี้เลยด้วย (สถานะนั้น
+  // ไม่มีปุ่ม มีแค่ลิงก์ดูรายละเอียด)" — hasMakeupToday ด้านบนเป็นจริงทันทีที่มี workout แถวเดียวถูก log
+  // (ไม่ได้เช็คว่าเซสชันจบหรือยัง) ต้องแยกสถานะ "กำลังทำอยู่" ออกจาก "จบแล้ว" ให้ชัด — ไม่ใช้แค่ activeMakeupDay
+  // (pointer ฝั่ง localStorage) เป็นตัวตัดสินเฉยๆ เพราะ pointer อาจค้างผิดจริงได้ (เช่น จบเซสชันจากอีกแท็บ/
+  // อุปกรณ์หนึ่ง แล้วแท็บนี้ไม่เคยได้รับสัญญาณ clearActiveMakeupDayId) — ยืนยันกับ DB อีกชั้นว่าท่าตามแผนของ
+  // วันที่ชดเชยนั้น (program_exercises ของ activeMakeupDay) ติ๊กครบ program_completions ของวันนี้แล้วจริง
+  // หรือยัง ก่อนเชื่อว่า "ยังทำอยู่" (ตรรกะเดียวกับ allFinished ใน session/page.tsx เป๊ะ — ไม่นับท่า ad-hoc
+  // เพราะไม่ใช่ส่วนหนึ่งของแผนที่ต้อง "ทำครบ") null = ยังตรวจไม่เสร็จ/ไม่มีเซสชันชดเชยค้างอยู่
+  const [makeupSessionFinished, setMakeupSessionFinished] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (!activeMakeupDay) {
+      setMakeupSessionFinished(null)
+      return
+    }
+    let cancelled = false
+    setMakeupSessionFinished(null)
+    ;(async () => {
+      const { data: exRows } = await supabase.from('program_exercises').select('id').eq('program_day_id', activeMakeupDay)
+      const exerciseIds = ((exRows as { id: string }[]) ?? []).map((r) => r.id)
+      if (exerciseIds.length === 0) {
+        if (!cancelled) setMakeupSessionFinished(true)
+        return
+      }
+      const { data: compRows } = await supabase
+        .from('program_completions')
+        .select('id')
+        .eq('completed_at', today)
+        .in('program_exercise_id', exerciseIds)
+      if (cancelled) return
+      setMakeupSessionFinished((compRows?.length ?? 0) >= exerciseIds.length)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [activeMakeupDay, supabase, today])
+  // true เฉพาะตอนยืนยันแล้วว่ากำลังทำเซสชันชดเชยอยู่จริง (pointer มี + DB ยืนยันว่ายังทำไม่ครบ) — ระหว่างรอ
+  // ผลตรวจ DB (makeupSessionFinished === null) ถือว่ายังไม่ active ไปก่อน กันการ์ดกระพริบเปลี่ยนสถานะ 2 รอบ
+  const makeupSessionActive = !!activeMakeupDay && makeupSessionFinished === false
 
   // v47: ฟีดแบ็ก "Workout Card ฝั่งซ้ายล่างยังว่างอยู่บ้าง อยากได้ Calories เติม" — ใช้สูตรประมาณเดียวกับ
   // หน้า Session/Stats (estimateCaloriesToday ใน lib/dashboardStats.ts) ไม่ใช่ตัวเลขสมมติ — น้ำหนักตัวใช้
@@ -2061,6 +2102,30 @@ export default function DashboardPage() {
                 >
                   ดูสรุปวันนี้ <span aria-hidden="true">▶</span>
                 </Button>
+              ) : makeupSessionActive && scheduledDay && totals.entryCount === 0 ? (
+                // ฟีดแบ็ก (ตรวจจากการใช้งานจริง) "'✅ ฝึกไปแล้ววันนี้' ขึ้นทันทีที่ log เซ็ตแรกของเซสชันชดเชย
+                // ทั้งที่ยังทำไม่จบเลย และไม่มีทางกลับเข้าเซสชันจากการ์ดนี้เลย (สถานะ 'ฝึกไปแล้ว' ด้านล่างมี
+                // แค่ลิงก์ดูรายละเอียด ไม่มีปุ่ม)" — คั่นสถานะ "กำลังทำอยู่" ไว้ก่อนสถานะ "ฝึกไปแล้ว" (เช็คจาก
+                // makeupSessionActive ด้านบน ยืนยันกับ DB แล้วว่ายังทำไม่ครบจริง ไม่ใช่แค่เชื่อ pointer เฉยๆ)
+                // ปุ่มนี้ใช้ sessionHref ตัวเดียวกับทุกจุดอื่นในแอป (BottomNav/Command Palette/Notification/
+                // /train) ไม่ได้สร้างกลไก resume ใหม่แยกต่างหาก
+                <div className="mt-4">
+                  <p className="text-[13px] text-amber flex items-center gap-1.5">
+                    <span aria-hidden="true">🔄</span> กำลังทำแผนชดเชย{activeMakeupDayTitle ? ` · ${activeMakeupDayTitle}` : ''}
+                  </p>
+                  <Button
+                    as={Link}
+                    href={sessionHref}
+                    size="md"
+                    className="mt-2 cta-sweep hover:-translate-y-0.5"
+                    style={{
+                      boxShadow:
+                        '0 0 2px rgba(255,255,255,.42), 0 0 8px rgba(255,210,120,.42), 0 0 22px rgba(255,150,20,.24), 0 0 60px rgba(255,130,0,.09), inset 0 1px 2px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.12)',
+                    }}
+                  >
+                    ไปต่อ <span aria-hidden="true">▶</span>
+                  </Button>
+                </div>
               ) : hasMakeupToday && scheduledDay && totals.entryCount === 0 ? (
                 // ฟีดแบ็ก (ตัดสินใจสุดท้ายหลังทดสอบจริง) "ไม่ควรมีปุ่ม 'เริ่ม Day 2 เพิ่มไหม?' เลย —
                 // วันนี้ฝึกไปแล้ว (ชดเชย) ระบบไม่ควรสร้าง decision ที่ผู้ใช้ไม่จำเป็นต้องตัดสินใจ (คนไม่ฝึก
@@ -2114,7 +2179,7 @@ export default function DashboardPage() {
                   วันนี้ (ชดเชย) และการ์ดเปลี่ยนไปเป็นสถานะรับทราบล้วนๆ ไม่มี action ใดๆ แล้ว ไม่ควรมีลิงก์
                   ชวนวอร์มอัปก่อนเริ่ม Day 2 โผล่ขึ้นมาขัดกัน (สื่อว่ายังต้องเริ่มอยู่ ทั้งที่ข้อความข้างบน
                   บอกว่าฝึกไปแล้ว) */}
-              {scheduledDay && !todayCompleted && !hasMakeupToday && totals.entryCount === 0 && warmupMoves.length > 0 && (
+              {scheduledDay && !todayCompleted && !hasMakeupToday && !makeupSessionActive && totals.entryCount === 0 && warmupMoves.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setWarmupOpen(true)}
@@ -2663,7 +2728,7 @@ export default function DashboardPage() {
                           ต้องไปทำ Pull อีกไหม" — hasMakeupToday true แปลว่าฝึกไปแล้ว (ผ่านการ์ด Today's
                           Workout/MINT Coach ด้านบนที่แก้ไปแล้วเช่นกัน) เปลี่ยนลูกศร "→" (ชวนไปทำ) เป็น
                           "· ✓" (บอกว่าเสร็จแล้ว) ไม่แตะโครงสร้าง/ขนาด card, ไม่เพิ่มข้อมูล/CTA ใดๆ */}
-                      <span className="shrink-0">{hasMakeupToday ? 'Today · ✓' : 'Today →'}</span>
+                      <span className="shrink-0">{hasMakeupToday && !makeupSessionActive ? 'Today · ✓' : 'Today →'}</span>
                       <span className="min-w-0 flex-1 truncate">{splitTitleDetail(scheduledDay.title).main}</span>
                       {intensity && (
                         <span
@@ -2811,7 +2876,7 @@ export default function DashboardPage() {
             isRecommendationForToday={data.isRecommendationForToday}
             todayWorkoutTitle={workoutTitle}
             nextScheduledMuscleGroup={nextScheduledMuscleGroup}
-            hasMakeupToday={hasMakeupToday && totals.entryCount === 0}
+            hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
           />
         </div>
       )}
