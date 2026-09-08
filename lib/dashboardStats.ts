@@ -559,6 +559,12 @@ export function computeDashboardNotifications(params: {
   // PR: สถิติใหม่ล่าสุด (ผู้เรียกกรองมาแล้วว่าต้องเพิ่งทำไม่นาน — ดู comment เต็มด้านบน) น้ำหนักเป็นหน่วย
   // แสดงผลที่แปลงมาแล้ว (kg/lb ตามที่ผู้ใช้ตั้งไว้) ไม่ใช่ kg ดิบเสมอเหมือน weightRemaining
   latestPR: { exerciseName: string; weight: number; unit: string } | null
+  // บั๊กเดียวกับที่แก้ใน BottomNav.tsx/DashboardView.tsx (เดสก์ท็อป/มือถือ) — href ของแจ้งเตือน Workout
+  // เดิม hardcode '/session' ตายตัว ถ้ากำลังทำเซสชันชดเชยค้างอยู่ (ยัง log ไม่ครบ/ยัง 0 เซ็ต) จะพากลับไป
+  // แผนจริงของวันนี้แทน — ฟังก์ชันนี้เป็น pure function ไม่แตะ window/localStorage เอง ผู้เรียก (DashboardView/
+  // MobileDashboardView) ต้องอ่านค่าจาก getActiveMakeupDayId() แล้วส่งเข้ามาเป็น parameter นี้แทน
+  // (optional เพื่อไม่ให้ test เดิมที่ยังไม่ส่งค่านี้พัง — ไม่ส่ง = เหมือนพฤติกรรมเดิมทุกประการ)
+  activeMakeupDayId?: string | null
 }): DashboardNotification[] {
   const items: DashboardNotification[] = []
 
@@ -569,7 +575,7 @@ export function computeDashboardNotifications(params: {
       icon: '🏋️',
       title: 'Workout',
       detail: `วันนี้ถึงวัน ${params.scheduledWorkoutTitle}`,
-      href: '/session',
+      href: params.activeMakeupDayId ? `/session?day=${params.activeMakeupDayId}` : '/session',
     })
   }
 

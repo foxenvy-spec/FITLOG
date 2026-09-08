@@ -1044,6 +1044,7 @@ export default function DashboardPage() {
         weightRemaining,
         bodyFatRemaining,
         latestPR: latestPRForNotif,
+        activeMakeupDayId: activeMakeupDay,
       })
     : []
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
+import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
 import { COLORS, CARD_GRADIENT_CSS, TITANIUM_MESH_CSS, CARD_BORDER_CSS, withAlpha } from '@/lib/theme'
 
 // ฟีดแบ็ก "Power-User Feature — Ctrl+K/Cmd+K แล้วมีแถบค้นหาเร็ว: พิมพ์ log → พาไปหน้าบันทึกทันที, พิมพ์
@@ -102,7 +103,11 @@ export default function CommandPalette() {
 
   function go(command: Command) {
     setOpen(false)
-    router.push(command.href)
+    // บั๊กเดียวกับที่แก้ใน BottomNav.tsx/DashboardView.tsx — "เซสชันวันนี้" เป็น global shortcut ผู้ใช้
+    // คาดหวังว่าจะกลับเข้าเซสชันชดเชยที่ทำค้างอยู่ ไม่ใช่แผนจริงของวันนี้ — resolve href ตอนกด (ไม่ใช่ตอน
+    // render รายการ) ให้ได้ค่า pointer ล่าสุดเสมอ
+    const href = command.id === 'session' ? sessionHrefWithMakeup() : command.href
+    router.push(href)
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent) {

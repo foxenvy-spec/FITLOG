@@ -290,6 +290,7 @@ export default function MobileDashboardView() {
     weightRemaining,
     bodyFatRemaining,
     latestPR: latestPRForNotif,
+    activeMakeupDayId: activeMakeupDay,
   })
 
   return (
