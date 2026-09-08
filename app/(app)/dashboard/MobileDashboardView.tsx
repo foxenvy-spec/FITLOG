@@ -199,6 +199,27 @@ export default function MobileDashboardView() {
     }
   }, [activeMakeupDay, supabase, today])
   const makeupSessionActive = !!activeMakeupDay && makeupSessionFinished === false
+  // ฟีดแบ็ก (live-test, มือถือ) "'0/6 EXERCISES' ถูกต้องสำหรับ Today's Plan (Day 2) แต่ผู้ใช้เพิ่งออกจาก
+  // เซสชันชดเชย (Day 1) ที่ทำครบ 7/7 มาไม่กี่วินาทีก่อน เห็น 0/6 แล้วรู้สึกว่า 'เมื่อกี้ฉันเพิ่งออกกำลังกาย
+  // ทำไมหน้าแรกบอก 0/6' — ถูกต้องด้าน data แต่ผิดด้าน communication บนมือถือ (จอแคบ ไม่มีที่ให้ Hero card
+  // เขียนบรรยายยาวแบบเดสก์ท็อป)" — ต้องมี title ของ "แผนอื่นที่ฝึกไปแล้ว" โชว์ควบคู่กับ 0/6 เสมอ ไม่ว่าจะ
+  // อยู่ระหว่างทำ (ใช้ activeMakeupDayTitle จาก pointer, แม่นกว่าตอนยังไม่มี workout row ให้ query จาก DB)
+  // หรือทำจบไปแล้ว (pointer อาจถูกเคลียร์ไปแล้ว — หา program_day_id ของ workout วันนี้ที่ไม่ใช่แผนวันนี้เอง
+  // จาก data.todayWorkouts แทน แล้ว lookup ชื่อจาก data.programDays)
+  const otherPlanWorkout = (data?.todayWorkouts ?? []).find((w) => w.program_day_id && w.program_day_id !== scheduledDay?.id)
+  const otherPlanDayTitle = otherPlanWorkout
+    ? (data?.programDays.find((d) => d.id === otherPlanWorkout.program_day_id)?.title ?? null)
+    : null
+  const makeupDayTitle = activeMakeupDayTitle ?? otherPlanDayTitle
+  // ฟีดแบ็ก "แสดง 7/7 ซ้ำในการ์ดนี้จะทำให้ความหมายพัง (ผู้ใช้จะคิดว่า Day 2 เสร็จ 7/7 ทั้งที่จริงคือ Day 1)"
+  // — โชว์แค่ชื่อแผน ไม่โชว์ตัวเลขซ้ำ (รายละเอียดเต็มอยู่ที่ History/Calendar) ใช้คำเดียวกับฝั่งเดสก์ท็อป
+  // (Hero card, DashboardView.tsx) เป๊ะ กันสองแพลตฟอร์มพูดคนละคำสำหรับสถานะเดียวกัน
+  const makeupAckLine =
+    makeupSessionActive && totals.entryCount === 0
+      ? { emoji: '🔄', text: `กำลังทำแผนชดเชย${makeupDayTitle ? ` · ${makeupDayTitle}` : ''}`, color: COLORS.amber }
+      : hasMakeupToday && !makeupSessionActive && totals.entryCount === 0
+        ? { emoji: '✅', text: 'ฝึกไปแล้ววันนี้ (แผนชดเชย)', color: COLORS.moss }
+        : null
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
   // ของแผนวันนี้" แยกกันสองชุดที่อาจ drift ไม่ตรงกัน
@@ -622,9 +643,27 @@ export default function MobileDashboardView() {
           <TodaysWorkoutEmptyCard variant={workoutCardVariant} />
         )}
 
+        {/* ฟีดแบ็ก (live-test, มือถือ) "0/6 ถูกต้องแล้วสำหรับ Today's Plan แต่ต้องมี context ควบคู่ว่า
+            วันนี้ฝึกแผนอื่นไปแล้ว ไม่งั้นผู้ใช้จะรู้สึกว่าแอปไม่รู้ว่าตัวเองเพิ่งออกกำลังกายไป" — วางบรรทัดนี้
+            ติดกับการ์ด Today's Workout ทันที (ไม่ใช่ไปโผล่ไกลที่การ์ด MINT Coach เท่านั้นแบบเดิม) ให้เห็น
+            ทั้งสองข้อความคู่กันในสายตาเดียว: "0/6" (แผนวันนี้) + บรรทัดนี้ (สิ่งที่ฝึกไปแล้วจริง) */}
+        {workoutCardVariant === 'active' && makeupAckLine && (
+          <p className="text-[12px] flex items-center gap-1.5 px-1" style={{ color: makeupAckLine.color }}>
+            <span aria-hidden="true">{makeupAckLine.emoji}</span> {makeupAckLine.text}
+          </p>
+        )}
+
         {/* ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่มเล็กๆ [ ดูท่าวอร์มอัป 3 นาที ]" — โชว์เฉพาะตอนมีแผนวันนี้จริง
             ยังไม่เสร็จ และยังไม่เริ่มล็อกเซ็ตเลย (เหมือนเงื่อนไขฝั่งเดสก์ท็อป — DashboardView.tsx) */}
-        {workoutCardVariant === 'active' && !todayCompleted && totals.entryCount === 0 && warmupMoves.length > 0 && (
+        {/* บั๊กเดียวกับที่แก้ใน DashboardView.tsx (เดสก์ท็อป, commit 9061a04) แต่ไม่เคยพอร์ตมาที่มือถือ —
+            ถ้าฝึกไปแล้ววันนี้ (ชดเชย) หรือกำลังทำเซสชันชดเชยอยู่ ไม่ควรมีลิงก์ชวนวอร์มอัปก่อนเริ่ม Day 2
+            โผล่ขึ้นมาขัดกับบรรทัด makeupAckLine ด้านบน (สื่อว่ายังต้องเริ่มอยู่ ทั้งที่เพิ่งบอกว่าฝึกไปแล้ว) */}
+        {workoutCardVariant === 'active' &&
+          !todayCompleted &&
+          !hasMakeupToday &&
+          !makeupSessionActive &&
+          totals.entryCount === 0 &&
+          warmupMoves.length > 0 && (
           <button
             type="button"
             onClick={() => setWarmupOpen(true)}
