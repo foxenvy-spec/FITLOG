@@ -33,6 +33,12 @@ export default function DaySummaryHeader({
 
   return (
     <div className="rounded-lg bg-surface border border-line shadow-elevated px-2 py-3 mb-3">
+      {/* ฟีดแบ็ก (semantic review, Makeup Session detail page) "'8,110 kg · 22 Sets · 3h 26m · 7
+          Exercises' ไม่มี label บอกว่าเป็นผลจริงหรือของแผน โดยเฉพาะ /calendar ที่วางบล็อกนี้ต่อจาก
+          '📋 แผนที่ชดเชย' พอดี ผู้ใช้อาจงงว่าตัวเลขนี้เป็นของแผนหรือของจริง" — คำนี้ถูกทุกจุดที่ใช้ component
+          นี้อยู่แล้วจริงๆ (คำนวณจาก workouts ที่ log จริงเสมอ ไม่เคยเป็นตัวเลขของแผน) เพิ่ม caption สั้นๆ
+          กันความกำกวมโดยไม่ต้องแยก logic ต่อหน้า */}
+      <p className="text-[11px] tracked uppercase text-muted mb-1.5 px-2">💪 ผลการฝึกจริง</p>
       <div className="flex items-stretch">
         {stats.map((s, i) => (
           <div
