@@ -1211,21 +1211,54 @@ export default function SessionPage() {
     // WORKOUT มี intent ชัดว่า "จะฝึกตอนนี้" ไม่ใช่ MINT Coach/ระบบมาตัดสินแทนว่าควรทำแผนไหนก่อน (นั่นเป็น
     // หน้าที่ของคำแนะนำใน AICoachCompactCard.tsx ต่างหาก ซึ่งเป็น suggestion ไม่ใช่ gate) — แผนที่พลาดเป็น
     // ปุ่มรอง (secondary link ไม่ใช่ปุ่มเด่นเท่ากัน) กดแล้ว navigate ไป /session?day=<id> ของแผนนั้นตรงๆ
+    //
+    // v2: ฟีดแบ็ก (live-test screenshot, P0) "ปุ่ม 'เริ่มวันนี้' glow แรงเกินไป (ดูเป็น Gaming UI มากกว่า
+    // Fitness App) — ลดเหลือ ~60-70% ของ glow ปัจจุบัน ให้เป็น gradient+soft shadow แทน gradient+strong
+    // glow" — ลด alpha ของทุกชั้นใน AMBER_GLOW_SHADOW ลง ~35% เฉพาะปุ่มนี้ (ไม่แตะ token กลาง — เหตุผล
+    // เดียวกับ BOTTOM_NAV_GLOW_SHADOW ใน BottomNav.tsx: AMBER_GLOW_SHADOW ใช้ร่วมหลายจุด (Button.tsx
+    // ทุกปุ่ม primary, DashboardView.tsx, SidebarNav.tsx) แก้ตรงนั้นจะกระทบทุกจุดที่ไม่ได้ถูกร้องขอ) เสริม
+    // soft drop shadow เบาๆ ให้ปุ่มดู "ลอย" แบบพรีเมียมแทนดู "เรืองแสง"
+    const smartStartCtaShadow =
+      '0 4px 14px rgba(0,0,0,.28), 0 0 2px rgba(255,255,255,.4), 0 0 8px rgba(255,210,120,.4), 0 0 22px rgba(255,150,20,.23), 0 0 60px rgba(255,130,0,.08)'
+    // v2 (P0): ฟีดแบ็ก "ปุ่มใหญ่ แต่ผู้ใช้ยังไม่รู้ว่าวันนี้ต้องทำอะไร/นานแค่ไหน — เพิ่มบรรทัด Exercises ·
+    // Sets · ~min ใต้ปุ่ม" — สูตรประมาณเวลาเดียวกับ estimatedMinutes ใน DashboardView.tsx เป๊ะ (~1.5
+    // นาที/เซ็ต รวมพักระหว่างเซ็ต ปัดเข้าใกล้ 5 นาที ขั้นต่ำ 10 นาที) ไม่คิดสูตรใหม่แยกกันขัดกันเอง —
+    // exercises/day ถูก set ไว้ก่อนหน้าจุดตรวจ smartStart ใน load() แล้ว (ดู setDay/setExercises ด้านบน)
+    // จึงเป็นข้อมูลของแผนวันนี้ล้วนๆ ไม่ใช่ของแผนที่พลาด
+    const smartStartTotalSets = exercises.reduce((sum, ex) => sum + (ex.sets ?? 0), 0)
+    const smartStartEstimatedMinutes = Math.max(10, Math.round((smartStartTotalSets * 1.5) / 5) * 5)
     return (
-      <div className="space-y-5 text-center py-6 max-w-xs mx-auto">
+      // v2 (P1): ฟีดแบ็ก "หัวข้อ DAY 2 ชิด status bar ไป เพิ่ม padding บนอีก 8-12px" — pt-3 เพิ่มเฉพาะจอนี้
+      // (ไม่แตะ pt-5 ที่ app/(app)/layout.tsx ให้ทุกหน้าอยู่แล้ว เพราะจะกระทบทุกหน้าทั่วแอป ไม่ใช่แค่จอนี้)
+      <div className="space-y-5 text-center py-6 pt-3 max-w-xs mx-auto">
         {day && (
           <div>
             <p className="font-display text-lg tracked uppercase text-ink">{splitTitleDetail(day.title).main}</p>
-            <p className="text-sm text-muted mt-1">แผนวันนี้</p>
-            <Button type="button" onClick={() => setPhase('active')} size="md" className="mt-3 w-full">
+            {/* v2 (P1): ลดน้ำหนัก subtitle ลง (text-sm -> text-xs) ให้ hierarchy กับ Hero ชัดขึ้น */}
+            <p className="text-xs text-muted mt-1">แผนวันนี้</p>
+            <Button
+              type="button"
+              onClick={() => setPhase('active')}
+              size="md"
+              className="mt-3 w-full"
+              style={{ boxShadow: smartStartCtaShadow }}
+            >
               เริ่มวันนี้ <span aria-hidden="true">→</span>
             </Button>
+            <p className="text-xs text-muted mt-2">
+              {exercises.length} ท่า · {smartStartTotalSets} เซ็ต · ~{smartStartEstimatedMinutes} นาที
+            </p>
           </div>
         )}
         {smartStartMissedDay && (
           <>
             <div className="border-t border-line" />
-            <div>
+            {/* v2 (P1): ฟีดแบ็ก "ทำ 'มีแผนที่พลาด' เป็น subtle card แทนลอยบนพื้นดำตรงๆ — พื้นหลังเข้ม
+                (~#151515) + border บางมาก ไม่ต้องใหญ่/เส้นขอบชัด" */}
+            <div
+              className="rounded-2xl px-4 py-3.5"
+              style={{ background: '#151515', border: `1px solid ${CARD_BORDER_CSS}` }}
+            >
               <p className="text-sm text-muted flex items-center justify-center gap-1.5">
                 <span aria-hidden="true">↩</span> มีแผนที่พลาด
               </p>

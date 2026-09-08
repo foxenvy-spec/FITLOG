@@ -76,10 +76,15 @@ export const dashboardSpec = {
     // ใช้ฟีเจอร์นั้นในอนาคตต้องเช็ค/re-tune ระยะภายในให้พอดีกับความสูงใหม่นี้ด้วย
     height: 54,
   },
+  // v: ฟีดแบ็ก (live-test, Smart Start screenshot) "Bottom Nav ยังกินพื้นที่เยอะ ปุ่ม START WORKOUT
+  // เด่นจนเกือบแย่งความสนใจจากเนื้อหาหลัก — ลดความสูง Bottom Nav ~10-15%, ลดขนาดวงกลม Start ลงเล็กน้อย
+  // (ไม่ต้องลดเยอะเท่า Bottom Nav — ปุ่มนี้ยังเป็นจุดเด่นของ FITLOG ได้)" — floatingButton.size 62 -> 57
+  // (-8%, เล็กน้อยตามที่ขอ) bottomNav.height 68 -> 58 (-14.7%, กลางช่วง 10-15% ที่ขอ) — coreSize/glow
+  // span ใน BottomNav.tsx อิง btnSize เป็นสัดส่วนอยู่แล้ว ไม่ต้อง re-tune แยก
   floatingButton: {
-    size: 62, // -9% จาก 68
+    size: 57, // -8% จาก 62
   },
   bottomNav: {
-    height: 68, // -8% จาก 74
+    height: 58, // -14.7% จาก 68
   },
 } as const
