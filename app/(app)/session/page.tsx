@@ -1212,12 +1212,12 @@ export default function SessionPage() {
     // หน้าที่ของคำแนะนำใน AICoachCompactCard.tsx ต่างหาก ซึ่งเป็น suggestion ไม่ใช่ gate) — แผนที่พลาดเป็น
     // ปุ่มรอง (secondary link ไม่ใช่ปุ่มเด่นเท่ากัน) กดแล้ว navigate ไป /session?day=<id> ของแผนนั้นตรงๆ
     return (
-      <div className="space-y-5 text-center py-6">
+      <div className="space-y-5 text-center py-6 max-w-xs mx-auto">
         {day && (
           <div>
             <p className="font-display text-lg tracked uppercase text-ink">{splitTitleDetail(day.title).main}</p>
             <p className="text-sm text-muted mt-1">แผนวันนี้</p>
-            <Button type="button" onClick={() => setPhase('active')} size="md" className="mt-3">
+            <Button type="button" onClick={() => setPhase('active')} size="md" className="mt-3 w-full">
               เริ่มวันนี้ <span aria-hidden="true">→</span>
             </Button>
           </div>
