@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { createClient } from '@/lib/supabase/client'
 import type { WorkoutTemplate, WorkoutTemplateExercise, ProgramDay } from '@/lib/types'
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/lib/muscle-groups'
@@ -104,6 +105,62 @@ function slugify(title: string) {
   return title.trim().toLowerCase().replace(/[^a-z0-9ก-๙]+/g, '-').replace(/^-+|-+$/g, '') || 'template'
 }
 
+function timestamp() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+// Excel จำกัดชื่อชีตไว้ 31 ตัวอักษร และห้ามมีอักขระ \ / ? * [ ] : — ตัดตัวที่ห้ามทิ้ง + ตัดความยาว แล้ว
+// กันชื่อซ้ำกัน (เทมเพลตชื่อเดียวกันสองอันในลิสต์) ด้วยการต่อเลข (2), (3), ... ต่อท้าย — book_append_sheet
+// ของ SheetJS จะ error ถ้าชื่อชีตซ้ำกันเป๊ะ
+function sanitizeSheetName(name: string, used: Set<string>): string {
+  const base = name.replace(/[\\/?*[\]:]/g, ' ').trim().slice(0, 31) || 'Sheet'
+  let candidate = base
+  let n = 2
+  while (used.has(candidate)) {
+    const suffix = ` (${n})`
+    candidate = base.slice(0, 31 - suffix.length) + suffix
+    n++
+  }
+  used.add(candidate)
+  return candidate
+}
+
+// ฟีดแบ็ก "อยาก export ทุกเทมเพลตเป็น excel 1 ไฟล์ แต่แยกตาม sheet เพื่อเอาไปวิเคราะห์และแก้ไขท่า" — เดิม
+// "⬇ Export" ต่อการ์ดมีอยู่แล้วแต่ export ทีละเทมเพลตเป็น .json (ดู handleExportTemplate) ไม่ใช่ .xlsx รวม —
+// สร้าง 1 sheet ต่อเทมเพลต ด้วย aoa_to_sheet (ไม่ใช้ json_to_sheet เหมือน /export เพราะเทมเพลตที่ยังไม่มี
+// ท่าเลยต้องได้ sheet ที่มีอย่างน้อยแถวหัวตาราง ไม่ใช่ sheet ว่างเปล่าไร้หัวตาราง) — หัวคอลัมน์ตั้งชื่อให้
+// อ่านง่ายสำหรับวิเคราะห์ก่อน แต่เลือกคำที่ parseWorkoutExcel (lib/importWorkoutExcel.ts) รู้จักอยู่แล้วเมื่อ
+// ไม่ขัดกับความอ่านง่าย (ชื่อท่า/เซ็ต/Reps/RIR/พัก/เหตุผล) เพื่อให้แก้ไขแล้วนำเข้ากลับผ่านปุ่ม "⬆ Import"
+// ได้บางส่วน — กลุ่มกล้ามเนื้อ/กล้ามเนื้อรอง/น้ำหนักเริ่มต้น เป็นข้อมูลอ่านอย่างเดียว (parser ไม่มีคอลัมน์
+// รองรับ 3 อย่างนี้ ยังไงก็ไม่รอดตอนนำเข้ากลับอยู่ดี ไม่ใช่บั๊กจากไฟล์นี้)
+function buildTemplateSheet(exercises: WorkoutTemplateExercise[]) {
+  const header = [
+    '#',
+    'ชื่อท่า',
+    'กลุ่มกล้ามเนื้อ',
+    'กล้ามเนื้อรอง',
+    'เซ็ต',
+    'Reps เป้าหมาย',
+    'RIR เป้าหมาย',
+    'พัก',
+    'น้ำหนักเริ่มต้น (กก.)',
+    'เหตุผล',
+  ]
+  const rows = exercises.map((ex, i) => [
+    i + 1,
+    ex.exercise_name,
+    ex.muscle_group ?? '',
+    (ex.secondary_muscles ?? []).join(', '),
+    ex.sets ?? '',
+    ex.target_reps ?? '',
+    ex.target_rir ?? '',
+    ex.rest ?? '',
+    ex.default_weight_kg ?? '',
+    ex.notes ?? '',
+  ])
+  return XLSX.utils.aoa_to_sheet([header, ...rows])
+}
+
 interface TemplateExport {
   version: 1
   type: 'fitlog-template'
@@ -140,6 +197,7 @@ export default function TemplatesPage() {
   const [applyMessage, setApplyMessage] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
   const [importMessage, setImportMessage] = useState<string | null>(null)
+  const [exportingAll, setExportingAll] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -218,6 +276,26 @@ export default function TemplatesPage() {
       return
     }
     setTemplates((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  function handleExportAllToExcel() {
+    if (templates.length === 0) return
+    setExportingAll(true)
+    setError(null)
+    try {
+      const wb = XLSX.utils.book_new()
+      const usedSheetNames = new Set<string>()
+      templates.forEach((t) => {
+        const sheetName = sanitizeSheetName(t.title, usedSheetNames)
+        const ws = buildTemplateSheet(exercisesByTemplate[t.id] ?? [])
+        XLSX.utils.book_append_sheet(wb, ws, sheetName)
+      })
+      XLSX.writeFile(wb, `fitlog-templates-${timestamp()}.xlsx`)
+    } catch (err) {
+      setError(`Export ไม่สำเร็จ: ${getErrorMessage(err)}`)
+    } finally {
+      setExportingAll(false)
+    }
   }
 
   function handleExportTemplate(t: WorkoutTemplate) {
@@ -657,7 +735,18 @@ export default function TemplatesPage() {
           <h1 className="font-display text-xl tracked uppercase">เทมเพลต</h1>
           <p className="text-sm text-muted mt-1">กดเริ่มได้ทุกเมื่อ ไม่ผูกกับวันในสัปดาห์</p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+          {/* ฟีดแบ็ก "อยาก export ทุกเทมเพลตเป็น excel 1 ไฟล์ แต่แยกตาม sheet เพื่อเอาไปวิเคราะห์และแก้ไขท่า"
+              — ปุ่มรวม ต่างจาก "⬇ Export" ต่อการ์ด (handleExportTemplate, ยังคงเป็น .json ทีละเทมเพลตเหมือนเดิม
+              ไม่แตะ) ปุ่มนี้ export ทุกเทมเพลตพร้อมกันเป็น .xlsx ไฟล์เดียว 1 sheet ต่อเทมเพลต */}
+          <button
+            type="button"
+            onClick={handleExportAllToExcel}
+            disabled={exportingAll || templates.length === 0}
+            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition disabled:opacity-40"
+          >
+            {exportingAll ? '...' : '📊 Export ทั้งหมด (.xlsx)'}
+          </button>
           <a
             href="/exercises"
             className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
