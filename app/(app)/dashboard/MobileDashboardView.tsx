@@ -49,7 +49,7 @@ import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { COLORS } from '@/lib/theme'
 import Header from '@/components/dashboard/Header'
 import WorkoutStreakCard from '@/components/WorkoutStreakCard'
-import TodaysFocusCard from '@/components/TodaysFocusCard'
+import TodaysFocusCard, { splitTitleDetail } from '@/components/TodaysFocusCard'
 import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
 import TodaysWorkoutEmptyCard from '@/components/TodaysWorkoutEmptyCard'
 import TodayHealthStatsRow from '@/components/TodayHealthStatsRow'
@@ -210,19 +210,23 @@ export default function MobileDashboardView() {
   const otherPlanDayTitle = otherPlanWorkout
     ? (data?.programDays.find((d) => d.id === otherPlanWorkout.program_day_id)?.title ?? null)
     : null
-  const makeupDayTitle = activeMakeupDayTitle ?? otherPlanDayTitle
-  // ฟีดแบ็ก (live-test รอบ 2) "'0/6 Exercises' กับ '✅ ฝึกไปแล้ววันนี้ (แผนชดเชย)' อยู่ติดกันเป็นบรรทัดเดี่ยว
-  // — ผู้ใช้ต้องตีความเองว่า 0/6 หมายถึง Day 2 ส่วน 'ฝึกไปแล้ว' หมายถึง Day 1 ซึ่งไม่ obvious พอ ดูเหมือน
-  // 'ฝึกไปแล้ว' เป็นสถานะของ Today's Workout เอง (ตัวการ์ด 0/6) ทั้งที่จริงพูดถึงแผนคนละอันเลย" — แยกเป็น
-  // 2 บรรทัดชัดเจน: heading ทั่วไป ("วันนี้ฝึกแล้ว"/"กำลังฝึกอยู่" — ไม่พูดถึงแผนไหนเจาะจง) + detail ระบุ
-  // ชื่อแผน + คำว่า "แผนชดเชย" ต่อท้ายเสมอ (กันเข้าใจผิดว่าเป็นแผนวันนี้) แยกออกจากตัวเลข 0/6 อย่างชัดเจน
-  // ไม่โชว์ตัวเลข 7/7 ซ้ำ (รายละเอียดเต็มอยู่ที่ History/Calendar) — heading ใช้คำเดียวกับฝั่งเดสก์ท็อป
-  // (Hero card, DashboardView.tsx) กันสองแพลตฟอร์มพูดคนละคำสำหรับสถานะเดียวกัน
+  const makeupDayTitleRaw = activeMakeupDayTitle ?? otherPlanDayTitle
+  // ฟีดแบ็ก "'Day 1 — Push (Chest-focused) · แผนชดเชย' ยาวเกินไป และ '(Chest-focused)' ไม่มีประโยชน์ใน
+  // acknowledgement บรรทัดนี้ (หน้าที่ของมันคือบอกว่า 'ฝึกอะไรไปแล้ว' ไม่ใช่อธิบายรายละเอียด workout)" —
+  // ตัดวงเล็บทิ้งด้วย splitTitleDetail() ตัวเดียวกับที่ TodaysFocusCard/AICoachCompactCard ใช้แยก
+  // "ชื่อหลัก"/"รายละเอียดในวงเล็บ" อยู่แล้ว เอาแค่ .main
+  const makeupDayTitle = makeupDayTitleRaw ? splitTitleDetail(makeupDayTitleRaw).main : null
+  // ฟีดแบ็ก (live-test รอบ 3) "'0/6 Exercises / ยังไม่ได้เริ่มแผนวันนี้' กับ 'วันนี้ฝึกแล้ว' อยู่ในการ์ด
+  // เดียวกันใกล้กันเกินไป — แม้ logic ถูกแล้วแต่ผู้ใช้ที่ไม่รู้จัก Makeup Session จะสงสัยทันทีว่า 'ตกลงวันนี้
+  // ฝึกแล้วหรือยัง?' เพราะคำว่า 'ยังไม่ได้เริ่ม' อยู่ติดกับ 'ฝึกแล้ว'" — เปลี่ยน heading จาก 'วันนี้ฝึกแล้ว'
+  // เป็น 'วันนี้คุณฝึกแล้ว' (คำว่า 'คุณ' สื่อว่าเป็นสถานะของผู้ใช้ทั้งวัน ไม่ใช่สถานะของการ์ด Today's Workout
+  // เอง) ใช้เครื่องหมาย '✓' แทน '✅' (เบากว่า ไม่แข่งกับสีของการ์ดตัวเลข 0/6 ด้านบน) — เว้นระยะห่างจากบล็อก
+  // 0/6 ด้วยเส้นคั่น (ดูจุด render ด้านล่าง) ให้รู้สึกเป็นคนละก้อนข้อมูลชัดเจนยิ่งขึ้น ไม่ใช่แค่สีต่างกัน
   const makeupAckLine =
     makeupSessionActive && totals.entryCount === 0
-      ? { emoji: '🔄', heading: 'กำลังฝึกอยู่', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.amber }
+      ? { mark: '🔄', heading: 'คุณกำลังฝึกอยู่', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.amber }
       : hasMakeupToday && !makeupSessionActive && totals.entryCount === 0
-        ? { emoji: '✅', heading: 'วันนี้ฝึกแล้ว', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.moss }
+        ? { mark: '✓', heading: 'วันนี้คุณฝึกแล้ว', detail: `${makeupDayTitle ? `${makeupDayTitle} · ` : ''}แผนชดเชย`, color: COLORS.moss }
         : null
   // ฟีดแบ็ก "ก่อนเริ่มเซ็ตแรก เพิ่มปุ่ม [ ดูท่าวอร์มอัป 3 นาที ]" — ใช้ computePlannedMuscleGroups
   // ตัวเดียวกับที่ DashboardView.tsx (เดสก์ท็อป) ใช้ (lib/dashboardStats.ts) กันตรรกะ "กลุ่มกล้ามเนื้อ
@@ -656,8 +660,13 @@ export default function MobileDashboardView() {
         {workoutCardVariant === 'active' && makeupAckLine && (
           <div className="px-1 flex flex-col gap-2">
             <p className="text-[11px] text-muted">ยังไม่ได้เริ่มแผนวันนี้</p>
+            {/* เส้นคั่นบางๆ แยก "แผนวันนี้ (0/6)" ออกจาก "สิ่งที่ฝึกไปแล้วจริง" ให้รู้สึกเป็นคนละก้อนข้อมูล
+                ชัดเจนกว่าแค่ต่อบรรทัดกันเฉยๆ (ฟีดแบ็ก live-test รอบ 3) */}
+            <div className="border-t border-line" />
             <div className="flex items-start gap-1.5">
-              <span aria-hidden="true" className="shrink-0">{makeupAckLine.emoji}</span>
+              <span aria-hidden="true" className="shrink-0" style={{ color: makeupAckLine.color }}>
+                {makeupAckLine.mark}
+              </span>
               <div className="min-w-0">
                 <p className="text-[12px] font-medium leading-tight" style={{ color: makeupAckLine.color }}>
                   {makeupAckLine.heading}
