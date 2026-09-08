@@ -68,8 +68,9 @@ import { speak } from '@/lib/speech'
 import { NumberStepper } from '@/components/timers/TimerShell'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
+import { splitTitleDetail } from '@/components/TodaysFocusCard'
 
-type Phase = 'loading' | 'error' | 'empty' | 'active' | 'done'
+type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'active' | 'done'
 
 // ตั้งแต่ persistSets เขียนลง DB ทันทีทีละเซ็ต (ไม่รอจนกดจบท่า) แถว workouts ของท่านึงอาจมีอยู่แล้ว
 // ทั้งที่ผู้ใช้ยังไม่ได้กด "บันทึก & ท่าถัดไป" จริงๆ — initSessionStates (lib/workoutSession.ts) เดา
@@ -142,6 +143,14 @@ export default function SessionPage() {
   const [day, setDay] = useState<ProgramDay | null>(null)
   // true เมื่อเข้ามาทำแผนของวันอื่น (ผ่าน ?day=<id> จาก /program) แทนวันจริงตามปฏิทินวันนี้ — "เซสชันชดเชย"
   const [isMakeupSession, setIsMakeupSession] = useState(false)
+  // ฟีดแบ็ก (live-test, product decision) "กด START WORKOUT (BottomNav) หลังจากทำเซสชันชดเชยจบไปแล้ว
+  // (Day 1) แต่แผนวันนี้ (Day 2) ยังไม่เริ่มเลย — ถูกพาเข้าเล่นท่าแรกของ Day 2 ทันทีแบบเงียบๆ ทำให้รู้สึกว่า
+  // 'เพิ่งฝึกเสร็จ ทำไมแอปพาเริ่มอีก workout?'" — ตัดสินใจ semantic ใหม่ของปุ่ม START WORKOUT: ปุ่มนี้แปลว่า
+  // "เข้าสู่ workout flow ของวันนี้" ไม่ใช่ "ต้องเริ่มฝึกทันที" — /session เป็นคนตัดสินใจเองว่าจะเข้า active
+  // ตรงๆ หรือหยุดถาม (ดู phase 'makeupCheckpoint' ด้านล่าง) ไม่แตะ BottomNav/label "START WORKOUT" เลย
+  // เก็บ "แผนอื่นที่ฝึกไปแล้ว" ไว้แสดงในหน้า checkpoint (ชื่อวัน) แยกจาก `day` (ซึ่งคือ Day 2 — แผนที่กำลัง
+  // จะเริ่ม ไม่ใช่แผนที่ฝึกไปแล้ว)
+  const [makeupCheckpointOtherDay, setMakeupCheckpointOtherDay] = useState<ProgramDay | null>(null)
   const [exercises, setExercises] = useState<ProgramExercise[]>([])
   const [states, setStates] = useState<Record<string, SessionSetState>>({})
   const [index, setIndex] = useState(0)
@@ -464,6 +473,50 @@ export default function SessionPage() {
       setNoLiveDuration(true)
       setPhase('done')
       return
+    }
+
+    // ฟีดแบ็ก (live-test, product decision — ดู comment เต็มที่ makeupCheckpointOtherDay state ด้านบน)
+    // "START WORKOUT หลัง Makeup จบไปแล้ว ไม่ควรพาเข้า Day 2 ทันทีแบบเงียบๆ" — ตรวจเฉพาะตอนเข้ามาแบบ
+    // ไม่มี ?day= (ไม่ใช่ resume เซสชันชดเชย, !makeupDayId) และยังไม่แตะแผนวันนี้เองเลย (typedWorkoutRows
+    // ว่างเปล่า — ตัวเดียวกับที่ Dashboard ใช้ตัดสิน "เริ่มแผนวันนี้หรือยัง") — หา workout วันนี้ที่ผูกกับ
+    // แผน "อื่น" จาก workoutRows ดิบ (ก่อนกรอง ต่างจาก typedWorkoutRows ที่กรองแผนอื่นทิ้งไปแล้ว) แล้ว
+    // ยืนยันกับ program_completions อีกชั้นว่าแผนนั้นทำครบจริง (ตรรกะเดียวกับ makeupSessionActive ใน
+    // DashboardView.tsx/MobileDashboardView.tsx — reuse แนวคิดเดิม ไม่สร้างเกณฑ์ตรวจ completion ใหม่)
+    // ก่อนเชื่อว่า "ฝึกแผนอื่นจบไปแล้วจริง" ไม่ใช่แค่ "มี workout ของแผนอื่น" (บั๊กคลาสเดียวกับที่เพิ่งแก้ไป
+    // ใน adhocCompletedCount — "มี workout" ≠ "session จบแล้ว")
+    if (!makeupDayId && typedWorkoutRows.length === 0) {
+      const rawWorkoutRows =
+        (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null; program_day_id: string | null })[]) ?? []
+      const otherPlanWorkout = rawWorkoutRows.find(
+        (w) => w.program_day_id && w.program_day_id !== (dayRow as ProgramDay).id
+      )
+      if (otherPlanWorkout) {
+        const { data: otherExRows } = await supabase
+          .from('program_exercises')
+          .select('id')
+          .eq('program_day_id', otherPlanWorkout.program_day_id as string)
+        const otherExerciseIds = ((otherExRows as { id: string }[]) ?? []).map((r) => r.id)
+        if (otherExerciseIds.length > 0) {
+          const { data: otherCompletions } = await supabase
+            .from('program_completions')
+            .select('id')
+            .eq('completed_at', todayStr())
+            .in('program_exercise_id', otherExerciseIds)
+          const otherPlanFinished = (otherCompletions?.length ?? 0) >= otherExerciseIds.length
+          if (otherPlanFinished) {
+            const { data: otherDayRow } = await supabase
+              .from('program_days')
+              .select('*')
+              .eq('id', otherPlanWorkout.program_day_id as string)
+              .maybeSingle()
+            if (otherDayRow) {
+              setMakeupCheckpointOtherDay(otherDayRow as ProgramDay)
+              setPhase('makeupCheckpoint')
+              return
+            }
+          }
+        }
+      }
     }
 
     setPhase('active')
@@ -1080,6 +1133,45 @@ export default function SessionPage() {
           </a>
         </div>
       </PremiumCard>
+    )
+  }
+
+  if (phase === 'makeupCheckpoint') {
+    // ฟีดแบ็ก (live-test, product decision — ดู comment เต็มที่ makeupCheckpointOtherDay state และจุด
+    // ตรวจใน load() ด้านบน) — semantic contract: START WORKOUT (BottomNav) แปลว่า "เข้าสู่ workout flow
+    // ของวันนี้" ไม่ใช่ "ต้องเริ่มฝึกทันที" หน้านี้คือจุดที่ /session หยุดถามยืนยันก่อนเข้า active จริง
+    // เฉพาะเคสเดียว: ฝึกแผนอื่นจบไปแล้ววันนี้ + แผนวันนี้เองยังไม่เริ่มเลย — คำที่ใช้ต้องเป็นข้อเท็จจริงล้วนๆ
+    // ("Day 2 — Pull ยังไม่ได้เริ่ม") ไม่ใช่คำถามชวน ("ต้องการฝึกอีกครั้งไหม?") เพราะจะฟังเหมือนระบบชวนฝึกซ้ำ
+    // — ให้ผู้ใช้ตัดสินใจเองด้วยปุ่ม "เริ่ม Day 2" (ไม่ encourage ≠ ไม่ allow)
+    return (
+      <div className="space-y-5 text-center py-6">
+        <div>
+          <p className="text-4xl" aria-hidden="true">
+            ✓
+          </p>
+          <p className="font-display text-lg tracked uppercase text-ink mt-2">วันนี้ฝึกแล้ว</p>
+          {makeupCheckpointOtherDay && (
+            <p className="text-sm text-muted mt-1">
+              {splitTitleDetail(makeupCheckpointOtherDay.title).main} · แผนชดเชย
+            </p>
+          )}
+        </div>
+        <div className="border-t border-line" />
+        {day && (
+          <div>
+            <p className="font-display text-lg tracked uppercase text-ink">{splitTitleDetail(day.title).main}</p>
+            <p className="text-sm text-muted mt-1">ยังไม่ได้เริ่ม</p>
+          </div>
+        )}
+        <div className="flex gap-2 justify-center pt-2">
+          <Button type="button" onClick={() => setPhase('active')} size="md">
+            เริ่ม {day ? splitTitleDetail(day.title).main : 'แผนวันนี้'}
+          </Button>
+          <Button as="a" href="/dashboard" variant="secondary" size="md">
+            กลับหน้าแรก
+          </Button>
+        </div>
+      </div>
     )
   }
 
