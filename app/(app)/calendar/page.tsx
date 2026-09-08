@@ -63,6 +63,17 @@ export default function CalendarPage() {
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [programByDow, setProgramByDow] = useState<Record<number, { day: ProgramDay; exercises: ProgramExercise[] }>>({})
 
+  // ฟีดแบ็ก "จากการ์ด 'ฝึกไปแล้ววันนี้ (แผนชดเชย)' บน Dashboard อยากมีลิงก์ 'ดูรายละเอียด →' พาเข้ามาเห็น
+  // ว่าวันนี้ฝึกอะไรไปบ้างทันที ไม่ต้องมาเลือกวันเองอีกที" — อ่าน ?date=YYYY-MM-DD จาก URL ครั้งเดียวตอน
+  // mount แล้ว select วันนั้นให้อัตโนมัติ (cursor ไม่ต้องแตะเลยถ้าเป็นวันนี้ เพราะ default เป็นเดือนปัจจุบัน
+  // อยู่แล้ว) อ่านจาก window.location ตรงๆ แทน useSearchParams (หน้านี้เป็น client component ล้วนอยู่แล้ว
+  // เลี่ยง Suspense boundary requirement ที่ไม่จำเป็นตรงนี้) ไม่มี param = พฤติกรรมเดิมทุกประการ
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const dateParam = new URLSearchParams(window.location.search).get('date')
+    if (dateParam) setSelectedDate(dateParam)
+  }, [])
+
   const monthStart = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor])
   const monthEnd = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0), [cursor])
 
