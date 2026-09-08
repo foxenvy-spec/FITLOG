@@ -1220,13 +1220,14 @@ export default function SessionPage() {
     // soft drop shadow เบาๆ ให้ปุ่มดู "ลอย" แบบพรีเมียมแทนดู "เรืองแสง"
     const smartStartCtaShadow =
       '0 4px 14px rgba(0,0,0,.28), 0 0 2px rgba(255,255,255,.4), 0 0 8px rgba(255,210,120,.4), 0 0 22px rgba(255,150,20,.23), 0 0 60px rgba(255,130,0,.08)'
-    // v2 (P0): ฟีดแบ็ก "ปุ่มใหญ่ แต่ผู้ใช้ยังไม่รู้ว่าวันนี้ต้องทำอะไร/นานแค่ไหน — เพิ่มบรรทัด Exercises ·
-    // Sets · ~min ใต้ปุ่ม" — สูตรประมาณเวลาเดียวกับ estimatedMinutes ใน DashboardView.tsx เป๊ะ (~1.5
-    // นาที/เซ็ต รวมพักระหว่างเซ็ต ปัดเข้าใกล้ 5 นาที ขั้นต่ำ 10 นาที) ไม่คิดสูตรใหม่แยกกันขัดกันเอง —
-    // exercises/day ถูก set ไว้ก่อนหน้าจุดตรวจ smartStart ใน load() แล้ว (ดู setDay/setExercises ด้านบน)
+    // v2 (P0): ฟีดแบ็ก "ปุ่มใหญ่ แต่ผู้ใช้ยังไม่รู้ว่าวันนี้ต้องทำอะไร — เพิ่มบรรทัด Exercises · Sets ใต้ปุ่ม"
+    // — exercises/day ถูก set ไว้ก่อนหน้าจุดตรวจ smartStart ใน load() แล้ว (ดู setDay/setExercises ด้านบน)
     // จึงเป็นข้อมูลของแผนวันนี้ล้วนๆ ไม่ใช่ของแผนที่พลาด
+    // v5 (Final Polish): ฟีดแบ็ก "หน้านี้เป้าหมายหลักคือให้ตัดสินใจเริ่ม ไม่ใช่วางแผนเวลา — ตัด ~นาที ออก
+    // เพราะไม่แม่น (เวลาพักแต่ละคนต่างกัน) เหลือแค่ 6 ท่า · 18 เซ็ต ก็บอกขนาดของ workout ได้ตรงกว่าแล้ว
+    // ลด visual noise ใต้ CTA" — เอา estimatedMinutes ออก ไม่ใช้สูตรนี้อีกที่นี่ (ยังคงอยู่ใน
+    // DashboardView.tsx ตามเดิม จุดนั้นไม่ได้ถูกร้องขอให้แก้)
     const smartStartTotalSets = exercises.reduce((sum, ex) => sum + (ex.sets ?? 0), 0)
-    const smartStartEstimatedMinutes = Math.max(10, Math.round((smartStartTotalSets * 1.5) / 5) * 5)
     // v4 (Final Polish): ฟีดแบ็ก "เพิ่ม subtle information เช่น 'Pull • Back / Biceps' ใต้ชื่อ Day 2 ให้
     // ผู้ใช้เข้าใจ workout โดยไม่ต้องกดเข้าไป" — reuse splitTitleDetail (ตัวเดียวกับ TodaysFocusCard.tsx)
     // แกะรายละเอียดในวงเล็บของ day.title ตรงๆ ไม่คิด parser ใหม่แยก — ถ้า title ไม่มีวงเล็บ (ไม่มี detail)
@@ -1256,7 +1257,7 @@ export default function SessionPage() {
             {/* v3 (Final Polish): ฟีดแบ็ก "ระยะห่างระหว่าง CTA กับ Metadata ดูค่อนข้างน้อย อยากให้แยกกลุ่ม
                 ชัดขึ้น +4-6px" — mt-2 (8px) -> mt-3.5 (14px, +6px) */}
             <p className="text-xs text-muted mt-3.5">
-              {exercises.length} ท่า · {smartStartTotalSets} เซ็ต · ~{smartStartEstimatedMinutes} นาที
+              {exercises.length} ท่า · {smartStartTotalSets} เซ็ต
             </p>
           </div>
         )}
