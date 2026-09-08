@@ -738,12 +738,20 @@ export function getWeekRange(reference: Date = new Date()): { start: string; end
   return { start: toIso(monday), end: toIso(sunday) }
 }
 
-// "แผนที่พลาด" ของสัปดาห์นี้ — program_days ที่วันตามปฏิทินผ่านไปแล้วในสัปดาห์นี้ (ก่อนวันนี้) แต่ยังไม่มี
-// workout ผูก program_day_id นั้นเลยสักแถวในสัปดาห์นี้ (ไม่ว่าจะทำวันไหนก็ตาม — สอดคล้องกับ Makeup Session
-// ทั้งฟีเจอร์ที่ performed_at ≠ program_day_id เสมอ) — ใช้ร่วมกันทั้ง MobileDashboardView.tsx (การ์ด "แผนที่
-// พลาด") และ session/page.tsx ("Smart Start" checkpoint) กันสองจุด derive ตรรกะเดียวกันแยกกันจนหลุด sync
-// doneDayIds มาจาก query workouts ภายนอก (ผู้เรียกกรอง .gte(performed_at, weekStart) เอง เพราะแต่ละจุดอาจ
-// query ต่างรูปแบบกัน — ฟังก์ชันนี้รับแค่ผลลัพธ์ที่กรองมาแล้วเป็น Set มาเทียบ ไม่ยุ่งกับ Supabase เอง)
+// "แผนที่พลาด" ของสัปดาห์นี้ — ใช้ร่วมกันทั้ง MobileDashboardView.tsx (การ์ด "แผนที่พลาด") และ
+// session/page.tsx ("Smart Start" checkpoint) กันสองจุด derive ตรรกะเดียวกันแยกกันจนหลุด sync (ถ้าแยกกัน
+// จะเสี่ยงเกิด "Dashboard บอกมี Day 1 พลาด แต่กด START กลับบอกไม่มี" ซึ่งจะดูเป็นบั๊กทันที)
+//
+// Contract — "พลาด" (missed) หมายถึง program day ที่ครบทุกเงื่อนไขนี้พร้อมกัน:
+//   1. วันตามปฏิทินของ day_of_week นั้น (ในสัปดาห์ปัจจุบัน) อยู่ก่อนวันนี้แล้ว (ไม่ใช่วันนี้/อนาคต)
+//   2. ยังไม่เคยมี workout ผูก program_day_id นั้นเลยแม้แต่แถวเดียวในสัปดาห์นี้ (ไม่ว่าจะ log ไปวันไหนก็ตาม
+//      ในสัปดาห์นั้น — สอดคล้องกับ Makeup Session ทั้งฟีเจอร์ที่ performed_at ≠ program_day_id เสมอ)
+// ข้อ 2 คือ "ไม่เคยแตะเลย" ไม่ใช่ "ยังทำไม่ครบ" — วันที่เริ่มไปแล้วแต่ยังไม่จบ (เช่น 3/6 ท่า แล้วหยุด) มี
+// workout row เกิดขึ้นแล้วอย่างน้อย 1 แถว จึงไม่นับเป็น "พลาด" ตามฟังก์ชันนี้ (ปล่อยให้ activeMakeupSession
+// pointer/Resume ดูแลกรณี "เริ่มแล้วค้างอยู่" แทน — คนละกลไกคนละหน้าที่กัน ไม่ทับซ้อนกัน)
+// doneDayIdsThisWeek มาจาก query workouts ภายนอก — ผู้เรียกเป็นคน .gte(performed_at, getWeekRange().start)
+// เอง (ฟังก์ชันนี้ไม่รู้จักวันที่จริงเลย รับแค่ผลลัพธ์ที่กรองสัปดาห์มาแล้วเป็น Set มาเทียบ ไม่ยุ่งกับ
+// Supabase หรือขอบเขตสัปดาห์เอง — ทั้งสองจุดเรียกต้องกรอง .gte(weekStart) เหมือนกันเพื่อให้ผลตรงกันเสมอ)
 export function findMissedProgramDays<T extends { id: string; day_of_week: number }>(
   programDays: T[],
   doneDayIdsThisWeek: Set<string>,

@@ -1504,22 +1504,38 @@ describe('findMissedProgramDays', () => {
   const fri = { id: 'fri', day_of_week: 5 }
   const days = [mon, wed, fri]
 
-  it('returns a day whose calendar date already passed this week with no workout logged', () => {
-    // วันนี้ = พุธ (3) — จันทร์ผ่านมาแล้ว ยังไม่มี workout เลย
+  // Case 1 — ไม่มี missed: วันที่ผ่านมาแล้ว (จันทร์) ถูกทำไปแล้วในสัปดาห์นี้ (ไม่ว่าจะครบหรือไม่ก็ตาม —
+  // ฟังก์ชันนี้ไม่รู้เรื่อง completion เลย รู้แค่ "มี workout ผูกอยู่ไหม" ดู contract เต็มที่ jsdoc ด้านบน)
+  it('excludes a day that already has a workout logged this week', () => {
+    expect(findMissedProgramDays(days, new Set(['mon']), 3)).toEqual([])
+  })
+
+  // Case 2 — มี missed ที่ไม่เคยแตะเลย: วันนี้ = พุธ (3), จันทร์ผ่านมาแล้วและไม่มี workout ผูกเลย
+  it('returns a day whose calendar date already passed this week with no workout logged at all', () => {
     expect(findMissedProgramDays(days, new Set(), 3)).toEqual([mon])
   })
 
-  it('excludes a day already done this week regardless of which day it was performed on', () => {
+  // Case 3 — "เคยเริ่มแต่ยังไม่จบ" ต้องไม่ถูกนับเป็น missed (นี่คือจุดสำคัญที่สุดของ contract — "ไม่เคย
+  // แตะเลย" ≠ "ยังทำไม่ครบ") — จันทร์ log ไปแล้ว 1 แถว (เช่น ทำได้ 3/6 ท่าแล้วหยุด) ก็ถือว่า "touched"
+  // แล้ว ไม่ใช่ missed อีกต่อไป ต้องปล่อยให้ resume pointer ดูแลแทน ไม่ใช่ Smart Start
+  it('does not treat a started-but-incomplete day as missed — touched is touched, complete or not', () => {
+    // จำลอง "จันทร์เริ่มแล้ว 3/6 ท่า" — มี workout row เกิดแล้วอย่างน้อย 1 แถวผูก program_day_id='mon'
+    // (การนับ 3/6 vs 6/6 ไม่เกี่ยวกับฟังก์ชันนี้เลย — doneDayIdsThisWeek แค่บอกว่า "มีแถวไหม" เท่านั้น)
     expect(findMissedProgramDays(days, new Set(['mon']), 3)).toEqual([])
   })
 
   it('never includes today or future days in the same week', () => {
-    // วันนี้ = จันทร์ (1) — ยังไม่มีวันไหนผ่านมาก่อนหน้าในสัปดาห์นี้เลย
+    // วันนี้ = จันทร์ (1) — ยังไม่มีวันไหนผ่านมาก่อนหน้าในสัปดาห์นี้เลย (Case: ไม่มี program day ก่อนหน้า
+    // ในสัปดาห์นี้ → ไม่มี Smart Start เข้า Today ทันที)
     expect(findMissedProgramDays(days, new Set(), 1)).toEqual([])
     // วันนี้ = พฤหัส (4) — จันทร์+พุธผ่านมาแล้ว ศุกร์ยังไม่ถึง ไม่นับ
     expect(findMissedProgramDays(days, new Set(), 4)).toEqual([mon, wed])
   })
 
+  // Case 4 — "นอกสัปดาห์ปัจจุบัน" ไม่ใช่สิ่งที่ฟังก์ชันนี้ตัดสินเอง — doneDayIdsThisWeek ต้องเป็นผลลัพธ์ที่
+  // ผู้เรียก .gte(performed_at, getWeekRange().start) มาแล้วเท่านั้น (ทั้ง MobileDashboardView.tsx และ
+  // session/page.tsx เรียกแบบนี้เหมือนกันทั้งคู่) — ฟังก์ชันนี้เองรับแค่ day_of_week ล้วนๆ ไม่รู้จักวันที่
+  // จริงเลย จึงตรวจ "อยู่ในสัปดาห์นี้ไหม" ที่ระดับ integration (query) ไม่ใช่ unit ของฟังก์ชันนี้
   it('returns an empty array when nothing is missed', () => {
     expect(findMissedProgramDays(days, new Set(['mon', 'wed', 'fri']), 5)).toEqual([])
   })
