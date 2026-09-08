@@ -1227,15 +1227,23 @@ export default function SessionPage() {
     // จึงเป็นข้อมูลของแผนวันนี้ล้วนๆ ไม่ใช่ของแผนที่พลาด
     const smartStartTotalSets = exercises.reduce((sum, ex) => sum + (ex.sets ?? 0), 0)
     const smartStartEstimatedMinutes = Math.max(10, Math.round((smartStartTotalSets * 1.5) / 5) * 5)
+    // v4 (Final Polish): ฟีดแบ็ก "เพิ่ม subtle information เช่น 'Pull • Back / Biceps' ใต้ชื่อ Day 2 ให้
+    // ผู้ใช้เข้าใจ workout โดยไม่ต้องกดเข้าไป" — reuse splitTitleDetail (ตัวเดียวกับ TodaysFocusCard.tsx)
+    // แกะรายละเอียดในวงเล็บของ day.title ตรงๆ ไม่คิด parser ใหม่แยก — ถ้า title ไม่มีวงเล็บ (ไม่มี detail)
+    // แค่ไม่โชว์บรรทัดนี้เฉยๆ ไม่กระทบอะไร
+    const { main: smartStartDayTitle, detail: smartStartDayDetail } = splitTitleDetail(day?.title ?? '')
     return (
       // v2 (P1): ฟีดแบ็ก "หัวข้อ DAY 2 ชิด status bar ไป เพิ่ม padding บนอีก 8-12px" — pt-3 เพิ่มเฉพาะจอนี้
       // (ไม่แตะ pt-5 ที่ app/(app)/layout.tsx ให้ทุกหน้าอยู่แล้ว เพราะจะกระทบทุกหน้าทั่วแอป ไม่ใช่แค่จอนี้)
       <div className="space-y-5 text-center py-6 pt-3 max-w-xs mx-auto">
         {day && (
           <div>
-            <p className="font-display text-lg tracked uppercase text-ink">{splitTitleDetail(day.title).main}</p>
+            {/* v4 (Final Polish): ฟีดแบ็ก "เพิ่ม label เล็กๆ TODAY เหนือ Day 2 ช่วยให้ scan ได้เร็วขึ้น" */}
+            <p className="text-[10px] font-display tracked uppercase text-muted">TODAY</p>
+            <p className="font-display text-lg tracked uppercase text-ink mt-1">{smartStartDayTitle}</p>
             {/* v2 (P1): ลดน้ำหนัก subtitle ลง (text-sm -> text-xs) ให้ hierarchy กับ Hero ชัดขึ้น */}
             <p className="text-xs text-muted mt-1">แผนวันนี้</p>
+            {smartStartDayDetail && <p className="text-xs text-muted mt-0.5">{smartStartDayDetail}</p>}
             <Button
               type="button"
               onClick={() => setPhase('active')}
@@ -1258,18 +1266,22 @@ export default function SessionPage() {
             {/* v2 (P1): ฟีดแบ็ก "ทำ 'มีแผนที่พลาด' เป็น subtle card แทนลอยบนพื้นดำตรงๆ — พื้นหลังเข้ม
                 (~#151515) + border บางมาก ไม่ต้องใหญ่/เส้นขอบชัด"
                 v3 (Final Polish): "Card อาจสูงไปนิด มีแค่ 3 บรรทัด ลดความสูงลง ~8-12px ให้รู้สึกเป็น
-                secondary information มากขึ้น" — py-3.5 (14px) -> py-2.5 (10px), ลด 8px รวม (4px ต่อด้าน) */}
+                secondary information มากขึ้น" — py-3.5 (14px) -> py-2.5 (10px), ลด 8px รวม (4px ต่อด้าน)
+                v4 (Final Polish): "ยังใหญ่เกินความสำคัญของ secondary action — ลดความสูงอีก ~20-25%" —
+                padding py-2.5 -> py-2, ป้ายหัวข้อ/ลิงก์ลดจาก text-sm -> text-xs (เหลือแค่ชื่อแผนที่พลาด
+                ที่ยังเป็น text-sm เพราะเป็นข้อมูลจำเป็นต่อการตัดสินใจ), ระยะห่างภายในบีบลง (mt-1 -> mt-0.5,
+                mt-2 -> mt-1) */}
             <div
-              className="rounded-2xl px-4 py-2.5"
+              className="rounded-2xl px-4 py-2"
               style={{ background: '#151515', border: `1px solid ${CARD_BORDER_CSS}` }}
             >
-              <p className="text-sm text-muted flex items-center justify-center gap-1.5">
+              <p className="text-xs text-muted flex items-center justify-center gap-1.5">
                 <span aria-hidden="true">↩</span> มีแผนที่พลาด
               </p>
-              <p className="text-sm text-ink mt-1">
+              <p className="text-sm text-ink mt-0.5">
                 {splitTitleDetail(smartStartMissedDay.title).main} · {WEEKDAYS[smartStartMissedDay.day_of_week]}
               </p>
-              <a href={`/session?day=${smartStartMissedDay.id}`} className="text-sm mt-2 inline-block hover:underline" style={{ color: COLORS.amber }}>
+              <a href={`/session?day=${smartStartMissedDay.id}`} className="text-xs mt-1 inline-block hover:underline" style={{ color: COLORS.amber }}>
                 ชดเชยแทน <span aria-hidden="true">→</span>
               </a>
             </div>
