@@ -150,9 +150,9 @@ export default function WorkoutReportPage() {
       <PremiumCard className="p-4">
         <SectionHeader icon="💪" title="Body Progress" />
         <div className="space-y-2 mt-3">
-          <BodyProgressRow label="น้ำหนัก" delta={report.bodySummary.weight} unit={unit} format={format} />
+          <BodyProgressRow label="น้ำหนัก" delta={report.bodySummary.weight} unit={unit} format={format} toDisplay={toDisplay} />
           <BodyProgressRow label="ไขมัน" delta={report.bodySummary.bodyFatPct} unit="%" decimals={1} />
-          <BodyProgressRow label="กล้ามเนื้อ" delta={report.bodySummary.skeletalMuscleKg} unit={unit} format={format} />
+          <BodyProgressRow label="กล้ามเนื้อ" delta={report.bodySummary.skeletalMuscleKg} unit={unit} format={format} toDisplay={toDisplay} />
         </div>
       </PremiumCard>
 
@@ -241,12 +241,14 @@ function BodyProgressRow({
   unit,
   decimals = 1,
   format,
+  toDisplay,
 }: {
   label: string
   delta: { value: number | null; delta: number | null; isGood: boolean | null }
   unit: string
   decimals?: number
   format?: (kg: number | null | undefined, decimals?: number) => string
+  toDisplay?: (kg: number) => number
 }) {
   if (delta.value === null) {
     return (
@@ -257,7 +259,12 @@ function BodyProgressRow({
     )
   }
   const startValue = delta.delta !== null ? delta.value - delta.delta : null
-  const displayValue = (v: number) => (format ? format(v, decimals) : v.toFixed(decimals))
+  // format() (ถ้ามี) ใส่หน่วยต่อท้ายให้ในตัวอยู่แล้ว เช่น "81.5 kg" — ห้ามเติม {unit} ซ้ำนอก displayValue อีก
+  const displayValue = (v: number) => (format ? format(v, decimals) : `${v.toFixed(decimals)} ${unit}`)
+  // delta เป็นผลต่างหน่วย kg เสมอ (จาก DB) — แถวที่ใช้ format (น้ำหนัก/กล้ามเนื้อ) ต้อง toDisplay ผลต่างด้วย
+  // ไม่งั้นตอนผู้ใช้เลือกหน่วยเป็น lb ตัวเลขหลักจะโชว์เป็น lb แต่ delta ยังเป็น kg ดิบไม่ตรงกัน
+  const deltaMagnitude =
+    delta.delta !== null ? (toDisplay ? toDisplay(Math.abs(delta.delta)) : Math.abs(delta.delta)) : 0
   const color = delta.isGood === null ? NEUTRAL.mutedIcon : delta.isGood ? COLORS.moss : COLORS.rust
   return (
     <div className="flex items-center justify-between text-sm gap-2 flex-wrap">
@@ -265,16 +272,14 @@ function BodyProgressRow({
       <span className="font-mono text-ink text-right">
         {startValue !== null ? (
           <>
-            {displayValue(startValue)} → {displayValue(delta.value)} {unit}
+            {displayValue(startValue)} → {displayValue(delta.value)}
           </>
         ) : (
-          <>
-            {displayValue(delta.value)} {unit}
-          </>
+          displayValue(delta.value)
         )}
         {delta.delta !== null && (
           <span className="ml-1.5 font-semibold" style={{ color }}>
-            {delta.delta > 0 ? '↑' : delta.delta < 0 ? '↓' : ''} {Math.abs(delta.delta).toFixed(decimals)}
+            {delta.delta > 0 ? '↑' : delta.delta < 0 ? '↓' : ''} {deltaMagnitude.toFixed(decimals)}
           </span>
         )}
       </span>
