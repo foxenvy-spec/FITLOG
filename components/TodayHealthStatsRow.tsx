@@ -89,7 +89,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
               return (
                 <span
                   key={key}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[12px]"
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[11px]"
                   style={{
                     backgroundColor: withAlpha(meta.color, '1c'),
                     border: `1px solid ${withAlpha(meta.color, '28')}`,
@@ -141,7 +141,7 @@ export default function TodayHealthStatsRow({ health }: TodayHealthStatsRowProps
         return (
           <div key={key} className="flex flex-col items-center justify-center gap-1 px-1.5 min-w-0">
             <span
-              className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs"
+              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[11px]"
               style={{ backgroundColor: `${meta.color}22` }}
               aria-hidden="true"
             >

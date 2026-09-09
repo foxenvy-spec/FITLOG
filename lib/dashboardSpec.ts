@@ -74,7 +74,11 @@ export const dashboardSpec = {
     // lib/healthIntegration.ts — เป็นสถานะเดียวที่ผู้ใช้เห็นจริงในโปรดักชันปัจจุบัน) สถานะ "เชื่อมต่อแล้ว"
     // (3-คอลัมน์ kcal/ก้าว/นอน ใน TodayHealthStatsRow.tsx) ยังไม่มีทาง reachable จริงในตอนนี้ — ถ้าเปิด
     // ใช้ฟีเจอร์นั้นในอนาคตต้องเช็ค/re-tune ระยะภายในให้พอดีกับความสูงใหม่นี้ด้วย
-    height: 54,
+    // v2 (design review, P5): ฟีดแบ็ก "utility card (Health App) ยัง visual weight เยอะไปเทียบกับความสำคัญ
+    // ใน daily flow — ลดอีก 10-15%" — 54 -> 46 (-14.8%, กลางช่วงที่ขอ) — ปรับขนาดวงไอคอนใน
+    // TodayHealthStatsRow.tsx ให้เล็กลงตาม (w-7->w-6) ไม่งั้นแค่บีบความสูง container โดยไม่ลดไอคอนจะดูอัดแน่น
+    // ขึ้นแทนที่จะดูเบาลง
+    height: 46,
   },
   // v: ฟีดแบ็ก (live-test, Smart Start screenshot) "Bottom Nav ยังกินพื้นที่เยอะ ปุ่ม START WORKOUT
   // เด่นจนเกือบแย่งความสนใจจากเนื้อหาหลัก — ลดความสูง Bottom Nav ~10-15%, ลดขนาดวงกลม Start ลงเล็กน้อย

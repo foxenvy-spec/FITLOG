@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { TEXT, COLORS } from '@/lib/theme'
+import { TEXT, COLORS, withAlpha } from '@/lib/theme'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
 
@@ -39,15 +39,19 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
           <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body }}>
             Today&apos;s Workout
           </p>
-          <p className="font-display tracked uppercase text-ink" style={{ fontSize: 14 }}>
+          {/* ฟีดแบ็ก (design review, P2) "Recovery/Rest เด้งเด่นพร้อมกัน 4 จุดบนหน้าแรก — ไม่แตะ semantic/
+              ข้อความ แต่การ์ดนี้เป็น supporting detail ของ Today's Focus (ตัวหลักที่ควรเด่นสุด) ควรลด
+              visual weight ลงเล็กน้อย (~10-15%)" — 'Rest Day' 14->12, สีบรรทัดรอง/badge ลดความสว่างลง
+              (ไม่เปลี่ยนข้อความ/สีเขียวของ Streak แค่ลด alpha ให้นุ่มลง) */}
+          <p className="font-display tracked uppercase text-ink" style={{ fontSize: 12 }}>
             Rest Day
           </p>
-          <p style={{ fontSize: 10, marginTop: 1, color: '#CFD4DE' }}>Recovery is part of progress</p>
+          <p style={{ fontSize: 10, marginTop: 1, color: TEXT.caption }}>Recovery is part of progress</p>
           {/* ฟีดแบ็ก "วันพักตามแผนควรมี Badge บอกว่า Streak ไม่ขาด กันผู้ใช้รู้สึกผิด" — ตรรกะ "วันพักตามแผน
               ไม่ตัด Streak" มีอยู่แล้วจริงใน computeCurrentStreak (lib/dashboardStats.ts) การ์ดนี้เดิมสื่อ
               "การพักเป็นส่วนหนึ่งของความก้าวหน้า" อยู่แล้วแต่ไม่ได้พูดถึง Streak ตรงๆ เลย — เพิ่มบรรทัดนี้
               ให้ชัดเจนขึ้นว่า Streak ไม่ขาดจริงๆ (คำเดียวกับที่ desktop ใช้ ดู DashboardView.tsx) */}
-          <p style={{ fontSize: 10, marginTop: 1, color: COLORS.moss }}>🛌 Streak stays protected ✅</p>
+          <p style={{ fontSize: 10, marginTop: 1, color: withAlpha(COLORS.moss, 'CC') }}>🛌 Streak stays protected ✅</p>
         </div>
       </PremiumCard>
     )

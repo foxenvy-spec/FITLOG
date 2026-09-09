@@ -566,28 +566,32 @@ export default function MobileDashboardView() {
             shadow-elevated/พื้นทึบแบบการ์ดหลักออก (เดิมใช้สไตล์เดียวกับ TodaysWorkout/Body Overview ซึ่ง
             เป็นการ์ด "หลัก") เปลี่ยนพื้นเป็นโปร่งกว่า + ตัดกรอบทึบ ให้รู้สึกเป็นแถบข้อมูลรอง ไม่ใช่การ์ด
             แข่งกับ Today's Focus ด้านบน — สีหัวข้อ "↩ แผนที่พลาด" ลดจาก amber ตัวหนาเต็มบรรทัด เหลือแค่ไอคอน
-            สีอำพัน + ข้อความสีเทา (text-muted) ให้เห็นชัดว่าเป็นข้อมูลเสริม สีอำพันเก็บไว้ที่ CTA จุดเดียว */}
+            สีอำพัน + ข้อความสีเทา (text-muted) ให้เห็นชัดว่าเป็นข้อมูลเสริม สีอำพันเก็บไว้ที่ CTA จุดเดียว
+            v2 (design review, P1): ฟีดแบ็ก "การ์ดนี้กินพื้นที่เยอะเกินความสำคัญเมื่อเทียบกับ Today's Focus
+            (โดยเฉพาะวันพัก ที่นี่ควรเป็นแค่ secondary) ลดความสูงลง ~20-30%" — padding py-2.5 -> py-1.5,
+            ป้ายหัวข้อ/ลิงก์ text-[12px] -> text-[11px] (ชื่อแผน "Day 2 — Pull · อังคาร" ยังคง text-[13px]
+            เพราะเป็นข้อมูลจำเป็นต่อการตัดสินใจ), ระยะห่างภายในบีบลง (mt-1 -> mt-0.5, mt-1.5 -> mt-1) */}
         {missedDays.length > 0 && (
-          <div className="rounded-card bg-surface2/60 px-3.5 py-2.5">
-            <p className="text-[12px] font-medium flex items-center gap-1.5 text-muted">
+          <div className="rounded-card bg-surface2/60 px-3.5 py-1.5">
+            <p className="text-[11px] font-medium flex items-center gap-1.5 text-muted">
               <span aria-hidden="true" style={{ color: COLORS.amber }}>
                 ↩
               </span>
               {missedDays.length === 1 ? 'แผนที่พลาด' : `${missedDays.length} แผนที่พลาด`}
             </p>
-            <p className="text-[13px] text-ink mt-1">
+            <p className="text-[13px] text-ink mt-0.5">
               {splitTitleDetail(missedDays[0].title).main} · {WEEKDAYS[missedDays[0].day_of_week]}
             </p>
             {missedDays.length === 1 ? (
               <Link
                 href={`/session?day=${missedDays[0].id}`}
-                className="text-[12px] mt-1.5 inline-block hover:underline"
+                className="text-[11px] mt-1 inline-block hover:underline"
                 style={{ color: COLORS.amber }}
               >
                 เริ่มแผนที่พลาด →
               </Link>
             ) : (
-              <Link href="/program" className="text-[12px] mt-1.5 inline-block hover:underline" style={{ color: COLORS.amber }}>
+              <Link href="/program" className="text-[11px] mt-1 inline-block hover:underline" style={{ color: COLORS.amber }}>
                 ดูแผนที่พลาดทั้งหมด →
               </Link>
             )}

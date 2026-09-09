@@ -402,7 +402,17 @@ export default function AICoachCompactCard({
                   ที่ไม่ใช่ CTA) + ลดขนาดลง ~15% (21 -> 18) ให้สีส้มเหลือแค่ตรง CTA ปุ่มจริงด้านล่างเท่านั้น */}
               {/* ฟีดแบ็ก "UPPER BODY ควรเป็น 18-20px/700/white" — เดิม font-semibold (600) ขยับเป็น
                   font-bold (700) ตามสเปค ขนาด/สี (text-ink, ไม่ใช่ #FFFFFF ล้วน) คงเดิมตามที่ขอ */}
-              <p className="font-display font-bold tracked uppercase text-ink truncate mt-1" style={{ fontSize: 18, lineHeight: 1.15 }}>
+              {/* ฟีดแบ็ก (design review, P2) "คำว่า Recovery/Rest เด้งเด่นพร้อมกัน 4 จุดบนหน้าแรก (Fitness
+                  Score badge, Today's Focus, Today's Workout, MINT Coach) — ไม่ต้องแก้ semantic/ข้อความ
+                  เลย แต่ Fitness Score กับ Today's Focus ควรเด่นสุด (สถานะรวม + คำแนะนำหลักของวันนี้) ส่วน
+                  MINT Coach เป็น supporting recommendation ควรลด visual weight ลงมากกว่า Today's Workout
+                  เล็กน้อย" — ตอน isRestDay เท่านั้น ลดขนาด/น้ำหนัก/สีของ 'Recovery Day' ลง (18->13,
+                  font-bold->font-semibold, text-ink->TEXT.secondary) ไม่แตะ 'region' (ชื่อกลุ่มกล้ามเนื้อ
+                  วันฝึกปกติ เช่น "LOWER BODY") เลย เพราะเป็นคนละเคส มีประวัติปรับแยกของตัวเองอยู่แล้ว */}
+              <p
+                className={`font-display tracked uppercase truncate mt-1 ${isRestDay ? 'font-semibold' : 'font-bold text-ink'}`}
+                style={{ fontSize: isRestDay ? 13 : 18, lineHeight: 1.15, color: isRestDay ? TEXT.secondary : undefined }}
+              >
                 {isRestDay ? 'Recovery Day' : region}
               </p>
               {/* ฟีดแบ็ก "อยากลดข้อความลงประมาณ 20-30% — Coach ควรพูดสั้นๆ เหมือนคนพูด ไม่ใช่ย่อหน้ายาว" —
