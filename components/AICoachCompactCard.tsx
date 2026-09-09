@@ -642,7 +642,7 @@ export default function AICoachCompactCard({
 // เต็มหน้าจริง) แทนที่ด้วยไอคอนเรขาคณิตนามธรรม (faceted gem — 4 เหลี่ยมมุมตัดไล่เฉดไทเทเนียม + เหลี่ยม
 // เดียวย้อมอำพันเป็นจุดเน้นแบรนด์) เล็กกว่ารูปเดิมมาก (56% ของกรอบ vs รูปเดิมที่ scale 1.85 เกือบเต็มเฟรม
 // แบบภาพสินค้า) กรอบไทเทเนียม+มุมตัด CNC รอบนอกเดิมไม่แตะ (ยังเข้าธีมเดียวกับการ์ดอื่นทั่วแอป)
-function AiRingAvatar({ size = 112 }: { size?: number }) {
+export function AiRingAvatar({ size = 112 }: { size?: number }) {
   const gradId = useId()
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">

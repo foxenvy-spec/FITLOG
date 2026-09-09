@@ -18,7 +18,9 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import PremiumCard from '@/components/ui/PremiumCard'
 import LoadingState from '@/components/LoadingState'
 import ErrorState from '@/components/ErrorState'
-import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
+import ProgressRing from '@/components/ui/ProgressRing'
+import { AiRingAvatar } from '@/components/AICoachCompactCard'
+import { COLORS, NEUTRAL, FIRE_GRADIENT_STOPS, withAlpha } from '@/lib/theme'
 
 const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
   { value: 7, label: '7D' },
@@ -48,13 +50,16 @@ export default function WorkoutReportPage() {
   const dateRangeLabel = formatDateRangeLabel(startIso, endIso)
 
   return (
-    <div className="space-y-5 lg:max-w-2xl lg:mx-auto">
+    // เดิมมี lg:max-w-2xl lg:mx-auto บีบ Report ให้แคบเหลือ ~672px ทั้งที่ layout กลาง (app/(app)/layout.tsx)
+    // ให้พื้นที่เต็มจอ desktop อยู่แล้ว (lg:max-w-none lg:mx-0) — ตัดออก ใช้ max-width กว้างขึ้นแทนแค่กัน
+    // เนื้อหายืดสุดโต่งบนจอกว้างมากๆ ไม่ centered (ให้ต่อจาก sidebar เหมือนหน้าอื่นในแอป)
+    <div className="space-y-4 lg:max-w-[1200px]">
       <Link href="/stats" className="print:hidden text-[12px] text-muted hover:text-amber inline-flex items-center gap-1">
         ← กลับไปสถิติ
       </Link>
 
       <div>
-        <h1 className="font-display text-2xl tracked uppercase">Workout Report</h1>
+        <h1 className="font-display text-2xl lg:text-[32px] tracked uppercase">Workout Report</h1>
         <p className="text-[12px] text-muted mt-1">
           📅 {periodLabel} ({dateRangeLabel})
         </p>
@@ -84,57 +89,57 @@ export default function WorkoutReportPage() {
         </button>
       </div>
 
-      {/* 1. Workout Summary */}
-      <PremiumCard className="p-4">
-        <SectionHeader icon="🏋️" title="Workout Summary" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-          <SummaryTile label="Workouts" value={report.currentTotals.workoutCount} unit="ครั้ง" deltaPct={report.workoutCountDeltaPct} accent={COLORS.amber} />
-          <SummaryTile
-            label="Duration"
-            value={Math.round(report.currentTotals.totalDurationMin)}
-            unit="นาที"
-            deltaPct={report.durationDeltaPct}
-            accent={COLORS.steel}
-          />
+      {/* 1. Workout Summary — hero card: 1 container ล้อม 4 KPI ตรงๆ (คั่นด้วยเส้นแบ่งบางๆ) ไม่ใช่การ์ด
+          ซ้อนการ์ดย่อยแบบเดิม (SummaryTile เดิมแต่ละใบมีกรอบ/พื้นหลังของตัวเอง ทำให้ดูเป็น "การ์ดเล็กเรียง
+          กัน" มากกว่า KPI แถวเดียวของรายงานฉบับเดียว) */}
+      <PremiumCard className="p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <SectionHeader icon="🏋️" title="Workout Summary" />
+          <p className="text-[11px] text-muted">เทียบ{periodLabel}ก่อน</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-5 gap-x-4 mt-4">
+          <SummaryTile label="Workouts" value={report.currentTotals.workoutCount} unit="ครั้ง" deltaPct={report.workoutCountDeltaPct} isFirst />
+          <SummaryTile label="Duration" value={Math.round(report.currentTotals.totalDurationMin)} unit="นาที" deltaPct={report.durationDeltaPct} />
           <SummaryTile
             label="Volume"
             value={Math.round(toDisplay(report.currentTotals.totalVolumeKg))}
             unit={unit}
             deltaPct={report.volumeDeltaPct}
-            accent={COLORS.moss}
           />
-          <SummaryTile label="Sets" value={report.currentTotals.totalSets} unit="เซ็ต" deltaPct={report.setsDeltaPct} accent={COLORS.violet} />
+          <SummaryTile label="Sets" value={report.currentTotals.totalSets} unit="เซ็ต" deltaPct={report.setsDeltaPct} />
         </div>
       </PremiumCard>
 
       {/* 2+3. Consistency / Training Trend — จัดคู่กันเป็น 2 คอลัมน์ (มือถือ: เรียงตกลงมาปกติ) ตาม layout
-          ที่ล็อกไว้ ให้ Report อ่านเป็น "การ์ดรายงาน" มากกว่าการ์ด /stats เรียงต่อกันเฉยๆ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* 2. Consistency */}
-        <PremiumCard className="p-4">
+          ที่ล็อกไว้ ให้ Report อ่านเป็น "การ์ดรายงาน" มากกว่าการ์ด /stats เรียงต่อกันเฉยๆ — สัดส่วน 0.85:1.5
+          ให้ Training Trend (มีกราฟ) กว้างกว่า Consistency (แค่วงกลม+ตัวเลข) ตามที่ล็อกไว้ */}
+      <div className="grid grid-cols-1 sm:grid-cols-[0.85fr_1.5fr] gap-4">
+        {/* 2. Consistency — โดนัทวงกลมแทน bar เดิม (reuse ProgressRing ที่มีอยู่แล้วทั่วแอป ปิด glow ให้
+            เบาที่สุดตามที่ล็อกไว้ "glow ต้องเบามาก") */}
+        <PremiumCard className="p-5 sm:p-6">
           <SectionHeader icon="🎯" title="Consistency" />
           {report.consistency.pct === null ? (
             <p className="text-sm text-muted mt-3">ยังไม่ได้ตั้งโปรแกรมประจำสัปดาห์ — ตั้งได้ที่หน้าโปรแกรม</p>
           ) : (
-            <div className="mt-3">
-              <div className="flex items-baseline justify-between">
-                <p className="font-mono font-bold text-2xl text-ink">{report.consistency.pct}%</p>
-                <p className="text-[12px] text-muted">
-                  ทำตามแผน {report.consistency.completedCount} / {report.consistency.plannedCount} วัน
+            <div className="mt-4 flex items-center gap-4">
+              <ProgressRing value={report.consistency.pct} size={92} strokeWidth={9} gradientStops={FIRE_GRADIENT_STOPS} glow={false}>
+                <p className="font-mono font-bold text-xl text-ink">{report.consistency.pct}%</p>
+              </ProgressRing>
+              <div>
+                <p className="text-sm text-ink font-medium">ทำตามแผน</p>
+                <p className="font-mono text-lg text-ink mt-0.5">
+                  {report.consistency.completedCount} / {report.consistency.plannedCount} <span className="text-[12px] text-muted font-sans">วัน</span>
                 </p>
-              </div>
-              <div className="h-2 mt-2 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
-                <div className="h-full rounded-full" style={{ width: `${Math.min(100, report.consistency.pct)}%`, background: COLORS.amber }} />
               </div>
             </div>
           )}
         </PremiumCard>
 
         {/* 3. Training Trend (Volume เท่านั้นตามที่ล็อกไว้) */}
-        <PremiumCard className="p-4">
+        <PremiumCard className="p-5 sm:p-6">
           <SectionHeader icon="📊" title="Training Trend" />
           <p className="text-[11px] text-muted mt-0.5">Volume · {period === 7 ? 'รายวัน' : 'รายสัปดาห์'}</p>
-          <div className="h-40 mt-2">
+          <div className="h-48 mt-3">
             {/* minWidth/minHeight เป็น fallback ตาม docs ของ recharts เอง สำหรับกรณี ResponsiveContainer
                 วัดขนาด container จริงได้ 0 (หรือใกล้ 0) ตอน mount ครั้งแรก — ไม่งั้นทุกอย่าง (แกน X และ Y
                 พร้อมกันทั้งคู่) จะถูกวาดที่พิกัดใกล้ (0,0) เหมือนกันหมด อ่านออกมาเป็น label ทุกตัวติดกันไม่มี
@@ -195,9 +200,9 @@ export default function WorkoutReportPage() {
       {/* 4. Body Progress — เปรียบเทียบต้นช่วง -> ปัจจุบัน ใช้ computeBodyMetricsSummary ตรงๆ ไม่คิด metric
           ใหม่ — Goal bar ใช้ goalProgress ที่มาจาก lib/goalProgress.ts เดิม (weight/bodyFat เท่านั้น ตาราง
           goals ไม่รองรับ goal_type อื่น — กล้ามเนื้อจึงไม่มี goal ให้โชว์ ไม่ใช่ bug) */}
-      <PremiumCard className="p-4">
+      <PremiumCard className="p-5 sm:p-6">
         <SectionHeader icon="💪" title="Body Progress" />
-        <div className="grid grid-cols-3 gap-2 mt-3">
+        <div className="grid grid-cols-3 gap-4 mt-4">
           <BodyProgressColumn
             label="น้ำหนัก"
             delta={report.bodySummary.weight}
@@ -225,11 +230,24 @@ export default function WorkoutReportPage() {
         </div>
       </PremiumCard>
 
-      {/* 5. MINT Summary — 1 ประโยคตีความ + 1 next-step เท่านั้น ไม่ใช่ chat/AI dashboard ใหม่ */}
-      <PremiumCard className="p-4" style={{ background: withAlpha(COLORS.violet, '0d'), border: `1px solid ${withAlpha(COLORS.violet, '30')}` }}>
-        <SectionHeader icon="✨" title="MINT Summary" iconBg={withAlpha(COLORS.violet, '22')} />
-        <p className="text-sm text-ink mt-3 font-medium">{report.summary.interpretation}</p>
-        <p className="text-[12px] text-muted mt-1">{report.summary.nextStep}</p>
+      {/* 5. MINT Coach (เดิมชื่อ "MINT Summary" — เปลี่ยนตามที่ล็อกใหม่ เพราะการ์ดนี้ตอนนี้มี persona
+          ชัดเจนแล้ว ไม่ใช่แค่ข้อความสรุปเฉยๆ) — ยังคง 1 ประโยคตีความ + 1 next-step เท่านั้นตามเดิม ไม่ใช่
+          chat/AI dashboard ใหม่ — avatar reuse AiRingAvatar ตัวเดียวกับ AICoachCompactCard.tsx (ตั้งใจไม่
+          เอา ai-coach-avatar.png รูป Robot เดิมกลับมา เพราะถูกถอดออกตามการตัดสินใจของผู้ใช้ไปแล้วก่อนหน้านี้) */}
+      <PremiumCard className="p-5 sm:p-6" style={{ background: withAlpha(COLORS.violet, '0d'), border: `1px solid ${withAlpha(COLORS.violet, '30')}` }}>
+        <SectionHeader icon="✨" title="MINT Coach" iconBg={withAlpha(COLORS.violet, '22')} />
+        <div className="flex items-start gap-3 mt-4">
+          <AiRingAvatar size={56} />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-ink font-medium">{report.summary.interpretation}</p>
+            <div className="mt-3 pt-3 border-t" style={{ borderColor: withAlpha(COLORS.violet, '20') }}>
+              <p className="text-[10px] tracked uppercase font-semibold" style={{ color: COLORS.violet }}>
+                💡 สิ่งที่ควรทำต่อ
+              </p>
+              <p className="text-[13px] text-muted mt-1">{report.summary.nextStep}</p>
+            </div>
+          </div>
+        </div>
       </PremiumCard>
 
       {/* Footer — Export PDF ย้ายขึ้นไปอยู่แถว period toggle ด้านบนแล้ว เหลือแค่ลิงก์เดียวตาม layout ที่
@@ -273,21 +291,24 @@ function SummaryTile({
   value,
   unit,
   deltaPct,
-  accent,
+  isFirst = false,
 }: {
   label: string
   value: number
   unit: string
   deltaPct: number | null
-  accent: string
+  isFirst?: boolean
 }) {
+  // v2 (visual polish): เดิมแต่ละ KPI มีกรอบ+พื้นหลังของตัวเอง (การ์ดซ้อนการ์ดใน Workout Summary) —
+  // เปลี่ยนเป็นคั่นด้วยเส้นแบ่งบางๆ แทน (เฉพาะ sm ขึ้นไปที่เรียงแนวนอนจริง — มือถือเป็น grid 2 คอลัมน์
+  // เส้นแบ่งแนวตั้งจะดูแปลก) ให้ทั้ง 4 ตัวเลขรู้สึกเป็น "แถว KPI เดียว" ของการ์ดเดียว ไม่ใช่การ์ดย่อย 4 ใบ
   return (
-    <div className="border shadow-glow rounded-card px-3 py-2.5" style={{ borderColor: withAlpha(accent, '33'), backgroundColor: '#1C1F24' }}>
+    <div className={isFirst ? '' : 'sm:border-l sm:pl-4'} style={{ borderColor: NEUTRAL.chipInactive }}>
       <p className="text-[11px] tracked uppercase text-muted">{label}</p>
-      <p className="font-mono text-lg text-ink mt-0.5">
-        {value.toLocaleString()} <span className="text-[11px] text-muted">{unit}</span>
+      <p className="font-mono text-2xl sm:text-3xl font-bold text-ink mt-1">
+        {value.toLocaleString()} <span className="text-xs font-normal text-muted">{unit}</span>
       </p>
-      <div className="mt-0.5 h-3.5">
+      <div className="mt-1 h-4">
         <DeltaBadge pct={deltaPct} />
       </div>
     </div>
@@ -333,8 +354,8 @@ function BodyProgressColumn({
   return (
     <div>
       <p className="text-[11px] tracked uppercase text-muted">{label}</p>
-      <p className="font-mono text-[15px] text-ink mt-0.5 truncate">{displayValue(delta.value)}</p>
-      <p className="text-[11px] mt-0.5" style={{ color: delta.delta === null || delta.delta === 0 ? NEUTRAL.mutedIcon : color }}>
+      <p className="font-mono text-lg sm:text-xl font-bold text-ink mt-1 truncate">{displayValue(delta.value)}</p>
+      <p className="text-[12px] mt-0.5" style={{ color: delta.delta === null || delta.delta === 0 ? NEUTRAL.mutedIcon : color }}>
         {delta.delta === null
           ? ' '
           : delta.delta === 0
