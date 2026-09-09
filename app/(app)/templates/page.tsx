@@ -38,8 +38,24 @@ const ICON_PALETTE = [
 // ตามตำแหน่ง (index ของเทมเพลตในลิสต์) ล้วนๆ ไม่ได้ผูกกับชื่อเทมเพลตจริง จึงชี้รูปเฉพาะเจาะจงให้เทมเพลตที่
 // ระบุชื่อมาไม่ได้ตรงๆ (ลำดับเปลี่ยนได้เสมอเมื่อมีเทมเพลตอื่นเพิ่ม/ลบก่อนหน้า) — จับคู่จากคำในชื่อเทมเพลตก่อน
 // เจอคำที่รู้จักแล้วใช้รูปเฉพาะนั้นเลย ไม่เจอค่อย fallback ไปวนตาม ICON_PALETTE เหมือนเดิมทุกประการ
+//
+// v2: ฟีดแบ็ก "import เทมเพลต 5 วันมาเพิ่ม (V2) กลายเป็นรูปไม่ตรงกล้ามเนื้อกับชื่อวัน (Push ได้รูปขา,
+// Legs ได้รูปอก ฯลฯ)" — ของเดิม 5 ใบพอดี "ดูเหมือน" ตรงเพราะบังเอิญ index 0-4 วนเข้ากับวันพอดี ไม่ใช่ตั้งใจ
+// จับคู่จริง พอมี 10 ใบ การวนตามตำแหน่งเลื่อนจนเห็นชัดว่าไม่ตรง — เพิ่ม override ตามคำในชื่อ (เช็คก่อน Core/Abs
+// เดิม ไม่กระทบ) ให้ตรงกับเนื้อหาจริงเสมอไม่ว่าจะมีกี่เทมเพลตหรือเรียงลำดับยังไง — ไล่ดูรูปจริงทุกไฟล์ก่อนจับคู่
+// (ไม่ใช่เดาจากชื่อไฟล์อย่างเดียว): chest.png = อกเน้นด้านหน้า (Push/Chest), back.png = หลังเน้นมองจากด้านหลัง
+// (Pull/Back), legs.png = ต้นขาด้านหน้าเน้น quad สีม่วง (Legs/Quad), lower.png = ก้น/แฮมสตริง/น่องมองจาก
+// ด้านหลัง (Lower/Hamstring/Glute), upper.png = ร่างกายท่อนบนทั้งหมดหน้า-หลัง (Upper ทั่วไป ไม่เจาะจงมัดเดียว)
+// — ไม่ใส่คำว่า "อก" เป็นคีย์เวิร์ดแยก เพราะ "อก" เป็น substring ของ "ออกกำลังกาย" (คำทั่วไปทั้งแอป) จะจับคู่
+// ผิดเป็น chest.png ทุกชื่อเทมเพลตที่มีคำนี้ปนอยู่ — ใช้ chest/push (อังกฤษ) ซึ่งเทมเพลตจริงของแอปตั้งชื่อแบบนี้
+// อยู่แล้วแทน
 const TITLE_ICON_OVERRIDES: { keywords: string[]; icon: string }[] = [
   { keywords: ['core', 'abs', 'แกนกลาง'], icon: '/images/templates/Core-Abs.png' },
+  { keywords: ['chest', 'push'], icon: '/images/templates/chest.png' },
+  { keywords: ['back', 'pull', 'หลัง'], icon: '/images/templates/back.png' },
+  { keywords: ['leg', 'quad', 'ขา'], icon: '/images/templates/legs.png' },
+  { keywords: ['lower', 'hamstring', 'glute', 'ก้น', 'ล่าง'], icon: '/images/templates/lower.png' },
+  { keywords: ['upper', 'บน'], icon: '/images/templates/upper.png' },
 ]
 
 function iconForTemplate(title: string, index: number): string {
