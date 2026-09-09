@@ -36,6 +36,7 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import EmptyState from '@/components/EmptyState'
 import PremiumCard from '@/components/ui/PremiumCard'
+import WorkoutReportSection from '@/components/stats/WorkoutReportSection'
 import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
 import { useCountUp } from '@/lib/useCountUp'
 
@@ -622,6 +623,10 @@ export default function StatsPage() {
           </div>
           {timeframeSelector}
         </div>
+        {/* ฟีดแบ็ก "อยากมี Workout Report ย้อนหลัง 7/30 วัน" — ดึงข้อมูลของตัวเองแยกจาก timeframe selector
+            ของหน้านี้ (workouts ด้านบนว่างเพราะ scope ตาม timeframe ที่เลือกไว้ อาจไม่เกี่ยวกับ 7/30 วัน
+            ล่าสุดเลย) จึงยังโชว์ได้แม้ workouts (ของหน้านี้) จะว่าง */}
+        <WorkoutReportSection />
         <EmptyState
           icon="📈"
           title="ยังไม่มีข้อมูลสถิติ"
@@ -666,6 +671,12 @@ export default function StatsPage() {
         FITLOG — Progress Report ·{' '}
         {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
+
+      {/* ฟีดแบ็ก "อยากมี Workout Report ย้อนหลัง 7/30 วัน — ควรเป็นพระเอกของหน้า" — วางไว้บนสุดเหนือ
+          StatCard grid เดิม ไม่แตะ/ไม่เรียงลำดับ section อื่นด้านล่างเลย ตัวเลือกช่วงเวลา 7D/30D เป็น
+          state ของตัวเอง แยกจาก timeframeSelector ด้านบน (คนละ concern เหมือนที่ BodyMetricsRow.tsx
+          มี selector ของตัวเองแยกจาก Dashboard อยู่แล้ว) */}
+      <WorkoutReportSection />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Total Volume" value={Math.round(toDisplay(totals.totalVolume))} unit={unit} accent="steel" />
