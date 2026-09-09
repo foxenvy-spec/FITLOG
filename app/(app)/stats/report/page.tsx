@@ -121,11 +121,20 @@ export default function WorkoutReportPage() {
       {/* 3. Training Trend (Volume เท่านั้นตามที่ล็อกไว้) */}
       <PremiumCard className="p-4">
         <SectionHeader icon="📊" title={`Training Trend · Volume (${period === 7 ? 'รายวัน' : 'รายสัปดาห์'})`} />
-        <div className="h-32 mt-3">
+        <div className="h-40 mt-3">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
+            <BarChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
               <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={{ stroke: NEUTRAL.chipInactive }} tickLine={false} />
+              {/* interval="preserveStartEnd" ให้ recharts เว้น label กลางๆ ที่จะชนกันเองถ้าพื้นที่ไม่พอ
+                  (เช่นจอมือถือแคบ) แทนที่จะบังคับวาดครบทุก label จนซ้อนทับกันแบบ default (interval=0) —
+                  ต้นเหตุที่ live-test เจอ label ชนกันหมดบนมือถือ ("พฤศสอาจอพ") ทั้งที่ font-size เท่าเดิม */}
+              <XAxis
+                dataKey="label"
+                interval="preserveStartEnd"
+                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                axisLine={{ stroke: NEUTRAL.chipInactive }}
+                tickLine={false}
+              />
               <YAxis
                 tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
                 axisLine={false}
@@ -259,8 +268,11 @@ function BodyProgressRow({
     )
   }
   const startValue = delta.delta !== null ? delta.value - delta.delta : null
-  // format() (ถ้ามี) ใส่หน่วยต่อท้ายให้ในตัวอยู่แล้ว เช่น "81.5 kg" — ห้ามเติม {unit} ซ้ำนอก displayValue อีก
-  const displayValue = (v: number) => (format ? format(v, decimals) : `${v.toFixed(decimals)} ${unit}`)
+  // % ไม่มีเว้นวรรคก่อนหน่วย (ตามธรรมเนียมเดิมทั้งแอป เช่น DashboardView.tsx "22.2%") ส่วน kg/lb เว้นวรรค
+  // (ตามธรรมเนียม formatWeight() "81.5 kg") — format() (ถ้ามี) ใส่หน่วยต่อท้ายให้ในตัวอยู่แล้ว ห้ามเติม
+  // {unit} ซ้ำนอก displayValue อีก
+  const unitSuffix = unit === '%' ? unit : ` ${unit}`
+  const displayValue = (v: number) => (format ? format(v, decimals) : `${v.toFixed(decimals)}${unitSuffix}`)
   // delta เป็นผลต่างหน่วย kg เสมอ (จาก DB) — แถวที่ใช้ format (น้ำหนัก/กล้ามเนื้อ) ต้อง toDisplay ผลต่างด้วย
   // ไม่งั้นตอนผู้ใช้เลือกหน่วยเป็น lb ตัวเลขหลักจะโชว์เป็น lb แต่ delta ยังเป็น kg ดิบไม่ตรงกัน
   const deltaMagnitude =
@@ -277,11 +289,15 @@ function BodyProgressRow({
         ) : (
           displayValue(delta.value)
         )}
-        {delta.delta !== null && (
-          <span className="ml-1.5 font-semibold" style={{ color }}>
-            {delta.delta > 0 ? '↑' : delta.delta < 0 ? '↓' : ''} {deltaMagnitude.toFixed(decimals)}
-          </span>
-        )}
+        {delta.delta !== null &&
+          (delta.delta === 0 ? (
+            <span className="ml-1.5 text-muted">— ไม่มีการเปลี่ยนแปลง</span>
+          ) : (
+            <span className="ml-1.5 font-semibold" style={{ color }}>
+              {delta.delta > 0 ? '↑' : '↓'} {deltaMagnitude.toFixed(decimals)}
+              {unitSuffix}
+            </span>
+          ))}
       </span>
     </div>
   )
