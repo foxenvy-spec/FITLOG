@@ -36,7 +36,7 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import EmptyState from '@/components/EmptyState'
 import PremiumCard from '@/components/ui/PremiumCard'
-import WorkoutReportSection from '@/components/stats/WorkoutReportSection'
+import Link from 'next/link'
 import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
 import { useCountUp } from '@/lib/useCountUp'
 
@@ -611,6 +611,19 @@ export default function StatsPage() {
     </div>
   )
 
+  // ฟีดแบ็ก "อยากมี Workout Report ย้อนหลัง 7/30 วัน — ควรแยกเป็นหน้าใหม่ /stats/report ไม่ยัดเป็น section
+  // ต่อท้ายหน้านี้ เพราะ /stats ตอนนี้มีข้อมูลมากพอเป็น Analytics Dashboard เต็มตัวแล้ว (มี Explore your
+  // data) ส่วน Report ควรเป็น curated summary แยกต่างหาก (Understand your progress) — จุดเข้าคือปุ่มนี้
+  // เท่านั้น ไม่เพิ่ม bottom nav/tab ใหม่ตามที่ยืนยัน — สไตล์เดียวกับปุ่ม Export PDF ที่มีอยู่แล้วด้านล่าง
+  const workoutReportButton = (
+    <Link
+      href="/stats/report"
+      className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-line text-muted text-[12px] font-display tracked uppercase px-3 py-2 hover:text-amber hover:border-amber/50 transition"
+    >
+      📄 Workout Report
+    </Link>
+  )
+
   if (workouts.length === 0) {
     return (
       <div className="space-y-8">
@@ -621,12 +634,11 @@ export default function StatsPage() {
                 ตัวบอกสถานะเล็กๆ ระหว่าง refetch แทนการสลับทั้งหน้าเป็น LoadingState เปล่าๆ */}
             {loading && <span className="text-[12px] text-muted animate-pulse">กำลังอัปเดต...</span>}
           </div>
-          {timeframeSelector}
+          <div className="flex items-center gap-2 flex-wrap">
+            {workoutReportButton}
+            {timeframeSelector}
+          </div>
         </div>
-        {/* ฟีดแบ็ก "อยากมี Workout Report ย้อนหลัง 7/30 วัน" — ดึงข้อมูลของตัวเองแยกจาก timeframe selector
-            ของหน้านี้ (workouts ด้านบนว่างเพราะ scope ตาม timeframe ที่เลือกไว้ อาจไม่เกี่ยวกับ 7/30 วัน
-            ล่าสุดเลย) จึงยังโชว์ได้แม้ workouts (ของหน้านี้) จะว่าง */}
-        <WorkoutReportSection />
         <EmptyState
           icon="📈"
           title="ยังไม่มีข้อมูลสถิติ"
@@ -655,6 +667,7 @@ export default function StatsPage() {
           {loading && <span className="text-[12px] text-muted animate-pulse">กำลังอัปเดต...</span>}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {workoutReportButton}
           {timeframeSelector}
           <button
             type="button"
@@ -671,12 +684,6 @@ export default function StatsPage() {
         FITLOG — Progress Report ·{' '}
         {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
-
-      {/* ฟีดแบ็ก "อยากมี Workout Report ย้อนหลัง 7/30 วัน — ควรเป็นพระเอกของหน้า" — วางไว้บนสุดเหนือ
-          StatCard grid เดิม ไม่แตะ/ไม่เรียงลำดับ section อื่นด้านล่างเลย ตัวเลือกช่วงเวลา 7D/30D เป็น
-          state ของตัวเอง แยกจาก timeframeSelector ด้านบน (คนละ concern เหมือนที่ BodyMetricsRow.tsx
-          มี selector ของตัวเองแยกจาก Dashboard อยู่แล้ว) */}
-      <WorkoutReportSection />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Total Volume" value={Math.round(toDisplay(totals.totalVolume))} unit={unit} accent="steel" />
