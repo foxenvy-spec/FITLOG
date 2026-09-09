@@ -207,3 +207,18 @@ export function composeReportSummary(input: ReportSummaryInput): ReportSummary {
     nextStep: consistencyPct !== null ? 'รักษาจังหวะการฝึกตามแผนต่อไป' : 'ลองตั้งโปรแกรมประจำสัปดาห์เพื่อติดตามง่ายขึ้น',
   }
 }
+
+export interface TrendPoint {
+  label: string
+  value: number
+}
+
+// จุดสูงสุดของ Training Trend — ใช้ประกอบประโยค insight ใต้กราฟ ("Volume สูงสุด{label} {value}{unit}")
+// คืน null ถ้าไม่มีจุดเลย หรือทุกจุดเป็น 0 (ไม่มีอะไรให้ชี้ "สูงสุด" อย่างมีความหมาย — ช่วงที่ไม่ได้ฝึกเลย)
+export function findPeakTrendPoint(points: TrendPoint[]): TrendPoint | null {
+  let peak: TrendPoint | null = null
+  for (const p of points) {
+    if (peak === null || p.value > peak.value) peak = p
+  }
+  return peak !== null && peak.value > 0 ? peak : null
+}

@@ -6,6 +6,7 @@ import {
   computeDailyVolumes,
   computeWeeklyVolumesWithLabels,
   composeReportSummary,
+  findPeakTrendPoint,
 } from './workoutReport'
 import type { Workout } from './types'
 import type { MetricDelta } from './bodyMetricsSummary'
@@ -241,5 +242,36 @@ describe('composeReportSummary', () => {
       periodLabel: '7 วันที่ผ่านมา',
     })
     expect(result.interpretation).toBe('ฝึกไป 4 ครั้งใน7 วันที่ผ่านมา')
+  })
+})
+
+describe('findPeakTrendPoint', () => {
+  it('returns null for an empty list', () => {
+    expect(findPeakTrendPoint([])).toBeNull()
+  })
+
+  it('returns null when every point is 0 (nothing trained that period)', () => {
+    const points = [
+      { label: 'จ', value: 0 },
+      { label: 'อ', value: 0 },
+    ]
+    expect(findPeakTrendPoint(points)).toBeNull()
+  })
+
+  it('returns the point with the highest value', () => {
+    const points = [
+      { label: 'จ', value: 200 },
+      { label: 'อ', value: 500 },
+      { label: 'พ', value: 300 },
+    ]
+    expect(findPeakTrendPoint(points)).toEqual({ label: 'อ', value: 500 })
+  })
+
+  it('returns the first point when there is a tie', () => {
+    const points = [
+      { label: 'จ', value: 500 },
+      { label: 'อ', value: 500 },
+    ]
+    expect(findPeakTrendPoint(points)).toEqual({ label: 'จ', value: 500 })
   })
 })

@@ -53,14 +53,16 @@ export default function WorkoutReportPage() {
         ← กลับไปสถิติ
       </Link>
 
-      <div className="flex items-start justify-between gap-2 flex-wrap">
-        <div>
-          <h1 className="font-display text-2xl tracked uppercase">Workout Report</h1>
-          <p className="text-[12px] text-muted mt-1">
-            📅 {periodLabel} ({dateRangeLabel})
-          </p>
-        </div>
-        <div className="print:hidden shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
+      <div>
+        <h1 className="font-display text-2xl tracked uppercase">Workout Report</h1>
+        <p className="text-[12px] text-muted mt-1">
+          📅 {periodLabel} ({dateRangeLabel})
+        </p>
+      </div>
+
+      {/* period toggle + Export PDF บนแถวเดียวกัน (locked layout) — ย้าย Export PDF ขึ้นจาก footer เดิม */}
+      <div className="print:hidden flex items-center justify-between gap-2 flex-wrap">
+        <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -73,6 +75,13 @@ export default function WorkoutReportPage() {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-1.5 active:scale-[0.98] transition"
+        >
+          📄 Export PDF
+        </button>
       </div>
 
       {/* 1. Workout Summary */}
@@ -98,76 +107,121 @@ export default function WorkoutReportPage() {
         </div>
       </PremiumCard>
 
-      {/* 2. Consistency */}
-      <PremiumCard className="p-4">
-        <SectionHeader icon="🎯" title="Consistency" />
-        {report.consistency.pct === null ? (
-          <p className="text-sm text-muted mt-3">ยังไม่ได้ตั้งโปรแกรมประจำสัปดาห์ — ตั้งได้ที่หน้าโปรแกรม</p>
-        ) : (
-          <div className="mt-3">
-            <div className="flex items-baseline justify-between">
-              <p className="font-mono font-bold text-2xl text-ink">{report.consistency.pct}%</p>
-              <p className="text-[12px] text-muted">
-                ทำตามแผน {report.consistency.completedCount} / {report.consistency.plannedCount} วัน
-              </p>
+      {/* 2+3. Consistency / Training Trend — จัดคู่กันเป็น 2 คอลัมน์ (มือถือ: เรียงตกลงมาปกติ) ตาม layout
+          ที่ล็อกไว้ ให้ Report อ่านเป็น "การ์ดรายงาน" มากกว่าการ์ด /stats เรียงต่อกันเฉยๆ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* 2. Consistency */}
+        <PremiumCard className="p-4">
+          <SectionHeader icon="🎯" title="Consistency" />
+          {report.consistency.pct === null ? (
+            <p className="text-sm text-muted mt-3">ยังไม่ได้ตั้งโปรแกรมประจำสัปดาห์ — ตั้งได้ที่หน้าโปรแกรม</p>
+          ) : (
+            <div className="mt-3">
+              <div className="flex items-baseline justify-between">
+                <p className="font-mono font-bold text-2xl text-ink">{report.consistency.pct}%</p>
+                <p className="text-[12px] text-muted">
+                  ทำตามแผน {report.consistency.completedCount} / {report.consistency.plannedCount} วัน
+                </p>
+              </div>
+              <div className="h-2 mt-2 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, report.consistency.pct)}%`, background: COLORS.amber }} />
+              </div>
             </div>
-            <div className="h-2 mt-2 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
-              <div className="h-full rounded-full" style={{ width: `${Math.min(100, report.consistency.pct)}%`, background: COLORS.amber }} />
-            </div>
+          )}
+        </PremiumCard>
+
+        {/* 3. Training Trend (Volume เท่านั้นตามที่ล็อกไว้) */}
+        <PremiumCard className="p-4">
+          <SectionHeader icon="📊" title="Training Trend" />
+          <p className="text-[11px] text-muted mt-0.5">Volume · {period === 7 ? 'รายวัน' : 'รายสัปดาห์'}</p>
+          <div className="h-40 mt-2">
+            {/* minWidth/minHeight เป็น fallback ตาม docs ของ recharts เอง สำหรับกรณี ResponsiveContainer
+                วัดขนาด container จริงได้ 0 (หรือใกล้ 0) ตอน mount ครั้งแรก — ไม่งั้นทุกอย่าง (แกน X และ Y
+                พร้อมกันทั้งคู่) จะถูกวาดที่พิกัดใกล้ (0,0) เหมือนกันหมด อ่านออกมาเป็น label ทุกตัวติดกันไม่มี
+                ช่องไฟเลยทั้งสองแกน ("พฤศสอาจอพ" และ "04k8k12k16k" พร้อมกัน) ตรงกับที่ live-test เจอบนมือถือ
+                จริง — ถ้าเป็นแค่ label ชนกันเพราะที่ไม่พอ (ปัญหาที่ interval="preserveStartEnd" แก้ไปรอบก่อน)
+                แกน Y ที่มีแค่ 5 ค่าเรียงแนวตั้งไม่ควรชนกันเองด้วยเลย บ่งชี้ว่าทั้ง chart render ที่ขนาดยุบ
+                ไม่ใช่แค่ label หนาแน่นเกินพื้นที่ */}
+            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={128}>
+              <BarChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
+                <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
+                {/* interval="preserveStartEnd" ให้ recharts เว้น label กลางๆ ที่จะชนกันเองถ้าพื้นที่ไม่พอ
+                    (เช่นจอมือถือแคบ) แทนที่จะบังคับวาดครบทุก label จนซ้อนทับกันแบบ default (interval=0) */}
+                <XAxis
+                  dataKey="label"
+                  interval="preserveStartEnd"
+                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                  axisLine={{ stroke: NEUTRAL.chipInactive }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={36}
+                  tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
+                />
+                <Tooltip
+                  cursor={{ fill: withAlpha(COLORS.amber, '14') }}
+                  contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: NEUTRAL.mutedIcon }}
+                  itemStyle={{ color: '#F3F0E8' }}
+                  formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
+                />
+                {/* palette ที่ล็อกไว้: chart ใช้ amber เป็นสีหลักจุดเดียว ไม่ทำ rainbow/gradient ต่อแท่ง */}
+                <Bar dataKey="value" fill={COLORS.amber} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        )}
-      </PremiumCard>
+          {/* Training Insight — ประโยคเดียวใต้กราฟ ประกอบจากข้อมูลที่คำนวณอยู่แล้ว (จุดสูงสุดของ trendPoints
+              + volumeDeltaPct ที่มีอยู่แล้วใน Workout Summary) ไม่ใช่ metric ใหม่ */}
+          {report.trendPeak && (
+            <p className="text-[12px] text-muted mt-2">
+              Volume สูงสุด{report.trendPeak.label} {Math.round(toDisplay(report.trendPeak.value)).toLocaleString()} {unit}
+              {report.volumeDeltaPct !== null && report.volumeDeltaPct !== 0 && (
+                <>
+                  {' · '}
+                  <span style={{ color: report.volumeDeltaPct > 0 ? COLORS.moss : COLORS.rust }}>
+                    {report.volumeDeltaPct > 0 ? '↑' : '↓'} {Math.abs(report.volumeDeltaPct)}%
+                  </span>{' '}
+                  เทียบช่วงก่อนหน้า
+                </>
+              )}
+            </p>
+          )}
+        </PremiumCard>
+      </div>
 
-      {/* 3. Training Trend (Volume เท่านั้นตามที่ล็อกไว้) */}
-      <PremiumCard className="p-4">
-        <SectionHeader icon="📊" title={`Training Trend · Volume (${period === 7 ? 'รายวัน' : 'รายสัปดาห์'})`} />
-        <div className="h-40 mt-3">
-          {/* minWidth/minHeight เป็น fallback ตาม docs ของ recharts เอง สำหรับกรณี ResponsiveContainer
-              วัดขนาด container จริงได้ 0 (หรือใกล้ 0) ตอน mount ครั้งแรก — ไม่งั้นทุกอย่าง (แกน X และ Y
-              พร้อมกันทั้งคู่) จะถูกวาดที่พิกัดใกล้ (0,0) เหมือนกันหมด อ่านออกมาเป็น label ทุกตัวติดกันไม่มี
-              ช่องไฟเลยทั้งสองแกน ("พฤศสอาจอพ" และ "04k8k12k16k" พร้อมกัน) ตรงกับที่ live-test เจอบนมือถือ
-              จริง — ถ้าเป็นแค่ label ชนกันเพราะที่ไม่พอ (ปัญหาที่ interval="preserveStartEnd" แก้ไปรอบก่อน)
-              แกน Y ที่มีแค่ 5 ค่าเรียงแนวตั้งไม่ควรชนกันเองด้วยเลย บ่งชี้ว่าทั้ง chart render ที่ขนาดยุบ ไม่ใช่
-              แค่ label หนาแน่นเกินพื้นที่ */}
-          <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={128}>
-            <BarChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
-              <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
-              {/* interval="preserveStartEnd" ให้ recharts เว้น label กลางๆ ที่จะชนกันเองถ้าพื้นที่ไม่พอ
-                  (เช่นจอมือถือแคบ) แทนที่จะบังคับวาดครบทุก label จนซ้อนทับกันแบบ default (interval=0) */}
-              <XAxis
-                dataKey="label"
-                interval="preserveStartEnd"
-                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
-                axisLine={{ stroke: NEUTRAL.chipInactive }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-                width={40}
-                tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
-              />
-              <Tooltip
-                cursor={{ fill: 'rgba(108,140,168,0.08)' }}
-                contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: NEUTRAL.mutedIcon }}
-                itemStyle={{ color: '#F3F0E8' }}
-                formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
-              />
-              <Bar dataKey="value" fill={COLORS.steel} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </PremiumCard>
-
-      {/* 4. Body Progress — เปรียบเทียบต้นช่วง -> ปัจจุบัน ใช้ computeBodyMetricsSummary ตรงๆ ไม่คิด metric ใหม่ */}
+      {/* 4. Body Progress — เปรียบเทียบต้นช่วง -> ปัจจุบัน ใช้ computeBodyMetricsSummary ตรงๆ ไม่คิด metric
+          ใหม่ — Goal bar ใช้ goalProgress ที่มาจาก lib/goalProgress.ts เดิม (weight/bodyFat เท่านั้น ตาราง
+          goals ไม่รองรับ goal_type อื่น — กล้ามเนื้อจึงไม่มี goal ให้โชว์ ไม่ใช่ bug) */}
       <PremiumCard className="p-4">
         <SectionHeader icon="💪" title="Body Progress" />
-        <div className="space-y-2 mt-3">
-          <BodyProgressRow label="น้ำหนัก" delta={report.bodySummary.weight} unit={unit} format={format} toDisplay={toDisplay} />
-          <BodyProgressRow label="ไขมัน" delta={report.bodySummary.bodyFatPct} unit="%" decimals={1} />
-          <BodyProgressRow label="กล้ามเนื้อ" delta={report.bodySummary.skeletalMuscleKg} unit={unit} format={format} toDisplay={toDisplay} />
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          <BodyProgressColumn
+            label="น้ำหนัก"
+            delta={report.bodySummary.weight}
+            unit={unit}
+            format={format}
+            toDisplay={toDisplay}
+            goal={
+              report.goalProgress.weight
+                ? { targetText: format(report.goalProgress.weight.targetValue, 1), progressPct: report.goalProgress.weight.progressPct }
+                : null
+            }
+          />
+          <BodyProgressColumn
+            label="ไขมัน"
+            delta={report.bodySummary.bodyFatPct}
+            unit="%"
+            decimals={1}
+            goal={
+              report.goalProgress.bodyFatPct
+                ? { targetText: `${report.goalProgress.bodyFatPct.targetValue.toFixed(1)}%`, progressPct: report.goalProgress.bodyFatPct.progressPct }
+                : null
+            }
+          />
+          <BodyProgressColumn label="กล้ามเนื้อ" delta={report.bodySummary.skeletalMuscleKg} unit={unit} format={format} toDisplay={toDisplay} goal={null} />
         </div>
       </PremiumCard>
 
@@ -178,21 +232,11 @@ export default function WorkoutReportPage() {
         <p className="text-[12px] text-muted mt-1">{report.summary.nextStep}</p>
       </PremiumCard>
 
-      {/* Footer — Export PDF ใช้ window.print() เดิมของ /stats ตรงๆ (ไม่เพิ่ม dependency ใหม่) — ไม่มีปุ่ม
-          "แชร์รายงาน" เพราะ Share-as-image ยังเป็น backlog รอบหน้า ยังไม่มีของจริงให้กด */}
-      <div className="print:hidden flex gap-2">
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="flex-1 flex items-center justify-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-2.5 active:scale-[0.98] transition"
-        >
-          📄 Export PDF
-        </button>
-        <Link
-          href="/stats"
-          className="flex-1 flex items-center justify-center gap-1.5 rounded-full bg-steel text-bg text-[12px] font-display tracked uppercase px-3 py-2.5 active:scale-[0.98] transition"
-        >
-          📊 ดูสถิติทั้งหมด →
+      {/* Footer — Export PDF ย้ายขึ้นไปอยู่แถว period toggle ด้านบนแล้ว เหลือแค่ลิงก์เดียวตาม layout ที่
+          ล็อกไว้ — ไม่มีปุ่ม "แชร์รายงาน" เพราะ Share-as-image ยังเป็น backlog รอบหน้า ยังไม่มีของจริงให้กด */}
+      <div className="print:hidden text-center">
+        <Link href="/stats" className="text-[12px] font-display tracked uppercase text-amber hover:opacity-80 transition inline-flex items-center gap-1">
+          ดูสถิติเพิ่มเติม →
         </Link>
       </div>
     </div>
@@ -250,13 +294,14 @@ function SummaryTile({
   )
 }
 
-function BodyProgressRow({
+function BodyProgressColumn({
   label,
   delta,
   unit,
   decimals = 1,
   format,
   toDisplay,
+  goal,
 }: {
   label: string
   delta: { value: number | null; delta: number | null; isGood: boolean | null }
@@ -264,47 +309,49 @@ function BodyProgressRow({
   decimals?: number
   format?: (kg: number | null | undefined, decimals?: number) => string
   toDisplay?: (kg: number) => number
+  // เฉพาะ weight/bodyFat มี goal จริง (ดูคอมเมนต์ WorkoutReportData.goalProgress) — กล้ามเนื้อส่ง null เสมอ
+  goal: { targetText: string; progressPct: number | null } | null
 }) {
-  if (delta.value === null) {
-    return (
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted">{label}</span>
-        <span className="text-muted">— ยังไม่มีข้อมูล</span>
-      </div>
-    )
-  }
-  const startValue = delta.delta !== null ? delta.value - delta.delta : null
   // % ไม่มีเว้นวรรคก่อนหน่วย (ตามธรรมเนียมเดิมทั้งแอป เช่น DashboardView.tsx "22.2%") ส่วน kg/lb เว้นวรรค
   // (ตามธรรมเนียม formatWeight() "81.5 kg") — format() (ถ้ามี) ใส่หน่วยต่อท้ายให้ในตัวอยู่แล้ว ห้ามเติม
   // {unit} ซ้ำนอก displayValue อีก
   const unitSuffix = unit === '%' ? unit : ` ${unit}`
+  if (delta.value === null) {
+    return (
+      <div>
+        <p className="text-[11px] tracked uppercase text-muted">{label}</p>
+        <p className="text-sm text-muted mt-1">— ยังไม่มีข้อมูล</p>
+      </div>
+    )
+  }
   const displayValue = (v: number) => (format ? format(v, decimals) : `${v.toFixed(decimals)}${unitSuffix}`)
-  // delta เป็นผลต่างหน่วย kg เสมอ (จาก DB) — แถวที่ใช้ format (น้ำหนัก/กล้ามเนื้อ) ต้อง toDisplay ผลต่างด้วย
+  // delta เป็นผลต่างหน่วย kg เสมอ (จาก DB) — คอลัมน์ที่ใช้ format (น้ำหนัก/กล้ามเนื้อ) ต้อง toDisplay ผลต่างด้วย
   // ไม่งั้นตอนผู้ใช้เลือกหน่วยเป็น lb ตัวเลขหลักจะโชว์เป็น lb แต่ delta ยังเป็น kg ดิบไม่ตรงกัน
   const deltaMagnitude =
     delta.delta !== null ? (toDisplay ? toDisplay(Math.abs(delta.delta)) : Math.abs(delta.delta)) : 0
   const color = delta.isGood === null ? NEUTRAL.mutedIcon : delta.isGood ? COLORS.moss : COLORS.rust
   return (
-    <div className="flex items-center justify-between text-sm gap-2 flex-wrap">
-      <span className="text-muted shrink-0">{label}</span>
-      <span className="font-mono text-ink text-right">
-        {startValue !== null ? (
-          <>
-            {displayValue(startValue)} → {displayValue(delta.value)}
-          </>
-        ) : (
-          displayValue(delta.value)
-        )}
-        {delta.delta !== null &&
-          (delta.delta === 0 ? (
-            <span className="ml-1.5 text-muted">— ไม่มีการเปลี่ยนแปลง</span>
-          ) : (
-            <span className="ml-1.5 font-semibold" style={{ color }}>
-              {delta.delta > 0 ? '↑' : '↓'} {deltaMagnitude.toFixed(decimals)}
-              {unitSuffix}
-            </span>
-          ))}
-      </span>
+    <div>
+      <p className="text-[11px] tracked uppercase text-muted">{label}</p>
+      <p className="font-mono text-[15px] text-ink mt-0.5 truncate">{displayValue(delta.value)}</p>
+      <p className="text-[11px] mt-0.5" style={{ color: delta.delta === null || delta.delta === 0 ? NEUTRAL.mutedIcon : color }}>
+        {delta.delta === null
+          ? ' '
+          : delta.delta === 0
+            ? 'ไม่เปลี่ยนแปลง'
+            : `${delta.delta > 0 ? '↑' : '↓'} ${deltaMagnitude.toFixed(decimals)}${unitSuffix}`}
+      </p>
+      {goal && (
+        <div className="mt-2">
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${Math.max(0, Math.min(100, goal.progressPct ?? 0))}%`, background: COLORS.amber }}
+            />
+          </div>
+          <p className="text-[10px] text-muted mt-1 truncate">เป้าหมาย {goal.targetText}</p>
+        </div>
+      )}
     </div>
   )
 }

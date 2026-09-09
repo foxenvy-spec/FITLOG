@@ -17,15 +17,23 @@ import {
   computeDailyVolumes,
   computeWeeklyVolumesWithLabels,
   composeReportSummary,
+  findPeakTrendPoint,
   type PeriodTotals,
   type ReportSummary,
+  type TrendPoint,
 } from './workoutReport'
+import { goalProgressPct } from './goalProgress'
 import { fetchBodyMetricsData } from '@/components/BodyMetricsRow'
 import { getErrorMessage } from './errors'
 
 export type ReportPeriod = 7 | 30
 
 const THAI_WEEKDAY_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+
+export interface GoalProgressDetail {
+  targetValue: number
+  progressPct: number | null
+}
 
 export interface WorkoutReportData {
   currentTotals: PeriodTotals
@@ -35,8 +43,15 @@ export interface WorkoutReportData {
   volumeDeltaPct: number | null
   setsDeltaPct: number | null
   consistency: PlannedConsistency
-  trendPoints: { label: string; value: number }[]
+  trendPoints: TrendPoint[]
+  trendPeak: TrendPoint | null
   bodySummary: BodyMetricsSummary
+  // เฉพาะ weight/bodyFat (ตาราง goals รองรับแค่ goal_type สองแบบนี้ — เหมือน BodyMetricsRow.tsx/หน้า
+  // /health ทุกจุด) — muscle ไม่มี goal ให้ใช้จริง จึงไม่มี field นี้ ไม่ใช่แค่ null เฉยๆ
+  goalProgress: {
+    weight: GoalProgressDetail | null
+    bodyFatPct: GoalProgressDetail | null
+  }
   summary: ReportSummary
 }
 
@@ -125,6 +140,27 @@ export function useWorkoutReport(period: ReportPeriod) {
 
     const bodySummary = computeBodyMetricsSummary(bodyMetricsInput.metrics, bodyMetricsInput.heightCm, period)
 
+    // Goal Progress (Body Progress section) — reuse ของเดิมจาก BodyMetricsRow.tsx/lib/goalProgress.ts
+    // เป๊ะ (ตาราง goals รองรับแค่ weight/body_fat, ใช้ earliest tracked value แทน starting_value แช่แข็ง
+    // เพื่อให้ % คืบหน้าเรียลไทม์ตาม v62 — ดูคอมเมนต์เดิมใน goalProgress.ts) ไม่คิดสูตรใหม่
+    const chronologicalMetrics = [...bodyMetricsInput.metrics].reverse()
+    const weightGoal = bodyMetricsInput.goals.find((g) => g.goal_type === 'weight')
+    const bodyFatGoal = bodyMetricsInput.goals.find((g) => g.goal_type === 'body_fat')
+    const earliestWeight = chronologicalMetrics.find((m) => m.weight_kg != null)?.weight_kg ?? null
+    const earliestBodyFat = chronologicalMetrics.find((m) => m.body_fat_pct != null)?.body_fat_pct ?? null
+    const goalProgress = {
+      weight:
+        weightGoal?.target_value != null
+          ? { targetValue: weightGoal.target_value, progressPct: goalProgressPct(weightGoal, bodySummary.weight.value, earliestWeight) }
+          : null,
+      bodyFatPct:
+        bodyFatGoal?.target_value != null
+          ? { targetValue: bodyFatGoal.target_value, progressPct: goalProgressPct(bodyFatGoal, bodySummary.bodyFatPct.value, earliestBodyFat) }
+          : null,
+    }
+
+    const trendPeak = findPeakTrendPoint(trendPoints)
+
     const volumeDeltaPct = computePctChange(currentTotals.totalVolumeKg, previousTotals.totalVolumeKg)
     const summary = composeReportSummary({
       workoutCount: currentTotals.workoutCount,
@@ -145,7 +181,9 @@ export function useWorkoutReport(period: ReportPeriod) {
       setsDeltaPct: computePctChange(currentTotals.totalSets, previousTotals.totalSets),
       consistency,
       trendPoints,
+      trendPeak,
       bodySummary,
+      goalProgress,
       summary,
     }
   }, [workouts, programDays, bodyMetricsInput, period])
