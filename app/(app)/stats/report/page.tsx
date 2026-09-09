@@ -122,12 +122,18 @@ export default function WorkoutReportPage() {
       <PremiumCard className="p-4">
         <SectionHeader icon="📊" title={`Training Trend · Volume (${period === 7 ? 'รายวัน' : 'รายสัปดาห์'})`} />
         <div className="h-40 mt-3">
-          <ResponsiveContainer width="100%" height="100%">
+          {/* minWidth/minHeight เป็น fallback ตาม docs ของ recharts เอง สำหรับกรณี ResponsiveContainer
+              วัดขนาด container จริงได้ 0 (หรือใกล้ 0) ตอน mount ครั้งแรก — ไม่งั้นทุกอย่าง (แกน X และ Y
+              พร้อมกันทั้งคู่) จะถูกวาดที่พิกัดใกล้ (0,0) เหมือนกันหมด อ่านออกมาเป็น label ทุกตัวติดกันไม่มี
+              ช่องไฟเลยทั้งสองแกน ("พฤศสอาจอพ" และ "04k8k12k16k" พร้อมกัน) ตรงกับที่ live-test เจอบนมือถือ
+              จริง — ถ้าเป็นแค่ label ชนกันเพราะที่ไม่พอ (ปัญหาที่ interval="preserveStartEnd" แก้ไปรอบก่อน)
+              แกน Y ที่มีแค่ 5 ค่าเรียงแนวตั้งไม่ควรชนกันเองด้วยเลย บ่งชี้ว่าทั้ง chart render ที่ขนาดยุบ ไม่ใช่
+              แค่ label หนาแน่นเกินพื้นที่ */}
+          <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={128}>
             <BarChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
               <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
               {/* interval="preserveStartEnd" ให้ recharts เว้น label กลางๆ ที่จะชนกันเองถ้าพื้นที่ไม่พอ
-                  (เช่นจอมือถือแคบ) แทนที่จะบังคับวาดครบทุก label จนซ้อนทับกันแบบ default (interval=0) —
-                  ต้นเหตุที่ live-test เจอ label ชนกันหมดบนมือถือ ("พฤศสอาจอพ") ทั้งที่ font-size เท่าเดิม */}
+                  (เช่นจอมือถือแคบ) แทนที่จะบังคับวาดครบทุก label จนซ้อนทับกันแบบ default (interval=0) */}
               <XAxis
                 dataKey="label"
                 interval="preserveStartEnd"

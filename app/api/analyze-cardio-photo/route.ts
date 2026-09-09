@@ -15,7 +15,7 @@ const EXTRACTION_SYSTEM_PROMPT = `คุณช่วยอ่านตัวเ�
 {
   "cardio_type": string หรือ null (เช่น "วิ่ง", "ปั่นจักรยาน", "ว่ายน้ำ", "เดินเร็ว" — แปลเป็นภาษาไทย),
   "distance_km": number หรือ null,
-  "duration_min": number หรือ null,
+  "duration_min": number หรือ null (ต้องเป็นจำนวนนาทีทศนิยมเสมอ ถ้าหน้าจอแสดงเวลาแบบ mm:ss หรือ hh:mm:ss เช่น "9:56" ให้แปลงเป็นนาทีทศนิยมก่อนตอบ — "9:56" คือ 9 นาที 56 วินาที = 9.93 ไม่ใช่ 956 หรือ 9.56),
   "avg_heart_rate": number หรือ null (ชีพจรเฉลี่ย หน่วย bpm),
   "calories_kcal": number หรือ null,
   "cadence": number หรือ null (อัตราก้าว/นาทีของวิ่ง/เดิน หรือรอบขา/นาทีของปั่นจักรยาน — มักเขียนว่า "cadence", "steps/min", หรือ "rpm")
