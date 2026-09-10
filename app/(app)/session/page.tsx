@@ -41,6 +41,7 @@ import {
   type LoggedWorkoutRow,
   type LoggedSetRow,
   type LastPerformance,
+  type SkippedExercise,
 } from '@/lib/workoutSession'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
@@ -1405,37 +1406,53 @@ export default function SessionPage() {
             ของกลุ่มกล้ามเนื้อที่เพิ่มขึ้นเด่นสุดสัปดาห์นี้ (เอนจินเดิม computeBestVolumeIncrease ที่ใช้ทำ
             greeting บน Dashboard อยู่แล้ว ไม่ได้สร้างสูตรใหม่) */}
         {summaryExtras && (
-          // Version 4 — ฟีดแบ็ก "mockup เป็นแค่แถวลิงก์สั้นๆ ไม่มี bar/เหตุผล" ตัด tier label + progress
-          // bar + บรรทัดเหตุผลออก เหลือแถวเดียวแบบเดียวกับ "สถิติใหม่" ด้านล่าง (ไอคอน + ป้าย/ค่า + ลูกศร)
-          // สีของ 🏆 ยังผูกกับ tier เดิม (workoutScoreTier) ให้พอเห็นสัญญาณคะแนนดี/แย่แบบเร็วๆ โดยไม่ต้องมี bar
+          // Version 4 — เปลี่ยนจากกรอบเทาเรียบๆ (bg-surface2 border-line) เป็นกรอบ+glow อำพันแบบเดียวกับ
+          // การ์ด "สถิติใหม่"/hero ด้านบน ให้การ์ดนี้อ่านเป็น "ความสำเร็จ" ไม่ใช่แค่กล่องข้อมูลรอง — เปลี่ยน
+          // ไอคอน ⭐ เป็น 🏆 ให้เข้าธีมเดียวกับการ์ด PR ด้านล่างที่ใช้ 🏆 อยู่แล้ว (ทั้งคู่เป็น "ความสำเร็จ")
           <div
-            className="rounded-lg px-4 py-3 flex items-center gap-3"
+            className="rounded-lg px-4 py-3 text-left space-y-1"
             style={{ background: withAlpha(COLORS.amber, '0a'), border: `1px solid ${withAlpha(COLORS.amber, '30')}` }}
           >
-            <span className="text-xl shrink-0" style={{ color: workoutScoreTier(summaryExtras.workoutScore).color }}>
-              🏆
-            </span>
-            <div className="min-w-0 flex-1 text-left">
-              <p className="text-[12px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
-              <p className="text-sm text-ink">
-                Workout Score <span className="font-mono">{summaryExtras.workoutScore}</span>
+            <p className="text-[12px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
+            {(() => {
+              const tier = workoutScoreTier(summaryExtras.workoutScore)
+              return (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🏆</span>
+                    <span className="font-mono text-lg text-ink">{summaryExtras.workoutScore}</span>
+                    <span className="text-[12px]" style={{ color: tier.color }}>
+                      {tier.label}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-surface2 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${summaryExtras.workoutScore}%`, background: tier.color }} />
+                  </div>
+                  {/* เหตุผลสั้นๆ ว่า "ทำไมได้คะแนนนี้" — ประกอบจากตัวเลขที่มีอยู่แล้วบนหน้านี้ (skipped.length,
+                      summary.exerciseCount/exercises.length) ไม่ใช่สูตรคำนวณใหม่ แค่แปลตัวเลขเป็นประโยค
+                      (ฟีดแบ็ก "35 ดูเหมือนคะแนนต่ำที่โยนมาเฉยๆ ต้องเล่าเรื่องว่าทำไม") */}
+                  {skipped.length > 0 && (
+                    <p className="text-[12px] text-muted mt-1">
+                      ข้ามท่าไป {skipped.length} ท่า · ทำได้ {summary.exerciseCount}/{exercises.length} ท่าตามแผน
+                    </p>
+                  )}
+                </>
+              )
+            })()}
+            {/* ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ engine
+                (computeBestVolumeIncrease) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — HighlightsRow.tsx
+                (Dashboard) ใช้ engine เดียวกันนี้แล้วเลี่ยงคำว่า Volume ไปแล้ว ("X เพิ่มขึ้นจากสัปดาห์ก่อน")
+                ปรับข้อความจุดนี้ให้ตรงกัน */}
+            {summaryExtras.volumeIncrease && (
+              <p className="text-xs text-ink">
+                🔥 {summaryExtras.volumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน{' '}
+                <span className="font-mono text-moss">+{summaryExtras.volumeIncrease.pct}%</span>
               </p>
-            </div>
-            <span className="text-muted shrink-0" aria-hidden="true">
-              ›
-            </span>
+            )}
           </div>
         )}
-        {/* ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ engine
-            (computeBestVolumeIncrease) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — HighlightsRow.tsx
-            (Dashboard) ใช้ engine เดียวกันนี้แล้วเลี่ยงคำว่า Volume ไปแล้ว ("X เพิ่มขึ้นจากสัปดาห์ก่อน")
-            ปรับข้อความจุดนี้ให้ตรงกัน — แยกเป็นบรรทัดของตัวเองนอกการ์ด Workout Score เพราะเป็นคนละข้อมูลกัน */}
-        {summaryExtras && summaryExtras.volumeIncrease && (
-          <p className="text-xs text-ink px-1">
-            🔥 {summaryExtras.volumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน{' '}
-            <span className="font-mono text-moss">+{summaryExtras.volumeIncrease.pct}%</span>
-          </p>
-        )}
+
+        {skipped.length > 0 && <SkippedExercisesCard skipped={skipped} />}
 
         {summaryExtras && summaryExtras.prs.length > 0 && (
           <div className="rounded-lg bg-surface2 border border-amber/30 px-4 py-3 text-left space-y-1">
@@ -2091,6 +2108,35 @@ function GlowIconChip({ icon, color, size = 36 }: { icon: React.ReactNode; color
     >
       {icon}
     </span>
+  )
+}
+
+// ฟีดแบ็ก "รายชื่อ 32 ท่ายาวเกินไป ดูเหมือนรายงาน debug" — โชว์แค่ 3 ชื่อแรก + "+N ท่า" ปุ่มเดียวขยาย/ย่อ
+// รายชื่อทั้งหมด (useState เฉยๆ ไม่ต้องทำ Bottom Sheet แยก) ข้อมูลเหมือนเดิมทุกตัว แค่เปลี่ยนการนำเสนอ
+function SkippedExercisesCard({ skipped }: { skipped: SkippedExercise[] }) {
+  const [expanded, setExpanded] = useState(false)
+  const preview = skipped.slice(0, 3).map((s) => s.exerciseName)
+  const remaining = skipped.length - preview.length
+  return (
+    <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
+      <p className="text-[12px] tracked uppercase text-muted">⏭️ ข้าม {skipped.length} ท่า</p>
+      {expanded ? (
+        <p className="text-xs text-ink">{skipped.map((s) => s.exerciseName).join(' · ')}</p>
+      ) : (
+        <p className="text-xs text-ink">
+          {preview.join(' · ')}
+          {remaining > 0 && <span className="text-muted"> · +{remaining} ท่า</span>}
+        </p>
+      )}
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] text-muted">ลองแทรกในเซสชันหน้าดูนะ</p>
+        {skipped.length > 3 && (
+          <button type="button" onClick={() => setExpanded((v) => !v)} className="text-[12px] text-amber shrink-0">
+            {expanded ? 'ย่อ' : 'ดูทั้งหมด →'}
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 
