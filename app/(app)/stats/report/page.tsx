@@ -233,6 +233,7 @@ export default function WorkoutReportPage() {
         <SectionHeader icon="💪" title="Body Progress" />
         <div className="grid grid-cols-3 gap-4 mt-4">
           <BodyProgressColumn
+            icon="⚖️"
             label="น้ำหนัก"
             delta={report.bodySummary.weight}
             unit={unit}
@@ -243,8 +244,10 @@ export default function WorkoutReportPage() {
                 ? { targetText: format(report.goalProgress.weight.targetValue, 1), progressPct: report.goalProgress.weight.progressPct }
                 : null
             }
+            isFirst
           />
           <BodyProgressColumn
+            icon="🎯"
             label="ไขมัน"
             delta={report.bodySummary.bodyFatPct}
             unit="%"
@@ -255,7 +258,15 @@ export default function WorkoutReportPage() {
                 : null
             }
           />
-          <BodyProgressColumn label="กล้ามเนื้อ" delta={report.bodySummary.skeletalMuscleKg} unit={unit} format={format} toDisplay={toDisplay} goal={null} />
+          <BodyProgressColumn
+            icon="💪"
+            label="กล้ามเนื้อ"
+            delta={report.bodySummary.skeletalMuscleKg}
+            unit={unit}
+            format={format}
+            toDisplay={toDisplay}
+            goal={null}
+          />
         </div>
       </PremiumCard>
 
@@ -345,6 +356,7 @@ function SummaryTile({
 }
 
 function BodyProgressColumn({
+  icon,
   label,
   delta,
   unit,
@@ -352,7 +364,9 @@ function BodyProgressColumn({
   format,
   toDisplay,
   goal,
+  isFirst = false,
 }: {
+  icon: string
   label: string
   delta: { value: number | null; delta: number | null; isGood: boolean | null }
   unit: string
@@ -361,15 +375,29 @@ function BodyProgressColumn({
   toDisplay?: (kg: number) => number
   // เฉพาะ weight/bodyFat มี goal จริง (ดูคอมเมนต์ WorkoutReportData.goalProgress) — กล้ามเนื้อส่ง null เสมอ
   goal: { targetText: string; progressPct: number | null } | null
+  isFirst?: boolean
 }) {
   // % ไม่มีเว้นวรรคก่อนหน่วย (ตามธรรมเนียมเดิมทั้งแอป เช่น DashboardView.tsx "22.2%") ส่วน kg/lb เว้นวรรค
   // (ตามธรรมเนียม formatWeight() "81.5 kg") — format() (ถ้ามี) ใส่หน่วยต่อท้ายให้ในตัวอยู่แล้ว ห้ามเติม
   // {unit} ซ้ำนอก displayValue อีก
   const unitSuffix = unit === '%' ? unit : ` ${unit}`
+  // เส้นแบ่งแนวตั้งบางๆ ระหว่างคอลัมน์ (ตามที่ล็อกไว้ "vertical separator") — pattern เดียวกับ SummaryTile
+  // ใน Workout Summary ทุกประการ (sm ขึ้นไปเท่านั้น ที่เรียงแนวนอนจริง)
+  const wrapperClass = isFirst ? '' : 'sm:border-l sm:pl-4'
+  const iconBadge = (
+    <span
+      className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] shrink-0 mb-2"
+      style={{ backgroundColor: 'rgba(255,255,255,.06)' }}
+      aria-hidden="true"
+    >
+      {icon}
+    </span>
+  )
   if (delta.value === null) {
     return (
-      <div>
-        <p className="text-[11px] tracked uppercase text-muted">{label}</p>
+      <div className={wrapperClass} style={{ borderColor: NEUTRAL.chipInactive }}>
+        {iconBadge}
+        <p className="text-[12px] tracked uppercase text-muted">{label}</p>
         <p className="text-sm text-muted mt-1">— ยังไม่มีข้อมูล</p>
       </div>
     )
@@ -381,19 +409,20 @@ function BodyProgressColumn({
     delta.delta !== null ? (toDisplay ? toDisplay(Math.abs(delta.delta)) : Math.abs(delta.delta)) : 0
   const color = delta.isGood === null ? NEUTRAL.mutedIcon : delta.isGood ? COLORS.moss : COLORS.rust
   return (
-    <div>
+    <div className={wrapperClass} style={{ borderColor: NEUTRAL.chipInactive }}>
+      {iconBadge}
       <p className="text-[12px] tracked uppercase text-muted">{label}</p>
       {/* ขนาดตัวเลขเท่า Workout Summary hero KPI (text-2xl/3xl) ให้น้ำหนักภาพเท่ากัน ไม่ใช่ตัวเลขรองที่
           ดูเบากว่า section อื่นของรายงานเดียวกัน */}
       <p className="font-mono text-2xl sm:text-3xl font-bold text-ink mt-1.5 truncate">{displayValue(delta.value)}</p>
       <p className="text-sm mt-1 font-semibold" style={{ color: delta.delta === null || delta.delta === 0 ? NEUTRAL.mutedIcon : color }}>
         {delta.delta === null
-          ? ' '
+          ? '—'
           : delta.delta === 0
             ? 'ไม่เปลี่ยนแปลง'
             : `${delta.delta > 0 ? '↑' : '↓'} ${deltaMagnitude.toFixed(decimals)}${unitSuffix}`}
       </p>
-      {goal && (
+      {goal ? (
         <div className="mt-3">
           <p className="text-[12px] text-muted mb-1.5 truncate">เป้าหมาย {goal.targetText}</p>
           <div className="h-2 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
@@ -403,6 +432,11 @@ function BodyProgressColumn({
             />
           </div>
           {goal.progressPct !== null && <p className="text-[11px] text-muted mt-1">{Math.round(goal.progressPct)}% ถึงเป้าหมาย</p>}
+        </div>
+      ) : (
+        <div className="mt-3">
+          <p className="text-[12px] text-muted mb-1.5">ไม่มีเป้าหมาย</p>
+          <div className="h-2 rounded-full border border-dashed" style={{ borderColor: NEUTRAL.chipInactive }} />
         </div>
       )}
     </div>
