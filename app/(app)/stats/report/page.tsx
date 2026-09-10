@@ -12,7 +12,8 @@
 // ชัดเจน) มากกว่าที่เคยเป็นตอน embed อยู่บน /stats
 import { useState } from 'react'
 import Link from 'next/link'
-import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
+import Image from 'next/image'
+import { ResponsiveContainer, ComposedChart, Bar, Line, Cell, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { useWorkoutReport, reportPeriodLabel, reportDateRange, type ReportPeriod } from '@/lib/useWorkoutReport'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -59,44 +60,62 @@ export default function WorkoutReportPage() {
         ← กลับไปสถิติ
       </Link>
 
-      {/* Header — title/subtitle ซ้าย, period toggle + Export PDF ขวา อยู่แถวเดียวกันบน desktop (lg:flex)
-          มือถือ stack ตกลงมาปกติ ตาม layout ที่ล็อกไว้ */}
-      <div className="lg:flex lg:items-center lg:justify-between lg:gap-4">
-        <div>
-          <h1 className="font-display text-2xl lg:text-[32px] tracked uppercase">Workout Report</h1>
-          <p className="text-[12px] text-muted mt-1">
-            📅 {periodLabel} ({dateRangeLabel})
-          </p>
+      {/* Header — hero surface กับพื้นหลังรูปดัมเบล reuse asset เดียวกับ Dashboard's Today's Workout card
+          เป๊ะ (/images/today-workout-hero-dumbbell.png ผ่านการปรับแต่ง v45-v71+ มาแล้วในคอมโพเนนต์นั้น —
+          ไม่ได้เอารูปสต็อกใหม่เข้ามา และไม่ก็อปปี้ทุก layer effect จากที่นั่น เพราะสัดส่วน hero แถบนี้
+          ต่างกัน แค่ยืมรูป + gradient fade ให้ตัวหนังสืออ่านง่าย) — เลเยอร์รูป/gradient ทั้งหมด print:hidden
+          (ของตกแต่งล้วนๆ ไม่ควรเปลืองหมึกตอน export PDF) ส่วนหัวข้อ/วันที่/ปุ่มยังโชว์ตามปกติเสมอ */}
+      <div className="relative overflow-hidden rounded-card">
+        <div className="absolute inset-0 print:hidden" aria-hidden="true">
+          <Image
+            src="/images/today-workout-hero-dumbbell.png"
+            alt=""
+            fill
+            className="object-cover"
+            style={{ objectPosition: '82% 38%', filter: 'blur(0.5px) saturate(1.1)' }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(100deg, #0B0B0B 0%, rgba(11,11,11,.88) 38%, rgba(11,11,11,.5) 68%, rgba(11,11,11,.25) 100%)' }}
+          />
         </div>
-
-        <div className="print:hidden flex items-center gap-2 flex-wrap mt-3 lg:mt-0 shrink-0">
-          <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
-            {PERIOD_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setPeriod(opt.value)}
-                className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
-                style={period === opt.value ? { backgroundColor: withAlpha(COLORS.amber, '22'), color: COLORS.amber } : { color: NEUTRAL.mutedIcon }}
-              >
-                {opt.label}
-              </button>
-            ))}
+        <div className="relative p-5 sm:p-7 lg:flex lg:items-center lg:justify-between lg:gap-4">
+          <div>
+            <h1 className="font-display text-2xl lg:text-[32px] tracked uppercase">Workout Report</h1>
+            <p className="text-[12px] text-muted mt-1">
+              📅 {periodLabel} ({dateRangeLabel})
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-1.5 active:scale-[0.98] transition"
-          >
-            📄 Export PDF
-          </button>
+
+          <div className="print:hidden flex items-center gap-2 flex-wrap mt-3 lg:mt-0 shrink-0">
+            <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
+              {PERIOD_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPeriod(opt.value)}
+                  className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
+                  style={period === opt.value ? { backgroundColor: withAlpha(COLORS.amber, '22'), color: COLORS.amber } : { color: NEUTRAL.mutedIcon }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-1.5 active:scale-[0.98] transition"
+            >
+              📄 Export PDF
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 1. Workout Summary — hero card: 1 container ล้อม 4 KPI ตรงๆ (คั่นด้วยเส้นแบ่งบางๆ) ไม่ใช่การ์ด
           ซ้อนการ์ดย่อยแบบเดิม (SummaryTile เดิมแต่ละใบมีกรอบ/พื้นหลังของตัวเอง ทำให้ดูเป็น "การ์ดเล็กเรียง
           กัน" มากกว่า KPI แถวเดียวของรายงานฉบับเดียว) */}
-      <PremiumCard className="p-5 sm:p-6">
+      <PremiumCard className="p-5 sm:p-6" reducedTexture>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <SectionHeader icon="🏋️" title="Workout Summary" />
           <p className="text-[11px] text-muted">เทียบ{periodLabel}ก่อน</p>
@@ -120,7 +139,7 @@ export default function WorkoutReportPage() {
       <div className="grid grid-cols-1 sm:grid-cols-[0.85fr_1.5fr] gap-4">
         {/* 2. Consistency — โดนัทวงกลมแทน bar เดิม (reuse ProgressRing ที่มีอยู่แล้วทั่วแอป ปิด glow ให้
             เบาที่สุดตามที่ล็อกไว้ "glow ต้องเบามาก") */}
-        <PremiumCard className="p-5 sm:p-6 flex flex-col">
+        <PremiumCard className="p-5 sm:p-6 flex flex-col" reducedTexture>
           <SectionHeader icon="🎯" title="Consistency" />
           {report.consistency.pct === null ? (
             <p className="text-sm text-muted mt-3">ยังไม่ได้ตั้งโปรแกรมประจำสัปดาห์ — ตั้งได้ที่หน้าโปรแกรม</p>
@@ -140,12 +159,27 @@ export default function WorkoutReportPage() {
                   🔥 {report.currentStreak} วันติดต่อกัน
                 </p>
               )}
+              {/* จุด adherence 5 วันล่าสุด — แพ็คจาก dayEntries/plannedWeekdays ที่คำนวณให้ consistency.pct
+                  อยู่แล้ว (ดู consistencyDays ใน lib/useWorkoutReport.ts) ไม่ใช่ query/สูตรใหม่ แค่เติม
+                  เนื้อหาให้การ์ดนี้ที่มีพื้นที่ว่างเยอะเมื่อมีแค่โดนัท+ตัวเลข */}
+              <div className="flex items-center gap-1.5 mt-1">
+                {report.consistencyDays.map((d, i) => (
+                  <span
+                    key={i}
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      background: d.hasWorkout ? COLORS.amber : d.planned ? withAlpha(COLORS.rust, '60') : NEUTRAL.chipInactive,
+                    }}
+                  />
+                ))}
+              </div>
+              <p className="text-[11px] text-muted">แผนฝึก 5 วันล่าสุด</p>
             </div>
           )}
         </PremiumCard>
 
         {/* 3. Training Trend (Volume เท่านั้นตามที่ล็อกไว้) */}
-        <PremiumCard className="p-5 sm:p-6">
+        <PremiumCard className="p-5 sm:p-6" reducedTexture>
           <SectionHeader icon="📊" title="Training Trend" />
           <p className="text-[11px] text-muted mt-0.5">Volume · {period === 7 ? 'รายวัน' : 'รายสัปดาห์'}</p>
           <div className="h-56 mt-3">
@@ -157,7 +191,7 @@ export default function WorkoutReportPage() {
                 แกน Y ที่มีแค่ 5 ค่าเรียงแนวตั้งไม่ควรชนกันเองด้วยเลย บ่งชี้ว่าทั้ง chart render ที่ขนาดยุบ
                 ไม่ใช่แค่ label หนาแน่นเกินพื้นที่ */}
             <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={128}>
-              <BarChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
+              <ComposedChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
                 <defs>
                   {/* ไล่เฉดอำพันจุดเดียว (เข้ม -> จาง) แนวตั้งต่อแท่ง — ยังเป็น "สีเดียว" ตามที่ล็อกไว้
                       (ไม่ใช่ rainbow ต่างสีต่อแท่ง) แค่เพิ่มมิติให้แท่งกราฟไม่ใช่สีตันแบนราบ */}
@@ -183,13 +217,10 @@ export default function WorkoutReportPage() {
                   width={40}
                   tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
                 />
-                <Tooltip
-                  cursor={{ fill: withAlpha(COLORS.amber, '14') }}
-                  contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: NEUTRAL.mutedIcon }}
-                  itemStyle={{ color: '#F3F0E8' }}
-                  formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
-                />
+                {/* content แบบ custom แทน formatter เดิม — เพราะตอนนี้มีทั้ง Bar และ Line ใช้ dataKey="value"
+                    ร่วมกัน (เส้นทับแท่งเดิม ไม่ใช่ metric ที่สอง) ถ้าใช้ Tooltip ปกติจะขึ้นแถวซ้ำกัน 2 แถว
+                    (ค่าเดียวกันเป๊ะ) — content นี้โชว์แค่แถวเดียวจาก payload[0] */}
+                <Tooltip cursor={{ fill: withAlpha(COLORS.amber, '14') }} content={<TrendTooltipContent unit={unit} />} />
                 {/* palette ที่ล็อกไว้: chart ใช้ amber เป็นสีหลักจุดเดียว ไม่ทำ rainbow/gradient ต่างสีต่อแท่ง
                     — แท่งที่เป็นจุดสูงสุด (ตรงกับ Training Insight ใต้กราฟ) เน้นด้วย opacity เต็ม/มี
                     เส้นขอบบาง ส่วนแท่งอื่น opacity ลดลงนิดหน่อยให้ตาสังเกตจุดเด่นได้ทันที (ทั้งหมดยัง
@@ -204,7 +235,18 @@ export default function WorkoutReportPage() {
                     />
                   ))}
                 </Bar>
-              </BarChart>
+                {/* เส้นแนวโน้มทับแท่งเดิม (ค่าเดียวกันเป๊ะ ไม่ใช่ metric ใหม่) — ให้กราฟดูมี "ทิศทาง" ชัดกว่า
+                    แท่งเปล่าๆ ยังเป็นสีอำพันเดียวกันทั้งกราฟ ไม่ได้เพิ่มสี/แกนที่สอง */}
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={withAlpha(COLORS.amber, 'CC')}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: COLORS.amber, strokeWidth: 0 }}
+                  activeDot={false}
+                  legendType="none"
+                />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
           {/* Training Insight — ประโยคเดียวใต้กราฟ ประกอบจากข้อมูลที่คำนวณอยู่แล้ว (จุดสูงสุดของ trendPoints
@@ -229,7 +271,7 @@ export default function WorkoutReportPage() {
       {/* 4. Body Progress — เปรียบเทียบต้นช่วง -> ปัจจุบัน ใช้ computeBodyMetricsSummary ตรงๆ ไม่คิด metric
           ใหม่ — Goal bar ใช้ goalProgress ที่มาจาก lib/goalProgress.ts เดิม (weight/bodyFat เท่านั้น ตาราง
           goals ไม่รองรับ goal_type อื่น — กล้ามเนื้อจึงไม่มี goal ให้โชว์ ไม่ใช่ bug) */}
-      <PremiumCard className="p-5 sm:p-6">
+      <PremiumCard className="p-5 sm:p-6" reducedTexture>
         <SectionHeader icon="💪" title="Body Progress" />
         <div className="grid grid-cols-3 gap-4 mt-4">
           <BodyProgressColumn
@@ -274,10 +316,14 @@ export default function WorkoutReportPage() {
           ชัดเจนแล้ว ไม่ใช่แค่ข้อความสรุปเฉยๆ) — ยังคง 1 ประโยคตีความ + 1 next-step เท่านั้นตามเดิม ไม่ใช่
           chat/AI dashboard ใหม่ — avatar reuse AiRingAvatar ตัวเดียวกับ AICoachCompactCard.tsx (ตั้งใจไม่
           เอา ai-coach-avatar.png รูป Robot เดิมกลับมา เพราะถูกถอดออกตามการตัดสินใจของผู้ใช้ไปแล้วก่อนหน้านี้) */}
-      <PremiumCard className="p-5 sm:p-6" style={{ background: withAlpha(COLORS.violet, '0d'), border: `1px solid ${withAlpha(COLORS.violet, '30')}` }}>
+      <PremiumCard
+        className="p-5 sm:p-6"
+        reducedTexture
+        style={{ background: withAlpha(COLORS.violet, '0d'), border: `1px solid ${withAlpha(COLORS.violet, '30')}` }}
+      >
         <SectionHeader icon="✨" title="MINT Coach" iconBg={withAlpha(COLORS.violet, '22')} />
         <div className="flex items-start gap-3 mt-4">
-          <AiRingAvatar size={56} />
+          <AiRingAvatar size={64} />
           <div className="min-w-0 flex-1">
             <p className="text-sm text-ink font-medium">{report.summary.interpretation}</p>
             <div className="mt-3 pt-3 border-t" style={{ borderColor: withAlpha(COLORS.violet, '20') }}>
@@ -297,6 +343,20 @@ export default function WorkoutReportPage() {
           ดูสถิติเพิ่มเติม →
         </Link>
       </div>
+    </div>
+  )
+}
+
+// Tooltip แบบ custom สำหรับ Training Trend เท่านั้น — payload[0] พอ (Bar กับ Line ค่าเดียวกันเป๊ะ กันไม่ให้
+// ขึ้นซ้ำ 2 แถวเหมือนใช้ Tooltip เริ่มต้นของ recharts ตรงๆ กับสอง series ที่แชร์ dataKey เดียวกัน)
+function TrendTooltipContent({ active, payload, label, unit }: { active?: boolean; payload?: { value: number }[]; label?: string; unit: string }) {
+  if (!active || !payload || payload.length === 0) return null
+  return (
+    <div style={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12, padding: '6px 10px' }}>
+      <p style={{ color: NEUTRAL.mutedIcon, margin: 0 }}>{label}</p>
+      <p style={{ color: '#F3F0E8', margin: 0 }}>
+        {payload[0].value} {unit} · วอลุ่ม
+      </p>
     </div>
   )
 }

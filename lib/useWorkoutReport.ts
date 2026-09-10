@@ -52,6 +52,9 @@ export interface WorkoutReportData {
   // สายโซ่ต่อเนื่องปัจจุบัน (computeCurrentStreak เดียวกับ Dashboard/train page) — ไม่ผูกกับ period ที่
   // เลือกอยู่ เพราะเป็นสายโซ่ "ตอนนี้" เสมอ เหมือนที่อื่นในแอปทุกจุด
   currentStreak: number
+  // รายวันของช่วง period (ล่าสุด 5 วัน) สำหรับวาดจุด adherence ใต้โดนัท Consistency — แพ็ค dayEntries ที่
+  // คำนวณให้ computePlannedConsistency อยู่แล้วเข้ากับ plannedWeekdays มาให้ใช้ตรงๆ ไม่ใช่ query/สูตรใหม่
+  consistencyDays: { dayOfWeek: number; hasWorkout: boolean; planned: boolean }[]
   trendPoints: TrendPoint[]
   trendPeak: TrendPoint | null
   bodySummary: BodyMetricsSummary
@@ -142,6 +145,10 @@ export function useWorkoutReport(period: ReportPeriod) {
     const dayEntries = buildTrainedDayEntries(trainedDateSet, period, today)
     const consistency = computePlannedConsistency(dayEntries, plannedWeekdays)
     const currentStreak = computeCurrentStreak(streakDates, plannedWeekdays)
+    // เอาแค่ 5 วันล่าสุด (ตัวโดนัทเล็ก ใส่จุดเกิน 7 จุดจะแน่นเกิน) — dayEntries เรียงเก่า->ใหม่อยู่แล้ว
+    const consistencyDays = dayEntries
+      .slice(-5)
+      .map((d) => ({ dayOfWeek: d.dayOfWeek, hasWorkout: d.hasWorkout, planned: plannedWeekdays.has(d.dayOfWeek) }))
 
     // 7D -> รายวัน, 30D -> รายสัปดาห์ (ตามที่ล็อกไว้) — ส่ง workouts เต็ม (ไม่ใช่ currentWorkouts ที่ตัด
     // ไว้แล้ว) เพราะทั้งสองฟังก์ชันสร้าง bucket วันที่/สัปดาห์ของตัวเองแล้วกรองตรงกับ bucket เท่านั้นอยู่แล้ว
@@ -198,6 +205,7 @@ export function useWorkoutReport(period: ReportPeriod) {
       setsDeltaPct: computePctChange(currentTotals.totalSets, previousTotals.totalSets),
       consistency,
       currentStreak,
+      consistencyDays,
       trendPoints,
       trendPeak,
       bodySummary,
