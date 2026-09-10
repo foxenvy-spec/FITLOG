@@ -72,11 +72,18 @@ export default function WorkoutReportPage() {
             alt=""
             fill
             className="object-cover"
-            style={{ objectPosition: '82% 38%', filter: 'blur(0.5px) saturate(1.1)' }}
+            style={{ objectPosition: '88% 42%', filter: 'blur(1px) saturate(1.05) brightness(0.85)' }}
+          />
+          {/* fade ทั้งแนวนอน (ซ้าย->ขวา ให้ตัวหนังสืออ่านง่าย) และแนวตั้ง (บน-ล่าง ให้ภาพ "จม" เข้าไปใน
+              การ์ดแทนที่จะรู้สึกเหมือนกรอบรูปแปะทับ) — จุดที่ผู้ใช้ชี้ว่ายังเป็น "banner" ไม่ใช่ "atmosphere"
+              คือภาพยังมีขอบเห็นชัดทั้ง 4 ด้าน เพิ่ม fade แนวตั้งอีกชั้นแก้ตรงนี้โดยเฉพาะ */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(110deg, #0B0B0B 0%, rgba(11,11,11,.9) 32%, rgba(11,11,11,.55) 62%, rgba(11,11,11,.3) 100%)' }}
           />
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(100deg, #0B0B0B 0%, rgba(11,11,11,.88) 38%, rgba(11,11,11,.5) 68%, rgba(11,11,11,.25) 100%)' }}
+            style={{ background: 'linear-gradient(180deg, rgba(11,11,11,.35) 0%, transparent 35%, transparent 65%, rgba(11,11,11,.55) 100%)' }}
           />
         </div>
         <div className="relative p-5 sm:p-7 lg:flex lg:items-center lg:justify-between lg:gap-4">
@@ -317,22 +324,41 @@ export default function WorkoutReportPage() {
           chat/AI dashboard ใหม่ — avatar reuse AiRingAvatar ตัวเดียวกับ AICoachCompactCard.tsx (ตั้งใจไม่
           เอา ai-coach-avatar.png รูป Robot เดิมกลับมา เพราะถูกถอดออกตามการตัดสินใจของผู้ใช้ไปแล้วก่อนหน้านี้) */}
       <PremiumCard
-        className="p-5 sm:p-6"
+        className="p-6 sm:p-8"
         reducedTexture
         style={{ background: withAlpha(COLORS.violet, '0d'), border: `1px solid ${withAlpha(COLORS.violet, '30')}` }}
       >
-        <SectionHeader icon="✨" title="MINT Coach" iconBg={withAlpha(COLORS.violet, '22')} />
-        <div className="flex items-start gap-3 mt-4">
-          <AiRingAvatar size={64} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-ink font-medium">{report.summary.interpretation}</p>
-            <div className="mt-3 pt-3 border-t" style={{ borderColor: withAlpha(COLORS.violet, '20') }}>
-              <p className="text-[10px] tracked uppercase font-semibold" style={{ color: COLORS.violet }}>
-                💡 สิ่งที่ควรทำต่อ
-              </p>
-              <p className="text-[13px] text-muted mt-1">{report.summary.nextStep}</p>
-            </div>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <SectionHeader icon="✨" title="MINT Coach" iconBg={withAlpha(COLORS.violet, '22')} />
+          <p className="text-[11px] text-muted">สรุป{periodLabel}</p>
+        </div>
+        <div className="flex items-center gap-5 mt-5">
+          <AiRingAvatar size={88} />
+          <p className="min-w-0 flex-1 text-base sm:text-lg text-ink font-medium leading-snug">
+            <span aria-hidden="true" style={{ color: COLORS.violet }}>
+              “
+            </span>
+            {report.summary.interpretation}
+            <span aria-hidden="true" style={{ color: COLORS.violet }}>
+              ”
+            </span>
+          </p>
+        </div>
+        {/* CTA แยกเป็นกล่องของตัวเอง (ไม่ใช่แค่ย่อหน้าที่สองต่อจาก interpretation) ให้ "สิ่งที่ควรทำต่อ" มี
+            น้ำหนักภาพเท่ากับ insight ด้านบน ไม่ใช่แค่รายละเอียดปลีกย่อยต่อท้าย */}
+        <div
+          className="mt-5 flex items-center justify-between gap-3 rounded-card px-4 py-3"
+          style={{ background: withAlpha(COLORS.violet, '14'), border: `1px solid ${withAlpha(COLORS.violet, '28')}` }}
+        >
+          <div className="min-w-0">
+            <p className="text-[10px] tracked uppercase font-semibold" style={{ color: COLORS.violet }}>
+              💡 สิ่งที่ควรทำต่อ
+            </p>
+            <p className="text-[13px] text-ink mt-0.5">{report.summary.nextStep}</p>
           </div>
+          <span aria-hidden="true" className="text-lg shrink-0" style={{ color: COLORS.violet }}>
+            →
+          </span>
         </div>
       </PremiumCard>
 
@@ -474,7 +500,9 @@ function BodyProgressColumn({
       <p className="text-[12px] tracked uppercase text-muted">{label}</p>
       {/* ขนาดตัวเลขเท่า Workout Summary hero KPI (text-2xl/3xl) ให้น้ำหนักภาพเท่ากัน ไม่ใช่ตัวเลขรองที่
           ดูเบากว่า section อื่นของรายงานเดียวกัน */}
-      <p className="font-mono text-2xl sm:text-3xl font-bold text-ink mt-1.5 truncate">{displayValue(delta.value)}</p>
+      {/* text-xl บนมือถือ (เดิม text-2xl ล้นจนตัด "81.5 kg" เหลือ "81.5 …" ในคอลัมน์แคบ 3 คอลัมน์ — พบจาก
+          screenshot จริงตอน visual QA ไม่ใช่แค่เดา) ขยับกลับไป text-3xl ที่ sm ขึ้นไปที่มีที่พอ */}
+      <p className="font-mono text-xl sm:text-3xl font-bold text-ink mt-1.5 truncate">{displayValue(delta.value)}</p>
       <p className="text-sm mt-1 font-semibold" style={{ color: delta.delta === null || delta.delta === 0 ? NEUTRAL.mutedIcon : color }}>
         {delta.delta === null
           ? '—'
