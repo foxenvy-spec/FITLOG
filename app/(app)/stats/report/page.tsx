@@ -12,7 +12,7 @@
 // ชัดเจน) มากกว่าที่เคยเป็นตอน embed อยู่บน /stats
 import { useState } from 'react'
 import Link from 'next/link'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { useWorkoutReport, reportPeriodLabel, reportDateRange, type ReportPeriod } from '@/lib/useWorkoutReport'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -50,43 +50,47 @@ export default function WorkoutReportPage() {
   const dateRangeLabel = formatDateRangeLabel(startIso, endIso)
 
   return (
-    // เดิมมี lg:max-w-2xl lg:mx-auto บีบ Report ให้แคบเหลือ ~672px ทั้งที่ layout กลาง (app/(app)/layout.tsx)
-    // ให้พื้นที่เต็มจอ desktop อยู่แล้ว (lg:max-w-none lg:mx-0) — ตัดออก ใช้ max-width กว้างขึ้นแทนแค่กัน
-    // เนื้อหายืดสุดโต่งบนจอกว้างมากๆ ไม่ centered (ให้ต่อจาก sidebar เหมือนหน้าอื่นในแอป)
-    <div className="space-y-4 lg:max-w-[1200px]">
+    // เดิมมี lg:max-w-2xl แล้วต่อมา lg:max-w-[1200px] — ทั้งคู่บีบ Report แคบกว่าที่ layout กลางให้จริง
+    // (app/(app)/layout.tsx: <main> เป็น flex-1 + lg:max-w-none lg:mx-0 = เต็มพื้นที่ที่เหลือจาก sidebar
+    // เป๊ะ ไม่มีหน้าไหนในแอปเพิ่ม max-width ทับอีกชั้น) ตัดออกทั้งหมด ให้ Report ใช้พื้นที่เต็มเหมือนทุกหน้า
+    // อื่น ไม่เหลือพื้นที่ว่างด้านขวาเปล่าๆ บนจอกว้าง
+    <div className="space-y-4">
       <Link href="/stats" className="print:hidden text-[12px] text-muted hover:text-amber inline-flex items-center gap-1">
         ← กลับไปสถิติ
       </Link>
 
-      <div>
-        <h1 className="font-display text-2xl lg:text-[32px] tracked uppercase">Workout Report</h1>
-        <p className="text-[12px] text-muted mt-1">
-          📅 {periodLabel} ({dateRangeLabel})
-        </p>
-      </div>
-
-      {/* period toggle + Export PDF บนแถวเดียวกัน (locked layout) — ย้าย Export PDF ขึ้นจาก footer เดิม */}
-      <div className="print:hidden flex items-center justify-between gap-2 flex-wrap">
-        <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
-          {PERIOD_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setPeriod(opt.value)}
-              className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
-              style={period === opt.value ? { backgroundColor: withAlpha(COLORS.amber, '22'), color: COLORS.amber } : { color: NEUTRAL.mutedIcon }}
-            >
-              {opt.label}
-            </button>
-          ))}
+      {/* Header — title/subtitle ซ้าย, period toggle + Export PDF ขวา อยู่แถวเดียวกันบน desktop (lg:flex)
+          มือถือ stack ตกลงมาปกติ ตาม layout ที่ล็อกไว้ */}
+      <div className="lg:flex lg:items-center lg:justify-between lg:gap-4">
+        <div>
+          <h1 className="font-display text-2xl lg:text-[32px] tracked uppercase">Workout Report</h1>
+          <p className="text-[12px] text-muted mt-1">
+            📅 {periodLabel} ({dateRangeLabel})
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-1.5 active:scale-[0.98] transition"
-        >
-          📄 Export PDF
-        </button>
+
+        <div className="print:hidden flex items-center gap-2 flex-wrap mt-3 lg:mt-0 shrink-0">
+          <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPeriod(opt.value)}
+                className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
+                style={period === opt.value ? { backgroundColor: withAlpha(COLORS.amber, '22'), color: COLORS.amber } : { color: NEUTRAL.mutedIcon }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-1.5 active:scale-[0.98] transition"
+          >
+            📄 Export PDF
+          </button>
+        </div>
       </div>
 
       {/* 1. Workout Summary — hero card: 1 container ล้อม 4 KPI ตรงๆ (คั่นด้วยเส้นแบ่งบางๆ) ไม่ใช่การ์ด
@@ -116,21 +120,26 @@ export default function WorkoutReportPage() {
       <div className="grid grid-cols-1 sm:grid-cols-[0.85fr_1.5fr] gap-4">
         {/* 2. Consistency — โดนัทวงกลมแทน bar เดิม (reuse ProgressRing ที่มีอยู่แล้วทั่วแอป ปิด glow ให้
             เบาที่สุดตามที่ล็อกไว้ "glow ต้องเบามาก") */}
-        <PremiumCard className="p-5 sm:p-6">
+        <PremiumCard className="p-5 sm:p-6 flex flex-col">
           <SectionHeader icon="🎯" title="Consistency" />
           {report.consistency.pct === null ? (
             <p className="text-sm text-muted mt-3">ยังไม่ได้ตั้งโปรแกรมประจำสัปดาห์ — ตั้งได้ที่หน้าโปรแกรม</p>
           ) : (
-            <div className="mt-4 flex items-center gap-4">
-              <ProgressRing value={report.consistency.pct} size={92} strokeWidth={9} gradientStops={FIRE_GRADIENT_STOPS} glow={false}>
-                <p className="font-mono font-bold text-xl text-ink">{report.consistency.pct}%</p>
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 mt-2 py-2">
+              <ProgressRing value={report.consistency.pct} size={128} strokeWidth={11} gradientStops={FIRE_GRADIENT_STOPS} glow={false}>
+                <p className="font-mono font-bold text-3xl text-ink">{report.consistency.pct}%</p>
               </ProgressRing>
-              <div>
-                <p className="text-sm text-ink font-medium">ทำตามแผน</p>
-                <p className="font-mono text-lg text-ink mt-0.5">
-                  {report.consistency.completedCount} / {report.consistency.plannedCount} <span className="text-[12px] text-muted font-sans">วัน</span>
+              <p className="font-mono text-base text-ink">
+                ทำตามแผน {report.consistency.completedCount} / {report.consistency.plannedCount} <span className="text-[12px] text-muted font-sans">วัน</span>
+              </p>
+              {/* currentStreak มาจาก computeCurrentStreak เดียวกับ Dashboard/train page (ดู comment
+                  STREAK_LOOKBACK_DAYS ใน lib/useWorkoutReport.ts) — ไม่ใช่ 0 = ไม่โชว์เลย ไม่ใช่ตัวเลข
+                  ที่นับต่ำกว่าจริงแบบที่จะเกิดถ้าใช้ workouts ที่ fetch มาสำหรับ period totals เฉยๆ */}
+              {report.currentStreak > 0 && (
+                <p className="text-[12px] font-semibold" style={{ color: COLORS.amber }}>
+                  🔥 {report.currentStreak} วันติดต่อกัน
                 </p>
-              </div>
+              )}
             </div>
           )}
         </PremiumCard>
@@ -139,7 +148,7 @@ export default function WorkoutReportPage() {
         <PremiumCard className="p-5 sm:p-6">
           <SectionHeader icon="📊" title="Training Trend" />
           <p className="text-[11px] text-muted mt-0.5">Volume · {period === 7 ? 'รายวัน' : 'รายสัปดาห์'}</p>
-          <div className="h-48 mt-3">
+          <div className="h-56 mt-3">
             {/* minWidth/minHeight เป็น fallback ตาม docs ของ recharts เอง สำหรับกรณี ResponsiveContainer
                 วัดขนาด container จริงได้ 0 (หรือใกล้ 0) ตอน mount ครั้งแรก — ไม่งั้นทุกอย่าง (แกน X และ Y
                 พร้อมกันทั้งคู่) จะถูกวาดที่พิกัดใกล้ (0,0) เหมือนกันหมด อ่านออกมาเป็น label ทุกตัวติดกันไม่มี
@@ -149,21 +158,29 @@ export default function WorkoutReportPage() {
                 ไม่ใช่แค่ label หนาแน่นเกินพื้นที่ */}
             <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={128}>
               <BarChart data={report.trendPoints.map((p) => ({ ...p, value: Math.round(toDisplay(p.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
+                <defs>
+                  {/* ไล่เฉดอำพันจุดเดียว (เข้ม -> จาง) แนวตั้งต่อแท่ง — ยังเป็น "สีเดียว" ตามที่ล็อกไว้
+                      (ไม่ใช่ rainbow ต่างสีต่อแท่ง) แค่เพิ่มมิติให้แท่งกราฟไม่ใช่สีตันแบนราบ */}
+                  <linearGradient id="reportVolumeBarFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={COLORS.amber} stopOpacity={1} />
+                    <stop offset="100%" stopColor={COLORS.amber} stopOpacity={0.45} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
                 {/* interval="preserveStartEnd" ให้ recharts เว้น label กลางๆ ที่จะชนกันเองถ้าพื้นที่ไม่พอ
                     (เช่นจอมือถือแคบ) แทนที่จะบังคับวาดครบทุก label จนซ้อนทับกันแบบ default (interval=0) */}
                 <XAxis
                   dataKey="label"
                   interval="preserveStartEnd"
-                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 11 }}
                   axisLine={{ stroke: NEUTRAL.chipInactive }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
-                  width={36}
+                  width={40}
                   tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
                 />
                 <Tooltip
@@ -173,8 +190,20 @@ export default function WorkoutReportPage() {
                   itemStyle={{ color: '#F3F0E8' }}
                   formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
                 />
-                {/* palette ที่ล็อกไว้: chart ใช้ amber เป็นสีหลักจุดเดียว ไม่ทำ rainbow/gradient ต่อแท่ง */}
-                <Bar dataKey="value" fill={COLORS.amber} radius={[3, 3, 0, 0]} />
+                {/* palette ที่ล็อกไว้: chart ใช้ amber เป็นสีหลักจุดเดียว ไม่ทำ rainbow/gradient ต่างสีต่อแท่ง
+                    — แท่งที่เป็นจุดสูงสุด (ตรงกับ Training Insight ใต้กราฟ) เน้นด้วย opacity เต็ม/มี
+                    เส้นขอบบาง ส่วนแท่งอื่น opacity ลดลงนิดหน่อยให้ตาสังเกตจุดเด่นได้ทันที (ทั้งหมดยัง
+                    amber สีเดียว ไม่ใช่สีต่างกัน) */}
+                <Bar dataKey="value" fill="url(#reportVolumeBarFill)" radius={[4, 4, 0, 0]}>
+                  {report.trendPoints.map((p, i) => (
+                    <Cell
+                      key={i}
+                      fillOpacity={report.trendPeak && p.label === report.trendPeak.label && p.value === report.trendPeak.value ? 1 : 0.55}
+                      stroke={report.trendPeak && p.label === report.trendPeak.label && p.value === report.trendPeak.value ? COLORS.amber : 'none'}
+                      strokeWidth={1}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -353,9 +382,11 @@ function BodyProgressColumn({
   const color = delta.isGood === null ? NEUTRAL.mutedIcon : delta.isGood ? COLORS.moss : COLORS.rust
   return (
     <div>
-      <p className="text-[11px] tracked uppercase text-muted">{label}</p>
-      <p className="font-mono text-lg sm:text-xl font-bold text-ink mt-1 truncate">{displayValue(delta.value)}</p>
-      <p className="text-[12px] mt-0.5" style={{ color: delta.delta === null || delta.delta === 0 ? NEUTRAL.mutedIcon : color }}>
+      <p className="text-[12px] tracked uppercase text-muted">{label}</p>
+      {/* ขนาดตัวเลขเท่า Workout Summary hero KPI (text-2xl/3xl) ให้น้ำหนักภาพเท่ากัน ไม่ใช่ตัวเลขรองที่
+          ดูเบากว่า section อื่นของรายงานเดียวกัน */}
+      <p className="font-mono text-2xl sm:text-3xl font-bold text-ink mt-1.5 truncate">{displayValue(delta.value)}</p>
+      <p className="text-sm mt-1 font-semibold" style={{ color: delta.delta === null || delta.delta === 0 ? NEUTRAL.mutedIcon : color }}>
         {delta.delta === null
           ? ' '
           : delta.delta === 0
@@ -363,14 +394,15 @@ function BodyProgressColumn({
             : `${delta.delta > 0 ? '↑' : '↓'} ${deltaMagnitude.toFixed(decimals)}${unitSuffix}`}
       </p>
       {goal && (
-        <div className="mt-2">
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
+        <div className="mt-3">
+          <p className="text-[12px] text-muted mb-1.5 truncate">เป้าหมาย {goal.targetText}</p>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
             <div
               className="h-full rounded-full"
               style={{ width: `${Math.max(0, Math.min(100, goal.progressPct ?? 0))}%`, background: COLORS.amber }}
             />
           </div>
-          <p className="text-[10px] text-muted mt-1 truncate">เป้าหมาย {goal.targetText}</p>
+          {goal.progressPct !== null && <p className="text-[11px] text-muted mt-1">{Math.round(goal.progressPct)}% ถึงเป้าหมาย</p>}
         </div>
       )}
     </div>

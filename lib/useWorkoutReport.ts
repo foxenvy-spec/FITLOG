@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createClient } from './supabase/client'
 import type { Workout, ProgramDay } from './types'
 import { todayStr, daysAgoStr } from './weekdays'
-import { computePlannedConsistency, type PlannedConsistency } from './dashboardStats'
+import { computePlannedConsistency, computeCurrentStreak, type PlannedConsistency } from './dashboardStats'
 import { computeBodyMetricsSummary, type BodyMetricsSummary } from './bodyMetricsSummary'
 import {
   computePeriodTotals,
@@ -30,6 +30,12 @@ export type ReportPeriod = 7 | 30
 
 const THAI_WEEKDAY_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
 
+// เท่ากับ STREAK_LOOKBACK_DAYS ใน app/(app)/train/page.tsx เป๊ะ (ค่าเดียวกับ STREAK_WALK_MAX_DAYS ใน
+// lib/dashboardStats.ts) — ต้อง query ย้อนหลังไกลกว่าหน้าต่างข้อมูลของ period comparison ปกติมาก เพราะ
+// streak จริงอาจยาวกว่า 7/30 วัน การใช้ workouts ที่ fetch มาสำหรับคำนวณ totals อยู่แล้ว (แค่ period*2-1
+// วัน) จะได้ตัวเลข streak ที่นับต่ำกว่าความจริงถ้า streak ยาวกว่านั้น — fetch แยกเบาๆ (คอลัมน์เดียว) แทน
+const STREAK_LOOKBACK_DAYS = 400
+
 export interface GoalProgressDetail {
   targetValue: number
   progressPct: number | null
@@ -43,6 +49,9 @@ export interface WorkoutReportData {
   volumeDeltaPct: number | null
   setsDeltaPct: number | null
   consistency: PlannedConsistency
+  // สายโซ่ต่อเนื่องปัจจุบัน (computeCurrentStreak เดียวกับ Dashboard/train page) — ไม่ผูกกับ period ที่
+  // เลือกอยู่ เพราะเป็นสายโซ่ "ตอนนี้" เสมอ เหมือนที่อื่นในแอปทุกจุด
+  currentStreak: number
   trendPoints: TrendPoint[]
   trendPeak: TrendPoint | null
   bodySummary: BodyMetricsSummary
@@ -71,6 +80,7 @@ export function useWorkoutReport(period: ReportPeriod) {
   const [error, setError] = useState<string | null>(null)
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [programDays, setProgramDays] = useState<Pick<ProgramDay, 'id' | 'day_of_week'>[]>([])
+  const [streakDates, setStreakDates] = useState<string[]>([])
   const [bodyMetricsInput, setBodyMetricsInput] = useState<Awaited<ReturnType<typeof fetchBodyMetricsData>>>({
     metrics: [],
     heightCm: null,
@@ -88,17 +98,23 @@ export function useWorkoutReport(period: ReportPeriod) {
       try {
         // เผื่อทั้งช่วงปัจจุบัน + ช่วงก่อนหน้าความยาวเท่ากันสำหรับเทียบ %-change (period*2-1 วันย้อนหลัง)
         const since = daysAgoStr(period * 2 - 1)
-        const [workoutsRes, daysRes, bodyData] = await Promise.all([
+        const streakSince = daysAgoStr(STREAK_LOOKBACK_DAYS)
+        const [workoutsRes, daysRes, bodyData, streakRes] = await Promise.all([
           supabase.from('workouts').select('*').gte('performed_at', since).order('performed_at', { ascending: true }),
           supabase.from('program_days').select('id, day_of_week'),
           fetchBodyMetricsData(supabase),
+          // คอลัมน์เดียว (performed_at) ย้อนหลัง 400 วัน — เบากว่า workouts เต็มแถวมาก ใช้แค่คำนวณ current
+          // streak เท่านั้น (เหมือน app/(app)/train/page.tsx ทุกประการ กันตัวเลขสองชุดไม่ตรงกัน)
+          supabase.from('workouts').select('performed_at').gte('performed_at', streakSince),
         ])
         if (cancelled) return
         if (workoutsRes.error) throw new Error(workoutsRes.error.message)
         if (daysRes.error) throw new Error(daysRes.error.message)
+        if (streakRes.error) throw new Error(streakRes.error.message)
         setWorkouts((workoutsRes.data as Workout[]) ?? [])
         setProgramDays((daysRes.data as Pick<ProgramDay, 'id' | 'day_of_week'>[]) ?? [])
         setBodyMetricsInput(bodyData)
+        setStreakDates(Array.from(new Set(((streakRes.data as { performed_at: string }[]) ?? []).map((r) => r.performed_at))))
       } catch (err) {
         if (!cancelled) setError(getErrorMessage(err))
       } finally {
@@ -125,6 +141,7 @@ export function useWorkoutReport(period: ReportPeriod) {
     const plannedWeekdays = new Set(programDays.map((d) => d.day_of_week))
     const dayEntries = buildTrainedDayEntries(trainedDateSet, period, today)
     const consistency = computePlannedConsistency(dayEntries, plannedWeekdays)
+    const currentStreak = computeCurrentStreak(streakDates, plannedWeekdays)
 
     // 7D -> รายวัน, 30D -> รายสัปดาห์ (ตามที่ล็อกไว้) — ส่ง workouts เต็ม (ไม่ใช่ currentWorkouts ที่ตัด
     // ไว้แล้ว) เพราะทั้งสองฟังก์ชันสร้าง bucket วันที่/สัปดาห์ของตัวเองแล้วกรองตรงกับ bucket เท่านั้นอยู่แล้ว
@@ -180,13 +197,14 @@ export function useWorkoutReport(period: ReportPeriod) {
       volumeDeltaPct,
       setsDeltaPct: computePctChange(currentTotals.totalSets, previousTotals.totalSets),
       consistency,
+      currentStreak,
       trendPoints,
       trendPeak,
       bodySummary,
       goalProgress,
       summary,
     }
-  }, [workouts, programDays, bodyMetricsInput, period])
+  }, [workouts, programDays, bodyMetricsInput, streakDates, period])
 
   return {
     loading: loading && workouts.length === 0,
