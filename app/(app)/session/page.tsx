@@ -1497,16 +1497,7 @@ export default function SessionPage() {
               {[...summaryExtras.recovery.byMuscle]
                 .sort((a, b) => b.pct - a.pct)
                 .map((m) => (
-                  <div key={m.muscleGroup} className="flex items-center gap-2.5">
-                    <span className="text-sm shrink-0" aria-hidden="true">
-                      {recoveryDot(m.tier)}
-                    </span>
-                    <span className="text-[12px] text-muted w-14 shrink-0">{m.muscleGroup}</span>
-                    <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
-                      <div className={`h-full rounded-full ${recoveryBarColor(m.tier)}`} style={{ width: `${m.pct}%` }} />
-                    </div>
-                    <span className="text-[12px] font-mono text-ink w-9 text-right">{m.pct}%</span>
-                  </div>
+                  <MuscleReadinessRow key={m.muscleGroup} muscleGroup={m.muscleGroup} pct={m.pct} tier={m.tier} />
                 ))}
             </div>
             {/* คำแนะนำสั้นๆ — เลือกกล้ามเนื้อที่ยังไม่พร้อม (tier red/orange) สูงสุด 2 กลุ่มจาก byMuscle ที่มี
@@ -2248,6 +2239,23 @@ function recoveryDot(tier: 'green' | 'yellow' | 'orange' | 'red') {
   if (tier === 'yellow') return '🟡'
   if (tier === 'orange') return '🟠'
   return '🔴'
+}
+
+// แถบความพร้อมของกล้ามเนื้อ 1 กลุ่ม — แยกเป็น component เดี่ยวเพื่อไม่ให้แถวซ้ำ 7 ครั้งใน .map()
+// ต้องแก้หน้าตาแถวที่เดียว (จุดสี/แถบ/เปอร์เซ็นต์) ไม่ต้องไล่แก้ทุกจุดที่ก็อปวางไว้
+function MuscleReadinessRow({ muscleGroup, pct, tier }: { muscleGroup: string; pct: number; tier: 'green' | 'yellow' | 'orange' | 'red' }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="text-sm shrink-0" aria-hidden="true">
+        {recoveryDot(tier)}
+      </span>
+      <span className="text-[12px] text-muted w-14 shrink-0">{muscleGroup}</span>
+      <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
+        <div className={`h-full rounded-full ${recoveryBarColor(tier)}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-[12px] font-mono text-ink w-9 text-right">{pct}%</span>
+    </div>
+  )
 }
 
 function ClockIcon() {
