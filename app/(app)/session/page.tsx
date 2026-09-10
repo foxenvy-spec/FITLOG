@@ -41,7 +41,6 @@ import {
   type LoggedWorkoutRow,
   type LoggedSetRow,
   type LastPerformance,
-  type SkippedExercise,
 } from '@/lib/workoutSession'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
@@ -1452,8 +1451,6 @@ export default function SessionPage() {
           </div>
         )}
 
-        {skipped.length > 0 && <SkippedExercisesCard skipped={skipped} />}
-
         {summaryExtras && summaryExtras.prs.length > 0 && (
           <div className="rounded-lg bg-surface2 border border-amber/30 px-4 py-3 text-left space-y-1">
             <p className="text-[12px] tracked uppercase text-amber">🏆 สถิติใหม่</p>
@@ -2108,35 +2105,6 @@ function GlowIconChip({ icon, color, size = 36 }: { icon: React.ReactNode; color
     >
       {icon}
     </span>
-  )
-}
-
-// ฟีดแบ็ก "รายชื่อ 32 ท่ายาวเกินไป ดูเหมือนรายงาน debug" — โชว์แค่ 3 ชื่อแรก + "+N ท่า" ปุ่มเดียวขยาย/ย่อ
-// รายชื่อทั้งหมด (useState เฉยๆ ไม่ต้องทำ Bottom Sheet แยก) ข้อมูลเหมือนเดิมทุกตัว แค่เปลี่ยนการนำเสนอ
-function SkippedExercisesCard({ skipped }: { skipped: SkippedExercise[] }) {
-  const [expanded, setExpanded] = useState(false)
-  const preview = skipped.slice(0, 3).map((s) => s.exerciseName)
-  const remaining = skipped.length - preview.length
-  return (
-    <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
-      <p className="text-[12px] tracked uppercase text-muted">⏭️ ข้าม {skipped.length} ท่า</p>
-      {expanded ? (
-        <p className="text-xs text-ink">{skipped.map((s) => s.exerciseName).join(' · ')}</p>
-      ) : (
-        <p className="text-xs text-ink">
-          {preview.join(' · ')}
-          {remaining > 0 && <span className="text-muted"> · +{remaining} ท่า</span>}
-        </p>
-      )}
-      <div className="flex items-center justify-between">
-        <p className="text-[12px] text-muted">ลองแทรกในเซสชันหน้าดูนะ</p>
-        {skipped.length > 3 && (
-          <button type="button" onClick={() => setExpanded((v) => !v)} className="text-[12px] text-amber shrink-0">
-            {expanded ? 'ย่อ' : 'ดูทั้งหมด →'}
-          </button>
-        )}
-      </div>
-    </div>
   )
 }
 
