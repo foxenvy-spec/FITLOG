@@ -41,6 +41,7 @@ import {
   type LoggedWorkoutRow,
   type LoggedSetRow,
   type LastPerformance,
+  type SkippedExercise,
 } from '@/lib/workoutSession'
 import ExercisePicker from '@/components/ExercisePicker'
 import type { ExerciseDef } from '@/lib/exerciseLibrary'
@@ -1358,12 +1359,16 @@ export default function SessionPage() {
               value={noLiveDuration ? '–' : formatClock(totalElapsedMs)}
               label="เวลาที่ใช้"
             />
+            {/* hero — ฟีดแบ็ก "7/39 ควรเป็นพระเอกเพราะอธิบาย session นี้ได้ดีที่สุด" — caption ใช้
+                skipped.length ที่มีอยู่แล้ว (ประกาศไว้ที่ต้นฟังก์ชัน) ไม่ใช่ตัวเลขใหม่ */}
             <GlowStatCell
               bare
+              emphasis="hero"
               icon={<DumbbellIcon />}
               color={COLORS.steel}
               value={`${summary.exerciseCount}/${exercises.length}`}
               label="ท่าที่ทำ"
+              caption={skipped.length > 0 ? `${skipped.length} ท่าข้าม` : undefined}
             />
             <GlowStatCell bare icon={<CheckIcon />} color={COLORS.moss} value={String(summary.totalSets)} label="เซ็ตรวม" />
           </div>
@@ -1384,8 +1389,10 @@ export default function SessionPage() {
                 ด้านบน) ผลรวมเป็น 0 จริงๆ เฉพาะตอนไม่มีทั้งคาร์ดิโอและ duration ที่เชื่อถือได้เลย ไม่ใช่บั๊ก
                 การคำนวณ แต่ "0 kcal" สื่อความหมายผิด — โชว์ "–" แทนเฉพาะตอนผลลัพธ์เป็น 0 เป๊ะ (ไม่กระทบตอนมี
                 คาร์ดิโอจริงที่ทำให้ผลรวม > 0) */}
+            {/* muted — ฟีดแบ็ก "6 kcal ควรลดความสำคัญลง เพราะเป็นค่าประมาณและ session สั้นมาก" */}
             <GlowStatRow
               bare
+              emphasis="muted"
               icon={<BoltIcon />}
               color={COLORS.green}
               value={summaryLoading ? '…' : summaryExtras && summaryExtras.calories > 0 ? `${summaryExtras.calories} kcal` : '–'}
@@ -1407,9 +1414,31 @@ export default function SessionPage() {
             style={{ background: withAlpha(COLORS.amber, '0a'), border: `1px solid ${withAlpha(COLORS.amber, '30')}` }}
           >
             <p className="text-[12px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
-            <p className="text-xs text-ink">
-              🏆 Workout Score <span className="font-mono text-amber">{summaryExtras.workoutScore}</span>
-            </p>
+            {(() => {
+              const tier = workoutScoreTier(summaryExtras.workoutScore)
+              return (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🏆</span>
+                    <span className="font-mono text-lg text-ink">{summaryExtras.workoutScore}</span>
+                    <span className="text-[12px]" style={{ color: tier.color }}>
+                      {tier.label}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-surface2 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${summaryExtras.workoutScore}%`, background: tier.color }} />
+                  </div>
+                  {/* เหตุผลสั้นๆ ว่า "ทำไมได้คะแนนนี้" — ประกอบจากตัวเลขที่มีอยู่แล้วบนหน้านี้ (skipped.length,
+                      summary.exerciseCount/exercises.length) ไม่ใช่สูตรคำนวณใหม่ แค่แปลตัวเลขเป็นประโยค
+                      (ฟีดแบ็ก "35 ดูเหมือนคะแนนต่ำที่โยนมาเฉยๆ ต้องเล่าเรื่องว่าทำไม") */}
+                  {skipped.length > 0 && (
+                    <p className="text-[12px] text-muted mt-1">
+                      ข้ามท่าไป {skipped.length} ท่า · ทำได้ {summary.exerciseCount}/{exercises.length} ท่าตามแผน
+                    </p>
+                  )}
+                </>
+              )
+            })()}
             {/* ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ engine
                 (computeBestVolumeIncrease) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — HighlightsRow.tsx
                 (Dashboard) ใช้ engine เดียวกันนี้แล้วเลี่ยงคำว่า Volume ไปแล้ว ("X เพิ่มขึ้นจากสัปดาห์ก่อน")
@@ -1423,13 +1452,7 @@ export default function SessionPage() {
           </div>
         )}
 
-        {skipped.length > 0 && (
-          <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
-            <p className="text-[12px] tracked uppercase text-muted">⏭️ ข้ามไป {skipped.length} ท่า</p>
-            <p className="text-xs text-ink">{skipped.map((s) => s.exerciseName).join(', ')}</p>
-            <p className="text-[12px] text-muted">ลองแทรกในเซสชันหน้าดูนะ</p>
-          </div>
-        )}
+        {skipped.length > 0 && <SkippedExercisesCard skipped={skipped} />}
 
         {summaryExtras && summaryExtras.prs.length > 0 && (
           <div className="rounded-lg bg-surface2 border border-amber/30 px-4 py-3 text-left space-y-1">
@@ -1450,28 +1473,33 @@ export default function SessionPage() {
         )}
 
         {summaryExtras && (
-          <PremiumCard className="px-4 py-4 text-left space-y-3">
+          // Version 4 — ฟีดแบ็ก "section นี้ 'มีของ' ที่สุด ควรยกระดับเป็นพระเอกของหน้า" ยก glow border
+          // เดียวกับการ์ด Highlight/hero ด้านบนมาใช้ + เปลี่ยนจาก icon chip รายกล้ามเนื้อเป็นจุดสีตาม tier
+          // (🟢🟡🟠🔴) อ่านเร็วกว่าต้องไล่อ่าน % ทีละแถว + เรียงจากพร้อมมากไปน้อยแทนลำดับ enum เดิม
+          <PremiumCard
+            className="px-4 py-4 text-left space-y-3"
+            style={{ border: `1px solid ${withAlpha(COLORS.amber, '20')}`, boxShadow: `0 0 20px ${withAlpha(COLORS.amber, '08')}` }}
+          >
             <div className="flex items-center justify-between">
               <p className="text-[12px] tracked uppercase text-muted">ความพร้อมกล้ามเนื้อโดยรวม</p>
               {summaryExtras.recovery.overall !== null ? (
-                <ProgressRing value={summaryExtras.recovery.overall} size={46} strokeWidth={5} gradientStops={ringStopsForPct(summaryExtras.recovery.overall)}>
-                  <span className="font-mono text-xs text-ink">{summaryExtras.recovery.overall}%</span>
-                </ProgressRing>
+                <div className="flex flex-col items-center">
+                  <ProgressRing value={summaryExtras.recovery.overall} size={46} strokeWidth={5} gradientStops={ringStopsForPct(summaryExtras.recovery.overall)}>
+                    <span className="font-mono text-xs text-ink">{summaryExtras.recovery.overall}%</span>
+                  </ProgressRing>
+                  <p className="text-[10px] tracked uppercase text-muted mt-0.5">พร้อม</p>
+                </div>
               ) : (
                 <span className="text-xs text-muted">ยังไม่มีข้อมูล</span>
               )}
             </div>
             <div className="space-y-2.5">
-              {summaryExtras.recovery.byMuscle.map((m) => {
-                const mgColor = MUSCLE_GROUP_COLORS[m.muscleGroup]
-                const MuscleGroupIcon = MUSCLE_ICON_BY_GROUP[m.muscleGroup]
-                return (
+              {[...summaryExtras.recovery.byMuscle]
+                .sort((a, b) => b.pct - a.pct)
+                .map((m) => (
                   <div key={m.muscleGroup} className="flex items-center gap-2.5">
-                    <span
-                      className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center"
-                      style={{ background: withAlpha(mgColor, '26'), boxShadow: `0 0 10px ${withAlpha(mgColor, '55')}`, color: mgColor }}
-                    >
-                      <MuscleGroupIcon />
+                    <span className="text-sm shrink-0" aria-hidden="true">
+                      {recoveryDot(m.tier)}
                     </span>
                     <span className="text-[12px] text-muted w-14 shrink-0">{m.muscleGroup}</span>
                     <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
@@ -1479,11 +1507,27 @@ export default function SessionPage() {
                     </div>
                     <span className="text-[12px] font-mono text-ink w-9 text-right">{m.pct}%</span>
                   </div>
-                )
-              })}
+                ))}
             </div>
+            {/* คำแนะนำสั้นๆ — เลือกกล้ามเนื้อที่ยังไม่พร้อม (tier red/orange) สูงสุด 2 กลุ่มจาก byMuscle ที่มี
+                อยู่แล้ว ไม่ใช่ query/สูตรใหม่ — ไม่มีเลยไม่โชว์เลย (ไม่เดาคำแนะนำเชิงบวกให้เพิ่ม) */}
+            {(() => {
+              const notReady = summaryExtras.recovery.byMuscle
+                .filter((m) => m.tier === 'red' || m.tier === 'orange')
+                .sort((a, b) => a.pct - b.pct)
+                .slice(0, 2)
+                .map((m) => m.muscleGroup)
+              if (notReady.length === 0) return null
+              return (
+                <p className="text-xs text-ink">
+                  💡 วันนี้ควรเลี่ยง{notReady.join('และ')} เพราะยังฟื้นตัวไม่เต็มที่
+                </p>
+              )
+            })()}
             <p className="text-[12px] text-muted/70">
-              ประเมินจากวอลุ่ม/ความหนักที่เพิ่งฝึกและวันที่ฝึกล่าสุดของแต่ละกลุ่มกล้ามเนื้อ (ยังไม่รวมข้อมูลการนอน)
+              ประเมินจากการฝึกและการฟื้นตัวล่าสุด
+              <br />
+              ยังไม่รวมข้อมูลการนอน
             </p>
           </PremiumCard>
         )}
@@ -2076,6 +2120,35 @@ function GlowIconChip({ icon, color, size = 36 }: { icon: React.ReactNode; color
   )
 }
 
+// ฟีดแบ็ก "รายชื่อ 32 ท่ายาวเกินไป ดูเหมือนรายงาน debug" — โชว์แค่ 3 ชื่อแรก + "+N ท่า" ปุ่มเดียวขยาย/ย่อ
+// รายชื่อทั้งหมด (useState เฉยๆ ไม่ต้องทำ Bottom Sheet แยก) ข้อมูลเหมือนเดิมทุกตัว แค่เปลี่ยนการนำเสนอ
+function SkippedExercisesCard({ skipped }: { skipped: SkippedExercise[] }) {
+  const [expanded, setExpanded] = useState(false)
+  const preview = skipped.slice(0, 3).map((s) => s.exerciseName)
+  const remaining = skipped.length - preview.length
+  return (
+    <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
+      <p className="text-[12px] tracked uppercase text-muted">⏭️ ข้าม {skipped.length} ท่า</p>
+      {expanded ? (
+        <p className="text-xs text-ink">{skipped.map((s) => s.exerciseName).join(' · ')}</p>
+      ) : (
+        <p className="text-xs text-ink">
+          {preview.join(' · ')}
+          {remaining > 0 && <span className="text-muted"> · +{remaining} ท่า</span>}
+        </p>
+      )}
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] text-muted">ลองแทรกในเซสชันหน้าดูนะ</p>
+        {skipped.length > 3 && (
+          <button type="button" onClick={() => setExpanded((v) => !v)} className="text-[12px] text-amber shrink-0">
+            {expanded ? 'ย่อ' : 'ดูทั้งหมด →'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // bare — Version 4 (Motivational/Premium) รวม 5 สถิติเข้าการ์ดเดียวกัน (แทนที่จะเป็นการ์ดแยก 5 ใบ) ต้อง
 // วางเนื้อหาไว้ในการ์ดนอกเอง ไม่ให้แต่ละ cell ห่อ PremiumCard ซ้อนอีกชั้น — ดีฟอลต์ false รักษาพฤติกรรมเดิม
 // เผื่อจุดอื่นเรียกใช้ต่อในอนาคต
@@ -2085,18 +2158,27 @@ function GlowStatCell({
   value,
   label,
   bare = false,
+  emphasis = 'normal',
+  caption,
 }: {
   icon: React.ReactNode
   color: string
   value: string
   label: string
   bare?: boolean
+  // ฟีดแบ็ก "5 ตัวเลขน้ำหนักเท่ากันหมด อยากให้ 'ท่าที่ทำ' เป็นพระเอกเพราะอธิบาย session ได้ดีที่สุด" —
+  // hero แค่ขยาย font ของค่าตัวเลข ไม่แตะ layout/grid เดิม ('muted' ใช้กับแคลอรี่ที่อยากลดความสำคัญลง)
+  emphasis?: 'normal' | 'hero' | 'muted'
+  // แคปชันเสริมเล็กๆ ใต้ label (เช่น "32 ท่าข้าม") — ใช้ตัวเลขที่มีอยู่แล้วบนหน้านี้ ไม่ใช่ข้อมูลใหม่
+  caption?: string
 }) {
+  const valueClass = emphasis === 'hero' ? 'font-mono text-2xl text-ink tabular' : emphasis === 'muted' ? 'font-mono text-base text-muted tabular' : 'font-mono text-lg text-ink tabular'
   const content = (
     <>
       <GlowIconChip icon={icon} color={color} size={34} />
-      <p className="font-mono text-lg text-ink tabular">{value}</p>
+      <p className={valueClass}>{value}</p>
       <p className="text-[12px] tracked uppercase text-muted">{label}</p>
+      {caption && <p className="text-[11px] text-muted/70 -mt-1">{caption}</p>}
     </>
   )
   if (bare) return <div className="flex flex-col items-center gap-1.5">{content}</div>
@@ -2109,18 +2191,21 @@ function GlowStatRow({
   value,
   label,
   bare = false,
+  emphasis = 'normal',
 }: {
   icon: React.ReactNode
   color: string
   value: string
   label: string
   bare?: boolean
+  emphasis?: 'normal' | 'muted'
 }) {
+  const valueClass = emphasis === 'muted' ? 'font-mono text-sm text-muted tabular truncate' : 'font-mono text-lg text-ink tabular truncate'
   const content = (
     <>
-      <GlowIconChip icon={icon} color={color} size={40} />
+      <GlowIconChip icon={icon} color={color} size={emphasis === 'muted' ? 32 : 40} />
       <div className="min-w-0 text-left">
-        <p className="font-mono text-lg text-ink tabular truncate">{value}</p>
+        <p className={valueClass}>{value}</p>
         <p className="text-[12px] tracked uppercase text-muted">{label}</p>
       </div>
     </>
@@ -2145,6 +2230,24 @@ function recoveryBarColor(tier: 'green' | 'yellow' | 'orange' | 'red') {
   if (tier === 'green') return 'bg-steel'
   if (tier === 'yellow') return 'bg-amber'
   return 'bg-rust'
+}
+
+// ป้าย/สี Workout Score — ใช้ตัวเลขเดียวกับ computeWorkoutScore (lib/workoutSession.ts) เป๊ะ แค่แปลเป็น
+// คำอธิบายสั้นๆ ให้ผู้ใช้เข้าใจทันทีว่า 35 "แปลว่าอะไร" แทนที่จะเห็นตัวเลขลอยๆ (ฟีดแบ็ก design review)
+function workoutScoreTier(score: number): { label: string; color: string } {
+  if (score >= 80) return { label: 'ยอดเยี่ยม', color: COLORS.moss }
+  if (score >= 60) return { label: 'ดี', color: COLORS.amber }
+  if (score >= 40) return { label: 'พอใช้', color: COLORS.amber }
+  return { label: 'ต้องปรับปรุง', color: COLORS.rust }
+}
+
+// วงกลมสีตามระดับฟื้นตัว (เดียวกับ recoveryBarColor แค่คืน emoji แทน class) — mockup ขอ "Recovery Map"
+// ที่อ่านเร็วด้วยสีจุด ไม่ต้องอ่านตัวเลข % ทุกแถวเพื่อรู้ว่ากล้ามเนื้อไหนพร้อม/ไม่พร้อม
+function recoveryDot(tier: 'green' | 'yellow' | 'orange' | 'red') {
+  if (tier === 'green') return '🟢'
+  if (tier === 'yellow') return '🟡'
+  if (tier === 'orange') return '🟠'
+  return '🔴'
 }
 
 function ClockIcon() {
@@ -2188,82 +2291,6 @@ function BoltIcon() {
       <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" />
     </svg>
   )
-}
-
-function ChestIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 8c0-2 2-3 4-2 1 .6 1.5 1.6 1.5 3v7" />
-      <path d="M20 8c0-2-2-3-4-2-1 .6-1.5 1.6-1.5 3v7" />
-    </svg>
-  )
-}
-
-function BackIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3v18" />
-      <path d="M5 6c3 2 4 5 7 5s4-3 7-5" />
-      <path d="M6 19c2-3 4-4 6-4s4 1 6 4" />
-    </svg>
-  )
-}
-
-function LegsIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 3c-.5 5-1 9-2.5 12M15 3c.5 5 1 9 2.5 12M9 3h6" />
-    </svg>
-  )
-}
-
-function CalvesIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 4c-1 3-.5 6 1 8-1 2-1.5 4-1 8" />
-      <path d="M15 4c1 3 .5 6-1 8 1 2 1.5 4 1 8" />
-    </svg>
-  )
-}
-
-function ShouldersIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 14c0-4 2-7 4-7s3 2 3 5" />
-      <path d="M21 14c0-4-2-7-4-7s-3 2-3 5" />
-      <path d="M10 12h4" />
-    </svg>
-  )
-}
-
-function ArmsIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M6 20c0-5 1-8 2-10 1-2 3-3 5-3 3 0 5 2 5 5 0 2-1 3-3 3-1 0-2-1-2-2" />
-      <path d="M8 20c0-3 .5-5 1.5-7" />
-    </svg>
-  )
-}
-
-function CoreIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="7" y="4" width="10" height="16" rx="3" />
-      <path d="M7 9h10M7 14h10M12 4v16" />
-    </svg>
-  )
-}
-
-const MUSCLE_ICON_BY_GROUP: Record<MuscleGroup, () => React.JSX.Element> = {
-  'อก': ChestIcon,
-  'หลัง': BackIcon,
-  'ขา': LegsIcon,
-  'น่อง': CalvesIcon,
-  'ไหล่': ShouldersIcon,
-  'แขน': ArmsIcon,
-  'แกนกลางลำตัว': CoreIcon,
-  'ทั้งตัว': DumbbellIcon,
-  'อื่นๆ': DumbbellIcon,
 }
 
 // ตัวจับเวลาพักแบบย่อ ฝังอยู่ในการ์ดของท่าปัจจุบัน — เริ่มนับอัตโนมัติทุกครั้งที่กด
