@@ -1302,64 +1302,113 @@ export default function SessionPage() {
     )
     const skipped = getSkippedExercises(exercises, states)
     return (
-      <div className="space-y-5 text-center py-4">
-        <div>
-          <p className="text-5xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
-            🎉
-          </p>
-          <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
-          <p className="text-xs text-muted mt-1">{day?.title}</p>
+      // lg:max-w-md lg:mx-auto — เดิมหน้านี้ไม่มี cap เลย (ต่างจาก branch เล่นเซสชันจริงด้านล่างที่มี
+      // lg:max-w-5xl ของตัวเอง) ปล่อยให้ยืดเต็มความกว้าง desktop จะดูแปลกเพราะเนื้อหาเป็น "การ์ดสรุปจบ
+      // เซสชัน" ทรง mobile ไม่ใช่หน้า analytics ที่ควรใช้พื้นที่กว้าง
+      <div className="space-y-5 text-center py-4 lg:max-w-md lg:mx-auto">
+        {/* Hero — reuse login-hero.png/mobile (นักกีฬาถือดัมเบล + เส้นแสงอำพัน) ตัวเดียวกับหน้า login แทน
+            การหารูปสต็อกใหม่ อยู่ในธีม Dark Titanium + Amber ของแอปอยู่แล้ว — gradient มืดทับให้ตัวหนังสือ
+            อ่านง่าย เหมือน pattern เดียวกับ hero ของ /stats/report */}
+        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0">
+          <div className="absolute inset-0" aria-hidden="true">
+            <Image
+              src="/images/login-hero-mobile.png"
+              alt=""
+              fill
+              className="object-cover sm:hidden"
+              style={{ objectPosition: '50% 30%', filter: 'brightness(0.75)' }}
+            />
+            <Image
+              src="/images/login-hero.png"
+              alt=""
+              fill
+              className="object-cover hidden sm:block"
+              style={{ objectPosition: '50% 35%', filter: 'brightness(0.75)' }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(11,11,11,.55) 55%, #0B0B0B 100%)' }}
+            />
+          </div>
+          <div className="relative px-4 py-8">
+            <p className="text-5xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
+              🎉
+            </p>
+            <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
+            <p className="text-xs text-muted mt-1">{day?.title}</p>
+            {/* แท็กไลน์สั้นๆ — คำเดียวเน้นความรู้สึก ไม่ใช่ข้อมูล จึงเป็นภาษาไทยให้เข้ากับทั้งแอป (ทุกจุดในแอป
+                เป็นไทยหมด ไม่มีจุดไหนแทรกภาษาอังกฤษเป็นคำโปรยแบบ mockup ที่ได้รับมา) */}
+            <p className="text-[11px] tracked uppercase mt-3" style={{ color: COLORS.amber }}>
+              แข็งแกร่งกว่าเมื่อวาน
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5">
-          {/* ดู comment ที่ noLiveDuration state ด้านบนของไฟล์ — "00:00" สื่อว่าใช้เวลาศูนย์นาทีจริง ทั้งที่
-              จริงๆ คือไม่เคยมี stopwatch ให้นับเลย ใช้ "–" (เครื่องหมายเดียวกับที่วอลุ่มรวม/แคลอรี่ข้างล่าง
-              ใช้อยู่แล้วเวลาไม่มีข้อมูล) แทนให้สื่อความหมายตรงกับความจริง */}
-          <GlowStatCell
-            icon={<ClockIcon />}
-            color={COLORS.amber}
-            value={noLiveDuration ? '–' : formatClock(totalElapsedMs)}
-            label="เวลาที่ใช้"
-          />
-          <GlowStatCell
-            icon={<DumbbellIcon />}
-            color={COLORS.steel}
-            value={`${summary.exerciseCount}/${exercises.length}`}
-            label="ท่าที่ทำ"
-          />
-          <GlowStatCell icon={<CheckIcon />} color={COLORS.moss} value={String(summary.totalSets)} label="เซ็ตรวม" />
-        </div>
+        {/* Version 4 (Motivational/Premium) — รวม 5 สถิติเข้าการ์ดใบเดียว คั่นด้วยเส้นบางๆ แทนที่จะเป็น
+            การ์ดแยก 5 ใบเรียงกัน (ของเดิม) เส้นขอบ+glow อำพันบางๆ ให้เข้าธีมเดียวกับ hero ด้านบน */}
+        <PremiumCard className="p-4 space-y-4" style={{ border: `1px solid ${withAlpha(COLORS.amber, '25')}`, boxShadow: `0 0 24px ${withAlpha(COLORS.amber, '0d')}` }}>
+          <div className="grid grid-cols-3 gap-2.5">
+            {/* ดู comment ที่ noLiveDuration state ด้านบนของไฟล์ — "00:00" สื่อว่าใช้เวลาศูนย์นาทีจริง ทั้งที่
+                จริงๆ คือไม่เคยมี stopwatch ให้นับเลย ใช้ "–" (เครื่องหมายเดียวกับที่วอลุ่มรวม/แคลอรี่ข้างล่าง
+                ใช้อยู่แล้วเวลาไม่มีข้อมูล) แทนให้สื่อความหมายตรงกับความจริง */}
+            <GlowStatCell
+              bare
+              icon={<ClockIcon />}
+              color={COLORS.amber}
+              value={noLiveDuration ? '–' : formatClock(totalElapsedMs)}
+              label="เวลาที่ใช้"
+            />
+            <GlowStatCell
+              bare
+              icon={<DumbbellIcon />}
+              color={COLORS.steel}
+              value={`${summary.exerciseCount}/${exercises.length}`}
+              label="ท่าที่ทำ"
+            />
+            <GlowStatCell bare icon={<CheckIcon />} color={COLORS.moss} value={String(summary.totalSets)} label="เซ็ตรวม" />
+          </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
-          <GlowStatRow
-            icon={<FlameIcon />}
-            color={COLORS.cyan}
-            value={summary.totalVolumeKg > 0 ? Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString() : '–'}
-            label={`วอลุ่มรวม (${unit})`}
-          />
-          {/* ฟีดแบ็ก (design review) "0 kcal ดูเหมือนระบบคำนวณแล้วพบว่าเผาผลาญ 0 จริง ทั้งที่ไม่น่าเป็นไปได้
-              สำหรับ workout 66 นาที" — estimateCaloriesToday() (lib/dashboardStats.ts) รวม cardioKcal
-              (จากข้อมูลคาร์ดิโอจริงถ้ามี) + strengthKcal (0 ถ้าไม่มี duration ให้อ้างอิง — ดู noLiveDuration
-              ด้านบน) ผลรวมเป็น 0 จริงๆ เฉพาะตอนไม่มีทั้งคาร์ดิโอและ duration ที่เชื่อถือได้เลย ไม่ใช่บั๊ก
-              การคำนวณ แต่ "0 kcal" สื่อความหมายผิด — โชว์ "–" แทนเฉพาะตอนผลลัพธ์เป็น 0 เป๊ะ (ไม่กระทบตอนมี
-              คาร์ดิโอจริงที่ทำให้ผลรวม > 0) */}
-          <GlowStatRow
-            icon={<BoltIcon />}
-            color={COLORS.green}
-            value={summaryLoading ? '…' : summaryExtras && summaryExtras.calories > 0 ? `${summaryExtras.calories} kcal` : '–'}
-            label="แคลอรี่ (ประมาณ)"
-          />
-        </div>
+          <div className="border-t" style={{ borderColor: NEUTRAL.chipInactive }} />
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <GlowStatRow
+              bare
+              icon={<FlameIcon />}
+              color={COLORS.cyan}
+              value={summary.totalVolumeKg > 0 ? Math.round(toDisplay(summary.totalVolumeKg)).toLocaleString() : '–'}
+              label={`วอลุ่มรวม (${unit})`}
+            />
+            {/* ฟีดแบ็ก (design review) "0 kcal ดูเหมือนระบบคำนวณแล้วพบว่าเผาผลาญ 0 จริง ทั้งที่ไม่น่าเป็นไปได้
+                สำหรับ workout 66 นาที" — estimateCaloriesToday() (lib/dashboardStats.ts) รวม cardioKcal
+                (จากข้อมูลคาร์ดิโอจริงถ้ามี) + strengthKcal (0 ถ้าไม่มี duration ให้อ้างอิง — ดู noLiveDuration
+                ด้านบน) ผลรวมเป็น 0 จริงๆ เฉพาะตอนไม่มีทั้งคาร์ดิโอและ duration ที่เชื่อถือได้เลย ไม่ใช่บั๊ก
+                การคำนวณ แต่ "0 kcal" สื่อความหมายผิด — โชว์ "–" แทนเฉพาะตอนผลลัพธ์เป็น 0 เป๊ะ (ไม่กระทบตอนมี
+                คาร์ดิโอจริงที่ทำให้ผลรวม > 0) */}
+            <GlowStatRow
+              bare
+              icon={<BoltIcon />}
+              color={COLORS.green}
+              value={summaryLoading ? '…' : summaryExtras && summaryExtras.calories > 0 ? `${summaryExtras.calories} kcal` : '–'}
+              label="แคลอรี่ (ประมาณ)"
+            />
+          </div>
+        </PremiumCard>
 
         {/* Priority 5 — เดิมหน้านี้ไม่มีคะแนนสรุปเซสชันหรือบรรทัดเทียบกับสัปดาห์ที่แล้วเลย มีแค่ตัวเลขดิบ
             (เวลา/ท่า/เซ็ต/วอลุ่ม/แคลอรี่) — เพิ่ม Workout Score (lib/workoutSession.ts) และ volume-trend
             ของกลุ่มกล้ามเนื้อที่เพิ่มขึ้นเด่นสุดสัปดาห์นี้ (เอนจินเดิม computeBestVolumeIncrease ที่ใช้ทำ
             greeting บน Dashboard อยู่แล้ว ไม่ได้สร้างสูตรใหม่) */}
         {summaryExtras && (
-          <div className="rounded-lg bg-surface2 border border-line px-4 py-3 text-left space-y-1">
+          // Version 4 — เปลี่ยนจากกรอบเทาเรียบๆ (bg-surface2 border-line) เป็นกรอบ+glow อำพันแบบเดียวกับ
+          // การ์ด "สถิติใหม่"/hero ด้านบน ให้การ์ดนี้อ่านเป็น "ความสำเร็จ" ไม่ใช่แค่กล่องข้อมูลรอง — เปลี่ยน
+          // ไอคอน ⭐ เป็น 🏆 ให้เข้าธีมเดียวกับการ์ด PR ด้านล่างที่ใช้ 🏆 อยู่แล้ว (ทั้งคู่เป็น "ความสำเร็จ")
+          <div
+            className="rounded-lg px-4 py-3 text-left space-y-1"
+            style={{ background: withAlpha(COLORS.amber, '0a'), border: `1px solid ${withAlpha(COLORS.amber, '30')}` }}
+          >
             <p className="text-[12px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
             <p className="text-xs text-ink">
-              ⭐ Workout Score <span className="font-mono text-amber">{summaryExtras.workoutScore}</span>
+              🏆 Workout Score <span className="font-mono text-amber">{summaryExtras.workoutScore}</span>
             </p>
             {/* ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ engine
                 (computeBestVolumeIncrease) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — HighlightsRow.tsx
@@ -2027,26 +2076,57 @@ function GlowIconChip({ icon, color, size = 36 }: { icon: React.ReactNode; color
   )
 }
 
-function GlowStatCell({ icon, color, value, label }: { icon: React.ReactNode; color: string; value: string; label: string }) {
-  return (
-    <PremiumCard className="py-3.5 px-2 flex flex-col items-center gap-1.5">
+// bare — Version 4 (Motivational/Premium) รวม 5 สถิติเข้าการ์ดเดียวกัน (แทนที่จะเป็นการ์ดแยก 5 ใบ) ต้อง
+// วางเนื้อหาไว้ในการ์ดนอกเอง ไม่ให้แต่ละ cell ห่อ PremiumCard ซ้อนอีกชั้น — ดีฟอลต์ false รักษาพฤติกรรมเดิม
+// เผื่อจุดอื่นเรียกใช้ต่อในอนาคต
+function GlowStatCell({
+  icon,
+  color,
+  value,
+  label,
+  bare = false,
+}: {
+  icon: React.ReactNode
+  color: string
+  value: string
+  label: string
+  bare?: boolean
+}) {
+  const content = (
+    <>
       <GlowIconChip icon={icon} color={color} size={34} />
       <p className="font-mono text-lg text-ink tabular">{value}</p>
       <p className="text-[12px] tracked uppercase text-muted">{label}</p>
-    </PremiumCard>
+    </>
   )
+  if (bare) return <div className="flex flex-col items-center gap-1.5">{content}</div>
+  return <PremiumCard className="py-3.5 px-2 flex flex-col items-center gap-1.5">{content}</PremiumCard>
 }
 
-function GlowStatRow({ icon, color, value, label }: { icon: React.ReactNode; color: string; value: string; label: string }) {
-  return (
-    <PremiumCard className="px-3.5 py-3.5 flex items-center gap-3">
+function GlowStatRow({
+  icon,
+  color,
+  value,
+  label,
+  bare = false,
+}: {
+  icon: React.ReactNode
+  color: string
+  value: string
+  label: string
+  bare?: boolean
+}) {
+  const content = (
+    <>
       <GlowIconChip icon={icon} color={color} size={40} />
       <div className="min-w-0 text-left">
         <p className="font-mono text-lg text-ink tabular truncate">{value}</p>
         <p className="text-[12px] tracked uppercase text-muted">{label}</p>
       </div>
-    </PremiumCard>
+    </>
   )
+  if (bare) return <div className="flex items-center gap-3">{content}</div>
+  return <PremiumCard className="px-3.5 py-3.5 flex items-center gap-3">{content}</PremiumCard>
 }
 
 // สีวงแหวน ProgressRing ของ "ความพร้อมกล้ามเนื้อโดยรวม" — ผูกกับ tier เดียวกับแถบสีรายกลุ่ม
