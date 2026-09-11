@@ -1327,17 +1327,24 @@ export default function SessionPage() {
               style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(11,11,11,.55) 55%, #0B0B0B 100%)' }}
             />
           </div>
-          <div className="relative px-4 py-8">
+          {/* ฟีดแบ็ก "ทำให้เหมือน mockup 100%" — จัดซ้าย (เดิม text-center จาก parent) ให้ตรงกับ mockup ที่
+              เนื้อหาหลักชิดซ้าย ส่วนแท็กไลน์แยกไปลอยขวาบนแทนที่จะอยู่ในสตรีมเดียวกัน */}
+          <div className="relative px-4 py-8 text-left">
             <p className="text-5xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
               🎉
             </p>
             <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
             <p className="text-xs text-muted mt-1">{day?.title}</p>
-            {/* แท็กไลน์ — ฟีดแบ็ก "อยากได้ภาษาอังกฤษสไตล์เดียวกับรูปที่ให้ Manus ทำ" เปลี่ยนจากภาษาไทยเดิม
-                (แข็งแกร่งกว่าเมื่อวาน) เป็นภาษาอังกฤษตรงตามคำขอรอบนี้ — font-serif italic + สีขาวครีม
-                (text-ink) แทน uppercase amber เดิม ให้ดูเป็นคำโปรยสไตล์ภาพถ่าย ไม่ใช่ label ข้อมูล */}
-            <p className="font-serif italic text-sm text-ink mt-3">Stronger Than Yesterday</p>
           </div>
+          {/* แท็กไลน์ — ภาษาอังกฤษสไตล์เดียวกับรูปที่ Manus ทำ (font-serif italic สีขาวครีม) ลอยขวาบน
+              แยกจากสตรีมข้อความหลัก 3 บรรทัดซ้อนกันแบบเดียวกับ mockup */}
+          <p className="absolute top-6 right-4 font-serif italic text-sm text-ink text-right leading-tight">
+            Stronger
+            <br />
+            Than
+            <br />
+            Yesterday
+          </p>
         </div>
 
         {/* Version 4 (Motivational/Premium) — รวม 5 สถิติเข้าการ์ดใบเดียว คั่นด้วยเส้นบางๆ แทนที่จะเป็น
@@ -1400,67 +1407,48 @@ export default function SessionPage() {
             (เวลา/ท่า/เซ็ต/วอลุ่ม/แคลอรี่) — เพิ่ม Workout Score (lib/workoutSession.ts) และ volume-trend
             ของกลุ่มกล้ามเนื้อที่เพิ่มขึ้นเด่นสุดสัปดาห์นี้ (เอนจินเดิม computeBestVolumeIncrease ที่ใช้ทำ
             greeting บน Dashboard อยู่แล้ว ไม่ได้สร้างสูตรใหม่) */}
+        {/* ฟีดแบ็ก "ทำให้เหมือน mockup 100%" — ทั้ง Workout Score และ PR เป็นแถวลิงก์สั้นสไตล์เดียวกัน
+            (ก่อนหน้านี้ Workout Score มี tier label + progress bar + บรรทัดเหตุผล ตอนนี้ตัดออกให้ตรง
+            mockup เป๊ะ) ใช้ SessionHighlightRow ร่วมกัน */}
         {summaryExtras && (
-          // Version 4 — เปลี่ยนจากกรอบเทาเรียบๆ (bg-surface2 border-line) เป็นกรอบ+glow อำพันแบบเดียวกับ
-          // การ์ด "สถิติใหม่"/hero ด้านบน ให้การ์ดนี้อ่านเป็น "ความสำเร็จ" ไม่ใช่แค่กล่องข้อมูลรอง — เปลี่ยน
-          // ไอคอน ⭐ เป็น 🏆 ให้เข้าธีมเดียวกับการ์ด PR ด้านล่างที่ใช้ 🏆 อยู่แล้ว (ทั้งคู่เป็น "ความสำเร็จ")
-          <div
-            className="rounded-lg px-4 py-3 text-left space-y-1"
-            style={{ background: withAlpha(COLORS.amber, '0a'), border: `1px solid ${withAlpha(COLORS.amber, '30')}` }}
-          >
-            <p className="text-[12px] tracked uppercase text-muted">ไฮไลท์เซสชันนี้</p>
-            {(() => {
-              const tier = workoutScoreTier(summaryExtras.workoutScore)
-              return (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">🏆</span>
-                    <span className="font-mono text-lg text-ink">{summaryExtras.workoutScore}</span>
-                    <span className="text-[12px]" style={{ color: tier.color }}>
-                      {tier.label}
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-surface2 overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${summaryExtras.workoutScore}%`, background: tier.color }} />
-                  </div>
-                  {/* เหตุผลสั้นๆ ว่า "ทำไมได้คะแนนนี้" — ประกอบจากตัวเลขที่มีอยู่แล้วบนหน้านี้ (skipped.length,
-                      summary.exerciseCount/exercises.length) ไม่ใช่สูตรคำนวณใหม่ แค่แปลตัวเลขเป็นประโยค
-                      (ฟีดแบ็ก "35 ดูเหมือนคะแนนต่ำที่โยนมาเฉยๆ ต้องเล่าเรื่องว่าทำไม") */}
-                  {skipped.length > 0 && (
-                    <p className="text-[12px] text-muted mt-1">
-                      ข้ามท่าไป {skipped.length} ท่า · ทำได้ {summary.exerciseCount}/{exercises.length} ท่าตามแผน
-                    </p>
-                  )}
-                </>
-              )
-            })()}
-            {/* ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ engine
-                (computeBestVolumeIncrease) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — HighlightsRow.tsx
-                (Dashboard) ใช้ engine เดียวกันนี้แล้วเลี่ยงคำว่า Volume ไปแล้ว ("X เพิ่มขึ้นจากสัปดาห์ก่อน")
-                ปรับข้อความจุดนี้ให้ตรงกัน */}
-            {summaryExtras.volumeIncrease && (
-              <p className="text-xs text-ink">
-                🔥 {summaryExtras.volumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน{' '}
-                <span className="font-mono text-moss">+{summaryExtras.volumeIncrease.pct}%</span>
-              </p>
-            )}
-          </div>
+          <SessionHighlightRow
+            icon="🏆"
+            iconColor={workoutScoreTier(summaryExtras.workoutScore).color}
+            label="ไฮไลท์เซสชันนี้"
+            value={
+              <>
+                Workout Score <span className="font-mono">{summaryExtras.workoutScore}</span>
+              </>
+            }
+          />
+        )}
+
+        {/* ฟีดแบ็ก (จากรอบตรวจบั๊กทั้งโปรเจครอบใหม่, "Terminology") "Volume ทั้งที่ engine
+            (computeBestVolumeIncrease) คำนวณจากจำนวนเซ็ต ไม่ใช่ kg-volume จริง" — HighlightsRow.tsx
+            (Dashboard) ใช้ engine เดียวกันนี้แล้วเลี่ยงคำว่า Volume ไปแล้ว ("X เพิ่มขึ้นจากสัปดาห์ก่อน")
+            ปรับข้อความจุดนี้ให้ตรงกัน — แยกเป็นบรรทัดของตัวเองนอกการ์ด Workout Score เพราะเป็นคนละข้อมูลกัน */}
+        {summaryExtras && summaryExtras.volumeIncrease && (
+          <p className="text-xs text-ink px-1">
+            🔥 {summaryExtras.volumeIncrease.muscleGroup} เพิ่มขึ้นจากสัปดาห์ก่อน{' '}
+            <span className="font-mono text-moss">+{summaryExtras.volumeIncrease.pct}%</span>
+          </p>
         )}
 
         {skipped.length > 0 && <SkippedExercisesCard skipped={skipped} />}
 
         {summaryExtras && summaryExtras.prs.length > 0 && (
-          <div className="rounded-lg bg-surface2 border border-amber/30 px-4 py-3 text-left space-y-1">
-            <p className="text-[12px] tracked uppercase text-amber">🏆 สถิติใหม่</p>
-            {summaryExtras.prs.slice(0, 2).map((pr) => (
-              <p key={pr.exerciseName} className="text-xs text-ink">
-                {pr.exerciseName} <span className="text-amber font-mono">+{format(pr.deltaKg)}</span>
-              </p>
-            ))}
-            {summaryExtras.prs.length > 2 && (
-              <p className="text-[12px] text-muted">และอีก {summaryExtras.prs.length - 2} ท่า</p>
-            )}
-          </div>
+          <SessionHighlightRow
+            icon="🏆"
+            iconColor={COLORS.amber}
+            label="สถิติใหม่"
+            value={
+              <>
+                {summaryExtras.prs[0].exerciseName}{' '}
+                <span className="font-mono text-amber">+{format(summaryExtras.prs[0].deltaKg)}</span>
+                {summaryExtras.prs.length > 1 && <span className="text-muted"> · +{summaryExtras.prs.length - 1} ท่า</span>}
+              </>
+            }
+          />
         )}
 
         {summaryLoading && !summaryExtras && (
@@ -2225,6 +2213,39 @@ function workoutScoreTier(score: number): { label: string; color: string } {
   if (score >= 60) return { label: 'ดี', color: COLORS.amber }
   if (score >= 40) return { label: 'พอใช้', color: COLORS.amber }
   return { label: 'ต้องปรับปรุง', color: COLORS.rust }
+}
+
+// แถวลิงก์สั้นๆ — ไอคอน + label/value 2 บรรทัด + ลูกศร ใช้ร่วมกันทั้ง Workout Score และ PR การ์ด
+// (ฟีดแบ็ก "ทำให้เหมือน mockup 100%" ทั้งสองการ์ดในภาพเป็นสไตล์เดียวกันเป๊ะ) แค่โชว์ ไม่ใช่ปุ่มลิงก์จริง
+// (ยังไม่มีหน้ารายละเอียดให้กดไป) ลูกศรเป็นแค่ cue ภาพให้อ่านง่ายตรงกับ mockup
+function SessionHighlightRow({
+  icon,
+  iconColor,
+  label,
+  value,
+}: {
+  icon: string
+  iconColor: string
+  label: string
+  value: React.ReactNode
+}) {
+  return (
+    <div
+      className="rounded-lg px-4 py-3 flex items-center gap-3"
+      style={{ background: withAlpha(COLORS.amber, '0a'), border: `1px solid ${withAlpha(COLORS.amber, '30')}` }}
+    >
+      <span className="text-xl shrink-0" style={{ color: iconColor }}>
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1 text-left">
+        <p className="text-[12px] tracked uppercase text-muted">{label}</p>
+        <p className="text-sm text-ink truncate">{value}</p>
+      </div>
+      <span className="text-muted shrink-0" aria-hidden="true">
+        ›
+      </span>
+    </div>
+  )
 }
 
 // วงกลมสีตามระดับฟื้นตัว (เดียวกับ recoveryBarColor แค่คืน emoji แทน class) — mockup ขอ "Recovery Map"
