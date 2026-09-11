@@ -12,6 +12,19 @@ interface WorkoutStreakCardProps {
   today: string
 }
 
+// ฟีดแบ็ก "emoji หน้านี้ใช้ที่เรามีอยู่แล้วได้ไหม ลองแมฟดู" — เดิมใช้อีโมจิ 🔥 ดิบๆ (มีสีของตัวเองติดมา
+// ชนกับพื้นวงกลมสีอำพันตั้งใจ เหมือนปัญหาเดียวกับไอคอนอื่นในหน้านี้ที่แก้ไปแล้ว) เปลี่ยนเป็น SVG เส้นล้วน
+// (stroke=currentColor) — path เดียวกับ FlameIcon ที่มีอยู่แล้วใน app/(app)/session/page.tsx (ไฟล์นั้น
+// component ท้องถิ่น ไม่ได้ export ให้ import ข้ามไฟล์ได้ เลย define ซ้ำที่นี่ด้วย path เดิมเป๊ะ ให้หน้าตา
+// ไอคอนไฟตรงกันทั้งแอป แทนที่จะออกแบบทรงใหม่)
+function FlameIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2c1 3-2 4-2 7a4 4 0 008 0c0-1-.5-2-1-3 1 0 3 2 3 6a6 6 0 11-12 0c0-4 2-7 4-10z" />
+    </svg>
+  )
+}
+
 // การ์ด "Workout Streak" แบบย่อ (เดิมสูง ~180px ลดเหลือ ~90-100px ตามที่ขอ) — รวมทุกอย่างลง
 // แถวเดียว: ไอคอนไฟ+จำนวนวัน ซ้าย, จุดวงกลม 7 วันเล็กๆ (ไม่มีตัวย่อวันกำกับใต้จุดแล้ว — ข้อมูล
 // วันยังอยู่ครบใน aria-label ให้ screen reader อ่านได้ปกติ) ขวา ตัดคำบรรยายใต้หัวข้อออกไปเลย
@@ -50,11 +63,11 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 shrink-0">
           <span
-            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs"
-            style={{ backgroundColor: withAlpha(COLORS.amber, '12') }}
+            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+            style={{ backgroundColor: withAlpha(COLORS.amber, '12'), color: COLORS.amber }}
             aria-hidden="true"
           >
-            🔥
+            <FlameIcon />
           </span>
           <p className="text-[12px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Weekly Activity</p>
         </div>

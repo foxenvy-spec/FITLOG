@@ -25,6 +25,30 @@ import { splitTitleDetail } from './TodaysFocusCard'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
 
+// ฟีดแบ็ก "emoji หน้านี้ใช้ที่เรามีอยู่แล้วได้ไหม ลองแมฟดู" — เดิมป้ายชื่อการ์ด "MINT Coach" ใช้อีโมจิ ✨
+// ดิบๆ นำหน้า (สีของตัวเองมากับฟอนต์/แพลตฟอร์ม) เปลี่ยนเป็น SVG เส้นล้วน (stroke=currentColor) — path
+// เดียวกับ SparkleIcon ที่ SidebarNav.tsx ใช้กับเมนู "AI Coach" อยู่แล้ว (component นั้นผูกกับ active state
+// ของ nav item โดยเฉพาะ import ตรงๆ ไม่ได้ เลย define local ซ้ำด้วย path เดิมเป๊ะ ให้ไอคอน "AI Coach"
+// หน้าตาตรงกันทั้งแอป แทนที่จะออกแบบทรงใหม่) ใช้ทั้งเดสก์ท็อป/มือถือ (component นี้ shared ทั้งสองแพลตฟอร์ม)
+function SparkleIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden="true">
+      <path
+        d="M12 3.5c.6 3.3 1.6 4.5 5 5.2-3.4.7-4.4 1.9-5 5.2-.6-3.3-1.6-4.5-5-5.2 3.4-.7 4.4-1.9 5-5.2Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18 15.5c.35 1.9.9 2.55 2.8 2.9-1.9.35-2.45 1-2.8 2.9-.35-1.9-.9-2.55-2.8-2.9 1.9-.35 2.45-1 2.8-2.9Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 interface AICoachCompactCardProps {
   message: string
   /** กลุ่มกล้ามเนื้อที่แนะนำวันนี้ + % ฟื้นตัว (ชุดเดียวกับที่ TodaysFocusCard ใช้อยู่แล้ว จาก
@@ -385,7 +409,9 @@ export default function AICoachCompactCard({
               <span> เดียวรวมกันก่อนรอบนี้ */}
           <div className="flex items-center justify-between gap-x-2 gap-y-0.5 flex-wrap">
             <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0">
-              <span aria-hidden="true" className="shrink-0">✨</span>
+              <span aria-hidden="true" className="shrink-0" style={{ color: COLORS.amber }}>
+                <SparkleIcon />
+              </span>
               <span className="whitespace-nowrap shrink-0" style={{ color: TEXT.body }}>MINT Coach ·</span>{' '}
               <span className="whitespace-nowrap shrink-0 font-semibold" style={{ color: TEXT.title }}>
                 {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}
