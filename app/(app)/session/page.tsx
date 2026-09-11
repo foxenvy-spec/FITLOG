@@ -1350,23 +1350,22 @@ export default function SessionPage() {
             Yesterday
           </p>
           {/* relative — กัน bug stacking เดิม (element ไม่มี position วาดก่อน positioned เสมอ ทำให้รูป/
-              gradient ไปทับข้อความ) ต้องใส่ relative ให้ join "positioned" stacking เดียวกับรูป */}
-          <div className="relative text-left">
-            <p className="font-display text-2xl tracked uppercase text-ink flex items-center gap-2">
-              <span className="text-3xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }} aria-hidden="true">
-                🎉
-              </span>
-              เซสชันเสร็จแล้ว
-            </p>
-            {/* ฟีดแบ็ก "ใช้สีเดียวกับเซสชันเสร็จแล้ว ไม่ต้องเอียง" — ตัด italic ออก เปลี่ยนสีจาก amber
-                กลับเป็น text-ink สีเดียวกับชื่อเซสชันด้านบน คง pl-10 (ชดเชยความกว้าง emoji+gap ให้บรรทัดนี้
-                เริ่มตรงกับตัวอักษรตัวแรกของชื่อเซสชัน) และ text-shadow (มิติ) ไว้เหมือนเดิม */}
-            <p
-              className="text-xs mt-1 pl-12 text-ink"
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.08)' }}
-            >
-              {day?.title}
-            </p>
+              gradient ไปทับข้อความ) ต้องใส่ relative ให้ join "positioned" stacking เดียวกับรูป
+              ฟีดแบ็ก "ขยับ emoji ลงมาอยู่ระหว่างกลางเซสชัน/Day 2 แต่ตำแหน่งข้างหน้าเหมือนเดิม" — ย้าย emoji
+              ออกมาเป็น sibling ก่อนบล็อกข้อความ (ไม่ได้อยู่ในบรรทัดชื่อเซสชันแล้ว) ใช้ items-center บน flex
+              แถวนอกสุด ให้ emoji จัดกึ่งกลางแนวตั้งเทียบกับบล็อก 2 บรรทัดทั้งก้อน (เซสชัน+Day 2) แทนที่จะ
+              ชิดกับบรรทัดชื่อเซสชันอย่างเดียว — เอา pl-12 ออกจาก Day 2 เพราะตอนนี้ทั้ง 2 บรรทัดอยู่ในคอลัมน์
+              เดียวกันที่เริ่มหลัง emoji+gap อยู่แล้วโดยไม่ต้องชดเชยเอง */}
+          <div className="relative flex items-center gap-2 text-left">
+            <span className="text-3xl shrink-0" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }} aria-hidden="true">
+              🎉
+            </span>
+            <div>
+              <p className="font-display text-2xl tracked uppercase text-ink">เซสชันเสร็จแล้ว</p>
+              <p className="text-xs mt-1 text-ink" style={{ textShadow: '0 1px 2px rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.08)' }}>
+                {day?.title}
+              </p>
+            </div>
           </div>
         </div>
 
