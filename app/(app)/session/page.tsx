@@ -1327,25 +1327,27 @@ export default function SessionPage() {
               style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(11,11,11,.55) 55%, #0B0B0B 100%)' }}
             />
           </div>
-          {/* ฟีดแบ็ก "ทำให้เหมือน mockup 100%" — จัดซ้าย (เดิม text-center จาก parent) ให้ตรงกับ mockup ที่
-              เนื้อหาหลักชิดซ้าย ส่วนแท็กไลน์แยกไปลอยขวาบนแทนที่จะอยู่ในสตรีมเดียวกัน */}
-          <div className="relative px-4 py-8 text-left">
-            <p className="text-5xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
-              🎉
-            </p>
-            <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
-            <p className="text-xs text-muted mt-1">{day?.title}</p>
-          </div>
-          {/* แท็กไลน์ — ฟีดแบ็ก "ดูตำแหน่ง version 4 ดีๆ" ขยับขึ้นชิดขอบบนของการ์ด (top-4 แทน top-6)
-              ให้อยู่ระดับเดียวกับ emoji ฝั่งซ้าย ไม่ใช่ต่ำกว่า และขยายขนาดตัวอักษรขึ้น (text-base แทน
-              text-sm) ให้มีน้ำหนักสายตาเทียบเท่าฝั่งซ้ายตาม mockup */}
-          <p className="absolute top-4 right-4 font-serif italic font-semibold text-base text-right leading-tight" style={{ color: COLORS.amber }}>
+          {/* ฟีดแบ็ก "ดูตำแหน่งเทียบกับคนในรูปดีๆ — Stronger Than Yesterday อยู่ประมาณเอวคน, เซสชันเสร็จแล้ว
+              อยู่ประมาณขา" — เดิมจัดทุกอย่างเป็นบล็อกเดียวไล่จากขอบบน (emoji ต่อด้วยชื่อ+วันติดกันเลย) แต่
+              mockup จริงกระจาย 3 ชิ้นนี้ตามความสูงคนในรูป: emoji ลอยบนสุด, tagline ลอยกลางๆ (แนวเอว),
+              ชื่อ+วันลอยล่างสุด (แนวขา) แยก absolute positioning เป็นคนละจุดแทนการ flow ต่อกัน */}
+          <p className="absolute top-4 left-4 text-5xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
+            🎉
+          </p>
+          <p
+            className="absolute right-4 font-serif italic font-semibold text-base text-right leading-tight"
+            style={{ color: COLORS.amber, top: '44%' }}
+          >
             Stronger
             <br />
             Than
             <br />
             Yesterday
           </p>
+          <div className="absolute left-4 bottom-6 text-left">
+            <p className="font-display text-2xl tracked uppercase text-ink">เซสชันเสร็จแล้ว</p>
+            <p className="text-xs text-muted mt-1">{day?.title}</p>
+          </div>
         </div>
 
         {/* Version 4 (Motivational/Premium) — รวม 5 สถิติเข้าการ์ดใบเดียว คั่นด้วยเส้นบางๆ แทนที่จะเป็น
