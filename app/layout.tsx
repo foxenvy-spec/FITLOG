@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Oswald, Kanit, Inter, IBM_Plex_Sans_Thai, IBM_Plex_Mono } from 'next/font/google'
+import { Oswald, Kanit, Inter, IBM_Plex_Sans_Thai, IBM_Plex_Mono, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
@@ -36,6 +36,17 @@ const plexMono = IBM_Plex_Mono({
   variable: '--font-mono',
   display: 'swap',
 })
+// เฉพาะจุด pull-quote เดียว (tagline "Stronger Than Yesterday" บนหน้า Session Complete) — เดิมใช้
+// font-serif ของ Tailwind (generic stack: ui-serif/Georgia/Times ตาม OS ผู้ใช้) ซึ่งหน้าตาไม่คงที่ข้าม
+// เครื่อง โหลดฟอนต์จริงแทนให้ควบคุมหน้าตาได้แน่นอน (ui-ux-pro-max ยืนยันแพทเทิร์นนี้ตรงกับที่ใช้อยู่:
+// sans สำหรับ UI ทั่วไป + serif italic เฉพาะจุดเน้น 1 จุด)
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['600', '700'],
+  style: ['italic'],
+  variable: '--font-playfair',
+  display: 'swap',
+})
 
 // นี่คือ ROOT layout ของทั้งแอป (ต้องมี <html>/<body> เสมอ — Next.js บังคับ)
 // ห้ามลบ/ทับด้วยเนื้อหาของ app/(app)/layout.tsx อีก เพราะจะทำให้หน้าเว็บพังทั้งหมด
@@ -63,7 +74,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="th" className={`${oswald.variable} ${kanit.variable} ${inter.variable} ${plexThai.variable} ${plexMono.variable}`}>
+    <html lang="th" className={`${oswald.variable} ${kanit.variable} ${inter.variable} ${plexThai.variable} ${plexMono.variable} ${playfair.variable}`}>
       <body>
         <ServiceWorkerRegister />
         {children}

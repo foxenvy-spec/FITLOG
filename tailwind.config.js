@@ -62,6 +62,9 @@ module.exports = {
         display: ['var(--font-oswald)', 'var(--font-kanit)'],
         body: ['var(--font-inter)', 'var(--font-plex-thai)'],
         mono: ['var(--font-mono)', 'var(--font-plex-thai)'],
+        // เฉพาะ pull-quote จุดเดียว (tagline บนหน้า Session Complete) — ตั้งชื่อ "quote" แยกจาก serif
+        // ทั่วไปของเบราว์เซอร์ ไม่ตั้งใจให้ใช้เป็น body font ที่ไหนอีก
+        quote: ['var(--font-playfair)', 'serif'],
       },
       letterSpacing: {
         widest2: '0.2em',

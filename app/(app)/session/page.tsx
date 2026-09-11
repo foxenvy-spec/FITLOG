@@ -1335,7 +1335,7 @@ export default function SessionPage() {
             🎉
           </p>
           <p
-            className="absolute right-4 font-serif italic font-semibold text-base text-right leading-tight"
+            className="absolute right-4 font-quote italic font-semibold text-base text-right leading-tight"
             style={{ color: COLORS.amber, top: '44%' }}
           >
             Stronger
@@ -2242,6 +2242,8 @@ function SessionHighlightRow({
       ? { background: withAlpha(COLORS.amber, '12'), border: `2px solid ${withAlpha(COLORS.amber, '90')}`, boxShadow: `0 0 24px ${withAlpha(COLORS.amber, '35')}` }
       : { background: 'transparent', border: `1px solid ${NEUTRAL.chipInactive}` }
   return (
+    // ฟีดแบ็ก (ui-ux-pro-max review) "ลูกศร › สื่อว่ากดได้แต่ไม่มีปลายทางจริง (false affordance)" —
+    // เอาลูกศรออก แถวนี้ยังไม่ใช่ปุ่มลิงก์จริง (ไม่มีหน้ารายละเอียดให้กดไปสักหน้า)
     <div className="rounded-lg px-4 py-3 flex items-center gap-3" style={style}>
       <span className="text-xl shrink-0" style={{ color: iconColor }}>
         {icon}
@@ -2250,9 +2252,6 @@ function SessionHighlightRow({
         <p className="text-[12px] tracked uppercase text-muted">{label}</p>
         <p className="text-sm text-ink truncate">{value}</p>
       </div>
-      <span className="text-muted shrink-0" aria-hidden="true">
-        ›
-      </span>
     </div>
   )
 }
