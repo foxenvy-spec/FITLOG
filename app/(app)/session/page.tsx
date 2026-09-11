@@ -1355,7 +1355,17 @@ export default function SessionPage() {
               </span>
               เซสชันเสร็จแล้ว
             </p>
-            <p className="text-xs text-muted mt-1">{day?.title}</p>
+            {/* ฟีดแบ็ก "ขยับ Day 2 ให้ตรงกับเซสชันเสร็จแล้ว (ไม่ใช่ตรงกับ emoji), เอียงๆ มีมิติและสี" —
+                pl-10 ชดเชยความกว้าง emoji (text-3xl) + gap-2 ด้านบนให้บรรทัดนี้เริ่มตรงกับตัวอักษรตัวแรก
+                ของชื่อเซสชัน ไม่ใช่ตรงกับ emoji — italic ให้ดูเอียงเล็กน้อย + text-shadow ให้มีมิติ (นูน
+                ขึ้นจากพื้นหลัง) + สีอุ่นแบบ amber อ่อนแทน text-muted เทาเรียบเดิม ให้เข้ากับโทนแสงอำพันของ
+                รูป (ยังคงความคมชัดพอสำหรับพื้นหลังมืดตามหลัก accessibility contrast) */}
+            <p
+              className="text-xs italic mt-1 pl-10"
+              style={{ color: withAlpha(COLORS.amber, 'c0'), textShadow: '0 1px 2px rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.08)' }}
+            >
+              {day?.title}
+            </p>
           </div>
         </div>
 
