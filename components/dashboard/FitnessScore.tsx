@@ -8,7 +8,7 @@ import FitnessScoreDetailSheet from './FitnessScoreDetailSheet'
 
 interface FitnessScoreProps {
   score: FitnessScoreResult
-  /** เส้นผ่านศูนย์กลางวงแหวน (px) — สเปก mockup ล่าสุดขอ 110–120px, ดีฟอลต์ 110 */
+  /** เส้นผ่านศูนย์กลางวงแหวน (px) — สเปก design brief 2 (6a) ขอ 76px เป๊ะ, ดีฟอลต์ 76 */
   size?: number
   /** true เมื่อวันนี้เป็น Rest Day จริง — ฟีดแบ็ก "Fitness Score ไม่ควรเปลี่ยนคะแนน/tier ตาม Rest Day
    * (เป็นภาพรวมสถานะ Fitness ไม่ใช่สถานะ workout วันนี้) แต่ข้อความแนะนำด้านล่าง ('Light Training')
@@ -31,7 +31,7 @@ interface FitnessScoreProps {
 // สีวง + tier label เปลี่ยนตาม tier ของคะแนนแล้ว (score.gradientStops / score.color จาก
 // lib/fitnessScore.ts) แทนที่จะเป็นสีไฟคงที่ (FIRE_ACCENT) เดิม — เพิ่มบรรทัดคำแนะนำ (score.
 // recommendation) ต่อท้าย tier label ให้ผู้ใช้เข้าใจ "ควรทำอะไรต่อ" ไม่ใช่แค่เห็นตัวเลข/ชื่อ tier เฉยๆ
-export default function FitnessScore({ score, size = 110, isRestDay = false }: FitnessScoreProps) {
+export default function FitnessScore({ score, size = 76, isRestDay = false }: FitnessScoreProps) {
   const animatedScore = Math.round(useCountUp(score.score, 900))
   // ฟีดแบ็ก "Fitness Score ควรมีเหตุผลที่เชื่อมกับ Score — กดแล้วเจอ breakdown ว่าทำไมได้คะแนนนี้" —
   // เดิมลิงก์ไป /stats (คอมเมนต์เดิมของไฟล์นี้ก็ยอมรับว่าเป็นแค่ทางออกชั่วคราวเพราะยังไม่มีหน้ารายละเอียด
@@ -55,24 +55,9 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
       aria-haspopup="dialog"
       aria-label={`Fitness Score ${score.score} จาก 100 — ${score.tierLabelTh} — ${isRestDay ? 'วันนี้เป็นวันพัก เน้น Recovery' : score.recommendation}`}
     >
-      {/* v11: ฟีดแบ็ก "ทำให้ Fitness Score เข้าใจได้ใน 1 วินาที — ผู้ใช้ใหม่อาจถามว่า 48 ของอะไร"
-          — ป้าย "Fitness Score" ถูกตัดออกไปตั้งแต่รอบลดความสูง Header ก่อนหน้านี้มาก (เหตุผลตอนนั้นคือ
-          บริบทรอบตัวเลขชัดพอแล้ว) — กลับมาใส่อีกครั้งตามที่ขอ แต่คุมให้เล็ก/แน่นที่สุด (8px, margin
-          บางๆ) ไม่ให้กลับไปดันความสูง Header เหมือนเดิม
-          v57: ฟีดแบ็ก "'Fitness Score' ตีความว่าคะแนนสุขภาพ/ฟิตเนสโดยรวม แต่ตัวเลขนี้จริงๆ วัดว่า
-          'วันนี้ร่างกายพร้อมฝึกแค่ไหน' — ใช้ 'Training Readiness' จะตรงกว่า" — เปลี่ยนป้ายที่แสดงผลเท่านั้น
-          (ชื่อฟังก์ชัน/ตัวแปร computeFitnessScore ฯลฯ ใน lib/fitnessScore.ts ไม่แตะ เพื่อไม่ให้กระทบ
-          จุดอื่นที่ import อยู่)
-          ฟีดแบ็ก (design review รอบถัดมา, P4.1) "Desktop (HeroGaugeConcept.tsx) เพิ่งเลือกเรียกคะแนนตัว
-          เดียวกันนี้ว่า 'Fitness Score' (ความฟิตโดยรวม/ระยะยาว) แยกจาก 'Recovery' (ความพร้อมวันนี้) — แต่
-          Mobile เรียกมันว่า 'Training Readiness' ซึ่งฟังดูเหมือนวัด 'พร้อมฝึกวันนี้' อันเป็นความหมายที่
-          เพิ่งตกลงให้เป็นหน้าที่ของ Recovery ต่างหาก ทำให้ตัวเลขเดียวกันมีชื่อขัดกันคนละความหมายระหว่าง
-          2 แพลตฟอร์ม เป็น semantic inconsistency จริง ไม่ใช่แค่ cosmetic — เปลี่ยนกลับเป็น 'Fitness Score'
-          ให้ตรงกับ Desktop (ทั้ง label ที่เห็น + aria-label ด้านบน) ไม่แตะ score/tier/recommendation/
-          computeFitnessScore() ใดๆ เลย ตาม v57 ที่ระบุไว้เดิมว่าเปลี่ยนแค่ป้ายแสดงผล */}
-      <p className="text-[8px] tracked uppercase leading-none" style={{ color: '#8A8E96', marginBottom: 2 }}>
-        Fitness Score
-      </p>
+      {/* v2 (design brief 2, 6a): ตัดป้าย "Fitness Score" เหนือวงออก — สเปก brief แสดงแค่ bell → ring
+          (คะแนน+/100) → tier label เท่านั้น ไม่มี micro-label เหนือวงเลย ประหยัดพื้นที่แนวตั้งของ hero
+          band ให้พอดี 246px ตาม token header.height ใหม่ */}
       {/* animate-pop-in (scale 0.6→1.1→1, keyframe ที่มีอยู่แล้วใน globals.css ใช้กับ badge/pill อื่นๆ
           ในแอป) — เดิมวงมาปุ๊บนิ่งเลยตอนโหลดหน้า ไม่มี entrance animation ของตัวเองต่างจากตัวเลข/เส้น
           progress ที่นับขึ้น/ไล่ยาวอยู่แล้ว เพิ่มให้วงทั้งก้อน "ป๊อป" เข้ามาตอน mount ครั้งแรก */}
@@ -163,41 +148,15 @@ export default function FitnessScore({ score, size = 110, isRestDay = false }: F
             ไปเป็นการกะพริบของจุดสว่างใน FitnessRing.tsx เองแทน (ดูคอมเมนต์ v31 ที่ไฟล์นั้น) — เหลือ animation
             เดียวของวงทั้งก้อนจริงๆ ไม่ใช่ 2 ชั้นซ้อนกัน */}
       </div>
-      {/* ตัดบรรทัด "Fitness Score" micro-label ออก (เดิมอยู่เหนือ tier label) — ความหมายของวงชัดเจน
-          อยู่แล้วจากบริบท (ตัวเลข 0-100 + /100 กลางวง) ไม่ต้องมีป้ายชื่อซ้ำ ประหยัดพื้นที่แนวตั้งได้อีก
-          ชั้นหนึ่ง — บรรทัด recommendation ยังคงบังคับบรรทัดเดียว (nowrap+ellipsis) เพราะข้อความยาว
-          (เช่น "Your body needs recovery") ดันให้คอลัมน์วงสูงกว่าคอลัมน์ซ้ายมาก */}
+      {/* v2 (design brief 2, 6a): ตัด status line (score.aiCoachStatus/"Recovery Recommended") ที่เคยอยู่
+          ใต้ tier label ออกด้วย — สเปก brief แสดงแค่ tier label เดียว ("Excellent") ไม่มีบรรทัดคำแนะนำ
+          ต่อท้าย รายละเอียด/คำแนะนำเต็มยังดูได้จาก FitnessScoreDetailSheet ที่กดเปิดจากปุ่มนี้อยู่แล้ว */}
       <div className="text-center">
         <p
           className="font-display font-bold tracked uppercase leading-tight"
           style={{ fontSize: 14, color: score.color }}
         >
           {score.tierLabel}
-        </p>
-        {/* v9: ฟีดแบ็ก "Typography บางจุดยังบางและเล็ก โดยเฉพาะ Light Training Recommendation — เพิ่ม
-            contrast ก่อน ไม่ต้องขยายขนาดเยอะ" — บรรทัดคำแนะนำนี้ยังเป็น text-muted (#9498A0) เดิม ไม่เคย
-            ถูกแตะเลยตลอดหลายรอบก่อน (แม้ตัวเลข/tier label ข้างบนถูกปรับไปหลายรอบแล้ว) ขยับเป็น #CFD4DE
-            ตามระดับเดียวกับ caption อื่นที่ปรับไปแล้วในรอบนี้ ไม่แตะขนาด (9px คงเดิม)
-            v10: ฟีดแบ็ก "แก้ Light Training Recommen... — อย่าให้ข้อความสำคัญโดนตัด" — nowrap+ellipsis
-            เดิมตัดข้อความยาว (เช่น "Light Training Recommended", "Your body needs recovery") จนอ่านไม่รู้
-            เรื่อง ตัดทั้งคู่ออก ปล่อยให้ตกบรรทัดได้ 2 บรรทัดแทนภายใน maxWidth เดิม (120px) — คอลัมน์วงจะสูง
-            ขึ้นบ้างเมื่อข้อความยาวตกบรรทัด แต่สำคัญกว่าการตัดข้อความทิ้งครึ่งหนึ่ง
-            v11: ฟีดแบ็ก "ชอบ Light Training มากกว่า Light Training Recommended — เข้ากับ English UI ของ
-            Score" — สลับมาใช้ score.aiCoachStatus (คำสั้น 2 คำ: Heavy/Normal/Moderate/Light Training,
-            Recovery Workout, Rest & Sleep — คนละฟิลด์กับ score.recommendation ที่เป็นประโยคเต็ม ออกแบบไว้
-            ให้สั้นสำหรับจุดนี้อยู่แล้วตั้งแต่ lib/fitnessScore.ts แต่ไม่เคยถูกใช้จริงที่ไหนมาก่อน) — สั้นพอ
-            ที่จะไม่ต้องตกบรรทัดแล้วในทางปฏิบัติ แต่ยังไม่ลบความสามารถตกบรรทัดออก เผื่อจอแคบผิดปกติ —
-            aria-label ด้านบนยังใช้ score.recommendation (ประโยคเต็ม) เพื่อ accessibility เหมือนเดิม
-            v55: ฟีดแบ็ก "Fitness Score ไม่ควรเปลี่ยนคะแนน/tier ตาม Rest Day แต่ข้อความแนะนำ ('Light
-            Training') ควรเปลี่ยนให้เข้ากับวันพัก" — override เฉพาะบรรทัดนี้ตอน isRestDay ส่วน score/
-            tierLabel/color ด้านบนไม่แตะเลย (คนละ concept — Fitness Score คือภาพรวมสถานะ Fitness ไม่ใช่
-            สถานะ workout วันนี้) v56: 'Recovery Focus' -> 'Recovery Recommended' ตามฟีดแบ็กรอบถัดมา
-            ให้สอดคล้องกับรูปแบบ tier อื่นของ Fitness Score (เช่น "Light Training Recommended") */}
-        <p
-          className="leading-tight"
-          style={{ fontSize: 9, color: '#CFD4DE', maxWidth: 120 }}
-        >
-          {isRestDay ? 'Recovery Recommended' : score.aiCoachStatus}
         </p>
       </div>
     </button>

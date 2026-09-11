@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { describeMuscleFocus, dominantMuscleGroup, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
-import { COLORS } from '@/lib/theme'
+import { COLORS, withAlpha } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 
 // ไอคอนเป้า (target) เส้นล้วน แทนอีโมจิ 🎯 เดิม — อีโมจิมีสีของตัวเองติดมา (แดง/ขาว/น้ำเงินตามแพลตฟอร์ม)
@@ -52,6 +52,11 @@ export function splitTitleDetail(text: string): { main: string; detail: string |
 // เป็นการ์ดเรียบแบน (flat) พื้นเทาเข้มเรียบ + border บางๆ เส้นเดียว ไม่มีลายผิว/มุมตัด — เขียนใหม่เป็น
 // การ์ดเรียบตรงตาม mockup แทน ไม่ใช้ PremiumCard อีกต่อไป (component นี้ใช้เฉพาะ Mobile Dashboard เท่านั้น
 // ไม่กระทบเดสก์ท็อป/หน้าอื่น) ตรรกะการเลือกข้อความ (workoutTitle/muscleRecommendation/isRestDay) ไม่แตะ
+//
+// v2: "Mobile_app_design_brief_1.zip" (6a, บรรทัด 94-101) — สเปกละเอียดต่างจากที่ประมาณไว้ตอนดูจากภาพ
+// mockup เท่านั้น 2 จุด: (1) ไอคอนเป็น "ทิ้นท์" อำพัน (rgba(232,163,61,.14), ไอคอนสีอำพัน) ไม่ใช่พื้นอำพัน
+// ทึบ+ไอคอนดำแบบเดิม (2) ตัวหนังสือหลัก (main, เช่น "Upper Body Strength") เป็นสีอำพัน #E8A33D ไม่ใช่สีขาว
+// ธรรมดา — พื้นการ์ดเปลี่ยนจาก gradient เป็นสีทึบ #16191D + hairline แบบ box-shadow ตรงตาม token ใหม่
 export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, isRestDay = false, href, todayExercises = [] }: TodaysFocusCardProps) {
   const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
   const { main, detail: rawDetail } = isRestDay
@@ -72,23 +77,24 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
   return (
     <Link
       href={href}
-      className="rounded-card border border-line flex items-center gap-3 active:opacity-80 transition"
+      className="rounded-card flex items-center gap-3 active:opacity-80 transition"
       style={{
         padding: dashboardSpec.focusCard.padding,
         minHeight: dashboardSpec.focusCard.height,
-        background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)',
+        background: '#16191D',
+        boxShadow: '0 0 0 1px rgba(255,255,255,.05)',
       }}
     >
       <span
-        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-        style={{ backgroundColor: COLORS.amber, color: '#1A1200' }}
+        className="rounded-full flex items-center justify-center shrink-0"
+        style={{ width: 34, height: 34, backgroundColor: withAlpha(COLORS.amber, '24'), color: COLORS.amber }}
         aria-hidden="true"
       >
         <TargetIcon />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[12px] tracked uppercase text-muted">Today&apos;s Focus</p>
-        <p className="font-display tracked uppercase text-ink truncate" style={{ fontSize: 14 }}>
+        <p className="text-[11px]" style={{ color: '#6C7078' }}>Today&apos;s Focus</p>
+        <p className="font-semibold truncate" style={{ fontSize: 14, color: COLORS.amber, marginTop: 2 }}>
           {main}
         </p>
         {detail && (

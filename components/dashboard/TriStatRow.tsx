@@ -15,9 +15,16 @@ import { recoveryTier } from '@/lib/dashboardStats'
 //
 // v2: ฟีดแบ็ก "ยังไม่เหมือนเลยทั้งสีกรอบแสงเงา" — ไอคอน emoji (💚🔻⚖️) เดิมมีสีของตัวเองติดมากับฟอนต์/
 // แพลตฟอร์ม (แดง/เหลือง/เทาเงินตามจริงของแต่ละอีโมจิ) ไปกันสีพื้นหลังวงที่ตั้งใจให้ตรงกับ tier/status —
-// mockup ใช้ไอคอนเส้น (line icon) สีเดียวล้วนในกล่องสี่เหลี่ยมมุมโค้ง ไม่ใช่วงกลม — เปลี่ยนเป็น SVG เส้น
-// เอง (stroke=currentColor ควบคุมสีได้เต็มที่) + เปลี่ยนกล่องไอคอนจาก rounded-full เป็น rounded-lg (สี่เหลี่ยม
-// มุมโค้ง) ตรงกับ mockup
+// เปลี่ยนเป็น SVG เส้นเอง (stroke=currentColor ควบคุมสีได้เต็มที่)
+//
+// v3: "Mobile_app_design_brief_1.zip" (6a, บรรทัด 74-92 ของ .dc.html) — สเปกละเอียดระบุ icon container
+// เป็นวงกลม (border-radius:50%) 26px ไม่ใช่สี่เหลี่ยมมุมโค้งแบบที่ประมาณไว้ตอนดูจากภาพ mockup เท่านั้น
+// (v2 ด้านบน) กลับไปใช้ rounded-full ตามสเปกที่ชัดเจนกว่า — พื้นหลังการ์ดเปลี่ยนจาก gradient เป็นสีทึบ
+// #16191D ล้วน + hairline แบบ box-shadow แทน border ตรงตาม token ใหม่ — สีทิ้นท์ไอคอน Body Fat ยังใช้
+// COLORS.rust เดิม (ตรงกับ hex #C1503A ที่ brief เรียกว่า "coral" — ชื่อคนละคำ แต่ hex เดียวกันเป๊ะ ไม่ต้อง
+// เปลี่ยน) ส่วน Weight เปลี่ยนจาก COLORS.amber -> COLORS.steel (#6C8CA8 ตรงกับ rgba(108,140,168) ในสเปก
+// เป๊ะ — amber เดิมเป็นการเดาผิดตอนไม่มีสเปกละเอียด) Recovery ยังคงใช้ recoveryTier() แบบ dynamic ต่อไป
+// (ไม่ใช่ moss คงที่แบบ mockup) เพราะให้ข้อมูลที่เป็นประโยชน์กว่า/สอดคล้องกับจุดอื่นในแอปที่ใช้ tier เดียวกัน
 
 interface MetricValue {
   value: number | null
@@ -75,17 +82,18 @@ function MiniStatCard({
 }) {
   return (
     <div
-      className="border border-line px-3 py-2.5 flex flex-col justify-between"
+      className="px-3 py-2.5 flex flex-col justify-between"
       style={{
         height: dashboardSpec.miniStatCard.height,
         borderRadius: dashboardSpec.miniStatCard.borderRadius,
-        background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)',
+        background: '#16191D',
+        boxShadow: '0 0 0 1px rgba(255,255,255,.05)',
       }}
     >
       <div className="flex items-center gap-1.5">
         <span
-          className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: withAlpha(iconColor, '18'), color: iconColor }}
+          className="rounded-full flex items-center justify-center shrink-0"
+          style={{ width: 26, height: 26, backgroundColor: withAlpha(iconColor, '2E'), color: iconColor }}
           aria-hidden="true"
         >
           {icon}
@@ -96,7 +104,7 @@ function MiniStatCard({
         <p className="text-[11px] text-muted truncate min-w-0 flex-1">{label}</p>
       </div>
       <div>
-        <p className="font-mono font-bold text-ink leading-none" style={{ fontSize: 17 }}>
+        <p className="font-display font-bold text-ink leading-none" style={{ fontSize: 17 }}>
           {value}
         </p>
         <p className="text-[11px] mt-1 leading-none" style={{ color: sublabelColor }}>
@@ -152,7 +160,7 @@ export default function TriStatRow({
       />
       <MiniStatCard
         icon={<ScaleIcon />}
-        iconColor={COLORS.amber}
+        iconColor={COLORS.steel}
         label="น้ำหนัก"
         value={weight.value != null ? `${weight.value.toFixed(1)}${weightUnit}` : '–'}
         sublabel={deltaText(weight.delta)}

@@ -1,10 +1,10 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { COLORS, TEXT } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from './AnimatedBarFill'
-import FitnessRing from './dashboard/FitnessRing'
 
 // ไอคอนดัมเบลเส้นล้วน (path เดียวกับ DumbbellIcon ใน BottomNav.tsx — ลายเซ็นเดียวกันทั้งแอป) แทนอีโมจิ
 // 🏋️ เดิม — เหตุผลเดียวกับ TargetIcon ใน TodaysFocusCard.tsx (อีโมจิมีสีของตัวเองติดมา ชนกับพื้นส้มทึบ)
@@ -38,6 +38,15 @@ interface TodaysWorkoutCompactCardProps {
 // เรียบแบน พื้นเทาเข้มเรียบ + border บางๆ + badge วงแหวนเล็ก + progress bar เท่านั้น ไม่มีรูปพื้นหลัง/
 // texture ใดๆ เลย — เขียนใหม่ให้ตรงกับ mockup (component นี้ใช้เฉพาะ Mobile Dashboard เท่านั้น ไม่กระทบ
 // เดสก์ท็อป/หน้าอื่น) ตรรกะคำนวณ pct/isCompleted ไม่แตะ
+//
+// v2: "Mobile_app_design_brief_1.zip" (6a, บรรทัด 103-112) — สเปกละเอียดตัดวง progress + badge ดัมเบล
+// ออกทั้งหมด (ไม่มี ring badge อีกต่อไป) เปลี่ยนเป็นเนื้อหาข้อความล้วนฝั่งซ้าย (ป้าย+ไอคอนเล็ก -> ตัวเลข
+// ใหญ่ -> caption -> progress bar) และรูปธัมบ์เนลเวิร์กเอาต์ 64px ทรงกลมมุมโค้งฝั่งขวาแทน — ใช้
+// workout-hero.jpg ที่มีอยู่แล้วในแอป (README ระบุให้ crop ภาพนี้ใช้ได้เลย ไม่ต้องหารูปใหม่) พื้นหลังการ์ด
+// เปลี่ยนจาก gradient 2 stop ธรรมดาเป็น gradient 3 stop มุมเอียง 158deg ตามสเปกเป๊ะ + shadow ยกการ์ดขึ้น
+// จากพื้น (การ์ดนี้เด่นสุดในหน้ารองจาก Hero ตาม README) — caption ("เซ็ทที่บันทึกแล้ว" ใน mockup) ยังใช้
+// exerciseWord/Completed✓ เดิม เพราะตัวเลขจริงของแอปนับ "ท่า/exercise" ไม่ใช่ "เซ็ท" ที่ mockup สมมติไว้
+// (ข้อความ mockup เป็นแค่ static mock data ไม่ใช่ความหมายจริงที่ต้องคัดลอกคำต่อคำ)
 export default function TodaysWorkoutCompactCard({ completed, total, href, volumeChangePct }: TodaysWorkoutCompactCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0
   const isCompleted = total > 0 && completed >= total
@@ -46,40 +55,37 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, volum
   return (
     <Link
       href={href}
-      className="rounded-card border border-line flex items-center gap-3 active:opacity-80 transition"
+      className="rounded-card flex items-center gap-3.5 active:opacity-80 transition"
       style={{
         padding: dashboardSpec.workoutCard.padding,
         minHeight: dashboardSpec.workoutCard.height,
-        background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)',
+        background: 'linear-gradient(158deg, #262A30 0%, #1A1D22 62%, #15181C 100%)',
+        boxShadow: '0 16px 36px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05)',
       }}
     >
-      <div className="relative shrink-0 flex items-center justify-center">
-        <FitnessRing value={pct} size={56} strokeWidth={4} simple>
-          <span
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: COLORS.amber, color: '#1A1200' }}
-            aria-hidden="true"
-          >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 text-muted">
+          <span className="shrink-0" aria-hidden="true">
             <DumbbellIcon />
           </span>
-        </FitnessRing>
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <p className="text-[12px] tracked uppercase text-muted">Today&apos;s Workout</p>
-        <div className="flex items-baseline gap-1 mt-0.5">
-          <span className="font-mono font-bold leading-none" style={{ fontSize: 24, color: TEXT.title }}>
+          <p className="text-[12px] tracked uppercase">Today&apos;s Workout</p>
+        </div>
+        <div className="flex items-baseline gap-1 mt-2">
+          <span className="font-display font-bold leading-none" style={{ fontSize: 30, color: TEXT.title }}>
             {completed}
           </span>
-          <span className="leading-none text-muted" style={{ fontSize: 14 }}>
+          <span className="leading-none text-muted" style={{ fontSize: 16 }}>
             /{total}
           </span>
-          <span className="leading-none uppercase tracked text-muted" style={{ fontSize: 9, color: isCompleted ? COLORS.moss : undefined }}>
-            {isCompleted ? 'Completed ✓' : exerciseWord}
-          </span>
         </div>
-        <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
-          <AnimatedBarFill pct={pct} color={COLORS.amber} />
+        <p className="leading-none text-muted mt-1" style={{ fontSize: 12, color: isCompleted ? COLORS.moss : undefined }}>
+          {isCompleted ? 'Completed ✓' : exerciseWord}
+        </p>
+        {/* v3: brief สเปก progress bar เป็น gradient อำพัน->แดงส้ม (linear-gradient(90deg,#E8A33D,#C1503A))
+            ไม่ใช่อำพันล้วน — background prop ของ AnimatedBarFill รองรับ gradient อยู่แล้ว (ใช้ที่ Weekly
+            Volume/Muscle Heatmap มาก่อน) ไม่ต้องเพิ่ม prop ใหม่ */}
+        <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-2.5">
+          <AnimatedBarFill pct={pct} color={COLORS.amber} background={`linear-gradient(90deg, ${COLORS.amber}, ${COLORS.rust})`} />
         </div>
         {isCompleted && volumeChangePct != null && (
           <p className="text-[12px] leading-none mt-1" style={{ color: volumeChangePct >= 0 ? COLORS.moss : COLORS.amber }}>
@@ -87,6 +93,13 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, volum
             {volumeChangePct}% จากครั้งก่อน
           </p>
         )}
+      </div>
+
+      <div
+        className="relative shrink-0 rounded-[14px] overflow-hidden"
+        style={{ width: dashboardSpec.workoutCard.thumbSize, height: dashboardSpec.workoutCard.thumbSize }}
+      >
+        <Image src="/images/workout-hero.jpg" alt="" fill className="object-cover" />
       </div>
       <span className="text-muted shrink-0" aria-hidden="true">›</span>
     </Link>
