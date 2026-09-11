@@ -96,10 +96,18 @@ export default function Header({ greetingText, notifications, displayName, fitne
       />
       <div className="min-w-0" style={{ paddingRight: 44 }}>
         <Greeting text={greetingText} />
+        {/* ฟีดแบ็ก (UX review) "displayName ไม่มี safeguard กันชื่อยาว — ถ้าตกบรรทัด (wrap) จะดันความสูง
+            คอลัมน์ซ้ายเกินที่ marginTop:52 ของวง Fitness Score คาดไว้ (ดู comment ของวงด้านล่าง) ชนกัน
+            ได้" — เพิ่ม whiteSpace:nowrap + overflow:hidden + textOverflow:ellipsis ให้ชื่อยาวตัดเป็น "..."
+            แทนการตกบรรทัด (min-w-0 ของ div ครอบด้านบนมีอยู่แล้ว จำเป็นสำหรับให้ ellipsis ทำงานใน flex
+            context) ไม่กระทบชื่อสั้น/ปกติเลยสักตัว เพราะไม่มีวันยาวเกิน min-w-0 ให้ตัด */}
         <p
           className="uppercase"
           style={{
             marginTop: 4,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
             fontFamily: 'var(--font-oswald), var(--font-kanit)',
             // ชื่อ 54px (เทียบเท่า text-6xl ลด 10%, เดิม 60px) — ออกแบบเจาะจงสำหรับ iPhone 15/16 Pro
             // (393px) เท่านั้น ไม่ต้อง responsive-scale ตามจอใหญ่ เผื่อ clamp ขั้นต่ำไว้นิดเดียวกันจอแคบ

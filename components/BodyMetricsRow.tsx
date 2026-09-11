@@ -313,7 +313,10 @@ export default function BodyMetricsRow({
             </p>
           )}
           {titleHref && (
-            <Link href={titleHref} className="text-[12px] text-amber hover:underline shrink-0">
+            // ฟีดแบ็ก (UX review) touch target — text-[12px] ไม่มี padding เตี้ยกว่า 24px ขั้นต่ำของ
+            // WCAG 2.2 AA — เพิ่ม py-1.5 -my-1.5 (ชดเชยแนวตั้งไม่ให้แถวสูงขึ้นเห็นชัด เพราะอยู่ในแถว
+            // items-center ร่วมกับหัวข้อ/pill อื่นที่กำหนดความสูงแถวไว้แล้ว)
+            <Link href={titleHref} className="text-[12px] text-amber hover:underline shrink-0 -my-1.5 py-1.5">
               ดูทั้งหมด →
             </Link>
           )}

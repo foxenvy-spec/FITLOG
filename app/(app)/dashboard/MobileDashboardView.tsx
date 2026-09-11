@@ -582,16 +582,20 @@ export default function MobileDashboardView() {
             <p className="text-[13px] text-ink mt-0.5">
               {splitTitleDetail(missedDays[0].title).main} · {WEEKDAYS[missedDays[0].day_of_week]}
             </p>
+            {/* ฟีดแบ็ก (UX review) "touch target เตี้ยเกิน WCAG 2.2 AA (ต้อง ≥24px แต่ inline-block ไม่มี
+                padding แนวตั้งเลย มีแค่ text-[11px] line-height ~16-17px)" — เพิ่ม py-1.5 -mx-1 px-1 ให้
+                พื้นที่กดจริงสูงขึ้นพ้นเกณฑ์ (ตัดสินสายตาจาก mt เดิมลงเป็น mt-0.5 ชดเชย padding ที่เพิ่ม ให้
+                ระยะห่างจากบรรทัดชื่อแผนด้านบนใกล้เคียงเดิม ไม่ใช่ขยับลงเห็นชัด) ไม่แตะขนาด/สีตัวหนังสือเลย */}
             {missedDays.length === 1 ? (
               <Link
                 href={`/session?day=${missedDays[0].id}`}
-                className="text-[11px] mt-1 inline-block hover:underline"
+                className="text-[11px] mt-0.5 -mx-1 px-1 py-1.5 inline-block hover:underline"
                 style={{ color: COLORS.amber }}
               >
                 เริ่มแผนที่พลาด →
               </Link>
             ) : (
-              <Link href="/program" className="text-[11px] mt-1 inline-block hover:underline" style={{ color: COLORS.amber }}>
+              <Link href="/program" className="text-[11px] mt-0.5 -mx-1 px-1 py-1.5 inline-block hover:underline" style={{ color: COLORS.amber }}>
                 ดูแผนที่พลาดทั้งหมด →
               </Link>
             )}
@@ -807,9 +811,10 @@ export default function MobileDashboardView() {
                     {otherPlanSetsCount} sets · {otherPlanExerciseCount} exercises
                   </p>
                 )}
+                {/* ฟีดแบ็ก (UX review) touch target — เหตุผลเดียวกับลิงก์ "แผนที่พลาด" ด้านบน */}
                 <Link
                   href={`/calendar?date=${todayStr()}`}
-                  className="text-[11px] hover:underline mt-0.5 inline-block"
+                  className="text-[11px] hover:underline mt-0 -mx-1 px-1 py-1.5 inline-block"
                   style={{ color: COLORS.amber }}
                 >
                   ดูสรุป →
@@ -830,10 +835,12 @@ export default function MobileDashboardView() {
           !makeupSessionActive &&
           totals.entryCount === 0 &&
           warmupMoves.length > 0 && (
+          // ฟีดแบ็ก (UX review) touch target — px-1 เดิมไม่มี padding แนวตั้งเลย เตี้ยกว่า 24px ขั้นต่ำ
+          // ของ WCAG 2.2 AA — เพิ่ม py-1.5 -mx-1 (ชดเชยด้วย margin ลบแนวนอนให้ตำแหน่งไอคอนซ้ายคงเดิม)
           <button
             type="button"
             onClick={() => setWarmupOpen(true)}
-            className="text-[12px] text-amber active:opacity-70 transition flex items-center gap-1 px-1"
+            className="text-[12px] text-amber active:opacity-70 transition flex items-center gap-1 -mx-1 px-1 py-1.5"
           >
             <span aria-hidden="true">🔥</span> ดูท่าวอร์มอัป 3 นาที
           </button>
