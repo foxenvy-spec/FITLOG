@@ -25,6 +25,11 @@ import { recoveryTier } from '@/lib/dashboardStats'
 // เปลี่ยน) ส่วน Weight เปลี่ยนจาก COLORS.amber -> COLORS.steel (#6C8CA8 ตรงกับ rgba(108,140,168) ในสเปก
 // เป๊ะ — amber เดิมเป็นการเดาผิดตอนไม่มีสเปกละเอียด) Recovery ยังคงใช้ recoveryTier() แบบ dynamic ต่อไป
 // (ไม่ใช่ moss คงที่แบบ mockup) เพราะให้ข้อมูลที่เป็นประโยชน์กว่า/สอดคล้องกับจุดอื่นในแอปที่ใช้ tier เดียวกัน
+//
+// v4: ฟีดแบ็ก "ตรงการ์ด ฟื้นตัว น้ำหนัก ไขมัน ใช้เป็นภาษาอังกฤษ" — ป้ายหัวการ์ดทั้ง 3 เปลี่ยนจากไทย
+// (ฟื้นตัว/ไขมัน/น้ำหนัก) เป็นอังกฤษ (Recovery/Body Fat/Weight) ตรงกับ brief เป๊ะ — sublabel ของ Recovery
+// เปลี่ยนตามไปด้วย (recovery.labelEn แทน labelTh, มีอยู่แล้วใน lib/dashboardStats.ts ไม่ต้องเพิ่มฟิลด์ใหม่)
+// ให้ทั้งการ์ดพูดภาษาเดียวกันตลอด ไม่ผสมไทย/อังกฤษในการ์ดเดียว
 
 interface MetricValue {
   value: number | null
@@ -145,15 +150,15 @@ export default function TriStatRow({
       <MiniStatCard
         icon={<HeartIcon />}
         iconColor={recovery?.color ?? '#9498A0'}
-        label="ฟื้นตัว"
+        label="Recovery"
         value={recoveryPct != null ? `${recoveryPct}%` : '–'}
-        sublabel={recovery?.labelTh ?? 'ยังไม่มีข้อมูล'}
+        sublabel={recovery?.labelEn ?? 'No data'}
         sublabelColor={recovery?.color ?? '#9498A0'}
       />
       <MiniStatCard
         icon={<TrendDownIcon />}
         iconColor={COLORS.rust}
-        label="ไขมัน"
+        label="Body Fat"
         value={bodyFat.value != null ? `${bodyFat.value.toFixed(1)}%` : '–'}
         sublabel={deltaText(bodyFat.delta)}
         sublabelColor={deltaColor(bodyFat.isGood)}
@@ -161,7 +166,7 @@ export default function TriStatRow({
       <MiniStatCard
         icon={<ScaleIcon />}
         iconColor={COLORS.steel}
-        label="น้ำหนัก"
+        label="Weight"
         value={weight.value != null ? `${weight.value.toFixed(1)}${weightUnit}` : '–'}
         sublabel={deltaText(weight.delta)}
         sublabelColor={deltaColor(weight.isGood)}
