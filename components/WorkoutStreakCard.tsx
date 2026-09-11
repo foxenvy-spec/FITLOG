@@ -41,7 +41,10 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
       style={{ background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)' }}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* gap-2.5 -> gap-2 เป็นส่วนหนึ่งของการแก้ overflow ด้านล่าง (ดู comment เต็มที่แถว 7 วัน) —
+            เก็บ margin เผื่อเพิ่มอีกเล็กน้อยแทนที่จะพอดีเป๊ะ 1px ซึ่งเสี่ยงล้นอีกถ้าฟอนต์ไทยจริงกว้างกว่า
+            สภาพแวดล้อมทดสอบเล็กน้อย */}
+        <div className="flex items-center gap-2 shrink-0">
           {/* v60: ฟีดแบ็ก "Hierarchy ช่วงล่างควรเป็น AI Coach > Workout > Body > Streak > Health > Quick
               Actions ตอนนี้ใกล้เคียงกันหมด — ลด visual emphasis ของ Streak ลงเล็กน้อย" — ลด alpha พื้นหลัง
               ไอคอนไฟจาก 22 (13%) เหลือ 18 (~9%) จุดเดียว (ไม่แตะสีตัวเลข streak — ยังเป็นอำพันเต็มตามกฎ
@@ -98,7 +101,13 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
             เพิ่ม gap แถวจาก 2px (gap-0.5) เป็น 4px (gap-1) แทน ให้แต่ละคอลัมน์มีที่หายใจมากขึ้นโดยไม่ต้อง
             แลกกับอะไร (เช็คพื้นที่การ์ดเหลือพอ เพราะบรรทัดตัวเลข streak ฝั่งซ้ายไม่ได้ยืดยาวขึ้นในรอบนี้ ดู
             comment ด้านบน) */}
-        <div className="flex items-end gap-1">
+        {/* ฟีดแบ็ก "เหมือนวันตรง Weekly จะหลุดออกกรอบ" — วัดจริงด้วย Playwright พบว่าแถว 7 วันล้นออกจาก
+            การ์ดจริง ~39px (22px×7 + gap 4px×6 = 178px แต่พื้นที่เหลือจริงหลังหักคอลัมน์ซ้าย+padding มีแค่
+            ~139px) — เดิมโดน overflow-hidden ของ PremiumCard บังไว้เงียบๆ (ตัดขอบวงสุดท้ายไปบางส่วน ไม่มี
+            ใครสังเกตเห็น) พอเปลี่ยนเป็นการ์ดเรียบแบนไม่มี overflow-hidden แล้ว การล้นจริงเลยโผล่ให้เห็น —
+            ลดวงจาก 22px เป็น 18px + gap จาก 4px (gap-1) เป็น 2px ให้แถวเหลือ 138px (18×7+2×6) พอดีกับพื้นที่
+            จริงพร้อม margin เผื่อการ render ของฟอนต์ไทยจริงบนอุปกรณ์ */}
+        <div className="flex items-end gap-[2px]">
           {weekDayTicks.map((tick, i) => {
             const isToday = tick.iso === today
             // อดีตที่พลาด (ไม่ใช่วันนี้/อนาคต/ฝึกแล้ว) โชว์ขีดเล็กๆ แยกจาก "อนาคต" (ว่างเปล่า) ตามที่ขอ
@@ -125,7 +134,7 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
                     คำนวณอยู่ (DashboardView.tsx) แต่ตอนนี้ใช้แค่ใน aria-label ให้ screen reader ยังแยกได้ว่า
                     วันไหนอยู่ใน streak ปัจจุบันจริง ไม่ได้ทิ้งข้อมูลนี้ไปเฉยๆ แค่ไม่ใช้ทำสีอีกต่อไป */}
                 <span
-                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[12px] shrink-0"
+                  className="w-[17px] h-[17px] rounded-full flex items-center justify-center text-[9px] shrink-0"
                   role="img"
                   aria-label={`${WEEKDAY_LABELS[i]}${isToday ? ' (วันนี้)' : ''}: ${
                     tick.trained
