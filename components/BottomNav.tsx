@@ -136,7 +136,139 @@ export default function BottomNav() {
   // minorCut=0 ให้มุมบนขวา/ล่างทั้งสองเหลี่ยมคม ตัดจริงแค่มุมเดียวตรงตามสัญลักษณ์ CNC ของแอป
   const navClipPath = cncCornerClipPath('tl', 18, 0)
 
+  // ฟีดแบ็ก "ทำไมไม่เห็นครบวงครับ" — ปุ่มลอย /session เดิมอยู่ *ข้างใน* <nav> ที่มี clipPath (สำหรับตัด
+  // มุม CNC) ครอบอยู่ clipPath ตัดทุกอย่างที่ล้นเหนือกรอบ nav ทิ้งเสมอ (ไม่ใช่แค่ overflow:hidden ที่พอมี
+  // ทางเลี่ยง) พอเพิ่มระยะยกปุ่มขึ้น (-0.58*btnSize) ในรอบก่อน ปุ่มเลยโผล่พ้นกรอบ nav จริงและโดนตัดหัวเรียบ
+  // เป็นสาเหตุที่วงไม่ครบ — ทางแก้ที่ถูกจุด: ย้ายปุ่มลอยออกมาเป็น sibling ของ <nav> แทนลูกข้างใน (render
+  // แยกด้านล่าง หลัง </nav>) ให้พ้นเงื้อมมือ clipPath ไปเลย ส่วนใน TABS.map ที่ตำแหน่ง /session เดิม
+  // แทนที่ด้วย placeholder ว่างๆ (ดูโค้ดใน map ด้านล่าง) แค่กันที่ให้ grid-cols-5 จัดระยะ 4 แท็บที่เหลือ
+  // เท่าเดิม ไม่ต้องคำนวณตำแหน่งใหม่เอง — overlay ใหม่ใช้ grid/minHeight/safe-bottom ชุดเดียวกับ nav เป๊ะ
+  // (CSS กฎเดียวกัน = ตำแหน่งคำนวณออกมาตรงกันเป๊ะ ไม่ต้อง hardcode พิกเซลเอง)
+  const btnSize = dashboardSpec.floatingButton.size
+  // ฟีดแบ็ก (เทียบกับ mockup ตรงๆ 2 รอบ) "ยังมีจุดส้มตรงกลาง ไม่ใช่จานเข้มล้วนแบบ mockup" —
+  // รอบแรกแค่ลดขนาด/เพิ่มความโปร่งใสของ Energy Core (ยังเป็น radial-gradient สีส้ม) ไม่พอ เพราะ
+  // FitnessRing เอง (simple mode) ก็มีชั้น "Orange Inner Glow" ในตัวอยู่แล้ว (ใช้ร่วมกับ Hero
+  // Ring จุดอื่น แก้ไฟล์นั้นตรงๆ ไม่ได้เพราะกระทบทั้งแอป) เปลี่ยนจาก "แสงส้ม" เป็น "จานทึบสีเข้ม"
+  // ล้วนแทน ให้ปิดทับ Orange Inner Glow ของ FitnessRing ได้เต็มที่ (จานทึบวาดทีหลังใน DOM จึงอยู่
+  // บนสุด) เหลือแค่วงคะแนนสีทอง (ring-progress) ที่ขอบเป็นสีเดียวที่เห็นได้ ตรงกับจานเข้ม+กรอบทอง
+  // ของ mockup เป๊ะ
+  const coreSize = Math.round(btnSize * 0.74)
+  // v55: วันพัก (isRestDay) ไม่พาไป /session (เริ่มเวิร์กเอาต์) อีกต่อไป — พาไปดู /coach
+  // (Recovery) แทน ปุ่มเดียวกับที่ AI Coach ใช้ตอน isRestDay ("ดู Recovery →") ให้ปลายทางตรงกับ
+  // ป้ายที่เห็นจริง ไม่ใช่แค่เปลี่ยนคำแต่กดแล้วยังพาไปเริ่มเวิร์กเอาต์เหมือนเดิม
+  // pointer เซสชันชดเชยที่ยังไม่จบต้องมาก่อน isRestDay เสมอ — isRestDay มาจากสถานะแผนจริงของ
+  // วันนี้ (React Query cache) ซึ่งอาจยังเป็น true ได้ถ้าเพิ่งเริ่มเซสชันชดเชยแบบยังไม่ log
+  // เซ็ตไหนเลยสักเซ็ต (hasLoggedToday ยังเป็น false) กันปุ่มพาไป /coach ทั้งที่กำลังทำเซสชันชดเชย
+  // อยู่จริง
+  const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : isRestDay ? '/coach' : '/session'
+
+  const floatingButton = (
+    <Link
+      href={sessionHref}
+      className="relative flex items-start justify-center"
+      aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : isInProgress ? 'ทำเวิร์กเอาต์ต่อ' : 'เริ่มเวิร์กเอาต์'}
+      onPointerDown={hapticSuccess}
+    >
+      {/* v3: ฟีดแบ็ก "เอาให้วงขึ้นเหนือกรอบ ให้มีมิติแบบตัวอย่าง" — top offset เดิม (-0.42*btnSize)
+          ให้วงจมอยู่ในแผ่น nav เกินครึ่ง เพิ่มเป็น -0.58*btnSize ให้ตัวกลมโผล่พ้นขอบบนของแผ่น
+          ชัดเจนกว่าเดิม (ลอยเหนือกรอบจริง ไม่ใช่แค่เนียนขอบ) + contact shadow วงรีทึบด้านล่าง
+          (ดูถัดจาก FitnessRing) จำลองเงาที่ปุ่มทอดลงบนผิวแผ่น titanium ให้รู้สึกว่าลอยจริง */}
+      <span
+        className="absolute rounded-full pointer-events-none animate-start-workout-pulse"
+        aria-hidden="true"
+        style={{
+          top: -Math.round(btnSize * 0.58),
+          width: btnSize,
+          height: btnSize,
+          boxShadow: BOTTOM_NAV_GLOW_SHADOW,
+        }}
+      />
+      <span
+        className="absolute rounded-full pointer-events-none"
+        aria-hidden="true"
+        style={{
+          top: 2,
+          width: Math.round(btnSize * 0.8),
+          height: Math.round(btnSize * 0.24),
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'radial-gradient(ellipse, rgba(0,0,0,.55), transparent 72%)',
+          filter: 'blur(2px)',
+        }}
+      />
+      <span
+        className="absolute rounded-full active:scale-[0.97] transition"
+        style={{
+          top: -Math.round(btnSize * 0.58),
+          width: btnSize,
+          height: btnSize,
+          // v2: ฟีดแบ็ก "แสง/เงายังไม่ดีขึ้นเลย" — เส้น inset highlight เดิม (1px, ไม่มี blur)
+          // บางเกินไปจนแทบไม่เห็นเป็น "แสงสะท้อนบนผิวโลหะ" เพิ่ม blur (4px) ให้ฟุ้งเป็นส่วนโค้ง
+          // สว่างจริงตามขอบบนของวง ผสานกับจุดสว่างของ ring gradient ด้านล่างเป็นชั้นเดียวกัน
+          // v3: ฟีดแบ็ก "มิติแบบตัวอย่าง" — เพิ่มระยะ/ความเข้ม drop shadow ใต้ปุ่ม (6px/.45 ->
+          // 10px/.55) ให้ตัวกลมดูยกตัวลอยขึ้นชัดกว่าเดิม แทนที่จะแบนราบกับพื้น
+          boxShadow: '0 10px 22px rgba(0,0,0,.55), inset 0 3px 4px rgba(255,255,255,.4)',
+        }}
+      >
+        <FitnessRing value={100} size={btnSize} simple gradientStops={BOTTOM_NAV_RING_GRADIENT}>
+          <div className="relative flex flex-col items-center justify-center w-full h-full">
+            {/* จานพื้นหลังทึบเข้ม — แทนที่ Energy Core สีส้มเดิม ปิดทับ "Orange Inner Glow" +
+                "Center Glass" ที่ FitnessRing (simple mode) วาดไว้ในตัวเองอยู่แล้ว ให้เนื้อที่
+                ตรงกลางปุ่มเป็นจานเข้มล้วนแบบ mockup ไม่มีสีส้ม/แสงเรืองใดๆ เหลือแค่วงคะแนนสีทอง
+                (ring-progress) ที่ขอบเป็นสีเดียวที่เห็น จัดกึ่งกลางจริงด้วย top/left 50% +
+                transform (absolute เฉยๆ ไม่มี offset จะไปยึดตำแหน่ง static ตาม flex flow แทน) */}
+            <span
+              className="absolute rounded-full"
+              aria-hidden="true"
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: coreSize,
+                height: coreSize,
+                background: '#101012',
+              }}
+            />
+            {isRestDay ? <MoonIcon /> : isCompleted ? <CheckIcon /> : <DumbbellIcon />}
+            <span
+              className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center relative"
+              style={{ color: '#FFF4E0' }}
+              aria-hidden="true"
+            >
+              {isRestDay ? (
+                <>
+                  VIEW
+                  <br />
+                  RECOVERY
+                </>
+              ) : isCompleted ? (
+                <>
+                  VIEW
+                  <br />
+                  SUMMARY
+                </>
+              ) : isInProgress ? (
+                <>
+                  RESUME
+                  <br />
+                  WORKOUT
+                </>
+              ) : (
+                <>
+                  START
+                  <br />
+                  WORKOUT
+                </>
+              )}
+            </span>
+          </div>
+        </FitnessRing>
+      </span>
+    </Link>
+  )
+
   return (
+    <>
     <nav
       className="lg:hidden fixed bottom-0 inset-x-0 z-20 safe-bottom"
       style={{
@@ -192,129 +324,11 @@ export default function BottomNav() {
           // v: glow เดิม animate บน box-shadow ของ span เดียวกับ ring โดยตรง (ไม่ compositable, repaint
           // จริงทุกเฟรมตลอดไป) — แยกเป็น span glow ต่างหาก (box-shadow คงที่ ไม่ animate) วางไว้ใต้ span
           // ring แล้ว animate แค่ opacity/scale ของมันแทน (ดู .animate-start-workout-pulse ใน globals.css)
+          // ปุ่มลอยจริง render แยกเป็น sibling ของ <nav> ด้านล่าง (นอก clipPath ที่ตัดมุม CNC) — ดูคอมเมนต์
+          // "ทำไมไม่เห็นครบวงครับ" ก่อน return ด้านบน ที่นี่แค่กันที่ในกริด 5 คอลัมน์ไว้เฉยๆ (ว่างจริง
+          // ไม่ render อะไร) ไม่งั้น 4 แท็บที่เหลือจะเลื่อนมาแทนคอลัมน์กลางที่หายไป
           if (href === '/session') {
-            const btnSize = dashboardSpec.floatingButton.size
-            // ฟีดแบ็ก (เทียบกับ mockup ตรงๆ 2 รอบ) "ยังมีจุดส้มตรงกลาง ไม่ใช่จานเข้มล้วนแบบ mockup" —
-            // รอบแรกแค่ลดขนาด/เพิ่มความโปร่งใสของ Energy Core (ยังเป็น radial-gradient สีส้ม) ไม่พอ เพราะ
-            // FitnessRing เอง (simple mode) ก็มีชั้น "Orange Inner Glow" ในตัวอยู่แล้ว (ใช้ร่วมกับ Hero
-            // Ring จุดอื่น แก้ไฟล์นั้นตรงๆ ไม่ได้เพราะกระทบทั้งแอป) เปลี่ยนจาก "แสงส้ม" เป็น "จานทึบสีเข้ม"
-            // ล้วนแทน ให้ปิดทับ Orange Inner Glow ของ FitnessRing ได้เต็มที่ (จานทึบวาดทีหลังใน DOM จึงอยู่
-            // บนสุด) เหลือแค่วงคะแนนสีทอง (ring-progress) ที่ขอบเป็นสีเดียวที่เห็นได้ ตรงกับจานเข้ม+กรอบทอง
-            // ของ mockup เป๊ะ
-            const coreSize = Math.round(btnSize * 0.74)
-            // v55: วันพัก (isRestDay) ไม่พาไป /session (เริ่มเวิร์กเอาต์) อีกต่อไป — พาไปดู /coach
-            // (Recovery) แทน ปุ่มเดียวกับที่ AI Coach ใช้ตอน isRestDay ("ดู Recovery →") ให้ปลายทางตรงกับ
-            // ป้ายที่เห็นจริง ไม่ใช่แค่เปลี่ยนคำแต่กดแล้วยังพาไปเริ่มเวิร์กเอาต์เหมือนเดิม
-            // pointer เซสชันชดเชยที่ยังไม่จบต้องมาก่อน isRestDay เสมอ — isRestDay มาจากสถานะแผนจริงของ
-            // วันนี้ (React Query cache) ซึ่งอาจยังเป็น true ได้ถ้าเพิ่งเริ่มเซสชันชดเชยแบบยังไม่ log
-            // เซ็ตไหนเลยสักเซ็ต (hasLoggedToday ยังเป็น false) กันปุ่มพาไป /coach ทั้งที่กำลังทำเซสชันชดเชย
-            // อยู่จริง
-            const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : isRestDay ? '/coach' : '/session'
-            return (
-              <Link
-                key={href}
-                href={sessionHref}
-                className="relative flex items-start justify-center"
-                aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : isInProgress ? 'ทำเวิร์กเอาต์ต่อ' : 'เริ่มเวิร์กเอาต์'}
-                onPointerDown={hapticSuccess}
-              >
-                {/* v3: ฟีดแบ็ก "เอาให้วงขึ้นเหนือกรอบ ให้มีมิติแบบตัวอย่าง" — top offset เดิม (-0.42*btnSize)
-                    ให้วงจมอยู่ในแผ่น nav เกินครึ่ง เพิ่มเป็น -0.58*btnSize ให้ตัวกลมโผล่พ้นขอบบนของแผ่น
-                    ชัดเจนกว่าเดิม (ลอยเหนือกรอบจริง ไม่ใช่แค่เนียนขอบ) + contact shadow วงรีทึบด้านล่าง
-                    (ดูถัดจาก FitnessRing) จำลองเงาที่ปุ่มทอดลงบนผิวแผ่น titanium ให้รู้สึกว่าลอยจริง */}
-                <span
-                  className="absolute rounded-full pointer-events-none animate-start-workout-pulse"
-                  aria-hidden="true"
-                  style={{
-                    top: -Math.round(btnSize * 0.58),
-                    width: btnSize,
-                    height: btnSize,
-                    boxShadow: BOTTOM_NAV_GLOW_SHADOW,
-                  }}
-                />
-                <span
-                  className="absolute rounded-full pointer-events-none"
-                  aria-hidden="true"
-                  style={{
-                    top: 2,
-                    width: Math.round(btnSize * 0.8),
-                    height: Math.round(btnSize * 0.24),
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'radial-gradient(ellipse, rgba(0,0,0,.55), transparent 72%)',
-                    filter: 'blur(2px)',
-                  }}
-                />
-                <span
-                  className="absolute rounded-full active:scale-[0.97] transition"
-                  style={{
-                    top: -Math.round(btnSize * 0.58),
-                    width: btnSize,
-                    height: btnSize,
-                    // v2: ฟีดแบ็ก "แสง/เงายังไม่ดีขึ้นเลย" — เส้น inset highlight เดิม (1px, ไม่มี blur)
-                    // บางเกินไปจนแทบไม่เห็นเป็น "แสงสะท้อนบนผิวโลหะ" เพิ่ม blur (4px) ให้ฟุ้งเป็นส่วนโค้ง
-                    // สว่างจริงตามขอบบนของวง ผสานกับจุดสว่างของ ring gradient ด้านล่างเป็นชั้นเดียวกัน
-                    // v3: ฟีดแบ็ก "มิติแบบตัวอย่าง" — เพิ่มระยะ/ความเข้ม drop shadow ใต้ปุ่ม (6px/.45 ->
-                    // 10px/.55) ให้ตัวกลมดูยกตัวลอยขึ้นชัดกว่าเดิม แทนที่จะแบนราบกับพื้น
-                    boxShadow: '0 10px 22px rgba(0,0,0,.55), inset 0 3px 4px rgba(255,255,255,.4)',
-                  }}
-                >
-                  <FitnessRing value={100} size={btnSize} simple gradientStops={BOTTOM_NAV_RING_GRADIENT}>
-                    <div className="relative flex flex-col items-center justify-center w-full h-full">
-                      {/* จานพื้นหลังทึบเข้ม — แทนที่ Energy Core สีส้มเดิม ปิดทับ "Orange Inner Glow" +
-                          "Center Glass" ที่ FitnessRing (simple mode) วาดไว้ในตัวเองอยู่แล้ว ให้เนื้อที่
-                          ตรงกลางปุ่มเป็นจานเข้มล้วนแบบ mockup ไม่มีสีส้ม/แสงเรืองใดๆ เหลือแค่วงคะแนนสีทอง
-                          (ring-progress) ที่ขอบเป็นสีเดียวที่เห็น จัดกึ่งกลางจริงด้วย top/left 50% +
-                          transform (absolute เฉยๆ ไม่มี offset จะไปยึดตำแหน่ง static ตาม flex flow แทน) */}
-                      <span
-                        className="absolute rounded-full"
-                        aria-hidden="true"
-                        style={{
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          width: coreSize,
-                          height: coreSize,
-                          background: '#101012',
-                        }}
-                      />
-                      {isRestDay ? <MoonIcon /> : isCompleted ? <CheckIcon /> : <DumbbellIcon />}
-                      <span
-                        className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center relative"
-                        style={{ color: '#FFF4E0' }}
-                        aria-hidden="true"
-                      >
-                        {isRestDay ? (
-                          <>
-                            VIEW
-                            <br />
-                            RECOVERY
-                          </>
-                        ) : isCompleted ? (
-                          <>
-                            VIEW
-                            <br />
-                            SUMMARY
-                          </>
-                        ) : isInProgress ? (
-                          <>
-                            RESUME
-                            <br />
-                            WORKOUT
-                          </>
-                        ) : (
-                          <>
-                            START
-                            <br />
-                            WORKOUT
-                          </>
-                        )}
-                      </span>
-                    </div>
-                  </FitnessRing>
-                </span>
-              </Link>
-            )
+            return <div key={href} aria-hidden="true" />
           }
 
           return (
@@ -342,6 +356,20 @@ export default function BottomNav() {
         })}
       </div>
     </nav>
+    {/* ปุ่มลอย /session จริง — ใช้ grid/minHeight/safe-bottom ชุดเดียวกับ <nav> ด้านบนเป๊ะ (กฎ CSS
+        เดียวกัน = คำนวณตำแหน่งแนวนอน/แนวตั้งออกมาตรงกับคอลัมน์กลางของ nav พอดี ไม่ต้อง hardcode พิกัด
+        เอง) แต่ไม่มี clipPath ครอบ ปุ่มเลยลอยพ้นกรอบ nav ได้เต็มที่โดยไม่โดนตัด — pointer-events-none
+        ทั้ง wrapper/placeholder คอลัมน์ว่าง เปิดเฉพาะคอลัมน์ปุ่มจริงให้กดได้ */}
+    <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 pointer-events-none safe-bottom" aria-hidden="false">
+      <div className="relative max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
+        <div aria-hidden="true" />
+        <div aria-hidden="true" />
+        <div className="pointer-events-auto">{floatingButton}</div>
+        <div aria-hidden="true" />
+        <div aria-hidden="true" />
+      </div>
+    </div>
+    </>
   )
 }
 
