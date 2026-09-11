@@ -1318,7 +1318,11 @@ export default function SessionPage() {
             เทสไว้อาจทับ tagline หรือล้นการ์ด เปลี่ยนมาใช้ flex-col justify-between ให้ emoji/ชื่อเซสชัน
             คืนเข้า normal flow (โตได้ตามเนื้อหาจริง ไม่ตัด/ทับ) เหลือแค่ tagline ที่ยังลอย absolute เพราะ
             เป็นข้อความอังกฤษสั้นตายตัว 3 คำ ไม่ขึ้นกับข้อมูลผู้ใช้ ความเสี่ยงล้นแทบไม่มี */}
-        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 min-h-[280px] sm:min-h-[340px] flex flex-col justify-between p-4 text-left">
+        {/* ฟีดแบ็ก "เอา emoji มาอยู่หน้าเซสชันเสร็จแล้ว, ขยับ Than ให้อยู่ระดับเดียวกับชื่อเซสชัน" —
+            emoji ย้ายเข้ามาอยู่บรรทัดเดียวกับชื่อ (ไม่ใช่ลอยแยกด้านบนอีกต่อไป) เหลือ flow child เดียว
+            (title block) เลยเปลี่ยน justify-between เป็น justify-end (แค่ดันลงล่างพอ) ส่วน tagline
+            ย้ายจาก top:44% เป็น bottom แทน คำนวณให้บรรทัดกลาง "Than" อยู่ระดับเดียวกับบรรทัดชื่อเซสชัน */}
+        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 min-h-[280px] sm:min-h-[340px] flex flex-col justify-end p-4 text-left">
           <div className="absolute inset-0" aria-hidden="true">
             <Image
               src="/images/session-complete-hero-mobile.png"
@@ -1332,16 +1336,9 @@ export default function SessionPage() {
               style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(11,11,11,.55) 55%, #0B0B0B 100%)' }}
             />
           </div>
-          {/* relative — บั๊กที่เจอตอนทดสอบ: element ธรรมดา (ไม่มี position) วาดก่อน element ที่ positioned
-              เสมอตามลำดับ stacking ของ CSS ไม่ว่าจะมาทีหลังใน DOM ก็ตาม ทำให้ภาพ/gradient (absolute)
-              ด้านบนไปทับ emoji/ชื่อเซสชันจนมองไม่เห็น ต้องใส่ relative ให้ทั้งคู่ join "positioned" stacking
-              เดียวกับรูป ถึงจะวาดทับรูปได้ถูกต้อง (ตำแหน่ง/ขนาดยังมาจาก flow ปกติเหมือนเดิม ไม่กระทบ) */}
-          <p className="relative text-4xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
-            🎉
-          </p>
           <p
-            className="absolute right-4 font-quote italic font-semibold text-base text-right leading-tight"
-            style={{ color: COLORS.amber, top: '44%' }}
+            className="absolute right-4 bottom-6 font-quote italic font-semibold text-base text-right leading-tight"
+            style={{ color: COLORS.amber }}
           >
             Stronger
             <br />
@@ -1349,8 +1346,15 @@ export default function SessionPage() {
             <br />
             Yesterday
           </p>
+          {/* relative — กัน bug stacking เดิม (element ไม่มี position วาดก่อน positioned เสมอ ทำให้รูป/
+              gradient ไปทับข้อความ) ต้องใส่ relative ให้ join "positioned" stacking เดียวกับรูป */}
           <div className="relative text-left">
-            <p className="font-display text-2xl tracked uppercase text-ink">เซสชันเสร็จแล้ว</p>
+            <p className="font-display text-2xl tracked uppercase text-ink flex items-center gap-2">
+              <span className="text-3xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }} aria-hidden="true">
+                🎉
+              </span>
+              เซสชันเสร็จแล้ว
+            </p>
             <p className="text-xs text-muted mt-1">{day?.title}</p>
           </div>
         </div>
