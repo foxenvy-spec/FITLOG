@@ -1337,11 +1337,10 @@ export default function SessionPage() {
             </p>
             <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
             <p className="text-xs text-muted mt-1">{day?.title}</p>
-            {/* แท็กไลน์สั้นๆ — คำเดียวเน้นความรู้สึก ไม่ใช่ข้อมูล จึงเป็นภาษาไทยให้เข้ากับทั้งแอป (ทุกจุดในแอป
-                เป็นไทยหมด ไม่มีจุดไหนแทรกภาษาอังกฤษเป็นคำโปรยแบบ mockup ที่ได้รับมา) */}
-            <p className="text-[11px] tracked uppercase mt-3" style={{ color: COLORS.amber }}>
-              แข็งแกร่งกว่าเมื่อวาน
-            </p>
+            {/* แท็กไลน์ — ฟีดแบ็ก "อยากได้ภาษาอังกฤษสไตล์เดียวกับรูปที่ให้ Manus ทำ" เปลี่ยนจากภาษาไทยเดิม
+                (แข็งแกร่งกว่าเมื่อวาน) เป็นภาษาอังกฤษตรงตามคำขอรอบนี้ — font-serif italic + สีขาวครีม
+                (text-ink) แทน uppercase amber เดิม ให้ดูเป็นคำโปรยสไตล์ภาพถ่าย ไม่ใช่ label ข้อมูล */}
+            <p className="font-serif italic text-sm text-ink mt-3">Stronger Than Yesterday</p>
           </div>
         </div>
 
