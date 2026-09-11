@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
@@ -102,6 +102,12 @@ interface AICoachCompactCardProps {
   /** ชื่อแผนแรกที่พลาด (เช่น "Day 1 — Push") ใช้ประกอบข้อความเมื่อ missedPlanCount === 1 เท่านั้น —
    * ไม่ระบุ = แสดงข้อความทั่วไปไม่เอ่ยชื่อแผน */
   missedPlanTitle?: string | null
+  /** ฟีดแบ็ก (Mobile Dashboard rebuild ตาม mockup "Version 5") "ของจริงไม่สวยเหมือน Version 5 เลย —
+   * ปรับสี กรอบ พื้นหลังใหม่ให้เหมือน 100%" — การ์ดนี้ใช้ร่วมกับเดสก์ท็อป (DashboardView.tsx) ซึ่งยังใช้
+   * พื้นผิว PremiumCard ("Dark Titanium") เดิมอยู่ ไม่ได้อยู่ใน scope ของการรีดีไซน์รอบนี้ — เพิ่ม variant
+   * นี้ให้ Mobile ขอพื้นผิวการ์ดเรียบแบน (flat) แทนได้ โดยไม่กระทบเดสก์ท็อป (default ยังเป็น 'default' =
+   * PremiumCard เหมือนเดิมทุกจุดที่ไม่ได้ระบุ) — เปลี่ยนแค่ wrapper ชั้นนอกสุด ไม่แตะ logic/เนื้อหาข้างในเลย */
+  variant?: 'default' | 'flat'
 }
 
 // v47: ฟีดแบ็ก "เพิ่ม Confidence 98% หรือ Updated 2 min ago" — Confidence % เป็นตัวเลขที่ไม่มีระบบไหนใน
@@ -185,6 +191,7 @@ export default function AICoachCompactCard({
   makeupSessionActive = false,
   missedPlanCount = 0,
   missedPlanTitle = null,
+  variant = 'default',
 }: AICoachCompactCardProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
@@ -298,7 +305,7 @@ export default function AICoachCompactCard({
     // (10px -> 8px) รวมกับ avatar ที่เล็กลง (ดู AiRingAvatar) ให้ความสูงรวมลดลงจริงตามเป้า
     // v52: ฟีดแบ็ก "AI Coach คือพระเอก แต่ยังใหญ่ไปนิดหนึ่ง ลดอีก 10-15%" (รอบถัดมาหลัง v51) — padding
     // แนวตั้งลดอีกขั้น (12px -> 10px) gap ลดอีกขั้น (8px -> 6px) ต่อจาก avatar ที่เล็กลงอีก (ดู AiRingAvatar)
-    <PremiumCard className="flex flex-col gap-1.5 px-3 py-2.5">
+    <AICoachCardWrapper variant={variant}>
       {/* v48b: ฟีดแบ็ก "AI Coach ยังไม่ Wow — เพิ่ม Background Particle" — จุดกระพริบเล็กๆ กระจายห่างๆ
           (เทคนิคเดียวกับที่การ์ด Hero Workout ใช้อยู่แล้วรอบก่อน) วางเฉพาะโซนขวา/ล่างของการ์ด หลีกเลี่ยง
           โซน avatar+ข้อความฝั่งซ้ายที่ยังต้องอ่านออกชัดเจน */}
@@ -628,8 +635,18 @@ export default function AICoachCompactCard({
           )}
         </div>
       )}
-    </PremiumCard>
+    </AICoachCardWrapper>
   )
+}
+
+// สลับพื้นผิว wrapper ตาม variant — 'default' (เดสก์ท็อป/เดิม) ยังเป็น PremiumCard (Dark Titanium) เป๊ะ
+// ทุกกระเบียดนิ้ว, 'flat' (Mobile Dashboard rebuild ตาม mockup "Version 5") เป็นการ์ดเรียบแบนแทน — สลับ
+// แค่พื้นผิวชั้นนอกสุด ไม่แตะเนื้อหา/logic ข้างในเลยสักบรรทัด (children เดียวกันทั้งสอง variant)
+function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'; children: ReactNode }) {
+  if (variant === 'flat') {
+    return <div className="rounded-card bg-surface border border-line flex flex-col gap-1.5 px-3 py-2.5">{children}</div>
+  }
+  return <PremiumCard className="flex flex-col gap-1.5 px-3 py-2.5">{children}</PremiumCard>
 }
 
 // Avatar วงแหวน — ใช้ภาษา "donut ring" เดียวกับ FitnessRing/GoalRing ที่ใช้ทั่วแอป (ไม่ใช่กรอบสี่เหลี่ยม

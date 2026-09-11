@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { TEXT, COLORS, withAlpha } from '@/lib/theme'
-import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
 
 interface TodaysWorkoutEmptyCardProps {
@@ -20,7 +19,7 @@ interface TodaysWorkoutEmptyCardProps {
 export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCardProps) {
   if (variant === 'restDay') {
     return (
-      <PremiumCard className="flex items-center gap-3 px-4 py-3">
+      <div className="rounded-card bg-surface border border-line flex items-center gap-3 px-4 py-3">
         <span
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
           style={{ backgroundColor: 'rgba(255,255,255,.08)' }}
@@ -53,7 +52,7 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
               ให้ชัดเจนขึ้นว่า Streak ไม่ขาดจริงๆ (คำเดียวกับที่ desktop ใช้ ดู DashboardView.tsx) */}
           <p style={{ fontSize: 10, marginTop: 1, color: withAlpha(COLORS.moss, 'CC') }}>🛌 Streak stays protected ✅</p>
         </div>
-      </PremiumCard>
+      </div>
     )
   }
 
@@ -62,7 +61,7 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
   // แทน (เลือกโปรแกรม/Template ยังกดถึงได้จาก Quick Actions แถวใต้การ์ดนี้ใน MobileDashboardView.tsx อยู่แล้ว
   // — การ์ดนี้กะทัดรัดมาก ไม่มีที่พอสำหรับ 3 ปุ่มในตัวเอง)
   return (
-    <PremiumCard className="flex items-center justify-between gap-3 px-4 py-3">
+    <div className="rounded-card bg-surface border border-line flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
         <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body }}>
           Today&apos;s Workout
@@ -74,6 +73,6 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
       <Button as={Link} href="/coach" className="shrink-0">
         🤖 ให้ MINT แนะนำ
       </Button>
-    </PremiumCard>
+    </div>
   )
 }

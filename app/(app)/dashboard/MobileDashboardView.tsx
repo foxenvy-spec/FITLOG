@@ -17,19 +17,6 @@ import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type D
 import { fetchDashboardData, greeting, emailDisplayName, FITLOG_PR_RECENT_DAYS } from './DashboardView'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import {
-  NOISE_BG,
-  DASHBOARD_BG_CSS,
-  VIGNETTE_CSS,
-  DIAGONAL_TITANIUM_CSS,
-  DIAGONAL_TITANIUM_FADE_MASK,
-  DIAGONAL_TITANIUM_MICRO_REFLECTION_CSS,
-  AMBIENT_ORANGE_CSS,
-  BLUE_AMBIENT_CSS,
-  RADIAL_SHADOW_CSS,
-  PAGE_REFLECTION_CSS,
-  HAIRLINE_SCRATCH_BG,
-} from '@/lib/theme'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import ErrorState from '@/components/ErrorState'
 import Header from '@/components/dashboard/Header'
@@ -246,51 +233,13 @@ export default function MobileDashboardView() {
 
   return (
     <>
-      <div className="relative animate-fade-scale-in" style={{ backgroundImage: DASHBOARD_BG_CSS }}>
-        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="absolute inset-0" style={{ backgroundImage: PAGE_REFLECTION_CSS }} />
-          <div className="absolute inset-0" style={{ backgroundImage: BLUE_AMBIENT_CSS }} />
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: DIAGONAL_TITANIUM_CSS,
-              WebkitMaskImage: DIAGONAL_TITANIUM_FADE_MASK,
-              maskImage: DIAGONAL_TITANIUM_FADE_MASK,
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: DIAGONAL_TITANIUM_MICRO_REFLECTION_CSS,
-              WebkitMaskImage: DIAGONAL_TITANIUM_FADE_MASK,
-              maskImage: DIAGONAL_TITANIUM_FADE_MASK,
-            }}
-          />
-          <div
-            className="absolute inset-0 overflow-hidden"
-            style={{ WebkitMaskImage: DIAGONAL_TITANIUM_FADE_MASK, maskImage: DIAGONAL_TITANIUM_FADE_MASK }}
-          >
-            <div
-              className="absolute"
-              style={{
-                inset: '-50%',
-                backgroundImage: HAIRLINE_SCRATCH_BG,
-                backgroundSize: '160px 160px',
-                transform: 'rotate(115deg)',
-                opacity: 0.02,
-                mixBlendMode: 'overlay',
-              }}
-            />
-          </div>
-          <div className="absolute inset-0" style={{ backgroundImage: AMBIENT_ORANGE_CSS }} />
-          <div className="absolute inset-0" style={{ backgroundImage: NOISE_BG, opacity: 0.02, mixBlendMode: 'overlay' }} />
-          <div className="absolute inset-0" style={{ backgroundImage: RADIAL_SHADOW_CSS }} />
-          <div className="page-light-sweep absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-            <div className="page-light-sweep-band" />
-          </div>
-          <div className="absolute inset-0" style={{ backgroundImage: VIGNETTE_CSS }} />
-        </div>
-
+      {/* ฟีดแบ็ก "ของจริงไม่สวยเหมือน Version 5 เลย — ปรับสี กรอบ พื้นหลังใหม่ให้เหมือน 100%" — พื้นหลังเดิม
+          (DASHBOARD_BG_CSS + ambient orange/blue + diagonal titanium mesh + hairline scratch + noise +
+          radial shadow + vignette, รวม 9 เลเยอร์) เป็นสไตล์ "Dark Titanium" ที่ทั้งแอปใช้ร่วมกันมาก่อน
+          rebuild รอบนี้ — mockup Version 5 พื้นหลังเรียบเกือบดำสนิท ไม่มีลายผิวโลหะ/แสง ambient สีส้ม-ฟ้า
+          หลายจุดแบบนั้นเลย เปลี่ยนเป็นไล่สีเรียบง่ายจุดเดียว (เกือบดำ #0B0B0D ขอบบนสว่างขึ้นนิดหน่อยจากแสง
+          หน้าจอ ไล่ลงมาดำสนิทด้านล่าง) ตรงกับโทน mockup มากกว่าเดิมมาก */}
+      <div className="relative animate-fade-scale-in" style={{ background: 'linear-gradient(180deg, #121214 0%, #0B0B0D 40%, #08080A 100%)' }}>
         <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap }}>
           <Header
             greetingText={greetingText}
@@ -346,6 +295,7 @@ export default function MobileDashboardView() {
             makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
             missedPlanCount={0}
             missedPlanTitle={null}
+            variant="flat"
           />
         </div>
       </div>
@@ -361,32 +311,6 @@ export default function MobileDashboardView() {
           onSaveDisplayName={handleSaveDisplayName}
         />
       )}
-      <style jsx>{`
-        .page-light-sweep-band {
-          position: absolute;
-          inset: 0;
-          height: 100%;
-          background: linear-gradient(180deg, transparent 45%, rgba(255, 255, 255, 0.035) 50%, transparent 55%);
-          transform: translateY(-100%);
-          animation: page-light-sweep-move 20s ease-in-out infinite;
-          will-change: transform;
-        }
-        @keyframes page-light-sweep-move {
-          0% {
-            transform: translateY(-100%);
-          }
-          45%,
-          100% {
-            transform: translateY(200%);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .page-light-sweep-band {
-            animation: none;
-            opacity: 0;
-          }
-        }
-      `}</style>
     </>
   )
 }

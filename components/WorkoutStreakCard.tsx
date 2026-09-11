@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { WEEKDAY_LABELS } from '@/app/(app)/dashboard/DashboardView'
 import { COLORS, NEUTRAL, TEXT, withAlpha } from '@/lib/theme'
-import PremiumCard from './ui/PremiumCard'
 import WorkoutStreakDetailSheet from './dashboard/WorkoutStreakDetailSheet'
 
 interface WorkoutStreakCardProps {
@@ -31,7 +30,15 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
   const weeklyTrainedCount = weekDayTicks.filter((t) => t.trained).length
   return (
     <>
-    <PremiumCard as="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className="animate-rise px-4 py-2.5 w-full text-left">
+    {/* ฟีดแบ็ก "ของจริงไม่สวยเหมือน Version 5 เลย — ปรับสี กรอบ พื้นหลังใหม่ให้เหมือน 100%" — เปลี่ยนจาก
+        PremiumCard (พื้นผิว Dark Titanium หลายเลเยอร์) เป็นการ์ดเรียบแบนตรงกับ mockup (component นี้ใช้
+        เฉพาะ Mobile Dashboard เท่านั้น ไม่กระทบจุดอื่น) ตรรกะจุด/สายโซ่ด้านในไม่แตะเลย */}
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      aria-haspopup="dialog"
+      className="rounded-card bg-surface border border-line animate-rise px-4 py-2.5 w-full text-left"
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 shrink-0">
           {/* v60: ฟีดแบ็ก "Hierarchy ช่วงล่างควรเป็น AI Coach > Workout > Body > Streak > Health > Quick
@@ -159,7 +166,7 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
           })}
         </div>
       </div>
-    </PremiumCard>
+    </button>
     <WorkoutStreakDetailSheet open={open} onClose={() => setOpen(false)} streak={streak} bestStreak={bestStreak} />
     </>
   )
