@@ -1362,7 +1362,7 @@ export default function SessionPage() {
                 กลับเป็น text-ink สีเดียวกับชื่อเซสชันด้านบน คง pl-10 (ชดเชยความกว้าง emoji+gap ให้บรรทัดนี้
                 เริ่มตรงกับตัวอักษรตัวแรกของชื่อเซสชัน) และ text-shadow (มิติ) ไว้เหมือนเดิม */}
             <p
-              className="text-xs mt-1 pl-10 text-ink"
+              className="text-xs mt-1 pl-12 text-ink"
               style={{ textShadow: '0 1px 2px rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.08)' }}
             >
               {day?.title}
