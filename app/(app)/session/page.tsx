@@ -1307,24 +1307,20 @@ export default function SessionPage() {
       // lg:max-w-5xl ของตัวเอง) ปล่อยให้ยืดเต็มความกว้าง desktop จะดูแปลกเพราะเนื้อหาเป็น "การ์ดสรุปจบ
       // เซสชัน" ทรง mobile ไม่ใช่หน้า analytics ที่ควรใช้พื้นที่กว้าง
       <div className="space-y-5 text-center py-4 lg:max-w-md lg:mx-auto">
-        {/* Hero — reuse login-hero.png/mobile (นักกีฬาถือดัมเบล + เส้นแสงอำพัน) ตัวเดียวกับหน้า login แทน
-            การหารูปสต็อกใหม่ อยู่ในธีม Dark Titanium + Amber ของแอปอยู่แล้ว — gradient มืดทับให้ตัวหนังสือ
-            อ่านง่าย เหมือน pattern เดียวกับ hero ของ /stats/report */}
-        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0">
+        {/* Hero — session-complete-hero-mobile.png (คู่นักกีฬายืนบนยอดเขา พระอาทิตย์ตก) ไฟล์ที่ผู้ใช้ส่งมา
+            เฉพาะสำหรับหน้านี้ (แทนที่ login-hero.png ที่ reuse ไว้ก่อนหน้า) — ไม่มีเวอร์ชัน desktop แยก
+            ใช้ไฟล์เดียวกันทั้ง 2 breakpoint (object-cover ครอปให้พอดีเอง) gradient มืดทับให้ตัวหนังสืออ่านง่าย
+            เหมือน pattern เดียวกับ hero ของ /stats/report — min-h ใหม่ (เดิมไม่มี ความสูงมาจาก
+            เนื้อหาข้อความล้วนๆ ~150px) ของ login-hero.png ที่มืด/เรียบมากพอจะโดนครอปเหลือแถบบางได้โดยไม่รู้สึก
+            แปลก แต่รูปภูเขานี้เป็นวิวที่ต้องการพื้นที่โชว์ ครอปเหลือแถบบางจะเสียของ */}
+        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 min-h-[280px] sm:min-h-[340px]">
           <div className="absolute inset-0" aria-hidden="true">
             <Image
-              src="/images/login-hero-mobile.png"
+              src="/images/session-complete-hero-mobile.png"
               alt=""
               fill
-              className="object-cover sm:hidden"
+              className="object-cover"
               style={{ objectPosition: '50% 30%', filter: 'brightness(0.75)' }}
-            />
-            <Image
-              src="/images/login-hero.png"
-              alt=""
-              fill
-              className="object-cover hidden sm:block"
-              style={{ objectPosition: '50% 35%', filter: 'brightness(0.75)' }}
             />
             <div
               className="absolute inset-0"
