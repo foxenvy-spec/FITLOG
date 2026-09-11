@@ -3,20 +3,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { describeMuscleFocus, dominantMuscleGroup, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { COLORS } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-
-// ไอคอนเป้า (target) เส้นล้วน แทนอีโมจิ 🎯 เดิม — อีโมจิมีสีของตัวเองติดมา (แดง/ขาว/น้ำเงินตามแพลตฟอร์ม)
-// ชนกับพื้นส้มทึบที่ตั้งใจให้เป็นสีเดียวตาม mockup — stroke=currentColor ควบคุมสีได้เต็มที่จาก parent
-function TargetIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
-    </svg>
-  )
-}
 
 interface TodaysFocusCardProps {
   /** ชื่อโปรแกรมจริงของวันนี้ (scheduledDay.title) ถ้ามี — มาก่อนเสมอ */
@@ -86,13 +74,13 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
         boxShadow: '0 0 0 1px rgba(255,255,255,.05)',
       }}
     >
-      <span
-        className="rounded-full flex items-center justify-center shrink-0"
-        style={{ width: 34, height: 34, backgroundColor: withAlpha(COLORS.amber, '24'), color: COLORS.amber }}
-        aria-hidden="true"
-      >
-        <TargetIcon />
-      </span>
+      {/* ฟีดแบ็ก "เปลี่ยนตรง today focus กับ today workout ด้วยดีไหม" — ตัดพื้นดำของ today-focus.png ออก
+          (ดู comment เต็มที่ chevron ด้านล่าง) แล้วทดสอบหลายขนาดบนการ์ดจริง พบว่า 34px (ขนาดวงเดิม) ยัง
+          เบลอเกินจะเห็นลายเป้าตรงกลาง ต้องขยับขึ้นเป็น ~44px ถึงจะอ่านลายเป้าออกชัด — วัดผลกระทบความสูงการ์ด
+          จริงแล้ว (Playwright) พบว่าสูงขึ้นแค่ ~4-5px (65.5->70px จาก minHeight 60 เดิมที่ตัวหนังสือ 2 บรรทัด
+          ก็ดันสูงเกิน 60 อยู่แล้ว) ไม่กระทบเลย์เอาต์รอบข้างจริง — ตัดวงพื้นหลังทิ้นท์อำพัน (withAlpha) ออกด้วย
+          เพราะ badge นี้มีวงแหวนเรืองแสงของตัวเองอยู่แล้ว ใส่วงทิ้นท์ซ้อนทับดูรกกว่าเดิม (ทดสอบเทียบแล้ว) */}
+      <Image src="/icons/today-focus-glow.png" alt="" width={44} height={44} className="shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="text-[11px]" style={{ color: '#6C7078' }}>Today&apos;s Focus</p>
         <p className="font-semibold truncate" style={{ fontSize: 14, color: COLORS.amber, marginTop: 2 }}>
@@ -104,15 +92,10 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
           </p>
         )}
       </div>
-      {/* ฟีดแบ็ก "Recovery/Body Fat/Weight มีไอคอนอยู่แล้วลองเอามาใช้ครับ" -> "ไอคอนกลุ่ม today-focus/
-          today-workout-icon-* (Dark Titanium 3D, พื้นดำทึบไม่มี alpha) ตัดพื้นหลังดำออกแล้วลองใช้" —
-          today-focus.png/today-workout-icon-dumbbell.png (badge วงแหวน+ไอคอนกลาง) อ่านไม่ออกแล้วที่ขนาด
-          จริงของการ์ดนี้ (34px, บีบจนเป็นแค่วงมัวๆ) แต่ today-workout-icon-arrow.png (ลูกศรเรืองแสงในวงกลม)
-          ยังชัดเจนดีที่ขนาดเล็ก ~20px — ตัดพื้นดำออกด้วย luminance keying (พื้นเดิมเป็นสีดำสนิท [0,0,0]
-          ทั้งภาพ, alpha ใหม่ = ความสว่างของพิกเซลเดิม, สอดคล้องกับเทคนิค glow-on-black มาตรฐาน) crop ชิดขอบ
-          แล้วลดขนาดไฟล์เหลือ public/icons/today-workout-chevron-glow.png — ใช้แทนตัวอักษร "›" เดิมที่จุด
-          เดียวกันนี้ในทั้ง 3 การ์ด (TodaysFocusCard/TodaysWorkoutCompactCard/WorkoutStreakCard) ให้สม่ำเสมอ
-          กัน ส่วนวงไอคอนหลัก (TargetIcon) ยังคง SVG เดิมไว้ก่อน เพราะ today-focus.png อ่านไม่ออกที่ 34px */}
+      {/* ฟีดแบ็ก "Recovery/Body Fat/Weight มีไอคอนอยู่แล้วลองเอามาใช้ครับ" -> "ตัดพื้นหลังดำออกแล้วลองใช้"
+          — ลูกศรเรืองแสง (ตัดพื้นดำด้วย luminance keying, ดู comment เต็มที่ไฟล์ theme ไม่มี ใช้ crop+resize
+          ธรรมดา) แทนตัวอักษร "›" เดิม จุดเดียวกันนี้ใช้ตัวเดียวกันทั้ง 3 การ์ด (TodaysFocusCard/
+          TodaysWorkoutCompactCard/WorkoutStreakCard) */}
       <Image src="/icons/today-workout-chevron-glow.png" alt="" width={20} height={20} className="shrink-0" aria-hidden="true" />
     </Link>
   )
