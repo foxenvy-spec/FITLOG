@@ -27,8 +27,27 @@ import FitnessRing from '@/components/dashboard/FitnessRing'
 // AMBER_GLOW_SHADOW (lib/theme.ts) เป็น token ใช้ร่วมหลายจุด (ปุ่ม CTA ใน Button.tsx, SidebarNav ฯลฯ)
 // แก้ตรงนั้นจะกระทบทุกจุดที่ไม่ได้ถูกร้องขอ — ลด alpha ของทุกชั้น glow ลง ~12% เฉพาะที่นี่แทน (ไม่แตะ
 // blur radius/ขนาด span ที่ครอบปุ่ม — ปุ่มเองยังใหญ่เท่าเดิมตามที่ขอ)
+// ฟีดแบ็ก "สีดูสดเกินไป" รอบเดียวกับที่แก้ ring gradient ด้านล่าง — สี glow เดิม (255,150,20 / 255,130,0)
+// เป็นส้มจัดคนละโทนกับทองนุ่มที่เพิ่งเปลี่ยนไป ปรับให้เป็นโทนทองเดียวกัน (ลด G/เพิ่ม R สัดส่วนใกล้เคียง
+// BOTTOM_NAV_RING_GRADIENT ด้านล่าง) ไม่แตะ alpha/blur radius เดิม (ขนาด/ความจางยังเท่าเดิมตามที่เคยขอ)
 const BOTTOM_NAV_GLOW_SHADOW =
-  '0 0 2px rgba(255,255,255,.53), 0 0 8px rgba(255,210,120,.53), 0 0 22px rgba(255,150,20,.31), 0 0 60px rgba(255,130,0,.105)'
+  '0 0 2px rgba(255,255,255,.53), 0 0 8px rgba(230,192,119,.53), 0 0 22px rgba(198,144,61,.31), 0 0 60px rgba(180,120,45,.105)'
+
+// ฟีดแบ็ก "สีดูสดเกินไป แสง/เงาไม่สวยเหมือนตัวอย่าง" — FitnessRing เดิมไม่ได้ส่ง gradientStops มา
+// เลยตกไปใช้ดีฟอลต์ FIRE_GRADIENT_STOPS (lib/theme.ts) ซึ่งมีจุดสว่างเกือบขาว (#FFF4CC) และส้มจัด
+// (#FF8A00/#D96A00) ตั้งใจให้ "จัดจ้านแบบไฟ" สำหรับจุดอื่น (Hero Ring ฯลฯ) แต่ทำให้วงปุ่มนี้ดูเป็นนีออน
+// สดเกินไปเทียบกับ mockup ที่เป็นโทนทองนุ่มกว่า ไม่มีจุดขาวจ้า — ทำชุดสีทองเฉพาะปุ่มนี้แยกต่างหาก (ไม่แตะ
+// FIRE_GRADIENT_STOPS/FitnessRing.tsx เพราะใช้ร่วมกับ Hero Ring จุดอื่น) ลดทั้งความสว่างสุด (ตัดจุดขาว
+// #FFF4CC ออก) และความจัดของโทนส้ม (D96A00/FF8A00 → น้ำตาลทอง/ทองอ่อนกว่า) ให้เป็น "โลหะทอง" แทน "ไฟ"
+const BOTTOM_NAV_RING_GRADIENT = [
+  { offset: '0%', color: '#8A6023' },
+  { offset: '25%', color: '#C6903D' },
+  { offset: '45%', color: '#E6C077' },
+  { offset: '50%', color: '#EFCE8C' },
+  { offset: '55%', color: '#E6C077' },
+  { offset: '75%', color: '#C6903D' },
+  { offset: '100%', color: '#8A6023' },
+] as const
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -212,7 +231,7 @@ export default function BottomNav() {
                     boxShadow: '0 6px 18px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.35)',
                   }}
                 >
-                  <FitnessRing value={100} size={btnSize} simple>
+                  <FitnessRing value={100} size={btnSize} simple gradientStops={BOTTOM_NAV_RING_GRADIENT}>
                     <div className="relative flex flex-col items-center justify-center w-full h-full">
                       {/* จานพื้นหลังทึบเข้ม — แทนที่ Energy Core สีส้มเดิม ปิดทับ "Orange Inner Glow" +
                           "Center Glass" ที่ FitnessRing (simple mode) วาดไว้ในตัวเองอยู่แล้ว ให้เนื้อที่
