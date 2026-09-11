@@ -26,6 +26,16 @@ interface FitnessRingProps {
    *  (เช่น TodaysWorkoutCompactCard ~46px) ที่ feedback บอกว่าเวอร์ชันเต็มรู้สึก "หนัก"/bevel เยอะไป
    *  เทียบกับ Fitness Score ring บน Header ที่ยังใช้เวอร์ชันเต็มเหมือนเดิม (ไม่แตะ, prop ดีฟอลต์ false) */
   simple?: boolean
+  /** true = โหมดแบนสุด — track เส้นเดียวจาง (rgba(255,255,255,.12), ไม่ใช่ gradient ไทเทเนียม) + วง
+   *  คะแนนสีตาม gradientStops (ไม่มี bloom filter) + glow เดียวรอบนอกผ่าน box-shadow เท่านั้น ไม่มี
+   *  brushed metal/micro scratch/specular/outer bevel/CNC edge/center glass/light sweep/metal dots/tip
+   *  pulse ใดๆ เลยสักอย่าง — ฟีดแบ็ก "ring ยังดูไม่สวย" หลังเทียบกับ mockup ใกล้ๆ พบว่าวง Fitness Score
+   *  บน Header ยังใช้เอฟเฟกต์ "Dark Titanium" เดิมทั้งชุด (ที่เหลือทุกการ์ดบนหน้านี้ตัดออกไปหมดแล้วตอน
+   *  rebuild ตาม design brief) ทำให้ track ที่ควรจะเป็นแค่ส่วนโค้งจางๆ ตามสเปก brief
+   *  (conic-gradient ... rgba(255,255,255,.1)) กลายเป็นแถบไทเทเนียมทึบสว่างเห็นชัดเป็น "รอยต่อ" ที่วง
+   *  แทน — โหมดนี้ใช้เฉพาะจุดที่ตั้งใจให้ตรงสเปก brief 100% (FitnessScore.tsx) ไม่กระทบ simple/เวอร์ชัน
+   *  เต็มที่จุดอื่น (GoalRing/BottomNav/AICoachCompactCard) ใช้อยู่เลย */
+  flat?: boolean
 }
 
 // FitnessRing — v4: เพิ่มความ "หนาของวัสดุ" กลับมาตามฟีดแบ็ก (v3 ที่พอร์ตตรงจาก reference มา
@@ -46,6 +56,7 @@ export default function FitnessRing({
   children,
   className = '',
   simple = false,
+  flat = false,
 }: FitnessRingProps) {
   const sw = strokeWidth ?? Math.round(size * 0.08)
   const radius = (size - sw) / 2
@@ -89,6 +100,44 @@ export default function FitnessRing({
   const tipAngle = rawAngleRad - Math.PI / 2
   const tipX = Math.round((size / 2 + radius * Math.cos(tipAngle)) * 100) / 100
   const tipY = Math.round((size / 2 + radius * Math.sin(tipAngle)) * 100) / 100
+
+  // โหมด flat — บางกว่า simple อีกขั้น: track เส้นเดียวจาง (ไม่ใช่ gradient ไทเทเนียม) + วง progress
+  // สีตาม tier (ไม่มี bloom filter) + children กลางวง ไม่มีเลเยอร์ตกแต่งอื่นเลย glow เดียวมาจาก
+  // box-shadow บน wrapper div ตรงตามสเปก brief (box-shadow:0 0 26px rgba(...,.55)) เป๊ะ
+  if (flat) {
+    const glowColor = gradientStops[0]?.color ?? '#FF8A00'
+    return (
+      <div
+        className={`relative rounded-full ${className}`}
+        style={{ width: size, height: size, boxShadow: `0 0 ${Math.round(size * 0.34)}px ${glowColor}8C` }}
+      >
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+          <defs>
+            <linearGradient id={`${idPrefix}-ring-gradient`} x1="0%" y1="0%" x2="100%" y2="100%">
+              {gradientStops.map((s) => (
+                <stop key={s.offset} offset={s.offset} stopColor={s.color} />
+              ))}
+            </linearGradient>
+          </defs>
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth={sw} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={`url(#${idPrefix}-ring-gradient)`}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.22,.9,.32,1)' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
+      </div>
+    )
+  }
 
   // โหมด simple — เดิม 3 เลเยอร์ล้วน: วง track ไทเทเนียม -> วง progress สีตาม tier -> children กลางวง
   // ไม่มี glow/reflection/highlight arc/light sweep/highlight dots/tip pulse/inner shadow เลยสักอย่าง

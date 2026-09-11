@@ -62,48 +62,19 @@ export default function FitnessScore({ score, size = 76, isRestDay = false }: Fi
           ในแอป) — เดิมวงมาปุ๊บนิ่งเลยตอนโหลดหน้า ไม่มี entrance animation ของตัวเองต่างจากตัวเลข/เส้น
           progress ที่นับขึ้น/ไล่ยาวอยู่แล้ว เพิ่มให้วงทั้งก้อน "ป๊อป" เข้ามาตอน mount ครั้งแรก */}
       <div className="relative flex items-center justify-center animate-pop-in">
-        {/* Bloom หลังวง — เดิมไม่มีเลย (ตัด Glow wrapper ออกตอนลดความสูง header รอบก่อน) ทำให้วงลอย
-            อยู่บนพื้นเปล่าๆ ไม่มี "แสงส่องจากด้านหลัง" แบบภาพอ้างอิง — ใช้สี tier ปัจจุบัน (score.color)
-            ไม่ตายตัวเป็นส้มเสมอ ให้ยังสัมพันธ์กับสีวง/ข้อความเหมือนจุดอื่นในหน้า
-            v18: ฟีดแบ็ก "Orange Glow ยังเป็น Layer เดียว อยากให้รู้สึกว่ามันเรืองจริง" — แยกจาก 1 ชั้นเป็น
-            5 ชั้นตามลำดับที่ขอ (Core/Bloom/Fog อยู่หลังวง, Particle/Specular อยู่หน้าวงแต่นอกรัศมีตัวเลข
-            กลาง ไม่บังเนื้อหา) ทั้งหมด static ตามที่ยืนยัน ไม่มี animation/gyroscope */}
-        {/* v20: ฟีดแบ็ก "Glow + Ring + Orange + Background รวมกันเด่นไปหน่อย ลดลงเล็กน้อย" — 3 ชั้น Fog/
-            Bloom/Core ด้านล่างลดอัลฟาลง ~15% ทั้งชุด (14/26/40 -> 11/20/36 hex) ยังคงลำดับความเข้มเดิม
-            (Fog จางสุด -> Core เข้มสุด) แค่ลดความเข้มรวมลง ไม่ตัดชั้นไหนออก */}
-        {/* Fog — วงนอกสุด กว้างที่สุด จางที่สุด จำลองหมอกแสงฟุ้งไกลรอบนอก */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: size * 2.6,
-            height: size * 2.6,
-            background: `radial-gradient(circle, ${score.color}11, transparent 60%)`,
-          }}
-          aria-hidden="true"
-        />
-        {/* Bloom — ชั้นเดิม ปรับอัลฟาลงเล็กน้อยเพราะตอนนี้มี Fog ห่อรอบนอกอีกชั้นแล้ว
-            v30: ฟีดแบ็ก "ring-bloom-breathe ❌ Bloom ควรนิ่ง" — ตัด animation หายใจ (v22) ออก กลับไปนิ่ง
-            เหมือน Fog/Core ชั้นอื่นๆ รอบๆ วง */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: size * 1.7,
-            height: size * 1.7,
-            background: `radial-gradient(circle, ${score.color}20, transparent 65%)`,
-          }}
-          aria-hidden="true"
-        />
-        {/* Core — วงในสุด แคบ เข้มกว่าจุดอื่น จำลองแกนแสงตรงกลางที่ตัววงลอยอยู่เหนือ */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: size * 1.05,
-            height: size * 1.05,
-            background: `radial-gradient(circle, ${score.color}36, transparent 55%)`,
-          }}
-          aria-hidden="true"
-        />
-        <FitnessRing value={animatedScore} size={size} gradientStops={score.gradientStops}>
+        {/* v3 (design brief 2, 6a): ฟีดแบ็ก "ring ยังดูไม่สวย" — เทียบใกล้ๆ พบว่าวงนี้ยังใช้เอฟเฟกต์เต็มชุด
+            "Dark Titanium" เดิม (titanium track gradient สว่างจ้า, bloom filter, light sweep, metal
+            highlight dots, specular, brushed metal ฯลฯ จาก FitnessRing.tsx เวอร์ชันเต็ม) ที่เหลือทุกจุด
+            บนหน้านี้ตัดออกไปหมดแล้วตอน rebuild ตาม brief (การ์ดอื่นทุกใบเป็นพื้นเรียบ #16191D + hairline
+            ไปแล้ว) — ผลคือ track "ที่เหลือ" ของวง (ตามสเปก brief ควรจางแทบมองไม่เห็น
+            rgba(255,255,255,.1)) กลายเป็นแถบไทเทเนียมทึบสว่างเห็นชัดเจนเหมือนรอยต่อ/วงแตก แถมมีจุดขาว
+            (metal highlight dots) ลอยอยู่นอกวงอีก — เปลี่ยนมาใช้ FitnessRing flat mode (ดู comment เต็ม
+            ที่ FitnessRing.tsx) ตรงตามสเปก brief เป๊ะ: track จางเส้นเดียว + วง progress สีตาม tier
+            (ไม่มี bloom) + glow เดียวรอบนอกผ่าน box-shadow — ตัดเลเยอร์ Fog/Bloom/Core (หมอกแสง 3 ชั้น
+            ซ้อนรอบนอก) + Particle (จุดฝุ่นแสง 4 จุด) + Specular (จุดสว่างมุมขวาบน) ที่เคยอยู่ตรงนี้ออกทั้งหมด
+            ด้วย เพราะ box-shadow ของวง flat mode ทำหน้าที่ "แสงเรืองรอบวง" แทนอยู่แล้วตัวเดียวพอ ไม่ต้อง
+            ซ้อนหมอก 3-4 ชั้นเพิ่มแบบเดิม (ยิ่งซ้อนยิ่งดูหมอกมัว ไม่ใช่ "เรืองจริง" ตามที่เคยตั้งใจไว้) */}
+        <FitnessRing value={animatedScore} size={size} gradientStops={score.gradientStops} flat>
           {/* v64: ฟีดแบ็ก "48 คือข้อมูลสำคัญที่สุดของส่วนนี้ เพิ่มขนาดอีก 5-8% แต่ไม่ต้องขยาย Ring" —
               เดิม fontSize ผูกกับ size (scoreRingSize) ตรงๆ ผ่าน multiplier 0.28 — ขยับ multiplier ขึ้น
               เป็น 0.29 (ตัวเลขเดียว ไม่แตะ size เอง) ให้ตัวเลขโตขึ้น ~5.3% (19->20px ที่ size ปัจจุบัน 69)
@@ -115,38 +86,6 @@ export default function FitnessScore({ score, size = 76, isRestDay = false }: Fi
             /100
           </span>
         </FitnessRing>
-        {/* Tiny Particle — จุดแสงเล็กๆ กระจายรอบวง (คงที่ ไม่ animate) จำลองประกายฝุ่นแสงที่ลอยอยู่ในหมอก */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: [
-              `radial-gradient(circle 2px at 14% 20%, ${score.color}99, transparent 100%)`,
-              `radial-gradient(circle 1.5px at 88% 26%, ${score.color}80, transparent 100%)`,
-              `radial-gradient(circle 1.5px at 80% 88%, ${score.color}70, transparent 100%)`,
-              `radial-gradient(circle 1px at 20% 84%, ${score.color}60, transparent 100%)`,
-            ].join(', '),
-          }}
-          aria-hidden="true"
-        />
-        {/* Specular Highlight — จุดสว่างจ้าเล็กๆ จุดเดียว มุมบนขวาของวง จำลองแสงกระทบผิวมันวาว
-            (offset ด้วย top/right ไม่ใช่กึ่งกลาง กันไม่ให้ทับตัวเลขกลางวง) */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 8,
-            height: 8,
-            top: size * 0.08,
-            right: size * 0.12,
-            background: 'radial-gradient(circle, rgba(255,255,255,.85), transparent 70%)',
-          }}
-          aria-hidden="true"
-        />
-        {/* v31: ฟีดแบ็ก "เหลือแค่ 7 Animation ทั้งแอป — Ring: rotate 12s + spark ตอน sweep ผ่าน" — เดิมมี
-            sweep+spark ของตัวเองอยู่ตรงนี้ (ring-sweep-wrap/ring-tiny-spark) ซ้อนทับกับ light sweep ที่
-            FitnessRing.tsx (ซึ่งวงนี้ห่ออยู่) มีอยู่แล้วในตัว (.animate-ring-sweep-slow) — กลายเป็นวงเดียว
-            มีจุดสว่างหมุนอยู่ 2 จุดพร้อมกันโดยไม่จำเป็น ตัดชุดนี้ทิ้งทั้งหมด รวม "spark ตอน sweep ผ่าน" เข้า
-            ไปเป็นการกะพริบของจุดสว่างใน FitnessRing.tsx เองแทน (ดูคอมเมนต์ v31 ที่ไฟล์นั้น) — เหลือ animation
-            เดียวของวงทั้งก้อนจริงๆ ไม่ใช่ 2 ชั้นซ้อนกัน */}
       </div>
       {/* v2 (design brief 2, 6a): ตัด status line (score.aiCoachStatus/"Recovery Recommended") ที่เคยอยู่
           ใต้ tier label ออกด้วย — สเปก brief แสดงแค่ tier label เดียว ("Excellent") ไม่มีบรรทัดคำแนะนำ
