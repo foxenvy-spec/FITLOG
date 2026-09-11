@@ -169,12 +169,14 @@ export default function BottomNav() {
           // ring แล้ว animate แค่ opacity/scale ของมันแทน (ดู .animate-start-workout-pulse ใน globals.css)
           if (href === '/session') {
             const btnSize = dashboardSpec.floatingButton.size
-            // ฟีดแบ็ก (เทียบกับ mockup ตรงๆ) "ปุ่มดูเหมือนดวงไฟกลมสว่างจ้า ไม่ใช่จานสีเข้ม+กรอบทองคมชัด
-            // แบบ mockup" — Energy Core เดิม (0.52 ของขนาดปุ่ม, สีทึบไม่มี alpha) แผ่ความสว่างจนกลบพื้น
-            // ไทเทเนียมเข้มของ FitnessRing เกือบหมด ทำให้อ่านเป็น "จานส้มสว่าง" แทนที่จะเป็น "จานเข้ม
-            // มีกรอบทองคม" — ลดขนาดลงและเพิ่มความโปร่งใส ให้พื้นเข้มของวง titanium (จาก FitnessRing
-            // simple mode) โผล่มาเห็นได้ ส่วนวงคะแนนสีทอง (ring-progress) ยังเป็นกรอบที่เด่นชัดสุดเหมือนเดิม
-            const coreSize = Math.round(btnSize * 0.34)
+            // ฟีดแบ็ก (เทียบกับ mockup ตรงๆ 2 รอบ) "ยังมีจุดส้มตรงกลาง ไม่ใช่จานเข้มล้วนแบบ mockup" —
+            // รอบแรกแค่ลดขนาด/เพิ่มความโปร่งใสของ Energy Core (ยังเป็น radial-gradient สีส้ม) ไม่พอ เพราะ
+            // FitnessRing เอง (simple mode) ก็มีชั้น "Orange Inner Glow" ในตัวอยู่แล้ว (ใช้ร่วมกับ Hero
+            // Ring จุดอื่น แก้ไฟล์นั้นตรงๆ ไม่ได้เพราะกระทบทั้งแอป) เปลี่ยนจาก "แสงส้ม" เป็น "จานทึบสีเข้ม"
+            // ล้วนแทน ให้ปิดทับ Orange Inner Glow ของ FitnessRing ได้เต็มที่ (จานทึบวาดทีหลังใน DOM จึงอยู่
+            // บนสุด) เหลือแค่วงคะแนนสีทอง (ring-progress) ที่ขอบเป็นสีเดียวที่เห็นได้ ตรงกับจานเข้ม+กรอบทอง
+            // ของ mockup เป๊ะ
+            const coreSize = Math.round(btnSize * 0.74)
             // v55: วันพัก (isRestDay) ไม่พาไป /session (เริ่มเวิร์กเอาต์) อีกต่อไป — พาไปดู /coach
             // (Recovery) แทน ปุ่มเดียวกับที่ AI Coach ใช้ตอน isRestDay ("ดู Recovery →") ให้ปลายทางตรงกับ
             // ป้ายที่เห็นจริง ไม่ใช่แค่เปลี่ยนคำแต่กดแล้วยังพาไปเริ่มเวิร์กเอาต์เหมือนเดิม
@@ -212,10 +214,11 @@ export default function BottomNav() {
                 >
                   <FitnessRing value={100} size={btnSize} simple>
                     <div className="relative flex flex-col items-center justify-center w-full h-full">
-                      {/* Energy Core — แกนพลังงานส้มลอยกลางวง Titanium (ไม่ใช่พื้นทึบเต็มวงเหมือนเดิม)
-                          ไล่จางออกจากศูนย์กลางแบบรัศมี ให้ความรู้สึก "แสง/พลังงาน" มากกว่า "ปุ่มสี" —
-                          จัดกึ่งกลางจริงด้วย top/left 50% + transform (absolute เฉยๆ ไม่มี offset จะไป
-                          ยึดตำแหน่ง static ตาม flex flow แทน ไม่ centered ทับ icon/label แบบที่ต้องการ) */}
+                      {/* จานพื้นหลังทึบเข้ม — แทนที่ Energy Core สีส้มเดิม ปิดทับ "Orange Inner Glow" +
+                          "Center Glass" ที่ FitnessRing (simple mode) วาดไว้ในตัวเองอยู่แล้ว ให้เนื้อที่
+                          ตรงกลางปุ่มเป็นจานเข้มล้วนแบบ mockup ไม่มีสีส้ม/แสงเรืองใดๆ เหลือแค่วงคะแนนสีทอง
+                          (ring-progress) ที่ขอบเป็นสีเดียวที่เห็น จัดกึ่งกลางจริงด้วย top/left 50% +
+                          transform (absolute เฉยๆ ไม่มี offset จะไปยึดตำแหน่ง static ตาม flex flow แทน) */}
                       <span
                         className="absolute rounded-full"
                         aria-hidden="true"
@@ -225,8 +228,7 @@ export default function BottomNav() {
                           transform: 'translate(-50%, -50%)',
                           width: coreSize,
                           height: coreSize,
-                          opacity: 0.55,
-                          background: 'radial-gradient(circle at 35% 30%, #FFF4CC 0%, #FFB84A 40%, #FF9A16 68%, transparent 85%)',
+                          background: '#101012',
                         }}
                       />
                       {isRestDay ? <MoonIcon /> : isCompleted ? <CheckIcon /> : <DumbbellIcon />}
