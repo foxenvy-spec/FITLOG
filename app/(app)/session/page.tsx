@@ -1313,7 +1313,12 @@ export default function SessionPage() {
             เหมือน pattern เดียวกับ hero ของ /stats/report — min-h ใหม่ (เดิมไม่มี ความสูงมาจาก
             เนื้อหาข้อความล้วนๆ ~150px) ของ login-hero.png ที่มืด/เรียบมากพอจะโดนครอปเหลือแถบบางได้โดยไม่รู้สึก
             แปลก แต่รูปภูเขานี้เป็นวิวที่ต้องการพื้นที่โชว์ ครอปเหลือแถบบางจะเสียของ */}
-        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 min-h-[280px] sm:min-h-[340px]">
+        {/* ฟีดแบ็ก (ui-ux-pro-max review) "ตัวหนังสือใน fixed-position box เสี่ยงล้น/ทับกันถ้าข้อความยาว
+            หรือซูมจอ" — เดิม emoji/ชื่อเซสชันวางด้วย absolute top/bottom ล้วนๆ ถ้า day?.title ยาวกว่าที่
+            เทสไว้อาจทับ tagline หรือล้นการ์ด เปลี่ยนมาใช้ flex-col justify-between ให้ emoji/ชื่อเซสชัน
+            คืนเข้า normal flow (โตได้ตามเนื้อหาจริง ไม่ตัด/ทับ) เหลือแค่ tagline ที่ยังลอย absolute เพราะ
+            เป็นข้อความอังกฤษสั้นตายตัว 3 คำ ไม่ขึ้นกับข้อมูลผู้ใช้ ความเสี่ยงล้นแทบไม่มี */}
+        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 min-h-[280px] sm:min-h-[340px] flex flex-col justify-between p-4 text-left">
           <div className="absolute inset-0" aria-hidden="true">
             <Image
               src="/images/session-complete-hero-mobile.png"
@@ -1327,11 +1332,11 @@ export default function SessionPage() {
               style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(11,11,11,.55) 55%, #0B0B0B 100%)' }}
             />
           </div>
-          {/* ฟีดแบ็ก "ดูตำแหน่งเทียบกับคนในรูปดีๆ — Stronger Than Yesterday อยู่ประมาณเอวคน, เซสชันเสร็จแล้ว
-              อยู่ประมาณขา" — เดิมจัดทุกอย่างเป็นบล็อกเดียวไล่จากขอบบน (emoji ต่อด้วยชื่อ+วันติดกันเลย) แต่
-              mockup จริงกระจาย 3 ชิ้นนี้ตามความสูงคนในรูป: emoji ลอยบนสุด, tagline ลอยกลางๆ (แนวเอว),
-              ชื่อ+วันลอยล่างสุด (แนวขา) แยก absolute positioning เป็นคนละจุดแทนการ flow ต่อกัน */}
-          <p className="absolute top-4 left-4 text-4xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
+          {/* relative — บั๊กที่เจอตอนทดสอบ: element ธรรมดา (ไม่มี position) วาดก่อน element ที่ positioned
+              เสมอตามลำดับ stacking ของ CSS ไม่ว่าจะมาทีหลังใน DOM ก็ตาม ทำให้ภาพ/gradient (absolute)
+              ด้านบนไปทับ emoji/ชื่อเซสชันจนมองไม่เห็น ต้องใส่ relative ให้ทั้งคู่ join "positioned" stacking
+              เดียวกับรูป ถึงจะวาดทับรูปได้ถูกต้อง (ตำแหน่ง/ขนาดยังมาจาก flow ปกติเหมือนเดิม ไม่กระทบ) */}
+          <p className="relative text-4xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
             🎉
           </p>
           <p
@@ -1344,15 +1349,16 @@ export default function SessionPage() {
             <br />
             Yesterday
           </p>
-          <div className="absolute left-4 bottom-10 text-left">
+          <div className="relative text-left">
             <p className="font-display text-2xl tracked uppercase text-ink">เซสชันเสร็จแล้ว</p>
             <p className="text-xs text-muted mt-1">{day?.title}</p>
           </div>
         </div>
 
         {/* Version 4 (Motivational/Premium) — รวม 5 สถิติเข้าการ์ดใบเดียว คั่นด้วยเส้นบางๆ แทนที่จะเป็น
-            การ์ดแยก 5 ใบเรียงกัน (ของเดิม) เส้นขอบ+glow อำพันบางๆ ให้เข้าธีมเดียวกับ hero ด้านบน */}
-        <PremiumCard className="p-4 space-y-4" style={{ border: `1px solid ${withAlpha(COLORS.amber, '25')}`, boxShadow: `0 0 24px ${withAlpha(COLORS.amber, '0d')}` }}>
+            การ์ดแยก 5 ใบเรียงกัน (ของเดิม) — ฟีดแบ็ก "ดู mockup ดีๆ" การ์ดนี้ควรมีกรอบทองสว่างใกล้เคียงกับ
+            Workout Score ไม่ใช่จางกว่ามากแบบเดิม (เดิม alpha 25/0d จางกว่า Workout Score's 90/35 เยอะ) */}
+        <PremiumCard className="p-4 space-y-4" style={{ border: `1.5px solid ${withAlpha(COLORS.amber, '70')}`, boxShadow: `0 0 24px ${withAlpha(COLORS.amber, '28')}` }}>
           <div className="grid grid-cols-3 gap-2.5">
             {/* ดู comment ที่ noLiveDuration state ด้านบนของไฟล์ — "00:00" สื่อว่าใช้เวลาศูนย์นาทีจริง ทั้งที่
                 จริงๆ คือไม่เคยมี stopwatch ให้นับเลย ใช้ "–" (เครื่องหมายเดียวกับที่วอลุ่มรวม/แคลอรี่ข้างล่าง
