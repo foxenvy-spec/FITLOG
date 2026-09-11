@@ -1331,7 +1331,7 @@ export default function SessionPage() {
               อยู่ประมาณขา" — เดิมจัดทุกอย่างเป็นบล็อกเดียวไล่จากขอบบน (emoji ต่อด้วยชื่อ+วันติดกันเลย) แต่
               mockup จริงกระจาย 3 ชิ้นนี้ตามความสูงคนในรูป: emoji ลอยบนสุด, tagline ลอยกลางๆ (แนวเอว),
               ชื่อ+วันลอยล่างสุด (แนวขา) แยก absolute positioning เป็นคนละจุดแทนการ flow ต่อกัน */}
-          <p className="absolute top-4 left-4 text-5xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
+          <p className="absolute top-4 left-4 text-4xl" style={{ filter: 'drop-shadow(0 0 18px rgba(255,138,0,.45))' }}>
             🎉
           </p>
           <p
@@ -1344,7 +1344,7 @@ export default function SessionPage() {
             <br />
             Yesterday
           </p>
-          <div className="absolute left-4 bottom-6 text-left">
+          <div className="absolute left-4 bottom-10 text-left">
             <p className="font-display text-2xl tracked uppercase text-ink">เซสชันเสร็จแล้ว</p>
             <p className="text-xs text-muted mt-1">{day?.title}</p>
           </div>
