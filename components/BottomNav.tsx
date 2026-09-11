@@ -169,15 +169,19 @@ export default function BottomNav() {
       aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : isInProgress ? 'ทำเวิร์กเอาต์ต่อ' : 'เริ่มเวิร์กเอาต์'}
       onPointerDown={hapticSuccess}
     >
-      {/* v3: ฟีดแบ็ก "เอาให้วงขึ้นเหนือกรอบ ให้มีมิติแบบตัวอย่าง" — top offset เดิม (-0.42*btnSize)
-          ให้วงจมอยู่ในแผ่น nav เกินครึ่ง เพิ่มเป็น -0.58*btnSize ให้ตัวกลมโผล่พ้นขอบบนของแผ่น
-          ชัดเจนกว่าเดิม (ลอยเหนือกรอบจริง ไม่ใช่แค่เนียนขอบ) + contact shadow วงรีทึบด้านล่าง
-          (ดูถัดจาก FitnessRing) จำลองเงาที่ปุ่มทอดลงบนผิวแผ่น titanium ให้รู้สึกว่าลอยจริง */}
+      {/* v3: ฟีดแบ็ก "เอาให้วงขึ้นเหนือกรอบ ให้มีมิติแบบตัวอย่าง" — เพิ่ม top offset จาก -0.42*btnSize
+          เป็น -0.58*btnSize ให้โผล่พ้นขอบบนชัดเจน + contact shadow วงรีด้านล่างจำลองเงาทอดลงพื้น
+          v4: ฟีดแบ็ก "ไม่อยากให้มีช่องว่าง อยากได้แสง/เงาสวยๆ" — -0.58 ทำให้เห็นเป็นจานลอยแยกจากแผ่น
+          nav ชัดเกินไป (มีช่องว่าง/เงาใต้ปุ่มดูเป็นสองชิ้น) ผู้ใช้อยากได้ปุ่มที่ดูเป็นเนื้อเดียวกับแผ่น
+          nav (นูนขึ้นมาจากผิว ไม่ใช่ลอยแยก) แต่ยังมีมิติแสง/เงาสวย — ลดกลับมาที่ -0.46*btnSize (ระหว่าง
+          ค่าเดิม 0.42 กับ 0.58 — โผล่พ้นขอบบนแค่พอเห็นเป็นทรงกลมเต็มวง ไม่ได้ห่างจนดูแยกชิ้น) คงชุดสี/
+          contrast ของ ring gradient และ glow ที่ปรับไว้ก่อนหน้าไว้ทั้งหมด (จุดที่ทำให้ "มีมิติ" จริงๆ คือ
+          ตรงนั้น ไม่ใช่ระยะยก) */}
       <span
         className="absolute rounded-full pointer-events-none animate-start-workout-pulse"
         aria-hidden="true"
         style={{
-          top: -Math.round(btnSize * 0.58),
+          top: -Math.round(btnSize * 0.46),
           width: btnSize,
           height: btnSize,
           boxShadow: BOTTOM_NAV_GLOW_SHADOW,
@@ -199,7 +203,7 @@ export default function BottomNav() {
       <span
         className="absolute rounded-full active:scale-[0.97] transition"
         style={{
-          top: -Math.round(btnSize * 0.58),
+          top: -Math.round(btnSize * 0.46),
           width: btnSize,
           height: btnSize,
           // v2: ฟีดแบ็ก "แสง/เงายังไม่ดีขึ้นเลย" — เส้น inset highlight เดิม (1px, ไม่มี blur)
