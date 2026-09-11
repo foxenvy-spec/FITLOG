@@ -1336,9 +1336,10 @@ export default function SessionPage() {
             <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
             <p className="text-xs text-muted mt-1">{day?.title}</p>
           </div>
-          {/* แท็กไลน์ — ฟีดแบ็ก "ทำให้เหมือน version 4" สีทอง/อำพัน (COLORS.amber) ตาม mockup เป๊ะ ไม่ใช่
-              สีขาวครีมแบบรูปถ่ายที่ Manus ทำ (คนละ reference กัน) font-serif italic + semibold */}
-          <p className="absolute top-6 right-4 font-serif italic font-semibold text-sm text-right leading-tight" style={{ color: COLORS.amber }}>
+          {/* แท็กไลน์ — ฟีดแบ็ก "ดูตำแหน่ง version 4 ดีๆ" ขยับขึ้นชิดขอบบนของการ์ด (top-4 แทน top-6)
+              ให้อยู่ระดับเดียวกับ emoji ฝั่งซ้าย ไม่ใช่ต่ำกว่า และขยายขนาดตัวอักษรขึ้น (text-base แทน
+              text-sm) ให้มีน้ำหนักสายตาเทียบเท่าฝั่งซ้ายตาม mockup */}
+          <p className="absolute top-4 right-4 font-serif italic font-semibold text-base text-right leading-tight" style={{ color: COLORS.amber }}>
             Stronger
             <br />
             Than
@@ -1438,6 +1439,7 @@ export default function SessionPage() {
 
         {summaryExtras && summaryExtras.prs.length > 0 && (
           <SessionHighlightRow
+            variant="subtle"
             icon="🏆"
             iconColor={COLORS.amber}
             label="สถิติใหม่"
@@ -2216,24 +2218,29 @@ function workoutScoreTier(score: number): { label: string; color: string } {
 }
 
 // แถวลิงก์สั้นๆ — ไอคอน + label/value 2 บรรทัด + ลูกศร ใช้ร่วมกันทั้ง Workout Score และ PR การ์ด
-// (ฟีดแบ็ก "ทำให้เหมือน mockup 100%" ทั้งสองการ์ดในภาพเป็นสไตล์เดียวกันเป๊ะ) แค่โชว์ ไม่ใช่ปุ่มลิงก์จริง
-// (ยังไม่มีหน้ารายละเอียดให้กดไป) ลูกศรเป็นแค่ cue ภาพให้อ่านง่ายตรงกับ mockup
+// แค่โชว์ ไม่ใช่ปุ่มลิงก์จริง (ยังไม่มีหน้ารายละเอียดให้กดไป) ลูกศรเป็นแค่ cue ภาพให้อ่านง่ายตรงกับ mockup
+// ฟีดแบ็ก "ดูตำแหน่ง/ความเข้มของกรอบ version 4 ดีๆ" — mockup ไม่ได้ให้ 2 การ์ดนี้เข้มเท่ากัน: Workout Score
+// มีกรอบทองสว่าง+เรืองแสงชัดเจน (เป็น "พระเอก" ของหน้า) ส่วน PR การ์ดกรอบจางกว่ามาก เกือบจะเป็นการ์ดเทาธรรมดา
+// — variant แยกความเข้มนี้แทนที่จะใช้กรอบเดียวกันทั้งคู่เหมือนรอบที่แล้ว
 function SessionHighlightRow({
   icon,
   iconColor,
   label,
   value,
+  variant = 'hero',
 }: {
   icon: string
   iconColor: string
   label: string
   value: React.ReactNode
+  variant?: 'hero' | 'subtle'
 }) {
+  const style =
+    variant === 'hero'
+      ? { background: withAlpha(COLORS.amber, '12'), border: `2px solid ${withAlpha(COLORS.amber, '90')}`, boxShadow: `0 0 24px ${withAlpha(COLORS.amber, '35')}` }
+      : { background: 'transparent', border: `1px solid ${NEUTRAL.chipInactive}` }
   return (
-    <div
-      className="rounded-lg px-4 py-3 flex items-center gap-3"
-      style={{ background: withAlpha(COLORS.amber, '0a'), border: `1px solid ${withAlpha(COLORS.amber, '30')}` }}
-    >
+    <div className="rounded-lg px-4 py-3 flex items-center gap-3" style={style}>
       <span className="text-xl shrink-0" style={{ color: iconColor }}>
         {icon}
       </span>
