@@ -218,26 +218,45 @@ export default function BottomNav() {
                 aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : isInProgress ? 'ทำเวิร์กเอาต์ต่อ' : 'เริ่มเวิร์กเอาต์'}
                 onPointerDown={hapticSuccess}
               >
+                {/* v3: ฟีดแบ็ก "เอาให้วงขึ้นเหนือกรอบ ให้มีมิติแบบตัวอย่าง" — top offset เดิม (-0.42*btnSize)
+                    ให้วงจมอยู่ในแผ่น nav เกินครึ่ง เพิ่มเป็น -0.58*btnSize ให้ตัวกลมโผล่พ้นขอบบนของแผ่น
+                    ชัดเจนกว่าเดิม (ลอยเหนือกรอบจริง ไม่ใช่แค่เนียนขอบ) + contact shadow วงรีทึบด้านล่าง
+                    (ดูถัดจาก FitnessRing) จำลองเงาที่ปุ่มทอดลงบนผิวแผ่น titanium ให้รู้สึกว่าลอยจริง */}
                 <span
                   className="absolute rounded-full pointer-events-none animate-start-workout-pulse"
                   aria-hidden="true"
                   style={{
-                    top: -Math.round(btnSize * 0.42),
+                    top: -Math.round(btnSize * 0.58),
                     width: btnSize,
                     height: btnSize,
                     boxShadow: BOTTOM_NAV_GLOW_SHADOW,
                   }}
                 />
                 <span
+                  className="absolute rounded-full pointer-events-none"
+                  aria-hidden="true"
+                  style={{
+                    top: 2,
+                    width: Math.round(btnSize * 0.8),
+                    height: Math.round(btnSize * 0.24),
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'radial-gradient(ellipse, rgba(0,0,0,.55), transparent 72%)',
+                    filter: 'blur(2px)',
+                  }}
+                />
+                <span
                   className="absolute rounded-full active:scale-[0.97] transition"
                   style={{
-                    top: -Math.round(btnSize * 0.42),
+                    top: -Math.round(btnSize * 0.58),
                     width: btnSize,
                     height: btnSize,
                     // v2: ฟีดแบ็ก "แสง/เงายังไม่ดีขึ้นเลย" — เส้น inset highlight เดิม (1px, ไม่มี blur)
                     // บางเกินไปจนแทบไม่เห็นเป็น "แสงสะท้อนบนผิวโลหะ" เพิ่ม blur (4px) ให้ฟุ้งเป็นส่วนโค้ง
                     // สว่างจริงตามขอบบนของวง ผสานกับจุดสว่างของ ring gradient ด้านล่างเป็นชั้นเดียวกัน
-                    boxShadow: '0 6px 18px rgba(0,0,0,.45), inset 0 3px 4px rgba(255,255,255,.4)',
+                    // v3: ฟีดแบ็ก "มิติแบบตัวอย่าง" — เพิ่มระยะ/ความเข้ม drop shadow ใต้ปุ่ม (6px/.45 ->
+                    // 10px/.55) ให้ตัวกลมดูยกตัวลอยขึ้นชัดกว่าเดิม แทนที่จะแบนราบกับพื้น
+                    boxShadow: '0 10px 22px rgba(0,0,0,.55), inset 0 3px 4px rgba(255,255,255,.4)',
                   }}
                 >
                   <FitnessRing value={100} size={btnSize} simple gradientStops={BOTTOM_NAV_RING_GRADIENT}>
