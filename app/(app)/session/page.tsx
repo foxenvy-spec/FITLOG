@@ -1336,9 +1336,9 @@ export default function SessionPage() {
             <p className="font-display text-2xl tracked uppercase text-ink mt-2">เซสชันเสร็จแล้ว</p>
             <p className="text-xs text-muted mt-1">{day?.title}</p>
           </div>
-          {/* แท็กไลน์ — ภาษาอังกฤษสไตล์เดียวกับรูปที่ Manus ทำ (font-serif italic สีขาวครีม) ลอยขวาบน
-              แยกจากสตรีมข้อความหลัก 3 บรรทัดซ้อนกันแบบเดียวกับ mockup */}
-          <p className="absolute top-6 right-4 font-serif italic text-sm text-ink text-right leading-tight">
+          {/* แท็กไลน์ — ฟีดแบ็ก "ทำให้เหมือน version 4" สีทอง/อำพัน (COLORS.amber) ตาม mockup เป๊ะ ไม่ใช่
+              สีขาวครีมแบบรูปถ่ายที่ Manus ทำ (คนละ reference กัน) font-serif italic + semibold */}
+          <p className="absolute top-6 right-4 font-serif italic font-semibold text-sm text-right leading-tight" style={{ color: COLORS.amber }}>
             Stronger
             <br />
             Than
