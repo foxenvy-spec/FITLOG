@@ -1336,9 +1336,12 @@ export default function SessionPage() {
               style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(11,11,11,.55) 55%, #0B0B0B 100%)' }}
             />
           </div>
+          {/* ฟีดแบ็ก "ปรับให้เอียงและมีมิติเหมือนตัวอย่าง" — italic เดิมเอียงน้อยไป เพิ่ม rotate เล็กน้อย
+              (transform) ให้เอียงชัดขึ้นแบบ mockup + text-shadow ให้ดูมีมิติ/นูน (เงาเข้มด้านล่างขวา)
+              เหมือนกับที่ทำให้ subtitle ไปแล้ว */}
           <p
             className="absolute right-4 bottom-6 font-quote italic font-semibold text-base text-right leading-tight"
-            style={{ color: COLORS.amber }}
+            style={{ color: COLORS.amber, transform: 'rotate(-4deg)', textShadow: '0 2px 4px rgba(0,0,0,.55)' }}
           >
             Stronger
             <br />
