@@ -101,7 +101,10 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, volum
       >
         <Image src="/images/workout-hero.jpg" alt="" fill className="object-cover" />
       </div>
-      <span className="text-muted shrink-0" aria-hidden="true">›</span>
+      {/* ฟีดแบ็ก "ไอคอนที่มีอยู่แล้วลองเอามาใช้" -> "ตัดพื้นหลังดำออกแล้วลองใช้" — เปลี่ยนตัวอักษร "›" เป็น
+          ไอคอนลูกศรเรืองแสงจริงจากชุด today-workout-icon-arrow.png (ตัดพื้นดำ+ครอปแล้ว ดู comment เต็มที่
+          TodaysFocusCard.tsx จุดเดียวกัน) ใช้ตัวเดียวกันทุกการ์ดที่มี chevron แบบนี้ */}
+      <Image src="/icons/today-workout-chevron-glow.png" alt="" width={20} height={20} className="shrink-0" aria-hidden="true" />
     </Link>
   )
 }

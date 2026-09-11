@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { describeMuscleFocus, dominantMuscleGroup, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
 import { COLORS, withAlpha } from '@/lib/theme'
@@ -103,7 +104,16 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
           </p>
         )}
       </div>
-      <span className="text-muted shrink-0" aria-hidden="true">›</span>
+      {/* ฟีดแบ็ก "Recovery/Body Fat/Weight มีไอคอนอยู่แล้วลองเอามาใช้ครับ" -> "ไอคอนกลุ่ม today-focus/
+          today-workout-icon-* (Dark Titanium 3D, พื้นดำทึบไม่มี alpha) ตัดพื้นหลังดำออกแล้วลองใช้" —
+          today-focus.png/today-workout-icon-dumbbell.png (badge วงแหวน+ไอคอนกลาง) อ่านไม่ออกแล้วที่ขนาด
+          จริงของการ์ดนี้ (34px, บีบจนเป็นแค่วงมัวๆ) แต่ today-workout-icon-arrow.png (ลูกศรเรืองแสงในวงกลม)
+          ยังชัดเจนดีที่ขนาดเล็ก ~20px — ตัดพื้นดำออกด้วย luminance keying (พื้นเดิมเป็นสีดำสนิท [0,0,0]
+          ทั้งภาพ, alpha ใหม่ = ความสว่างของพิกเซลเดิม, สอดคล้องกับเทคนิค glow-on-black มาตรฐาน) crop ชิดขอบ
+          แล้วลดขนาดไฟล์เหลือ public/icons/today-workout-chevron-glow.png — ใช้แทนตัวอักษร "›" เดิมที่จุด
+          เดียวกันนี้ในทั้ง 3 การ์ด (TodaysFocusCard/TodaysWorkoutCompactCard/WorkoutStreakCard) ให้สม่ำเสมอ
+          กัน ส่วนวงไอคอนหลัก (TargetIcon) ยังคง SVG เดิมไว้ก่อน เพราะ today-focus.png อ่านไม่ออกที่ 34px */}
+      <Image src="/icons/today-workout-chevron-glow.png" alt="" width={20} height={20} className="shrink-0" aria-hidden="true" />
     </Link>
   )
 }

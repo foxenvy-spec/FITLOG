@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { WEEKDAY_LABELS } from '@/app/(app)/dashboard/DashboardView'
 import { COLORS, NEUTRAL, TEXT, withAlpha } from '@/lib/theme'
@@ -71,7 +72,9 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
           </span>
           <p className="text-[12px] tracked uppercase leading-none" style={{ color: TEXT.body }}>Weekly Activity</p>
         </div>
-        <span className="text-muted shrink-0" aria-hidden="true">›</span>
+        {/* ไอคอนลูกศรเรืองแสงตัวเดียวกับ TodaysFocusCard/TodaysWorkoutCompactCard — ดู comment เต็มที่
+            TodaysFocusCard.tsx (ตัดพื้นดำจาก today-workout-icon-arrow.png ด้วย luminance keying) */}
+        <Image src="/icons/today-workout-chevron-glow.png" alt="" width={20} height={20} className="shrink-0" aria-hidden="true" />
       </div>
 
       {/* แถว 2: จุด 7 วัน (ซ้าย) + ตัวเลขรวมสัปดาห์ (ขวา) — แยกออกมาจากแถวหัวข้อด้านบนแล้ว ไม่ต้องแย่ง
