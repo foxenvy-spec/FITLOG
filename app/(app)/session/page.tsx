@@ -2285,13 +2285,43 @@ function recoveryDot(tier: 'green' | 'yellow' | 'orange' | 'red') {
   return '🔴'
 }
 
+// ฟีดแบ็ก "ขอ emoji ที่สื่อกลุ่มกล้ามเนื้อ" — เพิ่มคู่กับจุดสี tier เดิม (ไม่แทนที่) จุดสียังคงบอก
+// ความพร้อม/ไม่พร้อม เร็วที่สุดเหมือนเดิม ส่วน emoji นี้ช่วยให้เห็นเร็วว่าแถวไหนคือกลุ่มกล้ามเนื้อไหน
+// ไม่มี unicode emoji ที่ตรงตัวทุกกลุ่ม (ไม่มี emoji เฉพาะ "อก"/"หลัง"/"ไหล่"/"แกนกลางลำตัว" ในมาตรฐาน)
+// เลือกตัวที่สื่อความหมายใกล้เคียงที่สุดและแยกแยะกันได้ชัดแทน — ทดสอบ render จริงที่ขนาดแถว (~14px) แล้ว
+// เปลี่ยน 🦴/🤷 (หลัง/ไหล่) ออกเพราะรูปทรงซับซ้อนเกินไป อ่านไม่ออกตอนย่อเล็ก ดูเหมือนประแจ/มงกุฎแทน —
+// สลับเป็น 🎒/🙌 ที่รูปทรงหนา ชัด อ่านง่ายกว่ามากตอนเล็ก
+function muscleGroupEmoji(muscleGroup: string): string {
+  switch (muscleGroup) {
+    case 'อก':
+      return '🎽'
+    case 'หลัง':
+      return '🎒'
+    case 'ขา':
+      return '🦵'
+    case 'น่อง':
+      return '🧦'
+    case 'ไหล่':
+      return '🙌'
+    case 'แขน':
+      return '💪'
+    case 'แกนกลางลำตัว':
+      return '🎯'
+    default:
+      return '🏋️'
+  }
+}
+
 // แถบความพร้อมของกล้ามเนื้อ 1 กลุ่ม — แยกเป็น component เดี่ยวเพื่อไม่ให้แถวซ้ำ 7 ครั้งใน .map()
 // ต้องแก้หน้าตาแถวที่เดียว (จุดสี/แถบ/เปอร์เซ็นต์) ไม่ต้องไล่แก้ทุกจุดที่ก็อปวางไว้
 function MuscleReadinessRow({ muscleGroup, pct, tier }: { muscleGroup: string; pct: number; tier: 'green' | 'yellow' | 'orange' | 'red' }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-1.5">
       <span className="text-sm shrink-0" aria-hidden="true">
         {recoveryDot(tier)}
+      </span>
+      <span className="text-sm shrink-0" aria-hidden="true">
+        {muscleGroupEmoji(muscleGroup)}
       </span>
       <span className="text-[12px] text-muted w-14 shrink-0">{muscleGroup}</span>
       <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
