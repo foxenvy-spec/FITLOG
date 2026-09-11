@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { COLORS, withAlpha } from '@/lib/theme'
 import { recoveryTier } from '@/lib/dashboardStats'
@@ -11,11 +12,50 @@ import { recoveryTier } from '@/lib/dashboardStats'
 // Recovery ใช้ recoveryTier() ตัวเดียวกับที่ AI Coach/Recovery card อื่นทั้งแอปใช้ (ไม่คิดเกณฑ์สี/ป้าย
 // ใหม่แยกต่างหาก — เคยมีบั๊กจริงจากการมีหลาย tier function กระจายคนละไฟล์คำนวณจากข้อมูลเดียวกันแล้วให้
 // ผลไม่ตรงกัน ดู comment ที่ recoveryVerdictEmoji ใน lib/dashboardStats.ts)
+//
+// v2: ฟีดแบ็ก "ยังไม่เหมือนเลยทั้งสีกรอบแสงเงา" — ไอคอน emoji (💚🔻⚖️) เดิมมีสีของตัวเองติดมากับฟอนต์/
+// แพลตฟอร์ม (แดง/เหลือง/เทาเงินตามจริงของแต่ละอีโมจิ) ไปกันสีพื้นหลังวงที่ตั้งใจให้ตรงกับ tier/status —
+// mockup ใช้ไอคอนเส้น (line icon) สีเดียวล้วนในกล่องสี่เหลี่ยมมุมโค้ง ไม่ใช่วงกลม — เปลี่ยนเป็น SVG เส้น
+// เอง (stroke=currentColor ควบคุมสีได้เต็มที่) + เปลี่ยนกล่องไอคอนจาก rounded-full เป็น rounded-lg (สี่เหลี่ยม
+// มุมโค้ง) ตรงกับ mockup
 
 interface MetricValue {
   value: number | null
   delta: number | null
   isGood: boolean | null
+}
+
+function HeartIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.8.7 4.7 2.2l1.8 3 1.8-3C14.7 4.7 16.5 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function TrendDownIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 6l7 7 4-4 7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21 10v6h-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ScaleIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3v18M8 21h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M4 7h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M4 7l-2.5 5a2.5 2.5 0 0 0 5 0L4 7ZM20 7l-2.5 5a2.5 2.5 0 0 0 5 0L20 7Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 function MiniStatCard({
@@ -26,7 +66,7 @@ function MiniStatCard({
   sublabel,
   sublabelColor,
 }: {
-  icon: string
+  icon: ReactNode
   iconColor: string
   label: string
   value: string
@@ -35,13 +75,17 @@ function MiniStatCard({
 }) {
   return (
     <div
-      className="rounded-card bg-surface border border-line px-3 py-2.5 flex flex-col justify-between"
-      style={{ height: dashboardSpec.miniStatCard.height, borderRadius: dashboardSpec.miniStatCard.borderRadius }}
+      className="border border-line px-3 py-2.5 flex flex-col justify-between"
+      style={{
+        height: dashboardSpec.miniStatCard.height,
+        borderRadius: dashboardSpec.miniStatCard.borderRadius,
+        background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)',
+      }}
     >
       <div className="flex items-center gap-1.5">
         <span
-          className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[11px]"
-          style={{ backgroundColor: withAlpha(iconColor, '18') }}
+          className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+          style={{ backgroundColor: withAlpha(iconColor, '18'), color: iconColor }}
           aria-hidden="true"
         >
           {icon}
@@ -91,7 +135,7 @@ export default function TriStatRow({
   return (
     <div className="grid grid-cols-3 animate-rise" style={{ gap: dashboardSpec.miniStatCard.gridGap }}>
       <MiniStatCard
-        icon="💚"
+        icon={<HeartIcon />}
         iconColor={recovery?.color ?? '#9498A0'}
         label="ฟื้นตัว"
         value={recoveryPct != null ? `${recoveryPct}%` : '–'}
@@ -99,7 +143,7 @@ export default function TriStatRow({
         sublabelColor={recovery?.color ?? '#9498A0'}
       />
       <MiniStatCard
-        icon="🔻"
+        icon={<TrendDownIcon />}
         iconColor={COLORS.rust}
         label="ไขมัน"
         value={bodyFat.value != null ? `${bodyFat.value.toFixed(1)}%` : '–'}
@@ -107,7 +151,7 @@ export default function TriStatRow({
         sublabelColor={deltaColor(bodyFat.isGood)}
       />
       <MiniStatCard
-        icon="⚖️"
+        icon={<ScaleIcon />}
         iconColor={COLORS.amber}
         label="น้ำหนัก"
         value={weight.value != null ? `${weight.value.toFixed(1)}${weightUnit}` : '–'}

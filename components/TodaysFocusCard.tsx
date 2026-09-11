@@ -2,8 +2,20 @@
 
 import Link from 'next/link'
 import { describeMuscleFocus, dominantMuscleGroup, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { COLORS } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+
+// ไอคอนเป้า (target) เส้นล้วน แทนอีโมจิ 🎯 เดิม — อีโมจิมีสีของตัวเองติดมา (แดง/ขาว/น้ำเงินตามแพลตฟอร์ม)
+// ชนกับพื้นส้มทึบที่ตั้งใจให้เป็นสีเดียวตาม mockup — stroke=currentColor ควบคุมสีได้เต็มที่จาก parent
+function TargetIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+    </svg>
+  )
+}
 
 interface TodaysFocusCardProps {
   /** ชื่อโปรแกรมจริงของวันนี้ (scheduledDay.title) ถ้ามี — มาก่อนเสมอ */
@@ -60,15 +72,19 @@ export default function TodaysFocusCard({ workoutTitle, muscleRecommendation, is
   return (
     <Link
       href={href}
-      className="rounded-card bg-surface border border-line flex items-center gap-3 active:opacity-80 transition"
-      style={{ padding: dashboardSpec.focusCard.padding, minHeight: dashboardSpec.focusCard.height }}
+      className="rounded-card border border-line flex items-center gap-3 active:opacity-80 transition"
+      style={{
+        padding: dashboardSpec.focusCard.padding,
+        minHeight: dashboardSpec.focusCard.height,
+        background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)',
+      }}
     >
       <span
-        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base"
-        style={{ backgroundColor: withAlpha(COLORS.amber, '18'), color: COLORS.amber }}
+        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+        style={{ backgroundColor: COLORS.amber, color: '#1A1200' }}
         aria-hidden="true"
       >
-        🎯
+        <TargetIcon />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[12px] tracked uppercase text-muted">Today&apos;s Focus</p>

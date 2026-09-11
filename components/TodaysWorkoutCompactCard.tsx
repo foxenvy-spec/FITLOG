@@ -1,10 +1,26 @@
 'use client'
 
 import Link from 'next/link'
-import { COLORS, TEXT, withAlpha } from '@/lib/theme'
+import { COLORS, TEXT } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from './AnimatedBarFill'
 import FitnessRing from './dashboard/FitnessRing'
+
+// ไอคอนดัมเบลเส้นล้วน (path เดียวกับ DumbbellIcon ใน BottomNav.tsx — ลายเซ็นเดียวกันทั้งแอป) แทนอีโมจิ
+// 🏋️ เดิม — เหตุผลเดียวกับ TargetIcon ใน TodaysFocusCard.tsx (อีโมจิมีสีของตัวเองติดมา ชนกับพื้นส้มทึบ)
+function DumbbellIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2 12h2M5 9v6M8 7v10M16 7v10M19 9v6M22 12h-2M8 12h8"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 
 interface TodaysWorkoutCompactCardProps {
   completed: number
@@ -30,17 +46,21 @@ export default function TodaysWorkoutCompactCard({ completed, total, href, volum
   return (
     <Link
       href={href}
-      className="rounded-card bg-surface border border-line flex items-center gap-3 active:opacity-80 transition"
-      style={{ padding: dashboardSpec.workoutCard.padding, minHeight: dashboardSpec.workoutCard.height }}
+      className="rounded-card border border-line flex items-center gap-3 active:opacity-80 transition"
+      style={{
+        padding: dashboardSpec.workoutCard.padding,
+        minHeight: dashboardSpec.workoutCard.height,
+        background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)',
+      }}
     >
       <div className="relative shrink-0 flex items-center justify-center">
         <FitnessRing value={pct} size={56} strokeWidth={4} simple>
           <span
-            className="w-9 h-9 rounded-full flex items-center justify-center text-base"
-            style={{ backgroundColor: withAlpha(COLORS.amber, '18'), color: COLORS.amber }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: COLORS.amber, color: '#1A1200' }}
             aria-hidden="true"
           >
-            🏋️
+            <DumbbellIcon />
           </span>
         </FitnessRing>
       </div>

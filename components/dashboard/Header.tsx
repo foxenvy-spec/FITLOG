@@ -1,9 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import type { FitnessScoreResult } from '@/lib/fitnessScore'
 import type { DashboardNotification } from '@/lib/dashboardStats'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { PAGE_REFLECTION_CSS } from '@/lib/theme'
 import FitnessScore from './FitnessScore'
 import NotificationButton from './NotificationButton'
 import Greeting from './Greeting'
@@ -17,35 +17,48 @@ interface HeaderProps {
   isRestDay?: boolean
 }
 
-// เขียนใหม่ทั้งหมดตาม mockup "Version 5 — Hero + Card Focus" ("ทำให้เหมือน Version 5 100% ไม่ต้องสน
-// โครงสร้างเดิม") — เดิม Header นี้เป็น "ชื่อผู้ใช้ตัวใหญ่มาก (metallic wordmark) + วง Fitness Score เล็ก
-// มุมขวา" ผ่านการลดขนาดวงหลายรอบ (69px) ให้ไม่แข่งกับ Today's Focus — mockup ใหม่กลับด้าน: ไม่มีชื่อ
-// ผู้ใช้ตัวใหญ่เลย มีแค่ greeting เล็ก + wordmark แบรนด์เล็กๆ แถวบน แล้วแถวล่างเป็น headline ("Better
-// Than Yesterday") คู่กับวง Fitness Score ที่ใหญ่ขึ้นชัดเจน (108px) เป็นจุดโฟกัสหลักของ Hero แทน
+// v2: ฟีดแบ็ก "ยังไม่เหมือนเลยทั้งสีกรอบแสงเงา" — เทียบ mockup ละเอียดอีกรอบพบจุดที่พลาดไปจริงในรอบก่อน:
+// mockup มีภาพถ่ายคนมองจากด้านหลัง (silhouette, แสงโทนมืด) เป็นพื้นหลังของทั้งโซน Header เลย (ไม่ใช่พื้น
+// เรียบเปล่าๆ แบบที่ทำไว้) — ใช้ภาพเดียวกับ Session Complete hero (session-complete-hero-mobile.png,
+// คนละมุมกล้อง/คนแต่ theme เดียวกันเป๊ะ: คนมองออกจากด้านหลัง, ภูเขา/แสงเงาโทนมืด) ที่มีอยู่แล้วในแอป แทน
+// การหารูปใหม่ — ใส่ scrim ไล่มืดจากล่างขึ้นบน (เข้มสุดล่าง ให้ตัวหนังสือ/วงอ่านออก, จางสุดบนให้เห็นเนื้อรูป)
+// เทคนิคเดียวกับที่ session/page.tsx hero ใช้อยู่แล้ว (brightness filter + radial/linear scrim)
 export default function Header({ greetingText, notifications, fitnessScore, isRestDay = false }: HeaderProps) {
   return (
-    <div className="relative animate-rise">
-      {/* Soft Reflection บางๆ ทั่วโซน Header — โทเคนเดียวกับที่การ์ดอื่นในแอปใช้ (ไม่ใช่ค่าลอยใหม่) */}
-      <div className="absolute -inset-x-4 top-0 h-24 pointer-events-none" style={{ backgroundImage: PAGE_REFLECTION_CSS }} aria-hidden="true" />
-
-      <div className="relative flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <Greeting text={greetingText} />
-          <p className="font-display font-extrabold tracked uppercase text-ink leading-none" style={{ fontSize: 20, marginTop: 4 }}>
-            FITLOG
-          </p>
-        </div>
-        <NotificationButton notifications={notifications} />
+    <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 animate-rise" style={{ minHeight: 220 }}>
+      <div className="absolute inset-0" aria-hidden="true">
+        <Image
+          src="/images/session-complete-hero-mobile.png"
+          alt=""
+          fill
+          className="object-cover"
+          style={{ objectPosition: '50% 20%', filter: 'brightness(0.55)' }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(180deg, rgba(11,11,13,.35) 0%, rgba(11,11,13,.55) 40%, rgba(11,11,13,.92) 100%)' }}
+        />
       </div>
 
-      <div className="relative flex items-center justify-between gap-4" style={{ marginTop: 20 }}>
-        {/* [text-wrap:balance] กัน headline ตกบรรทัดกลางคำภาษาไทยตอนคอลัมน์แคบ (ชนวงด้านขวา) —
-            เหตุผลเดียวกับที่เคยแก้ปัญหานี้ใน Header เวอร์ชันก่อน */}
-        <p className="font-display font-bold text-ink flex-1 min-w-0 [text-wrap:balance]" style={{ fontSize: 22, lineHeight: 1.25 }}>
-          {isRestDay ? 'วันนี้เพื่อการฟื้นตัว' : 'ดีกว่าเมื่อวาน'}
-        </p>
-        <div className="shrink-0">
-          <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} isRestDay={isRestDay} />
+      <div className="relative flex flex-col justify-between h-full p-4" style={{ minHeight: 220 }}>
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Greeting text={greetingText} />
+            <p className="font-display font-extrabold tracked uppercase text-ink leading-none" style={{ fontSize: 20, marginTop: 4 }}>
+              FITLOG
+            </p>
+          </div>
+          <NotificationButton notifications={notifications} />
+        </div>
+
+        <div className="relative flex items-center justify-between gap-4" style={{ marginTop: 20 }}>
+          {/* [text-wrap:balance] กัน headline ตกบรรทัดกลางคำภาษาไทยตอนคอลัมน์แคบ (ชนวงด้านขวา) */}
+          <p className="font-display font-bold text-ink flex-1 min-w-0 [text-wrap:balance]" style={{ fontSize: 22, lineHeight: 1.25 }}>
+            {isRestDay ? 'วันนี้เพื่อการฟื้นตัว' : 'ดีกว่าเมื่อวาน'}
+          </p>
+          <div className="shrink-0">
+            <FitnessScore score={fitnessScore} size={dashboardSpec.header.scoreRingSize} isRestDay={isRestDay} />
+          </div>
         </div>
       </div>
     </div>

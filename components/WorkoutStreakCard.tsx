@@ -37,7 +37,8 @@ export default function WorkoutStreakCard({ streak, bestStreak, weekDayTicks, to
       type="button"
       onClick={() => setOpen(true)}
       aria-haspopup="dialog"
-      className="rounded-card bg-surface border border-line animate-rise px-4 py-2.5 w-full text-left"
+      className="rounded-card border border-line animate-rise px-4 py-2.5 w-full text-left"
+      style={{ background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)' }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 shrink-0">

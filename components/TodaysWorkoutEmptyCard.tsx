@@ -19,7 +19,10 @@ interface TodaysWorkoutEmptyCardProps {
 export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCardProps) {
   if (variant === 'restDay') {
     return (
-      <div className="rounded-card bg-surface border border-line flex items-center gap-3 px-4 py-3">
+      <div
+        className="rounded-card border border-line flex items-center gap-3 px-4 py-3"
+        style={{ background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)' }}
+      >
         <span
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
           style={{ backgroundColor: 'rgba(255,255,255,.08)' }}
@@ -61,7 +64,10 @@ export default function TodaysWorkoutEmptyCard({ variant }: TodaysWorkoutEmptyCa
   // แทน (เลือกโปรแกรม/Template ยังกดถึงได้จาก Quick Actions แถวใต้การ์ดนี้ใน MobileDashboardView.tsx อยู่แล้ว
   // — การ์ดนี้กะทัดรัดมาก ไม่มีที่พอสำหรับ 3 ปุ่มในตัวเอง)
   return (
-    <div className="rounded-card bg-surface border border-line flex items-center justify-between gap-3 px-4 py-3">
+    <div
+      className="rounded-card border border-line flex items-center justify-between gap-3 px-4 py-3"
+      style={{ background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)' }}
+    >
       <div className="min-w-0">
         <p className="text-[12px] tracked uppercase" style={{ color: TEXT.body }}>
           Today&apos;s Workout

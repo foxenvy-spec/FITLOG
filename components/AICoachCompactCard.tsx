@@ -644,7 +644,14 @@ export default function AICoachCompactCard({
 // แค่พื้นผิวชั้นนอกสุด ไม่แตะเนื้อหา/logic ข้างในเลยสักบรรทัด (children เดียวกันทั้งสอง variant)
 function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'; children: ReactNode }) {
   if (variant === 'flat') {
-    return <div className="rounded-card bg-surface border border-line flex flex-col gap-1.5 px-3 py-2.5">{children}</div>
+    return (
+      <div
+        className="rounded-card border border-line flex flex-col gap-1.5 px-3 py-2.5"
+        style={{ background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)' }}
+      >
+        {children}
+      </div>
+    )
   }
   return <PremiumCard className="flex flex-col gap-1.5 px-3 py-2.5">{children}</PremiumCard>
 }
