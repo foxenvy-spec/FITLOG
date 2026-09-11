@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { COLORS, withAlpha } from '@/lib/theme'
 import { recoveryTier } from '@/lib/dashboardStats'
+import { METRIC_ICON_IMAGES } from '@/components/MetricCard'
 
 // ใหม่สำหรับ Version 5 rebuild — แถว 3 การ์ดเล็ก Recovery/Body Fat/Weight แทนกริด 2x2 Body Overview
 // เดิม (BodyMetricsRow.tsx, มี 4 การ์ด: น้ำหนัก/ไขมันในร่างกาย/มวลกล้ามเนื้อ/มวลไขมัน — mockup มีแค่ 3
@@ -37,36 +38,38 @@ interface MetricValue {
   isGood: boolean | null
 }
 
-function HeartIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.8.7 4.7 2.2l1.8 3 1.8-3C14.7 4.7 16.5 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
+// ฟีดแบ็ก "Recovery/Body Fat/Weight มีไอคอนอยู่แล้วลองเอามาใช้ครับ" — เดิมวาด SVG เส้นเองใหม่ 3 อัน
+// (HeartIcon/TrendDownIcon/ScaleIcon) ทั้งที่แอปมีชุดไอคอนจริงอยู่แล้ว ("FITLOG – Metric Icons", PNG ที่
+// /public/icons/*.png) ใช้ซ้ำอยู่แล้วทั้งหน้า Health (health/page.tsx: STAT_ICON_IMAGES) และการ์ดสรุป
+// Dashboard เดสก์ท็อป (MetricCard.tsx: METRIC_ICON_IMAGES, export ไว้แล้ว import ตรงๆ ได้เลย) — ไอคอนชุด
+// นี้เป็น PNG สีเดียวล้วนออกแบบมาให้ใช้เป็น CSS mask (ระบายสีทับได้เต็มที่ผ่าน mask-image เหมือนที่
+// MetricCard.tsx ทำอยู่แล้ว) จึงเข้ากับ container สีทิ้นท์ตามสถานะ/tier ของการ์ดนี้ได้พอดี ไม่ต้องมีพื้นหลัง
+// วงกลมของตัวเองแยกแบบ health/page.tsx (ซึ่งใช้กับการ์ดพื้นผิว Dark Titanium คนละสไตล์กับการ์ดเรียบแบนนี้)
+// Body Fat ได้ไอคอน body-fat.png ตัวจริง (เดิมใช้ TrendDownIcon ลูกศรทั่วไป ไม่ได้สื่อ "ไขมัน" เจาะจง) —
+// Recovery ไม่มีไอคอนในชุด "Metric" (ชุดนั้นมีแต่ตัวชี้วัดร่างกาย ไม่มี Recovery) แต่มี heart-rate.png อยู่ใน
+// ชุดเดียวกัน (คอมเมนต์ที่ MetricCard.tsx/health/page.tsx ระบุว่า "เตรียมไว้ใช้ในหน้าอื่นต่อได้เลย" — ยังไม่
+// เคยถูกใช้ที่ไหนมาก่อน) ใช้ตัวนั้นแทน เพราะ heart rate เป็นสัญญาณที่ใกล้เคียง "ความพร้อม/ฟื้นตัว" ที่สุดในชุด
+const RECOVERY_ICON_SRC = '/icons/heart-rate.png'
 
-function TrendDownIcon() {
+function MaskIcon({ src, color, size = 14 }: { src: string; color: string; size?: number }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M3 6l7 7 4-4 7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M21 10v6h-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function ScaleIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 3v18M8 21h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M4 7h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M4 7l-2.5 5a2.5 2.5 0 0 0 5 0L4 7ZM20 7l-2.5 5a2.5 2.5 0 0 0 5 0L20 7Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-    </svg>
+    <span
+      aria-hidden="true"
+      style={{
+        display: 'block',
+        width: size,
+        height: size,
+        backgroundColor: color,
+        WebkitMaskImage: `url(${src})`,
+        maskImage: `url(${src})`,
+        WebkitMaskSize: 'contain',
+        maskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        maskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        maskPosition: 'center',
+      }}
+    />
   )
 }
 
@@ -148,7 +151,7 @@ export default function TriStatRow({
   return (
     <div className="grid grid-cols-3 animate-rise" style={{ gap: dashboardSpec.miniStatCard.gridGap }}>
       <MiniStatCard
-        icon={<HeartIcon />}
+        icon={<MaskIcon src={RECOVERY_ICON_SRC} color={recovery?.color ?? '#9498A0'} />}
         iconColor={recovery?.color ?? '#9498A0'}
         label="Recovery"
         value={recoveryPct != null ? `${recoveryPct}%` : '–'}
@@ -156,7 +159,7 @@ export default function TriStatRow({
         sublabelColor={recovery?.color ?? '#9498A0'}
       />
       <MiniStatCard
-        icon={<TrendDownIcon />}
+        icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color={COLORS.rust} />}
         iconColor={COLORS.rust}
         label="Body Fat"
         value={bodyFat.value != null ? `${bodyFat.value.toFixed(1)}%` : '–'}
@@ -164,7 +167,7 @@ export default function TriStatRow({
         sublabelColor={deltaColor(bodyFat.isGood)}
       />
       <MiniStatCard
-        icon={<ScaleIcon />}
+        icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color={COLORS.steel} />}
         iconColor={COLORS.steel}
         label="Weight"
         value={weight.value != null ? `${weight.value.toFixed(1)}${weightUnit}` : '–'}
