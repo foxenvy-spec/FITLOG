@@ -23,13 +23,23 @@ export const dashboardSpec = {
     // (ระยะในการ์ด Body Overview เอง) ตามที่ระบุชัดว่า "ไม่ต้องเพิ่ม/ลดขนาด 4 การ์ดนั้น"
     sectionGap: 8,
   },
+  // v: "ทำใหม่หมดตาม Version 5 (Hero + Card Focus)" — mockup วางวง Fitness Score เป็นจุดโฟกัสหลักของ
+  // Hero จริงๆ (ไม่ใช่ secondary corner element แบบ header เดิมที่ลดขนาดมาหลายรอบเพื่อไม่ให้แข่งกับ
+  // Today's Focus) — Header.tsx เขียนใหม่เป็น 2 แถว (แถวบน: greeting/wordmark เล็ก + กระดิ่ง, แถวล่าง:
+  // headline + วงใหญ่) ขนาดวงกลับไปที่ 108px (ใกล้เคียง "มอคอัพขอ 110-120px" ที่ FitnessScore.tsx เคย
+  // คอมเมนต์ไว้ตั้งแต่แรกก่อนถูกลดหลายรอบ) height ปรับตามโครงสร้างใหม่ 2 แถว (ประมาณเท่านั้น ใช้ทำ
+  // skeleton ให้ใกล้เคียง ไม่ pixel-perfect เป๊ะเพราะ headline อาจตกบรรทัดต่างกันตามความยาวข้อความ)
   header: {
-    height: 118, // -10% จาก 131 — ร่วมกับตัดบรรทัด "FITNESS SCORE" micro-label ออก (ดู FitnessScore.tsx)
-    // v59: ฟีดแบ็ก "Header กับ Fitness Score ยังไม่เป็นคู่เดียวกัน — Score ถูกลดจนดูเป็น secondary
-    // information เพิ่ม Ring ขึ้นประมาณ 5% เท่านั้น ไม่ต้องใหญ่เหมือนเวอร์ชันแรก" — 66 -> 69 (+4.5%, ปัดเข้า
-    // ใกล้ 5% ที่ขอที่สุด) header.height ด้านบนไม่แตะ (คงที่ 118 — ฟีดแบ็กระบุ "Header 100% ไม่ลด" ชัดเจน
-    // แค่วงในโตขึ้นเอง ไม่ต้องขยายกล่อง Header ตาม)
-    scoreRingSize: 69,
+    height: 172,
+    scoreRingSize: 108,
+  },
+  // ใหม่สำหรับ Version 5 rebuild — แถว 3 การ์ดเล็ก Recovery/Body Fat/Weight แทนกริด 2x2 Body Overview
+  // เดิม (BodyMetricsRow.tsx, ไม่ได้ใช้แล้วในหน้านี้) เตี้ยกว่า metricCard เดิมเพราะมีแค่ icon+value+
+  // delta บรรทัดเดียว ไม่มี sparkline
+  miniStatCard: {
+    height: 80,
+    borderRadius: 20,
+    gridGap: 10,
   },
   focusCard: {
     height: 60, // -10% จาก 67
