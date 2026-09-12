@@ -356,14 +356,16 @@ export default function AICoachCompactCard({
             112/96 (v54) อีก ~7% (112->104, 96->89) สัดส่วน isRestDay ต่อวันฝึกปกติเดิมยังคงไว้ (~0.857)
             ไม่แตะ layout/gap รอบๆ (flex items-center gap-2 เดิม ปรับตัวตาม avatar อัตโนมัติอยู่แล้ว) */}
         {/* ฟีดแบ็ก (poster "Version 2 — 9.3/10") "เทียบแล้ว AI Coach ใช้ไอคอนหน้าหุ่นยนต์เรียบๆ ไม่ใช่
-            เพชรเหลี่ยม — ปรับด้วยเลย" ตามด้วย "เอาให้เหมือน แสง สี เงา ขนาด" (close-up crop) — เฉพาะมือถือ
-            (variant="flat") เปลี่ยนจากกรอบวงไทเทเนียม+CNC เดิมเป็น badge สี่เหลี่ยมมุมมนพื้นน้ำเงินไล่สี
-            ตาม reference เป๊ะ (โครงสร้างแยกไปแล้วใน AiRingAvatar เอง) + ลดขนาดลงจาก 104/89 เดิม (~104->64,
-            89->56) ตามที่ระบุ "ขนาด" ชัดเจน สัดส่วน isRestDay/ปกติเดิมคงไว้ — เดสก์ท็อป (variant="default")
-            และ stats/report/page.tsx ที่ import AiRingAvatar ไปใช้ร่วมยังเป็นกรอบวง+เพชรเดิมทุกจุด (ไม่ได้
-            อยู่ในสโคปของรอบรีดีไซน์ Home นี้เลย) */}
+            เพชรเหลี่ยม — ปรับด้วยเลย" → "เอาให้เหมือน แสง สี เงา ขนาด" (close-up crop) → "ยังไม่เหมือน
+            ขนาดนั้นครับ" (เทียบ live screenshot จริงอีกรอบ) — เฉพาะมือถือ (variant="flat") เปลี่ยนจากกรอบวง
+            ไทเทเนียม+CNC เดิมเป็น badge สี่เหลี่ยมมุมมนพื้นน้ำเงินไล่สีตาม reference (โครงสร้างแยกไปแล้วใน
+            AiRingAvatar เอง) ขนาดลดมาแล้วรอบก่อน (104/89 -> 64/56) ยังใหญ่กว่า reference อยู่ (icon badge ใน
+            poster สูงพอๆ กับ 2 บรรทัดข้อความ "AI Coach"+subtitle เท่านั้น ไม่ใช่ 3-4 บรรทัดเหมือนการ์ดนี้ที่
+            มีข้อมูลมากกว่า) ลดลงอีกขั้น (64/56 -> 44/38) — เดสก์ท็อป (variant="default") และ
+            stats/report/page.tsx ที่ import AiRingAvatar ไปใช้ร่วมยังเป็นกรอบวง+เพชรเดิมทุกจุด (ไม่ได้อยู่
+            ในสโคปของรอบรีดีไซน์ Home นี้เลย) */}
         <AiRingAvatar
-          size={variant === 'flat' ? (isRestDay ? 56 : 64) : isRestDay ? 89 : 104}
+          size={variant === 'flat' ? (isRestDay ? 38 : 44) : isRestDay ? 89 : 104}
           icon={variant === 'flat' ? 'robot' : 'gem'}
         />
         <div className="min-w-0 flex-1">
