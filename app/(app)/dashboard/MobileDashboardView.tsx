@@ -264,7 +264,9 @@ export default function MobileDashboardView() {
           unit: '%',
           decimals: 1,
           pct: bodyFatGoalPct ?? 0,
-          statusText: bodyFatGoalReached ? 'Goal reached 🎉' : bodyFatRemaining != null ? `${bodyFatRemaining.toFixed(1)}% remaining` : '',
+          // ฟีดแบ็ก "'4.2% remaining' อ่านกำกวม — เป็นส่วนต่างแบบ percentage point (22.2% -> 18.0%) ไม่ใช่
+          // '4.2%' เชิงสัดส่วน — เปลี่ยนหน่วยเป็น 'pts' ให้ชัดว่าเป็นจุดเปอร์เซ็นต์ ไม่ใช่เปอร์เซ็นต์ซ้อน"
+          statusText: bodyFatGoalReached ? 'Goal reached 🎉' : bodyFatRemaining != null ? `${bodyFatRemaining.toFixed(1)} pts remaining` : '',
         }
       : null
 

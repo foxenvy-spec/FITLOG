@@ -251,6 +251,14 @@ export default function AICoachCompactCard({
   const focus = mg ? describeMuscleFocus(mg) : null
   const region = focus?.region ?? null
   const relatedGroups = focus?.relatedGroups ?? []
+  // ฟีดแบ็ก (screenshot จริง) "MINT Coach ขัดกันเอง — Today's Focus บอก 'Day 5 — Lower' แต่ MINT Coach
+  // บอก 'UPPER BODY' พร้อมป้าย '· Today' ทั้งคู่" — comment เดิมด้านบน (nextRecommendationMismatch) ยืนยัน
+  // ว่า isRecommendationForToday=true ควร "การันตี" ให้ mg ตรงกับตารางวันนี้อยู่แล้วในทางทฤษฎี แต่ในทางปฏิบัติ
+  // headline (region, มาจาก mg/resolveRecommendationDisplay — คนละแหล่งกับ Today's Focus) ไม่เคยถูก
+  // override ด้วยชื่อโปรแกรมจริงเลย มีแค่ relatedGroupsText/specificDetail (บรรทัดรอง) ที่ทำแบบนี้อยู่แล้ว —
+  // ใช้ pattern เดียวกันกับ headline ด้วย ป้องกันไม่ให้ตัวหนังสือขัดกันเองที่ผู้ใช้เห็นจริง ไม่ว่า invariant
+  // ชั้นข้อมูลจะยังไม่สมบูรณ์แค่ไหนก็ตาม (ไม่แตะ mg/resolveRecommendationDisplay/chosen/startLabel เลย)
+  const displayRegion = isRecommendationForToday && todayWorkoutTitle ? splitTitleDetail(todayWorkoutTitle).main : region
   // ฟีดแบ็ก "Training This Week บอกจันทร์-Lower Body แต่ Coach แนะนำอก+ไหล่+แขน พร้อมปุ่มเริ่มพฤหัส-
   // Core/Abs — คนละวันคนละกล้ามเนื้อกันเลย" — isRecommendationForToday=true รับประกันอยู่แล้วว่า mg ตรงกับ
   // ตารางวันนี้เป๊ะ (ดู comment ที่ isRecommendationForToday ใน DashboardView.tsx) จึงเช็คเฉพาะกรณี "Next
@@ -464,7 +472,7 @@ export default function AICoachCompactCard({
                 className={`font-display tracked uppercase truncate mt-1 ${isRestDay ? 'font-semibold' : 'font-bold text-ink'}`}
                 style={{ fontSize: isRestDay ? 13 : 18, lineHeight: 1.15, color: isRestDay ? TEXT.secondary : undefined }}
               >
-                {isRestDay ? 'Recovery Day' : region}
+                {isRestDay ? 'Recovery Day' : displayRegion}
               </p>
               {/* ฟีดแบ็ก "อยากลดข้อความลงประมาณ 20-30% — Coach ควรพูดสั้นๆ เหมือนคนพูด ไม่ใช่ย่อหน้ายาว" —
                   เดิม subtitle ("Today • Lower • Hamstring") กับ verdict ("🟢 เหมาะสำหรับฝึกวันนี้") เป็น

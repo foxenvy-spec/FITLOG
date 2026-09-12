@@ -39,12 +39,14 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
       {/* ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — mockup มีเลข % ความ
           คืบหน้าเล็กๆ ชิดขวาแถวเดียวกับป้ายชื่อเป้าหมาย (คนละจุดกับตัวเลขในแถบ progress ที่มีอยู่แล้ว) เพิ่ม
           เข้ามาเฉยๆ ไม่กระทบ pct ที่ใช้ fill แถบอยู่แล้ว */}
+      {/* ฟีดแบ็ก "'Body Fat Goal — 40%' อ่านแล้วเข้าใจผิดว่า 40% คือตัวเป้าหมาย Body Fat เอง เพราะ % อยู่ติด
+          กับหัวข้อ Goal" — เติมคำว่า "complete" ต่อท้ายให้ชัดว่าเป็นความคืบหน้า ไม่ใช่ค่าเป้าหมาย */}
       <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
         <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.5)', fontSize: 11 }}>
           {label}
         </p>
         <p className="font-homeNum font-semibold" style={{ color, fontSize: 11 }}>
-          {Math.round(pct)}%
+          {Math.round(pct)}% complete
         </p>
       </div>
       <p className="font-homeNum font-bold text-white" style={{ fontSize: 14, marginBottom: 8 }}>
