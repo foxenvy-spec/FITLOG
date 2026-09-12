@@ -356,11 +356,16 @@ export default function AICoachCompactCard({
             112/96 (v54) อีก ~7% (112->104, 96->89) สัดส่วน isRestDay ต่อวันฝึกปกติเดิมยังคงไว้ (~0.857)
             ไม่แตะ layout/gap รอบๆ (flex items-center gap-2 เดิม ปรับตัวตาม avatar อัตโนมัติอยู่แล้ว) */}
         {/* ฟีดแบ็ก (poster "Version 2 — 9.3/10") "เทียบแล้ว AI Coach ใช้ไอคอนหน้าหุ่นยนต์เรียบๆ ไม่ใช่
-            เพชรเหลี่ยม — ปรับด้วยเลย" — ผู้ใช้ยืนยันให้เปลี่ยนเฉพาะจุดนี้ (มือถือ, variant="flat") กรอบวง
-            ไทเทเนียม+CNC เดิมยังอยู่ (ภาษาเดียวกับวง avatar ที่ใช้ทั่วแอป) แค่สลับไอคอนด้านในจากเพชรเป็น
-            หน้าหุ่นยนต์แทน — เดสก์ท็อป (variant="default") และ stats/report/page.tsx ที่ import
-            AiRingAvatar ไปใช้ร่วมยังเป็นเพชรเดิมทุกจุด (ไม่ได้อยู่ในสโคปของรอบรีดีไซน์ Home นี้เลย) */}
-        <AiRingAvatar size={isRestDay ? 89 : 104} icon={variant === 'flat' ? 'robot' : 'gem'} />
+            เพชรเหลี่ยม — ปรับด้วยเลย" ตามด้วย "เอาให้เหมือน แสง สี เงา ขนาด" (close-up crop) — เฉพาะมือถือ
+            (variant="flat") เปลี่ยนจากกรอบวงไทเทเนียม+CNC เดิมเป็น badge สี่เหลี่ยมมุมมนพื้นน้ำเงินไล่สี
+            ตาม reference เป๊ะ (โครงสร้างแยกไปแล้วใน AiRingAvatar เอง) + ลดขนาดลงจาก 104/89 เดิม (~104->64,
+            89->56) ตามที่ระบุ "ขนาด" ชัดเจน สัดส่วน isRestDay/ปกติเดิมคงไว้ — เดสก์ท็อป (variant="default")
+            และ stats/report/page.tsx ที่ import AiRingAvatar ไปใช้ร่วมยังเป็นกรอบวง+เพชรเดิมทุกจุด (ไม่ได้
+            อยู่ในสโคปของรอบรีดีไซน์ Home นี้เลย) */}
+        <AiRingAvatar
+          size={variant === 'flat' ? (isRestDay ? 56 : 64) : isRestDay ? 89 : 104}
+          icon={variant === 'flat' ? 'robot' : 'gem'}
+        />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
               คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body
@@ -712,6 +717,33 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
 // แบบภาพสินค้า) กรอบไทเทเนียม+มุมตัด CNC รอบนอกเดิมไม่แตะ (ยังเข้าธีมเดียวกับการ์ดอื่นทั่วแอป)
 export function AiRingAvatar({ size = 112, icon = 'gem' }: { size?: number; icon?: 'gem' | 'robot' }) {
   const gradId = useId()
+
+  // ฟีดแบ็ก (close-up crop จาก poster "Version 2 — 9.3/10") "เอาให้เหมือน แสง สี เงา ขนาด" — reference
+  // ใช้ badge สี่เหลี่ยมมุมมนพื้นน้ำเงินไล่สีล้วน ไม่ใช่กรอบวงไทเทเนียม+มุมตัด CNC เหมือน gem เดิม — แยก
+  // เป็น early return คนละโครงสร้างไปเลยแทนที่จะฝืนใช้กรอบเดิม (กรอบไทเทเนียม/gem ของ desktop+stats/report
+  // ไม่ถูกแตะ) ขนาดเล็กลงด้วยตามที่ระบุ "ขนาด" ชัดเจน — ปรับที่จุดเรียกใช้ (เห็น comment ที่นั่น)
+  if (icon === 'robot') {
+    return (
+      <div
+        className="relative shrink-0 overflow-hidden flex items-center justify-center"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: Math.round(size * 0.28),
+          background: 'linear-gradient(135deg,#4da8ff,#2f6fe0)',
+          boxShadow: '0 4px 12px rgba(45,111,224,.35)',
+        }}
+        aria-hidden="true"
+      >
+        <img
+          src="/images/mint-coach-avatar.png"
+          alt=""
+          style={{ width: '78%', height: '78%', objectFit: 'contain' }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
       {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — กรอบ+glow รอบ avatar เดิมสีอำพัน เป็นแค่กรอบ
@@ -734,18 +766,7 @@ export function AiRingAvatar({ size = 112, icon = 'gem' }: { size?: number; icon
           clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       >
-        {icon === 'robot' ? (
-          // ฟีดแบ็ก (poster "Version 2 — 9.3/10") — mockup ใช้ไอคอนหน้าหุ่นยนต์แทนเพชรเหลี่ยม ผู้ใช้ส่งรูป
-          // มาสคอตจริงมาเอง (mint-coach-avatar.png, พื้นหลังโปร่งใสอยู่แล้ว) ใช้แทน SVG หน้าหุ่นยนต์ที่วาด
-          // เดาไว้ก่อนหน้า — กรอบวง/พื้นผิวไทเทเนียมรอบนอกเดิมยังใช้ร่วมกัน แค่สลับกราฟิกด้านในจุดเดียว
-          <img
-            src="/images/mint-coach-avatar.png"
-            alt=""
-            aria-hidden="true"
-            style={{ width: '68%', height: '68%', objectFit: 'contain' }}
-          />
-        ) : (
-          <svg viewBox="0 0 100 100" style={{ width: '56%', height: '56%' }}>
+        <svg viewBox="0 0 100 100" style={{ width: '56%', height: '56%' }}>
             <defs>
               <linearGradient id={`${gradId}-light`} x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor="#EEF0F2" />
@@ -785,7 +806,6 @@ export function AiRingAvatar({ size = 112, icon = 'gem' }: { size?: number; icon
               strokeLinejoin="round"
             />
           </svg>
-        )}
       </div>
     </div>
   )
