@@ -355,7 +355,12 @@ export default function AICoachCompactCard({
         {/* v56: ฟีดแบ็ก "P4 — Robot ยังหนักกว่าข้อความข้างๆ อีก 5-8% (ไม่เปลี่ยน Layout)" — ลดต่อจาก
             112/96 (v54) อีก ~7% (112->104, 96->89) สัดส่วน isRestDay ต่อวันฝึกปกติเดิมยังคงไว้ (~0.857)
             ไม่แตะ layout/gap รอบๆ (flex items-center gap-2 เดิม ปรับตัวตาม avatar อัตโนมัติอยู่แล้ว) */}
-        <AiRingAvatar size={isRestDay ? 89 : 104} />
+        {/* ฟีดแบ็ก (poster "Version 2 — 9.3/10") "เทียบแล้ว AI Coach ใช้ไอคอนหน้าหุ่นยนต์เรียบๆ ไม่ใช่
+            เพชรเหลี่ยม — ปรับด้วยเลย" — ผู้ใช้ยืนยันให้เปลี่ยนเฉพาะจุดนี้ (มือถือ, variant="flat") กรอบวง
+            ไทเทเนียม+CNC เดิมยังอยู่ (ภาษาเดียวกับวง avatar ที่ใช้ทั่วแอป) แค่สลับไอคอนด้านในจากเพชรเป็น
+            หน้าหุ่นยนต์แทน — เดสก์ท็อป (variant="default") และ stats/report/page.tsx ที่ import
+            AiRingAvatar ไปใช้ร่วมยังเป็นเพชรเดิมทุกจุด (ไม่ได้อยู่ในสโคปของรอบรีดีไซน์ Home นี้เลย) */}
+        <AiRingAvatar size={isRestDay ? 89 : 104} icon={variant === 'flat' ? 'robot' : 'gem'} />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
               คำแนะนำ (ตัว region ด้านล่างต่างหากที่เป็นคำแนะนำจริง) เปลี่ยนจาก text-amber เป็น TEXT.body
@@ -705,7 +710,7 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
 // เต็มหน้าจริง) แทนที่ด้วยไอคอนเรขาคณิตนามธรรม (faceted gem — 4 เหลี่ยมมุมตัดไล่เฉดไทเทเนียม + เหลี่ยม
 // เดียวย้อมอำพันเป็นจุดเน้นแบรนด์) เล็กกว่ารูปเดิมมาก (56% ของกรอบ vs รูปเดิมที่ scale 1.85 เกือบเต็มเฟรม
 // แบบภาพสินค้า) กรอบไทเทเนียม+มุมตัด CNC รอบนอกเดิมไม่แตะ (ยังเข้าธีมเดียวกับการ์ดอื่นทั่วแอป)
-export function AiRingAvatar({ size = 112 }: { size?: number }) {
+export function AiRingAvatar({ size = 112, icon = 'gem' }: { size?: number; icon?: 'gem' | 'robot' }) {
   const gradId = useId()
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
@@ -729,46 +734,65 @@ export function AiRingAvatar({ size = 112 }: { size?: number }) {
           clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       >
-        <svg viewBox="0 0 100 100" style={{ width: '56%', height: '56%' }}>
-          <defs>
-            <linearGradient id={`${gradId}-light`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#EEF0F2" />
-              <stop offset="100%" stopColor="#9BA0A8" />
-            </linearGradient>
-            <linearGradient id={`${gradId}-mid`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#7A7F87" />
-              <stop offset="100%" stopColor="#4A4E56" />
-            </linearGradient>
-            <linearGradient id={`${gradId}-dark`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#3E4148" />
-              <stop offset="100%" stopColor="#25272C" />
-            </linearGradient>
-            <linearGradient id={`${gradId}-accent`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor={COLORS.amber} />
-              <stop offset="100%" stopColor="#B97A28" />
-            </linearGradient>
-          </defs>
-          {/* faceted gem — มงกุฎ 2 เหลี่ยมด้านบน (ซ้ายไทเทเนียมสว่าง รับแสง / ขวาย้อมอำพัน จุดเน้นแบรนด์)
-              + pavilion 2 เหลี่ยมด้านล่าง (กลาง/เข้ม ให้มิติความลึก) */}
-          <polygon points="50,8 15,36 50,36" fill={`url(#${gradId}-light)`} />
-          <polygon points="50,8 85,36 50,36" fill={`url(#${gradId}-accent)`} />
-          <polygon points="15,36 50,36 50,92" fill={`url(#${gradId}-mid)`} />
-          <polygon points="50,36 85,36 50,92" fill={`url(#${gradId}-dark)`} />
-          <polygon
-            points="50,8 15,36 85,36"
-            fill="none"
-            stroke="rgba(255,255,255,.35)"
-            strokeWidth="1"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="15,36 85,36 50,92"
-            fill="none"
-            stroke="rgba(255,255,255,.18)"
-            strokeWidth="1"
-            strokeLinejoin="round"
-          />
-        </svg>
+        {icon === 'robot' ? (
+          // ฟีดแบ็ก (poster "Version 2 — 9.3/10") — mockup ใช้ไอคอนหน้าหุ่นยนต์เรียบๆ (เสาอากาศ+ตา 2 จุด+
+          // ปาก) แทนเพชรเหลี่ยม — กรอบวง/พื้นผิวไทเทเนียมรอบนอกเดิมยังใช้ร่วมกัน แค่สลับกราฟิกด้านในจุดเดียว
+          <svg viewBox="0 0 100 100" style={{ width: '58%', height: '58%' }}>
+            <defs>
+              <linearGradient id={`${gradId}-face`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#EEF0F2" />
+                <stop offset="100%" stopColor="#9BA0A8" />
+              </linearGradient>
+            </defs>
+            <line x1="50" y1="6" x2="50" y2="17" stroke={`url(#${gradId}-face)`} strokeWidth="3" strokeLinecap="round" />
+            <circle cx="50" cy="7" r="4" fill={COLORS.amber} />
+            <rect x="18" y="18" width="64" height="56" rx="16" fill="none" stroke={`url(#${gradId}-face)`} strokeWidth="4" />
+            <circle cx="38" cy="46" r="6" fill={`url(#${gradId}-face)`} />
+            <circle cx="62" cy="46" r="6" fill={`url(#${gradId}-face)`} />
+            <path d="M38 60q12 8 24 0" stroke={`url(#${gradId}-face)`} strokeWidth="3" strokeLinecap="round" fill="none" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 100 100" style={{ width: '56%', height: '56%' }}>
+            <defs>
+              <linearGradient id={`${gradId}-light`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#EEF0F2" />
+                <stop offset="100%" stopColor="#9BA0A8" />
+              </linearGradient>
+              <linearGradient id={`${gradId}-mid`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#7A7F87" />
+                <stop offset="100%" stopColor="#4A4E56" />
+              </linearGradient>
+              <linearGradient id={`${gradId}-dark`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#3E4148" />
+                <stop offset="100%" stopColor="#25272C" />
+              </linearGradient>
+              <linearGradient id={`${gradId}-accent`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={COLORS.amber} />
+                <stop offset="100%" stopColor="#B97A28" />
+              </linearGradient>
+            </defs>
+            {/* faceted gem — มงกุฎ 2 เหลี่ยมด้านบน (ซ้ายไทเทเนียมสว่าง รับแสง / ขวาย้อมอำพัน จุดเน้นแบรนด์)
+                + pavilion 2 เหลี่ยมด้านล่าง (กลาง/เข้ม ให้มิติความลึก) */}
+            <polygon points="50,8 15,36 50,36" fill={`url(#${gradId}-light)`} />
+            <polygon points="50,8 85,36 50,36" fill={`url(#${gradId}-accent)`} />
+            <polygon points="15,36 50,36 50,92" fill={`url(#${gradId}-mid)`} />
+            <polygon points="50,36 85,36 50,92" fill={`url(#${gradId}-dark)`} />
+            <polygon
+              points="50,8 15,36 85,36"
+              fill="none"
+              stroke="rgba(255,255,255,.35)"
+              strokeWidth="1"
+              strokeLinejoin="round"
+            />
+            <polygon
+              points="15,36 85,36 50,92"
+              fill="none"
+              stroke="rgba(255,255,255,.18)"
+              strokeWidth="1"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       </div>
     </div>
   )
