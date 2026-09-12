@@ -735,22 +735,15 @@ export function AiRingAvatar({ size = 112, icon = 'gem' }: { size?: number; icon
         }}
       >
         {icon === 'robot' ? (
-          // ฟีดแบ็ก (poster "Version 2 — 9.3/10") — mockup ใช้ไอคอนหน้าหุ่นยนต์เรียบๆ (เสาอากาศ+ตา 2 จุด+
-          // ปาก) แทนเพชรเหลี่ยม — กรอบวง/พื้นผิวไทเทเนียมรอบนอกเดิมยังใช้ร่วมกัน แค่สลับกราฟิกด้านในจุดเดียว
-          <svg viewBox="0 0 100 100" style={{ width: '58%', height: '58%' }}>
-            <defs>
-              <linearGradient id={`${gradId}-face`} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#EEF0F2" />
-                <stop offset="100%" stopColor="#9BA0A8" />
-              </linearGradient>
-            </defs>
-            <line x1="50" y1="6" x2="50" y2="17" stroke={`url(#${gradId}-face)`} strokeWidth="3" strokeLinecap="round" />
-            <circle cx="50" cy="7" r="4" fill={COLORS.amber} />
-            <rect x="18" y="18" width="64" height="56" rx="16" fill="none" stroke={`url(#${gradId}-face)`} strokeWidth="4" />
-            <circle cx="38" cy="46" r="6" fill={`url(#${gradId}-face)`} />
-            <circle cx="62" cy="46" r="6" fill={`url(#${gradId}-face)`} />
-            <path d="M38 60q12 8 24 0" stroke={`url(#${gradId}-face)`} strokeWidth="3" strokeLinecap="round" fill="none" />
-          </svg>
+          // ฟีดแบ็ก (poster "Version 2 — 9.3/10") — mockup ใช้ไอคอนหน้าหุ่นยนต์แทนเพชรเหลี่ยม ผู้ใช้ส่งรูป
+          // มาสคอตจริงมาเอง (mint-coach-avatar.png, พื้นหลังโปร่งใสอยู่แล้ว) ใช้แทน SVG หน้าหุ่นยนต์ที่วาด
+          // เดาไว้ก่อนหน้า — กรอบวง/พื้นผิวไทเทเนียมรอบนอกเดิมยังใช้ร่วมกัน แค่สลับกราฟิกด้านในจุดเดียว
+          <img
+            src="/images/mint-coach-avatar.png"
+            alt=""
+            aria-hidden="true"
+            style={{ width: '68%', height: '68%', objectFit: 'contain' }}
+          />
         ) : (
           <svg viewBox="0 0 100 100" style={{ width: '56%', height: '56%' }}>
             <defs>
