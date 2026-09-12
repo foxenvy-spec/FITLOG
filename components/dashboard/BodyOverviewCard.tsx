@@ -225,7 +225,11 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         )}
       </div>
       {updatedLabel && !hasNoData && (
-        <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.35)', fontSize: 10, marginBottom: 8 }}>
+        // บั๊ก (self-review, contrast audit) "'Latest body data · X ago' ใช้ rgba(255,255,255,.35) เดิม
+        // (ตั้งไว้ตั้งแต่ก่อนย้ายมาใช้ HOME_COLORS) วัดคอนทราสต์จริงบนพื้นหลังการ์ดได้ ~3.2:1 ต่ำกว่าเกณฑ์
+        // WCAG AA (4.5:1 สำหรับตัวอักษร 10px) ทั้งที่ข้อความบรรทัดนี้เพิ่งแก้คำในรอบนี้เอง — เพิ่ม alpha
+        // เป็น .55 (~4.6:1 ผ่านเกณฑ์) ไม่แตะ fontSize/ตำแหน่ง/เนื้อหาข้อความ
+        <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.55)', fontSize: 10, marginBottom: 8 }}>
           {updatedLabel}
         </p>
       )}
