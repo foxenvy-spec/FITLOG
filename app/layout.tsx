@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Oswald, Kanit, Inter, IBM_Plex_Sans_Thai, IBM_Plex_Mono, Playfair_Display } from 'next/font/google'
+import { Oswald, Kanit, Inter, IBM_Plex_Sans_Thai, IBM_Plex_Mono, Playfair_Display, Poppins, Noto_Sans_Thai } from 'next/font/google'
 import './globals.css'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
@@ -47,6 +47,22 @@ const playfair = Playfair_Display({
   variable: '--font-playfair',
   display: 'swap',
 })
+// "Mobile_app_design_brief_3.zip" (New_mobile_app.zip) — ทิศทางดีไซน์ Home ใหม่ (ผู้ใช้เลือก "ทำเฉพาะ
+// หน้า Home") ระบุ Poppins (headings/ตัวเลข) + Noto Sans Thai (ข้อความไทยทั่วไป) เป็นฟอนต์คู่ใหม่
+// เฉพาะหน้านี้ — โหลดเพิ่มที่นี่ (root layout, ตามข้อบังคับของ next/font) แต่ไม่แตะ Oswald/Kanit/
+// IBM Plex Sans Thai เดิมที่หน้าอื่นๆ ทั้งแอปยังใช้อยู่ (แค่ "มีตัวแปรใหม่ให้เลือกใช้" ไม่ใช่เปลี่ยนดีฟอลต์)
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
+const notoSansThai = Noto_Sans_Thai({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-thai',
+  display: 'swap',
+})
 
 // นี่คือ ROOT layout ของทั้งแอป (ต้องมี <html>/<body> เสมอ — Next.js บังคับ)
 // ห้ามลบ/ทับด้วยเนื้อหาของ app/(app)/layout.tsx อีก เพราะจะทำให้หน้าเว็บพังทั้งหมด
@@ -74,7 +90,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="th" className={`${oswald.variable} ${kanit.variable} ${inter.variable} ${plexThai.variable} ${plexMono.variable} ${playfair.variable}`}>
+    <html lang="th" className={`${oswald.variable} ${kanit.variable} ${inter.variable} ${plexThai.variable} ${plexMono.variable} ${playfair.variable} ${poppins.variable} ${notoSansThai.variable}`}>
       <body>
         <ServiceWorkerRegister />
         {children}

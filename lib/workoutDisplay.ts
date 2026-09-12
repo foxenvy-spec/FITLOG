@@ -131,3 +131,22 @@ export function computeExerciseProgress(w: Workout, priorPool: Workout[]): Exerc
   if (thisReps < lastReps) return { kind: 'repsDown', deltaReps: lastReps - thisReps }
   return { kind: 'same' }
 }
+
+// ชื่อโปรแกรม (scheduledDay.title) เป็นข้อความอิสระที่ผู้ใช้พิมพ์เอง (เช่น "Day 5 — Lower
+// (Hamstring/Glute)") ไม่มีฟิลด์กล้ามเนื้อแยกต่างหากใน ProgramDay (lib/types.ts) ให้ดึงมาแสดงบรรทัด 2
+// ตรงๆ — label ยาวๆ แบบนี้โดน truncate จะตัดจนอ่านไม่รู้เรื่อง ถ้าเจอวงเล็บ แยกเป็น 2 บรรทัดแทน: บรรทัด
+// หลัก (ก่อนวงเล็บ) + บรรทัดรายละเอียด (ในวงเล็บ, "/" แทนด้วย " • ")
+//
+// ย้ายมาจาก components/TodaysFocusCard.tsx (เดิม export จากไฟล์การ์ดนั้น) ตอน rebuild หน้า Home ตาม
+// "New_mobile_app.zip" — TodaysFocusCard ถูกลบทิ้งไปแล้ว (แทนที่ด้วย TodayCard.tsx) แต่ฟังก์ชันนี้ยัง
+// ใช้ร่วมกันหลายจุด (session/page.tsx, DashboardView.tsx เดสก์ท็อป, AICoachCompactCard.tsx) จึงย้ายมา
+// อยู่ใน lib ที่เป็นกลาง ไม่ผูกกับไฟล์การ์ดใดการ์ดหนึ่งอีกต่อไป
+export function splitTitleDetail(text: string): { main: string; detail: string | null } {
+  const openIdx = text.indexOf('(')
+  if (openIdx === -1) return { main: text, detail: null }
+  const closeIdx = text.lastIndexOf(')')
+  const main = text.slice(0, openIdx).trim() || text
+  const inner = closeIdx > openIdx ? text.slice(openIdx + 1, closeIdx) : text.slice(openIdx + 1)
+  const detail = inner.replace(/\//g, ' • ').trim()
+  return { main, detail: detail || null }
+}

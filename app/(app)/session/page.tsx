@@ -70,7 +70,7 @@ import { speak } from '@/lib/speech'
 import { NumberStepper } from '@/components/timers/TimerShell'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
-import { splitTitleDetail } from '@/components/TodaysFocusCard'
+import { splitTitleDetail } from '@/lib/workoutDisplay'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 

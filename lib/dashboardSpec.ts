@@ -23,25 +23,43 @@ export const dashboardSpec = {
     // (ระยะในการ์ด Body Overview เอง) ตามที่ระบุชัดว่า "ไม่ต้องเพิ่ม/ลดขนาด 4 การ์ดนั้น"
     sectionGap: 8,
   },
-  // v2: "Mobile_app_design_brief_1.zip" — handoff ฉบับละเอียด ระบุ token ชัดเจนทุกตัว (สี/ขนาด/ระยะ
-  // เป็น pixel เป๊ะ ไม่ใช่ประมาณจากภาพเหมือนรอบก่อนๆ) — อัปเดตทุกค่าตาม README/markup จริงในไฟล์
-  // "FITLOG Mobile Dashboard.dc.html" (option 6a): hero band สูง 246px, วง Fitness Score 76px (ไม่ใช่
-  // 108px ที่เคยประมาณเอาไว้ตอนไม่มีสเปกละเอียด)
-  header: {
-    height: 246,
-    scoreRingSize: 76,
+  // v3: "New_mobile_app.zip" — ทิศทางดีไซน์ Home ใหม่ทั้งชุด (ผู้ใช้เลือก "ทำเฉพาะหน้า Home" หลัง
+  // อัปโหลด brief ที่ 3 ซึ่งคนละทิศทางจาก brief ที่ 2 เดิม: ไม่มี hero photo/Fitness Score ring ใน
+  // Header อีกต่อไป, ไม่มี Recovery card, แทนที่ด้วย Body Overview (น้ำหนัก/ไขมัน/กล้ามเนื้อดิบ),
+  // Today card รวม Focus+Workout เป็นการ์ด hero ไล่สีส้มใบเดียว, Weekly Progress แบบเรียบ (ไม่มีแถว
+  // วงกลม 7 วัน), เพิ่ม Goal Cards (เนื้อหาใหม่ที่ mobile ไม่เคยมีมาก่อน) — token เดิมของ header/
+  // miniStatCard/focusCard/workoutCard (บรีฟที่ 2) ถูกแทนที่ทั้งหมดด้วยชุดนี้ตาม README/markup จริงใน
+  // "FITLOG.dc.html" ของแพ็กเกจใหม่
+  bodyOverviewCard: {
+    borderRadius: 18,
+    padding: 16,
+    statBorderRadius: 12,
+    statGap: 8,
+    iconSize: 24,
+    iconRadius: 7,
   },
-  // แถว 3 การ์ดเล็ก Recovery/Body Fat/Weight — radius/height ตาม spec ละเอียด (16px radius, การ์ดแบน
-  // ไม่ใช่ gradient ตามที่เคยเดาไว้)
-  miniStatCard: {
-    height: 84,
-    borderRadius: 16,
-    gridGap: 9,
+  todayCard: {
+    borderRadius: 18,
+    padding: 16,
+    photoSize: 56,
+    photoRadius: 12,
   },
-  focusCard: {
-    height: 60,
+  weeklyProgressCard: {
+    borderRadius: 18,
+    padding: 16,
+    barHeight: 8,
+  },
+  goalCard: {
     borderRadius: 16,
     padding: 13,
+    barHeight: 6,
+    gridGap: 10,
+  },
+  aiCoachCardV3: {
+    borderRadius: 18,
+    padding: 14,
+    iconSize: 38,
+    iconRadius: 12,
   },
   metricCard: {
     // v59: ฟีดแบ็ก "Body Cards ตอนนี้เล็กไปนิด ข้อมูลภายในเริ่มถูกบีบ เพิ่มความสูงกลับมาแค่ 5-8% ไม่ใช่
@@ -53,14 +71,6 @@ export const dashboardSpec = {
     valueFontSize: 22, // คงเดิม
     sparklineHeight: 16, // -20% จาก 20 (กราฟตกแต่ง ไม่ใช่ตัวหนังสือ ลดได้โดยไม่กระทบการอ่าน)
     labelFontSize: 15, // คงเดิม
-  },
-  // v2: brief ละเอียดตัดวง+ไอคอนดัมเบลออกทั้งหมด (ไม่มี progress ring badge อีกต่อไป) เปลี่ยนเป็น
-  // เนื้อหาข้อความฝั่งซ้าย + รูปธัมบ์เนล 64px ฝั่งขวาแทน — thumbSize แทน ringSize เดิม
-  workoutCard: {
-    height: 132,
-    borderRadius: 18,
-    padding: 16,
-    thumbSize: 64,
   },
   healthBanner: {
     // v8: ฟีดแบ็ก "Health App Card ไม่ใช่ Core Action ของ FITLOG ไม่ควรเด่น ลดความสูงลง 15-20%" —

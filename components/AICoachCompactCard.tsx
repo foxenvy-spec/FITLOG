@@ -21,7 +21,7 @@ import {
 import { recoveryTier, recoveryVerdictEmoji, type TodaysRecommendation } from '@/lib/dashboardStats'
 import { describeMuscleFocus, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
 import { resolveRecommendationDisplay } from '@/lib/recommendationDisplay'
-import { splitTitleDetail } from './TodaysFocusCard'
+import { splitTitleDetail } from '@/lib/workoutDisplay'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
 
@@ -666,14 +666,21 @@ export default function AICoachCompactCard({
 }
 
 // สลับพื้นผิว wrapper ตาม variant — 'default' (เดสก์ท็อป/เดิม) ยังเป็น PremiumCard (Dark Titanium) เป๊ะ
-// ทุกกระเบียดนิ้ว, 'flat' (Mobile Dashboard rebuild ตาม mockup "Version 5") เป็นการ์ดเรียบแบนแทน — สลับ
-// แค่พื้นผิวชั้นนอกสุด ไม่แตะเนื้อหา/logic ข้างในเลยสักบรรทัด (children เดียวกันทั้งสอง variant)
+// ทุกกระเบียดนิ้ว, 'flat' (Mobile Dashboard) เป็นการ์ดเรียบแบนแทน — สลับแค่พื้นผิวชั้นนอกสุด ไม่แตะ
+// เนื้อหา/logic ข้างในเลยสักบรรทัด (children เดียวกันทั้งสอง variant)
+//
+// v2: "New_mobile_app.zip" — พื้นผิว flat เปลี่ยนจาก gradient #1E2228→#17191E (สไตล์ "brief 2" เดิม)
+// เป็นสีทึบ #12161d + border rgba(255,255,255,.06) ให้ตรงกับการ์ดแบนใบอื่นๆ ในหน้า Home ที่เพิ่ง
+// rebuild รอบนี้ (BodyOverviewCard/WeeklyProgressCard/GoalCardsRow ใช้สูตรเดียวกันเป๊ะ) — เนื้อหา/สี
+// อำพันภายใน (COLORS.amber) ยังคงเดิมไม่แตะ เพราะเป็นโทนใกล้เคียงกับส้ม #ff8a3d ของสเปกใหม่อยู่แล้ว และ
+// การ์ดนี้มี logic ซับซ้อน/ถูกปรับละเอียดมาหลายรอบมาก (avatar ring, CTA, ข้อความแนะนำ ฯลฯ) การไล่เปลี่ยน
+// สีภายในทุกจุดเสี่ยงกระทบพฤติกรรม/edge case ที่ผ่านการ fine-tune มาแล้วโดยไม่จำเป็น
 function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'; children: ReactNode }) {
   if (variant === 'flat') {
     return (
       <div
-        className="rounded-card border border-line flex flex-col gap-1.5 px-3 py-2.5"
-        style={{ background: 'linear-gradient(180deg, #1E2228 0%, #17191E 100%)' }}
+        className="rounded-card flex flex-col gap-1.5 px-3 py-2.5"
+        style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)' }}
       >
         {children}
       </div>

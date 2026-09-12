@@ -8,37 +8,35 @@ import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
-import { computeTodayTotals, computeRecoveryPct, computeDashboardNotifications } from '@/lib/dashboardStats'
+import { computeTodayTotals, computeDashboardNotifications, computePlannedConsistency } from '@/lib/dashboardStats'
 import { goalProgressPct } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
-import { RECOVERY_MUSCLES } from '@/lib/muscle-groups'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { fetchDashboardData, greeting, emailDisplayName, FITLOG_PR_RECENT_DAYS } from './DashboardView'
-import { computeFitnessScore } from '@/lib/fitnessScore'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import ErrorState from '@/components/ErrorState'
 import Header from '@/components/dashboard/Header'
-import TriStatRow from '@/components/dashboard/TriStatRow'
-import WorkoutStreakCard from '@/components/WorkoutStreakCard'
-import TodaysFocusCard from '@/components/TodaysFocusCard'
-import TodaysWorkoutCompactCard from '@/components/TodaysWorkoutCompactCard'
-import TodaysWorkoutEmptyCard from '@/components/TodaysWorkoutEmptyCard'
+import BodyOverviewCard from '@/components/dashboard/BodyOverviewCard'
+import TodayCard from '@/components/dashboard/TodayCard'
+import WeeklyProgressCard from '@/components/dashboard/WeeklyProgressCard'
+import GoalCardsRow from '@/components/dashboard/GoalCardsRow'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
 
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
 /**
- * เขียนใหม่ทั้งหมดตาม mockup "Version 5 — Hero + Card Focus" ("ทำให้เหมือน Version 5 100% ไม่ต้องสน
- * โครงสร้างเดิม แก้ใหม่หมดเลย") — โครงสร้างเดิม (Quick Actions/แผนที่พลาด/Health Stats/Body Goal card/
- * ท่าวอร์มอัป/Onboarding Banner/Body Overview กริด 2x2) ถูกตัดออกทั้งหมด เหลือแค่ 6 ส่วนตาม mockup:
- * Header (headline + วง Fitness Score ใหญ่) → Recovery/Body Fat/Weight (3 การ์ด) → Today's Focus →
- * Today's Workout → Weekly Activity (การ์ดสัปดาห์เดียวกับที่มีอยู่แล้ว WorkoutStreakCard) → AI Coach
+ * เขียนใหม่ตาม "New_mobile_app.zip" (ผู้ใช้เลือก "ทำเฉพาะหน้า Home" ให้ใช้ทิศทางนี้แทน "brief 2 / option
+ * 6a" เดิมที่เพิ่งทำเสร็จไปทั้งมื้อก่อนหน้า) — สเปกใหม่ไม่มี hero photo/Fitness Score ring ใน Header,
+ * ไม่มีการ์ด Recovery, แทนที่ด้วย 5 ส่วนตาม README/markup จริงใน "FITLOG.dc.html":
+ * Header (โลโก้+กระดิ่ง+ทักทาย) → Body Overview (น้ำหนัก/ไขมัน/กล้ามเนื้อ) → Today (รวม Focus+Workout
+ * เดิมเป็นการ์ด hero ไล่สีส้มใบเดียว) → Weekly Progress (เรียบกว่าเดิม ไม่มีแถววงกลม 7 วัน) → Goal Cards
+ * (เนื้อหาใหม่ที่ไม่เคยมีมาก่อน) → AI Coach
  *
  * ยังใช้ fetchDashboardData/DashboardData ชุดเดียวกับเดสก์ท็อป (import จาก DashboardView) — ข้อมูล/
  * business logic (เช่น การตรวจจับเซสชันชดเชย, ตัวเลข completed/total, notifications) เป็นแหล่งเดียว
- * ไม่ได้รื้อสร้างใหม่ มีแค่ "จะ render อะไรบนหน้าจอ" ที่เปลี่ยนไปตาม mockup
+ * ไม่ได้รื้อสร้างใหม่ มีแค่ "จะ render อะไรบนหน้าจอ" ที่เปลี่ยนไปตามสเปกใหม่
  */
 export default function MobileDashboardView() {
   const supabase = createClient()
@@ -110,7 +108,7 @@ export default function MobileDashboardView() {
 
   // ยืนยันกับ DB ว่าเซสชันชดเชยที่ pointer ชี้อยู่จบครบตามแผนนั้นแล้วจริงหรือยัง (ตรรกะเดียวกับ
   // allFinished ใน session/page.tsx) — pointer เดียวอาจค้างผิดได้ (จบจากอีกอุปกรณ์) ต้องเช็คซ้ำกับข้อมูล
-  // จริงก่อนตัดสินว่า "กำลังทำอยู่" สำหรับสลับตัวเลข completed/total ที่ส่งเข้า Today's Workout
+  // จริงก่อนตัดสินว่า "กำลังทำอยู่" สำหรับสลับตัวเลข completed/total ที่ส่งเข้า Today
   const [makeupSessionFinished, setMakeupSessionFinished] = useState<boolean | null>(null)
   const [makeupTotalExercises, setMakeupTotalExercises] = useState(0)
   useEffect(() => {
@@ -151,15 +149,26 @@ export default function MobileDashboardView() {
       ? Math.min(100, Math.round(((data.completedCount + data.adhocCompletedCount) / data.todayExercises.length) * 100))
       : null
 
-  const recoveryPctMap = useMemo(() => {
-    const map: Record<string, number> = {}
-    RECOVERY_MUSCLES.forEach((mg) => {
-      map[mg] = computeRecoveryPct(data?.recoveryDates[mg] ?? null, mg)
-    })
-    return map
-  }, [data])
-
   const muscleRecommendation = data?.todaysRecommendation ?? null
+
+  // ความคืบหน้าสัปดาห์นี้ "ตามแผน" (ไม่ใช่ปฏิทินดิบ 7 วัน) — สูตรเดียวกับ ConsistencyStrip.tsx/
+  // DashboardView.tsx เดสก์ท็อป (computePlannedConsistency) ใช้ data.weekDayTicks ที่มีอยู่แล้ว (เดิมใช้
+  // วาดแถววงกลม 7 วันของ WorkoutStreakCard.tsx) แปลงเป็น {dayOfWeek, hasWorkout} ตามที่ฟังก์ชันนี้ต้องการ
+  // — plannedWeekdays ว่าง (ยังไม่เคยตั้งโปรแกรม) จะได้ pct: null กลับมา ใช้ fallback ไปนับปฏิทินดิบแทน
+  const plannedWeekdays = useMemo(() => new Set((data?.programDays ?? []).map((d) => d.day_of_week)), [data?.programDays])
+  const weeklyConsistencyDays = useMemo(
+    () =>
+      (data?.weekDayTicks ?? []).map((t) => ({
+        dayOfWeek: new Date(`${t.iso}T00:00:00Z`).getUTCDay(),
+        hasWorkout: t.trained,
+      })),
+    [data?.weekDayTicks]
+  )
+  const plannedConsistency = computePlannedConsistency(weeklyConsistencyDays, plannedWeekdays)
+  const weeklyTrainedCount = (data?.weekDayTicks ?? []).filter((t) => t.trained).length
+  const weeklyCompletedCount = plannedConsistency.plannedCount > 0 ? plannedConsistency.completedCount : weeklyTrainedCount
+  const weeklyPlannedCount = plannedConsistency.plannedCount > 0 ? plannedConsistency.plannedCount : 7
+  const weeklyPct = plannedConsistency.pct ?? Math.round((weeklyTrainedCount / 7) * 100)
 
   if (isLoading || !data) {
     return <MobileDashboardSkeleton />
@@ -169,24 +178,6 @@ export default function MobileDashboardView() {
     return <ErrorState title="โหลด Dashboard ไม่สำเร็จ" message="ไม่สามารถโหลด Dashboard ได้ ตรวจสอบการเชื่อมต่อแล้วลองใหม่" onRetry={retry} />
   }
 
-  // ปัจจัย Recovery ของ Fitness Score เท่านั้น — เอาเฉพาะกลุ่มกล้ามเนื้อที่มีประวัติฝึกจริงมาเฉลี่ย (เหตุผล
-  // เต็มดู DashboardView.tsx เดสก์ท็อป) ค่าเดียวกันนี้ใช้ซ้ำกับการ์ด Recovery ใน TriStatRow ด้านล่างด้วย
-  // (ไม่คำนวณ Recovery ภาพรวมแยกอีกชุด — กันบั๊ก "ตัวเลขเดียวกันคนละที่ไม่ตรงกัน" ที่เคยเจอมาก่อน)
-  const trainedRecoveryMuscles = RECOVERY_MUSCLES.filter((mg) => data?.recoveryDates[mg])
-  const fitnessScoreRecoveryPct =
-    trainedRecoveryMuscles.length > 0
-      ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / trainedRecoveryMuscles.length)
-      : null
-
-  const fitnessScore = computeFitnessScore([
-    { key: 'workout', label: 'Workout Completion', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
-    { key: 'streak', label: 'Streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
-    { key: 'sleep', label: 'Sleep', value: null, weight: 20 },
-    { key: 'recovery', label: 'Recovery (Avg)', value: fitnessScoreRecoveryPct, weight: 15 },
-    { key: 'weeklyGoal', label: 'Weekly Goal', value: data.weeklyGoalPct, weight: 10 },
-    { key: 'activityToday', label: 'Activity Today', value: progressPct ?? (totals.entryCount > 0 ? 100 : 0), weight: 5 },
-  ])
-
   const hasTodayPlan = data.todayExercises.length > 0
   const hasLoggedToday = data.todayWorkouts.length > 0
   const hasAnyProgram = data.programDays.length > 0
@@ -194,6 +185,19 @@ export default function MobileDashboardView() {
     hasTodayPlan || hasLoggedToday ? 'active' : hasAnyProgram ? 'restDay' : 'noProgram'
 
   const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && data.todayWorkouts.length > 0)
+  const todayCardCompleted =
+    workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0
+      ? makeupExercisesCompleted
+      : data.todayExercises.length > 0
+        ? data.completedCount + data.adhocCompletedCount
+        : totals.entryCount
+  const todayCardTotal =
+    workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0
+      ? Math.max(makeupTotalExercises, 1)
+      : Math.max(data.todayExercises.length, totals.entryCount, 1)
+  const todayCardHref =
+    workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0 ? sessionHref : scheduledDay ? sessionHref : '/log'
+
   const weightGoalReached =
     data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
       ? (goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value, data.earliestTrackedWeight) ?? 0) >= 100
@@ -231,57 +235,74 @@ export default function MobileDashboardView() {
   // ไม่ต้องคำนวณผ่าน toDisplay(value) - toDisplay(value - delta) ให้ซับซ้อนเกินจำเป็น
   const weightDeltaDisplay = data.bodyMetricsSummary.weight.delta != null ? toDisplay(data.bodyMetricsSummary.weight.delta) : null
 
+  const weightGoalPct =
+    data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+      ? goalProgressPct({ target_value: data.weightGoalTarget, starting_value: data.weightGoalStart }, data.bodyMetricsSummary.weight.value, data.earliestTrackedWeight)
+      : null
+  const bodyFatGoalPct =
+    data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+      ? goalProgressPct({ target_value: data.bodyFatGoalTarget, starting_value: data.bodyFatGoalStart }, data.bodyMetricsSummary.bodyFatPct.value, data.earliestTrackedBodyFat)
+      : null
+
+  const weightGoalCard =
+    data.weightGoalTarget != null && data.bodyMetricsSummary.weight.value != null
+      ? {
+          fromValue: toDisplay(data.bodyMetricsSummary.weight.value),
+          toValue: toDisplay(data.weightGoalTarget),
+          unit,
+          decimals: 1,
+          pct: weightGoalPct ?? 0,
+          statusText: weightGoalReached ? 'ถึงเป้าหมายแล้ว 🎉' : weightRemaining ? `เหลือ ${weightRemaining.value.toFixed(1)} ${weightRemaining.unit}` : '',
+        }
+      : null
+  const bodyFatGoalCard =
+    data.bodyFatGoalTarget != null && data.bodyMetricsSummary.bodyFatPct.value != null
+      ? {
+          fromValue: data.bodyMetricsSummary.bodyFatPct.value,
+          toValue: data.bodyFatGoalTarget,
+          unit: '%',
+          decimals: 1,
+          pct: bodyFatGoalPct ?? 0,
+          statusText: bodyFatGoalReached ? 'ถึงเป้าหมายแล้ว 🎉' : bodyFatRemaining != null ? `เหลือ ${bodyFatRemaining.toFixed(1)}%` : '',
+        }
+      : null
+
   return (
     <>
-      {/* ฟีดแบ็ก "ของจริงไม่สวยเหมือน Version 5 เลย — ปรับสี กรอบ พื้นหลังใหม่ให้เหมือน 100%" — พื้นหลังเดิม
-          (DASHBOARD_BG_CSS + ambient orange/blue + diagonal titanium mesh + hairline scratch + noise +
-          radial shadow + vignette, รวม 9 เลเยอร์) เป็นสไตล์ "Dark Titanium" ที่ทั้งแอปใช้ร่วมกันมาก่อน
-          rebuild รอบนี้ — mockup Version 5 พื้นหลังเรียบเกือบดำสนิท ไม่มีลายผิวโลหะ/แสง ambient สีส้ม-ฟ้า
-          หลายจุดแบบนั้นเลย เปลี่ยนเป็นไล่สีเรียบง่ายจุดเดียว (เกือบดำ #0B0B0D ขอบบนสว่างขึ้นนิดหน่อยจากแสง
-          หน้าจอ ไล่ลงมาดำสนิทด้านล่าง) ตรงกับโทน mockup มากกว่าเดิมมาก */}
-      <div className="relative animate-fade-scale-in" style={{ background: 'linear-gradient(180deg, #121214 0%, #0B0B0D 40%, #08080A 100%)' }}>
+      <div className="relative animate-fade-scale-in" style={{ background: '#0a0d12' }}>
         <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap }}>
           <Header
             greetingText={greetingText}
+            displayName={data.profileDisplayName || emailDisplayName(data.email)}
             notifications={notifications}
-            fitnessScore={fitnessScore}
-            isRestDay={workoutCardVariant === 'restDay'}
           />
 
-          <TriStatRow
-            recoveryPct={fitnessScoreRecoveryPct}
-            bodyFat={data.bodyMetricsSummary.bodyFatPct}
+          <BodyOverviewCard
             weight={{ value: weightDisplay, delta: weightDeltaDisplay, isGood: data.bodyMetricsSummary.weight.isGood }}
             weightUnit={unit}
+            bodyFatPct={data.bodyMetricsSummary.bodyFatPct}
+            muscleKg={data.bodyMetricsSummary.skeletalMuscleKg}
+            bmi={data.bodyMetricsSummary.bmi}
           />
 
-          <TodaysFocusCard
+          <TodayCard
             workoutTitle={workoutTitle}
             muscleRecommendation={muscleRecommendation}
-            isRestDay={workoutCardVariant === 'restDay'}
-            href={scheduledDay ? sessionHref : '/log'}
             todayExercises={data.todayExercises}
+            variant={workoutCardVariant}
+            completed={todayCardCompleted}
+            total={todayCardTotal}
+            href={todayCardHref}
           />
 
-          {workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0 ? (
-            <TodaysWorkoutCompactCard
-              completed={makeupExercisesCompleted}
-              total={Math.max(makeupTotalExercises, 1)}
-              href={sessionHref}
-              volumeChangePct={null}
-            />
-          ) : workoutCardVariant === 'active' ? (
-            <TodaysWorkoutCompactCard
-              completed={data.todayExercises.length > 0 ? data.completedCount + data.adhocCompletedCount : totals.entryCount}
-              total={Math.max(data.todayExercises.length, totals.entryCount, 1)}
-              href={scheduledDay ? sessionHref : '/log'}
-              volumeChangePct={todayCompleted ? data.sessionVolumeChange?.changePct ?? null : null}
-            />
-          ) : (
-            <TodaysWorkoutEmptyCard variant={workoutCardVariant} />
-          )}
+          <WeeklyProgressCard
+            completedCount={weeklyCompletedCount}
+            plannedCount={weeklyPlannedCount}
+            pct={weeklyPct}
+            streak={data.streak}
+          />
 
-          <WorkoutStreakCard streak={data.streak} bestStreak={data.bestStreak} weekDayTicks={data.weekDayTicks} today={today} />
+          <GoalCardsRow weight={weightGoalCard} bodyFat={bodyFatGoalCard} />
 
           <AICoachCompactCard
             message={data.aiDailySummary}

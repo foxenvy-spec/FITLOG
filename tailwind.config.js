@@ -65,6 +65,11 @@ module.exports = {
         // เฉพาะ pull-quote จุดเดียว (tagline บนหน้า Session Complete) — ตั้งชื่อ "quote" แยกจาก serif
         // ทั่วไปของเบราว์เซอร์ ไม่ตั้งใจให้ใช้เป็น body font ที่ไหนอีก
         quote: ['var(--font-playfair)', 'serif'],
+        // "New_mobile_app.zip" — ฟอนต์คู่ใหม่เฉพาะหน้า Home ที่ rebuild รอบนี้เท่านั้น (ไม่แตะ display/
+        // body เดิมที่หน้าอื่นทั้งแอปยังใช้) ตรงกับ .fl-num/.fl-th ในไฟล์ดีไซน์: ตัวเลข/หัวข้อใช้ Poppins
+        // นำ, ข้อความไทยทั่วไปใช้ Noto Sans Thai นำ
+        homeNum: ['var(--font-poppins)', 'var(--font-noto-thai)'],
+        homeTh: ['var(--font-noto-thai)', 'var(--font-poppins)'],
       },
       letterSpacing: {
         widest2: '0.2em',
