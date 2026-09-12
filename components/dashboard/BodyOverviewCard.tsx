@@ -102,6 +102,7 @@ function deltaColor(isGood: boolean | null): string {
 function StatCell({
   icon,
   iconTint,
+  iconGlow,
   label,
   value,
   delta,
@@ -109,6 +110,11 @@ function StatCell({
 }: {
   icon: React.ReactNode
   iconTint: string
+  /** ฟีดแบ็ก (mockup "Version 1 — Premium Glassmorphism + Gradient Accent") "polish ไอคอน badge ให้เป็น
+   * gradient accent + inner glow แทนสีทึบล้วนเดิม — ห้ามเปลี่ยนขนาด/เลย์เอาต์/สีพื้นฐาน" — เพิ่ม
+   * box-shadow ไล่โทนเดียวกับ iconTint (inner highlight บนขอบ + soft glow รอบนอก) เท่านั้น ไม่แตะ
+   * iconSize/iconRadius/margin ใดๆ (dashboardSpec เดิมทุกค่า) */
+  iconGlow: string
   label: string
   value: string
   delta: number | null
@@ -122,7 +128,14 @@ function StatCell({
     >
       <div
         className="flex items-center justify-center"
-        style={{ width: iconSize, height: iconSize, borderRadius: iconRadius, background: iconTint, marginBottom: 5 }}
+        style={{
+          width: iconSize,
+          height: iconSize,
+          borderRadius: iconRadius,
+          background: iconTint,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,.35), inset 0 -5px 7px rgba(0,0,0,.12), 0 2px 8px ${iconGlow}`,
+          marginBottom: 5,
+        }}
         aria-hidden="true"
       >
         {icon}
@@ -156,13 +169,19 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         // #000000 เยอะเกินไป" — พื้นเดิม (#12161d ทึบ/ไล่สีเทาดำ) เปลี่ยนเป็น HOME_COLORS.cardGlass
         // (กรมท่าโปร่งแสง ให้ผิวการ์ดดูมีมิติ+เห็นพื้นหลังลอดนิดหน่อยโดยเฉพาะจุดที่ทับภาพ Header อยู่แล้ว)
         // ไม่ใช้ backdrop-blur หนัก (ผู้ใช้ระบุชัดว่าไม่ต้องการ glassmorphism แบบเบลอจัด) แค่โปร่งแสงพอ
-        background: HOME_COLORS.cardGlass,
+        // v2: ฟีดแบ็ก (mockup "Version 1 — Premium Glassmorphism + Gradient Accent", "80%") "เพิ่ม subtle
+        // blue ambient lighting + edge highlight + depth — ห้ามเพิ่ม DOM node ใหม่ ห้ามเพิ่มความสูง/
+        // spacing" — ทำทั้งหมดผ่าน CSS background/box-shadow ล้วนๆ บน div เดิม (ไม่มี element ใหม่เลย):
+        // เติม radial-gradient ฟ้าจางๆ มุมบนซ้ายเป็น background layer แรก (ต่อจาก cardGlass เดิม, ซ้อนกัน
+        // แบบ CSS multi-background ไม่ใช่แทนที่) + inset highlight บางๆ ที่ขอบบน (แสงสะท้อนผิวกระจก) ต่อท้าย
+        // boxShadow เดิม — ไม่แตะ backdropFilter/border/borderRadius/padding/boxShadow เงาหลักเดิมเลย
+        background: `radial-gradient(130% 70% at 18% -12%, rgba(64,158,255,.12), transparent 55%), ${HOME_COLORS.cardGlass}`,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: `1px solid ${HOME_COLORS.cardBorder}`,
         borderRadius,
         padding,
-        boxShadow: '0 8px 20px rgba(0,0,0,.35)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.06), 0 8px 20px rgba(0,0,0,.35)',
       }}
     >
       <div className="flex items-center justify-between" style={{ marginBottom: updatedLabel && !hasNoData ? 2 : 10 }}>
@@ -209,7 +228,8 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
               rgba(...,.15) เป็นสีทึบ และไอคอนเป็นสีขาวแทน */}
           <StatCell
             icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#fff" />}
-            iconTint="#4da8ff"
+            iconTint="linear-gradient(135deg,#63b6ff,#2f74e0)"
+            iconGlow="rgba(77,168,255,.35)"
             label="Weight"
             value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
             delta={weight.delta}
@@ -217,7 +237,8 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           />
           <StatCell
             icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
-            iconTint="#ff5c93"
+            iconTint="linear-gradient(135deg,#ff7fb0,#d94f86)"
+            iconGlow="rgba(255,92,147,.35)"
             label="Body Fat"
             value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
             delta={bodyFatPct.delta}
@@ -225,7 +246,8 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           />
           <StatCell
             icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
-            iconTint="#34d6c4"
+            iconTint="linear-gradient(135deg,#57e0cd,#1fae94)"
+            iconGlow="rgba(52,214,196,.35)"
             label="Muscle"
             value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
             delta={muscleKg.delta}
