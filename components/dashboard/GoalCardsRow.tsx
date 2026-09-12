@@ -28,9 +28,17 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
   const { borderRadius, padding, barHeight } = dashboardSpec.goalCard
   return (
     <div style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', borderRadius, padding, boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}>
-      <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginBottom: 6 }}>
-        {label}
-      </p>
+      {/* ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — mockup มีเลข % ความ
+          คืบหน้าเล็กๆ ชิดขวาแถวเดียวกับป้ายชื่อเป้าหมาย (คนละจุดกับตัวเลขในแถบ progress ที่มีอยู่แล้ว) เพิ่ม
+          เข้ามาเฉยๆ ไม่กระทบ pct ที่ใช้ fill แถบอยู่แล้ว */}
+      <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+        <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.5)', fontSize: 11 }}>
+          {label}
+        </p>
+        <p className="font-homeNum font-semibold" style={{ color, fontSize: 11 }}>
+          {Math.round(pct)}%
+        </p>
+      </div>
       <p className="font-homeNum font-bold text-white" style={{ fontSize: 14, marginBottom: 8 }}>
         {fromValue.toFixed(decimals)} → {toValue.toFixed(decimals)} {unit}
       </p>

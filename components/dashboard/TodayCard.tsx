@@ -30,7 +30,7 @@ function ClockIcon() {
 
 function PlayIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="#e85f1a" aria-hidden="true">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
       <path d="M8 5v14l11-7z" />
     </svg>
   )
@@ -132,14 +132,16 @@ export default function TodayCard({
         </div>
 
         {variant !== 'restDay' && (
+          // ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — ปุ่มเดิมพื้นขาว/
+          // ตัวหนังสือส้ม แต่ mockup ใช้ปุ่มพื้นส้มทึบ (ไล่สีเดียวกับโลโก้/แบรนด์) + ตัวหนังสือขาว สลับให้ตรง
           <Link
             href={buttonHref}
             className="flex items-center justify-center active:opacity-90 transition font-homeTh font-bold"
             style={{
               width: '100%',
               marginTop: 14,
-              background: '#fff',
-              color: '#e85f1a',
+              background: 'linear-gradient(135deg,#ff9a3d,#ff5f1f)',
+              color: '#fff',
               borderRadius: 999,
               padding: 11,
               fontSize: 13.5,

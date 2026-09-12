@@ -31,11 +31,14 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
           Weekly Progress
         </span>
         {streak > 0 && (
+          // ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — badge streak ใน
+          // mockup เป็นพื้นส้มทึบ+ตัวหนังสือขาว ไม่ใช่พื้นจาง+ตัวหนังสือส้มแบบเดิม (เหมือนจุดเดียวกับ badge
+          // ไอคอน Body Overview ด้านบน — เป็น pattern เดียวกันทั่วหน้าใน mockup)
           <span
             className="font-homeNum font-bold"
             style={{
-              background: 'rgba(255,138,61,.15)',
-              color: '#ff8a3d',
+              background: 'linear-gradient(135deg,#ff9a3d,#ff5f1f)',
+              color: '#fff',
               fontSize: 10.5,
               padding: '4px 8px',
               borderRadius: 999,

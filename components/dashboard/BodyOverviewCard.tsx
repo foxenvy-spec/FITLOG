@@ -167,25 +167,28 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
       </div>
 
       <div className="grid grid-cols-3" style={{ gap: statGap }}>
+        {/* ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — badge ไอคอนใน
+            mockup เป็นสีทึบอิ่มตัว (ไอคอนขาวทับพื้นสี) ไม่ใช่พื้นจางๆ+ไอคอนสี — สลับ iconTint จาก
+            rgba(...,.15) เป็นสีทึบ และไอคอนเป็นสีขาวแทน */}
         <StatCell
-          icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#4da8ff" />}
-          iconTint="rgba(77,168,255,.15)"
+          icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#fff" />}
+          iconTint="#4da8ff"
           label="Weight"
           value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
           delta={weight.delta}
           isGood={weight.isGood}
         />
         <StatCell
-          icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#ff5c93" />}
-          iconTint="rgba(255,92,147,.15)"
+          icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
+          iconTint="#ff5c93"
           label="Body Fat"
           value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
           delta={bodyFatPct.delta}
           isGood={bodyFatPct.isGood}
         />
         <StatCell
-          icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#34d6c4" />}
-          iconTint="rgba(52,214,196,.15)"
+          icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
+          iconTint="#34d6c4"
           label="Muscle"
           value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
           delta={muscleKg.delta}
