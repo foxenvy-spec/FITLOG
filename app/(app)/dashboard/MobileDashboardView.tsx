@@ -295,12 +295,17 @@ export default function MobileDashboardView() {
             href={todayCardHref}
           />
 
-          <WeeklyProgressCard
-            completedCount={weeklyCompletedCount}
-            plannedCount={weeklyPlannedCount}
-            pct={weeklyPct}
-            streak={data.streak}
-          />
+          {/* ฟีดแบ็ก (poster "Version 2 — 9.3/10", โพลิช "ปรับระยะห่าง Workout → Progress") — sectionGap
+              เดียวกันทั้งหมด (dashboardSpec.screen.sectionGap) ใช้ร่วมทุกคู่การ์ด เพิ่ม marginTop เสริม
+              เฉพาะคู่นี้แทนแก้ token กลาง (ไม่กระทบระยะห่างคู่อื่น) */}
+          <div style={{ marginTop: 6 }}>
+            <WeeklyProgressCard
+              completedCount={weeklyCompletedCount}
+              plannedCount={weeklyPlannedCount}
+              pct={weeklyPct}
+              streak={data.streak}
+            />
+          </div>
 
           <GoalCardsRow weight={weightGoalCard} bodyFat={bodyFatGoalCard} />
 

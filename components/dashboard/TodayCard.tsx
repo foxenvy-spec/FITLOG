@@ -92,7 +92,9 @@ export default function TodayCard({
         padding,
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 16px 32px rgba(255,84,22,.2), 0 8px 20px rgba(0,0,0,.45)',
+        // ฟีดแบ็ก (poster "Version 2 — 9.3/10", โพลิช "ลด glow บางจุดที่มากเกินไป") — ลด alpha ของชั้น
+        // ส้ม .2 -> .16 และเงาเข้ม .45 -> .4 ให้เบาลงเล็กน้อยตามที่ระบุ ไม่แตะโครงสร้าง/สีพื้นฐาน
+        boxShadow: '0 16px 32px rgba(255,84,22,.16), 0 8px 20px rgba(0,0,0,.4)',
       }}
     >
       <Image src="/images/workout-hero.jpg" alt="" fill className="object-cover" aria-hidden="true" />

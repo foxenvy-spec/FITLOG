@@ -4,16 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import {
-  COLORS,
-  NEUTRAL,
-  CARD_GRADIENT_CSS,
-  CARD_REFLECTION_CSS,
-  CARD_MULTI_REFLECTION_CSS,
-  NOISE_BG,
-  TITANIUM_MESH_CSS,
-  cncCornerClipPath,
-} from '@/lib/theme'
+import { COLORS, NEUTRAL } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { todayStr } from '@/lib/weekdays'
@@ -22,38 +13,32 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchDashboardData } from '@/app/(app)/dashboard/DashboardView'
 import FitnessRing from '@/components/dashboard/FitnessRing'
 
-// v57: ฟีดแบ็ก "ปุ่มกลาง Bottom Nav มี Glow ใหญ่กว่าแท็บอื่นชัดเจน (Home/Program/Statistics/Profile
-// ไม่มี glow เลย) ถ้าอยากให้ Bottom Nav เป็น Navigation จริงๆ ลด Glow ~10-15% (ไม่ต้องลดขนาดปุ่ม)" —
-// AMBER_GLOW_SHADOW (lib/theme.ts) เป็น token ใช้ร่วมหลายจุด (ปุ่ม CTA ใน Button.tsx, SidebarNav ฯลฯ)
-// แก้ตรงนั้นจะกระทบทุกจุดที่ไม่ได้ถูกร้องขอ — ลด alpha ของทุกชั้น glow ลง ~12% เฉพาะที่นี่แทน (ไม่แตะ
-// blur radius/ขนาด span ที่ครอบปุ่ม — ปุ่มเองยังใหญ่เท่าเดิมตามที่ขอ)
-// ฟีดแบ็ก "สีดูสดเกินไป" รอบเดียวกับที่แก้ ring gradient ด้านล่าง — สี glow เดิม (255,150,20 / 255,130,0)
-// เป็นส้มจัดคนละโทนกับทองนุ่มที่เพิ่งเปลี่ยนไป ปรับให้เป็นโทนทองเดียวกัน (ลด G/เพิ่ม R สัดส่วนใกล้เคียง
-// BOTTOM_NAV_RING_GRADIENT ด้านล่าง) ไม่แตะ alpha/blur radius เดิม (ขนาด/ความจางยังเท่าเดิมตามที่เคยขอ)
+// ฟีดแบ็ก "5 เมนูด้านล่างยังไม่เหมือน poster" (New_mobile_app.zip rebuild, เทียบ "Version 2 — 9.3/10")
+// — ชุดสีทอง/บรอนซ์ด้านบน (ปรับมาหลายรอบสำหรับธีม Dark Titanium เดิม) เป็นคนละโทนกับส้มแบรนด์ใหม่
+// (#ff8a3d ที่ Body Overview/Today/Weekly Progress/Goal Cards ใช้กันหมดแล้วรอบ rebuild นี้) — retint
+// เป็นส้มแบรนด์ใหม่แทน คงโครงสร้างเดิม (ฐานเข้ม → กลาง → จุดสว่างแคบตรงกลาง 48-52% → กลาง → ฐานเข้ม) ที่
+// เคยผ่านการปรับ contrast มาแล้วหลายรอบไว้ทั้งหมด (คือส่วนที่ทำให้ดู "เป็นโลหะขัดเงา" จริง ไม่ใช่แบนราบ)
+// เปลี่ยนแค่ hue ลด alpha ของ glow ลงอีก (mockup ให้ความรู้สึกลอยเบา ไม่ใช่ไฟจ้า) ตามโพลิช "ลด glow บาง
+// จุดที่มากเกินไป" ในภาพเดียวกัน
 const BOTTOM_NAV_GLOW_SHADOW =
-  '0 0 2px rgba(255,255,255,.53), 0 0 8px rgba(230,192,119,.53), 0 0 22px rgba(198,144,61,.31), 0 0 60px rgba(180,120,45,.105)'
+  '0 0 2px rgba(255,255,255,.4), 0 0 8px rgba(255,154,90,.4), 0 0 20px rgba(255,120,50,.22), 0 0 46px rgba(255,100,40,.08)'
 
-// ฟีดแบ็ก "สีดูสดเกินไป แสง/เงาไม่สวยเหมือนตัวอย่าง" — FitnessRing เดิมไม่ได้ส่ง gradientStops มา
-// เลยตกไปใช้ดีฟอลต์ FIRE_GRADIENT_STOPS (lib/theme.ts) ซึ่งมีจุดสว่างเกือบขาว (#FFF4CC) และส้มจัด
-// (#FF8A00/#D96A00) ตั้งใจให้ "จัดจ้านแบบไฟ" สำหรับจุดอื่น (Hero Ring ฯลฯ) แต่ทำให้วงปุ่มนี้ดูเป็นนีออน
-// สดเกินไปเทียบกับ mockup ที่เป็นโทนทองนุ่มกว่า ไม่มีจุดขาวจ้า — ทำชุดสีทองเฉพาะปุ่มนี้แยกต่างหาก (ไม่แตะ
-// FIRE_GRADIENT_STOPS/FitnessRing.tsx เพราะใช้ร่วมกับ Hero Ring จุดอื่น) ลดทั้งความสว่างสุด (ตัดจุดขาว
-// #FFF4CC ออก) และความจัดของโทนส้ม (D96A00/FF8A00 → น้ำตาลทอง/ทองอ่อนกว่า) ให้เป็น "โลหะทอง" แทน "ไฟ"
-// v2: ฟีดแบ็ก "แสง/เงายังไม่ดีขึ้นเลย" หลังลดความจัดจ้านรอบแรก — ช่วงสีเดิม (#8A6023 ถึง #EFCE8C) แคบ
-// เกินไป (ความต่างความสว่างน้อย) เลยดูแบนเรียบเป็นโทนทองสม่ำเสมอ ไม่มี "จุดแวววาว" ชัดแบบโลหะขัดเงาจริง
-// ใน mockup — ขยายช่วง contrast ให้กว้างขึ้นมาก: ฐานเข้มลงเป็นบรอนซ์เข้ม (#4A3110) แทนน้ำตาลทองเดิม
-// จุดสว่างสุดเป็นทองอ่อนเกือบขาวอมครีม (#FFE9B8 — ยังอุ่น ไม่ใช่ขาวจ้า/ส้มจัดแบบที่เคยโดนฟีดแบ็ก) และ
-// บีบโซนสว่างให้แคบลง (stop 48-52% แทน 45-55% เดิม) ให้เป็น "ประกาย" คมชัดจุดเดียวแทนแถบสว่างกว้างจาง ๆ
 const BOTTOM_NAV_RING_GRADIENT = [
-  { offset: '0%', color: '#4A3110' },
-  { offset: '22%', color: '#8A6023' },
-  { offset: '40%', color: '#D9A94F' },
-  { offset: '48%', color: '#FFE9B8' },
-  { offset: '52%', color: '#FFE9B8' },
-  { offset: '60%', color: '#D9A94F' },
-  { offset: '78%', color: '#8A6023' },
-  { offset: '100%', color: '#4A3110' },
+  { offset: '0%', color: '#5C2208' },
+  { offset: '22%', color: '#A8410F' },
+  { offset: '40%', color: '#FF8A3D' },
+  { offset: '48%', color: '#FFD9A8' },
+  { offset: '52%', color: '#FFD9A8' },
+  { offset: '60%', color: '#FF8A3D' },
+  { offset: '78%', color: '#A8410F' },
+  { offset: '100%', color: '#5C2208' },
 ] as const
+
+// สีแท็บ active ของ Bottom Nav มือถือ (ส้มแบรนด์ใหม่ #ff8a3d) — แยกจาก COLORS.amber (#E8A33D) เดิมที่
+// SidebarNav.tsx (เมนูซ้ายเดสก์ท็อป) ยังใช้อยู่ผ่านไอคอนชุดเดียวกันด้านล่างของไฟล์นี้ — เพิ่ม activeColor
+// เป็น optional prop ในแต่ละไอคอนแทนที่จะแก้ COLORS.amber ตรงๆ (กระทบทั้งแอปรวมเดสก์ท็อปที่ไม่ได้อยู่ใน
+// ขอบเขตงานนี้) ไม่ส่ง prop นี้ = ใช้ COLORS.amber เดิมทุกจุดที่ไม่ได้แก้ (SidebarNav.tsx)
+const MOBILE_NAV_ACCENT = '#ff8a3d'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -132,10 +117,6 @@ export default function BottomNav() {
   useEffect(() => {
     setActiveMakeupDay(getActiveMakeupDayId())
   }, [pathname])
-  // มุมตัด CNC เดียวกับลายเซ็นทั้งแอป (บนซ้าย 18px) — เฉพาะ 2 มุมบน (มุมล่างชิดขอบจอจริง ไม่มีอะไรให้ตัด)
-  // minorCut=0 ให้มุมบนขวา/ล่างทั้งสองเหลี่ยมคม ตัดจริงแค่มุมเดียวตรงตามสัญลักษณ์ CNC ของแอป
-  const navClipPath = cncCornerClipPath('tl', 18, 0)
-
   // ฟีดแบ็ก "ทำไมไม่เห็นครบวงครับ" — ปุ่มลอย /session เดิมอยู่ *ข้างใน* <nav> ที่มี clipPath (สำหรับตัด
   // มุม CNC) ครอบอยู่ clipPath ตัดทุกอย่างที่ล้นเหนือกรอบ nav ทิ้งเสมอ (ไม่ใช่แค่ overflow:hidden ที่พอมี
   // ทางเลี่ยง) พอเพิ่มระยะยกปุ่มขึ้น (-0.58*btnSize) ในรอบก่อน ปุ่มเลยโผล่พ้นกรอบ nav จริงและโดนตัดหัวเรียบ
@@ -276,42 +257,15 @@ export default function BottomNav() {
     <nav
       className="lg:hidden fixed bottom-0 inset-x-0 z-20 safe-bottom"
       style={{
-        clipPath: navClipPath,
-        // ไล่สีแผ่นไทเทเนียมเดียวกับการ์ด (CARD_GRADIENT_CSS) + แถบสะท้อนแสงหลายชั้น (CARD_REFLECTION_CSS/
-        // CARD_MULTI_REFLECTION_CSS) + "Orange Reflection" วงรีแสงส้มจางๆ ลอยขึ้นจากตำแหน่งปุ่ม Start
-        // Workout ตรงกลาง (จำลองแสงพลังงานสะท้อนขึ้นมาบนผิวโลหะรอบปุ่ม) — เรียงจากบนสุด (จะ paint ทับ
-        // ล่างสุด) ไปหาไล่สีฐาน
-        backgroundImage: [
-          CARD_MULTI_REFLECTION_CSS,
-          CARD_REFLECTION_CSS,
-          'radial-gradient(ellipse 46% 160% at 50% 0%, rgba(255,150,30,.09), transparent 65%)',
-          'linear-gradient(135deg, rgba(255,255,255,.05) 0%, transparent 30%)',
-          CARD_GRADIENT_CSS,
-        ].join(', '),
-        // "Glass Shadow" — เงานุ่มกว้างยกแผ่นขึ้นจากพื้นหลังหน้า (แทนเงาชิดขอบบางๆ เดิม) + inset
-        // highlight ขอบบนบางๆ จำลองผิวกระจก/โลหะขัดเงาที่มีความหนา ไม่ใช่แผ่นแบนแปะติดพื้นหลัง
-        boxShadow: '0 -24px 48px -12px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05)',
-        borderTop: '1px solid rgba(255,255,255,.05)',
+        // ฟีดแบ็ก "5 เมนูด้านล่างยังไม่เหมือน poster" — แผ่น "Dark Titanium" หลายชั้น (ไล่สีโลหะ+แถบ
+        // สะท้อนแสง+เกรนนอยส์+mesh ไขว้ CNC+มุมตัด) เป็นวัสดุของธีมเดิม (brief 2) ที่ Home cards รอบ
+        // rebuild นี้เลิกใช้ไปแล้วทั้งหมด (BodyOverviewCard/TodayCard/ฯลฯ เป็นพื้นเรียบ #12161d+เส้นขอบ
+        // บางเดี่ยว) — เปลี่ยน nav ให้เป็นพื้นผิวเดียวกับการ์ดเหล่านั้นแทน ให้ทั้งหน้าเป็นวัสดุเดียวกันจริง
+        background: '#12161d',
+        borderTop: '1px solid rgba(255,255,255,.06)',
+        boxShadow: '0 -8px 24px rgba(0,0,0,.35)',
       }}
     >
-      {/* เกรนผิวโลหะ + mesh ไขว้ CNC ชั้นเดียวกับ PremiumCard — ให้แผ่น nav "จับต้องได้" เป็นวัสดุจริง
-          แทนสีทึบเรียบๆ เหมือนเดิม */}
-      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }} aria-hidden="true" />
-      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: TITANIUM_MESH_CSS }} aria-hidden="true" />
-      {/* Hairline Highlight — เส้นคมสว่างจ้าบางๆ พาดขอบบนสุดของแผ่น (จำลองขอบโลหะกัดคมที่โดนแสงจับเป็น
-          เส้น ต่างจาก border-top ทึบเดิม) สว่างสุดกลางแผ่น (ใต้ปุ่ม Start Workout พอดี) แล้วจางไปทั้งสอง
-          ข้าง — ผสมเส้นขาวกับโทนส้มอุ่นตรงกลาง ให้เชื่อมกับ glow ของปุ่มด้านบน */}
-      <div
-        className="absolute top-0 inset-x-0 pointer-events-none"
-        style={{
-          height: 1,
-          backgroundImage: [
-            'linear-gradient(90deg, transparent 4%, rgba(255,255,255,.4) 30%, rgba(255,255,255,.55) 50%, rgba(255,255,255,.4) 70%, transparent 96%)',
-            'linear-gradient(90deg, transparent 38%, rgba(255,170,80,.5) 50%, transparent 62%)',
-          ].join(', '),
-        }}
-        aria-hidden="true"
-      />
       <div className="relative max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
@@ -337,22 +291,11 @@ export default function BottomNav() {
 
           return (
             <Link key={href} href={href} className="relative flex flex-col items-center gap-1 py-2.5 active:scale-[0.94] transition" onPointerDown={hapticTap}>
-              {active && (
-                <span
-                  className="absolute rounded-full pointer-events-none"
-                  aria-hidden="true"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    top: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'radial-gradient(circle, rgba(232,163,61,.18), transparent 70%)',
-                  }}
-                />
-              )}
-              {Icon && <Icon active={active} />}
-              <span className={`relative text-[9.5px] font-display tracked uppercase ${active ? 'text-amber' : 'text-muted'}`}>
+              {Icon && <Icon active={active} activeColor={MOBILE_NAV_ACCENT} />}
+              <span
+                className="relative text-[9.5px] font-display tracked uppercase text-muted"
+                style={active ? { color: MOBILE_NAV_ACCENT } : undefined}
+              >
                 {label}
               </span>
             </Link>
@@ -419,8 +362,8 @@ function CheckIcon() {
 
 // ไอคอนพวกนี้ export ไว้ให้ SidebarNav.tsx (เมนูซ้ายเดสก์ท็อป) ใช้ร่วมด้วย — แท็บที่ตรงกัน
 // (หน้าแรก/โปรแกรม/สถิติ/โปรไฟล์) ควรเป็นเส้นเดียวกันเป๊ะทั้งมือถือ/เดสก์ท็อป ไม่ใช่วาดซ้ำคนละไฟล์
-export function HomeIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+export function HomeIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
+  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
       <path d="M4 11.5 12 4l8 7.5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -430,8 +373,8 @@ export function HomeIcon({ active }: { active: boolean }) {
   )
 }
 
-export function ProgramIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+export function ProgramIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
+  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
       <rect x="4" y="5" width="16" height="15" rx="2" stroke={c} strokeWidth="1.8" />
@@ -442,8 +385,8 @@ export function ProgramIcon({ active }: { active: boolean }) {
   )
 }
 
-export function ChartIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+export function ChartIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
+  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
       <path d="M5 19V10M12 19V5M19 19v-7" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
@@ -451,8 +394,8 @@ export function ChartIcon({ active }: { active: boolean }) {
   )
 }
 
-export function ProfileIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+export function ProfileIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
+  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
       <circle cx="12" cy="8" r="3.6" stroke={c} strokeWidth="1.8" />
