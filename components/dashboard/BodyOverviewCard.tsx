@@ -93,10 +93,14 @@ function deltaText(delta: number | null, digits = 1): string {
   return `${rounded > 0 ? '↑' : rounded < 0 ? '↓' : ''} ${Math.abs(rounded)}`
 }
 
+// v2: ฟีดแบ็ก (design review, 9.2/10, P4) "Trend value (↓0.5, ↓2.8) ควรเด่นขึ้นอีกนิด — ไม่ต้องเพิ่ม font
+// size แต่เพิ่ม font weight + brightness เล็กน้อย ให้ scan ได้ว่าน้ำหนัก/ไขมันลดลงโดยไม่ต้องอ่านตัวเลข
+// ละเอียด" — ปรับ hex ให้สว่าง/อิ่มตัวขึ้นเล็กน้อย (font-weight ปรับที่จุดเรียกใช้ใน StatCell แทน เพราะ
+// เป็น Tailwind className ไม่ใช่ค่าที่ฟังก์ชันนี้ควบคุม)
 function deltaColor(isGood: boolean | null): string {
-  if (isGood === true) return '#35d488'
-  if (isGood === false) return '#ff5c76'
-  return 'rgba(255,255,255,.4)'
+  if (isGood === true) return '#3fe092'
+  if (isGood === false) return '#ff6b80'
+  return 'rgba(255,255,255,.5)'
 }
 
 function StatCell({
@@ -124,7 +128,18 @@ function StatCell({
   return (
     <div
       className="rounded-xl"
-      style={{ background: 'rgba(255,255,255,.03)', borderRadius: dashboardSpec.bodyOverviewCard.statBorderRadius, padding: '7px 6px' }}
+      style={{
+        // v2: ฟีดแบ็ก (design review, 9.2/10, P2/P3) "Metric cards ยังดู flat — เพิ่ม inner highlight บาง
+        // มากๆ ที่ขอบบน (ไม่ใช่ border สีจัด) ให้ความรู้สึก titanium hardware" + "เพิ่ม layer separation
+        // ระหว่าง outer container กับ metric card อีก 5-8% — inner = slightly lifted titanium" — พื้นเดิม
+        // rgba(255,255,255,.03) จาง เกือบเป็นชั้นเดียวกับพื้นหลังการ์ดนอก ยกขึ้นอีกนิด (.03 -> .045) +
+        // เพิ่ม inset highlight บางๆ ที่ขอบบน (1px translucent, ไม่ใช่สี accent) แยกชั้นให้ชัดขึ้นโดยไม่ทำ
+        // ให้สว่างขึ้นทั้งกล่อง (ไม่แตะพื้นหลัง/เงาของการ์ดนอกซึ่งเป็น token กลาง HOME_COLORS.cardGlass)
+        background: 'rgba(255,255,255,.045)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.07)',
+        borderRadius: dashboardSpec.bodyOverviewCard.statBorderRadius,
+        padding: '7px 6px',
+      }}
     >
       <div
         className="flex items-center justify-center"
@@ -133,7 +148,11 @@ function StatCell({
           height: iconSize,
           borderRadius: iconRadius,
           background: iconTint,
-          boxShadow: `inset 0 1px 0 rgba(255,255,255,.35), inset 0 -5px 7px rgba(0,0,0,.12), 0 2px 8px ${iconGlow}`,
+          // v2: ฟีดแบ็ก (design review, 9.2/10, P1) "Icon glow แรงไปนิด โดยเฉพาะสีเขียว — ลดลงประมาณ
+          // 15-20% ให้เป็น soft illuminated icon แทน glowing icon" — ลด alpha ของ outer glow (caller ส่ง
+          // iconGlow มาแล้วลด .35 -> .28 ที่จุดเรียกใช้, -20%) + ลด blur/spread เล็กน้อย (8px -> 7px) ที่นี่
+          // ไม่แตะ inset highlight/inset shadow (ให้ความรู้สึก "แสงสะท้อนผิว" อยู่แล้ว ไม่ใช่ glow)
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,.35), inset 0 -5px 7px rgba(0,0,0,.12), 0 2px 7px ${iconGlow}`,
           marginBottom: 5,
         }}
         aria-hidden="true"
@@ -148,7 +167,9 @@ function StatCell({
       <p className="font-homeNum font-bold" style={{ fontSize: 15, marginBottom: 2, color: HOME_COLORS.textPrimary }}>
         {value}
       </p>
-      <p className="font-homeNum font-semibold" style={{ fontSize: 10.5, color: deltaColor(isGood) }}>
+      {/* v2: ฟีดแบ็ก (design review, 9.2/10, P4) "Trend value เด่นขึ้นอีกนิด — ไม่เพิ่ม font size แต่เพิ่ม
+          font weight + brightness" — font-semibold -> font-bold (deltaColor() เองสว่างขึ้นเล็กน้อยแล้ว) */}
+      <p className="font-homeNum font-bold" style={{ fontSize: 10.5, color: deltaColor(isGood) }}>
         {deltaText(delta)}
       </p>
     </div>
@@ -175,7 +196,12 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         // เติม radial-gradient ฟ้าจางๆ มุมบนซ้ายเป็น background layer แรก (ต่อจาก cardGlass เดิม, ซ้อนกัน
         // แบบ CSS multi-background ไม่ใช่แทนที่) + inset highlight บางๆ ที่ขอบบน (แสงสะท้อนผิวกระจก) ต่อท้าย
         // boxShadow เดิม — ไม่แตะ backdropFilter/border/borderRadius/padding/boxShadow เงาหลักเดิมเลย
-        background: `radial-gradient(130% 70% at 18% -12%, rgba(64,158,255,.12), transparent 55%), ${HOME_COLORS.cardGlass}`,
+        // v3: ฟีดแบ็ก (design review, 9.2/10, P3) "Outer card กับ metric card ยัง contrast น้อยไปนิด —
+        // เพิ่ม separation ~5-8% แต่ไม่ใช่เพิ่ม brightness ทั้งหมด: outer = deeper titanium, inner =
+        // slightly lifted titanium" — เติมขอบมืดจางๆ (vignette) เป็น background layer เพิ่ม (ระหว่างแสง
+        // ambient ฟ้ากับ cardGlass เดิม) ให้พื้นผิวนอกดู "ลึก" ขึ้นเฉพาะจุดนี้ ไม่แตะ HOME_COLORS.cardGlass
+        // (token กลางที่การ์ดอื่นทั้งหน้าอ้างอิงร่วมกัน) — ฝั่ง inner (StatCell) ยกพื้นขึ้นแยกที่จุดนั้นแล้ว
+        background: `radial-gradient(130% 70% at 18% -12%, rgba(64,158,255,.12), transparent 55%), radial-gradient(120% 90% at 50% 110%, rgba(0,0,0,.14), transparent 60%), ${HOME_COLORS.cardGlass}`,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: `1px solid ${HOME_COLORS.cardBorder}`,
@@ -229,7 +255,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           <StatCell
             icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#fff" />}
             iconTint="linear-gradient(135deg,#63b6ff,#2f74e0)"
-            iconGlow="rgba(77,168,255,.35)"
+            iconGlow="rgba(77,168,255,.28)"
             label="Weight"
             value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
             delta={weight.delta}
@@ -238,7 +264,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           <StatCell
             icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
             iconTint="linear-gradient(135deg,#ff7fb0,#d94f86)"
-            iconGlow="rgba(255,92,147,.35)"
+            iconGlow="rgba(255,92,147,.28)"
             label="Body Fat"
             value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
             delta={bodyFatPct.delta}
@@ -247,7 +273,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           <StatCell
             icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
             iconTint="linear-gradient(135deg,#57e0cd,#1fae94)"
-            iconGlow="rgba(52,214,196,.35)"
+            iconGlow="rgba(52,214,196,.28)"
             label="Muscle"
             value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
             delta={muscleKg.delta}
