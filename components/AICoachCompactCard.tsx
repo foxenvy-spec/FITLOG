@@ -453,7 +453,10 @@ export default function AICoachCompactCard({
                 {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}
               </span>
             </p>
-            <span className="flex items-center gap-1 text-[12px] tracked uppercase shrink-0" style={{ color: TEXT.body }} aria-hidden="true">
+            {/* ฟีดแบ็ก (design review, P3) "การ์ดนี้แน่นข้อมูล — timestamp ลด visual weight ลงได้อีกนิด
+                เพราะ DAY 5 — LOWER (headline) สำคัญกว่า" — สลับจาก TEXT.body (#BDBDBD) เป็น TEXT.caption
+                (#8A8E94, จางกว่า) + ลดขนาดตัวอักษรลงเล็กน้อย (12->10.5) ไม่แตะ headline/verdict ใดๆ เลย */}
+            <span className="flex items-center gap-1 text-[10.5px] tracked uppercase shrink-0" style={{ color: TEXT.caption }} aria-hidden="true">
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: COLORS.moss }} />
               <span className="whitespace-nowrap">{lastUpdatedAt ? `อัปเดต ${relativeUpdatedLabel(lastUpdatedAt)}` : 'อัปเดตล่าสุด'}</span>
             </span>

@@ -25,15 +25,20 @@ interface BodyOverviewCardProps {
 // (ไม่ใช่ periodLabel ที่มีอยู่แล้วซึ่งบอกระยะห่างจากเอนทรีก่อนหน้า คนละความหมาย) เทียบกับเวลาปัจจุบัน
 // ตรงๆ ให้ข้อความสั้นๆ ระดับความหยาบใกล้เคียงกับ periodLabelOf (lib/bodyMetricsSummary.ts) แต่เป็น
 // ภาษาอังกฤษ (การ์ดนี้ทั้งใบใช้อังกฤษแล้วตามฟีดแบ็กรอบก่อน)
+// v2: ฟีดแบ็ก (design review, P4) "'Updated 6 weeks ago' ทำให้เข้าใจผิดว่า FITLOG เพิ่ง 'อัปเดต' ข้อมูล
+// (การกระทำของระบบ) ทั้งที่จริงคือ 'เอนทรีล่าสุดที่ผู้ใช้บันทึกเอง' เก่าแค่ไหน (ข้อเท็จจริงเกี่ยวกับข้อมูล
+// ไม่ใช่การกระทำของแอป) — ผู้ใช้ใหม่เห็นแล้วอาจสงสัยว่า FITLOG เอาข้อมูลเก่ามาคำนวณหรือเปล่า — เปลี่ยนคำ
+// นำจาก 'Updated' เป็น 'Latest body data ·' ให้ชัดว่าเป็น timestamp ของข้อมูลดิบ ไม่ใช่คำมั่นสัญญาความสด
+// ใหม่ — ไม่ซ่อนตัวเลขวันที่เก่าเลย (ถ้าจริง 6 สัปดาห์ก็บอกตรงๆ ตามที่ตกลง ไม่ fake freshness)
 function lastMeasuredLabel(measuredAt: string | null | undefined): string | null {
   if (!measuredAt) return null
   const days = Math.floor((Date.now() - new Date(measuredAt).getTime()) / (24 * 60 * 60 * 1000))
-  if (days <= 0) return 'Updated today'
-  if (days === 1) return 'Updated yesterday'
-  if (days <= 6) return `Updated ${days} days ago`
-  if (days <= 13) return 'Updated last week'
-  if (days <= 44) return `Updated ${Math.round(days / 7)} weeks ago`
-  return `Updated ${Math.round(days / 30)} months ago`
+  if (days <= 0) return 'Latest body data · today'
+  if (days === 1) return 'Latest body data · yesterday'
+  if (days <= 6) return `Latest body data · ${days} days ago`
+  if (days <= 13) return 'Latest body data · last week'
+  if (days <= 44) return `Latest body data · ${Math.round(days / 7)} weeks ago`
+  return `Latest body data · ${Math.round(days / 30)} months ago`
 }
 
 // การ์ด "Body Overview" ใหม่ตาม "New_mobile_app.zip" (ผู้ใช้เลือก "ทำเฉพาะหน้า Home" ให้ใช้ทิศทางนี้

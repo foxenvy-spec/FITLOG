@@ -50,7 +50,9 @@ export const dashboardSpec = {
   },
   todayCard: {
     borderRadius: 18,
-    padding: 13, // -19% จาก 16
+    // v: ฟีดแบ็ก (design review, P1) "Today's Focus สูงไปนิด เทียบกับข้อมูลที่มีจริง (Day 5/muscle group/
+    // 0/6/ready/CTA) — ลดความสูงลง ~5-8% ผ่าน vertical padding/gap ระหว่างบรรทัด ไม่ใช่ลดตัวหนังสือหลัก"
+    padding: 12, // -7.7% จาก 13
     photoSize: 56,
     photoRadius: 12,
   },

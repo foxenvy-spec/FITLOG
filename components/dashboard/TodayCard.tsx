@@ -124,18 +124,21 @@ export default function TodayCard({
 
       <div className="relative">
         <div className="flex-1 min-w-0">
+          {/* ฟีดแบ็ก (design review, P1) "ลดความสูงลง 5-8% ผ่าน vertical padding/gap ระหว่างบรรทัด — ไม่ต้อง
+              ลดตัวหนังสือหลัก" — ลด marginBottom ของทุกแถวในคอลัมน์นี้ลงเล็กน้อย (6->5, 5->4, 10->8, 6->5)
+              ไม่แตะ fontSize ไหนเลยสักจุด (main/detail/status ยังเท่าเดิมทุกตัว) */}
           <div
             className="flex items-center font-homeTh font-semibold"
-            style={{ gap: 5, color: 'rgba(255,255,255,.85)', fontSize: 11.5, marginBottom: 6 }}
+            style={{ gap: 5, color: 'rgba(255,255,255,.85)', fontSize: 11.5, marginBottom: 5 }}
           >
             <ClockIcon />
             Today&apos;s Focus
           </div>
-          <div className="font-homeNum font-extrabold text-white truncate" style={{ fontSize: 19, marginBottom: 5 }}>
+          <div className="font-homeNum font-extrabold text-white truncate" style={{ fontSize: 19, marginBottom: 4 }}>
             {main}
           </div>
           {detail && (
-            <div className="font-homeTh truncate" style={{ color: 'rgba(255,255,255,.85)', fontSize: 11.5, marginBottom: 10 }}>
+            <div className="font-homeTh truncate" style={{ color: 'rgba(255,255,255,.85)', fontSize: 11.5, marginBottom: 8 }}>
               {detail}
             </div>
           )}
@@ -144,7 +147,7 @@ export default function TodayCard({
             // รอง" — แถวนี้เป็นสถานะสนับสนุน (ไม่ใช่ตัวเลขหลักของการ์ด เช่น "Day 5 — Lower" ด้านบน) ลดจาก
             // font-semibold เป็นน้ำหนักปกติ ให้ตัวเลขหลัก/ปุ่ม CTA ยังคงเป็นจุดหนักสุดของการ์ดเหมือนเดิม
             <div>
-              <div className="flex items-center font-homeNum" style={{ gap: 14, color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginBottom: 6 }}>
+              <div className="flex items-center font-homeNum" style={{ gap: 14, color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginBottom: 5 }}>
                 <span>
                   {completed}/{Math.max(total, 1)} exercises
                 </span>
@@ -167,7 +170,7 @@ export default function TodayCard({
             className="flex items-center justify-center active:opacity-90 active:scale-[0.97] transition font-homeTh font-bold"
             style={{
               width: '100%',
-              marginTop: 14,
+              marginTop: 11, // -21% จาก 14 (design review P1 — ลดระยะก่อน CTA)
               background: `linear-gradient(135deg,${HOME_COLORS.orange},${HOME_COLORS.orangeGlow})`,
               color: '#fff',
               borderRadius: 999,
