@@ -277,11 +277,11 @@ export default function MobileDashboardView() {
             notifications={notifications}
           />
 
-          {/* ฟีดแบ็ก "ขยับ Body Overview ขึ้นไปทับรูป ให้อยู่ใต้ Better [Than Yesterday]" — ดึงการ์ดนี้
-              ขึ้นทับขอบล่างของ Header ด้วย negative margin (คร่อม fade zone 48px ที่ Header.tsx ทำไว้แล้ว
-              สำหรับให้ภาพ "ละลาย" เข้าพื้นหลัง) เนื้อหา Header (ทักทาย/ชื่อ/tagline) จบที่ราว ๆ 150px จาก
-              190px ของ minHeight เหลือระยะห่างจากขอบล่างพอที่จะไม่โดนการ์ดนี้ทับ */}
-          <div style={{ marginTop: -30, position: 'relative' }}>
+          {/* ฟีดแบ็ก "ขยับ Body Overview ขึ้นไปทับรูป ให้อยู่ใต้ Better Than Yesterday" → "ทับรูปไปเลย
+              ให้อยู่ใต้คำว่า Better than yesterday พอดี" (รอบแรกทับแค่ 23px ยังเหลือช่องว่างเห็นรูปภูเขา
+              ระหว่าง tagline กับการ์ด — ลองรอบสองที่ -65 ดันทับซ้อนกับตัวหนังสือ tagline พอดี ลดกลับมา -54
+              ให้ tagline เห็นเต็มบรรทัดพอดีไม่มีช่องว่างเหลือ) */}
+          <div style={{ marginTop: -54, position: 'relative' }}>
             <BodyOverviewCard
               weight={{ value: weightDisplay, delta: weightDeltaDisplay, isGood: data.bodyMetricsSummary.weight.isGood }}
               weightUnit={unit}
