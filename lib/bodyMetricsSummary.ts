@@ -134,6 +134,10 @@ export interface BodyMetricsSummary {
   // ข้อความช่วงเวลาที่ใช้เทียบ delta ด้านบน (เทียบกับเอนทรีก่อนหน้าจริง ไม่ใช่กรอบ 7 วันคงที่)
   // ใช้ label เดียวกันกับทุกการ์ด เพราะทุกตัวเทียบกับเอนทรีก่อนหน้าตัวเดียวกัน
   periodLabel: string | null
+  // ฟีดแบ็ก "'Last Updated' แบบ subtle — user อยากรู้ว่าวัดเมื่อไหร่" — measured_at ของเอนทรีล่าสุดจริง
+  // (ไม่ใช่ periodLabel ด้านบนซึ่งบอกระยะห่างจากเอนทรีก่อนหน้า คนละความหมายกัน) เพิ่มเป็น field ใหม่
+  // เฉยๆ ไม่กระทบจุดเรียกเดิม (BodyMetricsRow.tsx เดสก์ท็อป) ที่ไม่ได้อ่าน field นี้
+  latestMeasuredAt: string | null
 }
 
 // metrics ควรเรียงใหม่ -> เก่า (measured_at desc) — ตรงกับที่หน้า /health query มาอยู่แล้ว
@@ -164,5 +168,6 @@ export function computeBodyMetricsSummary(
     visceralFat: metricDelta(metrics, previous, (m) => m.visceral_fat_grade, false),
     bmi: bmiOf(latest?.weight_kg ?? null, heightCm),
     periodLabel: periodLabelOf(latest, previous),
+    latestMeasuredAt: latest?.measured_at ?? null,
   }
 }

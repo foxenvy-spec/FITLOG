@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { describeMuscleFocus, dominantMuscleGroup, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
 import { splitTitleDetail } from '@/lib/workoutDisplay'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import AnimatedBarFill from '../AnimatedBarFill'
 
 interface TodayCardProps {
   /** ชื่อโปรแกรมจริงของวันนี้ (scheduledDay.title) ถ้ามี — มาก่อนเสมอ */
@@ -139,11 +140,18 @@ export default function TodayCard({
             // ฟีดแบ็ก "ทุกตัวแข็งแรงหมด (bold) — ควรมี hierarchy ชัดเจนกว่านี้ ระหว่างข้อมูลหลักกับข้อมูล
             // รอง" — แถวนี้เป็นสถานะสนับสนุน (ไม่ใช่ตัวเลขหลักของการ์ด เช่น "Day 5 — Lower" ด้านบน) ลดจาก
             // font-semibold เป็นน้ำหนักปกติ ให้ตัวเลขหลัก/ปุ่ม CTA ยังคงเป็นจุดหนักสุดของการ์ดเหมือนเดิม
-            <div className="flex items-center font-homeNum" style={{ gap: 14, color: 'rgba(255,255,255,.75)', fontSize: 11.5 }}>
-              <span>
-                {completed}/{Math.max(total, 1)} exercises
-              </span>
-              <span>{workoutStatusLabel}</span>
+            <div>
+              <div className="flex items-center font-homeNum" style={{ gap: 14, color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginBottom: 6 }}>
+                <span>
+                  {completed}/{Math.max(total, 1)} exercises
+                </span>
+                <span>{workoutStatusLabel}</span>
+              </div>
+              {/* ฟีดแบ็ก "Today's Focus ควรแสดง Progress แบบ visual เพิ่มอีกนิด — เส้น progress บางๆ
+                  ด้านล่างจำนวนท่า ให้เห็นความคืบหน้าทันทีโดยไม่ต้องเข้า workout" */}
+              <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,.15)', overflow: 'hidden', maxWidth: 160 }}>
+                <AnimatedBarFill pct={(completed / Math.max(total, 1)) * 100} color="#fff" background="rgba(255,255,255,.9)" />
+              </div>
             </div>
           )}
         </div>
@@ -153,7 +161,7 @@ export default function TodayCard({
           // ตัวหนังสือส้ม แต่ mockup ใช้ปุ่มพื้นส้มทึบ (ไล่สีเดียวกับโลโก้/แบรนด์) + ตัวหนังสือขาว สลับให้ตรง
           <Link
             href={buttonHref}
-            className="flex items-center justify-center active:opacity-90 transition font-homeTh font-bold"
+            className="flex items-center justify-center active:opacity-90 active:scale-[0.97] transition font-homeTh font-bold"
             style={{
               width: '100%',
               marginTop: 14,

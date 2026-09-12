@@ -15,6 +15,24 @@ interface BodyOverviewCardProps {
   weightUnit: string
   bodyFatPct: MetricDelta
   muscleKg: MetricDelta
+  /** measured_at ของเอนทรีล่าสุดจริง (data.bodyMetricsSummary.latestMeasuredAt) — ไม่ระบุ/null = ไม่มี
+   * ข้อมูลเลย ไม่โชว์บรรทัด "Updated..." */
+  latestMeasuredAt?: string | null
+}
+
+// ฟีดแบ็ก "เพิ่ม 'Last Updated' แบบ subtle — user อยากรู้ว่าวัดเมื่อไหร่" — ใช้ latestMeasuredAt จริง
+// (ไม่ใช่ periodLabel ที่มีอยู่แล้วซึ่งบอกระยะห่างจากเอนทรีก่อนหน้า คนละความหมาย) เทียบกับเวลาปัจจุบัน
+// ตรงๆ ให้ข้อความสั้นๆ ระดับความหยาบใกล้เคียงกับ periodLabelOf (lib/bodyMetricsSummary.ts) แต่เป็น
+// ภาษาอังกฤษ (การ์ดนี้ทั้งใบใช้อังกฤษแล้วตามฟีดแบ็กรอบก่อน)
+function lastMeasuredLabel(measuredAt: string | null | undefined): string | null {
+  if (!measuredAt) return null
+  const days = Math.floor((Date.now() - new Date(measuredAt).getTime()) / (24 * 60 * 60 * 1000))
+  if (days <= 0) return 'Updated today'
+  if (days === 1) return 'Updated yesterday'
+  if (days <= 6) return `Updated ${days} days ago`
+  if (days <= 13) return 'Updated last week'
+  if (days <= 44) return `Updated ${Math.round(days / 7)} weeks ago`
+  return `Updated ${Math.round(days / 30)} months ago`
 }
 
 // การ์ด "Body Overview" ใหม่ตาม "New_mobile_app.zip" (ผู้ใช้เลือก "ทำเฉพาะหน้า Home" ให้ใช้ทิศทางนี้
@@ -118,8 +136,12 @@ function StatCell({
   )
 }
 
-export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscleKg }: BodyOverviewCardProps) {
+export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscleKg, latestMeasuredAt }: BodyOverviewCardProps) {
   const { borderRadius, padding, statGap } = dashboardSpec.bodyOverviewCard
+  const updatedLabel = lastMeasuredLabel(latestMeasuredAt)
+  // ฟีดแบ็ก "เพิ่ม Empty State ที่ดี — user ใหม่ไม่มีข้อมูลไม่ควรเห็นแค่ '--' ทุกช่อง ให้รู้สึกเป็น
+  // product ที่สมบูรณ์" — ไม่มีข้อมูลเลยสักตัว (ไม่ใช่แค่บางตัว) ถึงจะสลับไปโชว์ empty state แทนกริด 3 ช่อง
+  const hasNoData = weight.value == null && bodyFatPct.value == null && muscleKg.value == null
 
   return (
     <div
@@ -134,7 +156,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         boxShadow: '0 8px 20px rgba(0,0,0,.35)',
       }}
     >
-      <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: updatedLabel && !hasNoData ? 2 : 10 }}>
         <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
           Body Overview
         </span>
@@ -142,41 +164,67 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
             ขยาย/ยุบแสดง BMI ในการ์ดนี้เอง เปลี่ยนเป็นลิงก์จริงไปหน้า /health (มี BMI + รายละเอียดร่างกาย
             ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ — สีเดิม (rgba(255,255,255,.4)) จางเกินไป เปลี่ยนเป็น
             Secondary tier (#A7ADB7) ตามที่ผู้ใช้ระบุ */}
-        <Link href="/health" className="flex items-center" style={{ color: '#A7ADB7', fontSize: 12, gap: 2 }}>
-          Details
-          <ChevronRightIcon />
-        </Link>
+        {!hasNoData && (
+          <Link href="/health" className="flex items-center" style={{ color: '#A7ADB7', fontSize: 12, gap: 2 }}>
+            Details
+            <ChevronRightIcon />
+          </Link>
+        )}
       </div>
+      {updatedLabel && !hasNoData && (
+        <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.35)', fontSize: 10, marginBottom: 8 }}>
+          {updatedLabel}
+        </p>
+      )}
 
-      <div className="grid grid-cols-3" style={{ gap: statGap }}>
-        {/* ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — badge ไอคอนใน
-            mockup เป็นสีทึบอิ่มตัว (ไอคอนขาวทับพื้นสี) ไม่ใช่พื้นจางๆ+ไอคอนสี — สลับ iconTint จาก
-            rgba(...,.15) เป็นสีทึบ และไอคอนเป็นสีขาวแทน */}
-        <StatCell
-          icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#fff" />}
-          iconTint="#4da8ff"
-          label="Weight"
-          value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
-          delta={weight.delta}
-          isGood={weight.isGood}
-        />
-        <StatCell
-          icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
-          iconTint="#ff5c93"
-          label="Body Fat"
-          value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
-          delta={bodyFatPct.delta}
-          isGood={bodyFatPct.isGood}
-        />
-        <StatCell
-          icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
-          iconTint="#34d6c4"
-          label="Muscle"
-          value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
-          delta={muscleKg.delta}
-          isGood={muscleKg.isGood}
-        />
-      </div>
+      {hasNoData ? (
+        // ฟีดแบ็ก "Empty State ที่ดี — อย่าให้รู้สึกเหมือนระบบไม่มีข้อมูล" — ลิงก์เดียวกับ "Details"
+        // ปกติ (/health มีฟอร์มบันทึกน้ำหนัก/ไขมัน/กล้ามเนื้ออยู่แล้ว ไม่ต้องสร้างหน้าใหม่)
+        <Link href="/health" className="flex flex-col items-start active:opacity-80 transition">
+          <span className="text-white font-bold" style={{ fontSize: 13, marginBottom: 3 }}>
+            Start tracking your body
+          </span>
+          <span className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 11, marginBottom: 10 }}>
+            Add your first measurement to see your progress.
+          </span>
+          <span
+            className="font-homeNum font-semibold"
+            style={{ color: '#ff8a3d', fontSize: 12, border: '1px solid rgba(255,138,61,.35)', borderRadius: 999, padding: '6px 14px' }}
+          >
+            + Add Measurement
+          </span>
+        </Link>
+      ) : (
+        <div className="grid grid-cols-3" style={{ gap: statGap }}>
+          {/* ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — badge ไอคอนใน
+              mockup เป็นสีทึบอิ่มตัว (ไอคอนขาวทับพื้นสี) ไม่ใช่พื้นจางๆ+ไอคอนสี — สลับ iconTint จาก
+              rgba(...,.15) เป็นสีทึบ และไอคอนเป็นสีขาวแทน */}
+          <StatCell
+            icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#fff" />}
+            iconTint="#4da8ff"
+            label="Weight"
+            value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
+            delta={weight.delta}
+            isGood={weight.isGood}
+          />
+          <StatCell
+            icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
+            iconTint="#ff5c93"
+            label="Body Fat"
+            value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
+            delta={bodyFatPct.delta}
+            isGood={bodyFatPct.isGood}
+          />
+          <StatCell
+            icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
+            iconTint="#34d6c4"
+            label="Muscle"
+            value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
+            delta={muscleKg.delta}
+            isGood={muscleKg.isGood}
+          />
+        </div>
+      )}
     </div>
   )
 }

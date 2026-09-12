@@ -290,6 +290,7 @@ export default function MobileDashboardView() {
               weightUnit={unit}
               bodyFatPct={data.bodyMetricsSummary.bodyFatPct}
               muscleKg={data.bodyMetricsSummary.skeletalMuscleKg}
+              latestMeasuredAt={data.bodyMetricsSummary.latestMeasuredAt}
             />
           </div>
 
