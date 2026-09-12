@@ -126,6 +126,14 @@ interface AICoachCompactCardProps {
   /** ชื่อแผนแรกที่พลาด (เช่น "Day 1 — Push") ใช้ประกอบข้อความเมื่อ missedPlanCount === 1 เท่านั้น —
    * ไม่ระบุ = แสดงข้อความทั่วไปไม่เอ่ยชื่อแผน */
   missedPlanTitle?: string | null
+  /** ฟีดแบ็ก (screenshot จริง) "แก้ headline ให้ตรงกับ Today's Focus แล้ว แต่ปุ่ม CTA ยังเขียน 'เริ่ม
+   * Day 1 — Push' อยู่ ทั้งที่ทั้งการ์ดกำลังพูดเรื่อง Day 5 — Lower — ยังขัดกันเองอยู่ดี (แค่ย้ายจุดขัดแย้ง
+   * จาก headline ไปที่ปุ่มแทน)" — ต้นเหตุ: ปุ่มเดิมใช้ระบบ workout_templates (แยกจาก program_days ที่
+   * Today's Focus ใช้) หาเทมเพลตที่ตรง mg ที่สุด ซึ่งอาจไม่ตรงกับตารางจริงของวันนี้เลย — เมื่อมีทั้ง
+   * isRecommendationForToday และ todayWorkoutTitle จริง (มีตารางจริงวันนี้แน่นอน) ควรพาไปที่เซสชันจริงของ
+   * วันนี้ตรงๆ (href เดียวกับปุ่ม START WORKOUT ของ Today's Focus) แทนการเดาเทมเพลต — ไม่ระบุ = พฤติกรรม
+   * เดิมทุกจุด (เดสก์ท็อป/จุดเรียกใช้อื่นที่ยังไม่ส่ง prop นี้มา) */
+  todaySessionHref?: string
   /** ฟีดแบ็ก (Mobile Dashboard rebuild ตาม mockup "Version 5") "ของจริงไม่สวยเหมือน Version 5 เลย —
    * ปรับสี กรอบ พื้นหลังใหม่ให้เหมือน 100%" — การ์ดนี้ใช้ร่วมกับเดสก์ท็อป (DashboardView.tsx) ซึ่งยังใช้
    * พื้นผิว PremiumCard ("Dark Titanium") เดิมอยู่ ไม่ได้อยู่ใน scope ของการรีดีไซน์รอบนี้ — เพิ่ม variant
@@ -215,6 +223,7 @@ export default function AICoachCompactCard({
   makeupSessionActive = false,
   missedPlanCount = 0,
   missedPlanTitle = null,
+  todaySessionHref,
   variant = 'default',
 }: AICoachCompactCardProps) {
   const supabase = createClient()
@@ -661,6 +670,17 @@ export default function AICoachCompactCard({
             // Week เลย — สลับไปดูรายละเอียดที่ /coach แทน (เหมือน pattern isRestDay/lowRecoveryCaution ด้านบน)
             <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
               ดูคำแนะนำเพิ่มเติม →
+            </Button>
+          ) : isRecommendationForToday && todayWorkoutTitle && todaySessionHref ? (
+            // ฟีดแบ็ก (screenshot จริง) "แก้ headline ตรงกับ Today's Focus แล้ว แต่ปุ่มยังเขียน 'เริ่ม
+            // Day 1 — Push' ทั้งที่การ์ดกำลังพูดเรื่อง Day 5 — Lower อยู่ — ขัดกันเองย้ายไปที่ปุ่มแทน" —
+            // มีตารางจริงของวันนี้แน่นอน (isRecommendationForToday + todayWorkoutTitle) พาไปเซสชันจริงของ
+            // วันนี้ตรงๆ (href เดียวกับปุ่ม START WORKOUT ของ Today's Focus) แทนการเดาเทมเพลตจาก
+            // workout_templates (ระบบคนละอันกับ program_days ที่อาจไม่ตรงตารางจริงเลย) — chosen/
+            // handleStart/startLabel ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ branch นี้ไม่ตรง (ไม่มี
+            // todaySessionHref ส่งมา เช่น เดสก์ท็อป) จะได้ fallback ไปที่ branch เดิมด้านล่างแทน
+            <Button as={Link} href={todaySessionHref} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
+              Start {displayRegion} →
             </Button>
           ) : templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />

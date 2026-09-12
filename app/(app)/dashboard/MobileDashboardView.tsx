@@ -329,6 +329,7 @@ export default function MobileDashboardView() {
             makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
             missedPlanCount={0}
             missedPlanTitle={null}
+            todaySessionHref={workoutCardVariant === 'active' ? todayCardHref : undefined}
             variant="flat"
           />
         </div>
