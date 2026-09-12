@@ -27,6 +27,8 @@ function BoltIcon() {
 // v4: ผู้ใช้ส่งรูปใหม่มาเอง (home-header-hero.png, 2560×1440 แนวนอน) แทนที่ session-complete-hero-
 // mobile.png เดิม (ยืม asset จากหน้า session-complete มาใช้ชั่วคราว) — ไฟล์เดิมยังอยู่ ใช้ต่อที่หน้า
 // session/page.tsx (หน้าจอสรุปผลหลังจบเวิร์กเอาต์) แยกกันคนละจุด ไม่เกี่ยวกัน ไม่ลบทิ้ง
+// v5: ฟีดแบ็ก "เอาไล่มืดออกให้หน่อยครับ" — ตัด scrim gradient ทับรูปออกทั้งหมดตามที่ขอ (รูปใหม่นี้มืด/
+// คอนทราสต์พออ่านตัวหนังสือขาวออกอยู่แล้วโดยไม่ต้องพึ่ง scrim เหมือนรูปเก่า)
 export default function Header({ greetingText, displayName, notifications }: HeaderProps) {
   return (
     <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190, boxShadow: '0 8px 24px rgba(0,0,0,.4)' }}>
@@ -36,11 +38,6 @@ export default function Header({ greetingText, displayName, notifications }: Hea
         fill
         className="object-cover"
         style={{ objectPosition: '50% 25%' }}
-      />
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(180deg, rgba(10,13,18,.4) 0%, rgba(10,13,18,.6) 45%, rgba(10,13,18,.94) 100%)' }}
-        aria-hidden="true"
       />
 
       <div className="relative" style={{ padding: '16px 16px 18px' }}>
