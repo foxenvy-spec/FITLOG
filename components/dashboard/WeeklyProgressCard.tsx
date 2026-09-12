@@ -23,6 +23,11 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
   const { borderRadius, padding, barHeight } = dashboardSpec.weeklyProgressCard
   const displayPct = pct ?? 0
   const total = Math.max(plannedCount, 1)
+  // ฟีดแบ็ก "เปลี่ยนจากตัวเลขเป็นพฤติกรรม — เอา % ออก เปลี่ยนเป็น 'N workouts left this week' ตอบคำถาม
+  // 'ฉันต้องทำอีกเท่าไร' ทันที" — เฉพาะเมื่อมีแผนตั้งไว้จริง (plannedCount>0) เท่านั้น ไม่งั้นไม่มีความหมาย
+  const remaining = plannedCount > 0 ? Math.max(plannedCount - completedCount, 0) : null
+  const remainingLabel =
+    remaining == null ? null : remaining === 0 ? 'All workouts done this week 🎉' : `${remaining} workout${remaining === 1 ? '' : 's'} left this week`
 
   return (
     <div
@@ -64,15 +69,17 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
             days
           </span>
         </span>
-        {/* ฟีดแบ็ก เดียวกับ badge ด้านบน — % ความคืบหน้าเป็นข้อมูล (Information) ไม่ใช่ Action เปลี่ยน
-            จากส้มเป็นฟ้า/ทีล ตามสูตรสี "Information = Cyan/Blue, Teal" ที่ผู้ใช้แนะนำ */}
-        <span className="font-homeNum font-bold" style={{ fontSize: 14, color: '#35b8ff' }}>
-          {displayPct}%
-        </span>
       </div>
       <div style={{ height: barHeight, borderRadius: 999, background: 'rgba(255,255,255,.06)', overflow: 'hidden' }}>
         <AnimatedBarFill pct={displayPct} color="#35b8ff" background="linear-gradient(90deg,#35b8ff,#20d6c7)" />
       </div>
+      {/* ฟีดแบ็ก "ตัดเลข % ออกทั้งหมด (ซ้ำกับที่แถบ progress สื่ออยู่แล้ว) แทนที่ด้วยประโยคบอกพฤติกรรม" —
+          แทนที่ตัวเลข 60% เดิมด้วยบรรทัดนี้ ให้คำตอบ "ต้องทำอีกกี่ครั้ง" ตรงๆ แทนเปอร์เซ็นต์นามธรรม */}
+      {remainingLabel && (
+        <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.45)', fontSize: 10.5, marginTop: 6 }}>
+          {remainingLabel}
+        </p>
+      )}
     </div>
   )
 }

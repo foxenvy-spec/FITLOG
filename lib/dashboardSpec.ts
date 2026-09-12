@@ -37,12 +37,15 @@ export const dashboardSpec = {
   // ~15-20% เทียบกับ mockup — โดยเฉพาะ padding/ไอคอน ไม่ใช่แค่ font ตัวเลข" — ลด padding/iconSize/
   // barHeight ของ 4 การ์ดชุดนี้ลง ~15-20% ทุกจุด (ไม่แตะ font size ของ "ข้อมูลจริง" เช่นตัวเลข value/
   // ชื่อเวิร์กเอาต์ ตามที่ผู้ใช้ระบุว่าข้อมูลควรยังอ่านง่าย แค่ระยะ/กรอบรอบๆ ควรแน่นขึ้น)
+  // ฟีดแบ็ก "ให้ Today's Focus เด่นกว่า Body Overview อีกนิด — ลดความสูง Body Overview ลง ~10-15%" —
+  // ลดอีกขั้นจากรอบก่อน (padding 13->12, iconSize 20->18) ให้ Body Overview อ่านเป็น secondary ชัดเจน
+  // ขึ้นเทียบกับ Today's Focus ที่เป็นการ์ด hero ของหน้า
   bodyOverviewCard: {
     borderRadius: 18,
-    padding: 13, // -19% จาก 16
-    statBorderRadius: 10, // -17% จาก 12
-    statGap: 7, // -12.5% จาก 8
-    iconSize: 20, // -17% จาก 24
+    padding: 12,
+    statBorderRadius: 10,
+    statGap: 7,
+    iconSize: 18,
     iconRadius: 6,
   },
   todayCard: {

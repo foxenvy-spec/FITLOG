@@ -252,7 +252,8 @@ export default function MobileDashboardView() {
           unit,
           decimals: 1,
           pct: weightGoalPct ?? 0,
-          statusText: weightGoalReached ? 'Goal reached 🎉' : weightRemaining ? `${weightRemaining.value.toFixed(1)} ${weightRemaining.unit} to go` : '',
+          // ฟีดแบ็ก "'X to go' อ่านคลุมเครือ เปลี่ยนเป็น 'X remaining' ให้ชัดว่าคือส่วนที่เหลือของเป้าหมาย"
+          statusText: weightGoalReached ? 'Goal reached 🎉' : weightRemaining ? `${weightRemaining.value.toFixed(1)} ${weightRemaining.unit} remaining` : '',
         }
       : null
   const bodyFatGoalCard =
@@ -263,7 +264,7 @@ export default function MobileDashboardView() {
           unit: '%',
           decimals: 1,
           pct: bodyFatGoalPct ?? 0,
-          statusText: bodyFatGoalReached ? 'Goal reached 🎉' : bodyFatRemaining != null ? `${bodyFatRemaining.toFixed(1)}% to go` : '',
+          statusText: bodyFatGoalReached ? 'Goal reached 🎉' : bodyFatRemaining != null ? `${bodyFatRemaining.toFixed(1)}% remaining` : '',
         }
       : null
 
@@ -287,7 +288,6 @@ export default function MobileDashboardView() {
               weightUnit={unit}
               bodyFatPct={data.bodyMetricsSummary.bodyFatPct}
               muscleKg={data.bodyMetricsSummary.skeletalMuscleKg}
-              bmi={data.bodyMetricsSummary.bmi}
             />
           </div>
 

@@ -578,17 +578,23 @@ export default function AICoachCompactCard({
         <p className="text-xs text-moss flex items-center gap-1.5">✓ {startedMessage}</p>
       ) : (
         <div className="flex items-center gap-2">
-          <Button as={Link} href={href} variant="icon" aria-label="ดูคำแนะนำจาก AI Coach">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M4 4h16v11H8l-4 4V4z"
-                stroke={COLORS.amber}
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Button>
+          {/* ฟีดแบ็ก "MINT Coach ควรลดบทบาท ทำให้รู้สึกเป็น assistant มากกว่าอีก dashboard card — เหลือ
+              CTA เดียว" — ปุ่มไอคอนแชทนี้พาไปหน้าเดียวกับ href เป๊ะ (คนละปุ่มแต่ปลายทางเดียวกับ Link ที่ห่อ
+              avatar+ข้อความด้านบนอยู่แล้ว บรรทัด 354) ซ้ำซ้อนจริง — ซ่อนเฉพาะมือถือ (variant="flat") เหลือ
+              แค่ CTA หลักด้านล่างเป็นปุ่มเดียว เดสก์ท็อป (variant="default") ยังมีเหมือนเดิมทุกจุด */}
+          {variant === 'default' && (
+            <Button as={Link} href={href} variant="icon" aria-label="ดูคำแนะนำจาก AI Coach">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M4 4h16v11H8l-4 4V4z"
+                  stroke={COLORS.amber}
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Button>
+          )}
 
           {isRestDay ? (
             // ฟีดแบ็ก "REST DAY ไม่ควรมีปุ่มเริ่ม DAY 4 — UPPER" — ตัดปุ่ม "เริ่ม [เทมเพลต]" ออกทั้งชุด

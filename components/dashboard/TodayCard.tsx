@@ -84,6 +84,13 @@ export default function TodayCard({
   const isCompleted = variant === 'active' && total > 0 && completed >= total
   const buttonLabel = variant === 'noProgram' ? 'Ask MINT' : isCompleted ? 'View Summary' : 'START WORKOUT'
   const buttonHref = variant === 'noProgram' ? '/coach' : href
+  // ฟีดแบ็ก "เพิ่มสถานะของ Today's Workout ให้ actionable ขึ้น — Ready to start / X% complete / Workout
+  // complete ✓ แทนที่จะมีแค่เลขจำนวนท่า" — สามสถานะตามความคืบหน้าจริง (completed/total เดิม ไม่คำนวณใหม่)
+  const workoutStatusLabel = isCompleted
+    ? 'Workout complete ✓'
+    : completed > 0
+      ? `${Math.round((completed / Math.max(total, 1)) * 100)}% complete`
+      : 'Ready to start'
 
   return (
     <div
@@ -136,7 +143,7 @@ export default function TodayCard({
               <span>
                 {completed}/{Math.max(total, 1)} exercises
               </span>
-              {isCompleted && <span>Completed ✓</span>}
+              <span>{workoutStatusLabel}</span>
             </div>
           )}
         </div>

@@ -1,19 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import Link from 'next/link'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { METRIC_ICON_IMAGES } from '@/components/MetricCard'
-
-// ฟีดแบ็ก "ใช้คำใน card เป็นภาษาอังกฤษได้ไหม" — ป้ายหมวด BMI ปกติมาจาก bmiCategory() (lib/
-// bodyMetricsSummary.ts) แต่ฟังก์ชันนั้น share กับหน้า /health/เดสก์ท็อปที่ยังเป็นไทยอยู่ (เปลี่ยน
-// ตรงนั้นจะกระทบทั้งแอป) — ทำ mapping อังกฤษเฉพาะจุดนี้แทน ใช้เกณฑ์ตัวเลขเดียวกันเป๊ะ (18.5/25/30
-// จาก bmiCategory() ต้นฉบับ) แค่คำที่แสดงผลเป็นอังกฤษ ไม่ใช่คำนวณใหม่
-function bmiCategoryEn(bmi: number): string {
-  if (bmi < 18.5) return 'Underweight'
-  if (bmi < 25) return 'Normal'
-  if (bmi < 30) return 'Overweight'
-  return 'Obese'
-}
 
 interface MetricDelta {
   value: number | null
@@ -26,7 +15,6 @@ interface BodyOverviewCardProps {
   weightUnit: string
   bodyFatPct: MetricDelta
   muscleKg: MetricDelta
-  bmi: number | null
 }
 
 // การ์ด "Body Overview" ใหม่ตาม "New_mobile_app.zip" (ผู้ใช้เลือก "ทำเฉพาะหน้า Home" ให้ใช้ทิศทางนี้
@@ -67,18 +55,9 @@ function MaskIcon({ src, color, size = 13 }: { src: string; color: string; size?
   )
 }
 
-function ChevronRightIcon({ open }: { open: boolean }) {
+function ChevronRightIcon() {
   return (
-    <svg
-      width="10"
-      height="10"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="rgba(255,255,255,.4)"
-      strokeWidth="2.5"
-      aria-hidden="true"
-      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .2s' }}
-    >
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2.5" aria-hidden="true">
       <path d="M9 6l6 6-6 6" />
     </svg>
   )
@@ -137,8 +116,7 @@ function StatCell({
   )
 }
 
-export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscleKg, bmi }: BodyOverviewCardProps) {
-  const [open, setOpen] = useState(false)
+export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscleKg }: BodyOverviewCardProps) {
   const { borderRadius, padding, statGap } = dashboardSpec.bodyOverviewCard
 
   return (
@@ -158,15 +136,13 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
           Body Overview
         </span>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="flex items-center"
-          style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, gap: 2 }}
-        >
+        {/* ฟีดแบ็ก "BMI ไม่ควรอยู่ตรงนี้ ให้ไปอยู่หน้า Stats/Body Details แทน" — เดิม "Details" เป็นปุ่ม
+            ขยาย/ยุบแสดง BMI ในการ์ดนี้เอง เปลี่ยนเป็นลิงก์จริงไปหน้า /health (มี BMI + รายละเอียดร่างกาย
+            ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ */}
+        <Link href="/health" className="flex items-center" style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, gap: 2 }}>
           Details
-          <ChevronRightIcon open={open} />
-        </button>
+          <ChevronRightIcon />
+        </Link>
       </div>
 
       <div className="grid grid-cols-3" style={{ gap: statGap }}>
@@ -198,24 +174,6 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           isGood={muscleKg.isGood}
         />
       </div>
-
-      {open && (
-        <div
-          className="flex justify-between"
-          style={{
-            marginTop: 10,
-            paddingTop: 10,
-            borderTop: '1px solid rgba(255,255,255,.06)',
-            color: 'rgba(255,255,255,.5)',
-            fontSize: 11.5,
-          }}
-        >
-          <span className="font-homeTh">BMI</span>
-          <span className="font-homeNum font-semibold text-white">
-            {bmi != null ? `${bmi.toFixed(1)} · ${bmiCategoryEn(bmi)}` : 'No data'}
-          </span>
-        </div>
-      )}
     </div>
   )
 }
