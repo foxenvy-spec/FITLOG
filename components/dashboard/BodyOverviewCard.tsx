@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { METRIC_ICON_IMAGES } from '@/components/MetricCard'
+import { HOME_COLORS } from '@/lib/homeColors'
 
 interface MetricDelta {
   value: number | null
@@ -75,7 +76,7 @@ function MaskIcon({ src, color, size = 13 }: { src: string; color: string; size?
 
 function ChevronRightIcon() {
   return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#A7ADB7" strokeWidth="2.5" aria-hidden="true">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={HOME_COLORS.textSecondary} strokeWidth="2.5" aria-hidden="true">
       <path d="M9 6l6 6-6 6" />
     </svg>
   )
@@ -121,12 +122,12 @@ function StatCell({
       >
         {icon}
       </div>
-      {/* ฟีดแบ็ก "Weight/Body Fat/Muscle เทาเกินไป อ่านยาก — Secondary tier ควรเป็น #A7ADB7 ไม่ใช่ rgba
+      {/* ฟีดแบ็ก "Weight/Body Fat/Muscle เทาเกินไป อ่านยาก — Secondary tier ควรเป็นโทเคนกลาง ไม่ใช่ rgba
           จางแบบเดิม โดยเฉพาะข้อมูลที่ user อ่านบ่อย ไม่ควรใช้โทน muted" */}
-      <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 10.5, marginBottom: 2 }}>
+      <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 10.5, marginBottom: 2 }}>
         {label}
       </p>
-      <p className="font-homeNum font-bold text-white" style={{ fontSize: 15, marginBottom: 2 }}>
+      <p className="font-homeNum font-bold" style={{ fontSize: 15, marginBottom: 2, color: HOME_COLORS.textPrimary }}>
         {value}
       </p>
       <p className="font-homeNum font-semibold" style={{ fontSize: 10.5, color: deltaColor(isGood) }}>
@@ -146,26 +147,28 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
   return (
     <div
       style={{
-        // ฟีดแบ็ก "รูป 3 มี depth ดีกว่า — Background → Card → inner panel → gradient accent"
-        // — พื้นเรียบทึบเดิม (#12161d) เปลี่ยนเป็นไล่สีแนวตั้งจาง ๆ (ไม่ใช่ glow) ให้ผิวการ์ดดูมีมิติขึ้น
-        // นิดเดียว โทนเดียวกับที่ใช้ซ้ำในการ์ดอื่นของ Home รอบนี้ทั้งหมด
-        background: 'linear-gradient(180deg, #171c25 0%, #12161d 100%)',
-        border: '1px solid rgba(255,255,255,.06)',
+        // ฟีดแบ็ก "FITLOG Premium Home Design System — เปลี่ยนจาก Solid Card เป็น Glass Card, อย่าใช้
+        // #000000 เยอะเกินไป" — พื้นเดิม (#12161d ทึบ/ไล่สีเทาดำ) เปลี่ยนเป็น HOME_COLORS.cardGlass
+        // (กรมท่าโปร่งแสง ให้ผิวการ์ดดูมีมิติ+เห็นพื้นหลังลอดนิดหน่อยโดยเฉพาะจุดที่ทับภาพ Header อยู่แล้ว)
+        // ไม่ใช้ backdrop-blur หนัก (ผู้ใช้ระบุชัดว่าไม่ต้องการ glassmorphism แบบเบลอจัด) แค่โปร่งแสงพอ
+        background: HOME_COLORS.cardGlass,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: `1px solid ${HOME_COLORS.cardBorder}`,
         borderRadius,
         padding,
         boxShadow: '0 8px 20px rgba(0,0,0,.35)',
       }}
     >
       <div className="flex items-center justify-between" style={{ marginBottom: updatedLabel && !hasNoData ? 2 : 10 }}>
-        <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
+        <span className="font-bold" style={{ fontSize: 14.5, color: HOME_COLORS.textPrimary }}>
           Body Overview
         </span>
         {/* ฟีดแบ็ก "BMI ไม่ควรอยู่ตรงนี้ ให้ไปอยู่หน้า Stats/Body Details แทน" — เดิม "Details" เป็นปุ่ม
             ขยาย/ยุบแสดง BMI ในการ์ดนี้เอง เปลี่ยนเป็นลิงก์จริงไปหน้า /health (มี BMI + รายละเอียดร่างกาย
-            ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ — สีเดิม (rgba(255,255,255,.4)) จางเกินไป เปลี่ยนเป็น
-            Secondary tier (#A7ADB7) ตามที่ผู้ใช้ระบุ */}
+            ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ */}
         {!hasNoData && (
-          <Link href="/health" className="flex items-center" style={{ color: '#A7ADB7', fontSize: 12, gap: 2 }}>
+          <Link href="/health" className="flex items-center" style={{ color: HOME_COLORS.textSecondary, fontSize: 12, gap: 2 }}>
             Details
             <ChevronRightIcon />
           </Link>
@@ -181,15 +184,15 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         // ฟีดแบ็ก "Empty State ที่ดี — อย่าให้รู้สึกเหมือนระบบไม่มีข้อมูล" — ลิงก์เดียวกับ "Details"
         // ปกติ (/health มีฟอร์มบันทึกน้ำหนัก/ไขมัน/กล้ามเนื้ออยู่แล้ว ไม่ต้องสร้างหน้าใหม่)
         <Link href="/health" className="flex flex-col items-start active:opacity-80 transition">
-          <span className="text-white font-bold" style={{ fontSize: 13, marginBottom: 3 }}>
+          <span className="font-bold" style={{ fontSize: 13, marginBottom: 3, color: HOME_COLORS.textPrimary }}>
             Start tracking your body
           </span>
-          <span className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 11, marginBottom: 10 }}>
+          <span className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 11, marginBottom: 10 }}>
             Add your first measurement to see your progress.
           </span>
           <span
             className="font-homeNum font-semibold"
-            style={{ color: '#ff8a3d', fontSize: 12, border: '1px solid rgba(255,138,61,.35)', borderRadius: 999, padding: '6px 14px' }}
+            style={{ color: HOME_COLORS.orange, fontSize: 12, border: '1px solid rgba(255,138,61,.35)', borderRadius: 999, padding: '6px 14px' }}
           >
             + Add Measurement
           </span>

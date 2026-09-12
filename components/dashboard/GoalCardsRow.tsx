@@ -2,6 +2,7 @@
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from '../AnimatedBarFill'
+import { HOME_COLORS } from '@/lib/homeColors'
 
 interface GoalCardProps {
   label: string
@@ -29,8 +30,10 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
   return (
     <div
       style={{
-        background: 'linear-gradient(180deg, #171c25 0%, #12161d 100%)',
-        border: '1px solid rgba(255,255,255,.06)',
+        background: HOME_COLORS.cardGlass,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: `1px solid ${HOME_COLORS.cardBorder}`,
         borderRadius,
         padding,
         boxShadow: '0 8px 20px rgba(0,0,0,.35)',
@@ -41,23 +44,21 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
           เข้ามาเฉยๆ ไม่กระทบ pct ที่ใช้ fill แถบอยู่แล้ว */}
       {/* ฟีดแบ็ก "'Body Fat Goal — 40%' อ่านแล้วเข้าใจผิดว่า 40% คือตัวเป้าหมาย Body Fat เอง เพราะ % อยู่ติด
           กับหัวข้อ Goal" — เติมคำว่า "complete" ต่อท้ายให้ชัดว่าเป็นความคืบหน้า ไม่ใช่ค่าเป้าหมาย */}
-      {/* ฟีดแบ็ก "ป้ายชื่อ/สถานะเป้าหมายเทาเกินไป — ใช้ Secondary tier #A7ADB7 แทน rgba จางเดิม เพราะ
-          user อ่านข้อมูลนี้บ่อย ไม่ควรเป็นโทน muted" */}
       <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-        <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 11 }}>
+        <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 11 }}>
           {label}
         </p>
         <p className="font-homeNum font-semibold" style={{ color, fontSize: 11 }}>
           {Math.round(pct)}% complete
         </p>
       </div>
-      <p className="font-homeNum font-bold text-white" style={{ fontSize: 14, marginBottom: 8 }}>
+      <p className="font-homeNum font-bold" style={{ fontSize: 14, marginBottom: 8, color: HOME_COLORS.textPrimary }}>
         {fromValue.toFixed(decimals)} → {toValue.toFixed(decimals)} {unit}
       </p>
       <div style={{ height: barHeight, borderRadius: 999, background: 'rgba(255,255,255,.06)', overflow: 'hidden', marginBottom: 6 }}>
         <AnimatedBarFill pct={pct} color={color} />
       </div>
-      <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 10.5 }}>
+      <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 10.5 }}>
         {statusText}
       </p>
     </div>

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { COLORS, NEUTRAL } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { HOME_COLORS } from '@/lib/homeColors'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { todayStr } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
@@ -23,16 +24,19 @@ import FitnessRing from '@/components/dashboard/FitnessRing'
 // v2: ฟีดแบ็ก (เทียบ poster รอบละเอียด) "ปุ่มลอยกลางยังดู Gaming/Mechanical ไป ลดความสว่างของ glow ลง
 // อีก 20-30%" — ลด alpha อีกขั้น (.4/.4/.22/.08 -> .3/.3/.16/.05) ปุ่มนี้เป็น Action/CTA จริงตัวเดียวใน
 // bottom nav เลยยังคงเป็นส้มไว้ (ไม่ใช่จุดที่ต้องเปลี่ยนสี ต่างจาก active tab ด้านล่าง)
+// v: "FITLOG Premium Home Design System" — glow/ring ย้ายไปใช้โทนส้มเดียวกับ HOME_COLORS
+// (orange/orangeGlow) แทนเฉด #FF8A3D/#A8410F เดิม ให้ปุ่มลอยกลางอ้างอิงส้มแบรนด์ตัวเดียวกับ CTA
+// อื่นทั่วหน้า Home (Header logo badge, TodayCard ปุ่ม START WORKOUT)
 const BOTTOM_NAV_GLOW_SHADOW =
-  '0 0 2px rgba(255,255,255,.3), 0 0 8px rgba(255,154,90,.3), 0 0 20px rgba(255,120,50,.16), 0 0 46px rgba(255,100,40,.05)'
+  '0 0 2px rgba(255,255,255,.3), 0 0 8px rgba(255,138,0,.3), 0 0 20px rgba(255,101,0,.16), 0 0 46px rgba(255,101,0,.05)'
 
 const BOTTOM_NAV_RING_GRADIENT = [
   { offset: '0%', color: '#5C2208' },
   { offset: '22%', color: '#A8410F' },
-  { offset: '40%', color: '#FF8A3D' },
+  { offset: '40%', color: HOME_COLORS.orange },
   { offset: '48%', color: '#FFD9A8' },
   { offset: '52%', color: '#FFD9A8' },
-  { offset: '60%', color: '#FF8A3D' },
+  { offset: '60%', color: HOME_COLORS.orange },
   { offset: '78%', color: '#A8410F' },
   { offset: '100%', color: '#5C2208' },
 ] as const
@@ -44,7 +48,7 @@ const BOTTOM_NAV_RING_GRADIENT = [
 // อยู่ผ่านไอคอนชุดเดียวกันด้านล่างของไฟล์นี้ — เพิ่ม activeColor เป็น optional prop ในแต่ละไอคอนแทนที่จะ
 // แก้ COLORS.amber ตรงๆ (กระทบทั้งแอปรวมเดสก์ท็อปที่ไม่ได้อยู่ในขอบเขตงานนี้) ไม่ส่ง prop นี้ = ใช้
 // COLORS.amber เดิมทุกจุดที่ไม่ได้แก้ (SidebarNav.tsx)
-const MOBILE_NAV_ACCENT = '#35b8ff'
+const MOBILE_NAV_ACCENT = HOME_COLORS.cyan
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/
@@ -272,8 +276,12 @@ export default function BottomNav() {
         // สะท้อนแสง+เกรนนอยส์+mesh ไขว้ CNC+มุมตัด) เป็นวัสดุของธีมเดิม (brief 2) ที่ Home cards รอบ
         // rebuild นี้เลิกใช้ไปแล้วทั้งหมด (BodyOverviewCard/TodayCard/ฯลฯ เป็นพื้นเรียบ #12161d+เส้นขอบ
         // บางเดี่ยว) — เปลี่ยน nav ให้เป็นพื้นผิวเดียวกับการ์ดเหล่านั้นแทน ให้ทั้งหน้าเป็นวัสดุเดียวกันจริง
-        background: '#12161d',
-        borderTop: '1px solid rgba(255,255,255,.06)',
+        // v: "FITLOG Premium Home Design System" — ย้ายไปใช้ HOME_COLORS.cardGlass + blur เดียวกับการ์ด
+        // อื่นทั้งหมดในหน้า Home แทนสีทึบ #12161d เดิม (คนละค่ากับโทเคนกลาง)
+        background: HOME_COLORS.cardGlass,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderTop: `1px solid ${HOME_COLORS.cardBorder}`,
         boxShadow: '0 -8px 24px rgba(0,0,0,.35)',
       }}
     >

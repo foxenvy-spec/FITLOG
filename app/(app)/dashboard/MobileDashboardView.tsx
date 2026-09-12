@@ -23,6 +23,7 @@ import TodayCard from '@/components/dashboard/TodayCard'
 import WeeklyProgressCard from '@/components/dashboard/WeeklyProgressCard'
 import GoalCardsRow from '@/components/dashboard/GoalCardsRow'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
+import { HOME_COLORS } from '@/lib/homeColors'
 
 const DashboardSettings = dynamic(() => import('@/components/DashboardSettings'), { ssr: false })
 
@@ -272,7 +273,10 @@ export default function MobileDashboardView() {
 
   return (
     <>
-      <div className="relative animate-fade-scale-in" style={{ background: '#0a0d12' }}>
+      {/* ฟีดแบ็ก "อย่าใช้ #000000 เยอะเกินไป — ภาพ 3 ดูแพงเพราะใช้ Deep Navy + Blue Black ไม่ใช่ดำล้วน"
+          (เทียบ poster รอบละเอียดอีกครั้ง) — เปลี่ยนพื้นหลังหน้าจาก #0a0d12 (ดำอมเทาเกือบล้วน) เป็น
+          HOME_COLORS.bg (#050B12, กรมท่าเข้มมีโทนน้ำเงินชัดเจนกว่า) */}
+      <div className="relative animate-fade-scale-in" style={{ background: HOME_COLORS.bg }}>
         <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: dashboardSpec.screen.sectionGap }}>
           <Header
             greetingText={greetingText}

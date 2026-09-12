@@ -24,6 +24,7 @@ import { resolveRecommendationDisplay } from '@/lib/recommendationDisplay'
 import { splitTitleDetail } from '@/lib/workoutDisplay'
 import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
+import { HOME_COLORS } from '@/lib/homeColors'
 
 // ฟีดแบ็ก "emoji หน้านี้ใช้ที่เรามีอยู่แล้วได้ไหม ลองแมฟดู" — เดิมป้ายชื่อการ์ด "MINT Coach" ใช้อีโมจิ ✨
 // ดิบๆ นำหน้า (สีของตัวเองมากับฟอนต์/แพลตฟอร์ม) เปลี่ยนเป็น SVG เส้นล้วน (stroke=currentColor) — path
@@ -736,8 +737,10 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
       <div
         className="rounded-card flex flex-col gap-1.5 px-3 py-2.5"
         style={{
-          background: 'linear-gradient(180deg, #171c25 0%, #12161d 100%)',
-          border: '1px solid rgba(255,255,255,.06)',
+          background: HOME_COLORS.cardGlass,
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: `1px solid ${HOME_COLORS.cardBorder}`,
           boxShadow: '0 8px 20px rgba(0,0,0,.35)',
         }}
       >
@@ -773,8 +776,8 @@ export function AiRingAvatar({ size = 112, icon = 'gem' }: { size?: number; icon
           width: size,
           height: size,
           borderRadius: Math.round(size * 0.28),
-          background: 'linear-gradient(135deg,#4da8ff,#2f6fe0)',
-          boxShadow: '0 4px 12px rgba(45,111,224,.35)',
+          background: `linear-gradient(135deg,${HOME_COLORS.cyan},#1a7fb8)`,
+          boxShadow: '0 4px 12px rgba(32,200,255,.35)',
         }}
         aria-hidden="true"
       >

@@ -6,6 +6,7 @@ import { describeMuscleFocus, dominantMuscleGroup, formatRelatedGroups, type Mus
 import { splitTitleDetail } from '@/lib/workoutDisplay'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from '../AnimatedBarFill'
+import { HOME_COLORS } from '@/lib/homeColors'
 
 interface TodayCardProps {
   /** ชื่อโปรแกรมจริงของวันนี้ (scheduledDay.title) ถ้ามี — มาก่อนเสมอ */
@@ -105,7 +106,9 @@ export default function TodayCard({
         // v2: ฟีดแบ็ก (เทียบ poster รอบละเอียด) "Orange กระจายทั่วหน้าเกินไป — การ์ดนี้ควรเป็น Black/
         // Titanium ที่มีแสงส้มแตะเบาๆ ('Orange → Black' เดิมหนักไปคนละด้าน ต้องการ 'Black → subtle
         // orange light' แทน)" — ลด boxShadow ส้มลงอีกขั้น (.16 -> .12)
-        boxShadow: '0 16px 32px rgba(255,84,22,.12), 0 8px 20px rgba(0,0,0,.4)',
+        // v3: ย้ายชั้นส้มไปใช้ HOME_COLORS.orangeGlow (#FF6500) แทน hex เดิม (#ff5416) ให้ตรงกับโทเคนส้ม
+        // ชุดเดียวที่ใช้ทั้งหน้า Home (Header logo badge, CTA ปุ่มด้านล่าง)
+        boxShadow: '0 16px 32px rgba(255,101,0,.12), 0 8px 20px rgba(0,0,0,.4)',
       }}
     >
       <Image src="/images/workout-hero.jpg" alt="" fill className="object-cover" aria-hidden="true" />
@@ -115,7 +118,7 @@ export default function TodayCard({
           ด้วยสีส้ม" ทั้งการ์ดแบบเดิม */}
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(115deg, rgba(255,84,22,.22) 0%, rgba(10,13,18,.72) 40%, rgba(10,13,18,.92) 100%)' }}
+        style={{ background: 'linear-gradient(115deg, rgba(255,101,0,.22) 0%, rgba(5,11,18,.72) 40%, rgba(5,11,18,.92) 100%)' }}
         aria-hidden="true"
       />
 
@@ -165,7 +168,7 @@ export default function TodayCard({
             style={{
               width: '100%',
               marginTop: 14,
-              background: 'linear-gradient(135deg,#ff9a3d,#ff5f1f)',
+              background: `linear-gradient(135deg,${HOME_COLORS.orange},${HOME_COLORS.orangeGlow})`,
               color: '#fff',
               borderRadius: 999,
               padding: 11,

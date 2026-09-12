@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import type { DashboardNotification } from '@/lib/dashboardStats'
 import NotificationButton from './NotificationButton'
+import { HOME_COLORS } from '@/lib/homeColors'
 
 interface HeaderProps {
   greetingText: string
@@ -13,7 +14,7 @@ interface HeaderProps {
 function BoltIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="#0a0d12" />
+      <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill={HOME_COLORS.bg} />
     </svg>
   )
 }
@@ -38,6 +39,9 @@ function BoltIcon() {
 // contrast ของภาพลง ~15-25% ให้ภาพทำหน้าที่เป็น background มากกว่าพระเอก" — ใช้ CSS filter ลด
 // contrast/saturation ของรูปโดยตรง (ไม่ใช่ทับ scrim มืดแบบที่เพิ่งเอาออกไปตามฟีดแบ็กก่อนหน้า — คนละ
 // เทคนิค คนละจุดประสงค์: scrim เดิมมีไว้กันตัวหนังสืออ่านไม่ออก ส่วนนี้มีไว้ลด "ความเป็นพระเอก" ของภาพเอง)
+// v8: ฟีดแบ็ก "FITLOG Premium Home Design System" — ย้ายสีทั้งหมดในไฟล์นี้ไปใช้ HOME_COLORS
+// (lib/homeColors.ts) แทนการ inline hex คนละค่ากันแต่ละจุด ให้ Header/การ์ดอื่นในหน้า Home ทั้งหมด
+// อ้างอิงโทเคนชุดเดียวกันจริง (Deep Navy แทน near-black เดิม)
 export default function Header({ greetingText, displayName, notifications }: HeaderProps) {
   return (
     <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190, boxShadow: '0 4px 14px rgba(0,0,0,.28)' }}>
@@ -50,7 +54,7 @@ export default function Header({ greetingText, displayName, notifications }: Hea
       />
       <div
         className="absolute inset-x-0 bottom-0"
-        style={{ height: 48, background: 'linear-gradient(180deg, transparent 0%, #0a0d12 100%)' }}
+        style={{ height: 48, background: `linear-gradient(180deg, transparent 0%, ${HOME_COLORS.bg} 100%)` }}
         aria-hidden="true"
       />
 
@@ -59,12 +63,12 @@ export default function Header({ greetingText, displayName, notifications }: Hea
           <div className="flex items-center" style={{ gap: 8 }}>
             <div
               className="rounded-lg flex items-center justify-center shrink-0"
-              style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#ff9a3d,#ff5f1f)' }}
+              style={{ width: 26, height: 26, background: `linear-gradient(135deg,${HOME_COLORS.orange},${HOME_COLORS.orangeGlow})` }}
               aria-hidden="true"
             >
               <BoltIcon />
             </div>
-            <span className="font-homeNum font-extrabold text-white" style={{ fontSize: 15, letterSpacing: '0.5px' }}>
+            <span className="font-homeNum font-extrabold" style={{ fontSize: 15, letterSpacing: '0.5px', color: HOME_COLORS.textPrimary }}>
               FITLOG
             </span>
           </div>
@@ -72,13 +76,13 @@ export default function Header({ greetingText, displayName, notifications }: Hea
         </div>
 
         <div>
-          <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, marginBottom: 2 }}>
+          <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 13, marginBottom: 2 }}>
             {greetingText}
           </p>
-          <p className="font-homeNum font-extrabold text-white leading-[1.1]" style={{ fontSize: 30 }}>
+          <p className="font-homeNum font-extrabold leading-[1.1]" style={{ fontSize: 30, color: HOME_COLORS.textPrimary }}>
             {displayName}
           </p>
-          <p className="font-homeTh italic font-semibold" style={{ color: '#ff8a3d', fontSize: 13, marginTop: 2 }}>
+          <p className="font-homeTh italic font-semibold" style={{ color: HOME_COLORS.orange, fontSize: 13, marginTop: 2 }}>
             Better Than Yesterday
           </p>
         </div>

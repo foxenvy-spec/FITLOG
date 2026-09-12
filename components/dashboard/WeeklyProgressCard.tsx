@@ -2,6 +2,7 @@
 
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from '../AnimatedBarFill'
+import { HOME_COLORS } from '@/lib/homeColors'
 
 interface WeeklyProgressCardProps {
   /** จำนวนวันที่ทำสำเร็จของแผนสัปดาห์นี้ (จาก computePlannedConsistency — นับเทียบกับวันที่ "ตั้งโปรแกรม
@@ -32,15 +33,17 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
   return (
     <div
       style={{
-        background: 'linear-gradient(180deg, #171c25 0%, #12161d 100%)',
-        border: '1px solid rgba(255,255,255,.06)',
+        background: HOME_COLORS.cardGlass,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: `1px solid ${HOME_COLORS.cardBorder}`,
         borderRadius,
         padding,
         boxShadow: '0 8px 20px rgba(0,0,0,.35)',
       }}
     >
       <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
-        <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
+        <span className="font-bold" style={{ fontSize: 14.5, color: HOME_COLORS.textPrimary }}>
           Weekly Progress
         </span>
         {streak > 0 && (
@@ -63,22 +66,21 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
         )}
       </div>
       <div className="flex justify-between items-baseline" style={{ marginBottom: 8 }}>
-        <span className="font-homeNum font-extrabold text-white" style={{ fontSize: 20 }}>
+        <span className="font-homeNum font-extrabold" style={{ fontSize: 20, color: HOME_COLORS.textPrimary }}>
           {completedCount}/{total}{' '}
-          <span className="font-semibold" style={{ fontSize: 12, color: '#A7ADB7' }}>
+          <span className="font-semibold" style={{ fontSize: 12, color: HOME_COLORS.textSecondary }}>
             days
           </span>
         </span>
       </div>
       <div style={{ height: barHeight, borderRadius: 999, background: 'rgba(255,255,255,.06)', overflow: 'hidden' }}>
-        <AnimatedBarFill pct={displayPct} color="#35b8ff" background="linear-gradient(90deg,#35b8ff,#20d6c7)" />
+        <AnimatedBarFill pct={displayPct} color={HOME_COLORS.cyan} background={`linear-gradient(90deg,${HOME_COLORS.cyan},#20d6c7)`} />
       </div>
       {/* ฟีดแบ็ก "ตัดเลข % ออกทั้งหมด (ซ้ำกับที่แถบ progress สื่ออยู่แล้ว) แทนที่ด้วยประโยคบอกพฤติกรรม" —
           แทนที่ตัวเลข 60% เดิมด้วยบรรทัดนี้ ให้คำตอบ "ต้องทำอีกกี่ครั้ง" ตรงๆ แทนเปอร์เซ็นต์นามธรรม —
-          ข้อความนี้เป็น actionable information ที่ user อ่านบ่อย ไม่ควรใช้โทน muted (rgba จางเดิม) เปลี่ยน
-          เป็น Secondary tier (#A7ADB7) ตามที่ผู้ใช้ระบุ */}
+          ข้อความนี้เป็น actionable information ที่ user อ่านบ่อย ไม่ควรใช้โทน muted (rgba จางเดิม) */}
       {remainingLabel && (
-        <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 10.5, marginTop: 6 }}>
+        <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 10.5, marginTop: 6 }}>
           {remainingLabel}
         </p>
       )}
