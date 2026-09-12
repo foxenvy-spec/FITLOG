@@ -27,7 +27,7 @@ interface GoalCardsRowProps {
 function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statusText }: GoalCardProps) {
   const { borderRadius, padding, barHeight } = dashboardSpec.goalCard
   return (
-    <div style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', borderRadius, padding }}>
+    <div style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', borderRadius, padding, boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}>
       <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginBottom: 6 }}>
         {label}
       </p>

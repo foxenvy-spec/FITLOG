@@ -133,6 +133,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         border: '1px solid rgba(255,255,255,.06)',
         borderRadius,
         padding,
+        boxShadow: '0 8px 20px rgba(0,0,0,.35)',
       }}
     >
       <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>

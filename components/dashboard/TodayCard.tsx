@@ -92,6 +92,7 @@ export default function TodayCard({
         padding,
         position: 'relative',
         overflow: 'hidden',
+        boxShadow: '0 16px 32px rgba(255,84,22,.2), 0 8px 20px rgba(0,0,0,.45)',
       }}
     >
       <Image src="/images/workout-hero.jpg" alt="" fill className="object-cover" aria-hidden="true" />

@@ -407,9 +407,15 @@ export default function AICoachCompactCard({
               ellipsis จึงไม่มี "..." ให้เห็น) — เพิ่ม shrink-0 ให้ทั้ง 2 span ข้อความ เหมือนกับ span ไอคอน
               บังคับให้ทั้งคู่คงความกว้างเดิมตามเนื้อหาเสมอ (ไม่ยอมถูกบีบ) เหมือนพฤติกรรมเดิมตอนยังเป็น
               <span> เดียวรวมกันก่อนรอบนี้ */}
+          {/* ฟีดแบ็ก "ปรับสี เงา ให้เหมือน ไม่ต้องสนใจทีมเดิม" (New_mobile_app.zip rebuild) — จุดเดียวที่
+              ยอมให้สีเบี่ยงจาก COLORS.amber ทั่วแอปในไฟล์นี้: ไอคอน sparkle เปลี่ยนเป็นส้มแบรนด์ใหม่
+              #ff8a3d เฉพาะ variant="flat" (มือถือ) เท่านั้น — เดสก์ท็อป (variant="default") ยังเป็น
+              COLORS.amber เดิมเป๊ะ ไม่แตะ เพราะจุดนี้เปลี่ยนแค่สีจุดเดียว ไม่กระทบ logic/ขนาด/glow ใดๆ
+              ต่างจาก CTA border/avatar ring อื่นๆ ในไฟล์นี้ที่ยังใช้ COLORS.amber เหมือนเดิมทั้งคู่ (คนละ
+              จุด/ซับซ้อนกว่านี้ เสี่ยงกระทบพฤติกรรมที่ปรับมาหลายรอบแล้วถ้าไล่เปลี่ยนสีทุกจุด) */}
           <div className="flex items-center justify-between gap-x-2 gap-y-0.5 flex-wrap">
             <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0">
-              <span aria-hidden="true" className="shrink-0" style={{ color: COLORS.amber }}>
+              <span aria-hidden="true" className="shrink-0" style={{ color: variant === 'flat' ? '#ff8a3d' : COLORS.amber }}>
                 <SparkleIcon />
               </span>
               <span className="whitespace-nowrap shrink-0" style={{ color: TEXT.body }}>MINT Coach ·</span>{' '}
@@ -680,7 +686,7 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
     return (
       <div
         className="rounded-card flex flex-col gap-1.5 px-3 py-2.5"
-        style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)' }}
+        style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}
       >
         {children}
       </div>

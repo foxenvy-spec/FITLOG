@@ -25,7 +25,7 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
   const total = Math.max(plannedCount, 1)
 
   return (
-    <div style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', borderRadius, padding }}>
+    <div style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', borderRadius, padding, boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
         <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
           ความคืบหน้าสัปดาห์นี้

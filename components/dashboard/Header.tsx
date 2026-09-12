@@ -27,7 +27,7 @@ function BoltIcon() {
 // ที่ตั้งใจให้กระชับ (190px) ไม่ใช่ปล่อยให้สูงเท่าที่เนื้อหาต้องการเฉยๆ
 export default function Header({ greetingText, displayName, notifications }: HeaderProps) {
   return (
-    <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190 }}>
+    <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190, boxShadow: '0 8px 24px rgba(0,0,0,.4)' }}>
       <Image
         src="/images/session-complete-hero-mobile.png"
         alt=""
