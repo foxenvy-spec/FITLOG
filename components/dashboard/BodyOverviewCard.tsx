@@ -2,8 +2,18 @@
 
 import { useState } from 'react'
 import { dashboardSpec } from '@/lib/dashboardSpec'
-import { bmiCategory } from '@/lib/bodyMetricsSummary'
 import { METRIC_ICON_IMAGES } from '@/components/MetricCard'
+
+// ฟีดแบ็ก "ใช้คำใน card เป็นภาษาอังกฤษได้ไหม" — ป้ายหมวด BMI ปกติมาจาก bmiCategory() (lib/
+// bodyMetricsSummary.ts) แต่ฟังก์ชันนั้น share กับหน้า /health/เดสก์ท็อปที่ยังเป็นไทยอยู่ (เปลี่ยน
+// ตรงนั้นจะกระทบทั้งแอป) — ทำ mapping อังกฤษเฉพาะจุดนี้แทน ใช้เกณฑ์ตัวเลขเดียวกันเป๊ะ (18.5/25/30
+// จาก bmiCategory() ต้นฉบับ) แค่คำที่แสดงผลเป็นอังกฤษ ไม่ใช่คำนวณใหม่
+function bmiCategoryEn(bmi: number): string {
+  if (bmi < 18.5) return 'Underweight'
+  if (bmi < 25) return 'Normal'
+  if (bmi < 30) return 'Overweight'
+  return 'Obese'
+}
 
 interface MetricDelta {
   value: number | null
@@ -151,7 +161,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           className="flex items-center"
           style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, gap: 2 }}
         >
-          ดูรายละเอียด
+          Details
           <ChevronRightIcon open={open} />
         </button>
       </div>
@@ -160,7 +170,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         <StatCell
           icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#4da8ff" />}
           iconTint="rgba(77,168,255,.15)"
-          label="น้ำหนัก"
+          label="Weight"
           value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
           delta={weight.delta}
           isGood={weight.isGood}
@@ -168,7 +178,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         <StatCell
           icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#ff5c93" />}
           iconTint="rgba(255,92,147,.15)"
-          label="ไขมันในร่างกาย"
+          label="Body Fat"
           value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
           delta={bodyFatPct.delta}
           isGood={bodyFatPct.isGood}
@@ -176,7 +186,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         <StatCell
           icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#34d6c4" />}
           iconTint="rgba(52,214,196,.15)"
-          label="กล้ามเนื้อ"
+          label="Muscle"
           value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
           delta={muscleKg.delta}
           isGood={muscleKg.isGood}
@@ -196,7 +206,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         >
           <span className="font-homeTh">BMI</span>
           <span className="font-homeNum font-semibold text-white">
-            {bmi != null ? `${bmi.toFixed(1)} · ${bmiCategory(bmi)}` : 'ยังไม่มีข้อมูล'}
+            {bmi != null ? `${bmi.toFixed(1)} · ${bmiCategoryEn(bmi)}` : 'No data'}
           </span>
         </div>
       )}

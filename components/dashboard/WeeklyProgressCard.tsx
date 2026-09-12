@@ -28,7 +28,7 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
     <div style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', borderRadius, padding, boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
         <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
-          ความคืบหน้าสัปดาห์นี้
+          Weekly Progress
         </span>
         {streak > 0 && (
           <span
@@ -41,7 +41,7 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
               borderRadius: 999,
             }}
           >
-            🔥 {streak} วันติดต่อกัน
+            🔥 {streak} Day Streak
           </span>
         )}
       </div>
@@ -49,7 +49,7 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
         <span className="font-homeNum font-extrabold text-white" style={{ fontSize: 20 }}>
           {completedCount}/{total}{' '}
           <span className="font-semibold" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>
-            วัน
+            days
           </span>
         </span>
         <span className="font-homeNum font-bold" style={{ fontSize: 14, color: '#ff8a3d' }}>

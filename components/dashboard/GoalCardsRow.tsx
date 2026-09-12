@@ -49,8 +49,8 @@ export default function GoalCardsRow({ weight, bodyFat }: GoalCardsRowProps) {
   const { gridGap } = dashboardSpec.goalCard
   return (
     <div className="grid grid-cols-2" style={{ gap: gridGap }}>
-      {weight && <GoalCard label="เป้าหมายน้ำหนัก" color="#4da8ff" {...weight} />}
-      {bodyFat && <GoalCard label="เป้าหมายไขมัน" color="#ff5c93" {...bodyFat} />}
+      {weight && <GoalCard label="Weight Goal" color="#4da8ff" {...weight} />}
+      {bodyFat && <GoalCard label="Body Fat Goal" color="#ff5c93" {...bodyFat} />}
     </div>
   )
 }

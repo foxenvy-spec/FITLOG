@@ -67,7 +67,7 @@ export default function TodayCard({
     variant === 'restDay'
       ? { main: 'Recovery Day', detail: 'Rest • Mobility' }
       : variant === 'noProgram'
-        ? { main: 'ยังไม่มีโปรแกรม', detail: null }
+        ? { main: 'No Program Yet', detail: null }
         : workoutTitle
           ? splitTitleDetail(workoutTitle)
           : mg
@@ -75,14 +75,14 @@ export default function TodayCard({
                 const focus = describeMuscleFocus(mg)
                 return { main: focus.region, detail: formatRelatedGroups(focus.relatedGroups) }
               })()
-            : { main: 'ยังไม่มี Workout วันนี้', detail: null }
+            : { main: 'No Workout Today', detail: null }
 
   const todayDominantMg = workoutTitle && variant === 'active' ? dominantMuscleGroup(todayExercises) : null
   const todayRegion = todayDominantMg ? describeMuscleFocus(todayDominantMg).region : null
   const detail = rawDetail && todayRegion ? `${todayRegion} • ${rawDetail}` : rawDetail
 
   const isCompleted = variant === 'active' && total > 0 && completed >= total
-  const buttonLabel = variant === 'noProgram' ? 'ให้ MINT แนะนำ' : isCompleted ? 'ดูสรุปวันนี้' : 'START WORKOUT'
+  const buttonLabel = variant === 'noProgram' ? 'Ask MINT' : isCompleted ? 'View Summary' : 'START WORKOUT'
   const buttonHref = variant === 'noProgram' ? '/coach' : href
 
   return (
@@ -109,7 +109,7 @@ export default function TodayCard({
             style={{ gap: 5, color: 'rgba(255,255,255,.85)', fontSize: 11.5, marginBottom: 6 }}
           >
             <ClockIcon />
-            วันนี้ควรทำอะไร?
+            Today&apos;s Focus
           </div>
           <div className="font-homeNum font-extrabold text-white truncate" style={{ fontSize: 19, marginBottom: 5 }}>
             {main}
@@ -122,9 +122,9 @@ export default function TodayCard({
           {variant === 'active' && (
             <div className="flex items-center font-homeNum font-semibold" style={{ gap: 14, color: 'rgba(255,255,255,.9)', fontSize: 11.5 }}>
               <span>
-                {completed}/{Math.max(total, 1)} ท่า
+                {completed}/{Math.max(total, 1)} exercises
               </span>
-              {isCompleted && <span>เสร็จแล้ว ✓</span>}
+              {isCompleted && <span>Completed ✓</span>}
             </div>
           )}
         </div>

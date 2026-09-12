@@ -143,7 +143,7 @@ export default function MobileDashboardView() {
   const makeupSessionActive = !!activeMakeupDay && makeupSessionFinished === false
   const makeupExercisesCompleted = (data?.todayWorkouts ?? []).filter((w) => w.program_day_id === activeMakeupDay).length
 
-  const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'บันทึกอิสระ' : null)
+  const workoutTitle = scheduledDay?.title ?? ((data?.todayWorkouts.length ?? 0) > 0 ? 'Free Log' : null)
   const progressPct =
     data && data.todayExercises.length > 0
       ? Math.min(100, Math.round(((data.completedCount + data.adhocCompletedCount) / data.todayExercises.length) * 100))
@@ -252,7 +252,7 @@ export default function MobileDashboardView() {
           unit,
           decimals: 1,
           pct: weightGoalPct ?? 0,
-          statusText: weightGoalReached ? 'ถึงเป้าหมายแล้ว 🎉' : weightRemaining ? `เหลือ ${weightRemaining.value.toFixed(1)} ${weightRemaining.unit}` : '',
+          statusText: weightGoalReached ? 'Goal reached 🎉' : weightRemaining ? `${weightRemaining.value.toFixed(1)} ${weightRemaining.unit} to go` : '',
         }
       : null
   const bodyFatGoalCard =
@@ -263,7 +263,7 @@ export default function MobileDashboardView() {
           unit: '%',
           decimals: 1,
           pct: bodyFatGoalPct ?? 0,
-          statusText: bodyFatGoalReached ? 'ถึงเป้าหมายแล้ว 🎉' : bodyFatRemaining != null ? `เหลือ ${bodyFatRemaining.toFixed(1)}%` : '',
+          statusText: bodyFatGoalReached ? 'Goal reached 🎉' : bodyFatRemaining != null ? `${bodyFatRemaining.toFixed(1)}% to go` : '',
         }
       : null
 
