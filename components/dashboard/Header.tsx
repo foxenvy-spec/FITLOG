@@ -20,16 +20,18 @@ function BoltIcon() {
 
 // v3: ฟีดแบ็ก (design review poster, "Version 2 — 9.3/10") "ทำให้เหมือน 100%" — รอบก่อน (v2, "New_mobile_
 // app.zip" ตรงๆ) ตัด hero photo ออกทั้งหมดเพราะสเปกนั้นไม่มี แต่รอบรีวิวถัดมาระบุชัดว่า Header ควรมีภาพพื้น
-// หลังกลับมา ("Hero Section: ภาพพื้นหลังสร้างอารมณ์และเอกลักษณ์ของ FITLOG") — ใช้ภาพเดียวกับที่เคยใช้ตอน
-// "brief 2" (session-complete-hero-mobile.png, คนมองภูเขา/พระอาทิตย์ตก โทนเดียวกับที่ภาพรีวิวโชว์) แทนที่
-// จะหารูปใหม่ — scrim ไล่มืดจากบนลงล่าง (เข้มสุดล่างให้ตัวหนังสือ/พื้นหลังหน้าถัดไปกลืนกันสนิท) เทคนิค
-// เดียวกับที่เคยพิสูจน์แล้วว่าอ่านออกจริงตอน "brief 2" — โพลิชข้อ "ลดความสูง Header 5-8%" ทำผ่าน minHeight
-// ที่ตั้งใจให้กระชับ (190px) ไม่ใช่ปล่อยให้สูงเท่าที่เนื้อหาต้องการเฉยๆ
+// หลังกลับมา ("Hero Section: ภาพพื้นหลังสร้างอารมณ์และเอกลักษณ์ของ FITLOG") — scrim ไล่มืดจากบนลงล่าง (เข้ม
+// สุดล่างให้ตัวหนังสือ/พื้นหลังหน้าถัดไปกลืนกันสนิท) เทคนิคเดียวกับที่เคยพิสูจน์แล้วว่าอ่านออกจริงตอน
+// "brief 2" — โพลิชข้อ "ลดความสูง Header 5-8%" ทำผ่าน minHeight ที่ตั้งใจให้กระชับ (190px) ไม่ใช่ปล่อยให้
+// สูงเท่าที่เนื้อหาต้องการเฉยๆ
+// v4: ผู้ใช้ส่งรูปใหม่มาเอง (home-header-hero.png, 2560×1440 แนวนอน) แทนที่ session-complete-hero-
+// mobile.png เดิม (ยืม asset จากหน้า session-complete มาใช้ชั่วคราว) — ไฟล์เดิมยังอยู่ ใช้ต่อที่หน้า
+// session/page.tsx (หน้าจอสรุปผลหลังจบเวิร์กเอาต์) แยกกันคนละจุด ไม่เกี่ยวกัน ไม่ลบทิ้ง
 export default function Header({ greetingText, displayName, notifications }: HeaderProps) {
   return (
     <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190, boxShadow: '0 8px 24px rgba(0,0,0,.4)' }}>
       <Image
-        src="/images/session-complete-hero-mobile.png"
+        src="/images/home-header-hero.png"
         alt=""
         fill
         className="object-cover"
