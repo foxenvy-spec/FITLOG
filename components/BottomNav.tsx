@@ -20,8 +20,11 @@ import FitnessRing from '@/components/dashboard/FitnessRing'
 // เคยผ่านการปรับ contrast มาแล้วหลายรอบไว้ทั้งหมด (คือส่วนที่ทำให้ดู "เป็นโลหะขัดเงา" จริง ไม่ใช่แบนราบ)
 // เปลี่ยนแค่ hue ลด alpha ของ glow ลงอีก (mockup ให้ความรู้สึกลอยเบา ไม่ใช่ไฟจ้า) ตามโพลิช "ลด glow บาง
 // จุดที่มากเกินไป" ในภาพเดียวกัน
+// v2: ฟีดแบ็ก (เทียบ poster รอบละเอียด) "ปุ่มลอยกลางยังดู Gaming/Mechanical ไป ลดความสว่างของ glow ลง
+// อีก 20-30%" — ลด alpha อีกขั้น (.4/.4/.22/.08 -> .3/.3/.16/.05) ปุ่มนี้เป็น Action/CTA จริงตัวเดียวใน
+// bottom nav เลยยังคงเป็นส้มไว้ (ไม่ใช่จุดที่ต้องเปลี่ยนสี ต่างจาก active tab ด้านล่าง)
 const BOTTOM_NAV_GLOW_SHADOW =
-  '0 0 2px rgba(255,255,255,.4), 0 0 8px rgba(255,154,90,.4), 0 0 20px rgba(255,120,50,.22), 0 0 46px rgba(255,100,40,.08)'
+  '0 0 2px rgba(255,255,255,.3), 0 0 8px rgba(255,154,90,.3), 0 0 20px rgba(255,120,50,.16), 0 0 46px rgba(255,100,40,.05)'
 
 const BOTTOM_NAV_RING_GRADIENT = [
   { offset: '0%', color: '#5C2208' },
@@ -34,11 +37,14 @@ const BOTTOM_NAV_RING_GRADIENT = [
   { offset: '100%', color: '#5C2208' },
 ] as const
 
-// สีแท็บ active ของ Bottom Nav มือถือ (ส้มแบรนด์ใหม่ #ff8a3d) — แยกจาก COLORS.amber (#E8A33D) เดิมที่
-// SidebarNav.tsx (เมนูซ้ายเดสก์ท็อป) ยังใช้อยู่ผ่านไอคอนชุดเดียวกันด้านล่างของไฟล์นี้ — เพิ่ม activeColor
-// เป็น optional prop ในแต่ละไอคอนแทนที่จะแก้ COLORS.amber ตรงๆ (กระทบทั้งแอปรวมเดสก์ท็อปที่ไม่ได้อยู่ใน
-// ขอบเขตงานนี้) ไม่ส่ง prop นี้ = ใช้ COLORS.amber เดิมทุกจุดที่ไม่ได้แก้ (SidebarNav.tsx)
-const MOBILE_NAV_ACCENT = '#ff8a3d'
+// ฟีดแบ็ก (เทียบ poster รอบละเอียด) "Orange กระจายทั่วหน้าเกินไป รวมถึง Bottom Navigation — ควรสงวนส้ม
+// ไว้แค่ Action/CTA จริงจุดเดียว (ปุ่มลอย START WORKOUT ด้านบน) แท็บนำทางปกติ (Home/Program/Stats/
+// Profile) เป็น Information/navigation ไม่ใช่ action ควรเป็นฟ้า/ทีลแทน" — เปลี่ยนจากส้มแบรนด์เป็นฟ้า
+// เฉพาะสีแท็บ active — แยกจาก COLORS.amber (#E8A33D) เดิมที่ SidebarNav.tsx (เมนูซ้ายเดสก์ท็อป) ยังใช้
+// อยู่ผ่านไอคอนชุดเดียวกันด้านล่างของไฟล์นี้ — เพิ่ม activeColor เป็น optional prop ในแต่ละไอคอนแทนที่จะ
+// แก้ COLORS.amber ตรงๆ (กระทบทั้งแอปรวมเดสก์ท็อปที่ไม่ได้อยู่ในขอบเขตงานนี้) ไม่ส่ง prop นี้ = ใช้
+// COLORS.amber เดิมทุกจุดที่ไม่ได้แก้ (SidebarNav.tsx)
+const MOBILE_NAV_ACCENT = '#35b8ff'
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
 // เดิมมี 4 แท็บ (หน้าแรก/เทรน-hub/สถิติ/โปรไฟล์) โดย "เทรน" เป็น hub รวมทางลัดไปโปรแกรม/

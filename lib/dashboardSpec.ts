@@ -21,7 +21,10 @@ export const dashboardSpec = {
     // marginTop:10 เสริมเฉพาะคู่ Today's Workout→Body Overview (v13, ไม่ได้แก้ที่นี่) รวมเป็น 8+10=18px
     // (เดิม 16+10=26px) ยังคงมากกว่าคู่อื่นเล็กน้อยตามที่ฟีดแบ็กรอบนั้นขอไว้ — ไม่แตะ metricCard.gridGap
     // (ระยะในการ์ด Body Overview เอง) ตามที่ระบุชัดว่า "ไม่ต้องเพิ่ม/ลดขนาด 4 การ์ดนั้น"
-    sectionGap: 8,
+    // v: ฟีดแบ็ก (เทียบ poster "Version 2" รอบละเอียด) "การ์ดในรูปจริงใหญ่/หนาเกินไป ~15-20% เทียบกับ
+    // mockup — ลด vertical spacing ลงด้วย ไม่ใช่แค่ขนาดการ์ด" — 8 -> 7 (-12.5%, ระมัดระวังกว่าเกณฑ์
+    // 15-20% เพราะ token นี้กระทบทุกคู่การ์ดพร้อมกันทีเดียว)
+    sectionGap: 7,
   },
   // v3: "New_mobile_app.zip" — ทิศทางดีไซน์ Home ใหม่ทั้งชุด (ผู้ใช้เลือก "ทำเฉพาะหน้า Home" หลัง
   // อัปโหลด brief ที่ 3 ซึ่งคนละทิศทางจาก brief ที่ 2 เดิม: ไม่มี hero photo/Fitness Score ring ใน
@@ -30,30 +33,34 @@ export const dashboardSpec = {
   // วงกลม 7 วัน), เพิ่ม Goal Cards (เนื้อหาใหม่ที่ mobile ไม่เคยมีมาก่อน) — token เดิมของ header/
   // miniStatCard/focusCard/workoutCard (บรีฟที่ 2) ถูกแทนที่ทั้งหมดด้วยชุดนี้ตาม README/markup จริงใน
   // "FITLOG.dc.html" ของแพ็กเกจใหม่
+  // v: ฟีดแบ็ก (เทียบ poster "Version 2" รอบละเอียด, live screenshot) "การ์ดในรูปจริงใหญ่/หนาเกินไป
+  // ~15-20% เทียบกับ mockup — โดยเฉพาะ padding/ไอคอน ไม่ใช่แค่ font ตัวเลข" — ลด padding/iconSize/
+  // barHeight ของ 4 การ์ดชุดนี้ลง ~15-20% ทุกจุด (ไม่แตะ font size ของ "ข้อมูลจริง" เช่นตัวเลข value/
+  // ชื่อเวิร์กเอาต์ ตามที่ผู้ใช้ระบุว่าข้อมูลควรยังอ่านง่าย แค่ระยะ/กรอบรอบๆ ควรแน่นขึ้น)
   bodyOverviewCard: {
     borderRadius: 18,
-    padding: 16,
-    statBorderRadius: 12,
-    statGap: 8,
-    iconSize: 24,
-    iconRadius: 7,
+    padding: 13, // -19% จาก 16
+    statBorderRadius: 10, // -17% จาก 12
+    statGap: 7, // -12.5% จาก 8
+    iconSize: 20, // -17% จาก 24
+    iconRadius: 6,
   },
   todayCard: {
     borderRadius: 18,
-    padding: 16,
+    padding: 13, // -19% จาก 16
     photoSize: 56,
     photoRadius: 12,
   },
   weeklyProgressCard: {
     borderRadius: 18,
-    padding: 16,
-    barHeight: 8,
+    padding: 13, // -19% จาก 16
+    barHeight: 7, // -12.5% จาก 8
   },
   goalCard: {
     borderRadius: 16,
-    padding: 13,
-    barHeight: 6,
-    gridGap: 10,
+    padding: 11, // -15% จาก 13
+    barHeight: 5, // -17% จาก 6
+    gridGap: 9, // -10% จาก 10
   },
   aiCoachCardV3: {
     borderRadius: 18,

@@ -94,13 +94,20 @@ export default function TodayCard({
         overflow: 'hidden',
         // ฟีดแบ็ก (poster "Version 2 — 9.3/10", โพลิช "ลด glow บางจุดที่มากเกินไป") — ลด alpha ของชั้น
         // ส้ม .2 -> .16 และเงาเข้ม .45 -> .4 ให้เบาลงเล็กน้อยตามที่ระบุ ไม่แตะโครงสร้าง/สีพื้นฐาน
-        boxShadow: '0 16px 32px rgba(255,84,22,.16), 0 8px 20px rgba(0,0,0,.4)',
+        // v2: ฟีดแบ็ก (เทียบ poster รอบละเอียด) "Orange กระจายทั่วหน้าเกินไป — การ์ดนี้ควรเป็น Black/
+        // Titanium ที่มีแสงส้มแตะเบาๆ ('Orange → Black' เดิมหนักไปคนละด้าน ต้องการ 'Black → subtle
+        // orange light' แทน)" — ลด boxShadow ส้มลงอีกขั้น (.16 -> .12)
+        boxShadow: '0 16px 32px rgba(255,84,22,.12), 0 8px 20px rgba(0,0,0,.4)',
       }}
     >
       <Image src="/images/workout-hero.jpg" alt="" fill className="object-cover" aria-hidden="true" />
+      {/* ฟีดแบ็ก (เทียบ poster รอบละเอียด) "ลด Orange background ลงประมาณ 30-40% ให้เป็น Black/Titanium
+          → subtle orange light แทน Orange → Black" — ลด alpha ชั้นส้มจาก .55 ลงมาเหลือ .22 (-60%) พื้นที่
+          ส่วนใหญ่ของการ์ดกลายเป็นมืด/ไทเทเนียมเป็นหลัก มีแค่แสงส้มจางๆ แตะมุมซ้ายบน แทนที่จะเป็นภาพ "ล้าง
+          ด้วยสีส้ม" ทั้งการ์ดแบบเดิม */}
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(115deg, rgba(255,84,22,.55) 0%, rgba(10,13,18,.65) 45%, rgba(10,13,18,.88) 100%)' }}
+        style={{ background: 'linear-gradient(115deg, rgba(255,84,22,.22) 0%, rgba(10,13,18,.72) 40%, rgba(10,13,18,.92) 100%)' }}
         aria-hidden="true"
       />
 
@@ -122,7 +129,10 @@ export default function TodayCard({
             </div>
           )}
           {variant === 'active' && (
-            <div className="flex items-center font-homeNum font-semibold" style={{ gap: 14, color: 'rgba(255,255,255,.9)', fontSize: 11.5 }}>
+            // ฟีดแบ็ก "ทุกตัวแข็งแรงหมด (bold) — ควรมี hierarchy ชัดเจนกว่านี้ ระหว่างข้อมูลหลักกับข้อมูล
+            // รอง" — แถวนี้เป็นสถานะสนับสนุน (ไม่ใช่ตัวเลขหลักของการ์ด เช่น "Day 5 — Lower" ด้านบน) ลดจาก
+            // font-semibold เป็นน้ำหนักปกติ ให้ตัวเลขหลัก/ปุ่ม CTA ยังคงเป็นจุดหนักสุดของการ์ดเหมือนเดิม
+            <div className="flex items-center font-homeNum" style={{ gap: 14, color: 'rgba(255,255,255,.75)', fontSize: 11.5 }}>
               <span>
                 {completed}/{Math.max(total, 1)} exercises
               </span>

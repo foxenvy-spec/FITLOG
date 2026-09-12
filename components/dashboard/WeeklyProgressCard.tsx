@@ -25,19 +25,28 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
   const total = Math.max(plannedCount, 1)
 
   return (
-    <div style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', borderRadius, padding, boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}>
+    <div
+      style={{
+        background: 'linear-gradient(180deg, #171c25 0%, #12161d 100%)',
+        border: '1px solid rgba(255,255,255,.06)',
+        borderRadius,
+        padding,
+        boxShadow: '0 8px 20px rgba(0,0,0,.35)',
+      }}
+    >
       <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
         <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
           Weekly Progress
         </span>
         {streak > 0 && (
-          // ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — badge streak ใน
-          // mockup เป็นพื้นส้มทึบ+ตัวหนังสือขาว ไม่ใช่พื้นจาง+ตัวหนังสือส้มแบบเดิม (เหมือนจุดเดียวกับ badge
-          // ไอคอน Body Overview ด้านบน — เป็น pattern เดียวกันทั่วหน้าใน mockup)
+          // ฟีดแบ็ก (เทียบ poster รอบละเอียด) "Orange กระจายทั่วหน้าเกินไป (Today's Focus/Start/Streak/
+          // Progress/Bottom Nav/AI Coach ล้วนส้มหมด — ควรสงวนส้มไว้แค่ Action/CTA จริง ใช้ฟ้า/เขียวสำหรับ
+          // Information/Progress แทน)" — สตรีคเป็นสถิติ ไม่ใช่ปุ่มกด เปลี่ยนจากส้มเป็นเขียว (สื่อ "ทำสำเร็จ
+          // ต่อเนื่อง" ตรงกับโทน isGood=true ที่ Body Overview ใช้อยู่แล้ว)
           <span
             className="font-homeNum font-bold"
             style={{
-              background: 'linear-gradient(135deg,#ff9a3d,#ff5f1f)',
+              background: 'linear-gradient(135deg,#3ee089,#1fae63)',
               color: '#fff',
               fontSize: 10.5,
               padding: '4px 8px',
@@ -55,12 +64,14 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
             days
           </span>
         </span>
-        <span className="font-homeNum font-bold" style={{ fontSize: 14, color: '#ff8a3d' }}>
+        {/* ฟีดแบ็ก เดียวกับ badge ด้านบน — % ความคืบหน้าเป็นข้อมูล (Information) ไม่ใช่ Action เปลี่ยน
+            จากส้มเป็นฟ้า/ทีล ตามสูตรสี "Information = Cyan/Blue, Teal" ที่ผู้ใช้แนะนำ */}
+        <span className="font-homeNum font-bold" style={{ fontSize: 14, color: '#35b8ff' }}>
           {displayPct}%
         </span>
       </div>
       <div style={{ height: barHeight, borderRadius: 999, background: 'rgba(255,255,255,.06)', overflow: 'hidden' }}>
-        <AnimatedBarFill pct={displayPct} color="#ff8a3d" background="linear-gradient(90deg,#ff9a3d,#ff5416)" />
+        <AnimatedBarFill pct={displayPct} color="#35b8ff" background="linear-gradient(90deg,#35b8ff,#20d6c7)" />
       </div>
     </div>
   )

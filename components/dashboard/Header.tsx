@@ -29,15 +29,25 @@ function BoltIcon() {
 // session/page.tsx (หน้าจอสรุปผลหลังจบเวิร์กเอาต์) แยกกันคนละจุด ไม่เกี่ยวกัน ไม่ลบทิ้ง
 // v5: ฟีดแบ็ก "เอาไล่มืดออกให้หน่อยครับ" — ตัด scrim gradient ทับรูปออกทั้งหมดตามที่ขอ (รูปใหม่นี้มืด/
 // คอนทราสต์พออ่านตัวหนังสือขาวออกอยู่แล้วโดยไม่ต้องพึ่ง scrim เหมือนรูปเก่า)
+// v6: ฟีดแบ็ก (เทียบ poster รอบละเอียด) "รูป 3 ทำให้ภาพภูเขาเป็นส่วนหนึ่งของ background (atmosphere)
+// รูป 1-2 ของจริงยังเป็น banner แยกชิ้นชัดเจน (ขอบ+เงาเข้มตัดกับพื้นหลังหน้า)" — เพิ่ม fade overlay
+// ไล่จากโปร่งใสไปเป็นสีพื้นหลังหน้า (#0a0d12) เฉพาะโซนล่างสุด (48px) ให้ภาพ "ละลาย" เข้ากับพื้นหลังแทนที่
+// จะตัดขอบแข็งแบบเดิม (วางไว้ก่อนเนื้อหา content ใน DOM order เนื้อหาเลยยัง render ทับด้านบนเสมอ ไม่ถูก
+// fade กระทบ) + ลด boxShadow ลง (.4 -> .28) ให้ดูเป็นพื้นผิวเดียวกับหน้า ไม่ใช่การ์ดลอยแยกชัด
 export default function Header({ greetingText, displayName, notifications }: HeaderProps) {
   return (
-    <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190, boxShadow: '0 8px 24px rgba(0,0,0,.4)' }}>
+    <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190, boxShadow: '0 4px 14px rgba(0,0,0,.28)' }}>
       <Image
         src="/images/home-header-hero.png"
         alt=""
         fill
         className="object-cover"
         style={{ objectPosition: '50% 25%' }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0"
+        style={{ height: 48, background: 'linear-gradient(180deg, transparent 0%, #0a0d12 100%)' }}
+        aria-hidden="true"
       />
 
       <div className="relative" style={{ padding: '16px 16px 18px' }}>

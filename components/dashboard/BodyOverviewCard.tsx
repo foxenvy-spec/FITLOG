@@ -115,11 +115,11 @@ function StatCell({
   return (
     <div
       className="rounded-xl"
-      style={{ background: 'rgba(255,255,255,.03)', borderRadius: dashboardSpec.bodyOverviewCard.statBorderRadius, padding: '10px 8px' }}
+      style={{ background: 'rgba(255,255,255,.03)', borderRadius: dashboardSpec.bodyOverviewCard.statBorderRadius, padding: '8px 7px' }}
     >
       <div
         className="flex items-center justify-center"
-        style={{ width: iconSize, height: iconSize, borderRadius: iconRadius, background: iconTint, marginBottom: 8 }}
+        style={{ width: iconSize, height: iconSize, borderRadius: iconRadius, background: iconTint, marginBottom: 6 }}
         aria-hidden="true"
       >
         {icon}
@@ -127,7 +127,7 @@ function StatCell({
       <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.45)', fontSize: 10.5, marginBottom: 2 }}>
         {label}
       </p>
-      <p className="font-homeNum font-bold text-white" style={{ fontSize: 15, marginBottom: 3 }}>
+      <p className="font-homeNum font-bold text-white" style={{ fontSize: 15, marginBottom: 2 }}>
         {value}
       </p>
       <p className="font-homeNum font-semibold" style={{ fontSize: 10.5, color: deltaColor(isGood) }}>
@@ -144,14 +144,17 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
   return (
     <div
       style={{
-        background: '#12161d',
+        // ฟีดแบ็ก "รูป 3 มี depth ดีกว่า — Background → Card → inner panel → gradient accent"
+        // — พื้นเรียบทึบเดิม (#12161d) เปลี่ยนเป็นไล่สีแนวตั้งจาง ๆ (ไม่ใช่ glow) ให้ผิวการ์ดดูมีมิติขึ้น
+        // นิดเดียว โทนเดียวกับที่ใช้ซ้ำในการ์ดอื่นของ Home รอบนี้ทั้งหมด
+        background: 'linear-gradient(180deg, #171c25 0%, #12161d 100%)',
         border: '1px solid rgba(255,255,255,.06)',
         borderRadius,
         padding,
         boxShadow: '0 8px 20px rgba(0,0,0,.35)',
       }}
     >
-      <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
         <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
           Body Overview
         </span>

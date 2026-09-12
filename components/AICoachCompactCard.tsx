@@ -696,9 +696,16 @@ export default function AICoachCompactCard({
 function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'; children: ReactNode }) {
   if (variant === 'flat') {
     return (
+      // ฟีดแบ็ก (เทียบ poster รอบละเอียด) "รูป 3 มี depth ดีกว่า — plain flat card ควรมีไล่สีจางๆ ให้ดูมี
+      // มิติ" — พื้นทึบเดิม (#12161d) เปลี่ยนเป็นไล่สีแนวตั้งจางๆ แบบเดียวกับการ์ดใหม่อื่นๆ ของ Home รอบนี้
+      // (BodyOverviewCard/WeeklyProgressCard/GoalCardsRow) ไม่แตะ logic/สีภายในการ์ดจุดอื่นเลย
       <div
         className="rounded-card flex flex-col gap-1.5 px-3 py-2.5"
-        style={{ background: '#12161d', border: '1px solid rgba(255,255,255,.06)', boxShadow: '0 8px 20px rgba(0,0,0,.35)' }}
+        style={{
+          background: 'linear-gradient(180deg, #171c25 0%, #12161d 100%)',
+          border: '1px solid rgba(255,255,255,.06)',
+          boxShadow: '0 8px 20px rgba(0,0,0,.35)',
+        }}
       >
         {children}
       </div>
