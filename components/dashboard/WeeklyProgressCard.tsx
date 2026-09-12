@@ -65,7 +65,7 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
       <div className="flex justify-between items-baseline" style={{ marginBottom: 8 }}>
         <span className="font-homeNum font-extrabold text-white" style={{ fontSize: 20 }}>
           {completedCount}/{total}{' '}
-          <span className="font-semibold" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>
+          <span className="font-semibold" style={{ fontSize: 12, color: '#A7ADB7' }}>
             days
           </span>
         </span>
@@ -74,9 +74,11 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
         <AnimatedBarFill pct={displayPct} color="#35b8ff" background="linear-gradient(90deg,#35b8ff,#20d6c7)" />
       </div>
       {/* ฟีดแบ็ก "ตัดเลข % ออกทั้งหมด (ซ้ำกับที่แถบ progress สื่ออยู่แล้ว) แทนที่ด้วยประโยคบอกพฤติกรรม" —
-          แทนที่ตัวเลข 60% เดิมด้วยบรรทัดนี้ ให้คำตอบ "ต้องทำอีกกี่ครั้ง" ตรงๆ แทนเปอร์เซ็นต์นามธรรม */}
+          แทนที่ตัวเลข 60% เดิมด้วยบรรทัดนี้ ให้คำตอบ "ต้องทำอีกกี่ครั้ง" ตรงๆ แทนเปอร์เซ็นต์นามธรรม —
+          ข้อความนี้เป็น actionable information ที่ user อ่านบ่อย ไม่ควรใช้โทน muted (rgba จางเดิม) เปลี่ยน
+          เป็น Secondary tier (#A7ADB7) ตามที่ผู้ใช้ระบุ */}
       {remainingLabel && (
-        <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.45)', fontSize: 10.5, marginTop: 6 }}>
+        <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 10.5, marginTop: 6 }}>
           {remainingLabel}
         </p>
       )}

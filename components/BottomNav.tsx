@@ -164,8 +164,13 @@ export default function BottomNav() {
           ค่าเดิม 0.42 กับ 0.58 — โผล่พ้นขอบบนแค่พอเห็นเป็นทรงกลมเต็มวง ไม่ได้ห่างจนดูแยกชิ้น) คงชุดสี/
           contrast ของ ring gradient และ glow ที่ปรับไว้ก่อนหน้าไว้ทั้งหมด (จุดที่ทำให้ "มีมิติ" จริงๆ คือ
           ตรงนั้น ไม่ใช่ระยะยก) */}
+      {/* ฟีดแบ็ก (เทียบ poster รอบละเอียด) "ปุ่มลอยกลางยังดู Gaming/Mechanical ไป — ลดวงแหวนลงเหลือ 1
+          outer glow + 1 titanium rim" — glow เดิม pulse ตลอดเวลา (opacity/scale หายใจทุก 3 วินาที ไม่มี
+          วันหยุด) เป็นจุดที่ทำให้ดูเป็น breathing HUD มากที่สุด ตัด animation ออก เหลือ glow นิ่งชั้นเดียว
+          (ring/titanium rim ด้านล่างเป็น "simple" mode อยู่แล้ว — ตัด bloom/reflection/highlight/tip ไป
+          หมดแล้วตั้งแต่ก่อนหน้านี้ ไม่ต้องลดซ้ำ) */}
       <span
-        className="absolute rounded-full pointer-events-none animate-start-workout-pulse"
+        className="absolute rounded-full pointer-events-none"
         aria-hidden="true"
         style={{
           top: -Math.round(btnSize * 0.46),

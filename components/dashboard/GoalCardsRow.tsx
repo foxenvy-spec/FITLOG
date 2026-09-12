@@ -41,8 +41,10 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
           เข้ามาเฉยๆ ไม่กระทบ pct ที่ใช้ fill แถบอยู่แล้ว */}
       {/* ฟีดแบ็ก "'Body Fat Goal — 40%' อ่านแล้วเข้าใจผิดว่า 40% คือตัวเป้าหมาย Body Fat เอง เพราะ % อยู่ติด
           กับหัวข้อ Goal" — เติมคำว่า "complete" ต่อท้ายให้ชัดว่าเป็นความคืบหน้า ไม่ใช่ค่าเป้าหมาย */}
+      {/* ฟีดแบ็ก "ป้ายชื่อ/สถานะเป้าหมายเทาเกินไป — ใช้ Secondary tier #A7ADB7 แทน rgba จางเดิม เพราะ
+          user อ่านข้อมูลนี้บ่อย ไม่ควรเป็นโทน muted" */}
       <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-        <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.5)', fontSize: 11 }}>
+        <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 11 }}>
           {label}
         </p>
         <p className="font-homeNum font-semibold" style={{ color, fontSize: 11 }}>
@@ -55,7 +57,7 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
       <div style={{ height: barHeight, borderRadius: 999, background: 'rgba(255,255,255,.06)', overflow: 'hidden', marginBottom: 6 }}>
         <AnimatedBarFill pct={pct} color={color} />
       </div>
-      <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.4)', fontSize: 10.5 }}>
+      <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 10.5 }}>
         {statusText}
       </p>
     </div>

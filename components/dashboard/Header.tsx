@@ -34,6 +34,10 @@ function BoltIcon() {
 // ไล่จากโปร่งใสไปเป็นสีพื้นหลังหน้า (#0a0d12) เฉพาะโซนล่างสุด (48px) ให้ภาพ "ละลาย" เข้ากับพื้นหลังแทนที่
 // จะตัดขอบแข็งแบบเดิม (วางไว้ก่อนเนื้อหา content ใน DOM order เนื้อหาเลยยัง render ทับด้านบนเสมอ ไม่ถูก
 // fade กระทบ) + ลด boxShadow ลง (.4 -> .28) ให้ดูเป็นพื้นผิวเดียวกับหน้า ไม่ใช่การ์ดลอยแยกชัด
+// v7: ฟีดแบ็ก "ภูเขาเด่นเกินไปนิดหนึ่ง ดูเหมือน fitness+travel/adventure app มากกว่า Dark Titanium — ลด
+// contrast ของภาพลง ~15-25% ให้ภาพทำหน้าที่เป็น background มากกว่าพระเอก" — ใช้ CSS filter ลด
+// contrast/saturation ของรูปโดยตรง (ไม่ใช่ทับ scrim มืดแบบที่เพิ่งเอาออกไปตามฟีดแบ็กก่อนหน้า — คนละ
+// เทคนิค คนละจุดประสงค์: scrim เดิมมีไว้กันตัวหนังสืออ่านไม่ออก ส่วนนี้มีไว้ลด "ความเป็นพระเอก" ของภาพเอง)
 export default function Header({ greetingText, displayName, notifications }: HeaderProps) {
   return (
     <div className="relative overflow-hidden" style={{ borderRadius: 20, minHeight: 190, boxShadow: '0 4px 14px rgba(0,0,0,.28)' }}>
@@ -42,7 +46,7 @@ export default function Header({ greetingText, displayName, notifications }: Hea
         alt=""
         fill
         className="object-cover"
-        style={{ objectPosition: '50% 25%' }}
+        style={{ objectPosition: '50% 25%', filter: 'contrast(0.8) saturate(0.8) brightness(0.92)' }}
       />
       <div
         className="absolute inset-x-0 bottom-0"

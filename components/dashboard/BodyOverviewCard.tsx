@@ -57,7 +57,7 @@ function MaskIcon({ src, color, size = 13 }: { src: string; color: string; size?
 
 function ChevronRightIcon() {
   return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2.5" aria-hidden="true">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#A7ADB7" strokeWidth="2.5" aria-hidden="true">
       <path d="M9 6l6 6-6 6" />
     </svg>
   )
@@ -94,16 +94,18 @@ function StatCell({
   return (
     <div
       className="rounded-xl"
-      style={{ background: 'rgba(255,255,255,.03)', borderRadius: dashboardSpec.bodyOverviewCard.statBorderRadius, padding: '8px 7px' }}
+      style={{ background: 'rgba(255,255,255,.03)', borderRadius: dashboardSpec.bodyOverviewCard.statBorderRadius, padding: '7px 6px' }}
     >
       <div
         className="flex items-center justify-center"
-        style={{ width: iconSize, height: iconSize, borderRadius: iconRadius, background: iconTint, marginBottom: 6 }}
+        style={{ width: iconSize, height: iconSize, borderRadius: iconRadius, background: iconTint, marginBottom: 5 }}
         aria-hidden="true"
       >
         {icon}
       </div>
-      <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.45)', fontSize: 10.5, marginBottom: 2 }}>
+      {/* ฟีดแบ็ก "Weight/Body Fat/Muscle เทาเกินไป อ่านยาก — Secondary tier ควรเป็น #A7ADB7 ไม่ใช่ rgba
+          จางแบบเดิม โดยเฉพาะข้อมูลที่ user อ่านบ่อย ไม่ควรใช้โทน muted" */}
+      <p className="font-homeTh" style={{ color: '#A7ADB7', fontSize: 10.5, marginBottom: 2 }}>
         {label}
       </p>
       <p className="font-homeNum font-bold text-white" style={{ fontSize: 15, marginBottom: 2 }}>
@@ -132,14 +134,15 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         boxShadow: '0 8px 20px rgba(0,0,0,.35)',
       }}
     >
-      <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
         <span className="text-white font-bold" style={{ fontSize: 14.5 }}>
           Body Overview
         </span>
         {/* ฟีดแบ็ก "BMI ไม่ควรอยู่ตรงนี้ ให้ไปอยู่หน้า Stats/Body Details แทน" — เดิม "Details" เป็นปุ่ม
             ขยาย/ยุบแสดง BMI ในการ์ดนี้เอง เปลี่ยนเป็นลิงก์จริงไปหน้า /health (มี BMI + รายละเอียดร่างกาย
-            ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ */}
-        <Link href="/health" className="flex items-center" style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, gap: 2 }}>
+            ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ — สีเดิม (rgba(255,255,255,.4)) จางเกินไป เปลี่ยนเป็น
+            Secondary tier (#A7ADB7) ตามที่ผู้ใช้ระบุ */}
+        <Link href="/health" className="flex items-center" style={{ color: '#A7ADB7', fontSize: 12, gap: 2 }}>
           Details
           <ChevronRightIcon />
         </Link>

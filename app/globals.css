@@ -91,9 +91,15 @@
      68px ได้) แทนที่จะพยายามคำนวณให้แม่นตาม breakdown เดิม เปลี่ยนแนวทางเป็นตั้งบัฟเฟอร์ฐานให้กว้างพอ
      เกินความสูงจริงของ nav แน่ๆ ไปเลย (96px, เท่ากับ pb-24 เดิมก่อนเริ่มแก้เรื่องนี้ทั้งหมด) แล้วค่อยบวก
      safe-area-inset-bottom ของเครื่องทับอีกที (ต่างจาก pb-24 เดิมที่ไม่เคยรวม safe-area เลย) */
+  /* ฟีดแบ็ก (รอบที่ 4) "Weekly Progress ถูก Bottom Nav บัง/ตัด — เพิ่ม bottom safe area อีก" — bottomNav.
+     height ปัจจุบันเหลือแค่ 58px (ลดจาก 68px เดิมที่คอมเมนต์ด้านบนอ้างถึง) ดังนั้น 96px buffer เดิมยังเกิน
+     พอในทางทฤษฎี ส่วนที่เหลือน่าจะมาจาก UI ของเบราว์เซอร์มือถือเอง (address bar/gesture bar) ที่กิน
+     พื้นที่จอเพิ่มนอกเหนือจาก layout ของหน้าเว็บ ซึ่ง CSS แก้ให้เต็มร้อยไม่ได้ — เพิ่มบัฟเฟอร์อีกขั้นตาม
+     pattern เดิม (+20px ต่อรอบ) เผื่อพื้นที่ให้มากขึ้น
+  */
   @media (max-width: 1023.98px) {
     .pb-safe-bottom-nav {
-      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
     }
   }
   .no-scrollbar {
