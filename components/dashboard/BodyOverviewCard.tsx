@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { bmiCategory } from '@/lib/bodyMetricsSummary'
+import { METRIC_ICON_IMAGES } from '@/components/MetricCard'
 
 interface MetricDelta {
   value: number | null
@@ -28,27 +29,31 @@ interface BodyOverviewCardProps {
 // เพราะไม่มี component อื่นต้องรู้สถานะนี้) — สีเดลต้า: brief ใช้เขียวคงที่ (#35d488) เพราะ mock data
 // เป็นค่าที่ดีทั้งหมด แต่จริงจะสลับ rust เมื่อ isGood===false / เทากลางเมื่อไม่รู้ทิศทาง (isGood===null)
 // เหมือน pattern เดิมที่ TriStatRow.tsx ใช้อยู่แล้วทั่วแอป ไม่ใช้สีตายตัวแบบ mockup ตรงๆ
-function WeightIcon() {
+// ฟีดแบ็ก "ใช้ไอคอน/อีโมจิให้เหมือนครับ" (จุด "icon ตรง 3 การ์ดบน" — 3 สต็อกน้ำหนัก/ไขมัน/กล้ามเนื้อ) —
+// เดิมวาด SVG เส้นเองเดา 3 อัน (วงกลม/หัวใจ/ลูกศรไขว้) ตรงตาม .dc.html เป๊ะ แต่ไม่ได้ดูเป็นมืออาชีพเท่า
+// ชุดไอคอนจริง "FITLOG – Metric Icons" (PNG, METRIC_ICON_IMAGES) ที่แอปมีอยู่แล้ว และเคยใช้แก้ปัญหา
+// เดียวกันนี้มาแล้วรอบก่อนกับการ์ด Recovery/Body Fat/Weight (TriStatRow.tsx เดิม ก่อนจะถูกแทนที่ด้วย
+// การ์ดนี้) — ใช้ MaskIcon เทคนิคเดียวกัน (PNG สีเดียวล้วน + CSS mask ระบายสีทับ) ให้ไอคอนดูสอดคล้อง/
+// เป็นมืออาชีพขึ้น แทนเส้นเรขาคณิตพื้นฐานที่วาดเดาเอง
+function MaskIcon({ src, color, size = 13 }: { src: string; color: string; size?: number }) {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da8ff" strokeWidth="2" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" />
-    </svg>
-  )
-}
-
-function BodyFatIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff5c93" strokeWidth="2" aria-hidden="true">
-      <path d="M12 21s-7-4.6-7-10.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 7 4.5C19 16.4 12 21 12 21z" />
-    </svg>
-  )
-}
-
-function MuscleIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d6c4" strokeWidth="2" aria-hidden="true">
-      <path d="M6.5 6.5 4 9l2.5 2.5M17.5 6.5 20 9l-2.5 2.5M9 4l1 16M15 4l-1 16" />
-    </svg>
+    <span
+      aria-hidden="true"
+      style={{
+        display: 'block',
+        width: size,
+        height: size,
+        backgroundColor: color,
+        WebkitMaskImage: `url(${src})`,
+        maskImage: `url(${src})`,
+        WebkitMaskSize: 'contain',
+        maskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        maskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        maskPosition: 'center',
+      }}
+    />
   )
 }
 
@@ -153,7 +158,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
 
       <div className="grid grid-cols-3" style={{ gap: statGap }}>
         <StatCell
-          icon={<WeightIcon />}
+          icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#4da8ff" />}
           iconTint="rgba(77,168,255,.15)"
           label="น้ำหนัก"
           value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
@@ -161,7 +166,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           isGood={weight.isGood}
         />
         <StatCell
-          icon={<BodyFatIcon />}
+          icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#ff5c93" />}
           iconTint="rgba(255,92,147,.15)"
           label="ไขมันในร่างกาย"
           value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
@@ -169,7 +174,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           isGood={bodyFatPct.isGood}
         />
         <StatCell
-          icon={<MuscleIcon />}
+          icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#34d6c4" />}
           iconTint="rgba(52,214,196,.15)"
           label="กล้ามเนื้อ"
           value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
