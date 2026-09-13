@@ -44,7 +44,18 @@ export default async function AppLayout({
             {/* safe-top ย้ายมาไว้ที่ main แทน (เดิมอยู่ที่ header ที่เพิ่งตัดออก) กัน status
                 bar/notch บนมือถือทับเนื้อหาบนสุด — env(safe-area-inset-top) เป็น 0 บนเดสก์ท็อป
                 ทั่วไปอยู่แล้ว จึงไม่กระทบเดสก์ท็อป */}
-            <main className="flex-1 w-full max-w-sm md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-safe-bottom-nav lg:pb-10 safe-top">
+            {/* บั๊ก (ฟีดแบ็ก "บน iPhone 14 Pro Max ทำไมไม่เต็มจอ") "max-w-sm (384px) ครอบ <main> ตั้งแต่
+                0px ถึง md (768px) — ช่วงนี้ครอบคลุมมือถือจริงแทบทุกรุ่นด้วย ไม่ใช่แค่หน้าต่างเดสก์ท็อปแคบๆ
+                ตามที่ตั้งใจ (iPhone 14/15/16 ธรรมดา/Pro กว้าง 390-393px ก็เกิน 384px แล้ว, Pro Max/Plus
+                กว้างถึง 430px — ส่วนเกินทั้งหมดกลายเป็นแถบดำว่างซ้าย-ขวานอกเหนือจาก px-5 gutter ปกติ ยิ่งจอ
+                กว้างยิ่งเห็นชัด)" — ใช้สกิล ui-ux-pro-max ยืนยัน pattern ที่ถูกต้อง (mobile-first: bucket
+                เริ่มต้นควร fluid เต็มความกว้าง เพิ่ม max-width center-constraint เฉพาะ breakpoint tablet/
+                desktop จริงขึ้นไป, ทดสอบช่วงมือถือจริงที่ 320-414 ก่อนถึง 768) — ตัด max-w-sm ออก เหลือแค่
+                w-full ที่ bucket มือถือ (0-767px) ให้เนื้อหาเต็มความกว้างจอจริงเสมอ (คุมด้วย px-5 อย่างเดียว
+                เหมือนที่ comment ด้านบนของไฟล์นี้ตั้งใจไว้แต่แรก — "< 768px: single column" ไม่เคยพูดถึงการ
+                จำกัดความกว้างเพิ่ม) — md:max-w-2xl/lg:max-w-none เดิมไม่แตะ ยังทำงานถูกต้องสำหรับแท็บเล็ต/
+                เดสก์ท็อปเหมือนเดิมทุกจุด */}
+            <main className="flex-1 w-full md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-safe-bottom-nav lg:pb-10 safe-top">
               {children}
             </main>
 

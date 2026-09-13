@@ -297,7 +297,13 @@ export default function BottomNav() {
         boxShadow: '0 -8px 24px rgba(0,0,0,.35)',
       }}
     >
-      <div className="relative max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
+      {/* บั๊ก (ฟีดแบ็ก "บน iPhone 14 Pro Max ทำไมไม่เต็มจอ") "max-w-sm บีบแถวไอคอน 5 ช่องให้แคบกว่า
+          viewport จริงบนมือถือกว้าง (Pro Max/Plus 430px) — คู่กับ <main> ใน app/(app)/layout.tsx ที่แก้
+          จุดเดียวกันไปแล้ว" — ตัด max-w-sm ออก เหลือ w-full ที่ bucket มือถือ ให้ 5 คอลัมน์กระจายเต็มความ
+          กว้างจอจริงเสมอ (md:max-w-2xl ของแท็บเล็ต/เดสก์ท็อปไม่แตะ) — ต้องแก้คู่กับ div ปุ่มลอยด้านล่าง
+          (comment เดิม "ใช้ grid/minHeight/safe-bottom ชุดเดียวกับ nav เป๊ะ") ให้ className ตรงกันเป๊ะเสมอ
+          ไม่งั้นตำแหน่งปุ่มลอยกับคอลัมน์ nav จะเหลื่อมกัน */}
+      <div className="relative w-full md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
 
@@ -339,7 +345,7 @@ export default function BottomNav() {
         เอง) แต่ไม่มี clipPath ครอบ ปุ่มเลยลอยพ้นกรอบ nav ได้เต็มที่โดยไม่โดนตัด — pointer-events-none
         ทั้ง wrapper/placeholder คอลัมน์ว่าง เปิดเฉพาะคอลัมน์ปุ่มจริงให้กดได้ */}
     <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 pointer-events-none safe-bottom" aria-hidden="false">
-      <div className="relative max-w-sm md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
+      <div className="relative w-full md:max-w-2xl mx-auto grid grid-cols-5 items-center" style={{ minHeight: dashboardSpec.bottomNav.height }}>
         <div aria-hidden="true" />
         <div aria-hidden="true" />
         <div className="pointer-events-auto">{floatingButton}</div>
