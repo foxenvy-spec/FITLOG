@@ -91,10 +91,16 @@ function ChevronRightIcon() {
   )
 }
 
+// ฟีดแบ็ก (Product/UI review, "Semantic Delta System") "'Body Fat 24.6% / 0' อ่านแล้วกำกวม — เดิม
+// delta===0 (วัดจริง เทียบกับเอนทรีก่อนหน้าแล้วไม่ต่างกัน คนละเคสกับ delta==null ที่ไม่มีเอนทรีก่อนหน้าให้
+// เทียบเลย) render ออกมาเป็นแค่ตัวเลข '0' ลอยๆ ไม่มีลูกศร/หน่วย ดูเหมือนเลขพัง ไม่ใช่ 'ไม่เปลี่ยนแปลง' —
+// เปลี่ยนเป็นข้อความ 'No change' ชัดเจนแทน (deltaColor เดิมให้ isGood===null -> เทากลาง อยู่แล้ว ถูกต้อง
+// สำหรับเคสนี้ ไม่ต้องแก้สี แก้แค่ข้อความ)
 function deltaText(delta: number | null, digits = 1): string {
   if (delta == null) return '–'
   const rounded = Math.round(delta * 10 ** digits) / 10 ** digits
-  return `${rounded > 0 ? '↑' : rounded < 0 ? '↓' : ''} ${Math.abs(rounded)}`
+  if (rounded === 0) return 'No change'
+  return `${rounded > 0 ? '↑' : '↓'} ${Math.abs(rounded)}`
 }
 
 // v2: ฟีดแบ็ก (design review, 9.2/10, P4) "Trend value (↓0.5, ↓2.8) ควรเด่นขึ้นอีกนิด — ไม่ต้องเพิ่ม font
