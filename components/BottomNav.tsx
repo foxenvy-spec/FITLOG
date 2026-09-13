@@ -399,10 +399,13 @@ function CheckIcon() {
 
 // ไอคอนพวกนี้ export ไว้ให้ SidebarNav.tsx (เมนูซ้ายเดสก์ท็อป) ใช้ร่วมด้วย — แท็บที่ตรงกัน
 // (หน้าแรก/โปรแกรม/สถิติ/โปรไฟล์) ควรเป็นเส้นเดียวกันเป๊ะทั้งมือถือ/เดสก์ท็อป ไม่ใช่วาดซ้ำคนละไฟล์
+// ฟีดแบ็ก (Accessibility audit) "ไอคอน 4 แท็บนี้ไม่มี aria-hidden ทั้งที่ DumbbellIcon/MoonIcon/CheckIcon
+// ในไฟล์เดียวกันมีอยู่แล้วทุกตัว — แต่ละไอคอนนี้วางคู่กับ text label ที่มองเห็นอยู่แล้วเสมอ (หน้าแรก/
+// โปรแกรม/สถิติ/โปรไฟล์) จึงเป็น decorative ซ้ำซ้อนกับ label ไม่ใช่ข้อมูลที่ screen reader ต้องอ่านซ้ำ"
 export function HomeIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
   const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <path d="M4 11.5 12 4l8 7.5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M6 10v9h12v-9" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M10 19v-5h4v5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -413,7 +416,7 @@ export function HomeIcon({ active, activeColor }: { active: boolean; activeColor
 export function ProgramIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
   const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <rect x="4" y="5" width="16" height="15" rx="2" stroke={c} strokeWidth="1.8" />
       <path d="M4 9.5h16" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
       <path d="M8 3v3M16 3v3" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
@@ -425,7 +428,7 @@ export function ProgramIcon({ active, activeColor }: { active: boolean; activeCo
 export function ChartIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
   const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <path d="M5 19V10M12 19V5M19 19v-7" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
@@ -434,7 +437,7 @@ export function ChartIcon({ active, activeColor }: { active: boolean; activeColo
 export function ProfileIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
   const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="relative">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <circle cx="12" cy="8" r="3.6" stroke={c} strokeWidth="1.8" />
       <path d="M4.5 19.5c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
     </svg>

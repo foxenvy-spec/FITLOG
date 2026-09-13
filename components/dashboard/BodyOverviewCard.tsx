@@ -221,9 +221,14 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
       }}
     >
       <div className="flex items-center justify-between" style={{ marginBottom: updatedLabel && !hasNoData ? 2 : 10 }}>
-        <span className="font-bold" style={{ fontSize: 14.5, color: HOME_COLORS.textPrimary }}>
+        {/* ฟีดแบ็ก (Accessibility audit) "ชื่อการ์ดทั้งหน้า Home เป็น <span> ล้วน ไม่มี heading เลยสักจุด —
+            screen reader ที่ navigate ด้วยปุ่ม 'jump to next heading' จะหาไม่เจอเลย" — เปลี่ยนเป็น <h2>
+            เฉพาะจุดที่ชัดเจนว่าเป็นชื่อการ์ดจริง 1:1 (Body Overview/Weekly Progress/Weight Goal/Body Fat
+            Goal) — Tailwind preflight (เปิดอยู่ในโปรเจกต์นี้) reset h1-h6 เป็น font/margin inherit จาก
+            className/style เดิมอยู่แล้ว จึงไม่มีผลต่อหน้าตาเลยแม้แต่พิกเซลเดียว (ตรวจแล้ว) */}
+        <h2 className="font-bold" style={{ fontSize: 14.5, color: HOME_COLORS.textPrimary }}>
           Body Overview
-        </span>
+        </h2>
         {/* ฟีดแบ็ก "BMI ไม่ควรอยู่ตรงนี้ ให้ไปอยู่หน้า Stats/Body Details แทน" — เดิม "Details" เป็นปุ่ม
             ขยาย/ยุบแสดง BMI ในการ์ดนี้เอง เปลี่ยนเป็นลิงก์จริงไปหน้า /health (มี BMI + รายละเอียดร่างกาย
             ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ */}

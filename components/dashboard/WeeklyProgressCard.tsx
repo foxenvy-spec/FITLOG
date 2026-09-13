@@ -68,9 +68,12 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
       }}
     >
       <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
-        <span className="font-bold" style={{ fontSize: 14.5, color: HOME_COLORS.textPrimary }}>
+        {/* ฟีดแบ็ก (Accessibility audit) "ชื่อการ์ดเป็น <span> ล้วน ไม่มี heading — screen reader navigate
+            ด้วย heading หาไม่เจอ" — เปลี่ยนเป็น <h2> (Tailwind preflight reset h1-h6 เป็น font/margin
+            inherit อยู่แล้ว ไม่กระทบหน้าตาเลย) */}
+        <h2 className="font-bold" style={{ fontSize: 14.5, color: HOME_COLORS.textPrimary }}>
           Weekly Progress
-        </span>
+        </h2>
         {streak > 0 && (
           // ฟีดแบ็ก (เทียบ poster รอบละเอียด) "Orange กระจายทั่วหน้าเกินไป (Today's Focus/Start/Streak/
           // Progress/Bottom Nav/AI Coach ล้วนส้มหมด — ควรสงวนส้มไว้แค่ Action/CTA จริง ใช้ฟ้า/เขียวสำหรับ

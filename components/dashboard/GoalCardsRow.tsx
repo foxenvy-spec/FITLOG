@@ -51,9 +51,13 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
           ของ label (Weight Goal/Body Fat Goal) — ไม่แตะ structure/ข้อมูล" — label เล็กลง (11->10), %
           ใหญ่/หนาขึ้น (11->13, font-semibold->font-bold) ให้เป็นตัวเลขที่สายตาไปหาก่อน */}
       <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-        <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 10 }}>
+        {/* ฟีดแบ็ก (Accessibility audit) "ชื่อการ์ด (Weight Goal/Body Fat Goal) เป็น <p> ล้วน ไม่มี heading
+            — screen reader navigate ด้วย heading หาไม่เจอ แม้จะลด visual prominence ของ label ไปแล้วก็ตาม
+            (ความสำคัญเชิง semantic ไม่ต้องเท่ากับขนาดตัวอักษรบนจอ)" — เปลี่ยนเป็น <h2> (Tailwind preflight
+            reset h1-h6 อยู่แล้ว ไม่กระทบหน้าตา) */}
+        <h2 className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 10 }}>
           {label}
-        </p>
+        </h2>
         <p className="font-homeNum font-bold" style={{ color, fontSize: 13 }}>
           {Math.round(pct)}% complete
         </p>
