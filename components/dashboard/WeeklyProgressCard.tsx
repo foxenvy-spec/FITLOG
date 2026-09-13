@@ -3,6 +3,7 @@
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import AnimatedBarFill from '../AnimatedBarFill'
 import { HOME_COLORS } from '@/lib/homeColors'
+import { COLORS } from '@/lib/theme'
 
 interface WeeklyProgressCardProps {
   /** จำนวนวันที่ทำสำเร็จของแผนสัปดาห์นี้ (จาก computePlannedConsistency — นับเทียบกับวันที่ "ตั้งโปรแกรม
@@ -75,13 +76,18 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
           // Progress/Bottom Nav/AI Coach ล้วนส้มหมด — ควรสงวนส้มไว้แค่ Action/CTA จริง ใช้ฟ้า/เขียวสำหรับ
           // Information/Progress แทน)" — สตรีคเป็นสถิติ ไม่ใช่ปุ่มกด เปลี่ยนจากส้มเป็นเขียว (สื่อ "ทำสำเร็จ
           // ต่อเนื่อง" ตรงกับโทน isGood=true ที่ Body Overview ใช้อยู่แล้ว)
+          // v2: ฟีดแบ็ก (design review, 8.7/10, P1) "Streak badge ยังมี 'แรงดึง' มากไป — เขียวสดเกิน+pill
+          // ใหญ่ แย่งความสนใจจาก 2/3 days หลัก ควรเป็น supporting badge ไม่ใช่ secondary CTA" — 3 การปรับ:
+          // (1) เขียวสดเดิม (#3ee089/#1fae63, ใช้ซ้ำกับ deltaColor isGood ใน BodyOverviewCard) เปลี่ยนเป็น
+          // COLORS.moss (#7A9B57, โทน "ดี/สำเร็จ" ที่เข้มกว่า/หม่นกว่าอยู่แล้วในระบบสีกลาง lib/theme.ts —
+          // ไม่ปั้นสีใหม่) (2) padding 4px 8px -> 3px 7px (~14% เล็กลง) (3) fontSize 10.5 -> 9.5
           <span
             className="font-homeNum font-bold"
             style={{
-              background: 'linear-gradient(135deg,#3ee089,#1fae63)',
+              background: `linear-gradient(135deg,${COLORS.moss},#5c7d42)`,
               color: '#fff',
-              fontSize: 10.5,
-              padding: '4px 8px',
+              fontSize: 9.5,
+              padding: '3px 7px',
               borderRadius: 999,
             }}
           >

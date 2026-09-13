@@ -190,7 +190,9 @@ export default function TodayCard({
             // แค่ลดความสูงลง ~10-15%" — padding 11 -> 9.5 (-14%) ไม่แตะ fontSize/borderRadius (ยังเป็น pill
             // เต็มรูปแบบเดียวกับ CTA อื่นทั่วแอป เช่น '+ Add Measurement' ใน BodyOverviewCard — เปลี่ยนแค่
             // ทรงปุ่มนี้ใบเดียวจะขัด visual language ปุ่ม pill ที่ใช้ร่วมกันทั้งหน้า)
-            padding: 9.5,
+            // v3: ฟีดแบ็ก (design review, 8.7/10, P1) "ยังใหญ่เกินนิดเดียว — headline ควรเป็นพระเอก ไม่ใช่
+            // CTA — ลดอีก 8-12%" — padding 9.5 -> 8.5 (-10.5%) ยังไม่แตะ fontSize/borderRadius เหมือนรอบก่อน
+            padding: 8.5,
             fontSize: 13.5,
             gap: 6,
           }}

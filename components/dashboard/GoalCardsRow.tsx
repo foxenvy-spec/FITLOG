@@ -33,7 +33,10 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
         background: HOME_COLORS.cardGlass,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        border: `1px solid ${HOME_COLORS.cardBorder}`,
+        // v2: ฟีดแบ็ก (design review, 8.7/10, P2) "ลด border contrast นิดเดียว — ให้ Goals รู้สึกเป็น
+        // supporting info รองจาก Body Overview/Today's Focus" — override เฉพาะการ์ดนี้ (ไม่แตะ
+        // HOME_COLORS.cardBorder ซึ่งเป็น token กลางที่การ์ดอื่นทั้งหน้าอ้างอิงร่วมกัน)
+        border: '1px solid rgba(255,255,255,.06)',
         borderRadius,
         padding,
         boxShadow: '0 8px 20px rgba(0,0,0,.35)',
@@ -44,11 +47,14 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
           เข้ามาเฉยๆ ไม่กระทบ pct ที่ใช้ fill แถบอยู่แล้ว */}
       {/* ฟีดแบ็ก "'Body Fat Goal — 40%' อ่านแล้วเข้าใจผิดว่า 40% คือตัวเป้าหมาย Body Fat เอง เพราะ % อยู่ติด
           กับหัวข้อ Goal" — เติมคำว่า "complete" ต่อท้ายให้ชัดว่าเป็นความคืบหน้า ไม่ใช่ค่าเป้าหมาย */}
+      {/* v2: ฟีดแบ็ก (design review, 8.7/10, P2) "ทำ percentage เป็น focal point มากขึ้น + ลด prominence
+          ของ label (Weight Goal/Body Fat Goal) — ไม่แตะ structure/ข้อมูล" — label เล็กลง (11->10), %
+          ใหญ่/หนาขึ้น (11->13, font-semibold->font-bold) ให้เป็นตัวเลขที่สายตาไปหาก่อน */}
       <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-        <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 11 }}>
+        <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 10 }}>
           {label}
         </p>
-        <p className="font-homeNum font-semibold" style={{ color, fontSize: 11 }}>
+        <p className="font-homeNum font-bold" style={{ color, fontSize: 13 }}>
           {Math.round(pct)}% complete
         </p>
       </div>

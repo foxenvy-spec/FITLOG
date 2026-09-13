@@ -64,7 +64,9 @@ export const dashboardSpec = {
   goalCard: {
     borderRadius: 16,
     padding: 11, // -15% จาก 13
-    barHeight: 5, // -17% จาก 6
+    // v: ฟีดแบ็ก (design review, 8.7/10, P2) "progress bar บางลงเล็กน้อย ให้ % complete (เพิ่งขยายใหญ่ขึ้น
+    // ใน GoalCardsRow.tsx) เป็น focal point แทน ไม่ใช่แถบ progress" — 5 -> 4 (-20%)
+    barHeight: 4,
     gridGap: 9, // -10% จาก 10
   },
   aiCoachCardV3: {
