@@ -30,15 +30,19 @@ interface BodyOverviewCardProps {
 // ไม่ใช่การกระทำของแอป) — ผู้ใช้ใหม่เห็นแล้วอาจสงสัยว่า FITLOG เอาข้อมูลเก่ามาคำนวณหรือเปล่า — เปลี่ยนคำ
 // นำจาก 'Updated' เป็น 'Latest body data ·' ให้ชัดว่าเป็น timestamp ของข้อมูลดิบ ไม่ใช่คำมั่นสัญญาความสด
 // ใหม่ — ไม่ซ่อนตัวเลขวันที่เก่าเลย (ถ้าจริง 6 สัปดาห์ก็บอกตรงๆ ตามที่ตกลง ไม่ fake freshness)
+// v3: ฟีดแบ็ก (Product/UI review, 8.7/10, §3.1) "'Latest body data' ยังกำกวมว่าเป็น 'ข้อมูลล่าสุดที่มี'
+// (อาจตีความว่าคำนวณจากข้อมูลตอนนี้) หรือ 'ค่าที่วัดครั้งล่าสุด' — เปลี่ยนเป็น 'Last measured ·' ชัดกว่าว่า
+// เป็นเหตุการณ์ 'ผู้ใช้วัด/บันทึกเมื่อไหร่' ไม่ใช่คุณสมบัติของข้อมูลปัจจุบัน" — คำนวณ/threshold เดิมทุกจุด
+// เปลี่ยนแค่คำนำ
 function lastMeasuredLabel(measuredAt: string | null | undefined): string | null {
   if (!measuredAt) return null
   const days = Math.floor((Date.now() - new Date(measuredAt).getTime()) / (24 * 60 * 60 * 1000))
-  if (days <= 0) return 'Latest body data · today'
-  if (days === 1) return 'Latest body data · yesterday'
-  if (days <= 6) return `Latest body data · ${days} days ago`
-  if (days <= 13) return 'Latest body data · last week'
-  if (days <= 44) return `Latest body data · ${Math.round(days / 7)} weeks ago`
-  return `Latest body data · ${Math.round(days / 30)} months ago`
+  if (days <= 0) return 'Last measured · today'
+  if (days === 1) return 'Last measured · yesterday'
+  if (days <= 6) return `Last measured · ${days} days ago`
+  if (days <= 13) return 'Last measured · last week'
+  if (days <= 44) return `Last measured · ${Math.round(days / 7)} weeks ago`
+  return `Last measured · ${Math.round(days / 30)} months ago`
 }
 
 // การ์ด "Body Overview" ใหม่ตาม "New_mobile_app.zip" (ผู้ใช้เลือก "ทำเฉพาะหน้า Home" ให้ใช้ทิศทางนี้
