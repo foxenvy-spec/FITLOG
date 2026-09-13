@@ -6,6 +6,7 @@ import { getWeekRange, getPreviousWeekRange, recoveryTier } from '@/lib/dashboar
 import GoalRing from './GoalRing'
 import Skeleton from './Skeleton'
 import { COLORS } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 type VolumeRow = { performed_at: string; sets: number | null; reps: number | null; weight_kg: number | null; total_volume_kg: number | null }
 
@@ -106,7 +107,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
                 className="flex-1 rounded-sm"
                 style={{
                   height: `${Math.max(8, (v / maxDaily) * 100)}%`,
-                  backgroundColor: COLORS.steel,
+                  backgroundColor: DS.domain.strength,
                   opacity: v > 0 ? 1 : 0.25,
                 }}
               />

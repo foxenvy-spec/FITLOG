@@ -766,7 +766,7 @@ export default function StatsPage() {
                       itemStyle={{ color: '#F3F0E8' }}
                       formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
                     />
-                    <Bar dataKey="value" fill={COLORS.steel} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="value" fill={DS.domain.strength} radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

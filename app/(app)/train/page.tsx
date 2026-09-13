@@ -11,7 +11,8 @@ import { calculatePlates } from '@/lib/plateCalculator'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { getErrorMessage } from '@/lib/errors'
 import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import PremiumCard from '@/components/ui/PremiumCard'
 import LoadingState from '@/components/LoadingState'
 import ErrorState from '@/components/ErrorState'
@@ -512,7 +513,7 @@ function PlateCalculatorWidget() {
                 <span
                   key={p.plate}
                   className="rounded-md px-1.5 py-0.5 text-[12px] font-mono"
-                  style={{ background: withAlpha(COLORS.steel, '26'), color: COLORS.steel }}
+                  style={{ background: withAlpha(DS.domain.strength, '26'), color: DS.domain.strength }}
                 >
                   {p.plate}×{p.count}
                 </span>
