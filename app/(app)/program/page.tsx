@@ -14,7 +14,7 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import PremiumCard from '@/components/ui/PremiumCard'
 import Button from '@/components/ui/Button'
-import { CARD_BORDER_CSS } from '@/lib/theme'
+import { CARD_BORDER_CSS, COLORS } from '@/lib/theme'
 
 export default function ProgramPage() {
   const supabase = createClient()
@@ -848,7 +848,7 @@ export default function ProgramPage() {
 
           {confirmLogDuplicate && (
             <div className="px-4 py-2.5 border-b border-white/5 bg-amber/10 flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[12px]" style={{ color: '#E8A33D' }}>
+              <p className="text-[12px]" style={{ color: COLORS.amber }}>
                 วันนี้มี Log อยู่แล้ว — เพิ่ม {currentExercises.length} ท่านี้เข้าไปอีกหรือไม่? (อาจได้ท่าซ้ำถ้าเคย log ท่าเดียวกันไปแล้ว)
               </p>
               <div className="flex gap-3 shrink-0">
