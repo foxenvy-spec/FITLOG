@@ -101,13 +101,18 @@ export default function TodayCard({
   // BottomNav.tsx เป๊ะ: !isCompleted && completed>0) คั่นกลางระหว่าง "ยังไม่เริ่ม" กับ "เสร็จแล้ว" ไม่เพิ่ม
   // state/ข้อมูลใหม่ใดๆ เลย แค่ทำให้ label ที่มีอยู่แล้วครบทุกจังหวะ
   const isInProgress = variant === 'active' && !isCompleted && completed > 0
+  // ฟีดแบ็ก (Final UX Consistency audit, "CTA wording/capitalization") "'View Summary'/'Ask MINT' เป็น
+  // Title Case ทั้งที่อีก 3 state บนปุ่มเดียวกัน (START WORKOUT/RESUME WORKOUT/VIEW RECOVERY) เป็น ALL
+  // CAPS หมด — ไม่สม่ำเสมอบนปุ่มเดียวกันเอง แถม 'View Summary' ยังขัดกับ BottomNav.tsx ที่พูดสถานะ isCompleted
+  // เดียวกันนี้ว่า 'VIEW SUMMARY' (ตัวพิมพ์ใหญ่ทั้งหมด) อยู่แล้ว — ปรับให้เป็น ALL CAPS ทั้ง 5 state ให้ตรง
+  // กันเองและตรงกับ Bottom Nav (ไม่แตะ href/logic/ปลายทางใดๆ เลย แค่ตัวอักษร)
   const buttonLabel =
     variant === 'noProgram'
-      ? 'Ask MINT'
+      ? 'ASK MINT'
       : variant === 'restDay'
         ? 'VIEW RECOVERY'
         : isCompleted
-          ? 'View Summary'
+          ? 'VIEW SUMMARY'
           : isInProgress
             ? 'RESUME WORKOUT'
             : 'START WORKOUT'
