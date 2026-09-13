@@ -298,20 +298,30 @@ export default function MobileDashboardView() {
             />
           </div>
 
-          <TodayCard
-            workoutTitle={workoutTitle}
-            muscleRecommendation={muscleRecommendation}
-            todayExercises={data.todayExercises}
-            variant={workoutCardVariant}
-            completed={todayCardCompleted}
-            total={todayCardTotal}
-            href={todayCardHref}
-          />
+          {/* ฟีดแบ็ก (Product/UI review, "#4 — Section hierarchy") "แต่ละการ์ดยังรู้สึกเป็น 'card ต่อ
+              card' มากกว่า 'หนึ่ง Dashboard ที่มีหลาย information zones' — สร้าง hierarchy ด้วย spacing
+              แทน (ไม่แตะ structure การ์ดเลย)" — sectionGap กลาง (7px) เท่าเดิมทุกคู่ เพิ่ม marginTop เสริม
+              เฉพาะคู่นี้ (Body Overview -> Today's Focus, รวม 7+9=16px ตามช่วงที่ขอ 14-18px) แบบเดียวกับที่
+              คู่ Today's Focus -> Weekly Progress ทำอยู่แล้วด้านล่าง (ไม่กระทบคู่อื่น) */}
+          <div style={{ marginTop: 9 }}>
+            <TodayCard
+              workoutTitle={workoutTitle}
+              muscleRecommendation={muscleRecommendation}
+              todayExercises={data.todayExercises}
+              variant={workoutCardVariant}
+              completed={todayCardCompleted}
+              total={todayCardTotal}
+              href={todayCardHref}
+            />
+          </div>
 
           {/* ฟีดแบ็ก (poster "Version 2 — 9.3/10", โพลิช "ปรับระยะห่าง Workout → Progress") — sectionGap
               เดียวกันทั้งหมด (dashboardSpec.screen.sectionGap) ใช้ร่วมทุกคู่การ์ด เพิ่ม marginTop เสริม
-              เฉพาะคู่นี้แทนแก้ token กลาง (ไม่กระทบระยะห่างคู่อื่น) */}
-          <div style={{ marginTop: 6 }}>
+              เฉพาะคู่นี้แทนแก้ token กลาง (ไม่กระทบระยะห่างคู่อื่น)
+              v2: ฟีดแบ็ก (Product/UI review, "#4") "Today's Focus ควรมี breathing room มากกว่า metric
+              sections — Focus -> Weekly ควรเป็นช่วงที่กว้างที่สุด (22-28px) ให้ Today's Focus โดดเด่นเป็น
+              hero จริงๆ ก่อนจะเข้าโซนข้อมูลสนับสนุน" — เพิ่ม marginTop เสริมจาก 6 -> 18 (รวม 7+18=25px) */}
+          <div style={{ marginTop: 18 }}>
             <WeeklyProgressCard
               completedCount={weeklyCompletedCount}
               plannedCount={weeklyPlannedCount}
@@ -320,23 +330,29 @@ export default function MobileDashboardView() {
             />
           </div>
 
-          <GoalCardsRow weight={weightGoalCard} bodyFat={bodyFatGoalCard} />
+          {/* ฟีดแบ็ก (Product/UI review, "#4") "Weekly -> Goals / Goals -> Coach ควรแคบกว่า Focus -> Weekly
+              (14px) ให้โซนข้อมูลสนับสนุนรู้สึกเป็นกลุ่มเดียวกัน แยกจาก Today's Focus ที่เป็น hero" */}
+          <div style={{ marginTop: 7 }}>
+            <GoalCardsRow weight={weightGoalCard} bodyFat={bodyFatGoalCard} />
+          </div>
 
-          <AICoachCompactCard
-            message={data.aiDailySummary}
-            muscleRecommendation={muscleRecommendation}
-            isRestDay={workoutCardVariant === 'restDay'}
-            lastUpdatedAt={dataUpdatedAt}
-            isRecommendationForToday={data.isRecommendationForToday}
-            todayWorkoutTitle={workoutTitle}
-            thisWeekWorkoutDays={data.thisWeekWorkoutDays}
-            hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
-            makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
-            missedPlanCount={0}
-            missedPlanTitle={null}
-            todaySessionHref={workoutCardVariant === 'active' ? todayCardHref : undefined}
-            variant="flat"
-          />
+          <div style={{ marginTop: 7 }}>
+            <AICoachCompactCard
+              message={data.aiDailySummary}
+              muscleRecommendation={muscleRecommendation}
+              isRestDay={workoutCardVariant === 'restDay'}
+              lastUpdatedAt={dataUpdatedAt}
+              isRecommendationForToday={data.isRecommendationForToday}
+              todayWorkoutTitle={workoutTitle}
+              thisWeekWorkoutDays={data.thisWeekWorkoutDays}
+              hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
+              makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
+              missedPlanCount={0}
+              missedPlanTitle={null}
+              todaySessionHref={workoutCardVariant === 'active' ? todayCardHref : undefined}
+              variant="flat"
+            />
+          </div>
         </div>
       </div>
 

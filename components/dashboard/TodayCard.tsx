@@ -185,7 +185,12 @@ export default function TodayCard({
             background: `linear-gradient(135deg,${HOME_COLORS.orange},${HOME_COLORS.orangeGlow})`,
             color: '#fff',
             borderRadius: 999,
-            padding: 11,
+            // v2: ฟีดแบ็ก (Product/UI review, "#1 — Today's Focus CTA") "ปุ่ม Orange ใหญ่ไปนิด กิน visual
+            // weight เยอะเทียบกับ headline — ยังต้องเป็น primary CTA เด่นอยู่ (ไม่ทำ outline/ไม่เล็กจิ๋ว)
+            // แค่ลดความสูงลง ~10-15%" — padding 11 -> 9.5 (-14%) ไม่แตะ fontSize/borderRadius (ยังเป็น pill
+            // เต็มรูปแบบเดียวกับ CTA อื่นทั่วแอป เช่น '+ Add Measurement' ใน BodyOverviewCard — เปลี่ยนแค่
+            // ทรงปุ่มนี้ใบเดียวจะขัด visual language ปุ่ม pill ที่ใช้ร่วมกันทั้งหน้า)
+            padding: 9.5,
             fontSize: 13.5,
             gap: 6,
           }}
