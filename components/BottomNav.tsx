@@ -152,6 +152,16 @@ export default function BottomNav() {
   // เซ็ตไหนเลยสักเซ็ต (hasLoggedToday ยังเป็น false) กันปุ่มพาไป /coach ทั้งที่กำลังทำเซสชันชดเชย
   // อยู่จริง
   const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : isRestDay ? '/coach' : '/session'
+  // ฟีดแบ็ก (Product/UI review, "The center button is not navigation. It is the user's most
+  // relevant action right now.") "ปุ่มกลาง KEEP ทุกอย่างตามเดิม (ขนาด/glow/state-based label ฯลฯ) —
+  // POLISH แค่ 3 จุด: label ทุก state น้ำหนัก/ความยาวใกล้เคียงกัน (ตรวจแล้ว — ใช้ span เดียวกันทุก state
+  // อยู่แล้ว ไม่มีจุดไหนต่างกัน), ตรวจ text ไม่ชน/ล้นวงกลม, และ animation ตอน state เปลี่ยนควร subtle" —
+  // ไอคอน/ป้ายตอนนี้สลับทันทีไม่มี transition เลยสักเฟรม (เปลี่ยนตอน React re-render เฉยๆ) ใช้
+  // stateKey นี้ผูกกับ key ของ wrapper ด้านล่าง ให้ React remount บล็อกนั้นทุกครั้งที่ state จริงเปลี่ยน
+  // (START -> RESUME -> VIEW SUMMARY -> VIEW RECOVERY) แล้วเล่น .animate-fade-scale-in ที่มีอยู่แล้ว
+  // (ใช้ซ้ำจาก MobileDashboardView.tsx ทั้งหน้า — fade+scale 0.97->1, 0.4s, ไม่มี bounce/overshoot ตาม
+  // ที่ขอ "subtle" ไม่ใช่ .animate-pop-in ที่มี overshoot เด้ง ซึ่งจะกลับไปให้ความรู้สึก "gaming" อีก)
+  const ctaStateKey = isRestDay ? 'rest' : isCompleted ? 'done' : isInProgress ? 'progress' : 'start'
 
   const floatingButton = (
     <Link
@@ -229,38 +239,40 @@ export default function BottomNav() {
                 background: '#101012',
               }}
             />
-            {isRestDay ? <MoonIcon /> : isCompleted ? <CheckIcon /> : <DumbbellIcon />}
-            <span
-              className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center relative"
-              style={{ color: '#FFF4E0' }}
-              aria-hidden="true"
-            >
-              {isRestDay ? (
-                <>
-                  VIEW
-                  <br />
-                  RECOVERY
-                </>
-              ) : isCompleted ? (
-                <>
-                  VIEW
-                  <br />
-                  SUMMARY
-                </>
-              ) : isInProgress ? (
-                <>
-                  RESUME
-                  <br />
-                  WORKOUT
-                </>
-              ) : (
-                <>
-                  START
-                  <br />
-                  WORKOUT
-                </>
-              )}
-            </span>
+            <div key={ctaStateKey} className="flex flex-col items-center animate-fade-scale-in">
+              {isRestDay ? <MoonIcon /> : isCompleted ? <CheckIcon /> : <DumbbellIcon />}
+              <span
+                className="text-[7px] font-display tracked uppercase leading-tight mt-0.5 text-center relative"
+                style={{ color: '#FFF4E0' }}
+                aria-hidden="true"
+              >
+                {isRestDay ? (
+                  <>
+                    VIEW
+                    <br />
+                    RECOVERY
+                  </>
+                ) : isCompleted ? (
+                  <>
+                    VIEW
+                    <br />
+                    SUMMARY
+                  </>
+                ) : isInProgress ? (
+                  <>
+                    RESUME
+                    <br />
+                    WORKOUT
+                  </>
+                ) : (
+                  <>
+                    START
+                    <br />
+                    WORKOUT
+                  </>
+                )}
+              </span>
+            </div>
           </div>
         </FitnessRing>
       </span>
