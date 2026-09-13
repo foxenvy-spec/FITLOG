@@ -55,7 +55,10 @@ export default async function AppLayout({
                 เหมือนที่ comment ด้านบนของไฟล์นี้ตั้งใจไว้แต่แรก — "< 768px: single column" ไม่เคยพูดถึงการ
                 จำกัดความกว้างเพิ่ม) — md:max-w-2xl/lg:max-w-none เดิมไม่แตะ ยังทำงานถูกต้องสำหรับแท็บเล็ต/
                 เดสก์ท็อปเหมือนเดิมทุกจุด */}
-            <main className="flex-1 w-full md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-5 lg:px-6 pt-5 pb-safe-bottom-nav lg:pb-10 safe-top">
+            {/* v2: ฟีดแบ็ก "อยากได้ความรู้สึกเต็มจอมากขึ้นแบบ poster" — ลด gutter มือถือจาก px-5 (20px)
+                เหลือ px-4 (16px) ยังห่างจากขอบจอพอสำหรับ iOS edge-swipe gesture (ไม่ชิดขอบจนกดพลาด/
+                สไลด์ย้อนกลับโดยไม่ตั้งใจ) ไม่แตะ lg:px-6 (เดสก์ท็อป มี sidebar คนละ layout ไม่เกี่ยวกัน) */}
+            <main className="flex-1 w-full md:max-w-2xl mx-auto lg:max-w-none lg:mx-0 px-4 lg:px-6 pt-5 pb-safe-bottom-nav lg:pb-10 safe-top">
               {children}
             </main>
 
