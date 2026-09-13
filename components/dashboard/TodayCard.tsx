@@ -84,8 +84,17 @@ export default function TodayCard({
   const detail = rawDetail && todayRegion ? `${todayRegion} • ${rawDetail}` : rawDetail
 
   const isCompleted = variant === 'active' && total > 0 && completed >= total
-  const buttonLabel = variant === 'noProgram' ? 'Ask MINT' : isCompleted ? 'View Summary' : 'START WORKOUT'
-  const buttonHref = variant === 'noProgram' ? '/coach' : href
+  // ฟีดแบ็ก (Product/UI review, "Today's Focus ควรเป็นพระเอกของหน้า") "TODAY'S WORKOUT ตอนวันฝึกจริง vs
+  // TODAY'S FOCUS ตอน Recovery/ยังไม่ตั้งโปรแกรม — ให้ eyebrow label สื่อว่าวันนี้เป็นวันประเภทไหนทันที"
+  // — copy-only, ไม่แตะ layout/data
+  const eyebrowLabel = variant === 'active' ? "Today's Workout" : "Today's Focus"
+  // v2: ฟีดแบ็ก (Product/UI review) "Rest Day ไม่มี CTA เลย ทั้งที่ Bottom Nav/AI Coach มี 'VIEW RECOVERY'
+  // ให้กดอยู่แล้ว — Today's Focus (การ์ด hero ของหน้า) ควรมี action ให้กดเหมือนวันฝึกปกติ ไม่ใช่การ์ดเดียว
+  // ที่ไม่มีปุ่มเลย" — เพิ่มปุ่มสำหรับ restDay ไปที่ /coach ปลายทางเดียวกับ Bottom Nav/AI Coach (ไม่ใช่
+  // ปลายทางใหม่ที่ยังไม่มีใครทดสอบ) คงสไตล์ปุ่มส้มเดิมไว้ (Bottom Nav เองก็ยังใช้วงแหวนส้มเดียวกันทุก state
+  // รวม Recovery Day — orange = "action วันนี้" ไม่ใช่แค่ "start workout" เท่านั้น)
+  const buttonLabel = variant === 'noProgram' ? 'Ask MINT' : variant === 'restDay' ? 'VIEW RECOVERY' : isCompleted ? 'View Summary' : 'START WORKOUT'
+  const buttonHref = variant === 'noProgram' || variant === 'restDay' ? '/coach' : href
   // ฟีดแบ็ก "เพิ่มสถานะของ Today's Workout ให้ actionable ขึ้น — Ready to start / X% complete / Workout
   // complete ✓ แทนที่จะมีแค่เลขจำนวนท่า" — สามสถานะตามความคืบหน้าจริง (completed/total เดิม ไม่คำนวณใหม่)
   const workoutStatusLabel = isCompleted
@@ -132,7 +141,7 @@ export default function TodayCard({
             style={{ gap: 5, color: 'rgba(255,255,255,.85)', fontSize: 11.5, marginBottom: 5 }}
           >
             <ClockIcon />
-            Today&apos;s Focus
+            {eyebrowLabel}
           </div>
           <div className="font-homeNum font-extrabold text-white truncate" style={{ fontSize: 19, marginBottom: 4 }}>
             {main}
@@ -162,28 +171,29 @@ export default function TodayCard({
           )}
         </div>
 
-        {variant !== 'restDay' && (
-          // ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — ปุ่มเดิมพื้นขาว/
-          // ตัวหนังสือส้ม แต่ mockup ใช้ปุ่มพื้นส้มทึบ (ไล่สีเดียวกับโลโก้/แบรนด์) + ตัวหนังสือขาว สลับให้ตรง
-          <Link
-            href={buttonHref}
-            className="flex items-center justify-center active:opacity-90 active:scale-[0.97] transition font-homeTh font-bold"
-            style={{
-              width: '100%',
-              marginTop: 11, // -21% จาก 14 (design review P1 — ลดระยะก่อน CTA)
-              background: `linear-gradient(135deg,${HOME_COLORS.orange},${HOME_COLORS.orangeGlow})`,
-              color: '#fff',
-              borderRadius: 999,
-              padding: 11,
-              fontSize: 13.5,
-              gap: 6,
-            }}
-          >
-            {variant === 'noProgram' && <span aria-hidden="true">🤖</span>}
-            {variant === 'active' && !isCompleted && <PlayIcon />}
-            {buttonLabel}
-          </Link>
-        )}
+        {/* ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — ปุ่มเดิมพื้นขาว/
+            ตัวหนังสือส้ม แต่ mockup ใช้ปุ่มพื้นส้มทึบ (ไล่สีเดียวกับโลโก้/แบรนด์) + ตัวหนังสือขาว สลับให้ตรง
+            v2: ฟีดแบ็ก (Product/UI review) "Rest Day ไม่มี CTA เลย" — เดิม variant!=='restDay' ซ่อนปุ่มทั้ง
+            บล็อกตอน Rest Day ตัดเงื่อนไขนี้ออก ให้ปุ่มโชว์ทุก variant เสมอ (label/href สลับเป็น
+            VIEW RECOVERY -> /coach ตอน restDay ที่จุดคำนวณ buttonLabel/buttonHref ด้านบนแล้ว) */}
+        <Link
+          href={buttonHref}
+          className="flex items-center justify-center active:opacity-90 active:scale-[0.97] transition font-homeTh font-bold"
+          style={{
+            width: '100%',
+            marginTop: 11, // -21% จาก 14 (design review P1 — ลดระยะก่อน CTA)
+            background: `linear-gradient(135deg,${HOME_COLORS.orange},${HOME_COLORS.orangeGlow})`,
+            color: '#fff',
+            borderRadius: 999,
+            padding: 11,
+            fontSize: 13.5,
+            gap: 6,
+          }}
+        >
+          {variant === 'noProgram' && <span aria-hidden="true">🤖</span>}
+          {variant === 'active' && !isCompleted && <PlayIcon />}
+          {buttonLabel}
+        </Link>
       </div>
     </div>
   )
