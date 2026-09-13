@@ -93,7 +93,24 @@ export default function TodayCard({
   // ที่ไม่มีปุ่มเลย" — เพิ่มปุ่มสำหรับ restDay ไปที่ /coach ปลายทางเดียวกับ Bottom Nav/AI Coach (ไม่ใช่
   // ปลายทางใหม่ที่ยังไม่มีใครทดสอบ) คงสไตล์ปุ่มส้มเดิมไว้ (Bottom Nav เองก็ยังใช้วงแหวนส้มเดียวกันทุก state
   // รวม Recovery Day — orange = "action วันนี้" ไม่ใช่แค่ "start workout" เท่านั้น)
-  const buttonLabel = variant === 'noProgram' ? 'Ask MINT' : variant === 'restDay' ? 'VIEW RECOVERY' : isCompleted ? 'View Summary' : 'START WORKOUT'
+  // ฟีดแบ็ก (Product/UI review, "State-aware Dashboard", P1 #1) "CTA ควรสลับตามสถานะจริงให้ครบ — ตอนนี้
+  // 'START WORKOUT' ค้างอยู่ทั้งช่วงยังไม่เริ่มและกำลังฝึกอยู่กลางคัน ทั้งที่ workoutStatusLabel ข้างล่าง
+  // (บรรทัดสถานะ) เองก็แยก 'Ready to start' vs 'X% complete' อยู่แล้ว และ BottomNav.tsx ก็มี isInProgress
+  // -> RESUME WORKOUT แยกไว้แล้วเช่นกัน — การ์ดนี้เลยพูดไม่ตรงกับตัวเองและกับปุ่มลอยกลางในบางจังหวะ (เริ่ม
+  // ฝึกไปแล้วบางท่า แต่ปุ่มบนการ์ดยังชวน 'START' เหมือนยังไม่ได้แตะเลย)" — เพิ่ม isInProgress (สูตรเดียวกับ
+  // BottomNav.tsx เป๊ะ: !isCompleted && completed>0) คั่นกลางระหว่าง "ยังไม่เริ่ม" กับ "เสร็จแล้ว" ไม่เพิ่ม
+  // state/ข้อมูลใหม่ใดๆ เลย แค่ทำให้ label ที่มีอยู่แล้วครบทุกจังหวะ
+  const isInProgress = variant === 'active' && !isCompleted && completed > 0
+  const buttonLabel =
+    variant === 'noProgram'
+      ? 'Ask MINT'
+      : variant === 'restDay'
+        ? 'VIEW RECOVERY'
+        : isCompleted
+          ? 'View Summary'
+          : isInProgress
+            ? 'RESUME WORKOUT'
+            : 'START WORKOUT'
   const buttonHref = variant === 'noProgram' || variant === 'restDay' ? '/coach' : href
   // ฟีดแบ็ก "เพิ่มสถานะของ Today's Workout ให้ actionable ขึ้น — Ready to start / X% complete / Workout
   // complete ✓ แทนที่จะมีแค่เลขจำนวนท่า" — สามสถานะตามความคืบหน้าจริง (completed/total เดิม ไม่คำนวณใหม่)
