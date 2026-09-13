@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { COLORS, NEUTRAL } from '@/lib/theme'
+import { NEUTRAL } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { HOME_COLORS } from '@/lib/homeColors'
+import { DS } from '@/lib/designSystem'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { todayStr } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
@@ -44,10 +45,10 @@ const BOTTOM_NAV_RING_GRADIENT = [
 // ฟีดแบ็ก (เทียบ poster รอบละเอียด) "Orange กระจายทั่วหน้าเกินไป รวมถึง Bottom Navigation — ควรสงวนส้ม
 // ไว้แค่ Action/CTA จริงจุดเดียว (ปุ่มลอย START WORKOUT ด้านบน) แท็บนำทางปกติ (Home/Program/Stats/
 // Profile) เป็น Information/navigation ไม่ใช่ action ควรเป็นฟ้า/ทีลแทน" — เปลี่ยนจากส้มแบรนด์เป็นฟ้า
-// เฉพาะสีแท็บ active — แยกจาก COLORS.amber (#E8A33D) เดิมที่ SidebarNav.tsx (เมนูซ้ายเดสก์ท็อป) ยังใช้
-// อยู่ผ่านไอคอนชุดเดียวกันด้านล่างของไฟล์นี้ — เพิ่ม activeColor เป็น optional prop ในแต่ละไอคอนแทนที่จะ
-// แก้ COLORS.amber ตรงๆ (กระทบทั้งแอปรวมเดสก์ท็อปที่ไม่ได้อยู่ในขอบเขตงานนี้) ไม่ส่ง prop นี้ = ใช้
-// COLORS.amber เดิมทุกจุดที่ไม่ได้แก้ (SidebarNav.tsx)
+// เฉพาะสีแท็บ active — แยกจาก DS.accent.primary (เดิม COLORS.amber, #E8A33D) ที่ SidebarNav.tsx (เมนูซ้าย
+// เดสก์ท็อป) ยังใช้อยู่ผ่านไอคอนชุดเดียวกันด้านล่างของไฟล์นี้ — เพิ่ม activeColor เป็น optional prop ใน
+// แต่ละไอคอนแทนที่จะแก้ DS.accent.primary ตรงๆ (กระทบทั้งแอปรวมเดสก์ท็อปที่ไม่ได้อยู่ในขอบเขตงานนี้) ไม่ส่ง
+// prop นี้ = ใช้ DS.accent.primary เดิมทุกจุดที่ไม่ได้แก้ (SidebarNav.tsx)
 const MOBILE_NAV_ACCENT = HOME_COLORS.cyan
 
 // 5 แท็บตามมอคอัพ: หน้าแรก / โปรแกรม / START WORKOUT (ปุ่มลอยกลาง) / สถิติ / โปรไฟล์
@@ -403,7 +404,7 @@ function CheckIcon() {
 // ในไฟล์เดียวกันมีอยู่แล้วทุกตัว — แต่ละไอคอนนี้วางคู่กับ text label ที่มองเห็นอยู่แล้วเสมอ (หน้าแรก/
 // โปรแกรม/สถิติ/โปรไฟล์) จึงเป็น decorative ซ้ำซ้อนกับ label ไม่ใช่ข้อมูลที่ screen reader ต้องอ่านซ้ำ"
 export function HomeIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
-  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
+  const c = active ? (activeColor ?? DS.accent.primary) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <path d="M4 11.5 12 4l8 7.5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -414,7 +415,7 @@ export function HomeIcon({ active, activeColor }: { active: boolean; activeColor
 }
 
 export function ProgramIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
-  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
+  const c = active ? (activeColor ?? DS.accent.primary) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <rect x="4" y="5" width="16" height="15" rx="2" stroke={c} strokeWidth="1.8" />
@@ -426,7 +427,7 @@ export function ProgramIcon({ active, activeColor }: { active: boolean; activeCo
 }
 
 export function ChartIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
-  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
+  const c = active ? (activeColor ?? DS.accent.primary) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <path d="M5 19V10M12 19V5M19 19v-7" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
@@ -435,7 +436,7 @@ export function ChartIcon({ active, activeColor }: { active: boolean; activeColo
 }
 
 export function ProfileIcon({ active, activeColor }: { active: boolean; activeColor?: string }) {
-  const c = active ? (activeColor ?? COLORS.amber) : NEUTRAL.mutedIcon
+  const c = active ? (activeColor ?? DS.accent.primary) : NEUTRAL.mutedIcon
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="relative">
       <circle cx="12" cy="8" r="3.6" stroke={c} strokeWidth="1.8" />

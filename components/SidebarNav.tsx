@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from './DashboardSettingsProvider'
 import { HomeIcon, ProgramIcon, ChartIcon, ProfileIcon } from './BottomNav'
 import {
-  COLORS,
   NEUTRAL,
   CARD_GRADIENT_CSS,
   CARD_REFLECTION_CSS,
@@ -16,6 +15,7 @@ import {
   TITANIUM_MESH_CSS,
   withAlpha,
 } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 // Desktop-only (lg+) sidebar — mirrors BottomNav's role on mobile/tablet but with
 // room for the full nav set instead of just the 4 tabs that fit a thumb-reachable
@@ -153,8 +153,8 @@ export default function SidebarNav() {
               style={
                 active
                   ? {
-                      backgroundImage: `linear-gradient(90deg, ${withAlpha(COLORS.amber, '2b')}, transparent 85%)`,
-                      boxShadow: `inset 3px 0 0 0 ${COLORS.amber}, 0 0 12px -4px ${withAlpha(COLORS.amber, '55')}`,
+                      backgroundImage: `linear-gradient(90deg, ${withAlpha(DS.accent.primary, '2b')}, transparent 85%)`,
+                      boxShadow: `inset 3px 0 0 0 ${DS.accent.primary}, 0 0 12px -4px ${withAlpha(DS.accent.primary, '55')}`,
                     }
                   : undefined
               }
@@ -165,7 +165,7 @@ export default function SidebarNav() {
                   ให้ไอคอนเด่นขึ้นเป็นจุดโฟกัสชัดกว่าเดิม โดยเฉพาะตอน rail โหมด (lg) ที่มีแค่ไอคอนอย่างเดียว */}
               <span
                 className="flex items-center justify-center rounded-md shrink-0"
-                style={active ? { backgroundColor: withAlpha(COLORS.amber, '1A'), width: 28, height: 28 } : { width: 28, height: 28 }}
+                style={active ? { backgroundColor: withAlpha(DS.accent.primary, '1A'), width: 28, height: 28 } : { width: 28, height: 28 }}
               >
                 <Icon active={active} />
               </span>
@@ -204,8 +204,8 @@ export default function SidebarNav() {
             width: 36,
             height: 36,
             backgroundImage: CARD_GRADIENT_CSS,
-            border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
-            boxShadow: `0 0 8px ${withAlpha(COLORS.amber, '20')}`,
+            border: `1.5px solid ${withAlpha(DS.accent.primary, '45')}`,
+            boxShadow: `0 0 8px ${withAlpha(DS.accent.primary, '20')}`,
           }}
           aria-hidden="true"
         >
@@ -221,7 +221,7 @@ export default function SidebarNav() {
 }
 
 function TrainIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+  const c = active ? DS.accent.primary : NEUTRAL.mutedIcon
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative shrink-0" aria-hidden="true">
       <circle cx="12" cy="12" r="8.2" stroke={c} strokeWidth="1.8" />
@@ -231,7 +231,7 @@ function TrainIcon({ active }: { active: boolean }) {
 }
 
 function CalendarIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+  const c = active ? DS.accent.primary : NEUTRAL.mutedIcon
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative shrink-0" aria-hidden="true">
       <rect x="4" y="5.5" width="16" height="14.5" rx="2" stroke={c} strokeWidth="1.8" />
@@ -242,7 +242,7 @@ function CalendarIcon({ active }: { active: boolean }) {
 }
 
 function BarbellIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+  const c = active ? DS.accent.primary : NEUTRAL.mutedIcon
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative shrink-0" aria-hidden="true">
       <path d="M2 12h2M20 12h2M5 9v6M19 9v6M8 7v10M16 7v10M8 12h8" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -251,7 +251,7 @@ function BarbellIcon({ active }: { active: boolean }) {
 }
 
 function SparkleIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+  const c = active ? DS.accent.primary : NEUTRAL.mutedIcon
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative shrink-0" aria-hidden="true">
       <path
@@ -266,7 +266,7 @@ function SparkleIcon({ active }: { active: boolean }) {
 }
 
 function GearIcon({ active }: { active: boolean }) {
-  const c = active ? COLORS.amber : NEUTRAL.mutedIcon
+  const c = active ? DS.accent.primary : NEUTRAL.mutedIcon
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative shrink-0" aria-hidden="true">
       <circle cx="12" cy="12" r="3" stroke={c} strokeWidth="1.8" />
