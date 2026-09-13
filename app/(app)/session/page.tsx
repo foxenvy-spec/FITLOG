@@ -14,11 +14,9 @@ import {
   COLORS,
   NEUTRAL,
   withAlpha,
-  CARD_BORDER_CSS,
-  CARD_AMBIENT_SHADOW_CSS,
-  CARD_FLOAT_SHADOW,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
+import { HOME_COLORS } from '@/lib/homeColors'
 import PremiumCard from '@/components/ui/PremiumCard'
 import Button from '@/components/ui/Button'
 import ProgressRing from '@/components/ui/ProgressRing'
@@ -1152,10 +1150,10 @@ export default function SessionPage() {
       // เดิม border-dashed สื่อความหมาย "ว่างเปล่า/ยังไม่ตั้งค่า" — PremiumCard ตัด border ทึบออกแล้ว
       // (v48: ใช้ contact shadow บอกขอบแทน) ส่ง border ทับผ่าน style (ชนะ default ของ PremiumCard เพราะ
       // ...style วางท้ายสุดเสมอ) แทนที่จะพึ่ง className ซึ่งชนะ inline style ของ PremiumCard ไม่ได้
-      <PremiumCard className="px-4 py-10 text-center space-y-3" style={{ border: `1px dashed ${CARD_BORDER_CSS}` }}>
+      <PremiumCard className="px-4 py-10 text-center space-y-3" style={{ border: `1px dashed ${HOME_COLORS.cardBorder}` }}>
         <p className="text-sm text-muted">ยังไม่มีโปรแกรมตั้งไว้สำหรับวันนี้ เลยเริ่มเซสชันไม่ได้</p>
         <div className="flex gap-2 justify-center">
-          <a href="/program" className="text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 inline-block">
+          <a href="/program" className="text-xs font-display tracked uppercase text-bg bg-[#FF8A00] rounded-lg px-4 py-2 inline-block">
             ไปตั้งโปรแกรม
           </a>
           <a href="/log" className="text-xs font-display tracked uppercase text-ink border border-line rounded-lg px-4 py-2 inline-block">
@@ -1279,7 +1277,7 @@ export default function SessionPage() {
                 mt-1 -> mt-0.5) */}
             <div
               className="rounded-2xl px-4 py-1.5"
-              style={{ background: '#151515', border: `1px solid ${CARD_BORDER_CSS}` }}
+              style={{ background: HOME_COLORS.cardGlass, backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: `1px solid ${HOME_COLORS.cardBorder}` }}
             >
               <p className="text-xs text-muted leading-tight flex items-center justify-center gap-1.5">
                 <span aria-hidden="true">↩</span> มีแผนที่พลาด
@@ -1287,7 +1285,7 @@ export default function SessionPage() {
               <p className="text-sm text-ink leading-tight mt-0">
                 {splitTitleDetail(smartStartMissedDay.title).main} · {WEEKDAYS[smartStartMissedDay.day_of_week]}
               </p>
-              <a href={`/session?day=${smartStartMissedDay.id}`} className="text-xs leading-tight mt-0.5 inline-block hover:underline" style={{ color: COLORS.amber }}>
+              <a href={`/session?day=${smartStartMissedDay.id}`} className="text-xs leading-tight mt-0.5 inline-block hover:underline" style={{ color: HOME_COLORS.orange }}>
                 ชดเชยแทน <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -1333,7 +1331,7 @@ export default function SessionPage() {
             />
             <div
               className="absolute inset-0"
-              style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(11,11,11,.55) 55%, #0B0B0B 100%)' }}
+              style={{ background: `radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(5,11,18,.55) 55%, ${HOME_COLORS.bg} 100%)` }}
             />
           </div>
           {/* ฟีดแบ็ก "ปรับให้เอียงและมีมิติเหมือนตัวอย่าง" — italic เดิมเอียงน้อยไป เพิ่ม rotate เล็กน้อย
@@ -1341,7 +1339,7 @@ export default function SessionPage() {
               เหมือนกับที่ทำให้ subtitle ไปแล้ว */}
           <p
             className="absolute right-4 bottom-6 font-quote italic font-semibold text-base text-right leading-tight"
-            style={{ color: COLORS.amber, transform: 'rotate(-4deg)', textShadow: '0 2px 4px rgba(0,0,0,.55)' }}
+            style={{ color: HOME_COLORS.orange, transform: 'rotate(-4deg)', textShadow: '0 2px 4px rgba(0,0,0,.55)' }}
           >
             Stronger
             <br />
@@ -1372,7 +1370,7 @@ export default function SessionPage() {
         {/* Version 4 (Motivational/Premium) — รวม 5 สถิติเข้าการ์ดใบเดียว คั่นด้วยเส้นบางๆ แทนที่จะเป็น
             การ์ดแยก 5 ใบเรียงกัน (ของเดิม) — ฟีดแบ็ก "ดู mockup ดีๆ" การ์ดนี้ควรมีกรอบทองสว่างใกล้เคียงกับ
             Workout Score ไม่ใช่จางกว่ามากแบบเดิม (เดิม alpha 25/0d จางกว่า Workout Score's 90/35 เยอะ) */}
-        <PremiumCard className="p-4 space-y-4" style={{ border: `1.5px solid ${withAlpha(COLORS.amber, '70')}`, boxShadow: `0 0 24px ${withAlpha(COLORS.amber, '28')}` }}>
+        <PremiumCard className="p-4 space-y-4" style={{ border: `1.5px solid ${withAlpha(HOME_COLORS.orange, '70')}`, boxShadow: `0 0 24px ${withAlpha(HOME_COLORS.orange, '28')}` }}>
           <div className="grid grid-cols-3 gap-2.5">
             {/* ดู comment ที่ noLiveDuration state ด้านบนของไฟล์ — "00:00" สื่อว่าใช้เวลาศูนย์นาทีจริง ทั้งที่
                 จริงๆ คือไม่เคยมี stopwatch ให้นับเลย ใช้ "–" (เครื่องหมายเดียวกับที่วอลุ่มรวม/แคลอรี่ข้างล่าง
@@ -1380,7 +1378,7 @@ export default function SessionPage() {
             <GlowStatCell
               bare
               icon={<ClockIcon />}
-              color={COLORS.amber}
+              color={HOME_COLORS.orange}
               value={noLiveDuration ? '–' : formatClock(totalElapsedMs)}
               label="เวลาที่ใช้"
             />
@@ -1390,7 +1388,7 @@ export default function SessionPage() {
               bare
               emphasis="hero"
               icon={<DumbbellIcon />}
-              color={COLORS.steel}
+              color={HOME_COLORS.cyan}
               value={`${summary.exerciseCount}/${exercises.length}`}
               label="ท่าที่ทำ"
               caption={skipped.length > 0 ? `${skipped.length} ท่าข้าม` : undefined}
@@ -1463,12 +1461,12 @@ export default function SessionPage() {
           <SessionHighlightRow
             variant="subtle"
             icon="🏆"
-            iconColor={COLORS.amber}
+            iconColor={HOME_COLORS.orange}
             label="สถิติใหม่"
             value={
               <>
                 {summaryExtras.prs[0].exerciseName}{' '}
-                <span className="font-mono text-amber">+{format(summaryExtras.prs[0].deltaKg)}</span>
+                <span className="font-mono" style={{ color: HOME_COLORS.orange }}>+{format(summaryExtras.prs[0].deltaKg)}</span>
                 {summaryExtras.prs.length > 1 && <span className="text-muted"> · +{summaryExtras.prs.length - 1} ท่า</span>}
               </>
             }
@@ -1485,7 +1483,7 @@ export default function SessionPage() {
           // (🟢🟡🟠🔴) อ่านเร็วกว่าต้องไล่อ่าน % ทีละแถว + เรียงจากพร้อมมากไปน้อยแทนลำดับ enum เดิม
           <PremiumCard
             className="px-4 py-4 text-left space-y-3"
-            style={{ border: `1px solid ${withAlpha(COLORS.amber, '20')}`, boxShadow: `0 0 20px ${withAlpha(COLORS.amber, '08')}` }}
+            style={{ border: `1px solid ${withAlpha(HOME_COLORS.orange, '20')}`, boxShadow: `0 0 20px ${withAlpha(HOME_COLORS.orange, '08')}` }}
           >
             <div className="flex items-center justify-between">
               <p className="text-[12px] tracked uppercase text-muted">ความพร้อมกล้ามเนื้อโดยรวม</p>
@@ -1530,7 +1528,7 @@ export default function SessionPage() {
           </PremiumCard>
         )}
 
-        {shareMsg && <p className="text-xs text-amber">{shareMsg}</p>}
+        {shareMsg && <p className="text-xs" style={{ color: HOME_COLORS.orange }}>{shareMsg}</p>}
         {errorMsg && <p className="text-xs text-rusttext">{errorMsg}</p>}
 
         <div className="flex gap-2 pt-2">
@@ -1547,7 +1545,7 @@ export default function SessionPage() {
             แชร์
           </button>
         </div>
-        <a href="/history" className="block text-[12px] text-muted hover:text-amber transition">
+        <a href="/history" className="block text-[12px] text-muted hover:text-[#FF8A00] transition">
           ดูประวัติทั้งหมด
         </a>
       </div>
@@ -1579,11 +1577,11 @@ export default function SessionPage() {
       {isMakeupSession && day && (
         <div
           className="rounded-md px-3 py-2 flex items-center gap-2"
-          style={{ backgroundColor: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '33')}` }}
+          style={{ backgroundColor: withAlpha(HOME_COLORS.orange, '14'), border: `1px solid ${withAlpha(HOME_COLORS.orange, '33')}` }}
         >
           <span className="text-xs shrink-0" aria-hidden="true">🔁</span>
           <p className="text-[12px] text-muted">
-            <span className="text-amber font-medium">โหมดชดเชย</span> — กำลังทำแผน &quot;{day.title}&quot; (ปกติตรงกับวัน
+            <span className="font-medium" style={{ color: HOME_COLORS.orange }}>โหมดชดเชย</span> — กำลังทำแผน &quot;{day.title}&quot; (ปกติตรงกับวัน
             {' '}{WEEKDAYS[day.day_of_week]}) บันทึกด้วยวันที่จริงวันนี้
           </p>
         </div>
@@ -1624,7 +1622,7 @@ export default function SessionPage() {
             type="button"
             onClick={() => setIndex(i)}
             className={`h-1.5 flex-1 rounded-full transition ${
-              i === index ? 'bg-amber' : states[ex.id]?.logged ? 'bg-steel' : 'bg-surface2'
+              i === index ? 'bg-[#FF8A00]' : states[ex.id]?.logged ? 'bg-[#20C8FF]' : 'bg-surface2'
             }`}
             aria-label={ex.exercise_name}
           />
@@ -1660,7 +1658,7 @@ export default function SessionPage() {
             <button
               type="button"
               onClick={addExercise}
-              className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] transition"
+              className="flex-[2] rounded-lg bg-[#20C8FF] text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] transition"
             >
               เพิ่มท่านี้
             </button>
@@ -1673,7 +1671,7 @@ export default function SessionPage() {
             setShowAddExercise(true)
             setShowSwapExercise(false)
           }}
-          className="w-full rounded-lg border border-dashed border-line text-muted hover:text-amber hover:border-amber/50 font-display tracked uppercase py-2.5 text-xs transition"
+          className="w-full rounded-lg border border-dashed border-line text-muted hover:text-[#FF8A00] hover:border-[#FF8A00]/50 font-display tracked uppercase py-2.5 text-xs transition"
         >
           + เพิ่มท่า
         </button>
@@ -1719,7 +1717,7 @@ export default function SessionPage() {
               type="button"
               onClick={swapCurrentExercise}
               disabled={swapping}
-              className="flex-[2] rounded-lg bg-steel text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] disabled:opacity-50 transition"
+              className="flex-[2] rounded-lg bg-[#20C8FF] text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] disabled:opacity-50 transition"
             >
               {swapping ? 'กำลังเปลี่ยน...' : 'เปลี่ยนเป็นท่านี้'}
             </button>
@@ -1735,8 +1733,8 @@ export default function SessionPage() {
         className="overflow-hidden"
         style={{
           background:
-            'radial-gradient(circle at 88% 15%, rgba(255,138,0,0.20), transparent 55%), #1C1F24',
-          boxShadow: `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}, 0 0 0 1px rgba(0,0,0,.3)`,
+            `radial-gradient(circle at 88% 15%, rgba(255,138,0,0.20), transparent 55%), ${HOME_COLORS.card}`,
+          boxShadow: '0 8px 20px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.3)',
           clipPath: CNC_CORNER_CLIP_PATH_DEFAULT,
         }}
       >
@@ -1765,7 +1763,7 @@ export default function SessionPage() {
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background: 'linear-gradient(90deg, rgba(20,22,26,0.9) 0%, rgba(20,22,26,0.55) 35%, transparent 60%)',
+                  background: 'linear-gradient(90deg, rgba(5,11,18,0.9) 0%, rgba(5,11,18,0.55) 35%, transparent 60%)',
                 }}
               />
             </>
@@ -1787,7 +1785,7 @@ export default function SessionPage() {
                   setShowSwapExercise((v) => !v)
                   setShowAddExercise(false)
                 }}
-                className="shrink-0 text-[12px] tracked uppercase text-muted hover:text-amber transition"
+                className="shrink-0 text-[12px] tracked uppercase text-muted hover:text-[#FF8A00] transition"
                 style={knownExercise?.imageUrl ? { textShadow: '0 1px 3px rgba(0,0,0,0.9)' } : undefined}
               >
                 🔁 เปลี่ยนท่า
@@ -1858,14 +1856,14 @@ export default function SessionPage() {
           {overloadSuggestion && currentLastPerf && (
             <div
               className="rounded-xl px-3 py-2 flex items-center justify-between gap-2"
-              style={{ background: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '2A')}` }}
+              style={{ background: withAlpha(HOME_COLORS.orange, '14'), border: `1px solid ${withAlpha(HOME_COLORS.orange, '2A')}` }}
             >
               <div className="min-w-0">
                 <p className="text-[12px] tracked uppercase truncate" style={{ color: '#CFD4DE' }}>
                   ครั้งก่อน {format(currentLastPerf.weightKg)} × {currentLastPerf.reps} ·{' '}
                   {overloadSuggestion.increasedWeight ? 'พร้อมเพิ่มน้ำหนักแล้ว' : 'ลองเพิ่มอีก 1 rep'}
                 </p>
-                <p className="font-display text-sm tracked" style={{ color: COLORS.amber }}>
+                <p className="font-display text-sm tracked" style={{ color: HOME_COLORS.orange }}>
                   แนะนำวันนี้ {format(overloadSuggestion.weightKg)} × {overloadSuggestion.reps}
                 </p>
               </div>
@@ -1873,7 +1871,7 @@ export default function SessionPage() {
                 type="button"
                 onClick={() => updateCurrent({ weightKg: overloadSuggestion.weightKg, reps: overloadSuggestion.reps })}
                 className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-display tracked uppercase active:scale-[0.98] transition"
-                style={{ background: COLORS.amber, color: NEUTRAL.onAmberText }}
+                style={{ background: HOME_COLORS.orange, color: NEUTRAL.onAmberText }}
               >
                 ใช้เลย
               </button>
@@ -1907,7 +1905,7 @@ export default function SessionPage() {
               <button
                 type="button"
                 onClick={() => setEditingBarWeight((v) => !v)}
-                className="text-[12px] tracked uppercase text-muted hover:text-amber transition shrink-0"
+                className="text-[12px] tracked uppercase text-muted hover:text-[#FF8A00] transition shrink-0"
               >
                 แผ่น/ข้าง (บาร์ {plateBreakdown.barWeight}{unit}) ✎
               </button>
@@ -1936,7 +1934,7 @@ export default function SessionPage() {
                     <button
                       type="button"
                       onClick={() => setBarWeightOverride(null)}
-                      className="text-[12px] text-muted hover:text-amber transition"
+                      className="text-[12px] text-muted hover:text-[#FF8A00] transition"
                     >
                       รีเซ็ต
                     </button>
@@ -1956,7 +1954,7 @@ export default function SessionPage() {
                   <span
                     key={p.plate}
                     className="rounded-md px-1.5 py-0.5 text-[12px] font-mono"
-                    style={{ background: withAlpha(COLORS.steel, '26'), color: COLORS.steel }}
+                    style={{ background: withAlpha(HOME_COLORS.cyan, '26'), color: HOME_COLORS.cyan }}
                   >
                     {p.plate}×{p.count}
                   </span>
@@ -1982,7 +1980,7 @@ export default function SessionPage() {
                   key={pct}
                   type="button"
                   onClick={() => updateCurrent({ weightKg: dropSetWeightKg(currentState.weightKg ?? 0, pct, unit) })}
-                  className="flex-1 rounded-lg border border-line text-muted hover:text-amber hover:border-amber/50 transition py-1.5 text-[12px] font-display tracked uppercase active:scale-[0.98]"
+                  className="flex-1 rounded-lg border border-line text-muted hover:text-[#FF8A00] hover:border-[#FF8A00]/50 transition py-1.5 text-[12px] font-display tracked uppercase active:scale-[0.98]"
                 >
                   −{pct}%
                 </button>
@@ -2018,7 +2016,7 @@ export default function SessionPage() {
             <button
               type="button"
               onClick={removeLastSet}
-              className="w-full text-[12px] text-muted hover:text-amber transition"
+              className="w-full text-[12px] text-muted hover:text-[#FF8A00] transition"
             >
               แก้ไข — ลบเซ็ตล่าสุด
             </button>
@@ -2083,12 +2081,12 @@ export default function SessionPage() {
                     type="button"
                     onClick={() => setIndex(i)}
                     className={`w-full text-left px-2.5 py-2 rounded-lg text-xs transition flex items-center gap-2 ${
-                      activeItem ? 'bg-amber/10 text-amber' : 'text-ink hover:bg-surface2'
+                      activeItem ? 'bg-[#FF8A00]/10 text-[#FF8A00]' : 'text-ink hover:bg-surface2'
                     }`}
                   >
                     <span
                       className={`w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-[12px] ${
-                        done ? 'bg-steel text-bg' : activeItem ? 'bg-amber text-bg' : 'bg-surface2 text-muted'
+                        done ? 'bg-[#20C8FF] text-bg' : activeItem ? 'bg-[#FF8A00] text-bg' : 'bg-surface2 text-muted'
                       }`}
                     >
                       {done ? '✓' : skipped ? '–' : i + 1}
@@ -2138,7 +2136,7 @@ function SkippedExercisesCard({ skipped }: { skipped: SkippedExercise[] }) {
       <div className="flex items-center justify-between">
         <p className="text-[12px] text-muted">ลองแทรกในเซสชันหน้าดูนะ</p>
         {skipped.length > 3 && (
-          <button type="button" onClick={() => setExpanded((v) => !v)} className="text-[12px] text-amber shrink-0">
+          <button type="button" onClick={() => setExpanded((v) => !v)} className="text-[12px] shrink-0" style={{ color: HOME_COLORS.orange }}>
             {expanded ? 'ย่อ' : 'ดูทั้งหมด →'}
           </button>
         )}
@@ -2259,7 +2257,7 @@ function SessionHighlightRow({
 }) {
   const style =
     variant === 'hero'
-      ? { background: withAlpha(COLORS.amber, '12'), border: `2px solid ${withAlpha(COLORS.amber, '90')}`, boxShadow: `0 0 24px ${withAlpha(COLORS.amber, '35')}` }
+      ? { background: withAlpha(HOME_COLORS.orange, '12'), border: `2px solid ${withAlpha(HOME_COLORS.orange, '90')}`, boxShadow: `0 0 24px ${withAlpha(HOME_COLORS.orange, '35')}` }
       : { background: 'transparent', border: `1px solid ${NEUTRAL.chipInactive}` }
   return (
     // ฟีดแบ็ก (ui-ux-pro-max review) "ลูกศร › สื่อว่ากดได้แต่ไม่มีปลายทางจริง (false affordance)" —
@@ -2450,14 +2448,14 @@ function RestTimerButton({
 
   return (
     <div className="text-right">
-      <p className={`font-mono text-xl tabular ${done ? 'text-amber' : 'text-steel'}`}>{formatClock(remainingMs)}</p>
+      <p className="font-mono text-xl tabular" style={{ color: done ? HOME_COLORS.orange : HOME_COLORS.cyan }}>{formatClock(remainingMs)}</p>
       <button
         type="button"
         onClick={() => {
           finishedRef.current = true
           pause()
         }}
-        className="text-[12px] text-muted hover:text-amber transition"
+        className="text-[12px] text-muted hover:text-[#FF8A00] transition"
       >
         {done ? 'พักครบแล้ว' : 'ข้ามพัก'}
       </button>
