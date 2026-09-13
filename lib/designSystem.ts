@@ -17,16 +17,52 @@
 // lib/homeColors.ts (HOME_COLORS) ไม่ถูกรวมเข้าที่นี่ — เป็น Home-specific visualization/brand
 // (deep-navy glass surface, orange/cyan accent เฉพาะ Home) คนละชั้นกับ global semantic ด้านล่าง
 //
-// Migration strategy ที่ตกลงกันไว้ (ยังไม่ได้ลงมือใน commit นี้):
-//   Phase 1 — Define only (ไฟล์นี้)
-//   Phase 2 — Map เฉพาะ token ที่มี "value เดิมเป๊ะ" (ไม่เปลี่ยน visual ใดๆ)
-//   Phase 3 — Migrate เฉพาะ shared component ที่พิสูจน์แล้วว่าใช้ role เดียวกันข้ามหน้า
-//             (เช่น BottomNav, BodyMetricsRow, WeeklyVolumeRecoveryCard, Coach-related/Session-related
-//             shared components) ไม่ไล่แก้ทุกไฟล์พร้อมกัน
-//   Phase 4 — ค่อยจัดการ known inconsistency ที่ confirmed แล้ว (Stats/Report MINT Coach ใช้ violet
-//             ทั้งที่เป็น rule-based, Stats 1RM chart ใช้ rust ขัดกับ convention steel=strength,
-//             Program's "บันทึกสำเร็จ" ใช้ steel ขณะที่ moss=success ทั่วแอป) ผ่าน semantic token
-//             ไม่ใช่ search/replace แบบสุ่ม
+// Migration strategy:
+//   Phase 1   — Define only ✅
+//   Phase 2   — Token inventory + mapping (COLORS/NEUTRAL/tailwind usage classified DIRECT/SEMANTIC/
+//               DOMAIN/VISUALIZATION/BRAND/AMBIGUOUS across the whole app) ✅ — no files touched
+//   Phase 3A  — Migrated BottomNav.tsx/SidebarNav.tsx's COLORS.amber (single, unambiguous role: active
+//               nav item) to accent.primary ✅
+//   Phase 3B  — Migrated NEUTRAL.chipInactive/mutedIcon to border.default/text.mutedChart, but ONLY
+//               where the role was unambiguously "chart stroke/grid/tick/tooltip" or a plain border/
+//               divider ✅ — this pass is what revealed the naming gaps fixed below
+//   Phase 3B.1 (this pass) — DS naming corrections only, zero component files touched. Phase 3B's
+//               audit proved 3 of Phase 1's names were narrower than the tokens' real cross-page role:
+//               1. NEUTRAL.onAmberText is not "text on the primary accent" — 4 of its 6 usages sit on
+//                  moss/cyan/green surfaces, not amber/orange. Removed accent.primaryText; replaced
+//                  with text.onAccent, named for the role actually evidenced (dark foreground content on
+//                  any solid, saturated status surface — badge, checkmark, button), not tied to one color.
+//               2. NEUTRAL.mutedIcon has two real roles that happen to share one hex: chart tick/axis/
+//                  tooltip text (kept as text.mutedChart, unchanged — it was already migrated under this
+//                  name and is correctly scoped) and inactive-icon/neutral-status text elsewhere
+//                  (inactive nav icon in BottomNav/SidebarNav, neutral delta fallback in BodyMetricsRow/
+//                  Report, Fitness Score's "Rest" tier label). Added text.mutedIcon for the second role —
+//                  same value as text.mutedChart and text.muted's cousin, not text.muted itself, which is
+//                  Tailwind's DIFFERENT-VALUED '#ADB1B8' general body/label text. Do not consolidate
+//                  text.muted/text.mutedIcon/text.mutedChart into one key — two of the three share a
+//                  value by coincidence of evidence so far, not by definition, and text.muted is a
+//                  genuinely different hex.
+//               3. NEUTRAL.chipInactive also has two roles sharing one hex: border/divider (kept as
+//                  border.default, unchanged) and a fill/track surface — the "empty" groove of a
+//                  progress bar (FitnessScoreDetailSheet, MetricDetailSheet, Stats Report's goal bar) or
+//                  an inactive/no-data marker (Dashboard's untrained day-tick circle, Stats' Radar
+//                  chart's no-data dot). Added surface.inactive for this second role, after inventorying
+//                  every chipInactive usage in the app (6 fill-role call sites found, 0 more border-role
+//                  ones than what Phase 3B already migrated) — named "inactive" rather than "track"
+//                  because 2 of the 6 are point/circle markers, not progress-bar grooves, and "inactive"
+//                  is what NEUTRAL.chipInactive's own original definition in lib/theme.ts already says
+//                  ("ชิป/วงกลมที่ยังไม่ active").
+//               No component file was migrated to any of these three corrected/added keys in this pass —
+//               that's Phase 3C, now that the vocabulary is settled.
+//   Phase 3C  — Context-aware migration of amber/rust/steel/violet, which have confirmed dual roles
+//               (rust: danger vs. domain.cardio; steel: domain.strength vs. the shared progress-vs-
+//               target tier system in WeeklyVolume/WeeklyMuscleHeatmap/WeeklyCardioVolume; violet: ai.llm
+//               vs. PR-highlight distinctiveness in Stats) — never migrate these by color name, only by
+//               the role confirmed at each call site
+//   Phase 4   — Known inconsistencies, fixed only after Phase 3 is otherwise done (Stats/Report's MINT
+//               Coach card using violet despite being rule-based; Stats' 1RM Trend chart using rust
+//               against the steel=strength convention; Program's steel-colored success message where
+//               moss is used everywhere else)
 
 import { COLORS, NEUTRAL } from './theme'
 
@@ -38,8 +74,6 @@ export const DS = {
   // Profile พิสูจน์ว่า segmented control ทั่วไปก็ใช้ amber เหมือนกัน ไม่ใช่แค่การเลือกวัน/เวลา
   accent: {
     primary: COLORS.amber,
-    // ตัวอักษร/ไอคอนสีเข้มที่วางทับพื้นหลัง accent.primary ทึบ (ปุ่ม/badge) — อ่านง่ายกว่าตัวขาว
-    primaryText: NEUTRAL.onAmberText,
   },
 
   // ความหมายที่ไม่ขึ้นกับหน้าไหนหน้าหนึ่งโดยเฉพาะ
@@ -98,20 +132,41 @@ export const DS = {
     // อ้างอิงแล้วผ่าน DS.surface.card
     card: '#1C1F24',
     card2: '#23272D', // tailwind `surface2`
+    // NEUTRAL.chipInactive เดิม เฉพาะบริบทที่มันเป็น fill/พื้นผิว (ไม่ใช่เส้นขอบ — ดู border.default
+    // ด้านล่างสำหรับ role นั้น) ตรวจครบทุกจุดที่เหลือในแอปแล้ว (6 จุด): progress-bar track ที่ยังไม่เติม
+    // (FitnessScoreDetailSheet, MetricDetailSheet, Stats Report's goal bar), วงกลม/จุด "ยังไม่มีข้อมูล"
+    // (Dashboard's untrained day-tick circle, Stats' Radar chart's no-data dot, Stats Report's
+    // consistency-adherence dot) — ตั้งชื่อ "inactive" ไม่ใช่ "track" เพราะ 2 ใน 6 เป็นจุด/วงกลม ไม่ใช่
+    // ร่องแถบ progress ตรงกับความหมายเดิมของ NEUTRAL.chipInactive เองใน lib/theme.ts ("ชิป/วงกลมที่ยัง
+    // ไม่ active") พอดี — ยังไม่ migrate component ไหนมาใช้คีย์นี้ในรอบนี้ (Phase 3C)
+    inactive: '#2E333A',
   },
 
   text: {
     // tailwind `ink` — ค่าเดียวกับ literal '#F3F0E8' ที่เจอซ้ำในหลาย recharts Tooltip itemStyle
     primary: '#F3F0E8',
     muted: '#ADB1B8', // tailwind `muted` — text รองทั่วไป (label, caption, ตัวเลขรอง ~700 จุดทั่วแอป)
-    // เฉดจางกว่า text.muted เจาะจงสำหรับ tick label/ไอคอนบนกราฟ (recharts tick fill) — คนละเฉดตั้งใจ
-    // ไม่ใช่ duplicate ของ text.muted (ใช้ NEUTRAL.mutedIcon เดิม)
+    // NEUTRAL.mutedIcon เป๊ะ — เฉพาะบริบท recharts tick/axis/tooltip label (มี usage จริงใน Stats/
+    // Stats Report/Exercise Detail's 1RM chart แล้ว ตั้งแต่ Phase 3B) อย่าใช้กับ UI ทั่วไปนอกกราฟ
     mutedChart: NEUTRAL.mutedIcon,
+    // ค่าเดียวกับ text.mutedChart เป๊ะ (NEUTRAL.mutedIcon ตัวเดียวกัน) แต่คนละบริบทเรียกใช้: ไอคอน nav
+    // ที่ไม่ active (BottomNav/SidebarNav), delta ที่เป็นกลางไม่มีทิศทางดี/แย่ (BodyMetricsRow, Stats
+    // Report's BodyProgressColumn), ป้าย tier "Rest" ของ Fitness Score — ไม่ใช่ text.muted (Tailwind's
+    // '#ADB1B8', คนละค่ากันจริงๆ) ตั้งใจแยกชื่อจาก mutedChart แม้ value เดียวกัน เพื่อให้ตำแหน่งเรียกใช้
+    // สื่อความหมายของตัวเองตรงๆ ไม่ใช่ทุกจุดที่ไม่ใช่กราฟแต่ดันถูกเรียกว่า "mutedChart"
+    mutedIcon: NEUTRAL.mutedIcon,
+    // แทนที่ accent.primaryText เดิม (Phase 1) — NEUTRAL.onAmberText จริงๆ แล้วไม่ได้ผูกกับ amber/
+    // primary อย่างเดียว (ตรวจพบใน Phase 3B ว่า 4 ใน 6 จุดที่ใช้จริงอยู่บนพื้น moss/cyan/green ไม่ใช่
+    // amber/orange เลย — Dashboard's day-tick checkmark บนพื้น moss, badge "พร้อมลุย" บนพื้น cyan,
+    // ปุ่ม "เซ็ตนี้เสร็จแล้ว" ของ Session บนพื้น green ทั้ง text และ background ของ checkmark วงเล็ก) —
+    // role จริงคือ "ตัวอักษร/ไอคอนเข้มอ่านง่ายบนพื้นหลังทึบสีอิ่มตัวใดๆ" ไม่ใช่แค่บนสี accent.primary
+    onAccent: NEUTRAL.onAmberText,
   },
 
   border: {
     // tailwind `line` — ค่าเดียวกับ NEUTRAL.chipInactive (คนละชื่อ ความหมายเดิมสองแบบ: `line` = เส้น
-    // ขอบทั่วไป, `chipInactive` = ชิป/จุดที่ยังไม่ active — แต่เป็น hex เดียวกันเป๊ะ)
+    // ขอบทั่วไป, `chipInactive` = ชิป/จุดที่ยังไม่ active — แต่เป็น hex เดียวกันเป๊ะ) — เฉพาะบริบท
+    // เส้นขอบ/เส้นแบ่ง/เส้นกราฟ (CartesianGrid/PolarGrid/axisLine, divider, dashed border) เท่านั้น
     default: '#2E333A',
     active: COLORS.amber, // ขอบ input/การ์ดตอน focus หรือถูกเลือก
   },
