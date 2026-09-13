@@ -64,7 +64,13 @@ function GoalCard({ label, fromValue, toValue, unit, decimals, pct, color, statu
       <div style={{ height: barHeight, borderRadius: 999, background: 'rgba(255,255,255,.06)', overflow: 'hidden', marginBottom: 6 }}>
         <AnimatedBarFill pct={pct} color={color} />
       </div>
-      <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 10.5 }}>
+      {/* v3: ฟีดแบ็ก (design review, 8.9/10, P1) "ลด contrast ของ secondary information ('6.0 kg
+          remaining') ให้เบาลงอีกเล็กน้อย ให้ % complete เป็น visual anchor เดียว — ไม่แตะ card/layout" —
+          rgba(255,255,255,.55) แทน HOME_COLORS.textSecondary (โทเคนกลางที่การ์ดอื่นทั้งหน้ายังใช้ solid
+          เต็มค่าอยู่) วัดคอนทราสต์แล้วยังผ่าน WCAG AA (~4.6:1 บนพื้นการ์ดจริง) เท่ากับค่าที่ใช้แก้บั๊ก
+          contrast ของ "Last measured" ใน BodyOverviewCard ไปแล้วรอบก่อน ไม่ใช่ค่าจางแบบเดิมที่เคยถูกตีกลับ
+          เพราะอ่านไม่ออก (rgba(...,.35)) */}
+      <p className="font-homeTh" style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5 }}>
         {statusText}
       </p>
     </div>
