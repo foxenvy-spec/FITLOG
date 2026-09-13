@@ -16,6 +16,21 @@ interface WeeklyProgressCardProps {
   streak: number
 }
 
+// ฟีดแบ็ก (Product/UI review, "#3 — Weekly Progress interpretation") "แปลตัวเลข -> ความหมาย (ไม่ใช่โชว์
+// ข้อมูลซ้ำ) — ห้ามเพิ่ม metric ใหม่/scoring system ใหม่ ห้ามเพิ่มความสูงการ์ด" — ใช้ pattern เดียวกับ
+// readinessVerdict() ใน AICoachCompactCard.tsx เป๊ะ (map ค่า % ที่มีอยู่แล้วเป็นข้อความสั้นๆ ตาม tier
+// ไม่คำนวณ % ใหม่/ไม่ใช้ scoring แยกต่างหาก) — displayPct มาจาก plannedConsistency จริงที่คำนวณไว้แล้ว
+// (เห็นได้จาก AnimatedBarFill ที่ใช้ตัวเดียวกันอยู่แล้วด้านล่าง) threshold ตรงกับตัวอย่างที่ผู้ใช้ให้มาเป๊ะ
+// (3/5=60% -> "Great pace" ฯลฯ) — เคส remaining===0 ไม่ต้องมี interpretation ซ้ำ เพราะ "All workouts done"
+// ก็เป็นการตีความสำเร็จอยู่แล้วในตัว (กัน "Week complete — All workouts done" ซ้ำความหมาย)
+function weeklyPaceLabel(pct: number): string {
+  if (pct >= 80) return 'Almost there'
+  if (pct >= 60) return 'Great pace'
+  if (pct >= 40) return 'Building momentum'
+  if (pct > 0) return 'Good start'
+  return 'Just getting started'
+}
+
 // การ์ด "ความคืบหน้าสัปดาห์นี้" ใหม่ตาม "New_mobile_app.zip" — แทนที่ WorkoutStreakCard.tsx (มีแถวจุด
 // วงกลม 7 วัน) ด้วยเลย์เอาต์เรียบกว่ามาก (เศษส่วน+% ตัวเลขใหญ่+แถบเดียว) ไม่มีปฏิทินรายวันแล้ว — badge
 // สตรีคยังอยู่ (🔥 N วันติดต่อกัน) คนละตัวเลขกับเศษส่วนหลัก (ดู comment ที่ props ด้านบน) เหมือนที่การ์ด
@@ -26,9 +41,18 @@ export default function WeeklyProgressCard({ completedCount, plannedCount, pct, 
   const total = Math.max(plannedCount, 1)
   // ฟีดแบ็ก "เปลี่ยนจากตัวเลขเป็นพฤติกรรม — เอา % ออก เปลี่ยนเป็น 'N workouts left this week' ตอบคำถาม
   // 'ฉันต้องทำอีกเท่าไร' ทันที" — เฉพาะเมื่อมีแผนตั้งไว้จริง (plannedCount>0) เท่านั้น ไม่งั้นไม่มีความหมาย
+  // v2: ฟีดแบ็ก (Product/UI review, "#3") "3/5 days / Great pace this week / 2 workouts left this week —
+  // ถ้าความสูงเดิมจำกัดมาก ให้แทนที่ caption เดิมมากกว่าเพิ่มบรรทัดใหม่" — รวม interpretation เข้าบรรทัด
+  // เดียวกับ remainingLabel เดิมเป๊ะ (คนละประโยคคั่นด้วย em dash) แทนการเพิ่มบรรทัดที่ 2 แยก ไม่เพิ่ม
+  // ความสูงการ์ดเลยสักพิกเซล เหมือน pattern "รวมเป็นบรรทัดเดียว ไม่ตัดข้อมูลออก" ที่ AICoachCompactCard.tsx
+  // เคยใช้แก้ปัญหาเดียวกันมาก่อน (verdict + เหตุผล ในบรรทัดเดียว)
   const remaining = plannedCount > 0 ? Math.max(plannedCount - completedCount, 0) : null
   const remainingLabel =
-    remaining == null ? null : remaining === 0 ? 'All workouts done this week 🎉' : `${remaining} workout${remaining === 1 ? '' : 's'} left this week`
+    remaining == null
+      ? null
+      : remaining === 0
+        ? 'All workouts done this week 🎉'
+        : `${weeklyPaceLabel(displayPct)} — ${remaining} workout${remaining === 1 ? '' : 's'} left this week`
 
   return (
     <div
