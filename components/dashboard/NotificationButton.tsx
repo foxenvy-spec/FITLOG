@@ -34,12 +34,17 @@ export default function NotificationButton({
 
   const bellButton =
     variant === 'flat' ? (
+      // ฟีดแบ็ก (Micro-interaction/Interaction Quality audit) "ปุ่มกระดิ่งมือถือ (flat) ไม่มี press
+      // feedback เลยสักจุด (ไม่มี active: ใดๆ) ต่างจากปุ่ม/ลิงก์ tappable อื่นทั้งหมดในหน้า Home ที่มี
+      // active:opacity หรือ active:scale อย่างน้อยหนึ่งอย่างเสมอ" — เพิ่ม active:opacity-70 (แบบเดียวกับ
+      // pattern ที่ใช้ทั่วแอปสำหรับปุ่ม/ลิงก์ที่เปลี่ยนความโปร่งใสตอนกด ไม่ใช่ scale เพราะปุ่มวงกลมเล็กนี้
+      // ขยับ/ย่อแล้วจะดูสั่นเกินตัว) ไม่แตะขนาด 34px เดิม (สเปกที่ตั้งใจไว้ชัดเจนจากรอบ rebuild ก่อนหน้า)
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="การแจ้งเตือน"
         aria-expanded={open}
-        className="relative w-[34px] h-[34px] rounded-full flex items-center justify-center transition"
+        className="relative w-[34px] h-[34px] rounded-full flex items-center justify-center transition active:opacity-70"
         style={{ backgroundColor: 'rgba(255,255,255,.06)' }}
       >
         <svg

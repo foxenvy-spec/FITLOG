@@ -227,8 +227,15 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
         {/* ฟีดแบ็ก "BMI ไม่ควรอยู่ตรงนี้ ให้ไปอยู่หน้า Stats/Body Details แทน" — เดิม "Details" เป็นปุ่ม
             ขยาย/ยุบแสดง BMI ในการ์ดนี้เอง เปลี่ยนเป็นลิงก์จริงไปหน้า /health (มี BMI + รายละเอียดร่างกาย
             ครบอยู่แล้ว) แทนที่จะทำ toggle ในการ์ดนี้ */}
+        {/* ฟีดแบ็ก (Micro-interaction/Interaction Quality audit) "'Details →' ไม่มี press feedback เลย
+            ทั้งที่ลิงก์ empty-state ('Start tracking your body') ของการ์ดเดียวกันมี active:opacity-80
+            transition อยู่แล้ว — สองลิงก์เดียวกัน (ไป /health) ควรให้ feedback แบบเดียวกัน" */}
         {!hasNoData && (
-          <Link href="/health" className="flex items-center" style={{ color: HOME_COLORS.textSecondary, fontSize: 12, gap: 2 }}>
+          <Link
+            href="/health"
+            className="flex items-center active:opacity-80 transition"
+            style={{ color: HOME_COLORS.textSecondary, fontSize: 12, gap: 2 }}
+          >
             Details
             <ChevronRightIcon />
           </Link>
