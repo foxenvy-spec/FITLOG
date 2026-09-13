@@ -22,6 +22,7 @@ import ErrorState from '@/components/ErrorState'
 import ProgressRing from '@/components/ui/ProgressRing'
 import { AiRingAvatar } from '@/components/AICoachCompactCard'
 import { COLORS, NEUTRAL, FIRE_GRADIENT_STOPS, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
   { value: 7, label: '7D' },
@@ -207,18 +208,18 @@ export default function WorkoutReportPage() {
                     <stop offset="100%" stopColor={COLORS.amber} stopOpacity={0.45} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
+                <CartesianGrid stroke={DS.border.default} vertical={false} />
                 {/* interval="preserveStartEnd" ให้ recharts เว้น label กลางๆ ที่จะชนกันเองถ้าพื้นที่ไม่พอ
                     (เช่นจอมือถือแคบ) แทนที่จะบังคับวาดครบทุก label จนซ้อนทับกันแบบ default (interval=0) */}
                 <XAxis
                   dataKey="label"
                   interval="preserveStartEnd"
-                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 11 }}
-                  axisLine={{ stroke: NEUTRAL.chipInactive }}
+                  tick={{ fill: DS.text.mutedChart, fontSize: 11 }}
+                  axisLine={{ stroke: DS.border.default }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: NEUTRAL.mutedIcon, fontSize: 11 }}
+                  tick={{ fill: DS.text.mutedChart, fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                   width={40}
@@ -378,8 +379,8 @@ export default function WorkoutReportPage() {
 function TrendTooltipContent({ active, payload, label, unit }: { active?: boolean; payload?: { value: number }[]; label?: string; unit: string }) {
   if (!active || !payload || payload.length === 0) return null
   return (
-    <div style={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12, padding: '6px 10px' }}>
-      <p style={{ color: NEUTRAL.mutedIcon, margin: 0 }}>{label}</p>
+    <div style={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12, padding: '6px 10px' }}>
+      <p style={{ color: DS.text.mutedChart, margin: 0 }}>{label}</p>
       <p style={{ color: '#F3F0E8', margin: 0 }}>
         {payload[0].value} {unit} · วอลุ่ม
       </p>
@@ -429,7 +430,7 @@ function SummaryTile({
   // เปลี่ยนเป็นคั่นด้วยเส้นแบ่งบางๆ แทน (เฉพาะ sm ขึ้นไปที่เรียงแนวนอนจริง — มือถือเป็น grid 2 คอลัมน์
   // เส้นแบ่งแนวตั้งจะดูแปลก) ให้ทั้ง 4 ตัวเลขรู้สึกเป็น "แถว KPI เดียว" ของการ์ดเดียว ไม่ใช่การ์ดย่อย 4 ใบ
   return (
-    <div className={isFirst ? '' : 'sm:border-l sm:pl-4'} style={{ borderColor: NEUTRAL.chipInactive }}>
+    <div className={isFirst ? '' : 'sm:border-l sm:pl-4'} style={{ borderColor: DS.border.default }}>
       <p className="text-[11px] tracked uppercase text-muted">{label}</p>
       <p className="font-mono text-2xl sm:text-3xl font-bold text-ink mt-1">
         {value.toLocaleString()} <span className="text-xs font-normal text-muted">{unit}</span>
@@ -481,7 +482,7 @@ function BodyProgressColumn({
   )
   if (delta.value === null) {
     return (
-      <div className={wrapperClass} style={{ borderColor: NEUTRAL.chipInactive }}>
+      <div className={wrapperClass} style={{ borderColor: DS.border.default }}>
         {iconBadge}
         <p className="text-[12px] tracked uppercase text-muted">{label}</p>
         <p className="text-sm text-muted mt-1">— ยังไม่มีข้อมูล</p>
@@ -495,7 +496,7 @@ function BodyProgressColumn({
     delta.delta !== null ? (toDisplay ? toDisplay(Math.abs(delta.delta)) : Math.abs(delta.delta)) : 0
   const color = delta.isGood === null ? NEUTRAL.mutedIcon : delta.isGood ? COLORS.moss : COLORS.rust
   return (
-    <div className={wrapperClass} style={{ borderColor: NEUTRAL.chipInactive }}>
+    <div className={wrapperClass} style={{ borderColor: DS.border.default }}>
       {iconBadge}
       <p className="text-[12px] tracked uppercase text-muted">{label}</p>
       {/* ขนาดตัวเลขเท่า Workout Summary hero KPI (text-2xl/3xl) ให้น้ำหนักภาพเท่ากัน ไม่ใช่ตัวเลขรองที่
@@ -524,7 +525,7 @@ function BodyProgressColumn({
       ) : (
         <div className="mt-3">
           <p className="text-[12px] text-muted mb-1.5">ไม่มีเป้าหมาย</p>
-          <div className="h-2 rounded-full border border-dashed" style={{ borderColor: NEUTRAL.chipInactive }} />
+          <div className="h-2 rounded-full border border-dashed" style={{ borderColor: DS.border.default }} />
         </div>
       )}
     </div>

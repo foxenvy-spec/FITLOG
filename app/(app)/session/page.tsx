@@ -17,6 +17,7 @@ import {
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
 import { HOME_COLORS } from '@/lib/homeColors'
+import { DS } from '@/lib/designSystem'
 import PremiumCard from '@/components/ui/PremiumCard'
 import Button from '@/components/ui/Button'
 import ProgressRing from '@/components/ui/ProgressRing'
@@ -1396,7 +1397,7 @@ export default function SessionPage() {
             <GlowStatCell bare icon={<CheckIcon />} color={COLORS.moss} value={String(summary.totalSets)} label="เซ็ตรวม" />
           </div>
 
-          <div className="border-t" style={{ borderColor: NEUTRAL.chipInactive }} />
+          <div className="border-t" style={{ borderColor: DS.border.default }} />
 
           <div className="grid grid-cols-2 gap-2.5">
             <GlowStatRow
@@ -2258,7 +2259,7 @@ function SessionHighlightRow({
   const style =
     variant === 'hero'
       ? { background: withAlpha(HOME_COLORS.orange, '12'), border: `2px solid ${withAlpha(HOME_COLORS.orange, '90')}`, boxShadow: `0 0 24px ${withAlpha(HOME_COLORS.orange, '35')}` }
-      : { background: 'transparent', border: `1px solid ${NEUTRAL.chipInactive}` }
+      : { background: 'transparent', border: `1px solid ${DS.border.default}` }
   return (
     // ฟีดแบ็ก (ui-ux-pro-max review) "ลูกศร › สื่อว่ากดได้แต่ไม่มีปลายทางจริง (false affordance)" —
     // เอาลูกศรออก แถวนี้ยังไม่ใช่ปุ่มลิงก์จริง (ไม่มีหน้ารายละเอียดให้กดไปสักหน้า)

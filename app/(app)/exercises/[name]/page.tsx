@@ -11,7 +11,8 @@ import { computeExerciseStats, type ExerciseStats } from '@/lib/exerciseStats'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { MUSCLE_GROUP_COLORS, muscleGroupLabel } from '@/lib/muscle-groups'
 import { equipmentLabel, invalidateExerciseLibraryCache } from '@/lib/exerciseLibrary'
-import { COLORS, NEUTRAL } from '@/lib/theme'
+import { COLORS } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { relativeDayLabel } from '@/lib/dashboardStats'
 import { todayStr } from '@/lib/weekdays'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
@@ -260,12 +261,12 @@ export default function ExerciseDetailPage() {
                       data={stats.progressPoints.map((p) => ({ ...p, oneRM: toDisplay(p.oneRM) }))}
                       margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
                     >
-                      <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
-                      <XAxis dataKey="label" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={{ stroke: NEUTRAL.chipInactive }} tickLine={false} />
-                      <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={['auto', 'auto']} />
+                      <CartesianGrid stroke={DS.border.default} vertical={false} />
+                      <XAxis dataKey="label" tick={{ fill: DS.text.mutedChart, fontSize: 10 }} axisLine={{ stroke: DS.border.default }} tickLine={false} />
+                      <YAxis tick={{ fill: DS.text.mutedChart, fontSize: 10 }} axisLine={false} tickLine={false} width={36} domain={['auto', 'auto']} />
                       <Tooltip
-                        contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                        labelStyle={{ color: NEUTRAL.mutedIcon }}
+                        contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                        labelStyle={{ color: DS.text.mutedChart }}
                         itemStyle={{ color: '#F3F0E8' }}
                         formatter={(v: number) => [`${v} ${unit}`, 'Estimated 1RM']}
                       />

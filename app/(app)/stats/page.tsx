@@ -38,6 +38,7 @@ import EmptyState from '@/components/EmptyState'
 import PremiumCard from '@/components/ui/PremiumCard'
 import Link from 'next/link'
 import { COLORS, NEUTRAL, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { useCountUp } from '@/lib/useCountUp'
 
 const WEEKS_SHOWN = 8
@@ -740,11 +741,11 @@ export default function StatsPage() {
               <div className="h-40 mt-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={weeklyVolume.map((b) => ({ ...b, value: Math.round(toDisplay(b.value)) }))} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
-                    <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
+                    <CartesianGrid stroke={DS.border.default} vertical={false} />
                     <XAxis
                       dataKey="label"
-                      tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
-                      axisLine={{ stroke: NEUTRAL.chipInactive }}
+                      tick={{ fill: DS.text.mutedChart, fontSize: 10 }}
+                      axisLine={{ stroke: DS.border.default }}
                       tickLine={false}
                     />
                     {/* บั๊ก (ฟีดแบ็กพร้อมสกรีนช็อต) — ตัวเลขแกน Y โดนตัดขอบซ้ายเหลือแค่ "00" เมื่อวอลุ่มสะสม
@@ -752,7 +753,7 @@ export default function StatsPage() {
                         5-6 หลักไม่พอที่ใส่ — ลด margin ติดลบลง (-20 -> -4) + เพิ่ม tickFormatter ย่อเป็น "40k"
                         แทน "40,000" กันปัญหาเดิมซ้ำอีกแม้วอลุ่มจะโตขึ้นไปอีกในอนาคต */}
                     <YAxis
-                      tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                      tick={{ fill: DS.text.mutedChart, fontSize: 10 }}
                       axisLine={false}
                       tickLine={false}
                       width={44}
@@ -760,8 +761,8 @@ export default function StatsPage() {
                     />
                     <Tooltip
                       cursor={{ fill: 'rgba(108,140,168,0.08)' }}
-                      contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                      labelStyle={{ color: NEUTRAL.mutedIcon }}
+                      contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: DS.text.mutedChart }}
                       itemStyle={{ color: '#F3F0E8' }}
                       formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
                     />
@@ -831,19 +832,19 @@ export default function StatsPage() {
         <PremiumCard className="h-48 p-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distanceByDay} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
-              <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
+              <CartesianGrid stroke={DS.border.default} vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }}
+                tick={{ fill: DS.text.mutedChart, fontSize: 10 }}
                 interval={6}
-                axisLine={{ stroke: NEUTRAL.chipInactive }}
+                axisLine={{ stroke: DS.border.default }}
                 tickLine={false}
               />
-              <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
+              <YAxis tick={{ fill: DS.text.mutedChart, fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
               <Tooltip
                 cursor={{ fill: 'rgba(193,80,58,0.08)' }}
-                contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: NEUTRAL.mutedIcon }}
+                contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: DS.text.mutedChart }}
                 itemStyle={{ color: '#F3F0E8' }}
                 formatter={(v: number) => [`${v} กม.`, 'ระยะทาง']}
               />
@@ -882,8 +883,8 @@ export default function StatsPage() {
           <PremiumCard className="h-64 p-3">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={strengthBalance} outerRadius="70%">
-                <PolarGrid stroke={NEUTRAL.chipInactive} />
-                <PolarAngleAxis dataKey="axis" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 11 }} />
+                <PolarGrid stroke={DS.border.default} />
+                <PolarAngleAxis dataKey="axis" tick={{ fill: DS.text.mutedChart, fontSize: 11 }} />
                 <Radar
                   dataKey="value"
                   stroke={COLORS.violet}
@@ -915,8 +916,8 @@ export default function StatsPage() {
                   }}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: NEUTRAL.mutedIcon }}
+                  contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: DS.text.mutedChart }}
                   itemStyle={{ color: '#F3F0E8' }}
                   formatter={(v: number, _name: string, entry: any) =>
                     entry?.payload?.pct === null ? ['ไม่มีข้อมูล', 'ระดับ'] : [`${v}%`, 'ระดับ']
@@ -934,7 +935,7 @@ export default function StatsPage() {
               ให้แยกจากเนื้อหาอื่นชัดเจนขึ้น ไม่แตะเนื้อหา/ความยาวข้อความเลย แค่เปลี่ยน container */}
           <p
             className="text-[12px] text-muted mt-2 px-3 py-2 rounded-lg border"
-            style={{ backgroundColor: 'rgba(255,255,255,.03)', borderColor: NEUTRAL.chipInactive }}
+            style={{ backgroundColor: 'rgba(255,255,255,.03)', borderColor: DS.border.default }}
           >
             Push/Pull/Legs เทียบเกณฑ์มาตรฐาน 1RM ต่อน้ำหนักตัว{profile?.sex ? '' : ' — ตั้งค่าเพศในโปรไฟล์เพื่อความแม่นยำขึ้น'}
             {' · '}Core จากสัดส่วนวอลุ่มฝึกจริงของกล้ามเนื้อแกนกลาง · Endurance จาก VO2max ประมาณ (ต้องตั้งค่าชีพจรในโปรไฟล์)
@@ -1000,15 +1001,15 @@ export default function StatsPage() {
             <PremiumCard className="h-44 p-3">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={oneRmTrend} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
-                  <CartesianGrid stroke={NEUTRAL.chipInactive} vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={{ stroke: NEUTRAL.chipInactive }} tickLine={false} />
+                  <CartesianGrid stroke={DS.border.default} vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: DS.text.mutedChart, fontSize: 10 }} axisLine={{ stroke: DS.border.default }} tickLine={false} />
                   {/* บั๊ก (ฟีดแบ็กพร้อมสกรีนช็อต) — ตัวเลขแกน Y โดนตัดขอบซ้าย เห็นเป็น "'5"/"'0"/"i5"
                       แทนที่จะเป็น "25"/"20"/"15" — margin.left ติดลบเดิม (-20) บีบพื้นที่แกนจนตัวเลข
                       2 หลักไม่พอที่ใส่แล้ว (สาเหตุเดียวกับกราฟ Weekly Volume ด้านบน) */}
-                  <YAxis tick={{ fill: NEUTRAL.mutedIcon, fontSize: 10 }} axisLine={false} tickLine={false} width={40} domain={['auto', 'auto']} />
+                  <YAxis tick={{ fill: DS.text.mutedChart, fontSize: 10 }} axisLine={false} tickLine={false} width={40} domain={['auto', 'auto']} />
                   <Tooltip
-                    contentStyle={{ background: '#1C1F24', border: `1px solid ${NEUTRAL.chipInactive}`, borderRadius: 8, fontSize: 12 }}
-                    labelStyle={{ color: NEUTRAL.mutedIcon }}
+                    contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: DS.text.mutedChart }}
                     itemStyle={{ color: '#F3F0E8' }}
                     formatter={(v: number) => [`${v} ${unit}`, 'Estimated 1RM']}
                   />
