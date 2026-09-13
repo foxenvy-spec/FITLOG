@@ -79,6 +79,7 @@ import NotificationButton from '@/components/dashboard/NotificationButton'
 import AICoachCompactCard from '@/components/AICoachCompactCard'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { CARD_GRADIENT_CSS, withAlpha, COLORS, NEUTRAL } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { computeFitnessScore } from '@/lib/fitnessScore'
 import FitnessScoreDetailSheet from '@/components/dashboard/FitnessScoreDetailSheet'
 import HeroGaugeConcept from '@/components/dashboard/HeroGaugeConcept'
@@ -1456,7 +1457,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden mt-1.5">
-                      <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={COLORS.amber} />
+                      <AnimatedBarFill pct={Math.max(0, Math.min(100, weightPct))} color={DS.accent.primary} />
                     </div>
                     {/* ฟีดแบ็ก (design review, micro-polish หลังปิด P1) "'7% Progress · เหลืออีก 6.5 kg'
                         เป็นประโยคเดียวความหนาแน่นเท่ากันหมด อยากให้ Progress % เด่นเป็น visual hierarchy
@@ -1477,7 +1478,7 @@ export default function DashboardPage() {
                         const parts = goalProgressLabelParts(weightPct)
                         return (
                           <>
-                            <span className="font-mono font-bold text-sm" style={{ color: COLORS.amber }}>
+                            <span className="font-mono font-bold text-sm" style={{ color: DS.accent.primary }}>
                               {parts.headline}
                             </span>
                             {parts.detail && <span>{parts.detail}</span>}
@@ -1488,7 +1489,7 @@ export default function DashboardPage() {
                     {/* ฟีดแบ็ก "อยากเห็นคาดว่าจะถึงเป้าหมายเมื่อไหร่" — โชว์เฉพาะตอนข้อมูลนิ่งพอจริงๆ
                         (ดูเกณฑ์ใน estimateGoalEtaWeeks) null = ไม่โชว์บรรทัดนี้เลย ไม่เดา/ไม่ประมาณคร่าวๆ */}
                     {data.weightEtaWeeks !== null && (
-                      <p className="text-[12px] mt-0.5" style={{ color: COLORS.amber }}>
+                      <p className="text-[12px] mt-0.5" style={{ color: DS.accent.primary }}>
                         🎯 คาดว่าจะถึงเป้าหมายใน ~{data.weightEtaWeeks} สัปดาห์
                       </p>
                     )}
@@ -1886,12 +1887,12 @@ export default function DashboardPage() {
                 (% ท่าตามแผนวันนี้ที่ทำเสร็จแล้ว ไม่เกี่ยวกับการฟื้นตัวเลย)" — เปลี่ยนแค่คำ label/aria-label ให้
                 ตรงกับสิ่งที่ค่าจริงวัด ("ความคืบหน้า" ของแผนวันนี้) ไม่แตะสูตร progressPct/ขนาดวง/ตำแหน่ง/
                 Recovery ใดๆ เลย */}
-            <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(COLORS.amber, '24')})` }}>
+            <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(DS.accent.primary, '24')})` }}>
               <GoalRing
                 pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
                 size={64}
                 strokeWidth={5}
-                color={COLORS.amber}
+                color={DS.accent.primary}
                 label={<span className="text-[7px]">ความคืบหน้า</span>}
                 ariaLabel="ความคืบหน้าของแผนวันนี้"
                 glow
@@ -2664,7 +2665,7 @@ export default function DashboardPage() {
                 (ripple 2 ครั้งแล้วหยุด ใช้กับการ์ด PR celebration อยู่แล้ว) มาใช้ซ้ำแทนสร้าง keyframe ใหม่ */}
             <div
               className={data.weeklyGoalPct >= 100 ? 'rounded-full animate-pr-glow' : undefined}
-              style={{ filter: `drop-shadow(0 0 4px ${withAlpha(COLORS.amber, '40')})`, ...({ '--pr-glow': 'rgba(232,163,61,.5)' } as React.CSSProperties) }}
+              style={{ filter: `drop-shadow(0 0 4px ${withAlpha(DS.accent.primary, '40')})`, ...({ '--pr-glow': 'rgba(232,163,61,.5)' } as React.CSSProperties) }}
             >
               {/* ฟีดแบ็ก "86% Goal ดูไม่สัมพันธ์กับข้อความข้างๆ (3 ครั้ง/อีก 2 ครั้งถึงเป้าหมาย) — 3/5 ครั้ง
                   ควรเป็น 60% ไม่ใช่ 86%" — weeklyGoalPct (lib fetchDashboardData ด้านบน) ไม่ใช่ % จำนวนครั้ง
@@ -2684,7 +2685,7 @@ export default function DashboardPage() {
                 pct={data.weeklyGoalPct}
                 size={72}
                 strokeWidth={7}
-                color={COLORS.amber}
+                color={DS.accent.primary}
                 label="Set Goal"
                 ariaLabel="Weekly Set Goal Progress"
                 glow
@@ -2744,7 +2745,7 @@ export default function DashboardPage() {
                 (() => {
                   const intensity = muscleIntensityFor(todayScheduledMuscleGroup)
                   return (
-                    <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: COLORS.amber }}>
+                    <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: DS.accent.primary }}>
                       {/* ฟีดแบ็ก (semantic review หลัง Makeup Session Smoke Test) "'Today →' อ่านเป็น
                           'สิ่งที่ต้องทำวันนี้' ทั้งที่จริงทำแผนนี้ไปแล้วผ่านเซสชันชดเชย ทำให้ผู้ใช้สงสัยว่า
                           ต้องไปทำ Pull อีกไหม" — hasMakeupToday true แปลว่าฝึกไปแล้ว (ผ่านการ์ด Today's
@@ -2768,7 +2769,7 @@ export default function DashboardPage() {
                 (() => {
                   const intensity = muscleIntensityFor(nextScheduledMuscleGroup)
                   return (
-                    <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: COLORS.amber }}>
+                    <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: DS.accent.primary }}>
                       <span className="shrink-0">Next →</span>
                       <span className="min-w-0 flex-1 truncate">{splitTitleDetail(next.day.title).main}</span>
                       {intensity && (

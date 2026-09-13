@@ -16,6 +16,7 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import Image from 'next/image'
 import { COLORS, withAlpha, lighten, NOISE_BG, CARD_BORDER_CSS } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import PremiumCard from '@/components/ui/PremiumCard'
 
 // Dark Titanium — พื้นการ์ดยังเป็นผิวโลหะเข้มเดียวกันหมด (ไม่ใช่ glow สีจัดๆ แบบก่อนหน้า) แต่เอาสัญญะสี
@@ -1097,7 +1098,7 @@ export default function TemplatesPage() {
             <button
               onClick={() => setCreating(true)}
               className="flex-1 rounded-3xl border border-dashed py-3.5 px-3 text-center transition active:scale-[0.99]"
-              style={{ borderColor: withAlpha(COLORS.amber, '66'), color: COLORS.amber }}
+              style={{ borderColor: withAlpha(DS.accent.primary, '66'), color: DS.accent.primary }}
             >
               <span className="block font-display text-sm tracked uppercase">+ เทมเพลตใหม่</span>
               <span className="block text-[12px] text-muted mt-1 normal-case">สร้างโปรแกรมของคุณเอง</span>

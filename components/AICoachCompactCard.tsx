@@ -18,6 +18,7 @@ import {
   CNC_CORNER_CLIP_PATH_DEFAULT,
   withAlpha,
 } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { recoveryTier, recoveryVerdictEmoji, type TodaysRecommendation } from '@/lib/dashboardStats'
 import { describeMuscleFocus, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
 import { resolveRecommendationDisplay } from '@/lib/recommendationDisplay'
@@ -296,7 +297,7 @@ export default function AICoachCompactCard({
   // border alpha ของปุ่ม secondary เดิม (40, ~25%) -> 66 (~40%) + font-semibold เฉพาะปุ่มในการ์ดนี้
   // (ผ่าน style/className override เฉพาะจุดเรียกใช้ ไม่แตะ Button.tsx กลางซึ่งใช้ร่วมกับปุ่ม secondary
   // อื่นทั่วแอป — เปลี่ยนตรงนั้นจะกระทบทุกจุดโดยไม่ตั้งใจ)
-  const ctaEmphasisStyle = { border: `1px solid ${withAlpha(COLORS.amber, '66')}` }
+  const ctaEmphasisStyle = { border: `1px solid ${withAlpha(DS.ai.ruleBased, '66')}` }
 
   async function handleStart() {
     if (!chosen || chosenExercises.length === 0) return
@@ -445,7 +446,7 @@ export default function AICoachCompactCard({
               จุด/ซับซ้อนกว่านี้ เสี่ยงกระทบพฤติกรรมที่ปรับมาหลายรอบแล้วถ้าไล่เปลี่ยนสีทุกจุด) */}
           <div className="flex items-center justify-between gap-x-2 gap-y-0.5 flex-wrap">
             <p className="font-display text-[12px] tracked uppercase flex items-center gap-1 shrink-0">
-              <span aria-hidden="true" className="shrink-0" style={{ color: variant === 'flat' ? '#ff8a3d' : COLORS.amber }}>
+              <span aria-hidden="true" className="shrink-0" style={{ color: variant === 'flat' ? '#ff8a3d' : DS.ai.ruleBased }}>
                 <SparkleIcon />
               </span>
               {/* บั๊ก (Empty/Edge States audit) "ป้าย '· Today'/'· Next Session' ติดอยู่ตลอดแม้ตอนที่
@@ -617,7 +618,7 @@ export default function AICoachCompactCard({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
                   d="M4 4h16v11H8l-4 4V4z"
-                  stroke={COLORS.amber}
+                  stroke={DS.ai.ruleBased}
                   strokeWidth="1.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -839,7 +840,7 @@ export function AiRingAvatar({ size = 112, icon = 'gem' }: { size?: number; icon
                 <stop offset="100%" stopColor="#25272C" />
               </linearGradient>
               <linearGradient id={`${gradId}-accent`} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={COLORS.amber} />
+                <stop offset="0%" stopColor={DS.ai.ruleBased} />
                 <stop offset="100%" stopColor="#B97A28" />
               </linearGradient>
             </defs>

@@ -103,7 +103,7 @@ export default function WorkoutReportPage() {
                   type="button"
                   onClick={() => setPeriod(opt.value)}
                   className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
-                  style={period === opt.value ? { backgroundColor: withAlpha(COLORS.amber, '22'), color: COLORS.amber } : { color: NEUTRAL.mutedIcon }}
+                  style={period === opt.value ? { backgroundColor: withAlpha(DS.accent.primary, '22'), color: DS.accent.primary } : { color: NEUTRAL.mutedIcon }}
                 >
                   {opt.label}
                 </button>
@@ -163,7 +163,7 @@ export default function WorkoutReportPage() {
                   STREAK_LOOKBACK_DAYS ใน lib/useWorkoutReport.ts) — ไม่ใช่ 0 = ไม่โชว์เลย ไม่ใช่ตัวเลข
                   ที่นับต่ำกว่าจริงแบบที่จะเกิดถ้าใช้ workouts ที่ fetch มาสำหรับ period totals เฉยๆ */}
               {report.currentStreak > 0 && (
-                <p className="text-[12px] font-semibold" style={{ color: COLORS.amber }}>
+                <p className="text-[12px] font-semibold" style={{ color: DS.accent.primary }}>
                   🔥 {report.currentStreak} วันติดต่อกัน
                 </p>
               )}
@@ -517,7 +517,7 @@ function BodyProgressColumn({
           <div className="h-2 rounded-full overflow-hidden" style={{ background: NEUTRAL.chipInactive }}>
             <div
               className="h-full rounded-full"
-              style={{ width: `${Math.max(0, Math.min(100, goal.progressPct ?? 0))}%`, background: COLORS.amber }}
+              style={{ width: `${Math.max(0, Math.min(100, goal.progressPct ?? 0))}%`, background: DS.accent.primary }}
             />
           </div>
           {goal.progressPct !== null && <p className="text-[11px] text-muted mt-1">{Math.round(goal.progressPct)}% ถึงเป้าหมาย</p>}

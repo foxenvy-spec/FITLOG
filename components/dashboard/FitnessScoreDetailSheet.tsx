@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import PremiumCard from '@/components/ui/PremiumCard'
-import { COLORS, TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
+import { TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { suggestFitnessScoreImprovement, type FitnessScoreResult } from '@/lib/fitnessScore'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 
@@ -128,7 +129,7 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
                   </p>
                 </div>
                 <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: NEUTRAL.chipInactive }}>
-                  {factor.value != null && <AnimatedBarFill pct={factor.value} color={COLORS.amber} />}
+                  {factor.value != null && <AnimatedBarFill pct={factor.value} color={DS.accent.primary} />}
                 </div>
               </div>
             ))}
@@ -137,12 +138,12 @@ export default function FitnessScoreDetailSheet({ open, onClose, score }: Fitnes
           {improvementTip && (
             <div
               className="mb-4 rounded-lg px-3 py-2.5"
-              style={{ backgroundColor: withAlpha(COLORS.amber, '14'), border: `1px solid ${withAlpha(COLORS.amber, '2A')}` }}
+              style={{ backgroundColor: withAlpha(DS.accent.primary, '14'), border: `1px solid ${withAlpha(DS.accent.primary, '2A')}` }}
             >
               <p className="text-[12px] leading-relaxed" style={{ color: TEXT.body }}>
                 💡 เพิ่ม{improvementTip.factorLabel}จาก {improvementTip.currentValue}% → {improvementTip.suggestedValue}%
                 {' — '}Fitness Score จะเพิ่มขึ้นประมาณ{' '}
-                <span style={{ color: COLORS.amber, fontWeight: 600 }}>+{improvementTip.scoreDelta}</span>
+                <span style={{ color: DS.accent.primary, fontWeight: 600 }}>+{improvementTip.scoreDelta}</span>
               </p>
             </div>
           )}

@@ -10,6 +10,7 @@ import LoadingState from '@/components/LoadingState'
 import PremiumCard from '@/components/ui/PremiumCard'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import { COLORS, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { useCountUp } from '@/lib/useCountUp'
 
 export default function AchievementsPage() {
@@ -78,7 +79,7 @@ export default function AchievementsPage() {
             <PremiumCard
               key={b.key}
               className={`px-3 py-4 text-center space-y-1.5 ${unlocked ? '' : 'opacity-60'}`}
-              style={unlocked ? { border: `1px solid ${withAlpha(COLORS.amber, '40')}` } : undefined}
+              style={unlocked ? { border: `1px solid ${withAlpha(DS.accent.primary, '40')}` } : undefined}
             >
               <div className={`text-3xl ${unlocked ? '' : 'grayscale opacity-50'}`}>{b.icon}</div>
               <p className={`text-xs font-display tracked uppercase ${unlocked ? 'text-ink' : 'text-muted'}`}>{b.title}</p>

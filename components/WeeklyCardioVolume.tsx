@@ -12,6 +12,7 @@ import { computeVO2Max, classifyVO2Max } from '@/lib/vo2max'
 import type { Workout, Profile } from '@/lib/types'
 import { todayDayOfWeek } from '@/lib/weekdays'
 import { COLORS, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
 import HeartRateSettings from './HeartRateSettings'
@@ -203,7 +204,7 @@ export default function WeeklyCardioVolume() {
                   key={activity}
                   href={`/log?type=cardio&activity=${encodeURIComponent(activity)}`}
                   className="text-[12px] font-display tracked uppercase px-2.5 py-1 rounded-full"
-                  style={{ border: `1px solid ${withAlpha(COLORS.amber, '40')}`, color: COLORS.amber }}
+                  style={{ border: `1px solid ${withAlpha(DS.accent.primary, '40')}`, color: DS.accent.primary }}
                 >
                   + {activity}
                 </Link>

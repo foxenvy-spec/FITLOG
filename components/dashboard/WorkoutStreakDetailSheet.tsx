@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import PremiumCard from '@/components/ui/PremiumCard'
-import { COLORS, TEXT, withAlpha } from '@/lib/theme'
+import { TEXT, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 interface WorkoutStreakDetailSheetProps {
   open: boolean
@@ -86,7 +87,7 @@ export default function WorkoutStreakDetailSheet({ open, onClose, streak, bestSt
               <p className="text-[12px] uppercase tracked" style={{ color: TEXT.secondary }}>
                 Current Streak
               </p>
-              <p className="font-mono leading-none mt-1.5" style={{ color: COLORS.amber, fontSize: 30, fontWeight: 700 }}>
+              <p className="font-mono leading-none mt-1.5" style={{ color: DS.accent.primary, fontSize: 30, fontWeight: 700 }}>
                 {streak}
                 <span style={{ fontSize: 13, fontWeight: 500 }}> วัน</span>
               </p>

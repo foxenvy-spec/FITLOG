@@ -10,7 +10,8 @@ import SignOutButton from '@/components/SignOutButton'
 import PremiumCard from '@/components/ui/PremiumCard'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
-import { COLORS, CARD_GRADIENT_CSS, withAlpha } from '@/lib/theme'
+import { CARD_GRADIENT_CSS, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { computeBmr } from '@/lib/bmr'
 
 function emailDisplayName(email: string | null | undefined) {
@@ -120,8 +121,8 @@ export default function ProfileView() {
             width: 56,
             height: 56,
             backgroundImage: CARD_GRADIENT_CSS,
-            border: `1.5px solid ${withAlpha(COLORS.amber, '45')}`,
-            boxShadow: `0 0 10px ${withAlpha(COLORS.amber, '20')}`,
+            border: `1.5px solid ${withAlpha(DS.accent.primary, '45')}`,
+            boxShadow: `0 0 10px ${withAlpha(DS.accent.primary, '20')}`,
           }}
         >
           {name.slice(0, 1).toUpperCase()}
@@ -432,7 +433,7 @@ function PersonalInfoCard({
       {bmr !== null ? (
         <div
           className="rounded-lg px-3 py-2.5 flex items-center justify-between gap-3"
-          style={{ backgroundColor: withAlpha(COLORS.amber, '0d'), border: `1px solid ${withAlpha(COLORS.amber, '25')}` }}
+          style={{ backgroundColor: withAlpha(DS.accent.primary, '0d'), border: `1px solid ${withAlpha(DS.accent.primary, '25')}` }}
         >
           <p className="text-[12px] text-muted">🔥 BMR โดยประมาณ</p>
           <p className="text-sm font-display tracked text-amber">~{bmr.toLocaleString('th-TH')} kcal/วัน</p>

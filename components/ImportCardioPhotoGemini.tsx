@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 export interface ExtractedCardioData {
   cardio_type: string | null
@@ -88,9 +89,9 @@ export default function ImportCardioPhotoGemini({ onExtracted }: { onExtracted: 
       }}
       className="rounded-lg border border-dashed px-3 py-2.5 transition"
       style={{
-        borderColor: dragOver ? withAlpha(COLORS.amber, '80') : withAlpha(COLORS.amber, '35'),
-        background: dragOver ? withAlpha(COLORS.amber, '10') : withAlpha(COLORS.amber, '05'),
-        boxShadow: dragOver ? `0 0 14px ${withAlpha(COLORS.amber, '25')}` : 'none',
+        borderColor: dragOver ? withAlpha(DS.accent.primary, '80') : withAlpha(DS.accent.primary, '35'),
+        background: dragOver ? withAlpha(DS.accent.primary, '10') : withAlpha(DS.accent.primary, '05'),
+        boxShadow: dragOver ? `0 0 14px ${withAlpha(DS.accent.primary, '25')}` : 'none',
       }}
     >
       <div className="flex items-center justify-between gap-2">

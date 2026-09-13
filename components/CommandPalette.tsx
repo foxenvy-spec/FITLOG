@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS_EN, type MuscleGroup } from '@/lib/muscle-groups'
 import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
-import { COLORS, CARD_GRADIENT_CSS, TITANIUM_MESH_CSS, CARD_BORDER_CSS, withAlpha } from '@/lib/theme'
+import { CARD_GRADIENT_CSS, TITANIUM_MESH_CSS, CARD_BORDER_CSS, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 // ฟีดแบ็ก "Power-User Feature — Ctrl+K/Cmd+K แล้วมีแถบค้นหาเร็ว: พิมพ์ log → พาไปหน้าบันทึกทันที, พิมพ์
 // chest → แสดงประวัติท่าเล่นอก, พิมพ์ ask → เด้งกล่องถาม AI MINT ทันที" — สโคปแรก: คำสั่งนำทางคงที่
@@ -175,7 +176,7 @@ export default function CommandPalette() {
                 onMouseEnter={() => setActiveIndex(i)}
                 onClick={() => go(c)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition"
-                style={i === activeIndex ? { backgroundColor: withAlpha(COLORS.amber, '14') } : undefined}
+                style={i === activeIndex ? { backgroundColor: withAlpha(DS.accent.primary, '14') } : undefined}
               >
                 <span className="text-base shrink-0" aria-hidden="true">
                   {c.icon}

@@ -604,7 +604,7 @@ export default function StatsPage() {
           type="button"
           onClick={() => setTimeframe(opt.value)}
           className="px-2.5 py-1 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors"
-          style={timeframe === opt.value ? { backgroundColor: withAlpha(COLORS.amber, '22'), color: COLORS.amber } : { color: NEUTRAL.mutedIcon }}
+          style={timeframe === opt.value ? { backgroundColor: withAlpha(DS.accent.primary, '22'), color: DS.accent.primary } : { color: NEUTRAL.mutedIcon }}
         >
           {opt.label}
         </button>

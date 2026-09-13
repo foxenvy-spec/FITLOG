@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import PremiumCard from '@/components/ui/PremiumCard'
-import { COLORS, TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
+import { TEXT, NEUTRAL, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { METRIC_ICON_IMAGES, type MetricIconImageKey, type MetricCardTheme } from '@/components/MetricCard'
 import Sparkline from '@/components/dashboard/Sparkline'
 
@@ -180,10 +181,10 @@ export default function MetricDetailSheet({ open, onClose, card }: MetricDetailS
                   >
                     <div
                       className="h-full rounded-full"
-                      style={{ width: `${goal.progressPct}%`, backgroundColor: COLORS.amber }}
+                      style={{ width: `${goal.progressPct}%`, backgroundColor: DS.accent.primary }}
                     />
                   </div>
-                  <p className="mt-1 text-right font-mono text-[12px]" style={{ color: COLORS.amber }}>
+                  <p className="mt-1 text-right font-mono text-[12px]" style={{ color: DS.accent.primary }}>
                     {Math.round(goal.progressPct)}%
                   </p>
                 </>
@@ -194,7 +195,7 @@ export default function MetricDetailSheet({ open, onClose, card }: MetricDetailS
               <p className="text-[12px]" style={{ color: TEXT.secondary }}>
                 ยังไม่ได้ตั้งเป้าหมายสำหรับ {label}
               </p>
-              <Link href="/health" className="mt-1.5 inline-block text-[12px] hover:underline" style={{ color: COLORS.amber }}>
+              <Link href="/health" className="mt-1.5 inline-block text-[12px] hover:underline" style={{ color: DS.accent.primary }}>
                 ตั้งเป้าหมายที่หน้าสุขภาพ →
               </Link>
             </div>

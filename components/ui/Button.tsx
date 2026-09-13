@@ -1,7 +1,8 @@
 'use client'
 
 import type { ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
-import { AMBER_GRADIENT_CSS, AMBER_GLOW_SHADOW, NEUTRAL, COLORS, withAlpha } from '@/lib/theme'
+import { AMBER_GRADIENT_CSS, AMBER_GLOW_SHADOW, NEUTRAL, withAlpha } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 
 interface ButtonOwnProps {
@@ -62,7 +63,7 @@ export default function Button<T extends ElementType = 'button'>({
     return (
       <Comp
         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${className}`}
-        style={{ border: `1px solid ${withAlpha(COLORS.amber, '40')}`, ...style }}
+        style={{ border: `1px solid ${withAlpha(DS.accent.primary, '40')}`, ...style }}
         onPointerDown={handlePointerDown}
         {...rest}
       >
@@ -74,7 +75,7 @@ export default function Button<T extends ElementType = 'button'>({
     return (
       <Comp
         className={`inline-flex items-center justify-center gap-1.5 font-display tracked uppercase rounded-full active:scale-[0.99] transition disabled:opacity-50 ${PRIMARY_SIZE_CLASS[size]} ${className}`}
-        style={{ background: 'transparent', border: `1px solid ${withAlpha(COLORS.amber, '40')}`, color: COLORS.amber, ...style }}
+        style={{ background: 'transparent', border: `1px solid ${withAlpha(DS.accent.primary, '40')}`, color: DS.accent.primary, ...style }}
         onPointerDown={handlePointerDown}
         {...rest}
       >

@@ -11,7 +11,6 @@ import { computeExerciseStats, type ExerciseStats } from '@/lib/exerciseStats'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { MUSCLE_GROUP_COLORS, muscleGroupLabel } from '@/lib/muscle-groups'
 import { equipmentLabel, invalidateExerciseLibraryCache } from '@/lib/exerciseLibrary'
-import { COLORS } from '@/lib/theme'
 import { DS } from '@/lib/designSystem'
 import { relativeDayLabel } from '@/lib/dashboardStats'
 import { todayStr } from '@/lib/weekdays'
@@ -115,7 +114,7 @@ export default function ExerciseDetailPage() {
     load()
   }, [load])
 
-  const color = known ? MUSCLE_GROUP_COLORS[known.muscleGroup] : COLORS.amber
+  const color = known ? MUSCLE_GROUP_COLORS[known.muscleGroup] : DS.accent.primary
 
   return (
     <div className="space-y-5">
