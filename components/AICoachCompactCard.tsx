@@ -448,10 +448,19 @@ export default function AICoachCompactCard({
               <span aria-hidden="true" className="shrink-0" style={{ color: variant === 'flat' ? '#ff8a3d' : COLORS.amber }}>
                 <SparkleIcon />
               </span>
-              <span className="whitespace-nowrap shrink-0" style={{ color: TEXT.body }}>MINT Coach ·</span>{' '}
-              <span className="whitespace-nowrap shrink-0 font-semibold" style={{ color: TEXT.title }}>
-                {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}
+              {/* บั๊ก (Empty/Edge States audit) "ป้าย '· Today'/'· Next Session' ติดอยู่ตลอดแม้ตอนที่
+                  muscleRecommendation เป็น null (ไม่มีประวัติฝึกพอให้แนะนำ — เนื้อหาการ์ดสลับไปพูด 'ยังไม่มี
+                  ข้อมูลพอให้วิเคราะห์' ผ่าน computeAIDailySummary ไปแล้ว) — ป้าย 'Next Session' ตอนนั้นสื่อผิด
+                  ว่ามีคำแนะนำเซสชันถัดไปรออยู่ ทั้งที่ไม่มีจริง — โชว์คำต่อท้ายนี้เฉพาะตอนมี muscleRecommendation
+                  จริงเท่านั้น ไม่มี = เหลือแค่ 'MINT Coach' เฉยๆ ไม่เดาว่าเป็น Today หรือ Next Session */}
+              <span className="whitespace-nowrap shrink-0" style={{ color: TEXT.body }}>
+                MINT Coach{muscleRecommendation ? ' ·' : ''}
               </span>
+              {muscleRecommendation && (
+                <span className="whitespace-nowrap shrink-0 font-semibold" style={{ color: TEXT.title }}>
+                  {isRecommendationForToday && !isRestDay ? 'Today' : 'Next Session'}
+                </span>
+              )}
             </p>
             {/* ฟีดแบ็ก (design review, P3) "การ์ดนี้แน่นข้อมูล — timestamp ลด visual weight ลงได้อีกนิด
                 เพราะ DAY 5 — LOWER (headline) สำคัญกว่า" — สลับจาก TEXT.body (#BDBDBD) เป็น TEXT.caption
