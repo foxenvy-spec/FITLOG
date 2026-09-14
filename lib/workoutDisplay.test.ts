@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeDaySummary, computeExerciseProgress, countDayPRs, formatDuration, workoutVolumeKg } from './workoutDisplay'
+import { computeDaySummary, computeDayTotals, computeExerciseProgress, countDayPRs, formatDuration, workoutVolumeKg } from './workoutDisplay'
 import type { Workout } from './types'
 
 function makeWorkout(overrides: Partial<Workout> = {}): Workout {
@@ -94,6 +94,90 @@ describe('computeDaySummary', () => {
       makeWorkout({ id: 'b', created_at: '2026-07-20T11:30:00Z' }), // 5.5h — plausible long session
     ])
     expect(summary.durationMin).toBe(330)
+  })
+
+  // 6B-2 (P0-2) — this fallback was ported in from the old (now-removed) computeTodayTotals: a day with a
+  // single cardio entry has no second timestamp to build a created_at span from, so it used to fall back to
+  // null here even though the cardio row carries a real self-reported duration_min. Consolidating the two
+  // implementations surfaced the gap; keeping it fixes History/Calendar/Train too, not just Dashboard/Stats.
+  it('falls back to the cardio entry\'s own duration_min when there is only one entry that day (no span to compute)', () => {
+    const summary = computeDaySummary([makeWorkout({ type: 'cardio', duration_min: 25, sets: null, reps: null, weight_kg: null })])
+    expect(summary.durationMin).toBe(25)
+  })
+
+  it('takes the max of the created_at span and cardio duration_min when both are available', () => {
+    const summary = computeDaySummary([
+      makeWorkout({ id: 'a', type: 'cardio', duration_min: 5, created_at: '2026-07-20T08:00:00Z' }),
+      makeWorkout({ id: 'b', type: 'strength', created_at: '2026-07-20T08:45:00Z' }),
+    ])
+    expect(summary.durationMin).toBe(45)
+  })
+})
+
+// 6B-2 (P0-2) — canonical "totals for one day" engine. Contract: without onlyProgramDayId returns actual
+// day totals (all workouts on that date); with onlyProgramDayId returns the schedule-scoped subset. These
+// are two distinct, intentionally different answers — tests assert each mode's filtering independently,
+// never that the two modes produce equal numbers.
+describe('computeDayTotals', () => {
+  it('without onlyProgramDayId: sums every workout on the given date, across program days and ad-hoc entries alike', () => {
+    const totals = computeDayTotals(
+      [
+        makeWorkout({ id: 'a', performed_at: '2026-07-20', sets: 4, program_day_id: 'day-legs' }),
+        makeWorkout({ id: 'b', performed_at: '2026-07-20', sets: 3, program_day_id: null }),
+        makeWorkout({ id: 'c', performed_at: '2026-07-20', sets: 2, program_day_id: 'day-makeup' }),
+        makeWorkout({ id: 'd', performed_at: '2026-07-19', sets: 99 }), // a different day — must not leak in
+      ],
+      '2026-07-20'
+    )
+    expect(totals.exerciseCount).toBe(3)
+    expect(totals.totalSets).toBe(4 + 3 + 2)
+  })
+
+  it('with onlyProgramDayId: keeps only ad-hoc entries plus the ones tagged for that program day, excluding other program days', () => {
+    const totals = computeDayTotals(
+      [
+        makeWorkout({ id: 'a', performed_at: '2026-07-20', sets: 4, program_day_id: 'day-legs' }),
+        makeWorkout({ id: 'b', performed_at: '2026-07-20', sets: 3, program_day_id: null }), // ad-hoc, always kept
+        makeWorkout({ id: 'c', performed_at: '2026-07-20', sets: 2, program_day_id: 'day-makeup' }), // a different plan — excluded
+      ],
+      '2026-07-20',
+      { onlyProgramDayId: 'day-legs' }
+    )
+    expect(totals.exerciseCount).toBe(2)
+    expect(totals.totalSets).toBe(4 + 3)
+  })
+
+  it('is deterministic: calling it twice with the same inputs (any order in the source array) returns identical totals', () => {
+    const workouts = [
+      makeWorkout({ id: 'a', performed_at: '2026-07-20', sets: 4, total_volume_kg: 400, program_day_id: 'day-legs' }),
+      makeWorkout({ id: 'b', performed_at: '2026-07-20', sets: 3, total_volume_kg: 150, program_day_id: null }),
+    ]
+    const first = computeDayTotals(workouts, '2026-07-20', { onlyProgramDayId: 'day-legs' })
+    const second = computeDayTotals([...workouts].reverse(), '2026-07-20', { onlyProgramDayId: 'day-legs' })
+    expect(second).toEqual(first)
+  })
+
+  it('filters to the requested date only, out of a multi-day workouts array (no caller-side pre-grouping needed)', () => {
+    const workouts = [
+      makeWorkout({ id: 'a', performed_at: '2026-07-18', sets: 5 }),
+      makeWorkout({ id: 'b', performed_at: '2026-07-19', sets: 6 }),
+      makeWorkout({ id: 'c', performed_at: '2026-07-20', sets: 7 }),
+    ]
+    expect(computeDayTotals(workouts, '2026-07-19').totalSets).toBe(6)
+    expect(computeDayTotals(workouts, '2026-07-99').totalSets).toBe(0)
+  })
+
+  it('matches computeDaySummary\'s math exactly for the no-scoping case (single canonical implementation, not two that happen to agree)', () => {
+    const dayWorkouts = [
+      makeWorkout({ id: 'a', performed_at: '2026-07-20', sets: null, total_volume_kg: 500 }),
+      makeWorkout({ id: 'b', performed_at: '2026-07-20', sets: 3, total_volume_kg: 210 }),
+    ]
+    expect(computeDayTotals(dayWorkouts, '2026-07-20')).toEqual(computeDaySummary(dayWorkouts))
+  })
+
+  it('a workout with a null sets field contributes 0 sets, not 1 (regression: Dashboard used to default missing sets to 1)', () => {
+    const totals = computeDayTotals([makeWorkout({ id: 'a', performed_at: '2026-07-20', sets: null })], '2026-07-20')
+    expect(totals.totalSets).toBe(0)
   })
 })
 

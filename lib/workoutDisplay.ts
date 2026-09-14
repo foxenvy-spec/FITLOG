@@ -15,8 +15,10 @@ export interface DaySummary {
   durationMin: number | null
 }
 
-// สรุปภาพรวมของวันหนึ่งๆ — โชว์ก่อนเห็นรายการละเอียด จะได้รู้ทันทีว่าวันนั้นหนักแค่ไหน
-export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
+// สรุปภาพรวมของวันหนึ่งๆ (คำนวณเองจากรายการที่กรองมาให้แล้ว) — โชว์ก่อนเห็นรายการละเอียด จะได้รู้ทันทีว่า
+// วันนั้นหนักแค่ไหน — ตัวเลขจริงๆ มาจาก computeDayTotals() ด้านล่าง (canonical) ฟังก์ชันนี้เป็นแค่ทางลัดของ
+// caller ที่กรอง workouts ของวันนั้นมาให้แล้วเอง (History/Calendar/Train/Log) ไม่ต้องแก้ call site เหล่านั้น
+function computeDaySummaryMath(dayWorkouts: Workout[]): DaySummary {
   const strength = dayWorkouts.filter((w) => w.type === 'strength')
   const totalSets = strength.reduce((s, w) => s + (w.sets ?? 0), 0)
   const totalVolumeKg = strength.reduce((s, w) => s + workoutVolumeKg(w), 0)
@@ -35,13 +37,54 @@ export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
   // แต่เซสชันเทรนจริงแทบไม่มีทางเกิน ~6 ชม. — ใส่เพดานสมเหตุสมผล เกินนี้ถือว่าค่าที่ได้ไม่น่าเชื่อถือ ตกกลับ
   // เป็น null (ไม่โชว์เวลาเลย) แทนที่จะโชว์ตัวเลขที่ผิดธรรมชาติชัดเจน (ตาม pattern "ไม่ใช้ข้อมูลสมมติ" ที่
   // ยึดมาตลอด — ไม่โชว์ดีกว่าโชว์ผิด) ไม่แตะ exerciseCount/totalSets/totalVolumeKg/caloriesKcal เลย
+  //
+  // 6B-2 (P0-2) — ตอนรวม computeTodayTotals (lib/dashboardStats.ts) เข้ามาเป็นฟังก์ชันเดียวกับนี้ พบว่า
+  // computeTodayTotals เดิมมี fallback อีกชั้นที่ฟังก์ชันนี้ไม่เคยมี: วันที่มีคาร์ดิโอ "รายการเดียว" (ไม่มี
+  // รายการที่ 2 ให้เทียบ timestamp เป็น span ได้) ใช้ duration_min ที่ผู้ใช้/AI กรอกเองของรายการนั้นแทน —
+  // lib/workoutReport.ts (Workout Report บน /stats) พึ่งพฤติกรรมนี้อยู่จริง (regression test ยืนยัน: วันที่
+  // มีคาร์ดิโอ 1 รายการ ต้องนับ duration_min ของมันเข้า total ไม่ใช่ 0) เอาออกไปตอนรวมฟังก์ชันจะทำให้ข้อมูล
+  // จริงหายไปเงียบๆ (ไม่ใช่แค่ style ต่างกัน) — เก็บ fallback นี้ไว้เป็นส่วนหนึ่งของ canonical engine เลย
+  // (ไม่ใช่ compromise เฉพาะ Dashboard อีกต่อไป) ให้ History/Calendar/Train ได้ประโยชน์เดียวกันด้วย: วันที่มี
+  // คาร์ดิโอรายการเดียวเคยโชว์ duration ว่างเปล่าที่หน้าเหล่านั้น ตอนนี้โชว์ duration_min จริงเช่นกัน — ไม่ใช่
+  // regression ของหน้าเหล่านั้น เป็นช่องว่างเดิมที่ไม่มีใครตั้งใจ exclude cardio duration_min ไว้แต่แรก
+  // duration_min ที่ผู้ใช้กรอกเองไม่มีทางพองข้ามวันแบบ created_at span (มันคือค่าเดียว ไม่ใช่ผลต่างของ 2
+  // timestamp) จึงไม่ต้องผ่าน sanity cap เดียวกัน — คง max(span capped แล้ว, cardio duration) ตามสูตรเดิม
+  // ของ computeTodayTotals เป๊ะ
   const DURATION_SANITY_CAP_MIN = 6 * 60
   const timestamps = dayWorkouts.map((w) => new Date(w.created_at).getTime()).filter((t) => !Number.isNaN(t))
-  const rawDurationMin =
-    timestamps.length >= 2 ? Math.round((Math.max(...timestamps) - Math.min(...timestamps)) / 60000) : null
-  const durationMin = rawDurationMin !== null && rawDurationMin <= DURATION_SANITY_CAP_MIN ? rawDurationMin : null
+  const rawSpanMin = timestamps.length >= 2 ? Math.round((Math.max(...timestamps) - Math.min(...timestamps)) / 60000) : null
+  const spanMin = rawSpanMin !== null && rawSpanMin <= DURATION_SANITY_CAP_MIN ? rawSpanMin : null
+  const cardioDurationMin = dayWorkouts.filter((w) => w.type === 'cardio').reduce((s, w) => s + (w.duration_min ?? 0), 0)
+  const durationMin = spanMin !== null ? Math.max(spanMin, cardioDurationMin) : cardioDurationMin > 0 ? cardioDurationMin : null
 
   return { exerciseCount: dayWorkouts.length, totalSets, totalVolumeKg, caloriesKcal, muscleGroups, durationMin }
+}
+
+// *** Canonical "ยอดรวมของวันหนึ่งๆ" ทั้งแอป *** (6B-2, P0-2 — แก้ cluster 2 จาก 6A audit: History/Calendar/
+// Train/Log ใช้ computeDaySummary ตัวนี้อยู่แล้ว แต่ Dashboard/Stats เคยมี computeTodayTotals
+// (lib/dashboardStats.ts) แยกเป็นอีกฟังก์ชันที่คิดเลขคล้ายกันแต่ไม่เหมือนกันเป๊ะ — sets เดิม default เป็น 1
+// ที่ Dashboard แต่เป็น 0 ที่นี่ (แถวที่ไม่มี sets เลยถูกนับต่างกันข้ามหน้า) และ duration เดิมของ Dashboard
+// ไม่มี sanity cap เลย (History/Calendar มีเพดาน 6 ชม.) ทำให้ตัวเลขวันเดียวกันต่างกันได้จริงระหว่างหน้าจอ —
+// ฟังก์ชันนี้เป็น engine เดียวที่ทุกจุดต้อง consume: รับ Workout[] เต็ม (ไม่กรองมาก่อน) + date ที่ต้องการ
+// กรองเองข้างใน กัน caller ต้องเขียน group-by-date loop ซ้ำ (Stats เดิมทำเอง) — onlyProgramDayId เป็น
+// option เสริมสำหรับ Dashboard โดยเฉพาะ (สโคปเฉพาะ workouts ที่ผูกกับแผนวันนี้ + รายการไม่ผูกแผนเลย ไม่รวม
+// เซสชันชดเชยของแผนอื่น) แทนที่ caller-local filter เดิม (DashboardView.tsx/MobileDashboardView.tsx เคย
+// กรอง relevantWorkouts เองก่อนเรียก) — ค่าที่ได้ = computeDaySummary เป๊ะ (sets ?? 0, duration cap 6 ชม.,
+// volume ผ่าน workoutVolumeKg() ตัวเดียวกัน) ไม่ใช่ computeTodayTotals เดิม
+export function computeDayTotals(
+  workouts: Workout[],
+  date: string,
+  opts?: { onlyProgramDayId?: string | null }
+): DaySummary {
+  let dayWorkouts = workouts.filter((w) => w.performed_at === date)
+  if (opts && opts.onlyProgramDayId !== undefined) {
+    dayWorkouts = dayWorkouts.filter((w) => !w.program_day_id || w.program_day_id === opts.onlyProgramDayId)
+  }
+  return computeDaySummaryMath(dayWorkouts)
+}
+
+export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
+  return computeDaySummaryMath(dayWorkouts)
 }
 
 // ท่านี้ตัวไหนคือ "สถิติใหม่" ของวันนั้น (นับทั้ง pr น้ำหนักและ bestVolume) — ใช้เช็คตัวจุด/badge ที่แค่ต้องรู้

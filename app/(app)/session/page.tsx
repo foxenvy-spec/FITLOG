@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
@@ -158,6 +158,18 @@ export default function SessionPage() {
   const [smartStartMissedDay, setSmartStartMissedDay] = useState<ProgramDay | null>(null)
   const [exercises, setExercises] = useState<ProgramExercise[]>([])
   const [states, setStates] = useState<Record<string, SessionSetState>>({})
+  // 6B-2 (P0-2) — เดิม shareSession()/phase 'done' render เรียก computeSessionSummary() ด้วย input
+  // นิพจน์เดียวกันเป๊ะแยกกันคนละจุด (คำนวณซ้ำ 2 รอบทุกครั้งที่กดแชร์ระหว่างดูหน้าสรุปอยู่) — hoist เป็น
+  // memo เดียว ใช้ค่าเดียวกันทั้ง 2 จุด ไม่เปลี่ยนสูตร/ผลลัพธ์เลย แค่เลิกคำนวณซ้ำ
+  const sessionSummary = useMemo(
+    () =>
+      computeSessionSummary(
+        Object.values(states)
+          .filter((s) => s.logged)
+          .map((s) => ({ setsLog: s.setsLog }))
+      ),
+    [states]
+  )
   const [index, setIndex] = useState(0)
   const [saving, setSaving] = useState(false)
   const [loggingSet, setLoggingSet] = useState(false)
@@ -1106,11 +1118,7 @@ export default function SessionPage() {
   }, [phase])
 
   async function shareSession() {
-    const summary = computeSessionSummary(
-      Object.values(states)
-        .filter((s) => s.logged)
-        .map((s) => ({ setsLog: s.setsLog }))
-    )
+    const summary = sessionSummary
     const skipped = getSkippedExercises(exercises, states)
     const lines = [
       `🏋️ ${day?.title ?? 'Workout'} เสร็จแล้ว!`,
@@ -1297,9 +1305,7 @@ export default function SessionPage() {
   }
 
   if (phase === 'done') {
-    const summary = computeSessionSummary(
-      Object.values(states).filter((s) => s.logged).map((s) => ({ setsLog: s.setsLog }))
-    )
+    const summary = sessionSummary
     const skipped = getSkippedExercises(exercises, states)
     return (
       // lg:max-w-md lg:mx-auto — เดิมหน้านี้ไม่มี cap เลย (ต่างจาก branch เล่นเซสชันจริงด้านล่างที่มี

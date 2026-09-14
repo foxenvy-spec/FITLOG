@@ -243,6 +243,31 @@ describe('computeTodayTotals', () => {
     const workouts = [makeWorkout({ type: 'strength' }), makeWorkout({ type: 'cardio' })]
     expect(computeTodayTotals(workouts).entryCount).toBe(2)
   })
+
+  // 6B-2 (P0-2) regression coverage — the two concrete bugs this migration fixes for Dashboard/Stats.
+  it('regression: a workout with sets=null contributes 0 sets, not 1 (old computeTodayTotals defaulted to 1)', () => {
+    const workouts = [makeWorkout({ sets: null })]
+    expect(computeTodayTotals(workouts).sets).toBe(0)
+  })
+
+  it('regression: an unrealistic created_at gap (backfilled entries) falls back to null duration instead of showing a bogus number of hours', () => {
+    const workouts = [
+      makeWorkout({ performed_at: '2026-07-18', created_at: '2026-07-18T06:00:00Z' }),
+      makeWorkout({ performed_at: '2026-07-18', created_at: '2026-07-19T10:09:00Z' }),
+    ]
+    expect(computeTodayTotals(workouts).durationMin).toBeNull()
+  })
+
+  it('onlyProgramDayId scopes totals to ad-hoc entries plus the given program day, excluding other program days (replaces the old caller-local relevantWorkouts filter in Dashboard)', () => {
+    const workouts = [
+      makeWorkout({ id: 'a', sets: 4, program_day_id: 'day-legs' }),
+      makeWorkout({ id: 'b', sets: 3, program_day_id: null }),
+      makeWorkout({ id: 'c', sets: 2, program_day_id: 'day-makeup' }),
+    ]
+    const totals = computeTodayTotals(workouts, { onlyProgramDayId: 'day-legs' })
+    expect(totals.entryCount).toBe(2)
+    expect(totals.sets).toBe(4 + 3)
+  })
 })
 
 describe('estimateCaloriesToday', () => {

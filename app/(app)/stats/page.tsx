@@ -27,6 +27,7 @@ import {
   BALANCE_STATUS_LABEL,
   type BalanceStatusTier,
 } from '@/lib/dashboardStats'
+import { workoutVolumeKg as volumeOf } from '@/lib/workoutDisplay'
 import { computeProgressiveOverload, type OverloadPlan } from '@/lib/aiCoach'
 import { computeStrengthAxis, vo2MaxToPct, coreVolumeToPct } from '@/lib/strengthStandards'
 import { computeVO2Max } from '@/lib/vo2max'
@@ -74,14 +75,10 @@ function shortLabel(iso: string) {
   return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
 }
 
-// ใช้ total_volume_kg ที่บันทึกไว้แม่นยำจากผลรวมทีละเซ็ตจริงก่อนเสมอ (ดูคอมเมนต์ที่ Workout.total_volume_kg
-// ใน lib/types.ts) — สูตร sets*reps*weight_kg เป็นแค่ fallback สำหรับแถวเก่าที่ยังไม่มีค่านี้ ถ้าใช้สูตรนี้เป็น
-// หลักจะผิดทันทีเมื่อแต่ละเซ็ตในเซสชันเดียวกันมีน้ำหนัก/reps ไม่เท่ากัน (เช่น drop set หรือเซ็ตที่ทำไม่ครบ)
-// เพราะ sets/reps/weight_kg ที่เก็บในแถว workouts คือค่าของ "เซ็ตที่หนักที่สุด" เซ็ตเดียวเท่านั้น ไม่ใช่ค่าเฉลี่ย
-function volumeOf(w: Workout) {
-  if (w.total_volume_kg !== null && w.total_volume_kg !== undefined) return w.total_volume_kg
-  return (w.sets ?? 0) * (w.reps ?? 0) * (w.weight_kg ?? 0)
-}
+// volumeOf = workoutVolumeKg (lib/workoutDisplay.ts, aliased on import above) — 6B-2 (P0-2): ก่อนหน้านี้
+// หน้านี้มีสูตรเดียวกันเขียนแยกเองอีกชุด (total_volume_kg ก่อนเสมอ, fallback sets*reps*weight_kg เหมือนกัน
+// เป๊ะ) ต่างกันแค่วิธีเช็ค null ผิวเผิน ไม่มีเหตุผลให้มีคนละ implementation — ใช้ตัวเดียวกับ Dashboard/
+// History/Calendar/Log/Train ทั้งหมด
 
 // actualReps: จำนวน reps จริงรวมทุกเซ็ตของ workout นี้ (รวมจากตาราง workout_sets) — แม่นยำกว่า
 // sets*reps (ซึ่งคูณเหมาว่าทุกเซ็ตมี reps เท่ากับเซ็ตที่หนักที่สุด) ถ้าไม่มีข้อมูล workout_sets

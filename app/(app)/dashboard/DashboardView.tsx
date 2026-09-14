@@ -912,12 +912,12 @@ export default function DashboardPage() {
   // ของวันนี้ (scheduledDay) ก่อนนับ — เหลือ null (workout อิสระไม่ผูกแผน) กับที่ตรงกับ scheduledDay พอดี
   // ไว้เหมือนเดิมทุกประการ ไม่กระทบ TodayMuscleChips/recovery/weekly volume ที่ยังต้องนับกล้ามเนื้อที่ฝึก
   // จริงวันนี้ครบทุกแหล่งที่มา (ถูกต้องอยู่แล้ว ไม่ใช่จุดที่มีปัญหา)
-  const totals = useMemo(() => {
-    const relevantWorkouts = (data?.todayWorkouts ?? []).filter(
-      (w) => !w.program_day_id || w.program_day_id === scheduledDay?.id
-    )
-    return computeTodayTotals(relevantWorkouts)
-  }, [data?.todayWorkouts, scheduledDay])
+  // 6B-2 (P0-2) — onlyProgramDayId ทำหน้าที่กรองนี้ให้แล้วใน computeTodayTotals เอง (ผ่าน canonical
+  // computeDayTotals, lib/workoutDisplay.ts) ไม่ต้อง build relevantWorkouts array แยกที่นี่อีกต่อไป
+  const totals = useMemo(
+    () => computeTodayTotals(data?.todayWorkouts ?? [], { onlyProgramDayId: scheduledDay?.id ?? null }),
+    [data?.todayWorkouts, scheduledDay]
+  )
 
   // ฟีดแบ็ก (ตรวจจากการใช้งานจริง, TC-10) "จบเซสชันชดเชยของแผนอื่นไปแล้ว แต่กลับเข้ามาการ์ด Today's
   // Workout ยังเร่งให้ 'เริ่มเทรนเลย' เหมือนไม่มีอะไรเกิดขึ้น — คนไม่ฝึก 2 รอบเต็มในวันเดียว" — ตรวจว่า

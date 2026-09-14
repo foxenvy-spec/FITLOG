@@ -2,7 +2,7 @@ import type { ProgramDay, Workout } from './types'
 import { todayStr, bangkokParts } from './weekdays'
 import type { ExerciseDef } from './exerciseLibrary'
 import { COLORS, FIRE_ACCENT } from './theme'
-import { workoutVolumeKg } from './workoutDisplay'
+import { workoutVolumeKg, computeDayTotals } from './workoutDisplay'
 
 // เพดานลูปกันเผื่อกรณีขอบ (เช่น ตั้งโปรแกรมแบบไม่มี weekday ไหนเป็นวันฝึกเลย) ไม่ให้วนไม่มีที่สิ้นสุด — export
 // ออกไปให้ทุกจุดที่ query workouts เพื่อป้อนเข้า computeCurrentStreak/computeLongestStreak (DashboardView.tsx,
@@ -181,33 +181,21 @@ export function detectTodayActivity(todayWorkouts: Workout[]): DetectedActivity 
   return { title: 'กิจกรรมอิสระ', buttonLabel: 'เริ่มกิจกรรม', icon: '⚡', isCardio: false }
 }
 
-// รวมข้อมูลของวันนี้จากรายการ workouts ที่บันทึกไว้
-// duration เป็นค่าประมาณ: ถ้ามีหลายรายการ ใช้ช่วงเวลาตั้งแต่รายการแรกถึงรายการสุดท้าย
-// ถ้ามีคาร์ดิโอที่ระบุเวลาไว้ ใช้ค่าที่มากกว่าระหว่างสองแบบ
-export function computeTodayTotals(todayWorkouts: Workout[]): TodayTotals {
-  const strength = todayWorkouts.filter((w) => w.type === 'strength')
-  const cardio = todayWorkouts.filter((w) => w.type === 'cardio')
-
-  const volumeKg = strength.reduce((sum, w) => {
-    if (w.total_volume_kg !== null && w.total_volume_kg !== undefined) return sum + w.total_volume_kg
-    if (w.sets && w.reps && w.weight_kg) return sum + w.sets * w.reps * w.weight_kg
-    return sum
-  }, 0)
-
-  const sets = strength.reduce((sum, w) => sum + (w.sets ?? 1), 0)
-
-  const cardioDuration = cardio.reduce((sum, w) => sum + (w.duration_min ?? 0), 0)
-
-  let spanDuration: number | null = null
-  if (todayWorkouts.length >= 2) {
-    const times = todayWorkouts.map((w) => new Date(w.created_at).getTime())
-    spanDuration = Math.round((Math.max(...times) - Math.min(...times)) / 60000)
-  }
-
-  const durationMin =
-    spanDuration !== null ? Math.max(spanDuration, cardioDuration) : cardioDuration > 0 ? cardioDuration : null
-
-  return { volumeKg, sets, durationMin, entryCount: todayWorkouts.length }
+// รวมข้อมูลของวันนี้จากรายการ workouts ที่บันทึกไว้ — ตัวเลขจริงๆ มาจาก computeDayTotals()
+// (lib/workoutDisplay.ts, canonical ทั้งแอปตั้งแต่ 6B-2/P0-2) ฟังก์ชันนี้เป็นแค่ facade เดิมที่คง field
+// name เดิม (volumeKg/sets/entryCount แทน totalVolumeKg/totalSets/exerciseCount) ไว้ให้ผู้เรียกเดิม
+// (DashboardView.tsx/MobileDashboardView.tsx) ไม่ต้องแก้ทุกจุดที่อ้างชื่อ field เหล่านี้ — ก่อนหน้านี้
+// ฟังก์ชันนี้คำนวณเองแยกจาก computeDaySummary (workoutDisplay.ts) ทำให้ sets ของแถวที่ไม่มี sets เลย
+// นับเป็น 1 ที่นี่แต่เป็น 0 ที่ History/Calendar และ duration ไม่มี sanity cap เหมือน History/Calendar เลย
+// (ดู comment เต็มที่ computeDayTotals) — ทั้งสองจุดเป็นค่าที่ "ผิดจริง" ไม่ใช่แค่ style ต่างกัน แก้โดยเปลี่ยน
+// มาเรียก engine เดียวกัน ไม่ใช่ sync ตัวเลขสองชุดให้ตรงกันเฉยๆ
+export function computeTodayTotals(
+  todayWorkouts: Workout[],
+  opts?: { onlyProgramDayId?: string | null }
+): TodayTotals {
+  const date = todayWorkouts[0]?.performed_at ?? todayStr()
+  const dt = computeDayTotals(todayWorkouts, date, opts)
+  return { volumeKg: dt.totalVolumeKg, sets: dt.totalSets, durationMin: dt.durationMin, entryCount: dt.exerciseCount }
 }
 
 export interface NextProgramDay {

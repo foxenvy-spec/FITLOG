@@ -89,13 +89,13 @@ export default function MobileDashboardView() {
     [data?.programDays, dow]
   )
   // กรอง workout ที่ระบุ program_day_id ของแผน "อื่น" (เซสชันชดเชย) ออกก่อนนับ ไม่ให้ปนกับสถิติ
-  // Exercises/Sets ของแผนจริงวันนี้ (เหตุผลเดียวกับ DashboardView.tsx เดสก์ท็อป)
-  const totals = useMemo(() => {
-    const relevantWorkouts = (data?.todayWorkouts ?? []).filter(
-      (w) => !w.program_day_id || w.program_day_id === scheduledDay?.id
-    )
-    return computeTodayTotals(relevantWorkouts)
-  }, [data?.todayWorkouts, scheduledDay])
+  // Exercises/Sets ของแผนจริงวันนี้ (เหตุผลเดียวกับ DashboardView.tsx เดสก์ท็อป) — 6B-2 (P0-2):
+  // onlyProgramDayId ทำหน้าที่กรองนี้ให้แล้วใน computeTodayTotals เอง (ผ่าน canonical computeDayTotals,
+  // lib/workoutDisplay.ts) ไม่ต้อง build relevantWorkouts array แยกที่นี่อีกต่อไป
+  const totals = useMemo(
+    () => computeTodayTotals(data?.todayWorkouts ?? [], { onlyProgramDayId: scheduledDay?.id ?? null }),
+    [data?.todayWorkouts, scheduledDay]
+  )
   const hasMakeupToday = (data?.todayWorkouts ?? []).some(
     (w) => w.program_day_id && w.program_day_id !== scheduledDay?.id
   )
