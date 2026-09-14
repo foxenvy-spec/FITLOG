@@ -1013,7 +1013,7 @@ export default function StatsPage() {
                     itemStyle={{ color: '#F3F0E8' }}
                     formatter={(v: number) => [`${v} ${unit}`, 'Estimated 1RM']}
                   />
-                  <Line type="monotone" dataKey="value" stroke={COLORS.rust} strokeWidth={2} dot={{ r: 2, fill: COLORS.rust }} />
+                  <Line type="monotone" dataKey="value" stroke={DS.domain.strength} strokeWidth={2} dot={{ r: 2, fill: DS.domain.strength }} />
                 </LineChart>
               </ResponsiveContainer>
             </PremiumCard>
