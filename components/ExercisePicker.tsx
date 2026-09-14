@@ -133,7 +133,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => refetch()}
-                  className="text-amber underline"
+                  className="text-accent-primary underline"
                 >
                   ลองใหม่
                 </button>
@@ -190,7 +190,7 @@ export default function ExercisePicker({ value, onChange, onSelect, placeholder 
           <div className="border-t border-line px-3 py-2">
             <a
               href="/exercises"
-              className="text-[12px] font-display tracked uppercase text-muted hover:text-amber transition"
+              className="text-[12px] font-display tracked uppercase text-muted hover:text-accent-primary transition"
             >
               ดูฐานข้อมูลท่าออกกำลังกายทั้งหมด →
             </a>

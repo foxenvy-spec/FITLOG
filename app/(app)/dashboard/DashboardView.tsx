@@ -2163,7 +2163,7 @@ export default function DashboardPage() {
                   <p className="text-[13px] text-moss flex items-center gap-1.5">
                     <span aria-hidden="true">✅</span> ฝึกไปแล้ววันนี้ (แผนชดเชย)
                   </p>
-                  <Link href={`/calendar?date=${todayStr()}`} className="text-[12px] text-muted hover:text-amber hover:underline mt-1 inline-block">
+                  <Link href={`/calendar?date=${todayStr()}`} className="text-[12px] text-muted hover:text-accent-primary hover:underline mt-1 inline-block">
                     ดูรายละเอียด →
                   </Link>
                 </div>
@@ -2206,7 +2206,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setWarmupOpen(true)}
-                  className="mt-2 text-[12px] text-amber hover:underline flex items-center gap-1"
+                  className="mt-2 text-[12px] text-accent-primary hover:underline flex items-center gap-1"
                 >
                   <span aria-hidden="true">🔥</span> ดูท่าวอร์มอัป 3 นาที
                 </button>
@@ -2242,11 +2242,11 @@ export default function DashboardPage() {
                         เลือกโปรแกรมเพื่อให้ FitLog วางแผนการฝึกและติดตาม Recovery ให้คุณ
                       </p>
                       <p className="text-[12px] mt-1">
-                        <Link href="/program" className="text-amber hover:underline">
+                        <Link href="/program" className="text-accent-primary hover:underline">
                           เลือกโปรแกรม →
                         </Link>{' '}
                         หรือ{' '}
-                        <Link href="/templates" className="text-amber hover:underline">
+                        <Link href="/templates" className="text-accent-primary hover:underline">
                           เริ่มจาก Template
                         </Link>
                       </p>
@@ -2628,7 +2628,7 @@ export default function DashboardPage() {
                       สื่อตรงว่าลิงก์นี้พาไปหน้ารายละเอียด (/recovery) เหมือนเดิมทุกประการ ไม่ใช้ "View
                       Insights" เพราะกว้างเกินไป ฟังดูเหมือนมีบทวิเคราะห์/คำแนะนำเพิ่มที่หน้า /recovery
                       ไม่มีจริง */}
-                  <p className="mt-3 pt-3 border-t border-white/5 text-right text-xs text-amber">
+                  <p className="mt-3 pt-3 border-t border-white/5 text-right text-xs text-accent-primary">
                     Recovery Details →
                   </p>
                 </>

@@ -387,7 +387,7 @@ export default function RecoveryPage() {
         </div>
       )}
 
-      <a href="/log" className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2">
+      <a href="/log" className="block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-2">
         ✚ บันทึกการฝึกวันนี้ →
       </a>
     </div>

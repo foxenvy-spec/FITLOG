@@ -116,7 +116,7 @@ export default function ProfileView() {
         {/* วงแหวนอำพัน+พื้นไทเทเนียม เดียวกับภาษาวง avatar ที่ใช้ทั่วแอป (AiRingAvatar/การ์ดผู้ใช้ท้าย
             SidebarNav) แทนวงกลมทึบ bg-surface2 เดิม */}
         <div
-          className="shrink-0 rounded-full flex items-center justify-center font-display text-lg tracked uppercase text-amber"
+          className="shrink-0 rounded-full flex items-center justify-center font-display text-lg tracked uppercase text-accent-primary"
           style={{
             width: 56,
             height: 56,
@@ -153,7 +153,7 @@ export default function ProfileView() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-[12px] tracked uppercase text-muted">ความสำเร็จล่าสุด</p>
-              <a href="/achievements" className="text-[12px] text-muted hover:text-amber transition">
+              <a href="/achievements" className="text-[12px] text-muted hover:text-accent-primary transition">
                 ดูทั้งหมด →
               </a>
             </div>
@@ -205,7 +205,7 @@ export default function ProfileView() {
               <a
                 key={item.href}
                 href={item.href}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-line bg-surface2/60 text-sm text-ink hover:border-amber/40 active:bg-white/5 transition"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-line bg-surface2/60 text-sm text-ink hover:border-accent-primary/40 active:bg-white/5 transition"
               >
                 <span className="shrink-0">{item.icon}</span>
                 {item.label}
@@ -403,7 +403,7 @@ function PersonalInfoCard({
           onChange={(e) => setAgeInput(e.target.value)}
           onBlur={handleAgeBlur}
           placeholder="เช่น 28"
-          className="w-24 shrink-0 bg-surface2 text-ink text-sm text-center font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-amber disabled:opacity-50"
+          className="w-24 shrink-0 bg-surface2 text-ink text-sm text-center font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-accent-primary disabled:opacity-50"
         />
       </div>
 
@@ -424,7 +424,7 @@ function PersonalInfoCard({
           onChange={(e) => setHeightInput(e.target.value)}
           onBlur={handleHeightBlur}
           placeholder="เช่น 170"
-          className="w-24 shrink-0 bg-surface2 text-ink text-sm text-center font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-amber disabled:opacity-50"
+          className="w-24 shrink-0 bg-surface2 text-ink text-sm text-center font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-accent-primary disabled:opacity-50"
         />
       </div>
 
@@ -436,7 +436,7 @@ function PersonalInfoCard({
           style={{ backgroundColor: withAlpha(DS.accent.primary, '0d'), border: `1px solid ${withAlpha(DS.accent.primary, '25')}` }}
         >
           <p className="text-[12px] text-muted">🔥 BMR โดยประมาณ</p>
-          <p className="text-sm font-display tracked text-amber">~{bmr.toLocaleString('th-TH')} kcal/วัน</p>
+          <p className="text-sm font-display tracked text-accent-primary">~{bmr.toLocaleString('th-TH')} kcal/วัน</p>
         </div>
       ) : null}
 

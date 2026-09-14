@@ -173,7 +173,7 @@ export default function SetEntryList({
       <button
         type="button"
         onClick={addSet}
-        className="w-full rounded-lg border border-dashed border-line text-muted hover:text-amber hover:border-amber/50 transition py-2.5 text-xs font-display tracked uppercase"
+        className="w-full rounded-lg border border-dashed border-line text-muted hover:text-accent-primary hover:border-accent-primary/50 transition py-2.5 text-xs font-display tracked uppercase"
       >
         + เพิ่มเซ็ต{rows.length > 0 ? ' (ก็อปจากเซ็ตก่อนหน้า)' : ''}
       </button>
