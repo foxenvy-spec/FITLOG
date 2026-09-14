@@ -69,7 +69,7 @@ import { speak } from '@/lib/speech'
 import { NumberStepper } from '@/components/timers/TimerShell'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
-import { splitTitleDetail } from '@/lib/workoutDisplay'
+import { splitTitleDetail, computeIsPR, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 
@@ -988,7 +988,7 @@ export default function SessionPage() {
       const { start: thisWeekStart, end: thisWeekEnd } = getWeekRange()
       const { start: lastWeekStart } = getPreviousWeekRange()
 
-      const [{ data: latestMetric }, { data: priorRows }, { data: recentMuscleRows }, { data: twoWeeksRows }, { data: todayCardioRows }] =
+      const [{ data: latestMetric }, { data: historyRows }, { data: recentMuscleRows }, { data: twoWeeksRows }, { data: todayCardioRows }] =
         await Promise.all([
           supabase.from('body_metrics').select('weight_kg').order('measured_at', { ascending: false }).limit(1).maybeSingle(),
           // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): เดิม query นี้ขาด .eq('user_id', user.id) ต่างจาก query อื่นที่
@@ -996,10 +996,15 @@ export default function SessionPage() {
           // ~455 — ทุกจุดกรอง user_id หมด) — ถ้าชื่อท่าตรงกับผู้ใช้คนอื่นพอดี (ชื่อทั่วไปเช่น "Bench Press")
           // priorBest อาจไปดึงน้ำหนักของคนอื่นมาเทียบ ทำให้ตรวจ PR ของผู้ใช้นี้ผิดพลาดได้ — เพิ่ม filter ให้
           // ตรงกับ convention เดิมของไฟล์นี้
+          // 6B-2 (P0-2 phase 2) — select('*') + limit(PR_HISTORY_LIMIT) แทนที่ select แคบๆ เดิม เพราะตอนนี้
+          // ผลลัพธ์นี้ส่งเข้า computeIsPR() (canonical, lib/workoutDisplay.ts) ตัวเดียวกับ History/Log แทน
+          // การหา priorBest เองแบบ inline ด้านล่าง — เกณฑ์ same-day exclusion (.lt('performed_at', ...))
+          // เดิมของจุดนี้ตรงกับ computeIsPR อยู่แล้ว (entry ที่ log ในเซสชันนี้ทุกตัวใช้ performed_at เป็น
+          // วันนี้เสมอ ไม่ใช่วันที่ backfill แบบ Log — todayStr() ตรงนี้จึงเทียบเท่า "วันของ entry เอง")
           loggedList.length > 0
             ? supabase
                 .from('workouts')
-                .select('exercise_name, weight_kg')
+                .select('*')
                 .eq('user_id', user.id)
                 .eq('type', 'strength')
                 .lt('performed_at', todayStr())
@@ -1007,7 +1012,9 @@ export default function SessionPage() {
                   'exercise_name',
                   loggedList.map((e) => e.ex.exercise_name)
                 )
-            : Promise.resolve({ data: [] as { exercise_name: string; weight_kg: number | null }[] }),
+                .order('performed_at', { ascending: false })
+                .limit(PR_HISTORY_LIMIT)
+            : Promise.resolve({ data: [] as Workout[] }),
           // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): query นี้ก็ขาด .eq('user_id', user.id) เหมือนกับ priorRows
           // ด้านบน (แก้ไปแล้วครั้งก่อน แต่พลาดจุดนี้ — คนละ query แต่ทำหน้าที่คล้ายกันในไฟล์เดียวกัน) — ถ้า
           // กลุ่มกล้ามเนื้อเดียวกันมีคนอื่นเพิ่งฝึกไปเมื่อไม่นาน priorLastTrainedDate อาจไปดึงวันที่ของคนอื่น
@@ -1038,19 +1045,34 @@ export default function SessionPage() {
       const bodyWeightKg = (latestMetric as { weight_kg: number | null } | null)?.weight_kg ?? null
       const calories = estimateCaloriesToday((todayCardioRows as Workout[]) ?? [], durationMin, bodyWeightKg)
 
-      const priorBest: Record<string, number> = {}
-      ;((priorRows as { exercise_name: string; weight_kg: number | null }[]) ?? []).forEach((r) => {
-        if (r.weight_kg === null) return
-        priorBest[r.exercise_name] = Math.max(priorBest[r.exercise_name] ?? 0, r.weight_kg)
-      })
+      // 6B-2 (P0-2 phase 2) — computeIsPR() (canonical) ตัวเดียวกับ History/Log แทนที่ priorBest map เดิม
+      // ที่คำนวณ "หนักสุดก่อนหน้า" เองแยกจากจุดอื่น — historyPool มาจาก query ด้านบน (จำกัด PR_HISTORY_LIMIT
+      // แล้ว) deltaKg ยังคำนวณแยกที่นี่ (computeIsPR ส่งกลับแค่ boolean) ด้วย prevBestWeight สูตรเดียวกับที่
+      // computeIsPR ใช้ภายในเป๊ะ
+      const historyPool = (historyRows as Workout[]) ?? []
       const prs: PRHit[] = loggedList
-        .filter((e) => e.state.weightKg !== null && priorBest[e.ex.exercise_name] !== undefined)
-        .filter((e) => (e.state.weightKg as number) > priorBest[e.ex.exercise_name])
-        .map((e) => ({
-          exerciseName: e.ex.exercise_name,
-          weightKg: e.state.weightKg as number,
-          deltaKg: Math.round(((e.state.weightKg as number) - priorBest[e.ex.exercise_name]) * 10) / 10,
-        }))
+        .filter((e) => e.state.weightKg !== null)
+        .map((e) => {
+          const entry = {
+            type: 'strength' as const,
+            exercise_name: e.ex.exercise_name,
+            performed_at: todayStr(),
+            weight_kg: e.state.weightKg,
+          } as Workout
+          if (!computeIsPR(entry, historyPool).isWeightPR) return null
+          const prevBestWeight = Math.max(
+            0,
+            ...historyPool
+              .filter((p) => p.type === 'strength' && p.exercise_name === e.ex.exercise_name && p.performed_at < entry.performed_at)
+              .map((p) => p.weight_kg ?? 0)
+          )
+          return {
+            exerciseName: e.ex.exercise_name,
+            weightKg: e.state.weightKg as number,
+            deltaKg: Math.round(((e.state.weightKg as number) - prevBestWeight) * 10) / 10,
+          }
+        })
+        .filter((x): x is PRHit => x !== null)
         .sort((a, b) => b.deltaKg - a.deltaKg)
 
       const trainedToday = aggregateMuscleLoads(

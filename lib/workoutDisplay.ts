@@ -123,6 +123,53 @@ export function formatDuration(min: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
+// จำนวนแถวประวัติย้อนหลังต่อท่าที่ถือว่า "พอ" สำหรับตรวจ PR (6B-2, P0-2 phase 2) — canonical ทั้งแอป ใช้
+// แทนที่ limit ที่แต่ละหน้าเคยตั้งเองไม่ตรงกัน (History เดิม 200 แต่ query เดียวกันนั้นทำหน้าที่คู่เป็นทั้ง
+// visible list ของหน้าด้วย ผูกสอง concern เข้าด้วยกันโดยไม่ตั้งใจ, Log เดิมไม่จำกัดเลยแต่ query แค่ 1 แถว
+// ที่หนักสุด, Session เดิมไม่จำกัดเลย) — เลือก 500 เพราะ "ประวัติพอสำหรับตรวจ PR" กับ "จำนวนแถวที่ควรโชว์ใน
+// list หน้าจอ" เป็นคนละคำถามกัน ไม่ควรใช้ค่าเดียวกัน (ดู comment เต็มที่ computeIsPR ด้านล่าง) — จุดที่ query
+// ประวัติสำหรับ PR โดยเฉพาะ (แยกจาก query แสดงผล) ควรใช้ค่านี้เป็น .limit()
+export const PR_HISTORY_LIMIT = 500
+
+export interface PRResult {
+  isWeightPR: boolean
+  isVolumePR: boolean
+}
+
+// *** Canonical "entry นี้เป็นสถิติใหม่ไหม" ทั้งแอป *** (6B-2, P0-2 phase 2 — แก้ cluster 2 ต่อจาก
+// computeDayTotals: History/Log/Session ต่างตรวจ PR แยกกันเอง ไม่ตรงกันทั้งเกณฑ์ (History เช็คทั้ง weight
+// PR และ Best Volume ผ่าน computeExerciseProgress ด้านล่าง, Log/Session เดิมเช็คแค่ weight) และ same-day
+// exclusion (History กันแถววันเดียวกันออกจาก "prior" อยู่แล้ว, Session hardcode "วันนี้" ตายตัวแทนที่จะอิง
+// วันที่ของ entry เอง — พังกรณี backfill/แก้ไขย้อนหลัง, Log เดิมไม่กันเลย ทำให้แถวก่อนหน้าวันเดียวกันถูกนับ
+// เป็น "ของเดิม" ได้) — ฟังก์ชันนี้รับผิดชอบแค่ "เป็นสถิติใหม่ไหม" ส่งกลับทั้ง isWeightPR/isVolumePR สอง
+// flag อิสระจากกัน (ไม่ mutually exclusive — entry เดียวอาจเป็นทั้งคู่พร้อมกันได้จริง) ให้ caller เลือก field
+// ที่ตรงกับ UI ของตัวเอง (History ใช้ทั้งคู่ผ่าน computeExerciseProgress ด้านล่าง, Log/Session ใช้แค่
+// isWeightPR ตาม contract เดิมของ UI แต่ละหน้า — ไม่ใช่ข้อจำกัดของฟังก์ชันนี้เอง) ไม่รับผิดชอบว่า UI จะเอา
+// ผลไปแสดงยังไง (badge/toast/gate ฯลฯ)
+//
+// same-day exclusion rule (ล็อกจาก behavior ของ computeExerciseProgress ที่ใช้มาก่อนแล้ว ไม่ใช่กฎใหม่):
+// "prior" = ประวัติที่ performed_at เร็วกว่า performed_at ของ entry ที่กำลังตรวจ "เอง" ไม่ใช่ "วันนี้"
+// ตายตัว — entry วันเดียวกับที่กำลังตรวจ (แม้ log เวลาต่างกัน) ไม่นับเป็น prior เสมอ กันเคส backfill/แก้ไข
+// ข้อมูลย้อนหลังที่ entry ไม่ได้เกิดขึ้น "วันนี้" จริงตามเวลาที่รันฟังก์ชัน
+//
+// historyPool ควรมาจาก query ที่ scope เฉพาะสำหรับตรวจ PR (จำกัดด้วย PR_HISTORY_LIMIT ด้านบน) แยกจาก query
+// แสดงผลของแต่ละหน้า — ไม่ใช่ pool เดียวกับที่ใช้แสดง list บนจอ (ดู comment ที่ PR_HISTORY_LIMIT)
+export function computeIsPR(entry: Workout, historyPool: Workout[]): PRResult {
+  if (entry.type !== 'strength' || !entry.exercise_name) return { isWeightPR: false, isVolumePR: false }
+  const prior = historyPool.filter(
+    (p) => p.type === 'strength' && p.exercise_name === entry.exercise_name && p.performed_at < entry.performed_at
+  )
+  if (prior.length === 0) return { isWeightPR: false, isVolumePR: false }
+  const thisWeight = entry.weight_kg ?? 0
+  const thisVolume = workoutVolumeKg(entry)
+  const prevBestWeight = Math.max(...prior.map((p) => p.weight_kg ?? 0))
+  const prevBestVolume = Math.max(...prior.map(workoutVolumeKg))
+  return {
+    isWeightPR: thisWeight > 0 && thisWeight > prevBestWeight,
+    isVolumePR: thisVolume > 0 && thisVolume > prevBestVolume,
+  }
+}
+
 export type ExerciseProgress =
   | { kind: 'pr'; deltaKg: number }
   | { kind: 'bestVolume' }
@@ -135,6 +182,9 @@ export type ExerciseProgress =
 
 // เทียบท่านี้กับประวัติก่อนหน้า (ไม่รวมวันเดียวกัน) — ใช้บอกว่าเปิดย้อนมาดูวันนี้แล้ว "หนักกว่าเดิม" แค่ไหน
 // priorPool ควรเป็น workouts ประเภท strength ของ exercise ต่างๆ ย้อนหลังพอสมควร (ยิ่งยาวยิ่งแม่น สำหรับเช็ค PR)
+// pr/bestVolume ของ badge นี้มาจาก computeIsPR() (canonical, ด้านบน) ตัวเดียวกับที่ Log/Session ใช้แล้ว —
+// ฟังก์ชันนี้แค่คง priority เดิม (weight PR ก่อน แล้วค่อย Best Volume, mutually exclusive) สำหรับ badge
+// เดี่ยวๆ ที่โชว์ได้ทีละอันเท่านั้น ไม่ใช่ข้อจำกัดของ computeIsPR เอง (ซึ่งส่งทั้งสอง flag อิสระต่อกัน)
 export function computeExerciseProgress(w: Workout, priorPool: Workout[]): ExerciseProgress {
   if (w.type !== 'strength' || !w.exercise_name) return { kind: 'none' }
   const prior = priorPool.filter(
@@ -143,21 +193,13 @@ export function computeExerciseProgress(w: Workout, priorPool: Workout[]): Exerc
   if (prior.length === 0) return { kind: 'none' }
 
   const thisWeight = w.weight_kg ?? 0
-  const thisVolume = workoutVolumeKg(w)
-  const prevBestWeight = Math.max(...prior.map((p) => p.weight_kg ?? 0))
-  const prevBestVolume = Math.max(...prior.map(workoutVolumeKg))
+  const { isWeightPR, isVolumePR } = computeIsPR(w, priorPool)
 
-  if (thisWeight > 0 && thisWeight > prevBestWeight) {
+  if (isWeightPR) {
+    const prevBestWeight = Math.max(...prior.map((p) => p.weight_kg ?? 0))
     return { kind: 'pr', deltaKg: Math.round((thisWeight - prevBestWeight) * 10) / 10 }
   }
-  // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): เดิม topPercent (จาก volumeTopPercent, ลบไปแล้ว) คำนวณเปอร์เซ็นไทล์
-  // ของ thisVolume เทียบกับ prior — แต่ branch นี้เข้าได้ก็ต่อเมื่อ thisVolume > prevBestVolume (สูงกว่า
-  // ค่ามากที่สุดในประวัติทั้งหมด) อยู่แล้วเสมอ ทำให้ beatCount ในสูตรเดิมเท่ากับ prior.length ทุกครั้ง
-  // (thisVolume ชนะทุกแถวใน prior โดยนิยาม) เปอร์เซ็นไทล์จึงเป็น 100 คงที่ ผลลัพธ์ที่คำนวณออกมา (หลัง clamp)
-  // จึงเป็น "Top 1%" เสมอไม่ว่าสถิติใหม่จะดีกว่าเดิมแค่นิดเดียวหรือดีกว่ามาก — ไม่ใช่ข้อมูลผิด แต่ไม่มีนัยสำคัญ
-  // เลยไม่ว่ากรณีไหน (โครงสร้างการเรียกรับประกันผลลัพธ์เดียวเสมอ) ตัดออก เหลือแค่ kind: 'bestVolume' เฉยๆ
-  // (badge แสดง "🏆 Best Volume" อยู่แล้ว ซึ่งสื่อความหมายเดียวกันโดยไม่ต้องมีตัวเลขที่ไม่มีความหมายจริงกำกับ)
-  if (thisVolume > 0 && thisVolume > prevBestVolume) {
+  if (isVolumePR) {
     return { kind: 'bestVolume' }
   }
 

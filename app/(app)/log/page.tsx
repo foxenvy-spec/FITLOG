@@ -19,7 +19,7 @@ import MuscleDiagram from '@/components/MuscleDiagram'
 import { computePaceSpeed, formatPace } from '@/lib/cardioPace'
 import { classifyHRZone, HR_ZONES, DEFAULT_MAX_HEART_RATE } from '@/lib/heartRate'
 import { cadenceUnitFor, cadenceUnitLabel, cadenceFieldLabel } from '@/lib/cadence'
-import { computeDaySummary } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeIsPR, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 import RestTimer from '@/components/timers/RestTimer'
 import { useIsMobile } from '@/lib/useIsMobile'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -328,22 +328,38 @@ function LogPageInner() {
       const topWeightKg = toKg(Number(topSet.weight))
       const totalVolumeKg = doneRows.reduce((sum, r) => sum + toKg(Number(r.weight)) * Number(r.reps), 0)
 
+      // 6B-2 (P0-2 phase 2) — ตรวจ PR ผ่าน computeIsPR() (canonical, lib/workoutDisplay.ts) ตัวเดียวกับ
+      // History/Session แทนที่ query MAX(weight_kg) เดิมของหน้านี้เอง — เดิมจุดนี้ไม่กัน "แถวก่อนหน้าวัน
+      // เดียวกัน" ออกจากการเทียบเลย (History/Session กันมาตลอด) ทำให้ badge "สถิติใหม่!" ที่นี่กับ badge บน
+      // History ของ entry เดียวกันไม่ตรงกันได้จริง — historyPool จำกัดด้วย PR_HISTORY_LIMIT (500) เดียวกับ
+      // ทุกจุดที่เหลือ ไม่ใช่แค่แถวเดียวที่หนักสุดเหมือนเดิม (ต้องมีประวัติให้ computeIsPR หา prevBest เอง)
+      // ใช้แค่ isWeightPR ตาม contract UI เดิมของหน้านี้ (ไม่เพิ่ม Best Volume toast — นอกสโคป)
       let isPR = false
       if (exerciseName) {
         // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจครอบใหม่): query นี้ขาด .eq('user_id', user.id) — บั๊กคลาสเดียวกับที่
         // เคยเจอและแก้ใน session/page.tsx (priorRows/recentMuscleRows) มาก่อน — ถ้าชื่อท่าตรงกับผู้ใช้คนอื่น
-        // พอดี (ชื่อทั่วไปเช่น "Bench Press") prevMax อาจไปดึงน้ำหนักของคนอื่นมาเทียบ ทำให้ตรวจ PR ผิดพลาดได้
-        let prQuery = supabase
+        // พอดี (ชื่อทั่วไปเช่น "Bench Press") ประวัติอาจไปดึงน้ำหนักของคนอื่นมาเทียบ ทำให้ตรวจ PR ผิดพลาดได้
+        let historyQuery = supabase
           .from('workouts')
-          .select('weight_kg')
+          .select('*')
           .eq('user_id', user.id)
           .eq('type', 'strength')
           .eq('exercise_name', exerciseName)
+          .order('performed_at', { ascending: false })
+          .limit(PR_HISTORY_LIMIT)
         // แก้ไขรายการเดิมอยู่ — ไม่เอาแถวตัวเองมาเทียบกับตัวเอง ไม่งั้นจะไม่มีวันเป็น PR ใหม่ได้เลย
-        if (editingId) prQuery = prQuery.neq('id', editingId)
-        const { data: prevBest } = await prQuery.order('weight_kg', { ascending: false }).limit(1).maybeSingle()
-        const prevMax = (prevBest?.weight_kg as number | null) ?? 0
-        if (topWeightKg > prevMax) isPR = true
+        if (editingId) historyQuery = historyQuery.neq('id', editingId)
+        const { data: historyRows } = await historyQuery
+        isPR = computeIsPR(
+          {
+            type: 'strength',
+            exercise_name: exerciseName,
+            performed_at: date,
+            weight_kg: topWeightKg,
+            total_volume_kg: totalVolumeKg,
+          } as Workout,
+          (historyRows as Workout[]) ?? []
+        ).isWeightPR
       }
 
       const payload = {

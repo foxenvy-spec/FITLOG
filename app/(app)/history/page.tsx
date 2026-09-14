@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Workout, WorkoutSet } from '@/lib/types'
 import { getErrorMessage } from '@/lib/errors'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
-import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
@@ -43,6 +43,11 @@ function HistoryPageInner() {
   const [exerciseFilter, setExerciseFilter] = useState<string | null>(searchParams.get('exercise'))
   const [search, setSearch] = useState('')
   const [workouts, setWorkouts] = useState<Workout[]>([])
+  // 6B-2 (P0-2 phase 2) — แยก pool สำหรับตรวจ PR ออกจาก `workouts` (visible list ของหน้านี้ จำกัดแค่ 200
+  // แถวล่าสุดเพื่อการแสดงผล/pagination) เดิมสองจุดนี้ใช้ query เดียวกัน (ผูก concern การแสดงผลกับการตรวจ PR
+  // เข้าด้วยกันโดยไม่ตั้งใจ) ทำให้ Stats (ที่ query แยก 500 แถวของตัวเอง) เห็นประวัติมากกว่าหน้านี้ ตรวจ PR
+  // ได้แม่นกว่าสำหรับท่าที่ฝึกไม่บ่อย — ใช้ PR_HISTORY_LIMIT (canonical, lib/workoutDisplay.ts) แทน
+  const [prHistoryPool, setPrHistoryPool] = useState<Workout[]>([])
   const [setsByWorkoutId, setSetsByWorkoutId] = useState<Record<string, WorkoutSet[]>>({})
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<Filter>('all')
@@ -91,6 +96,19 @@ function HistoryPageInner() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    async function loadPrHistory() {
+      const { data } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('type', 'strength')
+        .order('performed_at', { ascending: false })
+        .limit(PR_HISTORY_LIMIT)
+      setPrHistoryPool((data as Workout[]) ?? [])
+    }
+    loadPrHistory()
+  }, [supabase])
 
   async function handleDelete(id: string, label: string) {
     // ฟีดแบ็ก (Final Production Audit — CTA behavior) เหมือน log/page.tsx — เพิ่ม confirmation ก่อนลบ
@@ -305,7 +323,7 @@ function HistoryPageInner() {
                 summary={computeDaySummary(grouped[date])}
                 prBreakdown={countDayPRsBreakdown(
                   grouped[date].filter((w) => w.type === 'strength'),
-                  workouts
+                  prHistoryPool
                 )}
                 unit={unit}
                 toDisplay={toDisplay}
@@ -316,7 +334,7 @@ function HistoryPageInner() {
                     key={w.id}
                     workout={w}
                     displaySets={buildDisplaySets(w, setsByWorkoutId[w.id] ?? [])}
-                    progress={computeExerciseProgress(w, workouts)}
+                    progress={computeExerciseProgress(w, prHistoryPool)}
                     format={format}
                     expanded={expandedIds.has(w.id)}
                     onToggleExpand={() => toggleExpand(w.id)}

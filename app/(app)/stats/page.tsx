@@ -111,9 +111,14 @@ export default function StatsPage() {
   const [actualRepsByWorkout, setActualRepsByWorkout] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [prs, setPrs] = useState<{ name: string; weight: number; reps: number | null; date: string; previousBest: number | null }[]>([])
+  // 6B-2 (P0-2 phase 2) — ตั้งใจไม่เรียก "prs"/"PRs" เพราะนี่คือ all-time leaderboard (น้ำหนักสูงสุด
+  // ตลอดกาลของแต่ละท่า) ไม่ใช่ entry-level PR detector แบบ computeIsPR() (lib/workoutDisplay.ts) ที่
+  // History/Log/Session ใช้ — คนละคำถามกัน ("best historical performance คืออะไร" ไม่ใช่ "entry นี้เพิ่ง
+  // สร้างสถิติใหม่ไหม") ตั้งชื่อให้ไม่ชวนเข้าใจผิดว่าใช้ engine เดียวกัน (ยังคงแยก implementation ตามเดิม
+  // ทุกประการ — ไม่แตะ logic ข้างล่าง แค่เปลี่ยนชื่อตัวแปร)
+  const [bestLifts, setBestLifts] = useState<{ name: string; weight: number; reps: number | null; date: string; previousBest: number | null }[]>([])
   // ฟีดแบ็ก "อยากได้ Search Box ในส่วน Personal Records — พิมพ์ 'Bench'/'Squat' แล้วกรองได้เลย" —
-  // filter ฝั่ง client ล้วนๆ (prs ทั้งหมดโหลดมาอยู่ในมือแล้ว ไม่ต้อง query ใหม่) จับคู่แบบ substring
+  // filter ฝั่ง client ล้วนๆ (bestLifts ทั้งหมดโหลดมาอยู่ในมือแล้ว ไม่ต้อง query ใหม่) จับคู่แบบ substring
   // ไม่สนตัวพิมพ์เล็ก-ใหญ่ ครอบคลุมทั้งชื่อท่าไทย/อังกฤษที่ผู้ใช้อาจพิมพ์มา
   const [prSearch, setPrSearch] = useState('')
   // น้ำหนักตัวล่าสุด — ใช้ประมาณแคลอรี่ (ดู estimateCaloriesToday) ถ้ายังไม่เคยบันทึกน้ำหนักตัว
@@ -184,7 +189,7 @@ export default function StatsPage() {
   }, [load])
 
   useEffect(() => {
-    async function loadPRs() {
+    async function loadBestLifts() {
       const { data } = await supabase
         .from('workouts')
         .select('exercise_name, weight_kg, reps, performed_at')
@@ -225,9 +230,9 @@ export default function StatsPage() {
         date: best.date,
         previousBest: previousBestByName.get(name) ?? null,
       }))
-      setPrs(top.slice(0, 6))
+      setBestLifts(top.slice(0, 6))
     }
-    loadPRs()
+    loadBestLifts()
   }, [supabase])
 
   useEffect(() => {
@@ -648,9 +653,9 @@ export default function StatsPage() {
     )
   }
 
-  const filteredPrs = prSearch.trim()
-    ? prs.filter((p) => p.name.toLowerCase().includes(prSearch.trim().toLowerCase()))
-    : prs
+  const filteredBestLifts = prSearch.trim()
+    ? bestLifts.filter((p) => p.name.toLowerCase().includes(prSearch.trim().toLowerCase()))
+    : bestLifts
 
   return (
     <div className="space-y-8">
@@ -1064,14 +1069,14 @@ export default function StatsPage() {
         </section>
       )}
 
-      {prs.length > 0 && (
+      {bestLifts.length > 0 && (
         <section>
           <div className="flex items-center justify-between gap-3 mb-3">
             <h2 className="font-display text-sm tracked uppercase text-muted">🏆 Personal Records (น้ำหนักสูงสุด)</h2>
             {/* ฟีดแบ็ก "อยากได้ Search Box ในส่วน Personal Records — พิมพ์ 'Bench'/'Squat' แล้วกรองได้เลย"
                 — โชว์เฉพาะตอนมี PR เยอะพอจะรำคาญเลื่อนหา (>6 รายการ) ไม่ให้กล่องค้นหาโผล่มาเปล่าๆ ตอนมี
                 PR แค่ 2-3 ท่า ซึ่งเห็นครบในตาเดียวอยู่แล้ว */}
-            {prs.length > 6 && (
+            {bestLifts.length > 6 && (
               <input
                 type="text"
                 inputMode="search"
@@ -1085,11 +1090,11 @@ export default function StatsPage() {
           {/* border-violet/20 เดิม เน้นการ์ดนี้ว่าเป็น Personal Records แยกจากลิสต์ทั่วไป — PremiumCard
               ตัด border สีกลางทึบออกแล้ว (v48: ใช้ contact shadow บอกขอบแทน) ยังคงสีม่วงไว้ผ่าน style
               override (ชนะ default เพราะ ...style วางท้ายสุดเสมอ) แทนที่จะเสียจุดเด่นสีนี้ไปเฉยๆ */}
-          {filteredPrs.length === 0 ? (
+          {filteredBestLifts.length === 0 ? (
             <p className="text-xs text-muted text-center py-6">ไม่พบท่าที่ตรงกับ &quot;{prSearch.trim()}&quot;</p>
           ) : (
             <PremiumCard className="divide-y divide-white/5" style={{ border: `1px solid ${withAlpha(COLORS.violet, '33')}` }}>
-              {filteredPrs.map((p) => {
+              {filteredBestLifts.map((p) => {
                 const isNewPR = p.date === todayStr()
                 return (
                   <a

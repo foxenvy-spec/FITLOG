@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { computeDaySummary, computeDayTotals, computeExerciseProgress, countDayPRs, formatDuration, workoutVolumeKg } from './workoutDisplay'
+import {
+  computeDaySummary,
+  computeDayTotals,
+  computeExerciseProgress,
+  computeIsPR,
+  countDayPRs,
+  formatDuration,
+  workoutVolumeKg,
+} from './workoutDisplay'
 import type { Workout } from './types'
 
 function makeWorkout(overrides: Partial<Workout> = {}): Workout {
@@ -279,5 +287,61 @@ describe('countDayPRs', () => {
     const pr = makeWorkout({ id: 'a', performed_at: '2026-07-20', weight_kg: 35 })
     const notPr = makeWorkout({ id: 'b', performed_at: '2026-07-20', weight_kg: 20 })
     expect(countDayPRs([pr, notPr], prior)).toBe(1)
+  })
+})
+
+// 6B-2 (P0-2 phase 2) — canonical "is this entry a new record" engine, shared by History/Log/Session.
+describe('computeIsPR', () => {
+  it('flags isWeightPR when weight beats the all-time best', () => {
+    const history = [makeWorkout({ id: 'p1', performed_at: '2026-07-10', weight_kg: 30, total_volume_kg: 900 })]
+    const entry = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 35, total_volume_kg: 700 })
+    expect(computeIsPR(entry, history)).toEqual({ isWeightPR: true, isVolumePR: false })
+  })
+
+  it('flags isVolumePR when volume beats the all-time best, independently of weight', () => {
+    const history = [makeWorkout({ id: 'p1', performed_at: '2026-07-10', weight_kg: 40, total_volume_kg: 960 })]
+    const entry = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 40, total_volume_kg: 1600 })
+    expect(computeIsPR(entry, history)).toEqual({ isWeightPR: false, isVolumePR: true })
+  })
+
+  it('can flag both flags true at once when an entry beats both records (the two flags are independent, not mutually exclusive)', () => {
+    const history = [makeWorkout({ id: 'p1', performed_at: '2026-07-10', weight_kg: 30, total_volume_kg: 900 })]
+    const entry = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 35, total_volume_kg: 1600 })
+    expect(computeIsPR(entry, history)).toEqual({ isWeightPR: true, isVolumePR: true })
+  })
+
+  it('returns both false for the first time an exercise is logged (no prior history)', () => {
+    const entry = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 35 })
+    expect(computeIsPR(entry, [])).toEqual({ isWeightPR: false, isVolumePR: false })
+  })
+
+  it('returns both false for a non-strength entry', () => {
+    const entry = makeWorkout({ id: 't', type: 'cardio', performed_at: '2026-07-20' })
+    expect(computeIsPR(entry, []).isWeightPR).toBe(false)
+  })
+
+  // Locked same-day exclusion rule: "prior" = strictly before the entry's OWN performed_at, not a
+  // hardcoded "today" — matters for backfilled/edited entries whose performed_at isn't the actual date.
+  it('excludes same-day entries from history, even ones with an earlier weight, regardless of what "today" actually is', () => {
+    const history = [makeWorkout({ id: 'same-day', performed_at: '2026-07-20', weight_kg: 20 })]
+    const entry = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 35 })
+    expect(computeIsPR(entry, history)).toEqual({ isWeightPR: false, isVolumePR: false })
+  })
+
+  it('regression: a backfilled entry (performed_at in the past) excludes history from its own date, not from the real current date', () => {
+    // entry is being logged for 2026-06-01 (backfilled) — a row also dated 2026-06-01 must not count as
+    // "prior" just because it's earlier than *today's real calendar date* in a hardcoded rule
+    const history = [makeWorkout({ id: 'same-backfill-day', performed_at: '2026-06-01', weight_kg: 20 })]
+    const entry = makeWorkout({ id: 't', performed_at: '2026-06-01', weight_kg: 35 })
+    expect(computeIsPR(entry, history).isWeightPR).toBe(false)
+  })
+
+  it('ignores irrelevant history: other exercises and other users\' history mixed into the pool are not compared', () => {
+    const history = [
+      makeWorkout({ id: 'other-exercise', performed_at: '2026-07-10', exercise_name: 'สควอท', weight_kg: 999 }),
+      makeWorkout({ id: 'real-prior', performed_at: '2026-07-10', weight_kg: 20 }),
+    ]
+    const entry = makeWorkout({ id: 't', performed_at: '2026-07-20', weight_kg: 25 })
+    expect(computeIsPR(entry, history).isWeightPR).toBe(true)
   })
 })
