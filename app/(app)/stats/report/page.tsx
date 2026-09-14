@@ -327,20 +327,20 @@ export default function WorkoutReportPage() {
       <PremiumCard
         className="p-6 sm:p-8"
         reducedTexture
-        style={{ background: withAlpha(COLORS.violet, '0d'), border: `1px solid ${withAlpha(COLORS.violet, '30')}` }}
+        style={{ background: withAlpha(DS.ai.ruleBased, '0d'), border: `1px solid ${withAlpha(DS.ai.ruleBased, '30')}` }}
       >
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <SectionHeader icon="✨" title="MINT Coach" iconBg={withAlpha(COLORS.violet, '22')} />
+          <SectionHeader icon="✨" title="MINT Coach" iconBg={withAlpha(DS.ai.ruleBased, '22')} />
           <p className="text-[11px] text-muted">สรุป{periodLabel}</p>
         </div>
         <div className="flex items-center gap-5 mt-5">
           <AiRingAvatar size={88} />
           <p className="min-w-0 flex-1 text-base sm:text-lg text-ink font-medium leading-snug">
-            <span aria-hidden="true" style={{ color: COLORS.violet }}>
+            <span aria-hidden="true" style={{ color: DS.ai.ruleBased }}>
               “
             </span>
             {report.summary.interpretation}
-            <span aria-hidden="true" style={{ color: COLORS.violet }}>
+            <span aria-hidden="true" style={{ color: DS.ai.ruleBased }}>
               ”
             </span>
           </p>
@@ -349,15 +349,15 @@ export default function WorkoutReportPage() {
             น้ำหนักภาพเท่ากับ insight ด้านบน ไม่ใช่แค่รายละเอียดปลีกย่อยต่อท้าย */}
         <div
           className="mt-5 flex items-center justify-between gap-3 rounded-card px-4 py-3"
-          style={{ background: withAlpha(COLORS.violet, '14'), border: `1px solid ${withAlpha(COLORS.violet, '28')}` }}
+          style={{ background: withAlpha(DS.ai.ruleBased, '14'), border: `1px solid ${withAlpha(DS.ai.ruleBased, '28')}` }}
         >
           <div className="min-w-0">
-            <p className="text-[10px] tracked uppercase font-semibold" style={{ color: COLORS.violet }}>
+            <p className="text-[10px] tracked uppercase font-semibold" style={{ color: DS.ai.ruleBased }}>
               💡 สิ่งที่ควรทำต่อ
             </p>
             <p className="text-[13px] text-ink mt-0.5">{report.summary.nextStep}</p>
           </div>
-          <span aria-hidden="true" className="text-lg shrink-0" style={{ color: COLORS.violet }}>
+          <span aria-hidden="true" className="text-lg shrink-0" style={{ color: DS.ai.ruleBased }}>
             →
           </span>
         </div>
