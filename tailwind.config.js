@@ -48,6 +48,35 @@ module.exports = {
         // personal records stand out from the everyday amber/steel/rust/moss usage
         violet: '#9C7CC4',
         violetdim: '#372B49',
+
+        // Phase 5B (Design System Foundation) — semantic vocabulary, define-only.
+        // Semantic aliases mirror lib/designSystem.ts / lib/theme.ts. Keep values
+        // in sync. Intentional duplication until shared color primitives are
+        // introduced in a separate architecture refactor (tailwind.config.js is
+        // plain CommonJS evaluated at build time — it cannot import the
+        // TypeScript DS object directly without extra build tooling).
+        //
+        // Each key is a distinct semantic role, not a color name — do not
+        // collapse two keys into one just because their hex values match.
+        // 'domain-strength' and 'semantic-confirmation' are both #6C8CA8 by
+        // coincidence (5A #2 finding: Toast's "success" toast is actually a
+        // generic "saved/completed" confirmation, not a strength-domain
+        // signal) — merging them would re-introduce the exact naming
+        // collision Phase 5A resolved. Same for 'accent-primary' vs 'ai-rule'
+        // (#E8A33D) — one is generic interaction, the other is rule-based AI
+        // identity; they happen to share a hex, not a meaning.
+        //
+        // 'semantic-success' is intentionally narrow: goal met / positive
+        // trend / achievement only — NOT "any operation completed"
+        // (that's 'semantic-confirmation'). See 5A #2.
+        'accent-primary': '#E8A33D', // = COLORS.amber = DS.accent.primary
+        'domain-strength': '#6C8CA8', // = COLORS.steel = DS.domain.strength
+        'domain-cardio': '#C1503A', // = COLORS.rust = DS.domain.cardio
+        'semantic-success': '#7A9B57', // = COLORS.moss = DS.semantic.success
+        'semantic-danger': '#C1503A', // = COLORS.rust = DS.semantic.danger
+        'semantic-confirmation': '#6C8CA8', // new in 5A #2 — action saved/completed, distinct from semantic-success
+        'ai-rule': '#E8A33D', // = DS.ai.ruleBased
+        'ai-llm': '#9C7CC4', // = DS.ai.llm
       },
       // Foundation token — v49: ฟีดแบ็ก "แต่ละ Card เริ่มใช้สีคนละแบบ...ถ้ามี Design System ทุกอย่างจะ
       // อิง Token เดียว" — สืบจริงพบว่า PremiumCard/AICoachCompactCard/WeeklyVolume ใช้ rounded-[24px]
