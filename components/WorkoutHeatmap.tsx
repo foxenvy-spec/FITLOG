@@ -335,7 +335,7 @@ export default function WorkoutHeatmap() {
             onClick={() => chooseMetric(m)}
             className={`px-2 py-0.5 rounded-full text-[12px] tracked uppercase border transition ${
               metric === m
-                ? 'bg-amber/15 border-amber/50 text-amber'
+                ? 'bg-accent-primary/15 border-accent-primary/50 text-accent-primary'
                 : 'border-line text-muted hover:text-ink hover:border-ink/30'
             }`}
           >

@@ -4885,7 +4885,7 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
         </div>
         <div>
           <p className="text-[12px] tracked uppercase text-muted">TDEE</p>
-          <p className="font-mono text-xl text-amber">
+          <p className="font-mono text-xl text-accent-primary">
             {tdee}
             <span className="text-xs text-muted ml-1">kcal</span>
           </p>

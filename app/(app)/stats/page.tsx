@@ -1139,7 +1139,7 @@ export default function StatsPage() {
                 className="flex items-center justify-between px-4 py-3 hover:bg-surface2 active:bg-surface2 transition"
               >
                 <span className="text-sm text-ink">{name}</span>
-                <span className="font-mono text-sm text-amber">{count}×</span>
+                <span className="font-mono text-sm text-accent-primary">{count}×</span>
               </a>
             ))}
           </PremiumCard>

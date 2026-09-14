@@ -246,7 +246,7 @@ function HistoryPageInner() {
               onClick={() => setFilter(f)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase border transition ${
                 filter === f
-                  ? 'bg-amber text-bg border-amber'
+                  ? 'bg-accent-primary text-bg border-accent-primary'
                   : 'text-muted border-line'
               }`}
             >

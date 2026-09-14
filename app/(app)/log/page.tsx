@@ -695,8 +695,8 @@ function LogPageInner() {
                     onClick={() => setRpe(v)}
                     className={`text-xs px-3 py-1.5 rounded-full border transition ${
                       rpe === v
-                        ? 'bg-amber text-bg border-amber'
-                        : 'bg-surface2 border-line text-muted hover:text-ink hover:border-amber/50'
+                        ? 'bg-accent-primary text-bg border-accent-primary'
+                        : 'bg-surface2 border-line text-muted hover:text-ink hover:border-accent-primary/50'
                     }`}
                   >
                     {v === '' ? 'ไม่ระบุ' : v}
@@ -865,25 +865,25 @@ function LogPageInner() {
             </p>
             <PremiumCard className="px-4 py-3.5 grid grid-cols-2 gap-3">
               <div>
-                <p className="text-lg font-display text-amber">{daySummary.totalSets}</p>
+                <p className="text-lg font-display text-accent-primary">{daySummary.totalSets}</p>
                 <p className="text-[12px] text-muted">เซ็ตรวม</p>
               </div>
               <div>
                 {/* บั๊ก "วอลุ่มไม่แปลงหน่วยตาม weight-unit preference" — จุดอื่นทุกจุดในหน้านี้ใช้
                     toDisplay()/unit จาก useWeightUnit() (เหมือน DaySummaryHeader.tsx) มีแค่การ์ดนี้
                     ที่โชว์ totalVolumeKg ดิบๆ พร้อม label "(kg)" ฝังตายตัว */}
-                <p className="text-lg font-display text-amber">{Math.round(toDisplay(daySummary.totalVolumeKg)).toLocaleString('th-TH')}</p>
+                <p className="text-lg font-display text-accent-primary">{Math.round(toDisplay(daySummary.totalVolumeKg)).toLocaleString('th-TH')}</p>
                 <p className="text-[12px] text-muted">วอลุ่ม ({unit})</p>
               </div>
               {daySummary.durationMin !== null && (
                 <div>
-                  <p className="text-lg font-display text-amber">{daySummary.durationMin}</p>
+                  <p className="text-lg font-display text-accent-primary">{daySummary.durationMin}</p>
                   <p className="text-[12px] text-muted">นาที (โดยประมาณ)</p>
                 </div>
               )}
               {daySummary.caloriesKcal > 0 && (
                 <div>
-                  <p className="text-lg font-display text-amber">{Math.round(daySummary.caloriesKcal).toLocaleString('th-TH')}</p>
+                  <p className="text-lg font-display text-accent-primary">{Math.round(daySummary.caloriesKcal).toLocaleString('th-TH')}</p>
                   <p className="text-[12px] text-muted">แคลอรี่ (kcal)</p>
                 </div>
               )}

@@ -701,7 +701,7 @@ function StatTile({
 }) {
   return (
     <div className="px-3 py-3 text-center flex flex-col items-center justify-center">
-      <p className={`font-mono text-amber ${emphasize ? 'text-2xl' : 'text-lg'}`}>
+      <p className={`font-mono text-accent-primary ${emphasize ? 'text-2xl' : 'text-lg'}`}>
         {icon && (
           <span aria-hidden="true" className="mr-1">
             {icon}
