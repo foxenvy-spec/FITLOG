@@ -96,7 +96,7 @@ export default function WeeklyVolumeRecoveryCard({ recoveryPct }: WeeklyVolumeRe
             {Math.round(totalThisWeek).toLocaleString()} <span className="text-xs text-muted">kg</span>
           </p>
           {pctChange != null && (
-            <p className="text-[12px] mt-0.5" style={{ color: pctChange >= 0 ? COLORS.deltaGood : COLORS.rust }}>
+            <p className="text-[12px] mt-0.5" style={{ color: pctChange >= 0 ? COLORS.deltaGood : DS.semantic.danger }}>
               {pctChange >= 0 ? '↑' : '↓'}{Math.abs(pctChange)}% จากสัปดาห์ที่แล้ว
             </p>
           )}

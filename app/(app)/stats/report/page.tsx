@@ -265,7 +265,7 @@ export default function WorkoutReportPage() {
               {report.volumeDeltaPct !== null && report.volumeDeltaPct !== 0 && (
                 <>
                   {' · '}
-                  <span style={{ color: report.volumeDeltaPct > 0 ? COLORS.moss : COLORS.rust }}>
+                  <span style={{ color: report.volumeDeltaPct > 0 ? COLORS.moss : DS.semantic.danger }}>
                     {report.volumeDeltaPct > 0 ? '↑' : '↓'} {Math.abs(report.volumeDeltaPct)}%
                   </span>{' '}
                   เทียบช่วงก่อนหน้า
@@ -405,7 +405,7 @@ function SectionHeader({ icon, title, iconBg }: { icon: string; title: string; i
 
 function DeltaBadge({ pct }: { pct: number | null }) {
   if (pct === null || pct === 0) return null
-  const color = pct > 0 ? COLORS.moss : COLORS.rust
+  const color = pct > 0 ? COLORS.moss : DS.semantic.danger
   return (
     <span className="text-[11px] font-mono font-semibold" style={{ color }}>
       {pct > 0 ? '↑' : '↓'} {Math.abs(pct)}%
@@ -494,7 +494,7 @@ function BodyProgressColumn({
   // ไม่งั้นตอนผู้ใช้เลือกหน่วยเป็น lb ตัวเลขหลักจะโชว์เป็น lb แต่ delta ยังเป็น kg ดิบไม่ตรงกัน
   const deltaMagnitude =
     delta.delta !== null ? (toDisplay ? toDisplay(Math.abs(delta.delta)) : Math.abs(delta.delta)) : 0
-  const color = delta.isGood === null ? NEUTRAL.mutedIcon : delta.isGood ? COLORS.moss : COLORS.rust
+  const color = delta.isGood === null ? NEUTRAL.mutedIcon : delta.isGood ? COLORS.moss : DS.semantic.danger
   return (
     <div className={wrapperClass} style={{ borderColor: DS.border.default }}>
       {iconBadge}

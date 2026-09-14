@@ -723,7 +723,7 @@ export default function StatsPage() {
           const thisWeek = weeklyVolume.length > 0 ? weeklyVolume[weeklyVolume.length - 1].value : 0
           const prevWeek = weeklyVolume.length > 1 ? weeklyVolume[weeklyVolume.length - 2].value : null
           const pctChange = prevWeek !== null && prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100) : null
-          const trendColor = pctChange === null || pctChange === 0 ? NEUTRAL.mutedIcon : pctChange > 0 ? COLORS.moss : COLORS.rust
+          const trendColor = pctChange === null || pctChange === 0 ? NEUTRAL.mutedIcon : pctChange > 0 ? COLORS.moss : DS.semantic.danger
           return (
             <PremiumCard className="p-4">
               <h2 className="font-display text-sm tracked uppercase text-muted">Training Volume</h2>
@@ -848,7 +848,7 @@ export default function StatsPage() {
                 itemStyle={{ color: '#F3F0E8' }}
                 formatter={(v: number) => [`${v} กม.`, 'ระยะทาง']}
               />
-              <Bar dataKey="value" fill={COLORS.rust} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="value" fill={DS.domain.cardio} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </PremiumCard>
@@ -1178,7 +1178,7 @@ const STAT_ACCENT_TEXT = {
 const STAT_ACCENT_HEX = {
   amber: COLORS.amber,
   steel: COLORS.steel,
-  rust: COLORS.rust,
+  rust: DS.domain.cardio,
   moss: COLORS.moss,
   violet: COLORS.violet,
 } as const

@@ -12,6 +12,7 @@ import Skeleton from './Skeleton'
 import MetricCard, { type MetricIconImageKey, type MetricCardTheme } from './MetricCard'
 import MetricDetailSheet from './dashboard/MetricDetailSheet'
 import { COLORS, NEUTRAL } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 
 // ธีมสีต่อการ์ด (main + second) ตาม Color token ล่าสุด: น้ำหนัก=ส้ม #F59E0B, ไขมัน=ชมพู #EC4899,
@@ -225,7 +226,7 @@ export default function BodyMetricsRow({
       valueText: summary.weight.value != null ? `${toDisplay(summary.weight.value).toFixed(1)} ${unit}` : '—',
       deltaText:
         summary.weight.delta != null ? `${fmtSigned(toDisplay(summary.weight.delta), 1, ` ${unit}`)} ${period}` : null,
-      deltaColor: summary.weight.isGood == null ? NEUTRAL.mutedIcon : summary.weight.isGood ? COLORS.deltaGood : COLORS.rust,
+      deltaColor: summary.weight.isGood == null ? NEUTRAL.mutedIcon : summary.weight.isGood ? COLORS.deltaGood : DS.semantic.danger,
       deltaDir: summary.weight.delta == null ? null : summary.weight.delta > 0 ? 'up' : summary.weight.delta < 0 ? 'down' : null,
       series: weightSeries,
       goal: weightGoalDetail,
@@ -238,7 +239,7 @@ export default function BodyMetricsRow({
       label: 'ไขมัน (%)',
       valueText: summary.bodyFatPct.value != null ? `${summary.bodyFatPct.value.toFixed(1)} %` : '—',
       deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} ${period}` : null,
-      deltaColor: summary.bodyFatPct.isGood == null ? NEUTRAL.mutedIcon : summary.bodyFatPct.isGood ? COLORS.deltaGood : COLORS.rust,
+      deltaColor: summary.bodyFatPct.isGood == null ? NEUTRAL.mutedIcon : summary.bodyFatPct.isGood ? COLORS.deltaGood : DS.semantic.danger,
       deltaDir: summary.bodyFatPct.delta == null ? null : summary.bodyFatPct.delta > 0 ? 'up' : summary.bodyFatPct.delta < 0 ? 'down' : null,
       series: bodyFatSeries,
       goal: bodyFatGoalDetail,
@@ -254,7 +255,7 @@ export default function BodyMetricsRow({
           ? `${fmtSigned(toDisplay(summary.skeletalMuscleKg.delta), 1, ` ${unit}`)} ${period}`
           : null,
       deltaColor:
-        summary.skeletalMuscleKg.isGood == null ? NEUTRAL.mutedIcon : summary.skeletalMuscleKg.isGood ? COLORS.deltaGood : COLORS.rust,
+        summary.skeletalMuscleKg.isGood == null ? NEUTRAL.mutedIcon : summary.skeletalMuscleKg.isGood ? COLORS.deltaGood : DS.semantic.danger,
       deltaDir:
         summary.skeletalMuscleKg.delta == null ? null : summary.skeletalMuscleKg.delta > 0 ? 'up' : summary.skeletalMuscleKg.delta < 0 ? 'down' : null,
       series: muscleSeries,
@@ -283,7 +284,7 @@ export default function BodyMetricsRow({
       valueText: summary.visceralFat.value != null ? `${summary.visceralFat.value} ระดับ` : '—',
       deltaText: summary.visceralFat.delta != null ? `${fmtSigned(summary.visceralFat.delta, 0, ' ระดับ')} ${period}` : null,
       deltaColor:
-        summary.visceralFat.isGood == null ? NEUTRAL.mutedIcon : summary.visceralFat.isGood ? COLORS.deltaGood : COLORS.rust,
+        summary.visceralFat.isGood == null ? NEUTRAL.mutedIcon : summary.visceralFat.isGood ? COLORS.deltaGood : DS.semantic.danger,
       deltaDir: summary.visceralFat.delta == null ? null : summary.visceralFat.delta > 0 ? 'up' : summary.visceralFat.delta < 0 ? 'down' : null,
       series: visceralFatSeries,
       goal: null,

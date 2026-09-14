@@ -52,6 +52,7 @@ import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import PremiumCard from '@/components/ui/PremiumCard'
 import Button from '@/components/ui/Button'
 import { COLORS } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 const MAX_OVERLOAD_EXERCISES = 3
 
@@ -509,7 +510,7 @@ export default function CoachPage() {
                     {/* ฟีดแบ็ก (จากรอบตรวจ Dashboard/Recovery, "Terminology") "Volume ทั้งที่ metric จริงคือ
                         จำนวนเซ็ต" — ตัดคำว่า Volume ออก ตรงหลักเดียวกับที่แก้ไปแล้วบน Dashboard/Recovery */}
                     {data.muscleRecommendation?.scheduleOverriddenFrom && (
-                      <p className="text-[12px]" style={{ color: COLORS.rust }}>
+                      <p className="text-[12px]" style={{ color: DS.semantic.danger }}>
                         🔴 {data.muscleRecommendation.scheduleOverriddenFrom} ยังฝึกเกินเป้าหมาย
                       </p>
                     )}

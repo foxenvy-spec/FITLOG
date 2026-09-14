@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Button from './ui/Button'
 import { COLORS } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 
 // ฟีดแบ็ก "Weekly Summary Modal/Shareable Card — ทำปุ่ม Share สรุปประจำสัปดาห์ออกมาเป็นภาพสวยๆ สไตล์
 // Spotify Wrapped ให้แชร์ลง IG Story/Facebook ได้" — วาดด้วย Canvas API ตรงๆ ในเบราว์เซอร์ (ไม่เพิ่ม
@@ -152,7 +153,7 @@ export default function ShareWeeklySummaryButton({ stats }: { stats: WeeklySumma
       <Button type="button" variant="secondary" size="sm" onClick={handleShare} disabled={busy}>
         {busy ? '...' : '📤 แชร์สรุปสัปดาห์'}
       </Button>
-      {error && <p className="text-[12px]" style={{ color: COLORS.rust }}>{error}</p>}
+      {error && <p className="text-[12px]" style={{ color: DS.semantic.danger }}>{error}</p>}
     </div>
   )
 }
