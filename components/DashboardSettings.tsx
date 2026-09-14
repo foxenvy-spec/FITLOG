@@ -120,7 +120,7 @@ export default function DashboardSettings({
               type="button"
               onClick={handleSaveName}
               disabled={!nameChanged || saveState === 'saving'}
-              className="shrink-0 rounded-lg bg-amber text-bg text-xs font-display tracked uppercase px-3.5 py-3 disabled:opacity-40 transition"
+              className="shrink-0 rounded-lg bg-accent-primary text-bg text-xs font-display tracked uppercase px-3.5 py-3 disabled:opacity-40 transition"
             >
               {saveState === 'saving' ? '...' : 'บันทึก'}
             </button>

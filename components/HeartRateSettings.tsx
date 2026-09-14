@@ -136,7 +136,7 @@ export default function HeartRateSettings({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="w-full mt-4 rounded-lg bg-amber text-bg font-display tracked uppercase text-sm py-2.5 disabled:opacity-60"
+          className="w-full mt-4 rounded-lg bg-accent-primary text-bg font-display tracked uppercase text-sm py-2.5 disabled:opacity-60"
         >
           {saving ? 'กำลังบันทึก...' : 'บันทึก'}
         </button>

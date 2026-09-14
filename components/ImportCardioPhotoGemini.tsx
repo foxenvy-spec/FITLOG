@@ -105,7 +105,7 @@ export default function ImportCardioPhotoGemini({ onExtracted }: { onExtracted: 
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={analyzing}
-          className="text-[12px] shrink-0 border border-amber/40 rounded px-2.5 py-1.5 text-amber hover:bg-amber/10 disabled:opacity-60"
+          className="text-[12px] shrink-0 border border-accent-primary/40 rounded px-2.5 py-1.5 text-accent-primary hover:bg-accent-primary/10 disabled:opacity-60"
         >
           {analyzing ? 'กำลังอ่าน...' : preview ? 'เปลี่ยนรูป' : '📷 เลือกรูป'}
         </button>
