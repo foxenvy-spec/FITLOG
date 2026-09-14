@@ -66,7 +66,7 @@ export default function RestTimer({ voiceEnabled }: { voiceEnabled: boolean }) {
             type="button"
             onClick={() => pickPreset(p)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase border transition ${
-              durationSec === p ? 'bg-steel text-bg border-steel' : 'text-muted border-line'
+              durationSec === p ? 'bg-accent-primary text-bg border-accent-primary' : 'text-muted border-line'
             }`}
           >
             {p}s

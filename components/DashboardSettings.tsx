@@ -160,7 +160,7 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: 
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative w-10 h-6 rounded-full transition shrink-0 ${checked ? 'bg-amber' : 'bg-surface2'}`}
+      className={`relative w-10 h-6 rounded-full transition shrink-0 ${checked ? 'bg-accent-primary' : 'bg-surface2'}`}
     >
       <span
         className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-ink transition-transform ${

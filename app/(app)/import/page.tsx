@@ -279,7 +279,7 @@ export default function ImportPage() {
             type="button"
             onClick={() => setMode('log')}
             className={`flex-1 py-2 rounded-full text-xs font-display tracked uppercase transition ${
-              mode === 'log' ? 'bg-steel text-bg' : 'text-muted'
+              mode === 'log' ? 'bg-accent-primary text-bg' : 'text-muted'
             }`}
           >
             ประวัติย้อนหลัง
@@ -288,7 +288,7 @@ export default function ImportPage() {
             type="button"
             onClick={() => setMode('program')}
             className={`flex-1 py-2 rounded-full text-xs font-display tracked uppercase transition ${
-              mode === 'program' ? 'bg-amber text-bg' : 'text-muted'
+              mode === 'program' ? 'bg-accent-primary text-bg' : 'text-muted'
             }`}
           >
             โปรแกรมประจำสัปดาห์

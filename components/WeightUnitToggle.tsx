@@ -15,7 +15,7 @@ export default function WeightUnitToggle() {
         type="button"
         onClick={() => setUnit('kg')}
         aria-pressed={unit === 'kg'}
-        className={`px-2.5 py-1 rounded-full transition ${unit === 'kg' ? 'bg-amber text-bg' : 'text-muted'}`}
+        className={`px-2.5 py-1 rounded-full transition ${unit === 'kg' ? 'bg-accent-primary text-bg' : 'text-muted'}`}
       >
         kg
       </button>
@@ -23,7 +23,7 @@ export default function WeightUnitToggle() {
         type="button"
         onClick={() => setUnit('lb')}
         aria-pressed={unit === 'lb'}
-        className={`px-2.5 py-1 rounded-full transition ${unit === 'lb' ? 'bg-amber text-bg' : 'text-muted'}`}
+        className={`px-2.5 py-1 rounded-full transition ${unit === 'lb' ? 'bg-accent-primary text-bg' : 'text-muted'}`}
       >
         lb
       </button>

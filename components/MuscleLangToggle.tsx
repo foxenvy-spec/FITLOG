@@ -16,7 +16,7 @@ export default function MuscleLangToggle({
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => onChange('th')}
         aria-pressed={lang === 'th'}
-        className={`px-2.5 py-1 rounded-full transition ${lang === 'th' ? 'bg-steel text-bg' : 'text-muted'}`}
+        className={`px-2.5 py-1 rounded-full transition ${lang === 'th' ? 'bg-accent-primary text-bg' : 'text-muted'}`}
       >
         ไทย
       </button>
@@ -25,7 +25,7 @@ export default function MuscleLangToggle({
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => onChange('en')}
         aria-pressed={lang === 'en'}
-        className={`px-2.5 py-1 rounded-full transition ${lang === 'en' ? 'bg-steel text-bg' : 'text-muted'}`}
+        className={`px-2.5 py-1 rounded-full transition ${lang === 'en' ? 'bg-accent-primary text-bg' : 'text-muted'}`}
       >
         EN
       </button>

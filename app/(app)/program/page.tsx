@@ -614,7 +614,7 @@ export default function ProgramPage() {
               key={dow}
               onClick={() => setSelectedDow(dow)}
               className={`relative rounded-lg py-2.5 text-xs font-display tracked uppercase transition ${
-                selected ? 'bg-amber text-bg' : 'bg-surface text-muted border border-line'
+                selected ? 'bg-accent-primary text-bg' : 'bg-surface text-muted border border-line'
               }`}
             >
               {label}

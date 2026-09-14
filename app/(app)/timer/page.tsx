@@ -31,7 +31,7 @@ export default function TimerPage() {
           type="button"
           onClick={toggleVoice}
           className={`text-xs font-display tracked uppercase px-3 py-1.5 rounded-full border transition ${
-            voiceEnabled ? 'bg-amber text-bg border-amber' : 'text-muted border-line'
+            voiceEnabled ? 'bg-accent-primary text-bg border-accent-primary' : 'text-muted border-line'
           }`}
         >
           {voiceEnabled ? '🔊 Voice Coach' : '🔇 Voice Coach'}
@@ -45,7 +45,7 @@ export default function TimerPage() {
             type="button"
             onClick={() => setMode(m.key)}
             className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase border transition ${
-              mode === m.key ? 'bg-amber text-bg border-amber' : 'text-muted border-line'
+              mode === m.key ? 'bg-accent-primary text-bg border-accent-primary' : 'text-muted border-line'
             }`}
           >
             {m.label}

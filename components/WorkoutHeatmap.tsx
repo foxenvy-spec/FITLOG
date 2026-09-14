@@ -398,7 +398,7 @@ export default function WorkoutHeatmap() {
                       className={`relative aspect-square rounded-[4px] flex items-center justify-center text-[12px] font-mono transition ${
                         isFuture ? 'border border-dashed border-line text-muted/50' : 'text-bg'
                       } ${isToday ? 'ring-1 ring-amber ring-offset-1 ring-offset-surface' : ''} ${
-                        selectedDate === iso ? 'ring-2 ring-steel ring-offset-1 ring-offset-surface' : ''
+                        selectedDate === iso ? 'ring-2 ring-accent-primary ring-offset-1 ring-offset-surface' : ''
                       } ${clickable ? 'cursor-pointer hover:brightness-110' : 'cursor-default'}`}
                       style={!isFuture ? { backgroundColor: LEVEL_STYLE[level].bg } : undefined}
                     >

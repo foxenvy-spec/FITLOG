@@ -75,7 +75,7 @@ export default function ProgressTimelineCard({ heightCm }: { heightCm: number | 
               type="button"
               onClick={() => setRangeDays(r.key)}
               className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
-                rangeDays === r.key ? 'bg-steel text-bg' : 'text-muted'
+                rangeDays === r.key ? 'bg-accent-primary text-bg' : 'text-muted'
               }`}
             >
               {r.label}
@@ -91,7 +91,7 @@ export default function ProgressTimelineCard({ heightCm }: { heightCm: number | 
             type="button"
             onClick={() => setMetric(m.key)}
             className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
-              metric === m.key ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
+              metric === m.key ? 'bg-accent-primary text-bg' : 'bg-surface border border-line text-muted'
             }`}
           >
             {m.label}

@@ -1259,10 +1259,13 @@ export default function HealthPage() {
               onClick={() => setTab(t.key)}
               // Product Audit /health — ฟีดแบ็ก "แท็บ 'Photo' active ใช้ bg-rust แยกจากอีก 3 แท็บ (bg-steel)
               // โดยไม่มี comment อธิบายเหตุผลเลย ต่างจาก /log ที่ steel/rust มีระบบสมมาตรชัดเจน (2 ตัวเลือก
-              // จับคู่ความหมาย type) ที่นี่ไม่มี pattern แบบนั้น — unify เป็น steel ทั้ง 4 แท็บ ให้ tab bar
-              // อ่านเป็น navigation กลุ่มเดียวกัน (ไม่แตะ inactive state/behavior/OCR flow ใดๆ)
+              // จับคู่ความหมาย type) ที่นี่ไม่มี pattern แบบนั้น — unify ทั้ง 4 แท็บ ให้ tab bar อ่านเป็น
+              // navigation กลุ่มเดียวกัน (ไม่แตะ inactive state/behavior/OCR flow ใดๆ)
+              // Phase 5C-1: เดิม unify เป็น steel (ยังไม่มี DS.accent.primary/accent-primary ให้อ้างอิงตอน
+              // นั้น) — 5A ยืนยันแล้วว่านี่คือ "generic interaction state" ไม่ใช่ strength-domain จึงย้ายมาใช้
+              // accent-primary ตรงกับ selected/active ทั่วไปอีกฝั่งของแอป
               className={`flex-1 py-2.5 rounded-full text-[12px] sm:text-sm font-display tracked uppercase transition ${
-                tab === t.key ? 'bg-steel text-bg' : 'text-muted'
+                tab === t.key ? 'bg-accent-primary text-bg' : 'text-muted'
               }`}
             >
               {t.label}
@@ -1541,7 +1544,7 @@ export default function HealthPage() {
                   setTrendMetric('all')
                 }}
                 className={`px-3 py-2 rounded-full text-[12px] font-display tracked uppercase transition ${
-                  trendGroup === 'comp' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
+                  trendGroup === 'comp' ? 'bg-accent-primary text-bg' : 'bg-surface border border-line text-muted'
                 }`}
               >
                 น้ำหนัก/ไขมัน/กล้ามเนื้อ
@@ -1553,7 +1556,7 @@ export default function HealthPage() {
                   setTrendMetric('all')
                 }}
                 className={`px-3 py-2 rounded-full text-[12px] font-display tracked uppercase transition ${
-                  trendGroup === 'measure' ? 'bg-amber text-bg' : 'bg-surface border border-line text-muted'
+                  trendGroup === 'measure' ? 'bg-accent-primary text-bg' : 'bg-surface border border-line text-muted'
                 }`}
               >
                 สัดส่วนร่างกาย
@@ -1566,7 +1569,7 @@ export default function HealthPage() {
                   type="button"
                   onClick={() => setTrendPeriodDays(d)}
                   className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
-                    trendPeriodDays === d ? 'bg-steel text-bg' : 'text-muted'
+                    trendPeriodDays === d ? 'bg-accent-primary text-bg' : 'text-muted'
                   }`}
                 >
                   {d} วัน
@@ -2651,7 +2654,7 @@ function OverviewTrendChart({
               type="button"
               onClick={() => setRangeDays(r.days)}
               className={`px-3 py-1.5 rounded-full text-[12px] font-display tracked uppercase transition ${
-                rangeDays === r.days ? 'bg-steel text-bg' : 'text-muted'
+                rangeDays === r.days ? 'bg-accent-primary text-bg' : 'text-muted'
               }`}
             >
               {r.label}

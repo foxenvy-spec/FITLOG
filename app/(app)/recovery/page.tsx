@@ -411,7 +411,7 @@ export default function RecoveryPage() {
                   key={days}
                   onClick={() => setHistoryRangeDays(days)}
                   className={`px-2.5 py-1 rounded-full tracked uppercase transition ${
-                    historyRangeDays === days ? 'bg-steel text-bg' : 'text-muted'
+                    historyRangeDays === days ? 'bg-accent-primary text-bg' : 'text-muted'
                   }`}
                 >
                   {label}

@@ -369,7 +369,7 @@ function PersonalInfoCard({
             aria-pressed={profile?.sex === 'male'}
             disabled={savingSex !== null || !profile}
             className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase transition disabled:opacity-50 ${
-              profile?.sex === 'male' ? 'bg-amber text-bg' : 'text-muted'
+              profile?.sex === 'male' ? 'bg-accent-primary text-bg' : 'text-muted'
             }`}
           >
             {savingSex === 'male' ? '...' : 'ชาย'}
@@ -380,7 +380,7 @@ function PersonalInfoCard({
             aria-pressed={profile?.sex === 'female'}
             disabled={savingSex !== null || !profile}
             className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase transition disabled:opacity-50 ${
-              profile?.sex === 'female' ? 'bg-amber text-bg' : 'text-muted'
+              profile?.sex === 'female' ? 'bg-accent-primary text-bg' : 'text-muted'
             }`}
           >
             {savingSex === 'female' ? '...' : 'หญิง'}

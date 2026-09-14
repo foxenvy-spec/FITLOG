@@ -169,7 +169,7 @@ export default function SidebarNav() {
               >
                 <Icon active={active} />
               </span>
-              <span className={`hidden xl:inline font-display tracked uppercase text-[12px] ${active ? 'text-amber' : 'text-muted'}`}>{label}</span>
+              <span className={`hidden xl:inline font-display tracked uppercase text-[12px] ${active ? 'text-accent-primary' : 'text-muted'}`}>{label}</span>
             </Link>
           )
         })}

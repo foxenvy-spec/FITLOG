@@ -983,7 +983,7 @@ export default function StatsPage() {
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => pickExercise(name)}
                             className={`w-full text-left px-3 py-2 text-xs transition hover:bg-surface truncate ${
-                              name === selectedExercise ? 'text-amber' : 'text-ink'
+                              name === selectedExercise ? 'text-accent-primary' : 'text-ink'
                             }`}
                           >
                             {name}
