@@ -31,6 +31,7 @@ import {
   suggestMuscleToTrain,
   computeTodaysRecommendation,
   computeDashboardNotifications,
+  computeTodaysAction,
   computeTrainingBalance,
   trainingBalanceInsight,
   recommendationInsight,
@@ -938,7 +939,6 @@ export default function DashboardPage() {
   useEffect(() => {
     setActiveMakeupDay(getActiveMakeupDayId())
   }, [])
-  const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : '/session'
   const activeMakeupDayTitle = activeMakeupDay ? (data?.programDays.find((d) => d.id === activeMakeupDay)?.title ?? null) : null
 
   // ฟีดแบ็ก (ตรวจจากการใช้งานจริง) "'✅ ฝึกไปแล้ววันนี้ (แผนชดเชย)' ขึ้นทันทีที่ log เซ็ตแรกของเซสชันชดเชย
@@ -1045,6 +1045,23 @@ export default function DashboardPage() {
   // recovery/เทรนด์ body fat/เป้าหมาย) เป็นรายการแจ้งเตือนที่กดแล้วไปหน้าที่เกี่ยวข้องได้จริง แทนที่
   // "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" เดิมซึ่งเป็นสรุปสถิติเฉยๆ กดแล้วไปไหนไม่ได้
   const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && (data?.todayWorkouts.length ?? 0) > 0)
+
+  // 6B-1 (แก้ root cause ของ cluster "Today's Action ไม่มี source of truth เดียว" จาก 6A audit) —
+  // ประกอบ sessionHref/isCompletedToday จาก signal ที่คำนวณไว้แล้วทั้งหมดด้านบน (muscleRecommendation,
+  // hasMakeupToday, activeMakeupDay) เป็น struct เดียว แทนที่จะให้แต่ละจุดคำนวณ sessionHref/completed
+  // แยกกันเอง (เดิม sessionHref ไม่เคยรู้จัก scheduleOverriddenFrom เลย → CTA พาไปแผนตามตารางเดิมแม้คำแนะนำ
+  // สลับกลุ่มกล้ามเนื้อไปแล้ว, และ notification เดิมรับ todayCompleted ดิบเข้าไปตรงๆ ไม่เคยรวม
+  // hasMakeupToday → เตือน "ยังไม่ได้ฝึกวันนี้" ทั้งที่ทำเซสชันชดเชยจบไปแล้ว) ไม่แตะ suggestMuscleToTrain/
+  // computeTodaysRecommendation หรือ threshold ใดๆ — แค่ compose ค่าที่มีอยู่แล้ว
+  const todaysAction = computeTodaysAction({
+    recommendation: data?.muscleRecommendation ?? null,
+    programDays: data?.programDays ?? [],
+    programDayMuscleGroups: data?.programDayMuscleGroups ?? {},
+    activeMakeupDayId: activeMakeupDay,
+    hasMakeupToday,
+    todayCompletedRaw: todayCompleted,
+  })
+  const sessionHref = todaysAction.sessionHref
   // ฟีดแบ็ก (design review — "Training This Week บอก 'Next → Day 5 — Lower' แต่ MINT Coach บอก 'ควรพัก
   // หรือฝึกเบามากๆ' พร้อมกัน — ขัดกันเอง ไม่เด็ดขาด") จนถึง "Recovery 100% Excellent ควรโชว์ · Normal ให้
   // Training This Week ด้วย ไม่ใช่แค่ Light/Very Light ตอนมีปัญหา" — เดิมอิง data.todaysRecommendation.pct
@@ -1097,7 +1114,7 @@ export default function DashboardPage() {
   const notifications = data
     ? computeDashboardNotifications({
         scheduledWorkoutTitle: scheduledDay?.title ?? null,
-        todayCompleted,
+        todayCompleted: todaysAction.isCompletedToday,
         recommendation: data.todaysRecommendation,
         bodyFatDelta: data.bodyMetricsSummary.bodyFatPct.delta,
         bodyFatIsGood: data.bodyMetricsSummary.bodyFatPct.isGood,

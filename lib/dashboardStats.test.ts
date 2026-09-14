@@ -45,6 +45,7 @@ import {
   type MuscleTrainingQualityRow,
   computePlannedConsistency,
   findMissedProgramDays,
+  computeTodaysAction,
 } from './dashboardStats'
 import { MUSCLE_GROUPS } from './muscle-groups'
 
@@ -764,6 +765,120 @@ describe('computeTodaysRecommendation', () => {
 
   it('returns null when there is no base recommendation', () => {
     expect(computeTodaysRecommendation(null, { ขา: 12 }, { ขา: 29 })).toBeNull()
+  })
+})
+
+// 6B-1 (P0-1) — 3 scenarios locked in the Implementation Contract before this function was written.
+describe('computeTodaysAction', () => {
+  function makeProgramDay(overrides: Partial<ProgramDay>): ProgramDay {
+    return {
+      id: 'day-1',
+      user_id: 'u1',
+      day_of_week: 1,
+      title: 'Day 1',
+      created_at: '2026-01-01T00:00:00Z',
+      ...overrides,
+    }
+  }
+
+  it('scenario 1: schedule-overridden recommendation resolves sessionHref to the matching program_day_id, not the scheduled day', () => {
+    const programDays = [
+      makeProgramDay({ id: 'day-legs', day_of_week: 1, title: 'ขา' }),
+      makeProgramDay({ id: 'day-chest', day_of_week: 3, title: 'อก' }),
+    ]
+    const programDayMuscleGroups = { 1: 'ขา', 3: 'อก' }
+    const action = computeTodaysAction({
+      recommendation: { muscleGroup: 'อก', pct: 100, scheduleOverriddenFrom: 'ขา' },
+      programDays,
+      programDayMuscleGroups,
+      activeMakeupDayId: null,
+      hasMakeupToday: false,
+      todayCompletedRaw: false,
+    })
+    expect(action.sessionHref).toBe('/session?day=day-chest')
+    expect(action.scheduleOverriddenFrom).toBe('ขา')
+  })
+
+  it('scenario 1b: an active makeup session always wins over a schedule-overridden recommendation', () => {
+    const programDays = [makeProgramDay({ id: 'day-chest', day_of_week: 3, title: 'อก' })]
+    const action = computeTodaysAction({
+      recommendation: { muscleGroup: 'อก', pct: 100, scheduleOverriddenFrom: 'ขา' },
+      programDays,
+      programDayMuscleGroups: { 3: 'อก' },
+      activeMakeupDayId: 'day-makeup',
+      hasMakeupToday: true,
+      todayCompletedRaw: false,
+    })
+    expect(action.sessionHref).toBe('/session?day=day-makeup')
+  })
+
+  it('scenario 2: a completed makeup session (no longer active) marks the day completed even though raw progress is 0', () => {
+    const action = computeTodaysAction({
+      recommendation: { muscleGroup: 'ขา', pct: 100 },
+      programDays: [],
+      programDayMuscleGroups: {},
+      activeMakeupDayId: null, // cleared once the makeup session finished
+      hasMakeupToday: true, // but a workout was logged today under a different program_day_id
+      todayCompletedRaw: false, // raw progress against today's own scheduled day is still 0
+    })
+    expect(action.isCompletedToday).toBe(true)
+    expect(action.sessionHref).toBe('/session')
+  })
+
+  it('scenario 2b: falls back to the raw completion flag when there is no makeup session today', () => {
+    const completed = computeTodaysAction({
+      recommendation: null,
+      programDays: [],
+      programDayMuscleGroups: {},
+      activeMakeupDayId: null,
+      hasMakeupToday: false,
+      todayCompletedRaw: true,
+    })
+    expect(completed.isCompletedToday).toBe(true)
+
+    const notCompleted = computeTodaysAction({
+      recommendation: null,
+      programDays: [],
+      programDayMuscleGroups: {},
+      activeMakeupDayId: null,
+      hasMakeupToday: false,
+      todayCompletedRaw: false,
+    })
+    expect(notCompleted.isCompletedToday).toBe(false)
+  })
+
+  it('scenario 3: exposes lowRecoveryCaution from the recommendation unchanged, for callers to gate their own CTA', () => {
+    const cautioned = computeTodaysAction({
+      recommendation: { muscleGroup: 'ขา', pct: 20, lowRecoveryCaution: true },
+      programDays: [],
+      programDayMuscleGroups: {},
+      activeMakeupDayId: null,
+      hasMakeupToday: false,
+      todayCompletedRaw: false,
+    })
+    expect(cautioned.lowRecoveryCaution).toBe(true)
+
+    const notCautioned = computeTodaysAction({
+      recommendation: { muscleGroup: 'ขา', pct: 90 },
+      programDays: [],
+      programDayMuscleGroups: {},
+      activeMakeupDayId: null,
+      hasMakeupToday: false,
+      todayCompletedRaw: false,
+    })
+    expect(notCautioned.lowRecoveryCaution).toBe(false)
+  })
+
+  it('falls back to /session when there is no makeup session, no override, and no matching program day', () => {
+    const action = computeTodaysAction({
+      recommendation: { muscleGroup: 'อก', pct: 100 },
+      programDays: [],
+      programDayMuscleGroups: {},
+      activeMakeupDayId: null,
+      hasMakeupToday: false,
+      todayCompletedRaw: false,
+    })
+    expect(action.sessionHref).toBe('/session')
   })
 })
 

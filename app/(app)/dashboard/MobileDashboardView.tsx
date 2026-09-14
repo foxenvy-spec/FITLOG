@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDashboardSettings } from '@/components/DashboardSettingsProvider'
 import { todayDayOfWeek, todayStr, daysAgoStr } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
-import { computeTodayTotals, computeDashboardNotifications, computePlannedConsistency } from '@/lib/dashboardStats'
+import { computeTodayTotals, computeDashboardNotifications, computePlannedConsistency, computeTodaysAction } from '@/lib/dashboardStats'
 import { goalProgressPct } from '@/lib/goalProgress'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
@@ -105,8 +105,6 @@ export default function MobileDashboardView() {
   useEffect(() => {
     setActiveMakeupDay(getActiveMakeupDayId())
   }, [])
-  const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : '/session'
-
   // ยืนยันกับ DB ว่าเซสชันชดเชยที่ pointer ชี้อยู่จบครบตามแผนนั้นแล้วจริงหรือยัง (ตรรกะเดียวกับ
   // allFinished ใน session/page.tsx) — pointer เดียวอาจค้างผิดได้ (จบจากอีกอุปกรณ์) ต้องเช็คซ้ำกับข้อมูล
   // จริงก่อนตัดสินว่า "กำลังทำอยู่" สำหรับสลับตัวเลข completed/total ที่ส่งเข้า Today
@@ -186,6 +184,19 @@ export default function MobileDashboardView() {
     hasTodayPlan || hasLoggedToday ? 'active' : hasAnyProgram ? 'restDay' : 'noProgram'
 
   const todayCompleted = (progressPct !== null && progressPct >= 100) || (progressPct === null && data.todayWorkouts.length > 0)
+
+  // 6B-1 — sessionHref/isCompletedToday ตัวเดียวกับ DashboardView.tsx เดสก์ท็อป (canonical pipeline,
+  // lib/dashboardStats.ts) แทนที่จะคำนวณแยกเอง 2 ที่ (เดิม mobile กับ desktop ได้ค่าไม่ตรงกันได้ในเคส
+  // schedule override / makeup session) — ไม่แตะ recommendation engine หรือ threshold ใดๆ
+  const todaysAction = computeTodaysAction({
+    recommendation: muscleRecommendation,
+    programDays: data.programDays,
+    programDayMuscleGroups: data.programDayMuscleGroups,
+    activeMakeupDayId: activeMakeupDay,
+    hasMakeupToday,
+    todayCompletedRaw: todayCompleted,
+  })
+  const sessionHref = todaysAction.sessionHref
   const todayCardCompleted =
     workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0
       ? makeupExercisesCompleted
@@ -221,7 +232,7 @@ export default function MobileDashboardView() {
       : null
   const notifications = computeDashboardNotifications({
     scheduledWorkoutTitle: scheduledDay?.title ?? null,
-    todayCompleted,
+    todayCompleted: todaysAction.isCompletedToday,
     recommendation: data.todaysRecommendation,
     bodyFatDelta: data.bodyMetricsSummary.bodyFatPct.delta,
     bodyFatIsGood: data.bodyMetricsSummary.bodyFatPct.isGood,

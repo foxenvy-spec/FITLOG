@@ -525,6 +525,66 @@ export function computeTodaysRecommendation(
   return { ...recommendation, setsCurrent, setsTarget, setsRemaining: setsTarget - setsCurrent }
 }
 
+// ==================== Today's Action (6B-1, P0-1) ====================
+// *** Canonical "sessionHref ของวันนี้" + "จบวันนี้แล้วหรือยัง" *** — ก่อนหน้านี้ DashboardView.tsx และ
+// MobileDashboardView.tsx ต่างคำนวณ sessionHref (จาก activeMakeupDay อย่างเดียว, ไม่เคยดู
+// scheduleOverriddenFrom เลย) และค่าที่ส่งเข้า computeDashboardNotifications ({@link
+// computeDashboardNotifications}'s todayCompleted, จาก progressPct ของ scheduledDay ตัวเองอย่างเดียว
+// ไม่เคย OR กับ hasMakeupToday) แยกกันคนละที่ — ทำให้เกิด 2 บั๊กที่ยืนยันแล้วจาก 6A Core Experience Audit:
+// (1) วันที่ recommendation แนะนำกล้ามเนื้ออื่นแทนตาราง (scheduleOverriddenFrom) ปุ่ม CTA ยังพาไปวันตาราง
+//     เดิมอยู่ดี เพราะ sessionHref ไม่เคยรู้จัก scheduleOverriddenFrom เลย
+// (2) ทำเซสชันชดเชยเสร็จแล้ว (hasMakeupToday=true, activeMakeupDayId ถูกเคลียร์แล้ว) กระดิ่งแจ้งเตือนยัง
+//     ขึ้น "วันนี้ถึงวัน X" พร้อมลิงก์เปิดเซสชันซ้ำ เพราะ todayCompleted (คำนวณจาก progress ของวันตาราง
+//     ตัวเอง) ไม่เคยรู้ว่ามีการฝึกชดเชยเกิดขึ้นแล้ววันนี้
+// ฟังก์ชันนี้รวมสองค่านี้ไว้ที่เดียว ให้ DashboardView/MobileDashboardView/การแจ้งเตือน consume ผลลัพธ์
+// เดียวกัน ห้ามคำนวณ sessionHref/isCompletedToday แยกอิสระอีก (หลักการเดียวกับ Source of Truth ของ
+// suggestMuscleToTrain ด้านบน) — ไม่แตะ recommendation algorithm/recovery threshold/reasoning ใดๆ เลย
+// แค่ประกอบค่าที่มีอยู่แล้วให้เป็นก้อนเดียว
+export interface TodaysAction {
+  muscleGroup: string | null
+  lowRecoveryCaution: boolean
+  scheduleOverriddenFrom: string | null
+  sessionHref: string
+  isCompletedToday: boolean
+}
+
+export function computeTodaysAction(params: {
+  recommendation: MuscleRecommendation | null
+  programDays: ProgramDay[]
+  // day_of_week -> muscleGroup ของแผนวันนั้น (เช่น DashboardData.programDayMuscleGroups) — ใช้หา
+  // program_day_id ของวันที่ตรงกับกล้ามเนื้อที่ recommendation แนะนำ ตอน scheduleOverriddenFrom มีค่า
+  programDayMuscleGroups: Record<number, string | null>
+  // เซสชันชดเชยที่ "กำลังทำอยู่" ตอนนี้ (จาก getActiveMakeupSessionId ใน localStorage) — ต้องพากลับเข้า
+  // เซสชันเดิมก่อนเสมอ ไม่ว่า recommendation จะแนะนำอะไรก็ตาม (คนละเรื่องกับ scheduleOverriddenFrom)
+  activeMakeupDayId: string | null
+  // มีเซสชันชดเชย (program_day_id ต่างจากวันตารางจริง) บันทึกไว้แล้ว "วันนี้" หรือยัง — ไม่สนว่าจะยัง
+  // active อยู่หรือจบไปแล้ว (activeMakeupDayId ถูกเคลียร์ตอนจบเซสชัน แต่ hasMakeupToday ยังเป็น true)
+  hasMakeupToday: boolean
+  // todayCompleted เดิม — คำนวณจาก progress ของ "วันตารางจริงของวันนี้" เท่านั้น (ไม่รู้จัก makeup)
+  todayCompletedRaw: boolean
+}): TodaysAction {
+  const { recommendation, programDays, programDayMuscleGroups, activeMakeupDayId, hasMakeupToday, todayCompletedRaw } = params
+
+  let sessionHref = '/session'
+  if (activeMakeupDayId) {
+    // เซสชันชดเชยกำลังทำค้างอยู่ — พากลับเข้าเซสชันเดิมเสมอ ไม่ว่า recommendation จะเปลี่ยนไปแนะนำอะไร
+    sessionHref = `/session?day=${activeMakeupDayId}`
+  } else if (recommendation?.scheduleOverriddenFrom) {
+    // recommendation แนะนำกล้ามเนื้ออื่นแทนวันตาราง — หาว่ากล้ามเนื้อนั้นตรงกับ program_days วันไหน
+    // (ข้อมูลที่มีอยู่แล้วใน DashboardData ไม่ต้อง query ใหม่) ถ้าเจอ ให้ sessionHref พาไปวันนั้นแทน
+    const overrideDay = programDays.find((d) => programDayMuscleGroups[d.day_of_week] === recommendation.muscleGroup)
+    if (overrideDay) sessionHref = `/session?day=${overrideDay.id}`
+  }
+
+  return {
+    muscleGroup: recommendation?.muscleGroup ?? null,
+    lowRecoveryCaution: recommendation?.lowRecoveryCaution ?? false,
+    scheduleOverriddenFrom: recommendation?.scheduleOverriddenFrom ?? null,
+    sessionHref,
+    isCompletedToday: todayCompletedRaw || hasMakeupToday,
+  }
+}
+
 // ==================== Notifications (Priority 14) ====================
 // เดิมกระดิ่งแจ้งเตือนโชว์แค่ "PR ล่าสุด"/"ฝึกมากสุดสัปดาห์นี้" (NotificationButton.tsx) ซึ่งเป็นสรุป
 // สถิติเฉยๆ ไม่ได้บอกว่า "ควรทำอะไรต่อ" และกดแล้วก็ไปไหนไม่ได้ — เปลี่ยนเป็นหมวดที่ actionable จริง

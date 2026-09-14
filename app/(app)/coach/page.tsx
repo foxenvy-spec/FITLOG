@@ -521,11 +521,28 @@ export default function CoachPage() {
 
             {data.muscleRecommendation && (
               <div className="border-t border-white/5 pt-3 space-y-2.5">
+                {/* 6B-1 (แก้ cluster 1c จาก 6A audit — ฟีดแบ็ก "MINT Coach บอกควรพัก แต่ปุ่มก็ให้เริ่มเล่น
+                    ขัดกันเอง") — lowRecoveryCaution มีอยู่แล้วใน data.muscleRecommendation (มาจาก
+                    suggestMuscleToTrain ตัวเดียวกับที่หน้านี้เรียกอยู่แล้วที่บรรทัดด้านบน) แต่ปุ่มนี้ไม่เคย
+                    เช็คมาก่อน — เพิ่มข้อความเตือนด้วย token สีเดียวกับ scheduleOverriddenFrom ด้านบน (ไม่ผูก
+                    semantic token ใหม่) และลดน้ำหนักปุ่มจาก accent-primary เป็น muted (pattern เดียวกับ
+                    AICoachCompactCard.tsx ที่สลับ CTA เป็น secondary ตอน lowRecoveryCaution) — ไม่บล็อกการกด
+                    (ยังกดสร้างโปรแกรมต่อได้ถ้าต้องการ) ไม่แตะ handleGenerateWorkout/คำบนปุ่ม/recommendation
+                    engine ใดๆ */}
+                {data.muscleRecommendation.lowRecoveryCaution && !generatedWorkout && (
+                  <p className="text-[12px]" style={{ color: DS.semantic.danger }}>
+                    😴 {data.muscleRecommendation.muscleGroup}ยังฟื้นตัวไม่พอ แนะนำพักหรือฝึกเบาๆ ก่อน
+                  </p>
+                )}
                 {!generatedWorkout ? (
                   <button
                     type="button"
                     onClick={handleGenerateWorkout}
-                    className="text-xs font-display tracked uppercase text-accent-primary border border-accent-primary/40 rounded-lg px-3 py-2 active:scale-[0.99] transition"
+                    className={
+                      data.muscleRecommendation.lowRecoveryCaution
+                        ? 'text-xs font-display tracked uppercase text-muted border border-white/10 rounded-lg px-3 py-2 active:scale-[0.99] transition'
+                        : 'text-xs font-display tracked uppercase text-accent-primary border border-accent-primary/40 rounded-lg px-3 py-2 active:scale-[0.99] transition'
+                    }
                   >
                     🏋️ สร้างโปรแกรม{data.muscleRecommendation.muscleGroup}
                   </button>
