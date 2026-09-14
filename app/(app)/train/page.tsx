@@ -331,7 +331,7 @@ function TrainBody({
       <div className="order-1 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-1">
         <PremiumCard className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-[12px] tracked uppercase text-amber">โปรแกรมวันนี้</p>
+            <p className="text-[12px] tracked uppercase text-accent-primary">โปรแกรมวันนี้</p>
             <p className="shrink-0 text-[12px] text-muted whitespace-nowrap">🔥 {data.streak} วันติด</p>
           </div>
 
@@ -362,7 +362,7 @@ function TrainBody({
 
           <a
             href={sessionHref}
-            className="flex items-center justify-center gap-2 rounded-xl bg-amber text-bg font-display text-sm tracked uppercase py-3 active:scale-[0.99] transition"
+            className="flex items-center justify-center gap-2 rounded-xl bg-accent-primary text-bg font-display text-sm tracked uppercase py-3 active:scale-[0.99] transition"
           >
             <span aria-hidden="true">▶</span> {ctaLabel}
           </a>
@@ -371,7 +371,7 @@ function TrainBody({
 
       <div className="order-2 lg:order-none lg:col-start-1 lg:col-span-7 lg:row-start-2">
         <PremiumCard as="a" href="/log" className="flex items-center gap-3 px-4 py-3.5 active:scale-[0.99] transition">
-          <span className="shrink-0 w-9 h-9 rounded-full bg-amber/15 text-amber flex items-center justify-center text-base">✚</span>
+          <span className="shrink-0 w-9 h-9 rounded-full bg-accent-primary/15 text-accent-primary flex items-center justify-center text-base">✚</span>
           <div className="min-w-0">
             <p className="font-display tracked uppercase text-ink text-xs">บันทึกเวิร์กเอาต์แบบอิสระ</p>
             <p className="text-[12px] text-muted mt-0.5 truncate">จดเซ็ต น้ำหนัก คาร์ดิโอ แบบอิสระ</p>
@@ -407,7 +407,7 @@ function TrainBody({
                     type="button"
                     onClick={() => onRepeatSession(session)}
                     disabled={repeatingDate !== null}
-                    className="flex-1 text-center text-xs text-amber border border-amber/40 rounded-lg py-2 hover:bg-amber/10 transition disabled:opacity-50"
+                    className="flex-1 text-center text-xs text-accent-primary border border-accent-primary/40 rounded-lg py-2 hover:bg-accent-primary/10 transition disabled:opacity-50"
                   >
                     {repeatingDate === session.date ? 'กำลังบันทึก...' : 'เล่นเหมือนรอบนี้'}
                   </button>
@@ -438,7 +438,7 @@ function TrainBody({
                     type="button"
                     onClick={() => onStartTemplate(t)}
                     disabled={startingTemplateId !== null || exs.length === 0}
-                    className="shrink-0 text-xs font-display tracked uppercase text-amber border border-amber/40 rounded-full px-3 py-1.5 hover:bg-amber/10 transition disabled:opacity-50"
+                    className="shrink-0 text-xs font-display tracked uppercase text-accent-primary border border-accent-primary/40 rounded-full px-3 py-1.5 hover:bg-accent-primary/10 transition disabled:opacity-50"
                   >
                     {startingTemplateId === t.id ? '...' : 'เริ่มทันที'}
                   </button>
@@ -458,7 +458,7 @@ function TrainBody({
               as="a"
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center gap-1.5 py-5 text-muted hover:text-amber transition"
+              className="flex flex-col items-center justify-center gap-1.5 py-5 text-muted hover:text-accent-primary transition"
             >
               <span className="text-xl">{item.icon}</span>
               <span className="text-[12px] font-display tracked uppercase">{item.label}</span>
@@ -495,7 +495,7 @@ function PlateCalculatorWidget() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={`น้ำหนักรวมที่ต้องการ (${unit})`}
-            className="flex-1 min-w-0 bg-surface2 text-ink text-sm font-mono rounded px-3 py-2 border border-line outline-none focus:border-amber"
+            className="flex-1 min-w-0 bg-surface2 text-ink text-sm font-mono rounded px-3 py-2 border border-line outline-none focus:border-accent-primary"
           />
           <span className="text-xs text-muted shrink-0">{unit}</span>
         </div>

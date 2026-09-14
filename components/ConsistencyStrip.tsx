@@ -401,7 +401,7 @@ export default function ConsistencyStrip() {
                 ›
               </button>
             </div>
-            <a href="/calendar" className="text-[12px] text-amber shrink-0">
+            <a href="/calendar" className="text-[12px] text-accent-primary shrink-0">
               ดูปฏิทินทั้งหมด →
             </a>
           </div>
@@ -650,7 +650,7 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
                     <span>{describeWorkout(w)}</span>
                     {canExpand && (
                       <span
-                        className="text-muted text-[12px] shrink-0 transition-transform group-hover:text-amber"
+                        className="text-muted text-[12px] shrink-0 transition-transform group-hover:text-accent-primary"
                         style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}
                         aria-hidden="true"
                       >

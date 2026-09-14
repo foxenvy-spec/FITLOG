@@ -160,7 +160,7 @@ export default function BodyMetricsRow({
     return (
       <a
         href="/health"
-        className="flex items-center justify-between gap-3 rounded-lg bg-surface border border-line px-4 py-4 hover:border-amber/40 transition"
+        className="flex items-center justify-between gap-3 rounded-lg bg-surface border border-line px-4 py-4 hover:border-accent-primary/40 transition"
       >
         <div>
           <p className="text-sm text-ink">ยังไม่มีข้อมูลสัดส่วนร่างกาย</p>
@@ -168,7 +168,7 @@ export default function BodyMetricsRow({
             บันทึกน้ำหนัก/ไขมัน/กล้ามเนื้อครั้งแรกที่หน้าสุขภาพ แล้วการ์ดสรุปจะขึ้นตรงนี้
           </p>
         </div>
-        <span className="text-xs text-amber shrink-0">บันทึกเลย →</span>
+        <span className="text-xs text-accent-primary shrink-0">บันทึกเลย →</span>
       </a>
     )
   }
@@ -317,7 +317,7 @@ export default function BodyMetricsRow({
             // ฟีดแบ็ก (UX review) touch target — text-[12px] ไม่มี padding เตี้ยกว่า 24px ขั้นต่ำของ
             // WCAG 2.2 AA — เพิ่ม py-1.5 -my-1.5 (ชดเชยแนวตั้งไม่ให้แถวสูงขึ้นเห็นชัด เพราะอยู่ในแถว
             // items-center ร่วมกับหัวข้อ/pill อื่นที่กำหนดความสูงแถวไว้แล้ว)
-            <Link href={titleHref} className="text-[12px] text-amber hover:underline shrink-0 -my-1.5 py-1.5">
+            <Link href={titleHref} className="text-[12px] text-accent-primary hover:underline shrink-0 -my-1.5 py-1.5">
               ดูทั้งหมด →
             </Link>
           )}

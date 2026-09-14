@@ -55,7 +55,7 @@ export default function ExerciseCard({
 
   return (
     <li
-      className={`group rounded-lg border bg-surface shadow-elevated transition hover:-translate-y-0.5 hover:shadow-hero hover:border-amber/40 ${
+      className={`group rounded-lg border bg-surface shadow-elevated transition hover:-translate-y-0.5 hover:shadow-hero hover:border-accent-primary/40 ${
         isRecord ? 'border-violet/40' : 'border-line'
       }`}
     >
@@ -81,7 +81,7 @@ export default function ExerciseCard({
             <p className="text-lg font-semibold text-ink truncate leading-snug">
               <span className="mr-1.5">{w.type === 'strength' ? '🏋️' : '🏃'}</span>
               {nameHref ? (
-                <a href={nameHref} onClick={(e) => e.stopPropagation()} className="hover:text-amber hover:underline">
+                <a href={nameHref} onClick={(e) => e.stopPropagation()} className="hover:text-accent-primary hover:underline">
                   {name}
                 </a>
               ) : (
