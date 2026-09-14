@@ -267,7 +267,7 @@ export default function WorkoutHeatmap() {
           <button
             onClick={() => shiftMonth(-1)}
             aria-label="เดือนก่อนหน้า"
-            className="w-7 h-7 rounded-md border border-line text-muted hover:text-amber hover:border-amber/50 transition flex items-center justify-center text-xs"
+            className="w-7 h-7 rounded-md border border-line text-muted hover:text-accent-primary hover:border-accent-primary/50 transition flex items-center justify-center text-xs"
           >
             ‹
           </button>
@@ -275,7 +275,7 @@ export default function WorkoutHeatmap() {
             onClick={() => shiftMonth(1)}
             aria-label="เดือนถัดไป"
             disabled={cursor.getFullYear() === new Date().getFullYear() && cursor.getMonth() === new Date().getMonth()}
-            className="w-7 h-7 rounded-md border border-line text-muted hover:text-amber hover:border-amber/50 transition flex items-center justify-center text-xs disabled:opacity-30 disabled:hover:text-muted disabled:hover:border-line"
+            className="w-7 h-7 rounded-md border border-line text-muted hover:text-accent-primary hover:border-accent-primary/50 transition flex items-center justify-center text-xs disabled:opacity-30 disabled:hover:text-muted disabled:hover:border-line"
           >
             ›
           </button>
@@ -290,7 +290,7 @@ export default function WorkoutHeatmap() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search Exercise"
-            className="w-full rounded-md bg-surface2 border border-line pl-7 pr-2.5 py-1.5 text-xs text-ink placeholder:text-muted focus:outline-none focus:border-amber/50"
+            className="w-full rounded-md bg-surface2 border border-line pl-7 pr-2.5 py-1.5 text-xs text-ink placeholder:text-muted focus:outline-none focus:border-accent-primary/50"
           />
         </div>
         {searchQuery.trim() && (
@@ -457,7 +457,7 @@ export default function WorkoutHeatmap() {
                     <button
                       type="button"
                       onClick={() => setExpandedIds(new Set(expandableWorkoutIds))}
-                      className="text-muted hover:text-amber transition"
+                      className="text-muted hover:text-accent-primary transition"
                     >
                       Expand All
                     </button>
@@ -465,7 +465,7 @@ export default function WorkoutHeatmap() {
                     <button
                       type="button"
                       onClick={() => setExpandedIds(new Set())}
-                      className="text-muted hover:text-amber transition"
+                      className="text-muted hover:text-accent-primary transition"
                     >
                       Collapse All
                     </button>

@@ -461,11 +461,11 @@ export default function CalendarPage() {
 
               {selectedWorkouts.filter((w) => w.type === 'strength').length > 1 && (
                 <div className="flex justify-end gap-3 mb-2">
-                  <button type="button" onClick={expandAllDay} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
+                  <button type="button" onClick={expandAllDay} className="text-[12px] tracked uppercase text-muted hover:text-accent-primary transition">
                     Expand All
                   </button>
                   <span className="text-line">|</span>
-                  <button type="button" onClick={collapseAllDay} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
+                  <button type="button" onClick={collapseAllDay} className="text-[12px] tracked uppercase text-muted hover:text-accent-primary transition">
                     Collapse All
                   </button>
                 </div>
@@ -489,7 +489,7 @@ export default function CalendarPage() {
           )}
         </div>
       ) : (
-        <a href="/history" className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-1">
+        <a href="/history" className="block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-1">
           ดูประวัติทั้งหมด →
         </a>
       )}
@@ -502,7 +502,7 @@ export default function CalendarPage() {
           <button
             type="button"
             onClick={() => setShowGoalForm((v) => !v)}
-            className="text-xs font-display tracked uppercase text-amber"
+            className="text-xs font-display tracked uppercase text-accent-primary"
           >
             {showGoalForm ? 'ปิด' : '+ เพิ่มเป้าหมาย'}
           </button>
@@ -564,7 +564,7 @@ export default function CalendarPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleDone(g)}
-                          className="text-xs text-muted hover:text-amber focus:text-amber transition"
+                          className="text-xs text-muted hover:text-accent-primary focus:text-accent-primary transition"
                         >
                           สำเร็จ
                         </button>
@@ -581,7 +581,7 @@ export default function CalendarPage() {
                   {progress !== null && (
                     <div className="mt-2.5 h-1.5 rounded-full bg-surface2 overflow-hidden">
                       <div
-                        className="h-full bg-amber transition-[width]"
+                        className="h-full bg-accent-primary transition-[width]"
                         style={{ width: `${Math.max(3, progress * 100)}%` }}
                       />
                     </div>

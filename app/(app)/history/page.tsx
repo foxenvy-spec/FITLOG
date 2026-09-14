@@ -258,7 +258,7 @@ function HistoryPageInner() {
           type="button"
           onClick={handleExportCsv}
           disabled={exporting}
-          className="shrink-0 px-3 py-1.5 rounded-full text-xs font-display tracked uppercase border border-line text-muted hover:text-amber hover:border-amber/50 transition disabled:opacity-50"
+          className="shrink-0 px-3 py-1.5 rounded-full text-xs font-display tracked uppercase border border-line text-muted hover:text-accent-primary hover:border-accent-primary/50 transition disabled:opacity-50"
         >
           {exporting ? 'กำลัง Export...' : 'Export CSV'}
         </button>
@@ -278,11 +278,11 @@ function HistoryPageInner() {
 
       {dates.length > 0 && (
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={expandAll} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
+          <button type="button" onClick={expandAll} className="text-[12px] tracked uppercase text-muted hover:text-accent-primary transition">
             Expand All
           </button>
           <span className="text-line">|</span>
-          <button type="button" onClick={collapseAll} className="text-[12px] tracked uppercase text-muted hover:text-amber transition">
+          <button type="button" onClick={collapseAll} className="text-[12px] tracked uppercase text-muted hover:text-accent-primary transition">
             Collapse All
           </button>
         </div>
@@ -325,7 +325,7 @@ function HistoryPageInner() {
                       <>
                         <a
                           href={`/log?edit=${w.id}`}
-                          className="text-muted hover:text-amber text-xs"
+                          className="text-muted hover:text-accent-primary text-xs"
                           aria-label="แก้ไขรายการ"
                         >
                           แก้ไข
@@ -350,7 +350,7 @@ function HistoryPageInner() {
 
       <a
         href="/export"
-        className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
+        className="block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-2"
       >
         📤 Export & Backup →
       </a>
