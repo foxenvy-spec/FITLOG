@@ -70,6 +70,7 @@ import { NumberStepper } from '@/components/timers/TimerShell'
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import { splitTitleDetail, computeIsPR, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
+import { createExercisePersistence, type ExercisePersistence } from '@/lib/sessionPersistence'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 
@@ -135,6 +136,12 @@ interface SummaryExtras {
 export default function SessionPage() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  // P1-2 (6A audit — "logSet() race") — logSet()/logCurrentExercise()/swapCurrentExercise() ทั้งสามจุด
+  // persist ท่าเดียวกันได้พร้อมกัน (ดู comment เต็มที่ persistSets เดิม/lib/sessionPersistence.ts) — ต้อง
+  // เป็น instance เดียวตลอดอายุ component (เก็บ workoutId ล่าสุดต่อท่าไว้ภายใน) ไม่สร้างใหม่ทุก render
+  // (ซึ่งจะล้าง state ที่เพิ่งเรียนรู้มาทุกครั้ง ทำลายจุดประสงค์ทั้งหมดของมัน) — lazy-init ผ่าน ref ครั้งเดียว
+  const persistenceRef = useRef<ExercisePersistence | null>(null)
+  if (!persistenceRef.current) persistenceRef.current = createExercisePersistence(supabase)
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const { showToast } = useToast()
   const { data: exerciseLibrary = [] } = useExerciseLibrary()
@@ -686,75 +693,6 @@ export default function SessionPage() {
     setShowAddExercise(false)
   }
 
-  // เขียน setsLog ปัจจุบันของท่านี้ลง DB จริง (workouts + workout_sets) — เรียกทันทีทุกครั้งที่กด
-  // "เซ็ตนี้เสร็จแล้ว" ไม่ใช่รอจนกดจบท่า เพราะ state ของหน้านี้อยู่ในหน่วยความจำล้วนๆ ถ้าออกจากหน้า
-  // ระหว่างทำท่าอยู่ (เช่น สลับไปดูหน้าอื่นแล้วกลับมา) ข้อมูลที่ยังไม่ได้เขียนลง DB จะหายหมด
-  async function persistSets(
-    ex: ProgramExercise,
-    state: SessionSetState,
-    userId: string
-  ): Promise<{ workoutId: string | null; setsError: string | null }> {
-    if (state.setsLog.length === 0) return { workoutId: state.workoutId ?? null, setsError: null }
-
-    // top set = เซ็ตที่หนักที่สุด (ถ้าเท่ากันเทียบ reps) — เก็บลง workouts.reps/weight_kg
-    // เพื่อให้ยังใช้เป็นค่าเดี่ยวสำหรับ PR / ประมาณ 1RM ได้เหมือนหน้า /log
-    const topSet = state.setsLog.reduce((best, s) => {
-      if (s.weightKg > best.weightKg) return s
-      if (s.weightKg === best.weightKg && s.reps > best.reps) return s
-      return best
-    }, state.setsLog[0])
-    // total_volume_kg: รวมจาก reps x น้ำหนัก จริงทีละเซ็ต (ไม่ใช่ setsDone * ค่าเดียวเหมือนเดิม)
-    const totalVolumeKg = state.setsLog.reduce((sum, s) => sum + s.reps * s.weightKg, 0)
-    const payload = {
-      user_id: userId,
-      type: 'strength' as const,
-      performed_at: todayStr(),
-      exercise_name: ex.exercise_name,
-      muscle_group: ex.muscle_group,
-      sets: state.setsLog.length,
-      reps: topSet.reps,
-      weight_kg: topSet.weightKg,
-      rpe: state.rpe,
-      notes: ex.rationale,
-      total_volume_kg: totalVolumeKg,
-      // บั๊ก (ฟีดแบ็ก "ทำเซสชันชดเชย Day 1 Push แล้วสลับท่าเป็น Assisted Dip Machine กลางเซสชัน —
-      // พอเปิด /session ปกติของวันนี้ (Day 2 Pull) กลับเห็นท่านั้นโผล่มาเป็น ad-hoc ที่เสร็จแล้วด้วย")
-      // เดิมใช้ ex.program_day_id ซึ่งเป็น '' (sentinel ว่าง) เสมอสำหรับท่า ad-hoc/สลับ (ดู
-      // makeAdhocExercise) แปลงเป็น null แล้วตีความว่า "อิสระ ไม่ผูกแผนไหนเลย" — แต่ที่จริงท่าที่เพิ่ม/
-      // สลับกลางเซสชัน "ผูกอยู่กับเซสชันนี้" อยู่แล้ว (ไม่ว่าเซสชันนั้นจะเป็นวันปกติหรือชดเชย) ควรได้
-      // program_day_id เดียวกับแผนที่กำลังเปิดอยู่ตอนนี้ (state `day`) เหมือนท่าตามแผนทุกประการ ไม่ใช่
-      // null ลอยๆ — null ควรเหลือไว้เฉพาะ workout จาก /log ที่ไม่มีบริบทเซสชันเลยจริงๆ เท่านั้น
-      program_day_id: day?.id ?? null,
-    }
-
-    // ถ้าเคยบันทึกท่านี้ไปแล้ว (เซ็ตก่อนหน้าในท่าเดียวกัน หรือกลับมาแก้ผ่าน progress chips)
-    // ต้องอัปเดตแถวเดิมแทนการ insert ใหม่ ไม่งั้นจะได้รายการซ้ำซ้อนในประวัติ/สถิติ
-    const { data: upserted, error: wErr } = state.workoutId
-      ? await supabase.from('workouts').update(payload).eq('id', state.workoutId).select('id').single()
-      : await supabase.from('workouts').insert(payload).select('id').single()
-
-    if (wErr) throw wErr
-
-    const workoutId = (upserted as { id: string } | null)?.id ?? state.workoutId
-    if (!workoutId) return { workoutId: null, setsError: null }
-
-    // ลบเซ็ตเก่าทั้งหมดแล้วเขียนชุดใหม่ทับ — ง่ายกว่า diff ทีละเซ็ต และจำนวน/ลำดับเซ็ตอาจเปลี่ยนไปจากเดิม
-    if (state.workoutId) {
-      await supabase.from('workout_sets').delete().eq('workout_id', workoutId)
-    }
-    const setsPayload = state.setsLog.map((s, i) => ({
-      workout_id: workoutId,
-      user_id: userId,
-      set_number: i + 1,
-      reps: s.reps,
-      weight_kg: s.weightKg,
-      completed: true,
-    }))
-    const { error: setsError } = await supabase.from('workout_sets').insert(setsPayload)
-
-    return { workoutId, setsError: setsError ? setsError.message : null }
-  }
-
   // ฟีดแบ็ก "Dashboard แสดง 7/8 ทั้งๆที่ประวัติบันทึกไป 8 ท่า" — root cause: program_completions เดิม
   // ผูก FK กับ program_exercises เท่านั้น (not null) ท่า ad-hoc ("เพิ่มท่า" ระหว่างเซสชัน — ไม่มีแถว
   // program_exercises ให้ผูก) เลยข้ามการบันทึก completion ไปตรงๆ ทุกครั้ง แม้จะทำเสร็จจริง — migration 042
@@ -805,7 +743,12 @@ export default function SessionPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
-      const { workoutId, setsError } = await persistSets(current, { ...currentState, setsLog: newSetsLog }, user.id)
+      const { workoutId, setsError } = await persistenceRef.current!.persist(
+        current,
+        { ...currentState, setsLog: newSetsLog },
+        user.id,
+        day?.id ?? null
+      )
       if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
       if (setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
     } catch (err) {
@@ -841,11 +784,13 @@ export default function SessionPage() {
       }
 
       if (currentState.setsLog.length > 0) {
-        // ปกติเซ็ตทั้งหมดถูกเขียนลง DB ไปแล้วทีละเซ็ตตั้งแต่ตอนกด "เซ็ตนี้เสร็จแล้ว" (ดู persistSets
-        // ใน logSet) เรียกซ้ำอีกทีตรงนี้เพื่อความชัวร์ (idempotent) เผื่อครั้งก่อนๆ เขียนไม่สำเร็จ
+        // ปกติเซ็ตทั้งหมดถูกเขียนลง DB ไปแล้วทีละเซ็ตตั้งแต่ตอนกด "เซ็ตนี้เสร็จแล้ว" (ดู persistSets ใน
+        // lib/sessionPersistence.ts) เรียกซ้ำอีกทีตรงนี้เพื่อความชัวร์ (idempotent) เผื่อครั้งก่อนๆ เขียน
+        // ไม่สำเร็จ — ผ่าน persistenceRef เดียวกับ logSet เสมอ (P1-2) กันสองจุดนี้ persist ท่าเดียวกัน
+        // พร้อมกันแล้ว insert ซ้ำ/เขียนสลับกัน (ดู comment เต็มที่ createExercisePersistence)
         let workoutId: string | null
         try {
-          const result = await persistSets(current, currentState, user.id)
+          const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null)
           workoutId = result.workoutId
           if (result.setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
         } catch (err) {
@@ -912,7 +857,9 @@ export default function SessionPage() {
           setSwapError('กรุณาเข้าสู่ระบบใหม่')
           return
         }
-        const result = await persistSets(current, currentState, user.id)
+        // P1-2 — persistenceRef เดียวกับ logSet/logCurrentExercise เสมอ กันสามจุดนี้ persist ท่าเดียวกัน
+        // พร้อมกัน (ดู comment เต็มที่ createExercisePersistence, lib/sessionPersistence.ts)
+        const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null)
         if (result.setsError) {
           setSwapError('บันทึกท่าเดิมสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
         }
