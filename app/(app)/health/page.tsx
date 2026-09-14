@@ -1327,7 +1327,7 @@ export default function HealthPage() {
                 <button
                   type="button"
                   onClick={() => setTab('trends')}
-                  className="mt-3 w-full text-center text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
+                  className="mt-3 w-full text-center text-[12px] font-display tracked uppercase text-bg bg-accent-primary rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
                 >
                   ดูคำแนะนำเพิ่มเติม
                 </button>
@@ -1781,7 +1781,7 @@ export default function HealthPage() {
                 <p className="text-sm text-muted">ยังไม่มีข้อมูล เริ่มบันทึกครั้งแรกได้เลย</p>
                 <a
                   href="#metric-form"
-                  className="inline-block text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
+                  className="inline-block text-[12px] font-display tracked uppercase text-bg bg-accent-primary rounded-lg px-4 py-2 active:scale-[0.99] transition"
                 >
                   + บันทึกครั้งแรก
                 </a>
@@ -3428,7 +3428,7 @@ function OverviewHealthScoreHeader({
                   ) : (
                     <div className="mt-1.5">
                       <div className="h-1.5 w-28 rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full rounded-full bg-amber" style={{ width: `${g.progressPct}%` }} />
+                        <div className="h-full rounded-full bg-accent-primary" style={{ width: `${g.progressPct}%` }} />
                       </div>
                       {/* v34: ฟีดแบ็ก "PROGRESS 71% (breakdown) กับ คืบหน้า 0% (เป้าหมาย) ตรงนี้ดูขัดกัน —
                           ต้องแยกให้ชัดว่าคนละเรื่อง" — เดิม "คืบหน้า" เฉยๆ ชวนสับสนกับหมวด PROGRESS ใน
@@ -3443,7 +3443,7 @@ function OverviewHealthScoreHeader({
           ) : (
             <>
               <p className="font-mono text-sm" style={{ color: '#9DA0A8' }}>ยังไม่ได้ตั้ง</p>
-              <a href="/calendar" className="text-[12px] text-amber transition hover:text-ink">
+              <a href="/calendar" className="text-[12px] text-accent-primary transition hover:text-ink">
                 + ตั้งเป้าหมาย
               </a>
             </>
@@ -3581,7 +3581,7 @@ function GoalsCard({
     <PremiumCard className="p-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-sm tracked uppercase text-muted">เป้าหมายของคุณ</h2>
-        <a href="/calendar" className="text-[12px] text-amber underline">
+        <a href="/calendar" className="text-[12px] text-accent-primary underline">
           แก้ไขเป้าหมาย
         </a>
       </div>
@@ -3622,7 +3622,7 @@ function GoalsCard({
                     {pct !== null && pct >= 100 ? (
                       <span className="text-moss"> · ถึงเป้าหมายแล้ว</span>
                     ) : (
-                      remaining !== null && <span className="text-amber"> · เหลือ {fmt(remaining)}</span>
+                      remaining !== null && <span className="text-accent-primary"> · เหลือ {fmt(remaining)}</span>
                     )}
                   </span>
                 </div>
@@ -3634,10 +3634,10 @@ function GoalsCard({
                       style={{ left: `${Math.min(100, Math.max(0, pct))}%` }}
                     >
                       <span className="text-[12px] font-mono text-ink whitespace-nowrap">{fmt(current!)}</span>
-                      <span className="text-amber leading-none" aria-hidden="true">▲</span>
+                      <span className="text-accent-primary leading-none" aria-hidden="true">▲</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-surface2 overflow-hidden">
-                      <div className="h-full bg-amber rounded-full" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-accent-primary rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-[12px] text-muted">{fmt(start!)}</span>
@@ -3646,7 +3646,7 @@ function GoalsCard({
                   </div>
                 ) : (
                   <div className="h-2 rounded-full bg-surface2 overflow-hidden">
-                    <div className="h-full bg-amber rounded-full" style={{ width: `${pct ?? 0}%` }} />
+                    <div className="h-full bg-accent-primary rounded-full" style={{ width: `${pct ?? 0}%` }} />
                   </div>
                 )}
               </div>
@@ -3656,7 +3656,7 @@ function GoalsCard({
       )}
       <a
         href="/calendar"
-        className="mt-3 block text-center text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
+        className="mt-3 block text-center text-[12px] font-display tracked uppercase text-bg bg-accent-primary rounded-lg py-2 transition active:scale-[0.99] hover:opacity-90"
       >
         ดูเป้าหมายทั้งหมด
       </a>
@@ -3705,7 +3705,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
       <h2 className="font-display text-sm tracked uppercase text-muted mb-3">คำแนะนำสำหรับคุณ</h2>
       <div className="space-y-2">
         {highlight && (
-          <div className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-3">
+          <div className="rounded-lg border border-accent-primary/40 bg-accent-primary/10 px-3.5 py-3">
             <div className="flex items-start gap-2.5">
               <span className="w-8 h-8 shrink-0 inline-block">
                 <Image src={highlight.imageSrc} alt="" width={32} height={32} className="w-full h-full object-contain" />
@@ -3715,7 +3715,7 @@ function RecommendationsCard({ insights, latestWeightKg }: { insights: Insight[]
                 <p className="text-[12px] text-muted mt-0.5">{highlight.detail}</p>
                 <a
                   href="/program"
-                  className="inline-block mt-2 text-[12px] font-display tracked uppercase text-bg bg-amber rounded-full px-3 py-1.5 transition active:scale-[0.99] hover:opacity-90"
+                  className="inline-block mt-2 text-[12px] font-display tracked uppercase text-bg bg-accent-primary rounded-full px-3 py-1.5 transition active:scale-[0.99] hover:opacity-90"
                 >
                   ดูโปรแกรมแนะนำ
                 </a>
@@ -4844,7 +4844,7 @@ function MetricForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-lg font-display tracked uppercase py-3 text-sm bg-amber text-bg transition active:scale-[0.99] hover:opacity-90 disabled:opacity-50 disabled:active:scale-100"
+        className="w-full rounded-lg font-display tracked uppercase py-3 text-sm bg-accent-primary text-bg transition active:scale-[0.99] hover:opacity-90 disabled:opacity-50 disabled:active:scale-100"
       >
         {saving ? 'กำลังบันทึก...' : 'บันทึก'}
       </button>
@@ -4896,7 +4896,7 @@ function BmrEstimateCard({ profile, weightKg }: { profile: Profile | null; weigh
         <select
           value={activity}
           onChange={(e) => setActivity(e.target.value as ActivityLevel)}
-          className="w-full bg-surface2 text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-amber"
+          className="w-full bg-surface2 text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-accent-primary"
         >
           {(Object.keys(ACTIVITY_MULTIPLIERS) as ActivityLevel[]).map((level) => (
             <option key={level} value={level}>
