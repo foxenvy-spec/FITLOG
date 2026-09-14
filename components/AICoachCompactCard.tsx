@@ -291,7 +291,10 @@ export default function AICoachCompactCard({
   // recoveryPct มาจาก TodaysRecommendation ตรงๆ (Recommendation Identity) ไม่คำนวณ computeRecoveryPct
   // ซ้ำใน component นี้อีกแล้ว — ตัวเลขเดียวกับที่ Insight ใช้เป๊ะ ไม่มีโอกาสเพี้ยนจาก recoveryDates ที่อาจ
   // ไม่ sync กับตอนที่ recommendation engine คำนวณ pct ไว้
-  const displayPct = resolved.recoveryPct ?? 0
+  // P1-1 — resolved.recoveryPct null = ไม่เคยฝึกกล้ามเนื้อนี้เลย (ไม่ใช่ "ฟื้นตัว 0%" ซึ่งคือค่าตรงข้ามเลย
+  // ทั้งความหมายและสี) เดิม ?? 0 ทำให้ readinessVerdict(0) ตีความว่า "ควรพักหรือฝึกเบามากๆ" สีแดง ทั้งที่จริง
+  // คือไม่มี fatigue เลย — เก็บ displayPct ไว้เป็น number | null แล้ว branch แยกตอน render แทน
+  const displayPct = resolved.recoveryPct
   // ฟีดแบ็ก (design review, P2) "Mint Coach ควรเด่นขึ้น แต่ CTA ต้องไม่มี glow (สงวนไว้ให้ Today's
   // Workout hero เป็น glow-CTA เดียวของหน้าเท่านั้น)" — เพิ่มความเด่นด้วย contrast/น้ำหนักตัวอักษรแทน:
   // border alpha ของปุ่ม secondary เดิม (40, ~25%) -> 66 (~40%) + font-semibold เฉพาะปุ่มในการ์ดนี้
@@ -570,6 +573,13 @@ export default function AICoachCompactCard({
                   {missedPlanCount === 1 && missedPlanTitle
                     ? `หากสะดวก แนะนำให้ชดเชย ${missedPlanTitle} ก่อน`
                     : `มีแผนที่พลาดสะสม ${missedPlanCount} วัน — เลือกทำเมื่อสะดวก`}
+                </p>
+              ) : displayPct === null ? (
+                // P1-1 — ไม่เคยฝึกกล้ามเนื้อนี้เลย ห้ามส่งเข้า recoveryTier/readinessVerdict (ไม่มีนิยาม tier
+                // สำหรับ "ไม่มีข้อมูล")
+                <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
+                  🆕 ยังไม่เคยฝึกกล้ามเนื้อนี้ พร้อมเริ่มได้เลย ·{' '}
+                  {isRecommendationForToday ? 'Today' : 'Next session'} • {relatedGroupsText}
                 </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>

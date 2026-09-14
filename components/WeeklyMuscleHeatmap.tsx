@@ -46,7 +46,8 @@ interface GroupStat {
   volumeKg: number
   sessions: number
   avgRpe: number | null
-  recoveryPct: number
+  // P1-1 — null = ไม่เคยฝึกกลุ่มนี้เลย (ไม่ใช่ recovery percentage) ดู computeRecoveryPct
+  recoveryPct: number | null
   // Priority 5 (Training Balance อธิบายได้) — เดิมการ์ดนี้บอกแค่ "กล้ามเนื้อเด่น/ด้อย" จาก % ส่วนแบ่งเซ็ต
   // (top 3/bottom 2) ซึ่งเป็นค่าสัมพัทธ์ล้วนๆ ไม่บอกว่าเทียบกับเป้าหมายจริงของกลุ่มนั้นแล้วเกิน/ขาดแค่ไหน —
   // เพิ่มสถานะเทียบเป้าหมายรายสัปดาห์ (เอนจินเดียวกับการ์ด WeeklyVolume: volumeStatus) เข้ามาในแถวขยาย
@@ -585,9 +586,15 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
                               RPE เฉลี่ย <span className="font-mono text-ink">{s.avgRpe}</span>
                             </span>
                           )}
-                          <span style={{ color: recoveryTier(s.recoveryPct).color }}>
-                            Recovery <span className="font-mono">{s.recoveryPct}%</span>
-                          </span>
+                          {/* P1-1 — s.recoveryPct null (ไม่เคยฝึกกลุ่มนี้เลย) ห้ามส่งเข้า recoveryTier
+                              (ไม่มีนิยาม tier สำหรับ "ไม่มีข้อมูล") หรือโชว์ "null%" */}
+                          {s.recoveryPct === null ? (
+                            <span className="text-muted">— ยังไม่เคยฝึก</span>
+                          ) : (
+                            <span style={{ color: recoveryTier(s.recoveryPct).color }}>
+                              Recovery <span className="font-mono">{s.recoveryPct}%</span>
+                            </span>
+                          )}
                         </div>
                         {/* Priority 5 (Training Balance อธิบายได้) — เดิม "กล้ามเนื้อเด่น/ด้อย" ท้ายการ์ด
                             บอกแค่ % ส่วนแบ่งเซ็ตของ top 3/bottom 2 กลุ่ม ไม่รู้ว่าเทียบกับเป้าหมายรายสัปดาห์

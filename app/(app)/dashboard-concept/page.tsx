@@ -52,7 +52,7 @@ export default function DashboardConceptPreviewPage() {
   }
 
   const trainedRecoveryMuscles = RECOVERY_MUSCLES.filter((mg) => data.recoveryDates[mg])
-  const recoveryPctMap: Record<string, number> = {}
+  const recoveryPctMap: Record<string, number | null> = {}
   RECOVERY_MUSCLES.forEach((mg) => {
     recoveryPctMap[mg] = computeRecoveryPct(data.recoveryDates[mg] ?? null, mg)
   })
@@ -60,9 +60,12 @@ export default function DashboardConceptPreviewPage() {
   // Recovery "0%/Rest" ปลอมๆ ตอนไม่มีข้อมูลจริง) ขัดกับ pattern "ไม่ใช้ข้อมูลสมมติ" — เปลี่ยนเป็น null
   // แล้วปล่อยให้ HeroGaugeConcept ไม่โชว์วง Recovery เลยแทน (recoveryPct/recoveryLabel เป็น optional
   // อยู่แล้ว ดู components/dashboard/HeroGaugeConcept.tsx)
+  // trainedRecoveryMuscles กรองมาแล้วว่ามี data.recoveryDates[mg] จริง — recoveryPctMap[mg] จึงไม่มีทางเป็น
+  // null ในกลุ่มนี้ (P1-1: null เกิดเฉพาะตอนไม่เคยฝึกเลย) แต่ type ยัง number|null อยู่ ใช้ ?? 0 ที่นี่เป็นแค่
+  // type narrowing ไม่ใช่ fallback ที่จะถูกใช้จริง
   const recoveryPct =
     trainedRecoveryMuscles.length > 0
-      ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / trainedRecoveryMuscles.length)
+      ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + (recoveryPctMap[mg] ?? 0), 0) / trainedRecoveryMuscles.length)
       : null
 
   const fitnessScore = computeFitnessScore([

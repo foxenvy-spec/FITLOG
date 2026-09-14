@@ -302,8 +302,11 @@ describe('estimateCaloriesToday', () => {
 })
 
 describe('computeRecoveryPct (Recovery Logic)', () => {
-  it('is 100% (fully recovered) when a muscle has never been trained', () => {
-    expect(computeRecoveryPct(null, 'อก')).toBe(100)
+  // P1-1 (6A audit — "Never-trained → fabricated 100%") — never-trained is a distinct "no data" state,
+  // not a recovery percentage. It used to return 100 (indistinguishable from "just finished the recovery
+  // window"), which fed straight into suggestMuscleToTrain and every recovery display as if it were real.
+  it('is null (no data) when a muscle has never been trained, not 100%', () => {
+    expect(computeRecoveryPct(null, 'อก')).toBeNull()
   })
 
   it('is 0% the same day it was trained', () => {
@@ -769,6 +772,75 @@ describe('suggestMuscleToTrain', () => {
     const rec = suggestMuscleToTrain({ ขา: 50, อก: 40 }, null)
     expect(rec?.muscleGroup).toBe('ขา')
     expect(rec?.lowRecoveryCaution).toBe(true)
+  })
+
+  // P1-1 (6A audit — "Never-trained → fabricated 100%") — locked ranking contract: a never-trained muscle
+  // (pct: null) ranks above every trained muscle, including one recovered to 100%. Sign-off quote: "null
+  // ต้องไม่ถูกแปลงเป็น 100 เพื่อการ ranking."
+  describe('P1-1: never-trained muscles (pct: null)', () => {
+    it('ranks a never-trained muscle above a muscle fully recovered to 100%', () => {
+      const rec = suggestMuscleToTrain({ อก: 100, ขา: null })
+      expect(rec?.muscleGroup).toBe('ขา')
+      expect(rec?.pct).toBeNull()
+    })
+
+    it('ranks a never-trained muscle above a muscle with low recovery', () => {
+      const rec = suggestMuscleToTrain({ อก: 20, ขา: null })
+      expect(rec?.muscleGroup).toBe('ขา')
+    })
+
+    it('recommends a never-trained muscle when it is under its weekly target (bypasses the tier check entirely)', () => {
+      const rec = suggestMuscleToTrain({ ขา: 100, อก: null }, null, { ขา: 29, อก: 0 }, { ขา: 12, อก: 10 })
+      expect(rec?.muscleGroup).toBe('อก')
+      expect(rec?.pct).toBeNull()
+    })
+
+    it('respects existing weekly-target gating for a never-trained muscle (no target set at all -> not eligible for the ready-and-under-target path, falls through to rank-based fallback where it still wins)', () => {
+      const rec = suggestMuscleToTrain({ ขา: 60, อก: null }, null, { ขา: 5 }, { ขา: 12, อก: 0 })
+      // อก has no target (0) so isn't "under target" — falls to the final fallback, where null still
+      // outranks ขา's 60
+      expect(rec?.muscleGroup).toBe('อก')
+    })
+
+    it('a scheduled, never-trained muscle is recommended with pct null and no caution', () => {
+      const rec = suggestMuscleToTrain({ ขา: null, อก: 80 }, 'ขา')
+      expect(rec?.muscleGroup).toBe('ขา')
+      expect(rec?.pct).toBeNull()
+      expect(rec?.lowRecoveryCaution).toBeUndefined()
+    })
+
+    it('schedule-override still works when the alternative is never-trained', () => {
+      // ขาเกินเป้า Volume แล้ว อกไม่เคยฝึกเลย (null) และยังไม่ถึงเป้า — ควรสลับไปแนะนำอกแทน
+      const rec = suggestMuscleToTrain({ ขา: 100, อก: null }, 'ขา', { ขา: 29, อก: 0 }, { ขา: 12, อก: 10 })
+      expect(rec?.muscleGroup).toBe('อก')
+      expect(rec?.scheduleOverriddenFrom).toBe('ขา')
+    })
+
+    it('never flags lowRecoveryCaution for a never-trained recommendation, in any code path', () => {
+      expect(suggestMuscleToTrain({ ขา: null })?.lowRecoveryCaution).toBeUndefined()
+      expect(suggestMuscleToTrain({ ขา: null, อก: 100 })?.lowRecoveryCaution).toBeUndefined()
+      expect(suggestMuscleToTrain({ ขา: null }, 'ขา')?.lowRecoveryCaution).toBeUndefined()
+    })
+
+    it('is deterministic across multiple never-trained muscles: ties resolve to stable insertion order, not randomly', () => {
+      const map = { อก: null, ขา: null, หลัง: 50 }
+      const first = suggestMuscleToTrain(map)
+      const second = suggestMuscleToTrain(map)
+      const third = suggestMuscleToTrain(map)
+      expect(first?.muscleGroup).toBe('อก')
+      expect(second?.muscleGroup).toBe('อก')
+      expect(third?.muscleGroup).toBe('อก')
+    })
+
+    it('is deterministic across multiple never-trained ready-and-under-target candidates too', () => {
+      const recoveryMap = { อก: null, ขา: null, หลัง: 90 }
+      const sets = { อก: 0, ขา: 0, หลัง: 0 }
+      const targets = { อก: 10, ขา: 10, หลัง: 10 }
+      const first = suggestMuscleToTrain(recoveryMap, null, sets, targets)
+      const second = suggestMuscleToTrain(recoveryMap, null, sets, targets)
+      expect(first?.muscleGroup).toBe(second?.muscleGroup)
+      expect(first?.muscleGroup).toBe('อก')
+    })
   })
 })
 

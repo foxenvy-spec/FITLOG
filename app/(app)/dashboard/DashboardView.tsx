@@ -413,7 +413,7 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     return null
   })()
 
-  const recoveryPctForSummary: Record<string, number> = {}
+  const recoveryPctForSummary: Record<string, number | null> = {}
   RECOVERY_MUSCLES.forEach((mg) => {
     recoveryPctForSummary[mg] = computeRecoveryPct(recoveryDates[mg] ?? null, mg)
   })
@@ -1075,6 +1075,9 @@ export default function DashboardPage() {
   const muscleIntensityFor = (muscleGroup: string | null): { label: 'Normal' | 'Light' | 'Very Light'; color: string } | null => {
     if (!muscleGroup || !data) return null
     const pct = computeRecoveryPct(data.recoveryDates[muscleGroup] ?? null, muscleGroup)
+    // P1-1 — pct null (ไม่เคยฝึกกลุ่มนี้เลย) ไม่มี fatigue ให้ต้องลดความหนักเลย ถือเป็น Normal เหมือนกลุ่มที่
+    // ฟื้นตัวเต็มที่แล้ว — ไม่ส่ง null เข้า recoveryTier (ไม่มีนิยาม tier สำหรับ "ไม่มีข้อมูล")
+    if (pct === null) return { label: 'Normal', color: recoveryTier(100).color }
     const tier = recoveryTier(pct)
     const label = tier.labelEn === 'Rest' ? 'Very Light' : tier.labelEn === 'Recovering' ? 'Light' : 'Normal'
     return { label, color: tier.color }
@@ -1131,15 +1134,17 @@ export default function DashboardPage() {
   // 20% / Sleep 20% (ไม่มีข้อมูลเสมอ กระจายน้ำหนักให้ปัจจัยอื่น) / Recovery 15% / Weekly Goal 10% /
   // Activity วันนี้ 5%) — เดสก์ท็อปไม่เคยมี Fitness Score เลยมาก่อนรอบนี้
   const trainedRecoveryMuscles = data ? RECOVERY_MUSCLES.filter((mg) => data.recoveryDates[mg]) : []
-  const recoveryPctMap: Record<string, number> = {}
+  const recoveryPctMap: Record<string, number | null> = {}
   if (data) {
     RECOVERY_MUSCLES.forEach((mg) => {
       recoveryPctMap[mg] = computeRecoveryPct(data.recoveryDates[mg] ?? null, mg)
     })
   }
+  // trainedRecoveryMuscles กรองมาแล้วว่ามี data.recoveryDates[mg] จริง — recoveryPctMap[mg] จึงไม่มีทางเป็น
+  // null ในกลุ่มนี้ (P1-1: null เกิดเฉพาะตอนไม่เคยฝึกเลย) — ?? 0 ที่นี่เป็นแค่ type narrowing ไม่ใช่ fallback จริง
   const fitnessScoreRecoveryPct =
     trainedRecoveryMuscles.length > 0
-      ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) / trainedRecoveryMuscles.length)
+      ? Math.round(trainedRecoveryMuscles.reduce((sum, mg) => sum + (recoveryPctMap[mg] ?? 0), 0) / trainedRecoveryMuscles.length)
       : null
   const fitnessScore = useMemo(() => {
     if (!data) return null
@@ -2012,14 +2017,22 @@ export default function DashboardPage() {
                   (ตัวหนา + tracking กว้างขึ้น) ให้สแกนอ่าน 3 บรรทัดแยกจากกันได้ง่ายกว่าเดิมที่ชิดกันเป็นก้อน */}
               {!isEmptyWorkoutState && data.isRecommendationForToday && data.todaysRecommendation && (() => {
                 const rec = data.todaysRecommendation
-                const tier = recoveryTier(rec.pct)
+                // P1-1 — rec.pct null (ไม่เคยฝึกกล้ามเนื้อนี้เลย) ต้องมี bullet ของตัวเอง ห้ามส่งเข้า
+                // recoveryTier/recoveryVerdictEmoji (ไม่มีนิยาม tier สำหรับ "ไม่มีข้อมูล") หรือโชว์ "null%"
+                const tier = rec.pct === null ? null : recoveryTier(rec.pct)
                 const daysSince = daysSinceLastTrained(data.recoveryDates[rec.muscleGroup] ?? null)
                 return (
                   <div className="mt-2.5 rounded-lg border border-white/5 bg-black/10 px-2.5 py-2 space-y-1.5">
                     <p className="text-[12px] font-bold tracked-lg uppercase text-muted">ทำไมวันนี้?</p>
-                    <p className="text-[12px] leading-snug" style={{ color: tier.color }}>
-                      {recoveryVerdictEmoji(rec.pct)} {rec.muscleGroup} ฟื้นตัวแล้ว {rec.pct}%
-                    </p>
+                    {rec.pct === null ? (
+                      <p className="text-[12px] leading-snug text-muted">
+                        🆕 ยังไม่เคยฝึก{rec.muscleGroup} พร้อมเริ่มได้เลย
+                      </p>
+                    ) : (
+                      <p className="text-[12px] leading-snug" style={{ color: tier!.color }}>
+                        {recoveryVerdictEmoji(rec.pct)} {rec.muscleGroup} ฟื้นตัวแล้ว {rec.pct}%
+                      </p>
+                    )}
                     {rec.setsTarget > 0 && (
                       <p className="text-[12px] leading-snug" style={{ color: rec.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}>
                         {rec.setsRemaining > 0 ? '🟢' : '🟡'} เป้าหมายสัปดาห์นี้ {rec.setsCurrent}/{rec.setsTarget} เซ็ต
@@ -2350,7 +2363,9 @@ export default function DashboardPage() {
                   {recommendation &&
                     (() => {
                       const recColor = COLORS.cyan
-                      const isFullyReady = recommendation.pct >= FULLY_RECOVERED_PCT
+                      // P1-1 contract — pct null (ไม่เคยฝึกกล้ามเนื้อนี้เลย) ไม่ถือเป็น isFullyReady ที่นี่
+                      // โดยตั้งใจ (explicit แทนที่จะพึ่ง null >= 90 ที่ JS แปลง null เป็น 0 แล้วบังเอิญได้ false)
+                      const isFullyReady = recommendation.pct !== null && recommendation.pct >= FULLY_RECOVERED_PCT
                       if (!recommendation.scheduleOverriddenFrom && !isFullyReady) return null
                       return (
                         <div
@@ -2395,10 +2410,12 @@ export default function DashboardPage() {
                       // เท่านั้น) ทำให้สองจุดคำนวณ "Recovery" คนละสูตรจากข้อมูลชุดเดียวกัน — เปลี่ยนวงแหวนนี้
                       // ให้ใช้ trainedRecoveryMuscles สูตรเดียวกับ header เป๊ะ ให้ค่าตรงกันทั้งหน้าเสมอ
                       // (ไม่มีข้อมูลเทรนเลยสักกลุ่ม = fallback 100% เหมือน computeRecoveryPct(null, mg) เดิม)
+                      // trainedRecoveryMuscles กรองมาแล้วว่ามี data.recoveryDates[mg] จริง — ?? 0 เป็นแค่ type
+                      // narrowing ที่นี่ (P1-1: null เกิดเฉพาะตอนไม่เคยฝึกเลย ซึ่งถูกกรองออกไปแล้ว)
                       const overallRecoveryPct =
                         trainedRecoveryMuscles.length > 0
                           ? Math.round(
-                              trainedRecoveryMuscles.reduce((sum, mg) => sum + recoveryPctMap[mg], 0) /
+                              trainedRecoveryMuscles.reduce((sum, mg) => sum + (recoveryPctMap[mg] ?? 0), 0) /
                                 trainedRecoveryMuscles.length
                             )
                           : 100
@@ -2485,9 +2502,15 @@ export default function DashboardPage() {
                       // (ฟื้นตัวน้อยสุด = เร่งด่วนสุดที่ควรรู้) แล้วตัดเหลือ 3 กลุ่มแรกเป็นค่าเริ่มต้น ปุ่ม
                       // "แสดงทั้งหมด" เดิมด้านล่างยังกดดูครบ 7 กลุ่มได้เหมือนเดิม ไม่เสียข้อมูล แค่ไม่บังคับ
                       // เห็นทุกกลุ่มตั้งแต่แรก (การ์ดทั้งใบเป็นลิงก์ไป /recovery อยู่แล้วด้วยสำหรับรายละเอียดเต็ม)
-                      const notReadyMuscles = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT)
+                      // P1-1 — pct null (ไม่เคยฝึกกลุ่มนี้เลย) ไม่ใช่ "ยังไม่พร้อม" ตรงข้ามเลย (ไม่มี fatigue
+                      // = พร้อมที่สุด ตาม P1-1 contract) กรองออกจาก notReadyMuscles ก่อนเช็ค < FULLY_RECOVERED_PCT
+                      // (เทียบ null กับตัวเลขด้วย < จะถูก JS แปลง null เป็น 0 เงียบๆ ทำให้กลุ่มที่ไม่เคยฝึกเลย
+                      // ถูกจัดเป็น "ยังไม่พร้อม" ผิดความหมาย)
+                      const notReadyMuscles = RECOVERY_MUSCLES.filter(
+                        (mg) => recoveryPctMap[mg] !== null && (recoveryPctMap[mg] as number) < FULLY_RECOVERED_PCT
+                      )
                         .slice()
-                        .sort((a, b) => recoveryPctMap[a] - recoveryPctMap[b])
+                        .sort((a, b) => (recoveryPctMap[a] as number) - (recoveryPctMap[b] as number))
                       const displayedMuscles = showAllRecovery ? RECOVERY_MUSCLES : notReadyMuscles.slice(0, 3)
                       if (displayedMuscles.length === 0) {
                         // ฟีดแบ็ก "Recovery 100% ไม่ควรแปลว่า 'ทุกกล้ามเนื้อพร้อมฝึก' — ผู้ใช้อาจตีความเป็น
@@ -2519,6 +2542,31 @@ export default function DashboardPage() {
                       }
                       return displayedMuscles.map((mg) => {
                       const pct = recoveryPctMap[mg]
+                      // P1-1 — pct null (ไม่เคยฝึกกลุ่มนี้เลย) แถวนี้แสดงแยกจากแถวปกติทั้งหมด ไม่ส่ง null เข้า
+                      // recoveryTier/AnimatedBarFill เป็นเปอร์เซ็นต์/tier ปลอม (เหมือน pattern เดียวกับที่แก้ที่
+                      // /recovery page — การ์ดนี้เป็น per-muscle list แบบเดียวกัน มีบั๊กเดียวกัน)
+                      if (pct === null) {
+                        const isHoveredNew = mg === hoveredRecoveryGroup
+                        return (
+                          <div
+                            key={mg}
+                            onMouseEnter={() => setHoveredRecoveryGroup(mg)}
+                            onMouseLeave={() => setHoveredRecoveryGroup(null)}
+                            className="rounded-md px-2 py-1.5 flex items-center gap-2 transition"
+                            style={{ backgroundColor: isHoveredNew ? '#1D2129' : '#171A20' }}
+                          >
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }} aria-hidden="true" />
+                            <span className="text-[12px] text-ink w-11 shrink-0 truncate">{mg}</span>
+                            <span className="flex-1 min-w-[18px] text-[12px] text-muted">ยังไม่เคยฝึก</span>
+                            <span
+                              className="shrink-0 text-[12px] font-display font-semibold tracked uppercase rounded-full px-1.5 py-0.5"
+                              style={{ backgroundColor: withAlpha(NEUTRAL.mutedIcon, '22'), color: NEUTRAL.mutedIcon }}
+                            >
+                              ใหม่
+                            </span>
+                          </div>
+                        )
+                      }
                       // ฟีดแบ็ก (P1.4, Information Hierarchy review) "Progress bar ไม่ต้องใช้สีสดทุกแถว
                       // ใช้ Rest -> muted, Recovering -> accent, Ready -> green" — เดิม color มาจาก
                       // recoveryStatusColor(pct) ตรงๆ (4 เฉดเต็มจาก RECOVERY_TIERS: Excellent/Good/
@@ -2620,7 +2668,10 @@ export default function DashboardPage() {
                       หรือกลุ่มที่ฟื้นตัวเต็มที่แล้ว) กันปุ่มลอยอยู่เฉยๆ ตอนทุกกลุ่มพร้อมหมดแล้ว (ข้อความ
                       "ฟื้นตัวดีทุกกลุ่มกล้ามเนื้อ ✅" ด้านบนสื่อสารครบอยู่แล้ว ไม่ต้องมีปุ่มขยายเพิ่ม) */}
                   {(() => {
-                    const notReadyCount = RECOVERY_MUSCLES.filter((mg) => recoveryPctMap[mg] < FULLY_RECOVERED_PCT).length
+                    // P1-1 — pct null (ไม่เคยฝึกเลย) ไม่นับเป็น "ยังไม่พร้อม" เหมือนกับ notReadyMuscles ด้านบน
+                    const notReadyCount = RECOVERY_MUSCLES.filter(
+                      (mg) => recoveryPctMap[mg] !== null && (recoveryPctMap[mg] as number) < FULLY_RECOVERED_PCT
+                    ).length
                     if (notReadyCount === 0) return null
                     return (
                       <button

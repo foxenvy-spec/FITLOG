@@ -78,7 +78,7 @@ interface CoachData {
   // ฟีดแบ็ก "AI Coach ควรกลายเป็น Decision Engine ที่มีเหตุผล ไม่ใช่แค่ Widget" — recovery % ของกลุ่ม
   // กล้ามเนื้อที่เกี่ยวข้องกับ muscleRecommendation ทั้งหมด (ไม่ใช่แค่ตัวหลักตัวเดียว) ใช้ describeMuscleFocus
   // (ตารางเดียวกับที่ Dashboard/TodaysFocusCard ใช้อยู่แล้ว) render เป็น bullet "🟢 อก ฟื้นตัวแล้ว 100%"
-  reasoningGroups: { muscleGroup: string; pct: number }[]
+  reasoningGroups: { muscleGroup: string; pct: number | null }[]
 }
 
 function topExerciseNames(rows: { exercise_name: string | null }[], limit: number): string[] {
@@ -148,7 +148,7 @@ export default function CoachPage() {
         if (!w.muscle_group) return
         if (!lastTrainedByMuscle[w.muscle_group]) lastTrainedByMuscle[w.muscle_group] = w.performed_at
       })
-      const recoveryPctMap: Record<string, number> = {}
+      const recoveryPctMap: Record<string, number | null> = {}
       MUSCLE_GROUPS.forEach((mg) => {
         recoveryPctMap[mg] = computeRecoveryPct(lastTrainedByMuscle[mg] ?? null, mg)
       })
@@ -275,10 +275,14 @@ export default function CoachPage() {
 
       // เหตุผลเบื้องหลังคำแนะนำ — recovery % ของกลุ่มกล้ามเนื้อที่เกี่ยวข้องทั้งหมด (ไม่ใช่แค่ muscleGroup
       // หลักตัวเดียว) ใช้ describeMuscleFocus ตัวเดียวกับ TodaysFocusCard/AICoachCompactCard
+      // P1-1 — recoveryPctMap[mg] ?? 100 เดิมตั้งใจ fallback ตอนไม่มีคีย์นี้เลย แต่ตอนนี้ recoveryPctMap[mg]
+      // เป็น null ได้จริงเพื่อสื่อ "ไม่เคยฝึกกลุ่มนี้" (ไม่ใช่ "ไม่มีคีย์") — ?? 100 แบบเดิมจะกลืน null กลับ
+      // เป็นสถิติปลอมอีกครั้ง เปลี่ยนเป็น ?? null ให้ "ไม่มีคีย์เลย" ตกไปที่ null (ไม่มีข้อมูล) เหมือนกัน
+      // แทนที่จะสมมติ 100
       const reasoningGroups = recommendation
         ? describeMuscleFocus(recommendation.muscleGroup as MuscleGroup).relatedGroups.map((mg) => ({
             muscleGroup: mg,
-            pct: recoveryPctMap[mg] ?? 100,
+            pct: recoveryPctMap[mg] ?? null,
           }))
         : []
 
@@ -500,6 +504,15 @@ export default function CoachPage() {
                   <div className="mt-2 space-y-0.5">
                     <p className="text-[12px] tracked uppercase text-muted">เหตุผล</p>
                     {data.reasoningGroups.map((g) => {
+                      // P1-1 — g.pct null = ไม่เคยฝึกกลุ่มนี้เลย ห้ามส่งเข้า recoveryTier/recoveryVerdictEmoji
+                      // (ไม่มีนิยาม tier สำหรับ "ไม่มีข้อมูล") และห้ามโชว์ "ฟื้นตัวแล้ว null%"
+                      if (g.pct === null) {
+                        return (
+                          <p key={g.muscleGroup} className="text-[12px] text-muted">
+                            🆕 ยังไม่เคยฝึก{g.muscleGroup} พร้อมเริ่มได้เลย
+                          </p>
+                        )
+                      }
                       const tier = recoveryTier(g.pct)
                       return (
                         <p key={g.muscleGroup} className="text-[12px]" style={{ color: tier.color }}>

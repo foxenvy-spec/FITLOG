@@ -54,7 +54,12 @@ export function computeSessionMuscleRecovery(
     }
 
     const lastDate = priorLastTrainedDate[mg] ?? null
-    const pct = computeRecoveryPct(lastDate, mg)
+    // P1-1 — computeRecoveryPct เปลี่ยนมาคืน null สำหรับ "ไม่เคยฝึกกลุ่มนี้เลย" (เดิมคืน 100) แต่ไฟล์นี้
+    // ออกแบบมาให้ hasHistory (ด้านล่าง) เป็นตัวบอก caller อยู่แล้วว่า pct นี้เชื่อถือได้จริงไหม (ไม่ใช่แค่
+    // ค่าตั้งต้นของ computeRecoveryPct(null, ...)) — คง sentinel 100 ไว้ที่นี่เหมือนพฤติกรรมเดิมทุกประการ
+    // (ไม่แตะ aggregate/session summary ในเฟสนี้ตามที่ตกลงไว้) แทนที่จะเปลี่ยน MuscleRecoveryScore.pct เป็น
+    // nullable ซึ่งจะกระทบ ProgressRing/MuscleReadinessRow ที่ยังไม่ได้อยู่ใน scope ของ P1-1 รอบนี้
+    const pct = computeRecoveryPct(lastDate, mg) ?? 100
     return { muscleGroup: mg, pct, tier: tierForPct(pct), trainedToday: false, hasHistory: lastDate !== null }
   })
 

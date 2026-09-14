@@ -34,12 +34,13 @@ import Skeleton from '@/components/Skeleton'
 import AnimatedBarFill from '@/components/AnimatedBarFill'
 import ErrorState from '@/components/ErrorState'
 import PremiumCard from '@/components/ui/PremiumCard'
-import { withAlpha } from '@/lib/theme'
+import { withAlpha, NEUTRAL } from '@/lib/theme'
 
 interface MuscleRow {
   mg: MuscleGroup
   lastTrained: string | null
-  pct: number
+  // P1-1 — null = ไม่เคยฝึกกลุ่มนี้เลย (ไม่ใช่ recovery percentage) ดู computeRecoveryPct
+  pct: number | null
 }
 
 
@@ -190,10 +191,13 @@ export default function RecoveryPage() {
         if (!lastTrainedByMuscle[r.muscle_group]) lastTrainedByMuscle[r.muscle_group] = r.performed_at
       })
 
+      // P1-1 — เรียงจากฟื้นตัวน้อยสุด (เร่งด่วนสุด) ไปมากสุด — pct null (ไม่เคยฝึกเลย) จัดเป็น "พร้อมที่สุด"
+      // (ไม่มี fatigue เลย ตาม P1-1 contract) จึงอยู่ท้ายลิสต์เสมอ เหมือนกลุ่มที่ฟื้นตัวเต็ม 100% หรือมากกว่า
+      const rankPct = (pct: number | null) => (pct === null ? Infinity : pct)
       const built: MuscleRow[] = MUSCLE_GROUPS.map((mg) => {
         const lastTrained = lastTrainedByMuscle[mg] ?? null
         return { mg, lastTrained, pct: computeRecoveryPct(lastTrained, mg) }
-      }).sort((a, b) => a.pct - b.pct)
+      }).sort((a, b) => rankPct(a.pct) - rankPct(b.pct))
 
       setRows(built)
     } catch (err) {
@@ -272,7 +276,7 @@ export default function RecoveryPage() {
       </div>
 
       {!loading && !error && rows.length > 0 && (() => {
-        const recoveryPctMap: Record<string, number> = {}
+        const recoveryPctMap: Record<string, number | null> = {}
         rows.forEach((r) => {
           recoveryPctMap[r.mg] = r.pct
         })
@@ -284,7 +288,9 @@ export default function RecoveryPage() {
         // scheduleOverriddenFrom ก็ยังนับว่า "เรื่องของวันนี้" เหมือนกัน (ดู comment เต็มที่ DashboardView.tsx)
         const isRecommendationForToday =
           isTodayScheduled && (recommendation.muscleGroup === scheduledMuscle || recommendation.scheduleOverriddenFrom === scheduledMuscle)
-        const recColor = recoveryStatusColor(recommendation.pct)
+        // P1-1 — pct null (ไม่เคยฝึกกล้ามเนื้อนี้เลย) ไม่ส่งเข้า recoveryStatusColor (ไม่มีนิยาม tier สำหรับ
+        // "ไม่มีข้อมูล") ใช้สีกลางแทนสี tier แทน
+        const recColor = recommendation.pct === null ? NEUTRAL.mutedIcon : recoveryStatusColor(recommendation.pct)
         return (
           <div
             className="flex items-center gap-2.5 rounded-lg px-4 py-3"
@@ -297,7 +303,11 @@ export default function RecoveryPage() {
                 <span className="font-display tracked uppercase" style={{ color: recColor }}>
                   {recommendation.muscleGroup}
                 </span>{' '}
-                <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
+                {recommendation.pct === null ? (
+                  <span className="text-muted">— ยังไม่เคยฝึกกล้ามเนื้อนี้ พร้อมเริ่มได้เลย</span>
+                ) : (
+                  <span className="text-muted">— ฟื้นตัวแล้ว {recommendation.pct}%</span>
+                )}
               </p>
               {/* ฟีดแบ็ก "Legs ฟื้นตัวแล้ว ≠ Legs ควรฝึก" — บอกเหตุผลตรงๆ เหมือนที่ Dashboard ทำ แทนที่จะ
                   แนะนำเงียบๆ โดยไม่อธิบายว่าทำไมไม่ตรงตาราง
@@ -337,8 +347,11 @@ export default function RecoveryPage() {
       ) : (
         <div className="space-y-3">
           {rows.map(({ mg, lastTrained, pct }) => {
-            const status = statusLabel(pct)
-            const color = recoveryStatusColor(pct)
+            // P1-1 — pct null (ไม่เคยฝึกกลุ่มนี้เลย) ห้ามส่งเข้า statusLabel/recoveryStatusColor (ไม่มีนิยาม
+            // tier สำหรับ "ไม่มีข้อมูล") — เดิมการ์ดนี้ขัดกันเอง (แสดง "100% ดีเยี่ยม" สีเขียว + แถบเต็ม พร้อม
+            // "ยังไม่มีประวัติ" อยู่บรรทัดถัดมาในการ์ดเดียวกัน) แก้โดยไม่โชว์ %/สี tier/แถบเลยตอนไม่มีข้อมูลจริง
+            const status = pct === null ? null : statusLabel(pct)
+            const color = pct === null ? NEUTRAL.mutedIcon : recoveryStatusColor(pct)
             const hoursLeft = computeRecoveryReadyInHours(lastTrained, mg)
             return (
               <PremiumCard key={mg} className="px-4 py-3.5">
@@ -350,13 +363,17 @@ export default function RecoveryPage() {
                     />
                     <p className="font-display text-base tracked uppercase text-ink truncate">{mg}</p>
                   </div>
-                  <span className="text-[12px] font-mono shrink-0" style={{ color }}>
-                    {pct}%
-                  </span>
+                  {pct === null ? (
+                    <span className="text-[12px] font-mono shrink-0 text-muted">—</span>
+                  ) : (
+                    <span className="text-[12px] font-mono shrink-0" style={{ color }}>
+                      {pct}%
+                    </span>
+                  )}
                 </div>
 
                 <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
-                  <AnimatedBarFill pct={pct} color={color} />
+                  {pct !== null && <AnimatedBarFill pct={pct} color={color} />}
                 </div>
 
                 {/* ฟีดแบ็ก (จากรอบตรวจ Dashboard, "Typography") "ไม่ลดต่ำกว่า 12px สำหรับข้อความรอง" — หน้านี้
@@ -372,7 +389,7 @@ export default function RecoveryPage() {
                       'ยังไม่มีประวัติ'
                     )}
                   </p>
-                  <p className="text-[12px]" style={{ color: status.color }}>{status.text}</p>
+                  {status && <p className="text-[12px]" style={{ color: status.color }}>{status.text}</p>}
                 </div>
 
                 <p className="text-[12px] text-muted mt-1">

@@ -272,8 +272,14 @@ export const RECOVERY_WINDOW_DAYS: Record<string, number> = {
   อื่นๆ: 2,
 }
 
-export function computeRecoveryPct(lastTrainedDate: string | null, muscleGroup: string): number {
-  if (!lastTrainedDate) return 100
+// P1-1 (6A audit — "Never-trained → fabricated 100%") — null หมายถึง "ไม่มีประวัติการฝึกกลุ่มนี้เลย" ซึ่ง
+// เป็นคนละสถานะกับ "ฝึกแล้วฟื้นตัวเต็มที่ (100%)" — ก่อนหน้านี้ทั้งสองสถานะคืนค่าเป็น 100 เหมือนกัน ทำให้ UI/
+// recommendation engine แยกไม่ออก (การ์ดโชว์ "100% ดีเยี่ยม" สีเขียวเต็มบาร์ให้กล้ามเนื้อที่ไม่เคยแตะเลย,
+// suggestMuscleToTrain เทียบกล้ามเนื้อที่ไม่เคยฝึกกับที่ฝึกจริงด้วยตัวเลขเดียวกัน) — ผู้เรียกทุกจุดต้องเช็ค
+// null เองก่อนเสมอ ห้ามแปลงกลับเป็น 100/0 หรือส่งเข้า recoveryTier/recoveryStatusColor/recoveryVerdictEmoji
+// ตรงๆ (ฟังก์ชันเหล่านั้นรับแค่ number ตั้งใจ — ไม่มีนิยาม "tier" สำหรับ "ไม่มีข้อมูล")
+export function computeRecoveryPct(lastTrainedDate: string | null, muscleGroup: string): number | null {
+  if (!lastTrainedDate) return null
   const last = new Date(lastTrainedDate + 'T00:00:00')
   const today = new Date(todayStr() + 'T00:00:00')
   const daysSince = Math.round((today.getTime() - last.getTime()) / 86400000)
@@ -391,7 +397,11 @@ export function computeRecoveryReadyInHours(lastTrainedDate: string | null, musc
 // ในบรรดากลุ่มที่ recoveryPctByMuscle มีข้อมูลให้
 export interface MuscleRecommendation {
   muscleGroup: string
-  pct: number
+  // P1-1 — null = ไม่เคยฝึกกลุ่มนี้เลย (ไม่ใช่ "ฟื้นตัว 0%" หรือ "ฟื้นตัว 100%") ผู้เรียกทุกจุดต้องเช็ค null
+  // เองก่อนแสดงผล ห้ามส่งเข้า recoveryTier/recoveryStatusColor/recoveryVerdictEmoji ตรงๆ (ดู
+  // computeRecoveryPct ด้านบน) — ในการจัดอันดับของ suggestMuscleToTrain ด้านล่าง null คือลำดับสูงสุด
+  // (ไม่มี fatigue เลยเสมอ ชนะแม้กลุ่มที่ฟื้นตัวเต็ม 100% แล้ว)
+  pct: number | null
   // ถ้าไม่ null แปลว่ากลุ่มนี้ "แทนที่" กลุ่มที่ตารางกำหนดไว้จริง (ค่านี้) เพราะกลุ่มตามตาราง Volume
   // สัปดาห์นี้เกินเป้าหมายไปแล้ว (ดู comment เต็มที่ suggestMuscleToTrain) — ผู้เรียกใช้ค่านี้บอกผู้ใช้ว่า
   // "ตามตารางคือ X แต่แนะนำ Y แทนเพราะ Volume ของ X เกินเป้าแล้ว" แทนที่จะแนะนำเงียบๆ โดยไม่อธิบาย
@@ -400,14 +410,22 @@ export interface MuscleRecommendation {
   // RECOVERY_TIERS) — เกิดได้ 2 กรณี: (1) กลุ่มตามตารางยังไม่ถึงเป้า Volume เลยไม่ถูกเช็ค/แทนที่ แต่ร่างกาย
   // ยังไม่พร้อมเต็มที่ (2) ไม่มีกลุ่มไหนพร้อมฝึกจริงๆ เลยตกกลับไปแนะนำกลุ่ม recovery สูงสุดเท่าที่มี ทั้งที่ยัง
   // ต่ำกว่าเกณฑ์ — ผู้เรียกใช้สัญญาณนี้แนะนำ "ลดความหนัก/เลื่อนออกไปก่อน" แทนคำแนะนำความหนักปกติเงียบๆ
+  // (P1-1: ไม่เคยเป็น true เมื่อ pct เป็น null — กลุ่มที่ไม่เคยฝึกเลยไม่มี fatigue ให้ต้องเตือนลดความหนัก)
   lowRecoveryCaution?: boolean
 }
 
-function withRecoveryCaution(rec: { muscleGroup: string; pct: number; scheduleOverriddenFrom?: string | null }): MuscleRecommendation {
+function withRecoveryCaution(rec: { muscleGroup: string; pct: number | null; scheduleOverriddenFrom?: string | null }): MuscleRecommendation {
+  // P1-1 — pct null (ไม่เคยฝึกกลุ่มนี้เลย) ไม่มี tier ให้เช็ค และไม่มี fatigue ให้ต้องเตือนเลย
+  if (rec.pct === null) return rec
   const tier = recoveryTier(rec.pct).labelEn
   const lowRecoveryCaution = tier === 'Recovering' || tier === 'Rest'
   return lowRecoveryCaution ? { ...rec, lowRecoveryCaution } : rec
 }
+
+// P1-1 — จัดอันดับกลุ่มไม่เคยฝึก (null) ให้อยู่เหนือกลุ่มที่ฝึกแล้วทุกระดับเสมอ รวมถึงกลุ่มที่ฟื้นตัวเต็ม 100%
+// ด้วย (ล็อกไว้ใน P1-1 contract: ไม่มี fatigue เลย = พร้อมที่สุด) — ใช้ Infinity แทน null เฉพาะตอนเทียบลำดับ
+// ภายในฟังก์ชันนี้เท่านั้น (implementation detail, ไม่เคยหลุดออกไปเป็นผลลัพธ์จริงที่ไหน)
+const rankPct = (pct: number | null): number => (pct === null ? Infinity : pct)
 
 // scheduledMuscle: ถ้ามีตารางโปรแกรมประจำสัปดาห์ระบุไว้ (เช่น พฤหัส = "ขา") ให้ยึดตามตารางก่อนเป็นค่าเริ่มต้น
 // แทนที่จะเลือกจาก recovery % สูงสุดล้วนๆ — ป้องกันกรณีแนะนำสวนทางตาราง (เช่น ตารางบอกขา แต่ recovery
@@ -425,7 +443,7 @@ function withRecoveryCaution(rec: { muscleGroup: string; pct: number; scheduleOv
 // เสมอ (ไม่ใช่แค่ recovery สูงสุดเฉยๆ) กันแนะนำซ้ำกลุ่มเดิมที่ฟื้นตัวเร็ว (เช่น กลุ่มเล็ก) ทั้งที่ Volume เกินเป้า
 // ไปแล้ว ในขณะที่กลุ่มอื่นยังไม่ถึงเป้าเลย
 export function suggestMuscleToTrain(
-  recoveryPctByMuscle: Record<string, number>,
+  recoveryPctByMuscle: Record<string, number | null>,
   scheduledMuscle?: string | null,
   setsByMuscle?: Record<string, number>,
   targetsByMuscle?: Record<string, number>
@@ -439,17 +457,17 @@ export function suggestMuscleToTrain(
     return target > 0 && (setsByMuscle[mg] ?? 0) >= target
   }
 
-  const bestReadyAndUnderTarget = (): [string, number] | null => {
+  const bestReadyAndUnderTarget = (): [string, number | null] | null => {
     if (!setsByMuscle || !targetsByMuscle) return null
     const list = entries
       .filter(([mg, pct]) => {
-        const tier = recoveryTier(pct).labelEn
-        const isReady = tier === 'Good' || tier === 'Excellent'
+        // P1-1 — pct null (ไม่เคยฝึกกลุ่มนี้เลย) = พร้อมเสมอ ไม่มี tier ให้เช็ค (bypass recoveryTier)
+        const isReady = pct === null || recoveryTier(pct).labelEn === 'Good' || recoveryTier(pct).labelEn === 'Excellent'
         const target = targetsByMuscle[mg] ?? 0
         const current = setsByMuscle[mg] ?? 0
         return isReady && target > 0 && current < target
       })
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => rankPct(b[1]) - rankPct(a[1]))
     return list.length > 0 ? list[0] : null
   }
 
@@ -458,8 +476,8 @@ export function suggestMuscleToTrain(
       const alt = bestReadyAndUnderTarget()
       if (alt) {
         const [muscleGroup, pct] = alt
-        // alt มาจาก bestReadyAndUnderTarget ซึ่งกรอง tier "ดี" ขึ้นไปแล้วเสมอ — ไม่มีทาง low recovery
-        // แต่ยังห่อด้วย withRecoveryCaution เพื่อความสม่ำเสมอ (no-op ในเคสนี้จริง)
+        // alt มาจาก bestReadyAndUnderTarget ซึ่งกรอง tier "ดี" ขึ้นไปแล้วเสมอ (หรือ pct null ซึ่งไม่มี
+        // low recovery ให้เตือนอยู่แล้ว) — ยังห่อด้วย withRecoveryCaution เพื่อความสม่ำเสมอ (no-op ในเคสนี้จริง)
         return withRecoveryCaution({ muscleGroup, pct, scheduleOverriddenFrom: scheduledMuscle })
       }
     }
@@ -475,8 +493,9 @@ export function suggestMuscleToTrain(
   }
 
   // ไม่มีกลุ่มไหนพร้อมฝึกจริงๆ (ทุกกลุ่ม recovery ต่ำกว่าเกณฑ์ "ดี" หรือเกินเป้า Volume ไปหมด) — ตกกลับไป
-  // แนะนำกลุ่ม recovery สูงสุดเท่าที่มี withRecoveryCaution จะติดธงเตือนถ้า pct นี้ยังต่ำกว่าเกณฑ์อยู่ดี
-  const [muscleGroup, pct] = entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best), entries[0])
+  // แนะนำกลุ่มที่ rank สูงสุดเท่าที่มี (null ยังชนะเสมอถ้ามีอยู่ในชุดนี้ — ดู rankPct ด้านบน) withRecoveryCaution
+  // จะติดธงเตือนถ้า pct นี้ยังต่ำกว่าเกณฑ์อยู่ดี (ไม่มีทาง true ถ้า pct เป็น null)
+  const [muscleGroup, pct] = entries.reduce((best, cur) => (rankPct(cur[1]) > rankPct(best[1]) ? cur : best), entries[0])
   return withRecoveryCaution({ muscleGroup, pct })
 }
 
@@ -596,8 +615,9 @@ export function computeDashboardNotifications(params: {
   // Workout: ชื่อวันตามตารางของวันนี้ (ถ้ามี) — ไม่โชว์ถ้าฝึกวันนี้ไปแล้ว (ไม่มีอะไรให้ "ต้องทำ" แล้ว)
   scheduledWorkoutTitle: string | null
   todayCompleted: boolean
-  // Recovery: กล้ามเนื้อที่แนะนำวันนี้ — โชว์เฉพาะตอนพร้อมเต็มที่แล้วจริงๆ (>= FULLY_RECOVERED_PCT)
-  recommendation: { muscleGroup: string; pct: number } | null
+  // Recovery: กล้ามเนื้อที่แนะนำวันนี้ — โชว์เฉพาะตอนพร้อมเต็มที่แล้วจริงๆ (>= FULLY_RECOVERED_PCT) หรือ
+  // ไม่เคยฝึกกล้ามเนื้อนี้เลย (pct null, P1-1 — ไม่มี fatigue เลยจึง "พร้อม" ยิ่งกว่า >= FULLY_RECOVERED_PCT)
+  recommendation: { muscleGroup: string; pct: number | null } | null
   // Progress: เทรนด์ body fat ล่าสุด (จาก computeBodyMetricsSummary)
   bodyFatDelta: number | null
   bodyFatIsGood: boolean | null
@@ -627,7 +647,7 @@ export function computeDashboardNotifications(params: {
     })
   }
 
-  if (params.recommendation && params.recommendation.pct >= FULLY_RECOVERED_PCT) {
+  if (params.recommendation && (params.recommendation.pct === null || params.recommendation.pct >= FULLY_RECOVERED_PCT)) {
     items.push({
       id: 'notif-recovery',
       category: 'recovery',
@@ -1330,12 +1350,16 @@ export function computeGreetingContext(
   bestVolumeIncrease: VolumeIncrease | null
 ): GreetingContext {
   if (scheduledDayTitle) {
+    // P1-1 — muscleRecommendation.pct null = ไม่เคยฝึกกล้ามเนื้อนี้เลย (ไม่ใช่ "ฟื้นตัวเต็มที่") ต้องมีข้อความ
+    // ของตัวเอง ห้ามโชว์ "ฟื้นตัวแล้ว null%" หรือปนกับกรณีฟื้นตัวเต็มที่จริง
     const detail =
       muscleRecommendation === null
         ? null
-        : muscleRecommendation.pct >= FULLY_RECOVERED_PCT
-          ? `${muscleRecommendation.muscleGroup}ฟื้นตัวเต็มที่แล้ว`
-          : `${muscleRecommendation.muscleGroup}ฟื้นตัวแล้ว ${muscleRecommendation.pct}%`
+        : muscleRecommendation.pct === null
+          ? `ยังไม่เคยฝึก${muscleRecommendation.muscleGroup} พร้อมเริ่มได้เลย`
+          : muscleRecommendation.pct >= FULLY_RECOVERED_PCT
+            ? `${muscleRecommendation.muscleGroup}ฟื้นตัวเต็มที่แล้ว`
+            : `${muscleRecommendation.muscleGroup}ฟื้นตัวแล้ว ${muscleRecommendation.pct}%`
     return { headline: `พร้อมสำหรับ ${scheduledDayTitle} หรือยัง?`, detail }
   }
 
