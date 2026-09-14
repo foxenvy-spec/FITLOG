@@ -619,7 +619,7 @@ export default function StatsPage() {
   const workoutReportButton = (
     <Link
       href="/stats/report"
-      className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-line text-muted text-[12px] font-display tracked uppercase px-3 py-2 hover:text-amber hover:border-amber/50 transition"
+      className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-line text-muted text-[12px] font-display tracked uppercase px-3 py-2 hover:text-accent-primary hover:border-accent-primary/50 transition"
     >
       📄 Workout Report
     </Link>
@@ -673,7 +673,7 @@ export default function StatsPage() {
           <button
             type="button"
             onClick={() => window.print()}
-            className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-2 active:scale-[0.98] transition"
+            className="print:hidden shrink-0 flex items-center gap-1.5 rounded-full border border-accent-primary/40 text-accent-primary text-[12px] font-display tracked uppercase px-3 py-2 active:scale-[0.98] transition"
           >
             📄 Export PDF
           </button>
@@ -696,7 +696,7 @@ export default function StatsPage() {
       <button
         type="button"
         onClick={() => setMoreStatsOpen((v) => !v)}
-        className="text-[12px] font-display tracked uppercase text-amber -mt-4 self-start"
+        className="text-[12px] font-display tracked uppercase text-accent-primary -mt-4 self-start"
       >
         {moreStatsOpen ? 'ซ่อนสถิติเพิ่มเติม ↑' : 'ดูสถิติเพิ่มเติม →'}
       </button>
@@ -825,7 +825,7 @@ export default function StatsPage() {
             WeeklyCardioVolume บน Dashboard เดสก์ท็อป) ลิงก์ตรงนี้แทนการย้ำข้อมูลซ้ำในหน้านี้อีกที */}
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-sm tracked uppercase text-muted">ระยะทางคาร์ดิโอ (กม. ต่อวัน, 28 วันล่าสุด)</h2>
-          <a href="/cardio" className="text-[12px] text-amber hover:underline shrink-0">
+          <a href="/cardio" className="text-[12px] text-accent-primary hover:underline shrink-0">
             ดู Cardio Dashboard →
           </a>
         </div>
@@ -1148,13 +1148,13 @@ export default function StatsPage() {
 
       <a
         href="/history"
-        className="print:hidden block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
+        className="print:hidden block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-2"
       >
         ดูประวัติทั้งหมด →
       </a>
       <a
         href="/achievements"
-        className="print:hidden block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
+        className="print:hidden block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-2"
       >
         🏆 ดูความสำเร็จ →
       </a>

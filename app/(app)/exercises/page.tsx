@@ -222,7 +222,7 @@ function ExerciseDetail({ ex, lang }: { ex: ExerciseDef; lang: MuscleLabelLang }
 
       <a
         href={`/exercises/${encodeURIComponent(ex.name)}`}
-        className="block text-center text-xs tracked uppercase text-amber hover:underline py-2"
+        className="block text-center text-xs tracked uppercase text-accent-primary hover:underline py-2"
       >
         📊 ดูสถิติของท่านี้ (PR · 1RM · Volume) →
       </a>

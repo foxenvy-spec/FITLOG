@@ -57,7 +57,7 @@ export default function WorkoutReportPage() {
     // เป๊ะ ไม่มีหน้าไหนในแอปเพิ่ม max-width ทับอีกชั้น) ตัดออกทั้งหมด ให้ Report ใช้พื้นที่เต็มเหมือนทุกหน้า
     // อื่น ไม่เหลือพื้นที่ว่างด้านขวาเปล่าๆ บนจอกว้าง
     <div className="space-y-4">
-      <Link href="/stats" className="print:hidden text-[12px] text-muted hover:text-amber inline-flex items-center gap-1">
+      <Link href="/stats" className="print:hidden text-[12px] text-muted hover:text-accent-primary inline-flex items-center gap-1">
         ← กลับไปสถิติ
       </Link>
 
@@ -112,7 +112,7 @@ export default function WorkoutReportPage() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber/40 text-amber text-[12px] font-display tracked uppercase px-3 py-1.5 active:scale-[0.98] transition"
+              className="shrink-0 flex items-center gap-1.5 rounded-full border border-accent-primary/40 text-accent-primary text-[12px] font-display tracked uppercase px-3 py-1.5 active:scale-[0.98] transition"
             >
               📄 Export PDF
             </button>
@@ -366,7 +366,7 @@ export default function WorkoutReportPage() {
       {/* Footer — Export PDF ย้ายขึ้นไปอยู่แถว period toggle ด้านบนแล้ว เหลือแค่ลิงก์เดียวตาม layout ที่
           ล็อกไว้ — ไม่มีปุ่ม "แชร์รายงาน" เพราะ Share-as-image ยังเป็น backlog รอบหน้า ยังไม่มีของจริงให้กด */}
       <div className="print:hidden text-center">
-        <Link href="/stats" className="text-[12px] font-display tracked uppercase text-amber hover:opacity-80 transition inline-flex items-center gap-1">
+        <Link href="/stats" className="text-[12px] font-display tracked uppercase text-accent-primary hover:opacity-80 transition inline-flex items-center gap-1">
           ดูสถิติเพิ่มเติม →
         </Link>
       </div>

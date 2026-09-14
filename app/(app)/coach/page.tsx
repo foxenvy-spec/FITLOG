@@ -525,7 +525,7 @@ export default function CoachPage() {
                   <button
                     type="button"
                     onClick={handleGenerateWorkout}
-                    className="text-xs font-display tracked uppercase text-amber border border-amber/40 rounded-lg px-3 py-2 active:scale-[0.99] transition"
+                    className="text-xs font-display tracked uppercase text-accent-primary border border-accent-primary/40 rounded-lg px-3 py-2 active:scale-[0.99] transition"
                   >
                     🏋️ สร้างโปรแกรม{data.muscleRecommendation.muscleGroup}
                   </button>
@@ -549,7 +549,7 @@ export default function CoachPage() {
                                 type="button"
                                 onClick={() => handleSwapExercise(i)}
                                 title="สลับท่านี้ (เช่น ยิมไม่มีอุปกรณ์นี้)"
-                                className="text-[12px] text-muted hover:text-amber active:scale-[0.99] transition"
+                                className="text-[12px] text-muted hover:text-accent-primary active:scale-[0.99] transition"
                               >
                                 🔄
                               </button>
@@ -654,7 +654,7 @@ export default function CoachPage() {
               <PremiumCard className="px-4 py-3.5">
                 <p className="text-[12px] text-muted">
                   ยังไม่มีประวัติพอให้แนะนำ —{' '}
-                  <a href="/log" className="text-amber hover:underline">
+                  <a href="/log" className="text-accent-primary hover:underline">
                     บันทึกเซ็ตแรก
                   </a>
                 </p>
@@ -694,7 +694,7 @@ export default function CoachPage() {
             )}
           </section>
 
-          <a href="/recovery" className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2">
+          <a href="/recovery" className="block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-2">
             ดู Recovery รายกลุ่มกล้ามเนื้อแบบเต็ม →
           </a>
         </>

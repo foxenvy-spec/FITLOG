@@ -122,7 +122,7 @@ export default function ExerciseDetailPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-xs text-muted hover:text-amber transition mb-2"
+          className="text-xs text-muted hover:text-accent-primary transition mb-2"
         >
           ← กลับ
         </button>
@@ -197,7 +197,7 @@ export default function ExerciseDetailPage() {
       ) : stats && stats.totalSessions === 0 ? (
         <p className="text-sm text-muted bg-surface border border-line shadow-elevated rounded-lg px-4 py-8 text-center">
           ยังไม่มีประวัติการฝึกท่านี้ —{' '}
-          <a href="/log" className="text-amber hover:underline">
+          <a href="/log" className="text-accent-primary hover:underline">
             บันทึกเซ็ตแรก
           </a>
         </p>
@@ -306,7 +306,7 @@ export default function ExerciseDetailPage() {
 
             <a
               href={`/history?exercise=${encodeURIComponent(exerciseName)}`}
-              className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
+              className="block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-2"
             >
               ดูประวัติทั้งหมดของท่านี้ →
             </a>
