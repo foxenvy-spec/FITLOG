@@ -116,9 +116,9 @@ export default function LoginPage() {
               className="w-[clamp(110px,20vh,180px)] sm:w-[clamp(120px,18vh,260px)] h-auto select-none"
               draggable={false}
             />
-            <p className="mt-[clamp(0.2rem,0.8vh,0.3rem)] sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[12px] tracked-lg uppercase text-amber">Track &middot; Train &middot; Transform</p>
+            <p className="mt-[clamp(0.2rem,0.8vh,0.3rem)] sm:mt-[clamp(0.15rem,0.4vh,0.375rem)] text-[12px] tracked-lg uppercase text-accent-primary">Track &middot; Train &middot; Transform</p>
             <p className="mt-[clamp(0.3rem,1vh,0.4rem)] sm:mt-[clamp(0.25rem,0.6vh,0.5rem)] text-sm text-ink/90 font-body text-center">
-              Track Every Workout. <span className="text-amber">Celebrate Your Progress.</span>
+              Track Every Workout. <span className="text-accent-primary">Celebrate Your Progress.</span>
             </p>
           </div>
 
@@ -126,7 +126,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-[clamp(0.4rem,1.1vh,0.625rem)] sm:space-y-[clamp(0.4rem,1vh,0.75rem)]">
               <div className="relative">
                 <label htmlFor="login-email" className="sr-only">อีเมล</label>
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-accent-primary">
                   <MailIcon />
                 </span>
                 <input
@@ -145,7 +145,7 @@ export default function LoginPage() {
 
               <div className="relative">
                 <label htmlFor="login-password" className="sr-only">รหัสผ่าน</label>
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-amber">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-accent-primary">
                   <LockIcon />
                 </span>
                 <input
@@ -184,7 +184,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={loading}
-                    className="text-amber hover:underline disabled:opacity-50 disabled:pointer-events-none"
+                    className="text-accent-primary hover:underline disabled:opacity-50 disabled:pointer-events-none"
                   >
                     ลืมรหัสผ่าน?
                   </button>
@@ -201,7 +201,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 rounded-lg bg-amber text-bg font-display tracked uppercase py-3 sm:py-[clamp(0.5rem,1.3vh,0.75rem)] text-lg disabled:opacity-50 active:scale-[0.99] transition"
+                className="w-full mt-2 rounded-lg bg-accent-primary text-bg font-display tracked uppercase py-3 sm:py-[clamp(0.5rem,1.3vh,0.75rem)] text-lg disabled:opacity-50 active:scale-[0.99] transition"
               >
                 {loading ? 'กำลังโหลด...' : mode === 'signin' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
               </button>
@@ -220,9 +220,9 @@ export default function LoginPage() {
                 className="text-xs text-muted whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none"
               >
                 {mode === 'signin' ? (
-                  <>ยังไม่มีบัญชี? <span className="text-amber font-medium">สมัครสมาชิก</span></>
+                  <>ยังไม่มีบัญชี? <span className="text-accent-primary font-medium">สมัครสมาชิก</span></>
                 ) : (
-                  <>มีบัญชีแล้ว? <span className="text-amber font-medium">เข้าสู่ระบบ</span></>
+                  <>มีบัญชีแล้ว? <span className="text-accent-primary font-medium">เข้าสู่ระบบ</span></>
                 )}
               </button>
               <div className="flex-1 h-px bg-line" />
@@ -251,7 +251,7 @@ export default function LoginPage() {
 function Feature({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
   return (
     <div className="flex flex-col items-center gap-1.5 px-1">
-      <span className="text-amber">{icon}</span>
+      <span className="text-accent-primary">{icon}</span>
       <p className="text-xs font-display tracked uppercase text-ink">{title}</p>
       <p className="text-[12px] text-muted leading-snug">{subtitle}</p>
     </div>
@@ -271,11 +271,11 @@ function FeatureRow({
 }) {
   return (
     <div className={`flex items-center gap-4 py-[clamp(0.375rem,1.2vh,0.625rem)] ${first ? 'pt-0' : ''}`}>
-      <span className="shrink-0 w-[clamp(2.25rem,5vh,2.875rem)] h-[clamp(2.25rem,5vh,2.875rem)] rounded-xl border border-line bg-bg/60 flex items-center justify-center text-amber">
+      <span className="shrink-0 w-[clamp(2.25rem,5vh,2.875rem)] h-[clamp(2.25rem,5vh,2.875rem)] rounded-xl border border-line bg-bg/60 flex items-center justify-center text-accent-primary">
         {icon}
       </span>
       <div>
-        <p className="text-sm font-display tracked uppercase text-amber">{title}</p>
+        <p className="text-sm font-display tracked uppercase text-accent-primary">{title}</p>
         <p className="text-xs text-ink/80 leading-snug mt-0.5">{subtitle}</p>
       </div>
     </div>

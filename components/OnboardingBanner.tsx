@@ -7,7 +7,7 @@
 // เพราะมันเป็น "ผลลัพธ์หลังมีข้อมูล" ไม่ใช่จุดเริ่มต้น — โผล่ให้เจอเองทีหลังตอนมีข้อมูลพอให้แนะนำจริง
 export default function OnboardingBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div className="lg:col-span-2 rounded-lg bg-surface border border-amber/25 shadow-elevated overflow-hidden animate-hero-enter">
+    <div className="lg:col-span-2 rounded-lg bg-surface border border-accent-primary/25 shadow-elevated overflow-hidden animate-hero-enter">
       <div className="px-5 py-5 relative">
         <button
           type="button"
@@ -18,7 +18,7 @@ export default function OnboardingBanner({ onDismiss }: { onDismiss: () => void 
           ✕
         </button>
 
-        <p className="text-[12px] tracked uppercase text-amber flex items-center gap-1.5">
+        <p className="text-[12px] tracked uppercase text-accent-primary flex items-center gap-1.5">
           <span aria-hidden="true">👋</span> ยินดีต้อนรับสู่ FITLOG
         </p>
         <p className="font-display text-lg tracked uppercase text-ink mt-1.5">เริ่มยังไงดี?</p>
@@ -29,7 +29,7 @@ export default function OnboardingBanner({ onDismiss }: { onDismiss: () => void 
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
           <a
             href="/log"
-            className="flex-1 text-center rounded-lg bg-amber text-bg font-display tracked uppercase text-sm py-3 active:scale-[0.99] transition"
+            className="flex-1 text-center rounded-lg bg-accent-primary text-bg font-display tracked uppercase text-sm py-3 active:scale-[0.99] transition"
           >
             ▶ เริ่มบันทึกเลย
           </a>

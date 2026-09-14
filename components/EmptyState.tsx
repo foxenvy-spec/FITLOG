@@ -19,7 +19,7 @@ export default function EmptyState({ icon, title, message, ctaHref, ctaLabel }: 
       {ctaHref && ctaLabel && (
         <a
           href={ctaHref}
-          className="inline-block mt-5 text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2.5 active:scale-[0.99] transition"
+          className="inline-block mt-5 text-xs font-display tracked uppercase text-bg bg-accent-primary rounded-lg px-4 py-2.5 active:scale-[0.99] transition"
         >
           {ctaLabel}
         </a>
