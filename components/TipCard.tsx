@@ -23,7 +23,7 @@ export default function TipCard({ summary }: TipCardProps) {
         ✨
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-xs tracked uppercase text-amber">Tip</p>
+        <p className="font-display text-xs tracked uppercase text-accent-primary">Tip</p>
         <p className="text-xs text-muted mt-0.5 whitespace-pre-line">{summary}</p>
       </div>
       <span className="text-muted shrink-0 mt-1" aria-hidden="true">›</span>

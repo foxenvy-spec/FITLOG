@@ -199,7 +199,7 @@ export default function SidebarNav() {
         style={{ borderTop: '1px solid rgba(255,255,255,.06)' }}
       >
         <span
-          className="relative shrink-0 rounded-full flex items-center justify-center font-display text-xs tracked uppercase text-amber"
+          className="relative shrink-0 rounded-full flex items-center justify-center font-display text-xs tracked uppercase text-accent-primary"
           style={{
             width: 36,
             height: 36,
