@@ -56,15 +56,33 @@
 //               that's Phase 3C, now that the vocabulary is settled.
 //   Phase 3C  — Context-aware migration of amber/rust/steel/violet, which have confirmed dual roles
 //               (rust: danger vs. domain.cardio; steel: domain.strength vs. the shared progress-vs-
-//               target tier system in WeeklyVolume/WeeklyMuscleHeatmap/WeeklyCardioVolume; violet: ai.llm
-//               vs. PR-highlight distinctiveness in Stats) — never migrate these by color name, only by
-//               the role confirmed at each call site
+//               target tier system in WeeklyMuscleHeatmap/WeeklyCardioVolume; violet: ai.llm vs.
+//               PR-highlight distinctiveness in Stats) — never migrate these by color name, only by
+//               the role confirmed at each call site. Never guess at an ambiguous usage — STOP and
+//               report it instead of forcing 100% coverage.
+//     Batch 1 (amber)  — migrated to accent.primary / ai.ruleBased ✅ — left decorative glows, tier
+//                        systems, and two newly-found amber/moss two-state indicators (Dashboard's
+//                        weekly-set-target dot and session-volume-change text) unresolved rather than
+//                        guessed at
+//     Batch 2 (steel)  — migrated to domain.strength (Stats' Weekly Volume chart, WeeklyVolumeRecoveryCard's
+//                        sparkline, /train's plate calculator) ✅ — left the progress-tier usages, generic
+//                        decorative accents (achievements, TodayHealthStatsRow, Templates' Import button),
+//                        and Push/Pull visualization split alone
+//     Batch 3 (rust)   — migrated to domain.cardio (Stats' cardio chart, its STAT_ACCENT_HEX entry) and
+//                        semantic.danger (negative body-metric/volume deltas, warning text, error text) ✅
+//                        — left the progress-tier usages, the 1RM chart (known Phase 4 issue), Push/Pull
+//                        visualization, and two STOP+REPORT points (Stats Report's consistency dot,
+//                        HeroGaugeConcept's diffColor) alone
+//     Batch 3.1 (progressTier) — created DS.progressTier (see below) once steel+rust both confirmed
+//                        participating in the exact same 5-value tier map, and migrated only the two
+//                        components proven to share it verbatim
+//     Batch 4 (violet) — next: ai.llm vs. PR-highlight distinctiveness, the last Phase 3C batch
 //   Phase 4   — Known inconsistencies, fixed only after Phase 3 is otherwise done (Stats/Report's MINT
 //               Coach card using violet despite being rule-based; Stats' 1RM Trend chart using rust
 //               against the steel=strength convention; Program's steel-colored success message where
 //               moss is used everywhere else)
 
-import { COLORS, NEUTRAL } from './theme'
+import { COLORS, NEUTRAL, withAlpha } from './theme'
 
 export const DS = {
   // Primary / general interaction accent — ยืนยันตรงกันทุกหน้าที่ตรวจ: segmented control ทั่วไป
@@ -104,6 +122,29 @@ export const DS = {
     // tierForPct/recoveryTier และ lib/dashboardStats.ts's recoveryTier ตัวที่เทียบเท่ากัน) ซึ่งคืนค่า
     // ระหว่าง strength(steel)/accent.primary(amber)/danger(rust) อยู่แล้วต่อ tier — ไม่ประกาศ flat
     // hex ซ้ำที่นี่ ให้เรียกฟังก์ชันเดิมแทน
+  },
+
+  // Progress-vs-target tier — คนละ dimension จาก domain (ข้างบน) และ semantic.success/danger:
+  // "high"/"veryHigh" ไม่ได้แปลว่า "ดี" เสมอไป (veryHigh คือเกินเป้ามากไป ควรระวัง ไม่ใช่ควรยินดี) และ
+  // "behind" ก็ไม่ได้แปลว่า "danger" (แค่ยังไม่ถึงเป้า ยังมีเวลา) — ห้ามเอา semantic.success/danger มา
+  // แทนที่ tier พวกนี้เด็ดขาด
+  //
+  // ยืนยันแล้วว่า WeeklyCardioVolume.tsx's STATUS_COLOR และ WeeklyMuscleHeatmap.tsx's
+  // TARGET_STATUS_COLOR เป็นระบบเดียวกันเป๊ะ (ทั้งคู่ผูกกับ VolumeStatus type เดียวกันจาก
+  // lib/dashboardStats.ts, ทั้งคู่มี comment ยืนยันว่าตั้งใจให้ตรงกันข้าม component) — 5 ระดับ,
+  // ค่าเดิมทุกตัวเป๊ะ ไม่มีการไล่เฉดใหม่
+  //
+  // WeeklyVolume.tsx's bucket map (under/onTarget/over, ผูกกับ VolumeBucket คนละ type, ดึง
+  // COLORS.yellow เข้ามาด้วย) เป็นคนละ family — สังเกตได้จาก comment ของมันเองที่อ้างว่า "ใช้ชุดสี
+  // เดียวกับ" อีกสองไฟล์นี้ (ไม่จริงทั้งหมด เป็นแค่ palette คล้ายกันไม่ใช่ type/ค่าเดียวกัน) — ไม่รวมเข้า
+  // progressTier นี้จนกว่าจะเจอ evidence ว่ามีการใช้ family นี้ในหลาย component จริง (ตอนนั้นค่อยตั้ง
+  // DS.targetStatus แยกต่างหาก)
+  progressTier: {
+    behind: withAlpha(COLORS.steel, '99'),
+    onTrack: COLORS.steel,
+    met: withAlpha(COLORS.moss, 'BF'),
+    high: COLORS.moss,
+    veryHigh: COLORS.rust,
   },
 
   // แยก "เนื้อหาที่มาจาก LLM จริง" ออกจาก "ตรรกะ/กฎที่แอปคำนวณเองแล้วพูดในน้ำเสียง AI Coach" — เป็น

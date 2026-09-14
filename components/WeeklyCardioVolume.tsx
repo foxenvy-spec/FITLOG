@@ -11,7 +11,7 @@ import { HR_ZONES, DEFAULT_MAX_HEART_RATE, classifyCardioLoad, CARDIO_LOAD_LABEL
 import { computeVO2Max, classifyVO2Max } from '@/lib/vo2max'
 import type { Workout, Profile } from '@/lib/types'
 import { todayDayOfWeek } from '@/lib/weekdays'
-import { COLORS, withAlpha } from '@/lib/theme'
+import { withAlpha } from '@/lib/theme'
 import { DS } from '@/lib/designSystem'
 import AnimatedBarFill from './AnimatedBarFill'
 import Skeleton from './Skeleton'
@@ -19,15 +19,11 @@ import HeartRateSettings from './HeartRateSettings'
 import CardioTargetsSettings from './CardioTargetsSettings'
 import ErrorState from './ErrorState'
 
-// ฟีดแบ็ก "อยากได้แค่ 3 สี (steel/moss/rust) ใช้ความเข้มสื่อระดับความรุนแรง" — ใช้ชุดสีเดียวกับ
-// WeeklyVolume.tsx ให้สองการ์ดนี้อ่านสอดคล้องกัน (steel = ยังไม่ถึงเป้า, moss = ในช่วงเหมาะสม, rust = สูงเกินไป)
-const STATUS_COLOR: Record<VolumeStatus, string> = {
-  behind: withAlpha(COLORS.steel, '99'), // steel จาง — ยังห่างเป้าอยู่มาก
-  onTrack: COLORS.steel, // steel เต็ม — ใกล้ถึงเป้าแล้ว
-  met: withAlpha(COLORS.moss, 'BF'), // moss จาง — เข้าช่วงเหมาะสมพอดี
-  high: COLORS.moss, // moss เต็ม — อยู่ในช่วงเหมาะสมแต่เริ่มเยอะ (100-200%)
-  veryHigh: COLORS.rust, // rust — เกินช่วงเหมาะสม (>200%)
-}
+// ยืนยันแล้วว่าเป็นระบบเดียวกับ WeeklyMuscleHeatmap.tsx's TARGET_STATUS_COLOR เป๊ะ (VolumeStatus type
+// เดียวกัน ค่าเดียวกันทุกตัว) — ย้ายมาอ้างอิง DS.progressTier กลางแทนการประกาศซ้ำสองที่ (ไม่ใช่ค่าเดียวกับ
+// WeeklyVolume.tsx's bucket map ทั้งที่ comment เดิมเคยอ้างว่า "ใช้ชุดสีเดียวกัน" — ไฟล์นั้นผูกกับ
+// VolumeBucket คนละ type และดึง COLORS.yellow เข้ามาด้วย ไม่ใช่ family เดียวกันจริงๆ)
+const STATUS_COLOR: Record<VolumeStatus, string> = DS.progressTier
 
 function MetricTile({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
