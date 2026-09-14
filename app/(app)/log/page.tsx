@@ -534,8 +534,8 @@ function LogPageInner() {
       <div className="space-y-6 lg:col-span-7">
 
       {editingId && (
-        <div className="rounded-lg bg-amber/10 border border-amber/40 px-3 py-2 flex items-center justify-between">
-          <span className="text-xs text-amber font-display tracked uppercase">กำลังแก้ไขรายการเดิม</span>
+        <div className="rounded-lg bg-accent-primary/10 border border-accent-primary/40 px-3 py-2 flex items-center justify-between">
+          <span className="text-xs text-accent-primary font-display tracked uppercase">กำลังแก้ไขรายการเดิม</span>
           <button
             type="button"
             onClick={cancelEdit}
@@ -581,18 +581,18 @@ function LogPageInner() {
         <button
           type="button"
           onClick={handleCopyLast}
-          className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
+          className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition"
         >
           ⧉ คัดลอกจากครั้งก่อน
         </button>
         <div className="flex gap-3">
-          <a href="/exercises" className="text-xs font-display tracked uppercase text-muted hover:text-amber transition">
+          <a href="/exercises" className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition">
             🔍 ฐานข้อมูลท่า
           </a>
-          <a href="/templates" className="text-xs font-display tracked uppercase text-muted hover:text-amber transition">
+          <a href="/templates" className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition">
             📋 เทมเพลต
           </a>
-          <a href="/import" className="text-xs font-display tracked uppercase text-muted hover:text-amber transition">
+          <a href="/import" className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition">
             📥 นำเข้าจาก Excel
           </a>
         </div>
@@ -903,7 +903,7 @@ function LogPageInner() {
             <button
               type="button"
               onClick={loadToday}
-              className="text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 inline-block"
+              className="text-[12px] font-display tracked uppercase text-bg bg-accent-primary rounded-lg px-4 py-2 inline-block"
             >
               ลองอีกครั้ง
             </button>
@@ -914,7 +914,7 @@ function LogPageInner() {
             <p className="text-sm text-muted">ยังไม่มีรายการวันนี้ เริ่มบันทึกเซ็ตแรกได้เลย</p>
             <a
               href="#log-form"
-              className="inline-block text-[12px] font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2 active:scale-[0.99] transition"
+              className="inline-block text-[12px] font-display tracked uppercase text-bg bg-accent-primary rounded-lg px-4 py-2 active:scale-[0.99] transition"
             >
               + บันทึกเซ็ตแรก
             </a>
@@ -958,7 +958,7 @@ function LogPageInner() {
                   <button
                     type="button"
                     onClick={() => loadWorkoutIntoForm(w)}
-                    className="text-muted hover:text-amber text-xs"
+                    className="text-muted hover:text-accent-primary text-xs"
                     aria-label="แก้ไขรายการ"
                   >
                     แก้ไข
@@ -979,7 +979,7 @@ function LogPageInner() {
 
       <a
         href="/history"
-        className="block text-center text-xs tracked uppercase text-muted hover:text-amber transition py-2"
+        className="block text-center text-xs tracked uppercase text-muted hover:text-accent-primary transition py-2"
       >
         ดูประวัติทั้งหมด →
       </a>
@@ -1006,7 +1006,7 @@ function ChipRow({ options, onPick }: { options: string[]; onPick: (v: string) =
           key={opt}
           type="button"
           onClick={() => onPick(opt)}
-          className="text-xs px-2.5 py-1 rounded-full bg-surface2 border border-line text-muted hover:text-ink hover:border-amber/50 transition"
+          className="text-xs px-2.5 py-1 rounded-full bg-surface2 border border-line text-muted hover:text-ink hover:border-accent-primary/50 transition"
         >
           {opt}
         </button>

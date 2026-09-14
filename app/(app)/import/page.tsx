@@ -344,7 +344,7 @@ export default function ImportPage() {
           <div className="flex gap-2 justify-center pt-2">
             <a
               href={mode === 'log' ? '/history' : '/program'}
-              className="text-xs tracked uppercase text-amber hover:underline"
+              className="text-xs tracked uppercase text-accent-primary hover:underline"
             >
               {mode === 'log' ? 'ดูประวัติ →' : 'ดูโปรแกรม →'}
             </a>
@@ -439,13 +439,13 @@ function DayCard({
             type="date"
             value={date}
             onChange={(e) => onDateChange(e.target.value)}
-            className="bg-surface2 text-ink text-xs font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-amber shrink-0"
+            className="bg-surface2 text-ink text-xs font-mono rounded px-2 py-1.5 border border-line outline-none focus:border-accent-primary shrink-0"
           />
         ) : (
           <select
             value={weekday}
             onChange={(e) => onWeekdayChange(Number(e.target.value))}
-            className="bg-surface2 text-ink text-xs rounded px-2 py-1.5 border border-line outline-none focus:border-amber shrink-0"
+            className="bg-surface2 text-ink text-xs rounded px-2 py-1.5 border border-line outline-none focus:border-accent-primary shrink-0"
           >
             {WEEKDAYS.map((w, i) => (
               <option key={i} value={i}>
@@ -459,13 +459,13 @@ function DayCard({
       <div className="px-4 pt-2 pb-1 flex gap-3">
         <button
           onClick={() => onToggleAll(true)}
-          className="text-[12px] tracked uppercase text-muted hover:text-amber"
+          className="text-[12px] tracked uppercase text-muted hover:text-accent-primary"
         >
           เลือกทั้งหมด
         </button>
         <button
           onClick={() => onToggleAll(false)}
-          className="text-[12px] tracked uppercase text-muted hover:text-amber"
+          className="text-[12px] tracked uppercase text-muted hover:text-accent-primary"
         >
           ไม่เลือกเลย
         </button>
@@ -479,7 +479,7 @@ function DayCard({
                 type="checkbox"
                 checked={ex.include}
                 onChange={(e) => onUpdateExercise(ex.id, { include: e.target.checked })}
-                className="mt-1 accent-amber shrink-0"
+                className="mt-1 accent-accent-primary shrink-0"
               />
               <input
                 value={ex.name}
@@ -532,7 +532,7 @@ function DayCard({
                 <select
                   value={ex.muscleGroup}
                   onChange={(e) => onUpdateExercise(ex.id, { muscleGroup: e.target.value as MuscleGroup })}
-                  className="bg-surface2 text-xs text-muted rounded px-2 py-1 border border-line outline-none focus:border-amber"
+                  className="bg-surface2 text-xs text-muted rounded px-2 py-1 border border-line outline-none focus:border-accent-primary"
                 >
                   {MUSCLE_GROUPS.map((mg) => (
                     <option key={mg} value={mg}>
@@ -572,7 +572,7 @@ function BodyLogCard({
               type="checkbox"
               checked={row.include}
               onChange={(e) => onUpdate(row.id, { include: e.target.checked })}
-              className="accent-amber shrink-0"
+              className="accent-accent-primary shrink-0"
             />
             <span className="text-xs font-mono text-muted shrink-0">{row.date}</span>
             <NumberField label="กก." value={row.weight_kg} step={0.1} onChange={(v) => onUpdate(row.id, { weight_kg: v })} />
@@ -624,7 +624,7 @@ function NumberField({
         step={step}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-        className="w-full bg-surface2 text-ink text-xs font-mono text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
+        className="w-full bg-surface2 text-ink text-xs font-mono text-center rounded px-1 py-1.5 border border-line outline-none focus:border-accent-primary"
       />
     </label>
   )
@@ -645,7 +645,7 @@ function TextField({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
+        className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-accent-primary"
       />
     </label>
   )

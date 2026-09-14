@@ -841,19 +841,19 @@ export default function TemplatesPage() {
             type="button"
             onClick={handleExportAllToExcel}
             disabled={exportingAll || templates.length === 0}
-            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-accent-primary hover:border-accent-primary/50 transition disabled:opacity-40"
           >
             {exportingAll ? '...' : '📊 Export ทั้งหมด (.xlsx)'}
           </button>
           <a
             href="/exercises"
-            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
+            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-accent-primary hover:border-accent-primary/50 transition"
           >
             🔍 ฐานข้อมูลท่า
           </a>
           <a
             href="/history"
-            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-amber hover:border-amber/50 transition"
+            className="inline-flex items-center gap-1.5 text-[12px] font-display tracked uppercase text-muted border border-line rounded-full px-3 py-1.5 hover:text-accent-primary hover:border-accent-primary/50 transition"
           >
             🕐 ดูประวัติ
           </a>
@@ -1039,21 +1039,21 @@ export default function TemplatesPage() {
                   <div className="px-4 py-3 border-t border-line flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                     <button
                       onClick={() => setAddingToId(t.id)}
-                      className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
+                      className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition"
                     >
                       + เพิ่มท่า
                     </button>
                     <button
                       onClick={() => setApplyPickerId(applyPickerId === t.id ? null : t.id)}
                       disabled={exercises.length === 0}
-                      className="text-xs font-display tracked uppercase text-muted hover:text-amber transition disabled:opacity-40"
+                      className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition disabled:opacity-40"
                     >
                       📅 ตั้งโปรแกรม
                     </button>
                     <button
                       onClick={() => handleExportTemplate(t)}
                       disabled={exercises.length === 0}
-                      className="text-xs font-display tracked uppercase text-muted hover:text-amber transition disabled:opacity-40"
+                      className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition disabled:opacity-40"
                     >
                       ⬇ Export
                     </button>
@@ -1070,7 +1070,7 @@ export default function TemplatesPage() {
                             key={dow}
                             onClick={() => handleApplyToProgram(t, dow)}
                             disabled={applyingId === t.id}
-                            className="rounded-lg py-2.5 text-xs font-display tracked uppercase bg-surface2 text-ink border border-line hover:border-amber transition disabled:opacity-40"
+                            className="rounded-lg py-2.5 text-xs font-display tracked uppercase bg-surface2 text-ink border border-line hover:border-accent-primary transition disabled:opacity-40"
                           >
                             {label}
                           </button>
@@ -1244,7 +1244,7 @@ function ExerciseRow({
     >
       <span
         onPointerDown={onDragHandleDown}
-        className="mt-0.5 text-muted hover:text-amber shrink-0 cursor-grab active:cursor-grabbing"
+        className="mt-0.5 text-muted hover:text-accent-primary shrink-0 cursor-grab active:cursor-grabbing"
         style={{ touchAction: 'none' }}
       >
         <DragHandleIcon />
@@ -1254,7 +1254,7 @@ function ExerciseRow({
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-ink truncate">{exercise.exercise_name}</p>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onToggleEdit} className="text-[12px] text-muted hover:text-amber transition">
+            <button onClick={onToggleEdit} className="text-[12px] text-muted hover:text-accent-primary transition">
               {editing ? 'เสร็จ' : 'แก้ไข'}
             </button>
             <button onClick={onDelete} className="text-[12px] text-muted hover:text-rust transition">
@@ -1331,7 +1331,7 @@ function BlurField({ label, value, onBlur }: { label: string; value: string; onB
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         onBlur={() => onBlur(local)}
-        className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
+        className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-accent-primary"
       />
     </label>
   )
@@ -1349,7 +1349,7 @@ function BlurTextArea({ label, value, onBlur }: { label: string; value: string; 
         onBlur={() => onBlur(local)}
         rows={2}
         placeholder="เช่น เกร็งแกนกลางลำตัว ควบคุมจังหวะขาลง ไม่ใช้แรงเหวี่ยง"
-        className="w-full bg-surface2 text-ink text-xs rounded px-2 py-1.5 border border-line outline-none focus:border-amber resize-none"
+        className="w-full bg-surface2 text-ink text-xs rounded px-2 py-1.5 border border-line outline-none focus:border-accent-primary resize-none"
       />
     </label>
   )
@@ -1364,7 +1364,7 @@ function NewTemplateForm({ onCancel, onSubmit }: { onCancel: () => void; onSubmi
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="เช่น Push Day"
-        className="w-full bg-surface2 text-ink text-sm rounded px-3 py-2 border border-line outline-none focus:border-amber"
+        className="w-full bg-surface2 text-ink text-sm rounded px-3 py-2 border border-line outline-none focus:border-accent-primary"
       />
       <div className="flex gap-2">
         <button onClick={onCancel} className="flex-1 rounded-lg border border-line text-muted font-display tracked uppercase py-2.5 text-xs transition active:scale-[0.98] hover:bg-white/5">
@@ -1464,7 +1464,7 @@ function AddExerciseForm({
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           placeholder="เช่น เกร็งแกนกลางลำตัว ควบคุมจังหวะขาลง ไม่ใช้แรงเหวี่ยง"
-          className="w-full bg-surface text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-amber resize-none"
+          className="w-full bg-surface text-ink text-xs rounded px-2 py-2 border border-line outline-none focus:border-accent-primary resize-none"
         />
       </label>
       <div className="flex gap-2">
@@ -1491,7 +1491,7 @@ function MiniField({ label, value, onChange }: { label: string; value: string; o
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-surface text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
+        className="w-full bg-surface text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-accent-primary"
       />
     </label>
   )

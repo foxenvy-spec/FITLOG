@@ -595,10 +595,10 @@ export default function ProgramPage() {
           <p className="text-sm text-muted mt-1">แผนออกกำลังกายประจำสัปดาห์ของคุณ</p>
         </div>
         <div className="flex gap-3 shrink-0">
-          <a href="/templates" className="text-xs font-display tracked uppercase text-muted hover:text-amber transition">
+          <a href="/templates" className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition">
             📋 เทมเพลต
           </a>
-          <a href="/import" className="text-xs font-display tracked uppercase text-muted hover:text-amber transition">
+          <a href="/import" className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition">
             📥 นำเข้า
           </a>
         </div>
@@ -667,7 +667,7 @@ export default function ProgramPage() {
           <div className="flex gap-2 justify-center flex-wrap">
             <button
               onClick={openTemplatePicker}
-              className="text-xs font-display tracked uppercase text-bg bg-amber rounded-lg px-4 py-2"
+              className="text-xs font-display tracked uppercase text-bg bg-accent-primary rounded-lg px-4 py-2"
             >
               📋 เลือกจากเทมเพลต
             </button>
@@ -707,7 +707,7 @@ export default function ProgramPage() {
               <>
                 <button
                   onClick={() => setSelectMode(true)}
-                  className="text-[12px] text-muted hover:text-amber shrink-0"
+                  className="text-[12px] text-muted hover:text-accent-primary shrink-0"
                 >
                   เลือก
                 </button>
@@ -833,14 +833,14 @@ export default function ProgramPage() {
               {currentExercises.length === 0 && (
                 <button
                   onClick={openTemplatePicker}
-                  className="text-xs font-display tracked uppercase text-amber hover:underline"
+                  className="text-xs font-display tracked uppercase text-accent-primary hover:underline"
                 >
                   📋 เลือกจากเทมเพลต
                 </button>
               )}
               <button
                 onClick={() => setAddingExercise(true)}
-                className="text-xs font-display tracked uppercase text-muted hover:text-amber transition"
+                className="text-xs font-display tracked uppercase text-muted hover:text-accent-primary transition"
               >
                 + เพิ่มท่า
               </button>
@@ -848,7 +848,7 @@ export default function ProgramPage() {
           )}
 
           {confirmLogDuplicate && (
-            <div className="px-4 py-2.5 border-b border-white/5 bg-amber/10 flex items-center justify-between gap-2 flex-wrap">
+            <div className="px-4 py-2.5 border-b border-white/5 bg-accent-primary/10 flex items-center justify-between gap-2 flex-wrap">
               <p className="text-[12px]" style={{ color: DS.accent.primary }}>
                 วันนี้มี Log อยู่แล้ว — เพิ่ม {currentExercises.length} ท่านี้เข้าไปอีกหรือไม่? (อาจได้ท่าซ้ำถ้าเคย log ท่าเดียวกันไปแล้ว)
               </p>
@@ -859,7 +859,7 @@ export default function ProgramPage() {
                 <button
                   onClick={handleLogAllToday}
                   disabled={logging}
-                  className="text-[12px] text-bg bg-amber rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
+                  className="text-[12px] text-bg bg-accent-primary rounded px-2.5 py-1 font-display tracked uppercase disabled:opacity-50"
                 >
                   {logging ? '...' : 'เพิ่มเข้า Log'}
                 </button>
@@ -967,7 +967,7 @@ function ExerciseRow({
               e.stopPropagation()
               setEditing((v) => !v)
             }}
-            className="text-[12px] text-muted hover:text-amber shrink-0"
+            className="text-[12px] text-muted hover:text-accent-primary shrink-0"
           >
             {editing ? 'เสร็จ' : 'แก้ไข'}
           </button>
@@ -1028,7 +1028,7 @@ function MiniField({ label, value, onBlur }: { label: string; value: string; onB
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         onBlur={() => onBlur(local)}
-        className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-amber"
+        className="w-full bg-surface2 text-ink text-xs text-center rounded px-1 py-1.5 border border-line outline-none focus:border-accent-primary"
       />
     </label>
   )
@@ -1083,7 +1083,7 @@ function TemplatePickerPanel({
       {!loading && !error && templates && templates.length === 0 && (
         <p className="text-xs text-muted">
           ยังไม่มีเทมเพลตเลย —{' '}
-          <a href="/templates" className="text-amber hover:underline">
+          <a href="/templates" className="text-accent-primary hover:underline">
             สร้างเทมเพลตแรกที่นี่
           </a>
         </p>
@@ -1099,13 +1099,13 @@ function TemplatePickerPanel({
                 <button
                   onClick={() => onSelect(t)}
                   disabled={applyingTemplateId !== null}
-                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-line bg-surface2 px-3 py-2.5 text-left transition hover:border-amber/40 disabled:opacity-50"
+                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-line bg-surface2 px-3 py-2.5 text-left transition hover:border-accent-primary/40 disabled:opacity-50"
                 >
                   <span className="min-w-0">
                     <span className="block text-sm text-ink truncate">{t.title}</span>
                     <span className="block text-[12px] text-muted">{exCount} ท่า</span>
                   </span>
-                  <span className="text-[12px] text-amber shrink-0">{applying ? 'กำลังใส่...' : 'ใช้เทมเพลตนี้ →'}</span>
+                  <span className="text-[12px] text-accent-primary shrink-0">{applying ? 'กำลังใส่...' : 'ใช้เทมเพลตนี้ →'}</span>
                 </button>
               </li>
             )
