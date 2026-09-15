@@ -1097,19 +1097,26 @@ export default function HealthPage() {
   const goalRows: { valueText: string; label: string; subText: string | null; progressPct: number | null }[] = []
   if (weightGoal?.target_value != null) {
     const targetText = `${toDisplay(weightGoal.target_value).toFixed(1)} ${unit}`
+    const weightProgressPct = goalProgressPct(weightGoal)
     goalRows.push({
       valueText: latest?.weight_kg != null ? `${toDisplay(latest.weight_kg).toFixed(1)} → ${targetText}` : targetText,
       label: 'น้ำหนักเป้าหมาย',
+      // 6D P1-1: ถึง/เกินเป้าหมายแล้ว (progressPct clamp เป็น 100) ต้องไม่โชว์ "เหลือ X" อีกต่อไป — เดิม
+      // subText คำนวณ Math.abs(current-target) ตรงๆ แยกจาก progressPct เลย ทำให้การ์ดขึ้น "100%" พร้อม
+      // "เหลือ 2.0 kg" ขัดกันเอง (บั๊กเดียวกับที่ GoalsCard ในแท็บแนวโน้มเจอและแก้ไปแล้ว — ดู comment ที่นั่น)
       subText:
-        latest?.weight_kg != null
-          ? `เหลือ ${Math.abs(toDisplay(latest.weight_kg) - toDisplay(weightGoal.target_value)).toFixed(1)} ${unit}`
-          : null,
-      progressPct: goalProgressPct(weightGoal),
+        weightProgressPct !== null && weightProgressPct >= 100
+          ? 'ถึงเป้าหมายแล้ว'
+          : latest?.weight_kg != null
+            ? `เหลือ ${Math.abs(toDisplay(latest.weight_kg) - toDisplay(weightGoal.target_value)).toFixed(1)} ${unit}`
+            : null,
+      progressPct: weightProgressPct,
     })
   }
   if (bodyFatGoalForBanner?.target_value != null) {
     const bodyFatDiff = latest?.body_fat_pct != null ? latest.body_fat_pct - bodyFatGoalForBanner.target_value : null
     const bodyFatTargetText = `${bodyFatGoalForBanner.target_value.toFixed(1)}%`
+    const bodyFatProgressPct = goalProgressPct(bodyFatGoalForBanner)
     goalRows.push({
       valueText: latest?.body_fat_pct != null ? `${latest.body_fat_pct.toFixed(1)}% → ${bodyFatTargetText}` : bodyFatTargetText,
       label: 'Body Fat เป้าหมาย',
@@ -1122,8 +1129,15 @@ export default function HealthPage() {
       // v60: ฟีดแบ็ก "25.1 → 20.0 คือลดลง 5.1 percentage points ไม่ใช่ลด 5.1% เชิงสัมพัทธ์ — ควรเขียนว่า
       // 'เหลือ 5.1 จุดเปอร์เซ็นต์' ตรงๆ" — ยืนยันขอศัพท์นี้ตรงๆ รอบนี้ (กลับคำตัดสินใจ v27 ที่เคยเลี่ยงคำนี้)
       // เปลี่ยนจาก "เหลืออีก X% เพื่อถึงเป้าหมาย" เป็น "เหลือ X จุดเปอร์เซ็นต์" ไม่กระทบตัวเลขหรือการคำนวณใดๆ
-      subText: bodyFatDiff === null || bodyFatDiff === 0 ? null : `เหลือ ${Math.abs(bodyFatDiff).toFixed(1)} จุดเปอร์เซ็นต์`,
-      progressPct: goalProgressPct(bodyFatGoalForBanner),
+      // 6D P1-1: เพิ่ม gate เดียวกับ weight row ด้านบน — เดิม bodyFatDiff === 0 เท่านั้นที่ซ่อน subText ไม่ครอบ
+      // คลุมกรณี "เกินเป้าไปแล้ว" (diff ไม่เป็น 0 แต่ progressPct clamp ที่ 100 แล้ว) ซึ่งเป็นบั๊กเดียวกับ weight
+      subText:
+        bodyFatProgressPct !== null && bodyFatProgressPct >= 100
+          ? 'ถึงเป้าหมายแล้ว'
+          : bodyFatDiff === null || bodyFatDiff === 0
+            ? null
+            : `เหลือ ${Math.abs(bodyFatDiff).toFixed(1)} จุดเปอร์เซ็นต์`,
+      progressPct: bodyFatProgressPct,
     })
   }
 
@@ -3414,7 +3428,13 @@ function OverviewHealthScoreHeader({
                       ลดจาก text-sm/semibold/ink เป็น text-xs/สีจาง, subText (เหลือ X) ขยับขึ้นมาเป็น
                       text-sm/font-semibold แทน ไม่เปลี่ยนลำดับการวาง (A → B ยังอยู่บนเหมือนเดิม) */}
                   {g.subText && (
-                    <p className="font-mono font-semibold text-sm whitespace-nowrap mt-0.5" style={{ color: '#D8A34A' }}>
+                    // 6D P1-1: เมื่อถึง/เกินเป้าหมายแล้ว (progressPct >= 100) ใช้มอส (#8CB264 — เดียวกับ
+                    // text-moss ที่ GoalsCard ใช้กับ "ถึงเป้าหมายแล้ว") แทนอำพัน — อำพัน (v28 ด้านบน) มีไว้
+                    // สื่อ "ยังไปไม่ถึงเป้า" โดยเจตนา ไม่ควรใช้กับข้อความสำเร็จ
+                    <p
+                      className="font-mono font-semibold text-sm whitespace-nowrap mt-0.5"
+                      style={{ color: g.progressPct !== null && g.progressPct >= 100 ? '#8CB264' : '#D8A34A' }}
+                    >
                       {g.subText}
                     </p>
                   )}
