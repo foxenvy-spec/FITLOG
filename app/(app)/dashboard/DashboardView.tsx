@@ -25,10 +25,8 @@ import {
   FULLY_RECOVERED_PCT,
   findNextProgramDay,
   getWeekRange,
-  getPreviousWeekRange,
   computeVolumeTrendInsights,
   computeMissedMuscleInsights,
-  suggestMuscleToTrain,
   computeTodaysRecommendation,
   computeDashboardNotifications,
   computeTodaysAction,
@@ -38,8 +36,6 @@ import {
   computeBestVolumeIncrease,
   computeGreetingContext,
   computeWorkoutMotivationLabel,
-  getScheduledMuscleForDay,
-  getNextScheduledMuscle,
   estimateCaloriesToday,
   computeLatestPR,
   computeSessionVolumeChange,
@@ -50,11 +46,11 @@ import {
   type MuscleRecommendation,
   type TodaysRecommendation,
   type VolumeIncrease,
-  type ScheduledDay,
   type LatestPR,
   type SessionVolumeChange,
 } from '@/lib/dashboardStats'
-import { fetchWeeklyVolumeTargets, type WeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
+import { type WeeklyVolumeTargets } from '@/lib/weeklyVolumeTargets'
+import { loadMuscleRecommendation } from '@/lib/muscleRecommendationData'
 import { goalProgressPct, goalProgressLabelParts, estimateGoalEtaWeeks } from '@/lib/goalProgress'
 import { saveDisplayName } from '@/lib/profile'
 import { computePushPullBalance, computeAIDailySummary, bodyFatTrendInsight, muscleMassTrendInsight, workoutFrequencyInsight } from '@/lib/aiCoach'
@@ -217,7 +213,7 @@ export interface DashboardData {
   // เจตนาเดิม ไม่ใช่บั๊กที่ต้องรวม 2 ระบบเป็นอันเดียว (คงไว้ตามเดิมทุกจุดตามที่ยืนยันสโคปแล้ว) — แต่ MINT
   // Coach's ปุ่ม "เริ่ม X" (workout_templates, คนละระบบกับ program_days อีกชั้น) ไม่ควรชวนกดเริ่มเซสชันที่
   // ดูเหมือนเป็น "Next Session" แต่จริงๆ ไม่ตรงกับ Next ของตารางเลย — เปิด map วัน→กล้ามเนื้อของโปรแกรม
-  // (คำนวณไว้แล้วเป็น scheduledDaysWithMuscle ด้านล่าง) ออกมาให้ component เทียบกับกล้ามเนื้อที่แนะนำได้ตรงๆ
+  // (คำนวณใน loadMuscleRecommendation(), lib/muscleRecommendationData.ts) ออกมาให้ component เทียบกับกล้ามเนื้อที่แนะนำได้ตรงๆ
   programDayMuscleGroups: Record<number, string | null>
 }
 
@@ -230,7 +226,6 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   } = await supabase.auth.getUser()
 
   const { start: thisWeekStart, end: thisWeekEnd } = getWeekRange()
-  const { start: lastWeekStart } = getPreviousWeekRange()
 
   // Streak นับต่อเนื่องจะขาดทันทีถ้าเว้นเกิน 1 วัน (ดู computeCurrentStreak) ดังนั้นย้อนหลัง
   // 400 วัน (เกินหนึ่งปี) ก็เกินพอสำหรับ streak ที่มีความหมายจริง — กัน query โตไม่จำกัดตาม
@@ -244,8 +239,6 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     { data: allDates },
     { data: dayRows },
     { data: recentStrength },
-    { data: twoWeeksStrength },
-    weeklyVolumeTargets,
     { data: profileRow },
     { data: bodyMetricRows },
     { data: goalRows },
@@ -257,20 +250,18 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
       .gte('performed_at', streakCutoff)
       .order('performed_at', { ascending: false }),
     supabase.from('program_days').select('*').order('day_of_week'),
+    // 6D P1-2A — เดิม query นี้ถูกใช้ร่วมกันทั้งเพื่อ recoveryDates (ป้อน suggestMuscleToTrain) และ
+    // latestPR/sessionVolumeChange (Dashboard-only, ไม่เกี่ยวกับ recommendation engine) — recoveryDates/
+    // recoveryPctForSummary ย้ายไปคำนวณใน lib/muscleRecommendationData.ts's loadMuscleRecommendation()
+    // แล้ว (ซึ่ง query ชุดเดียวกันนี้ซ้ำอีกครั้งภายในตัวเอง ตามขอบเขตที่ล็อกไว้ว่าห้ามส่ง strengthRows ออกมา
+    // จาก shared function) — แต่ latestPR/sessionVolumeChange ยังต้องใช้ strengthRows ชุดนี้อยู่ที่นี่ คง
+    // query ไว้ตำแหน่งเดิมเป๊ะ ยอมรับต้นทุนเป็น query ซ้ำเพิ่มขึ้น 1 ครั้ง (ไม่ optimize รวม 2 จุดนี้ตอนนี้)
     supabase
       .from('workouts')
       .select('muscle_group, performed_at, exercise_name, type, weight_kg, total_volume_kg')
       .eq('type', 'strength')
       .order('performed_at', { ascending: false })
       .limit(1000),
-    supabase
-      .from('workouts')
-      .select('muscle_group, sets, performed_at')
-      .eq('type', 'strength')
-      .gte('performed_at', lastWeekStart)
-      .lte('performed_at', thisWeekEnd),
-    // เป้าหมายเซ็ต/สัปดาห์ของผู้ใช้เอง (ตั้งได้ต่อคน) รวมกับ default แล้ว — ดู lib/weeklyVolumeTargets.ts
-    fetchWeeklyVolumeTargets(supabase),
     // ชื่อที่แสดงบน Dashboard ที่ผู้ใช้ตั้งเอง (ถ้ามี) — ดู lib/profile.ts
     user
       ? supabase.from('profiles').select('display_name').eq('user_id', user.id).maybeSingle()
@@ -309,6 +300,8 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   const streak = streakChainDates.size
   const bestStreak = computeLongestStreak(distinctDates, workoutWeekdays)
 
+  // 6D P1-2A — recoveryDates ย้ายไปคำนวณใน loadMuscleRecommendation() แล้ว (ดู comment ที่ query
+  // recentStrength ด้านบน) strengthRows ที่นี่เหลือไว้ใช้แค่ latestPR/sessionVolumeChange เท่านั้น
   const strengthRows =
     (recentStrength as {
       muscle_group: string | null
@@ -317,39 +310,12 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
       weight_kg: number | null
       total_volume_kg: number | null
     }[]) ?? []
-  const recoveryDates: Record<string, string | null> = {}
-  RECOVERY_MUSCLES.forEach((mg) => {
-    const match = strengthRows.find((r) => r.muscle_group === mg)
-    recoveryDates[mg] = match?.performed_at ?? null
-  })
   const latestPR = computeLatestPR(strengthRows)
   // ฟีดแบ็ก "State C (เทรนเสร็จแล้ว) ควรโชว์ 'Volume +8% จากครั้งก่อน'" — เทียบ volume รวมของกลุ่ม
   // กล้ามเนื้อที่เทรนจริงวันนี้ (todayList) กับเซสชันก่อนหน้าล่าสุดของกลุ่มเดียวกัน (ดู
   // computeSessionVolumeChange) — คืน null ถ้ายังไม่มีข้อมูลพอเทียบ (วันนี้ยังไม่ได้เทรน/ไม่มีเซสชันก่อนหน้า)
   const todayMuscleGroups = Array.from(new Set(todayList.map((w) => w.muscle_group).filter((mg): mg is string => !!mg)))
   const sessionVolumeChange = computeSessionVolumeChange(strengthRows, todayMuscleGroups, today)
-
-  const twoWeeksRows =
-    (twoWeeksStrength as { muscle_group: string | null; sets: number | null; performed_at: string }[]) ?? []
-  const thisWeekSets: Record<string, number> = {}
-  const lastWeekSets: Record<string, number> = {}
-  twoWeeksRows.forEach((r) => {
-    if (!r.muscle_group) return
-    const bucket = r.performed_at >= thisWeekStart ? thisWeekSets : lastWeekSets
-    bucket[r.muscle_group] = (bucket[r.muscle_group] ?? 0) + (r.sets ?? 0)
-  })
-  const weeklyGoalPct = Math.round(
-    VOLUME_MUSCLES.reduce((sum, mg) => {
-      const target = weeklyVolumeTargets[mg]
-      const pct = target > 0 ? Math.min(100, ((thisWeekSets[mg] ?? 0) / target) * 100) : 0
-      return sum + pct
-    }, 0) / VOLUME_MUSCLES.length
-  )
-
-  // ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — สรุป Volume รวมสัปดาห์นี้
-  // (ผลรวมเดียวกับ totalSets ใน WeeklyVolume.tsx เป๊ะ — thisWeekSets มาจาก query เดียวกัน กรอง type
-  // strength + performed_at ในสัปดาห์นี้เหมือนกัน) มาแสดงในการ์ด Weekly Goal ด้วย
-  const weeklyTotalSets = VOLUME_MUSCLES.reduce((sum, mg) => sum + (thisWeekSets[mg] ?? 0), 0)
 
   // Consistency % ย้อนหลัง 21 วัน — สูตรเดียวกับ ConsistencyStrip.tsx (computePlannedConsistency) ทุก
   // ประการ ใช้ distinctDates/workoutWeekdays ชุดเดียวกับที่คำนวณ streak ด้านบนอยู่แล้ว (ครอบคลุม 400 วัน
@@ -372,25 +338,6 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   }
   const weeklyConsistencyPct = computePlannedConsistency(consistencyWindowDays, workoutWeekdays).pct
 
-  const volumeInsights = computeVolumeTrendInsights(thisWeekSets, lastWeekSets)
-  // ฟีดแบ็ก (P2 follow-up, Information Hierarchy review) "Insight ซ้ำ — 'อกคุณฝึกน้อยกว่าส่วนอื่น'/
-  // 'น่องคุณฝึกน้อยกว่าส่วนอื่น' จาก InsightCarousel พูดเรื่องเดียวกับ Primary Insight Banner ใหม่ (เพิ่ม
-  // อก และแกนกลางลำตัวในสัปดาห์นี้) ทำให้ผู้ใช้เห็นเรื่อง 'อก' ซ้ำ 2 จุดในหน้าเดียว" — imbalanceInsights
-  // (computeImbalanceInsights, ⚖️ "X คุณฝึกน้อยกว่าส่วนอื่น") ตัดออกจาก Dashboard insights โดยเฉพาะ ไม่ได้
-  // ลบฟังก์ชันหรือ insight ประเภทนี้ออกจากแอป — /coach (app/(app)/coach/page.tsx) ยังเรียก
-  // computeImbalanceInsights เองแยกต่างหากอยู่ตามเดิมทุกประการ ข้อมูลเดียวกันนี้ยังเห็นได้เป็น raw data ที่
-  // Muscle Balance/Weekly Volume (Evidence tier) อยู่แล้วด้วย ไม่ต้องพูดซ้ำเป็น insight การ์ดอีกรอบบน Dashboard
-  const missedInsights = computeMissedMuscleInsights(recoveryDates)
-  // Training Balance Engine — มองภาพรวมฝั่งบน/ล่างลำตัวเอียงผิดสัดส่วนไหม (เทียบกับอุดมคติตามจำนวนกลุ่ม
-  // กล้ามเนื้อจริงของแต่ละฝั่ง ไม่ใช่ 50/50) พร้อมคะแนน Balance + 2 กลุ่มที่ควรเพิ่มสัปดาห์นี้ในใบเดียว —
-  // null เมื่อสมดุลดีอยู่แล้ว — คนละคำถามกับ imbalanceInsights ที่ตัดไปด้านบน (อันนั้นเตือนทีละกลุ่ม อันนี้
-  // สรุปภาพรวม 2 ฝั่งลำตัว) จึงยังเก็บไว้ ไม่ซ้ำกับ Primary Insight Banner โดยตรง
-  const trainingBalance = computeTrainingBalance(thisWeekSets, VOLUME_MUSCLES)
-  const trainingBalanceInsights = [trainingBalanceInsight(trainingBalance)].filter((i): i is Insight => i !== null)
-  // ไม่ slice ที่นี่แล้ว — คอมโพเนนต์เป็นคนรวมกับ body-composition/workout-frequency insight
-  // (ที่ต้อง useWeightUnit() ซึ่งเป็น hook เรียกในนี้ไม่ได้) แล้วค่อย slice ทีเดียวตอน render
-  const insights = [...volumeInsights, ...missedInsights, ...trainingBalanceInsights]
-
   // เทรนด์สัดส่วนร่างกายล่าสุด — ใช้ทำ insight เพิ่มเติมในการ์ด AI Coach (ดู bodyFatTrendInsight/
   // muscleMassTrendInsight ใน lib/aiCoach.ts) ไม่ต้องใช้ heightCm เพราะ insight พวกนี้ไม่ได้ใช้ BMI
   const typedBodyMetricRows = (bodyMetricRows as BodyMetric[]) ?? []
@@ -412,13 +359,6 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
     }
     return null
   })()
-
-  const recoveryPctForSummary: Record<string, number | null> = {}
-  RECOVERY_MUSCLES.forEach((mg) => {
-    recoveryPctForSummary[mg] = computeRecoveryPct(recoveryDates[mg] ?? null, mg)
-  })
-  const pushPullBalance = computePushPullBalance(thisWeekSets)
-  const bestVolumeIncrease = computeBestVolumeIncrease(thisWeekSets, lastWeekSets)
 
   // จำนวนครั้งที่ฝึกแล้วสัปดาห์นี้ (นับวันที่ต่างกัน ไม่ใช่จำนวนแถว) — ใช้ distinctDates ที่ดึงมาแล้ว
   // สำหรับคำนวณ streak ด้านบน (ย้อนหลัง 400 วัน ครอบคลุมสัปดาห์นี้แน่นอน) ไม่ต้อง query ซ้ำ
@@ -512,41 +452,60 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
         ? 100
         : null
 
-  // ท่าของ "ทุกวัน" ในตาราง (ไม่ใช่แค่วันนี้) — ใช้หากล้ามเนื้อหลักจริงของแต่ละวันจากท่าที่ตั้งไว้
-  // (dominantMuscleGroup) แทนการเดาจาก title ตรงๆ (ดู comment เต็มที่ ScheduledDay ใน lib/dashboardStats.ts
-  // — เดิม getScheduledMuscleForDay ต้องตั้งชื่อวันเป็นชื่อกล้ามเนื้อไทยล้วนๆ เช่น "ขา" ถึงจะจับคู่ได้ ทำให้
-  // ผู้ใช้ที่ตั้งชื่อวันแบบบรรยาย เช่น "Day 5 — Lower" ไม่เคยได้ประโยชน์จาก "เคารพตารางประจำสัปดาห์" เลย —
-  // ฟีดแบ็ก "AI Coach ยังบอก NEXT ทั้งที่ Today's Focus บอก Day 5 — Lower ซึ่งควรเป็นวันนี้จริงๆ") —
-  // currentDay ใช้ todayExercises ที่ดึงไปแล้วด้านบน ไม่ต้อง query ซ้ำ ส่วนวันอื่นดึงเพิ่มทีเดียว
-  const otherDayIds = typedDays.filter((d) => d.id !== currentDay?.id).map((d) => d.id)
-  const { data: otherDaysExRows } =
-    otherDayIds.length > 0
-      ? await supabase.from('program_exercises').select('program_day_id, muscle_group').in('program_day_id', otherDayIds)
-      : { data: [] as { program_day_id: string; muscle_group: string | null }[] }
-
-  const exercisesByDayId: Record<string, { muscle_group: string | null }[]> = {}
-  if (currentDay) exercisesByDayId[currentDay.id] = todayExercises
-  ;((otherDaysExRows as { program_day_id: string; muscle_group: string | null }[]) ?? []).forEach((row) => {
-    exercisesByDayId[row.program_day_id] = exercisesByDayId[row.program_day_id] ?? []
-    exercisesByDayId[row.program_day_id].push(row)
+  // 6D P1-2A — recommendation pipeline เต็มชุด (recoveryDates/thisWeekSets/lastWeekSets/
+  // weeklyVolumeTargets/programDayMuscleGroups/scheduledMuscle resolution/suggestMuscleToTrain) ย้ายไปอยู่
+  // ที่ lib/muscleRecommendationData.ts's loadMuscleRecommendation() แล้ว ให้ /train เรียกใช้ชุดเดียวกันได้
+  // (extraction boundary ที่ล็อกไว้: 1:1 port ของโค้ดเดิมทั้งหมด ไม่มีการปรับ optimize/query concurrency)
+  const {
+    recommendation: muscleRecommendation,
+    programDayMuscleGroups,
+    recoveryDates,
+    thisWeekSets,
+    lastWeekSets,
+    weeklyVolumeTargets,
+    todayScheduledMuscle,
+  } = await loadMuscleRecommendation(supabase, {
+    programDays: typedDays,
+    currentDay,
+    todayDayOfWeek: dow,
+    todayExercises,
+    todayMuscleGroups,
+    progressPctForLabel,
   })
 
-  const scheduledDaysWithMuscle: ScheduledDay[] = typedDays.map((d) => ({
-    day_of_week: d.day_of_week,
-    title: d.title,
-    muscleGroup: dominantMuscleGroup(exercisesByDayId[d.id] ?? []),
-  }))
-  // ใช้เทียบกับกล้ามเนื้อที่ MINT Coach แนะนำ (ดู comment เต็มที่ programDayMuscleGroups ใน DashboardData
-  // ด้านบน) — เก็บเป็น map ตาม day_of_week ให้หาได้ตรงๆ จาก next.day.day_of_week (findNextProgramDay)
-  const programDayMuscleGroups: Record<number, string | null> = {}
-  scheduledDaysWithMuscle.forEach((d) => {
-    programDayMuscleGroups[d.day_of_week] = d.muscleGroup ?? null
-  })
+  const weeklyGoalPct = Math.round(
+    VOLUME_MUSCLES.reduce((sum, mg) => {
+      const target = weeklyVolumeTargets[mg]
+      const pct = target > 0 ? Math.min(100, ((thisWeekSets[mg] ?? 0) / target) * 100) : 0
+      return sum + pct
+    }, 0) / VOLUME_MUSCLES.length
+  )
+  // ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ" — สรุป Volume รวมสัปดาห์นี้
+  // (ผลรวมเดียวกับ totalSets ใน WeeklyVolume.tsx เป๊ะ — thisWeekSets มาจาก query เดียวกัน กรอง type
+  // strength + performed_at ในสัปดาห์นี้เหมือนกัน) มาแสดงในการ์ด Weekly Goal ด้วย
+  const weeklyTotalSets = VOLUME_MUSCLES.reduce((sum, mg) => sum + (thisWeekSets[mg] ?? 0), 0)
 
-  // กล้ามเนื้อที่ควรแนะนำ: ยึดตามตารางโปรแกรมประจำสัปดาห์ก่อน (ถ้ามี) แทนที่จะดู recovery % สูงสุดล้วนๆ
-  // เพื่อไม่ให้แนะนำสวนทางกับตาราง เช่น ตารางบอกวันนี้เป็นวันขา แต่ recovery ของอกดันสูงกว่า
-  // ถ้าวันนี้ทำครบตามแผนแล้ว หรือวันนี้เป็นวันพัก/ไม่ได้ผูกกล้ามเนื้อไว้ ให้มองไปที่วันถัดไปในตาราง
-  const todayScheduledMuscle = getScheduledMuscleForDay(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
+  const volumeInsights = computeVolumeTrendInsights(thisWeekSets, lastWeekSets)
+  // ฟีดแบ็ก (P2 follow-up, Information Hierarchy review) "Insight ซ้ำ — 'อกคุณฝึกน้อยกว่าส่วนอื่น'/
+  // 'น่องคุณฝึกน้อยกว่าส่วนอื่น' จาก InsightCarousel พูดเรื่องเดียวกับ Primary Insight Banner ใหม่ (เพิ่ม
+  // อก และแกนกลางลำตัวในสัปดาห์นี้) ทำให้ผู้ใช้เห็นเรื่อง 'อก' ซ้ำ 2 จุดในหน้าเดียว" — imbalanceInsights
+  // (computeImbalanceInsights, ⚖️ "X คุณฝึกน้อยกว่าส่วนอื่น") ตัดออกจาก Dashboard insights โดยเฉพาะ ไม่ได้
+  // ลบฟังก์ชันหรือ insight ประเภทนี้ออกจากแอป — /coach (app/(app)/coach/page.tsx) ยังเรียก
+  // computeImbalanceInsights เองแยกต่างหากอยู่ตามเดิมทุกประการ ข้อมูลเดียวกันนี้ยังเห็นได้เป็น raw data ที่
+  // Muscle Balance/Weekly Volume (Evidence tier) อยู่แล้วด้วย ไม่ต้องพูดซ้ำเป็น insight การ์ดอีกรอบบน Dashboard
+  const missedInsights = computeMissedMuscleInsights(recoveryDates)
+  // Training Balance Engine — มองภาพรวมฝั่งบน/ล่างลำตัวเอียงผิดสัดส่วนไหม (เทียบกับอุดมคติตามจำนวนกลุ่ม
+  // กล้ามเนื้อจริงของแต่ละฝั่ง ไม่ใช่ 50/50) พร้อมคะแนน Balance + 2 กลุ่มที่ควรเพิ่มสัปดาห์นี้ในใบเดียว —
+  // null เมื่อสมดุลดีอยู่แล้ว — คนละคำถามกับ imbalanceInsights ที่ตัดไปด้านบน (อันนั้นเตือนทีละกลุ่ม อันนี้
+  // สรุปภาพรวม 2 ฝั่งลำตัว) จึงยังเก็บไว้ ไม่ซ้ำกับ Primary Insight Banner โดยตรง
+  const trainingBalance = computeTrainingBalance(thisWeekSets, VOLUME_MUSCLES)
+  const trainingBalanceInsights = [trainingBalanceInsight(trainingBalance)].filter((i): i is Insight => i !== null)
+  // ไม่ slice ที่นี่แล้ว — คอมโพเนนต์เป็นคนรวมกับ body-composition/workout-frequency insight
+  // (ที่ต้อง useWeightUnit() ซึ่งเป็น hook เรียกในนี้ไม่ได้) แล้วค่อย slice ทีเดียวตอน render
+  const insights = [...volumeInsights, ...missedInsights, ...trainingBalanceInsights]
+  const pushPullBalance = computePushPullBalance(thisWeekSets)
+  const bestVolumeIncrease = computeBestVolumeIncrease(thisWeekSets, lastWeekSets)
+
   // บั๊ก (ฟีดแบ็ก "MINT Coach บอก 'ครั้งหน้าแนะนำเล่นอก' ทั้งที่เพิ่งเล่นอกไปและฟื้นตัว 0% แล้ว ทั้งที่การ์ด
   // Training This Week บอก Next → Day 2 — Pull ถูกต้องอยู่แล้ว") — preferTodayMuscle เดิมเช็คแค่
   // progressPctForLabel (% ท่าที่ติ๊กครบตามแผน, program_completions) ซึ่งตั้งใจไม่นับงานนอกแผน (ดู comment
@@ -554,17 +513,15 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   // ท่าตามแผน (หรือเล่นแบบ ad-hoc/generated) ระบบยังคงแนะนำกลุ่มเดิมของวันนี้ซ้ำอยู่ ทั้งที่ "Training This
   // Week"/"findNextProgramDay" มองไปข้างหน้าถูกต้องแล้ว — เพิ่มเงื่อนไข ต้องยังไม่เคย log ท่ากลุ่มนี้จริงวันนี้
   // เลย (todayMuscleGroups จาก todayList ด้านบน) ถึงจะยังนับว่า "วันนี้ยังไม่เสร็จ" ให้แนะนำกลุ่มเดิมต่อ
+  //
+  // 6D P1-2A — todayScheduledMuscle มาจาก loadMuscleRecommendation() แล้ว (ค่าเดียวกับที่ engine ใช้ตัดสิน
+  // ภายในจริงๆ ไม่ใช่คำนวณซ้ำแบบคนละที่มา) preferTodayMuscle ยังคำนวณที่นี่ (สูตรเดิมเป๊ะ) เพราะเป็น
+  // Dashboard-only concern (ป้อน isRecommendationForToday/aiDailySummary เท่านั้น ไม่ใช่ dependency ของ
+  // suggestMuscleToTrain/computeTodaysAction — engine คำนวณ preferTodayMuscle ของตัวเองแยกภายในไปแล้ว)
   const preferTodayMuscle =
     !!todayScheduledMuscle &&
     !todayMuscleGroups.includes(todayScheduledMuscle) &&
     (progressPctForLabel === null || progressPctForLabel < 100)
-  const scheduledMuscle = preferTodayMuscle
-    ? todayScheduledMuscle
-    : getNextScheduledMuscle(scheduledDaysWithMuscle, dow, MUSCLE_GROUPS)
-  // thisWeekSets/weeklyVolumeTargets ส่งเข้าไปด้วย (เดิมไม่มี) — ให้ engine แนะนำกลุ่มอื่นแทนกลุ่มตามตาราง
-  // ได้ถ้า Volume ของกลุ่มตามตารางเกินเป้าหมายไปแล้ว (ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — ดู comment
-  // เต็มที่ suggestMuscleToTrain) และให้กรณี "เลือกอิสระ" (ไม่มีตารางบังคับ) ไม่แนะนำกลุ่มที่เกินเป้าซ้ำๆ ด้วย
-  const muscleRecommendation = suggestMuscleToTrain(recoveryPctForSummary, scheduledMuscle, thisWeekSets, weeklyVolumeTargets)
   // suggestMuscleToTrain ตกกลับไปเลือกกล้ามเนื้อ recovery สูงสุดเงียบๆ ถ้า scheduledMuscle ไม่มีอยู่ใน
   // recoveryPctByMuscle (เช่น วันนี้ตั้งชื่อวันเป็น "ทั้งตัว"/"อื่นๆ" ซึ่งไม่อยู่ใน RECOVERY_MUSCLES) —
   // เช็คว่าผลลัพธ์จริงตรงกับ todayScheduledMuscle เป๊ะๆ (หรือ "แทนที่" กลุ่มตามตารางเพราะ Volume เกินเป้า —
