@@ -892,7 +892,9 @@ describe('computeTodaysAction', () => {
       hasMakeupToday: false,
       todayCompletedRaw: false,
     })
-    expect(action.sessionHref).toBe('/session?day=day-chest')
+    // 6C-1 — schedule-override sessions must be marked so /session doesn't classify them as a genuine
+    // makeup/catch-up session (see lib/activeMakeupSession.ts's isGenuineMakeupSession)
+    expect(action.sessionHref).toBe('/session?day=day-chest&source=recommendation')
     expect(action.scheduleOverriddenFrom).toBe('ขา')
   })
 
@@ -906,6 +908,7 @@ describe('computeTodaysAction', () => {
       hasMakeupToday: true,
       todayCompletedRaw: false,
     })
+    // genuine makeup sessions never carry the recommendation marker — this IS a real catch-up session
     expect(action.sessionHref).toBe('/session?day=day-makeup')
   })
 

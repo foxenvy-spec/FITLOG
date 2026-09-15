@@ -579,8 +579,17 @@ export function computeTodaysAction(params: {
   } else if (recommendation?.scheduleOverriddenFrom) {
     // recommendation แนะนำกล้ามเนื้ออื่นแทนวันตาราง — หาว่ากล้ามเนื้อนั้นตรงกับ program_days วันไหน
     // (ข้อมูลที่มีอยู่แล้วใน DashboardData ไม่ต้อง query ใหม่) ถ้าเจอ ให้ sessionHref พาไปวันนั้นแทน
+    //
+    // 6C-1 — วันที่ override เกือบเสมอมี day_of_week ต่างจากวันนี้จริง (เพราะเป็นแผนของอีกวันหนึ่ง) ก่อนหน้า
+    // นี้ /session (session/page.tsx) ตีความ "?day=X ที่ day_of_week ต่างจากวันนี้" ว่าเป็นเซสชันชดเชยเสมอ —
+    // ทั้งที่นี่ไม่ใช่การชดเชยวันที่พลาดเลย แค่คำแนะนำ Volume/Recovery ปกติ ทำให้ session banner/BottomNav/
+    // Dashboard ขึ้นข้อความ "โหมดชดเชย" ผิดๆ ทั้งที่ไม่เคยพลาดวันไหนจริง (6A/6C audit) — ติด marker
+    // source=recommendation ต่อท้าย ให้ /session แยกสอง intent นี้ออกจากกันได้ (ดู isMakeup ใน
+    // session/page.tsx) โดยไม่แตะ query param `day` เดิม/กลไก makeup session เดิมเลย — genuine makeup
+    // (activeMakeupDayId ด้านบน, ลิงก์จาก /program, "มีแผนที่พลาด" ใน session/page.tsx เอง) ไม่ติด marker
+    // นี้ ยังคงถูกจัดเป็นเซสชันชดเชยเหมือนเดิมทุกประการ
     const overrideDay = programDays.find((d) => programDayMuscleGroups[d.day_of_week] === recommendation.muscleGroup)
-    if (overrideDay) sessionHref = `/session?day=${overrideDay.id}`
+    if (overrideDay) sessionHref = `/session?day=${overrideDay.id}&source=recommendation`
   }
 
   return {

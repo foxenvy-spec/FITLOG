@@ -41,3 +41,23 @@ export function sessionHrefWithMakeup(): string {
   const dayId = getActiveMakeupDayId()
   return dayId ? `/session?day=${dayId}` : '/session'
 }
+
+// 6C-1 (6A/6C audit — "schedule-override session mislabeled as makeup") — ?day=<program_day_id> ใน URL
+// ของ /session มีอย่างน้อย 2 ที่มาที่ต้องแยกออกจากกัน:
+// (1) genuine makeup/catch-up — ลิงก์จาก /program, "มีแผนที่พลาด" ใน session/page.tsx เอง, หรือ
+//     activeMakeupDayId (เซสชันชดเชยที่ทำค้างไว้) — ตั้งใจ "ทำแผนของอีกวันหนึ่งแทนวันนี้" จริงๆ
+// (2) คำแนะนำที่สลับกล้ามเนื้อเพราะ Volume/Recovery ตามปกติ (computeTodaysAction's scheduleOverriddenFrom
+//     branch, lib/dashboardStats.ts) — เลือกวันที่ตรงกับกล้ามเนื้อที่แนะนำ ไม่ใช่การ "ชดเชย" อะไรเลย แนบ
+//     &source=recommendation ต่อท้าย ?day= มาด้วยเสมอเพื่อบอกจุดนี้
+// ก่อนหน้านี้ session/page.tsx ตัดสิน "นี่คือเซสชันชดเชยไหม" จากแค่ day_of_week ต่างจากวันนี้เฉยๆ (ใช้ได้
+// ตอน ?day= มีความหมายเดียว) พอมีที่มาที่ 2 เกิดขึ้น เงื่อนไขเดิมเข้าใจผิดว่าเป็นเซสชันชดเชยเสมอ ทำให้ banner/
+// BottomNav/Dashboard (ผ่าน activeMakeupSession ทั้งไฟล์นี้) ขึ้น "โหมดชดเชย" ผิดๆ — ฟังก์ชันนี้เป็นจุดเดียว
+// ที่ session/page.tsx ต้องเรียกเพื่อตัดสินเรื่องนี้ กัน logic ซ้ำ/หลุด sync กันอีกในอนาคต
+export function isGenuineMakeupSession(params: {
+  dayParam: string | null
+  selectedDayOfWeek: number
+  todayDayOfWeek: number
+  source: string | null
+}): boolean {
+  return params.dayParam != null && params.selectedDayOfWeek !== params.todayDayOfWeek && params.source !== 'recommendation'
+}

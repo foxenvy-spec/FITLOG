@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout } from '@/lib/types'
 import { todayDayOfWeek, todayStr, WEEKDAYS } from '@/lib/weekdays'
-import { setActiveMakeupDayId, clearActiveMakeupDayId, getActiveMakeupDayId } from '@/lib/activeMakeupSession'
+import { setActiveMakeupDayId, clearActiveMakeupDayId, getActiveMakeupDayId, isGenuineMakeupSession } from '@/lib/activeMakeupSession'
 import { MUSCLE_GROUP_COLORS, RECOVERY_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { useExerciseLibrary } from '@/lib/useExerciseLibrary'
 import { findExerciseByName } from '@/lib/exercises'
@@ -261,6 +261,14 @@ export default function SessionPage() {
     // window.location ตรงๆ แทน useSearchParams (หน้านี้เป็น client component ล้วนอยู่แล้ว ทุก query/state
     // รันหลัง mount เสมอ — เลี่ยง Suspense boundary requirement ของ useSearchParams ที่ไม่จำเป็นตรงนี้)
     const makeupDayId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('day') : null
+    // 6C-1 (6A/6C audit — "schedule-override session mislabeled as makeup") — computeTodaysAction()
+    // (lib/dashboardStats.ts) แนบ &source=recommendation ท้าย ?day= ตอน sessionHref มาจากคำแนะนำที่สลับ
+    // กล้ามเนื้อเพราะ Volume/Recovery ปกติ (scheduleOverriddenFrom) ไม่ใช่การชดเชยวันที่พลาดจริง — ก่อนหน้านี้
+    // ?day=X ที่ day_of_week ต่างจากวันนี้ ถูกตีความเป็นเซสชันชดเชยเสมอไม่ว่าที่มาจะเป็นอะไร ทำให้ session
+    // banner/BottomNav/Dashboard (ผ่าน activeMakeupSession ด้านล่าง) ขึ้น "โหมดชดเชย" ผิดๆ ทั้งที่ไม่เคย
+    // พลาดวันไหนเลย — genuine makeup (ลิงก์จาก /program, "มีแผนที่พลาด" ในหน้านี้เอง, activeMakeupDayId ที่
+    // ทำค้างไว้) ไม่เคยแนบ source นี้ จึงยังถูกจัดเป็นเซสชันชดเชยเหมือนเดิมทุกประการ
+    const sessionSource = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('source') : null
     const { data: dayRow, error: dayErr } = await (makeupDayId
       ? supabase.from('program_days').select('*').eq('id', makeupDayId).maybeSingle()
       : supabase.from('program_days').select('*').eq('day_of_week', dow).maybeSingle())
@@ -276,9 +284,15 @@ export default function SessionPage() {
       return
     }
 
-    // true เฉพาะตอนเลือกแผนของวันอื่น (ไม่ใช่วันจริงตามปฏิทินวันนี้) มาทำ — ใช้โชว์ banner "โหมดชดเชย"
-    // กันสับสนกับแผนจริงของวันนี้ ไม่ใช่ธงที่ persist ลง DB (แค่ derive จาก day_of_week ที่โหลดมาเทียบ dow)
-    const isMakeup = makeupDayId != null && (dayRow as ProgramDay).day_of_week !== dow
+    // true เฉพาะตอนเลือกแผนของวันอื่น (ไม่ใช่วันจริงตามปฏิทินวันนี้) มาทำ "ชดเชย" จริงๆ — ใช้โชว์ banner
+    // "โหมดชดเชย" กันสับสนกับแผนจริงของวันนี้ ไม่ใช่ธงที่ persist ลง DB — isGenuineMakeupSession()
+    // (lib/activeMakeupSession.ts, 6C-1) เป็นจุดเดียวที่ตัดสินเรื่องนี้ กัน logic ซ้ำ/หลุด sync กันอีก
+    const isMakeup = isGenuineMakeupSession({
+      dayParam: makeupDayId,
+      selectedDayOfWeek: (dayRow as ProgramDay).day_of_week,
+      todayDayOfWeek: dow,
+      source: sessionSource,
+    })
     setIsMakeupSession(isMakeup)
     // จำไว้ว่ากำลังทำเซสชันชดเชยของแผนไหนอยู่ (ดู lib/activeMakeupSession.ts) ให้ทุกจุดที่ลิงก์ไป
     // '/session' เฉยๆ ทั่วแอป (BottomNav, การ์ด Today's Workout ฯลฯ) อ่านไปสร้าง href กลับเข้าเซสชันเดิม
