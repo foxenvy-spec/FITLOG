@@ -2190,8 +2190,18 @@ export default function DashboardPage() {
                 // ไปหน้า /calendar พร้อม ?date= วันนี้ ให้เปิดมาเห็นรายละเอียดวันนี้ทันทีเลย (ดูจุดอ่าน
                 // query param นี้ที่ calendar/page.tsx)
                 <div className="mt-4">
+                  {/* 6C-2 (6A/6C audit — "persisted makeup heuristic asserts an intent it can't prove")
+                      — hasMakeupToday เป็นแค่ fact ว่า program_day_id ของ workout วันนี้ต่างจาก
+                      scheduledDay (ดู comment เต็มที่ hasMakeupToday ด้านบน) ไม่ใช่หลักฐานว่า "นี่คือ
+                      เซสชันชดเชย" จริง — ตั้งแต่ P0-1 มีเหตุผลที่ 2 ที่ทำให้ program_day_id ต่างกันได้โดยไม่ใช่
+                      การชดเชยเลย (recommendation แนะนำสลับกล้ามเนื้อเพราะ Volume/Recovery ปกติ, ดู
+                      scheduleOverriddenFrom/computeTodaysAction) แต่ไม่มีข้อมูล persisted ไหนแยกสองกรณีนี้
+                      ออกจากกันได้ (source=recommendation เป็นแค่ URL marker ตอนเซสชัน ไม่เคยเขียนลง DB) —
+                      เปลี่ยนข้อความจากการ "อ้าง intent" (แผนชดเชย) เป็น "บอก fact เท่าที่รู้จริง" (ฝึกกลุ่ม
+                      อื่นแทน) แทน ไม่แตะ hasMakeupToday/isGenuineMakeupSession/genuine makeup path
+                      (makeupSessionActive ด้านบน) ใดๆ เลย */}
                   <p className="text-[13px] text-moss flex items-center gap-1.5">
-                    <span aria-hidden="true">✅</span> ฝึกไปแล้ววันนี้ (แผนชดเชย)
+                    <span aria-hidden="true">✅</span> ฝึกไปแล้ววันนี้ · ฝึกกลุ่มอื่นแทน
                   </p>
                   <Link href={`/calendar?date=${todayStr()}`} className="text-[12px] text-muted hover:text-accent-primary hover:underline mt-1 inline-block">
                     ดูรายละเอียด →

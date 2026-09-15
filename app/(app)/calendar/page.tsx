@@ -420,16 +420,24 @@ export default function CalendarPage() {
             // ฟีดแบ็ก (semantic review, Makeup Session detail page) "'โปรแกรมที่ตั้งไว้ · Day 2 — Pull'
             // ขัดกับรายการท่าที่ฝึกจริงด้านล่าง (อก/ไหล่/แขน) — ผู้ใช้จะสงสัยว่าระบบบันทึกผิดหรือเปล่า
             // ทั้งที่จริงคือทำเซสชันชดเชยของอีกวันหนึ่ง" — ตรวจว่า workout ของวันนี้มี program_day_id ที่
-            // ไม่ตรงกับ scheduledProgram ของวันนี้ (ตามวันในสัปดาห์) ไหม ถ้าใช่ แปลว่าเป็นเซสชันชดเชย
-            // เปลี่ยนป้ายให้ตรงความจริง ไม่แตะ exercise list/PR/DaySummaryHeader ด้านล่างเลย (ถูกต้อง
-            // อยู่แล้วตามที่ยืนยัน)
+            // ไม่ตรงกับ scheduledProgram ของวันนี้ (ตามวันในสัปดาห์) ไหม
+            //
+            // 6C-2 (6A/6C audit — "persisted makeup heuristic asserts an intent it can't prove") —
+            // program_day_id mismatch เป็นแค่ fact ว่าวันนี้ฝึก program day อื่น ไม่ใช่หลักฐานว่า "นี่คือ
+            // เซสชันชดเชย" จริง — ตั้งแต่ P0-1 มีเหตุผลที่ 2 ที่ทำให้ mismatch เกิดได้โดยไม่ใช่การชดเชยเลย
+            // (recommendation แนะนำสลับกล้ามเนื้อเพราะ Volume/Recovery ปกติ) แต่ไม่มีข้อมูล persisted ไหน
+            // แยกสองกรณีนี้ออกจากกันได้ (source=recommendation เป็นแค่ URL marker ตอนเซสชัน ไม่เคยเขียนลง
+            // DB — ดู lib/dashboardStats.ts's computeTodaysAction) — เปลี่ยนป้ายจากการ "อ้าง intent" (แผนที่
+            // ชดเชย) เป็น "บอก fact เท่าที่รู้จริง" (ฝึกกลุ่มอื่นแทน) แทน ไม่แตะ exercise list/PR/
+            // DaySummaryHeader ด้านล่างเลย (ถูกต้องอยู่แล้วตามที่ยืนยัน) — เก็บชื่อตัวแปร isMakeupDay ไว้
+            // (ยังตอบคำถามเดิม "program_day_id ต่างจากตารางไหม" ถูกต้อง แค่ copy ที่ derive จากมันเปลี่ยน)
             const isMakeupDay = selectedWorkouts.some(
               (w) => w.program_day_id && w.program_day_id !== scheduledProgram.day.id
             )
             return (
             <div className="bg-surface2 border border-line rounded-lg px-4 py-3 mb-3">
               <p className="text-[12px] text-muted tracked uppercase mb-1.5">
-                {isMakeupDay ? '📋 แผนที่ชดเชย' : '📋 โปรแกรมที่ตั้งไว้'} · {scheduledProgram.day.title}
+                {isMakeupDay ? '📋 ฝึกกลุ่มอื่นแทน' : '📋 โปรแกรมที่ตั้งไว้'} · {scheduledProgram.day.title}
               </p>
               <ul className="space-y-1">
                 {scheduledProgram.exercises.map((ex) => (
