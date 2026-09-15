@@ -24,7 +24,7 @@ import InsightCard from '@/components/InsightCard'
 import type { Insight } from '@/lib/dashboardStats'
 import { zoneOf, classifyMetric, computeHealthTrendInsights, type Direction, type Zone } from '@/lib/healthInsights'
 import { computeHealthScore, type HealthScoreRanges, type HealthScoreResult, type ScoreDirection } from '@/lib/healthScore'
-import { periodLabelOf } from '@/lib/bodyMetricsSummary'
+import { periodLabelOf, metricDelta } from '@/lib/bodyMetricsSummary'
 import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import { saveAge, isValidAge, isValidHeightCm, AGE_RANGE, HEIGHT_CM_RANGE } from '@/lib/profile'
 import { computeBmr, computeTdee, ACTIVITY_MULTIPLIERS, ACTIVITY_LEVEL_LABELS, type ActivityLevel } from '@/lib/bmr'
@@ -278,6 +278,9 @@ export default function HealthPage() {
   )
 
   const latest = metrics[0] ?? null
+  // 6D P0-1: แถวก่อนหน้าล่าสุด (ไม่ว่าจะห่างกี่วัน) — จุดเดียวที่ fieldDelta()/previousBmi/weightPeriodCaption
+  // ทั้งหมดต้องอิงร่วมกัน ไม่ให้แต่ละจุด scan หาคู่แถวของตัวเองแยกกัน (ดู comment ที่ fieldDelta ด้านล่าง)
+  const previous = metrics[1] ?? null
   const bmi = bmiOf(latest?.weight_kg ?? null, profile?.height_cm ?? null)
   const latestLbm = latest ? lbmOf(latest) : null
 
@@ -424,33 +427,29 @@ export default function HealthPage() {
     return null
   }
 
-  // ผลต่างของค่าล่าสุด vs ค่าที่กรอกไว้ก่อนหน้า (สแกนหาสองแถวล่าสุดที่มีค่านี้จริงๆ ไม่จำเป็นต้องเป็นแถวติดกัน)
+  // 6D P0-1: ผลต่างของค่าล่าสุด (latest) vs แถวก่อนหน้าติดกันจริง (previous) เท่านั้น — เดิม scan หา 2 ค่า
+  // ที่ไม่ null ข้ามแถวไปเรื่อยๆ ทำให้ value ที่การ์ดโชว์ (จาก latest) กับ delta ที่โชว์คู่กัน (จากคู่แถวอื่น
+  // ที่ scan เจอ) ไม่ใช่คู่เดียวกัน — delegate ไป canonical metricDelta() (lib/bodyMetricsSummary.ts) ที่ล็อก
+  // ไว้แล้วว่า "ไม่มีข้อมูลพอในคู่แถวจริง → null" แทนการหาคู่ทดแทนจากประวัติที่ไกลกว่า
   function fieldDelta(field: keyof BodyMetric, toDisplayFn?: (v: number) => number): number | null {
-    const nonNull: number[] = []
-    for (const m of metrics) {
-      const v = m[field]
-      if (typeof v === 'number') {
-        nonNull.push(toDisplayFn ? toDisplayFn(v) : v)
-        if (nonNull.length === 2) break
-      }
-    }
-    if (nonNull.length < 2) return null
-    return nonNull[0] - nonNull[1]
+    return metricDelta(
+      metrics,
+      previous,
+      (m) => {
+        const v = m[field]
+        return typeof v === 'number' ? (toDisplayFn ? toDisplayFn(v) : v) : null
+      },
+      false
+    ).delta
   }
 
   // BMI จากค่าน้ำหนักที่กรอกไว้ก่อนหน้า (ใช้ส่วนสูงปัจจุบันเดียวกัน เพราะส่วนสูงไม่ค่อยเปลี่ยน)
+  // 6D P0-1: ใช้ previous (แถวก่อนหน้าติดกันจริง) โดยตรง แทนการ scan หาค่า weight_kg ที่ไม่ null 2 ค่าแรก
+  // ข้ามแถว (เดิมอาจได้ BMI ก่อนหน้าจากแถวที่ไกลกว่า previous ที่ fieldDelta()/weightPeriodCaption ใช้จริง)
   const previousBmi = useMemo(() => {
-    if (!profile?.height_cm) return null
-    const nonNull: number[] = []
-    for (const m of metrics) {
-      if (typeof m.weight_kg === 'number') {
-        nonNull.push(m.weight_kg)
-        if (nonNull.length === 2) break
-      }
-    }
-    if (nonNull.length < 2) return null
-    return bmiOf(nonNull[1], profile.height_cm)
-  }, [metrics, profile?.height_cm])
+    if (!profile?.height_cm || previous?.weight_kg == null) return null
+    return bmiOf(previous.weight_kg, profile.height_cm)
+  }, [previous, profile?.height_cm])
 
   // v29: ฟีดแบ็ก "Weight/Skeletal Muscle เป็น Primary, Fat Mass เป็น Secondary...ผู้ใช้ไม่ควรต้องตีความเอง
   // ว่าเลขนั้นดีหรือไม่ดี" — เพิ่ม primary (สำหรับความหนาแน่นภาพ) + delta จริง (fieldDelta เดียวกับ Key
@@ -1013,7 +1012,11 @@ export default function HealthPage() {
   // v8: ฟีดแบ็ก "↑ 0.9 kg / จาก 3 สัปดาห์ก่อน คนละบรรทัดเยอะไป อยากได้ ↑ 0.9 kg · 3 สัปดาห์ รวมบรรทัดเดียว"
   // — เปลี่ยนจาก periodLabelOf (คืนประโยคเต็ม "จาก X ก่อน" ไว้ใช้เดี่ยวๆ) เป็น compactPeriodLabel (คืนแค่
   // ระยะเวลาล้วนๆ ไว้ต่อท้ายเดลต้าด้วย "·")
-  const weightPeriodCaption = compactPeriodLabel(latest, metrics[1] ?? null)
+  // 6D P0-1: แสดง caption เฉพาะเมื่อ weightDeltaForCard (คู่แถวเดียวกัน: latest vs. previous) มีค่าจริง —
+  // เดิม compactPeriodLabel(latest, metrics[1] ?? null) คำนวณแยกจาก fieldDelta() เสมอ ทำให้ถ้า weight_kg
+  // ของ latest/metrics[1] ไม่ครบคู่ (fieldDelta ไป scan เจอคู่ที่ไกลกว่า) caption จะโชว์ระยะเวลาของ
+  // metrics[1] ทั้งที่ตัวเลขเดลต้าจริงมาจากคู่แถวอื่น
+  const weightPeriodCaption = weightDeltaForCard !== null ? compactPeriodLabel(latest, previous) : null
 
   // ฟีดแบ็ก "Body Fat Card ยังไม่บอกว่าดีหรือยัง อยากเห็น Badge (Good/Normal)" — ใช้เกณฑ์ % ไขมันตามเพศ
   // เดียวกับที่คะแนนสุขภาพรวมใช้อยู่แล้ว (bodyFatPctRange) ไม่ได้คิดเกณฑ์ใหม่แยกต่างหาก

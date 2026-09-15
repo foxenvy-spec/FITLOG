@@ -197,6 +197,26 @@ describe('computeAIDailySummary', () => {
     expect(msg).not.toContain('ดึง')
   })
 
+  // 6D P0-2: pct: null (never-trained, P1-1 semantic — lib/dashboardStats.ts) ต้องไม่ interpolate ตรงๆ
+  // เป็น "null%" — เดิม bug นี้เป็น modal case เพราะ never-trained ถูกจัดอันดับสูงสุดเสมอ ไม่ใช่ edge case
+  it('never mentions a literal "null" percentage when the recommended muscle has never been trained', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'แขน', pct: null },
+      { pushSets: 0, pullSets: 0, ratio: null, status: 'insufficient_data' }
+    )
+    expect(msg).not.toContain('null')
+    expect(msg).toContain('แขน')
+    expect(msg).toContain('ยังไม่เคยฝึกกล้ามเนื้อนี้')
+  })
+
+  it('keeps the existing numeric recovery copy unchanged when pct is a number', () => {
+    const msg = computeAIDailySummary(
+      { muscleGroup: 'ขา', pct: 65 },
+      { pushSets: 10, pullSets: 10, ratio: 1, status: 'balanced' }
+    )
+    expect(msg).toContain('ฟื้นตัวแล้ว 65%')
+  })
+
   it('appends a pull suggestion when push dominant', () => {
     const msg = computeAIDailySummary(
       { muscleGroup: 'ขา', pct: 80 },

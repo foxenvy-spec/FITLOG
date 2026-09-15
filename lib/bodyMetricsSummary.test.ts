@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { BodyMetric } from './types'
-import { computeBodyMetricsSummary, findComparisonEntry } from './bodyMetricsSummary'
+import { computeBodyMetricsSummary, findComparisonEntry, metricDelta } from './bodyMetricsSummary'
 
 // เอนทรีเปล่า (ทุกฟิลด์ null) — ทดสอบแค่ override ฟิลด์ที่เกี่ยวข้องต่อเคส กัน object literal ยาวเป็นหน้าจอ
 function emptyMetric(overrides: Partial<BodyMetric>): BodyMetric {
@@ -48,6 +48,33 @@ function emptyMetric(overrides: Partial<BodyMetric>): BodyMetric {
     ...overrides,
   }
 }
+
+// 6D P0-1: metricDelta ถูก export ให้ /health ใช้เป็น canonical delta engine โดยตรง (แทน fieldDelta()
+// ของตัวเองที่เคย scan ข้ามแถวได้) — เคสนี้แค่ยืนยันว่า public contract ยังทำงานเหมือนเดิมทุกประการ
+// (computeBodyMetricsSummary ก็ใช้ฟังก์ชันนี้อยู่แล้วภายใน ไม่มี logic เปลี่ยน)
+describe('metricDelta', () => {
+  it('returns null delta when latest lacks the field, even if an older row has it', () => {
+    const latest = emptyMetric({ measured_at: '2026-01-10' })
+    const previous = emptyMetric({ measured_at: '2026-01-05', weight_kg: 70 })
+    const result = metricDelta([latest, previous], previous, (m) => m.weight_kg, false)
+    expect(result).toEqual({ value: null, delta: null, isGood: null })
+  })
+
+  it('returns null delta when the immediately-previous row lacks the field, without looking further back', () => {
+    const latest = emptyMetric({ measured_at: '2026-01-10', weight_kg: 68 })
+    const previous = emptyMetric({ measured_at: '2026-01-05' })
+    const older = emptyMetric({ measured_at: '2026-01-01', weight_kg: 72 })
+    const result = metricDelta([latest, previous, older], previous, (m) => m.weight_kg, false)
+    expect(result).toEqual({ value: 68, delta: null, isGood: null })
+  })
+
+  it('computes value/delta/isGood from the latest vs. previous pair when both have the field', () => {
+    const latest = emptyMetric({ measured_at: '2026-01-10', weight_kg: 68 })
+    const previous = emptyMetric({ measured_at: '2026-01-05', weight_kg: 70 })
+    const result = metricDelta([latest, previous], previous, (m) => m.weight_kg, false)
+    expect(result).toEqual({ value: 68, delta: -2, isGood: true })
+  })
+})
 
 describe('computeBodyMetricsSummary — skeletalMuscleKg', () => {
   // บั๊กจริงที่พบ: การ์ด "กล้ามเนื้อ" บนแดชบอร์ดโชว์ delta -22.2kg ใน 4 เดือน ทั้งที่ผู้ใช้แค่เปลี่ยนจาก

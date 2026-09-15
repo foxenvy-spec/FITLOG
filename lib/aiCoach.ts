@@ -205,7 +205,14 @@ export function computeAIDailySummary(
     return 'ยังไม่มีข้อมูลพอให้วิเคราะห์ — ลองบันทึกการฝึกสัก 2-3 ครั้งก่อน'
   }
 
-  let msg = `${recoveryRecommendationLabel(progressPct, isForToday)} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
+  // 6D P0-2: pct null = ยังไม่เคยฝึกกล้ามเนื้อนี้ (P1-1 semantic, lib/dashboardStats.ts) — เดิม interpolate
+  // ตรงๆ ทำให้ประโยคนี้ขึ้น "ฟื้นตัวแล้ว null%" จริง เพราะ never-trained ถูกจัดเป็น candidate อันดับแรกเสมอ
+  // (ไม่ใช่ edge case) ใช้ wording เดียวกับที่ล็อกไว้แล้วใน reasoningGroups/AICoachCompactCard ไม่สร้างใหม่
+  const label = recoveryRecommendationLabel(progressPct, isForToday)
+  let msg =
+    muscleRecommendation.pct === null
+      ? `${label} ${muscleRecommendation.muscleGroup} (ยังไม่เคยฝึกกล้ามเนื้อนี้ พร้อมเริ่มได้เลย)`
+      : `${label} ${muscleRecommendation.muscleGroup} (ฟื้นตัวแล้ว ${muscleRecommendation.pct}%)`
 
   // ฟีดแบ็ก "Recovery ฟื้นตัวแล้ว ≠ ควรฝึก" — ถ้า suggestMuscleToTrain แนะนำกลุ่มนี้แทนกลุ่มตามตารางเพราะ
   // เซ็ตของกลุ่มตามตารางเกินเป้าหมายไปแล้ว (scheduleOverriddenFrom) ต้องบอกเหตุผลตรงๆ ไม่ใช่แนะนำเงียบๆ

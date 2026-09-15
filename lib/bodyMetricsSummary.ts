@@ -77,7 +77,9 @@ export function periodLabelOf(latest: BodyMetric | null, previous: BodyMetric | 
 }
 
 // higherIsGood: undefined = ไม่ตัดสิน (ใช้กับ BMI ที่ใช้ category แทน)
-function metricDelta(
+// 6D P0-1: export เพื่อให้ /health ใช้เป็น canonical delta engine โดยตรง (เดิมมี fieldDelta() ของตัวเอง
+// ที่ scan หา 2 ค่าที่ไม่ null ข้ามแถวได้ ทำให้ value/delta/period caption ไม่ได้มาจากคู่แถวเดียวกันเสมอไป)
+export function metricDelta(
   sortedDesc: BodyMetric[],
   previous: BodyMetric | null,
   pick: (m: BodyMetric) => number | null,
