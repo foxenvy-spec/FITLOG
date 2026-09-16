@@ -888,7 +888,16 @@ function LogPageInner() {
           </div>
         )}
 
-        {daySummary && (
+        {/* Empty/Null/Unavailable States audit — เดิม today เริ่มต้นเป็น [] (useState initial value)
+            เหมือนกับตอน query เสร็จแล้วแต่ไม่มี workout จริง ทำให้ daySummary === null ทั้งสองเคสแยกกันไม่ได้
+            (loading vs confirmed-empty conflate กัน) ทั้งที่ "รายการวันนี้" section ด้านล่าง (บรรทัด ~940)
+            มี loadingToday gate อยู่แล้วแยกสองเคสนี้ถูกต้อง — เพิ่ม loadingToday check ที่นี่ให้ตรงกัน reuse
+            LoadingState ตัวเดียวกับที่ section นั้นใช้ ไม่สร้าง component ใหม่ ไม่แตะ daySummary/
+            computeDaySummary/bodyWeightKg/today query ใดๆ เลย */}
+        {loadingToday ? (
+          <LoadingState />
+        ) : (
+          daySummary && (
           <div>
             {/* บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "การ์ดนี้เขียน 'สรุปวันนี้' ตายตัว ทั้งที่จริงสรุปของ date
                 ที่กำลังดูอยู่ (อาจไม่ใช่วันนี้ ถ้าเปิดผ่าน ?edit=<id> หรือแก้ date picker เพื่อ backfill
@@ -922,6 +931,7 @@ function LogPageInner() {
               )}
             </PremiumCard>
           </div>
+          )
         )}
 
       <div>
