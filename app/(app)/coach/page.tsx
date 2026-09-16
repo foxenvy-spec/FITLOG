@@ -14,7 +14,7 @@ import {
   type GeneratedWorkout,
 } from '@/lib/workoutGenerator'
 import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
-import { MUSCLE_GROUPS, VOLUME_MUSCLES, dominantMuscleGroup, describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
+import { MUSCLE_GROUPS, VOLUME_MUSCLES, RECOVERY_MUSCLES, dominantMuscleGroup, describeMuscleFocus, type MuscleGroup } from '@/lib/muscle-groups'
 import { todayStr } from '@/lib/weekdays'
 import {
   computeRecoveryPct,
@@ -148,8 +148,16 @@ export default function CoachPage() {
         if (!w.muscle_group) return
         if (!lastTrainedByMuscle[w.muscle_group]) lastTrainedByMuscle[w.muscle_group] = w.performed_at
       })
+      // 6D P1-5 — recoveryPctMap เป็น candidate domain ของ suggestMuscleToTrain โดยตรง (ทั้งผ่าน
+      // `scheduledMuscle in recoveryPctByMuscle` check และ final-fallback ranking ข้าม entries ทั้งหมด) —
+      // เดิมใช้ MUSCLE_GROUPS (9 กลุ่ม รวม "ทั้งตัว"/"อื่นๆ" ซึ่งไม่มี weekly volume target และถูกออกแบบให้
+      // "กำกวมเกินกว่าจะเทียบได้ตรงๆ" ตาม comment ที่ VOLUME_MUSCLES/RECOVERY_MUSCLES ใน lib/muscle-groups.ts)
+      // ทำให้ engine เลือกกลุ่มเหล่านี้เป็นคำแนะนำได้จริง ขัดกับ Dashboard/Train (ผ่าน loadMuscleRecommendation)
+      // ที่ใช้ RECOVERY_MUSCLES (7 กลุ่ม) เป็น candidate domain มาตั้งแต่ต้น — เปลี่ยนมาใช้ domain เดียวกัน
+      // ไม่แตะ getScheduledMuscleForDay/getNextScheduledMuscle ด้านล่าง (ยังใช้ MUSCLE_GROUPS ตามเดิม —
+      // schedule resolution เป็นคนละ domain จาก recommendation candidate pool, ดู comment เต็มที่ P1-5)
       const recoveryPctMap: Record<string, number | null> = {}
-      MUSCLE_GROUPS.forEach((mg) => {
+      RECOVERY_MUSCLES.forEach((mg) => {
         recoveryPctMap[mg] = computeRecoveryPct(lastTrainedByMuscle[mg] ?? null, mg)
       })
 

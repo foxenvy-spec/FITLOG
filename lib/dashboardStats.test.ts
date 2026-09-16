@@ -842,6 +842,62 @@ describe('suggestMuscleToTrain', () => {
       expect(first?.muscleGroup).toBe('อก')
     })
   })
+
+  // 6D P1-5 (6A/6D audit — "Coach recovery domain mismatch") — Coach/recovery/page.tsx used to build their
+  // recoveryPctByMuscle over all 9 MUSCLE_GROUPS (including the "ทั้งตัว"/"อื่นๆ" catch-all categories,
+  // which have no weekly volume target and are explicitly documented as "too ambiguous to compare
+  // directly" — see VOLUME_MUSCLES/RECOVERY_MUSCLES in lib/muscle-groups.ts) while Dashboard/Train (via
+  // loadMuscleRecommendation) only ever supply the 7-key RECOVERY_MUSCLES domain — a caller-side bug, not
+  // an engine bug. These tests lock the engine's actual contract at the boundary: it faithfully returns
+  // whatever candidate domain it's given (characterization, not endorsement), and once callers correctly
+  // restrict that domain to RECOVERY_MUSCLES, catch-all categories are structurally impossible to get back,
+  // regardless of scheduledMuscle or which fallback path is taken.
+  describe('recovery domain boundary (P1-5)', () => {
+    it('characterization: allows a catch-all category when the caller supplies it in recoveryPctByMuscle — this is a caller responsibility, not something the engine should be relied on to filter', () => {
+      const rec = suggestMuscleToTrain({ อก: 60, หลัง: 50, 'ทั้งตัว': null }, 'ทั้งตัว')
+      expect(rec?.muscleGroup).toBe('ทั้งตัว')
+    })
+
+    it('Trigger A — never returns "ทั้งตัว" when scheduledMuscle resolves to it but the domain is correctly restricted to real muscles', () => {
+      const rec = suggestMuscleToTrain({ อก: 60, หลัง: 50, ขา: 40 }, 'ทั้งตัว')
+      expect(rec?.muscleGroup).not.toBe('ทั้งตัว')
+      expect(['อก', 'หลัง', 'ขา']).toContain(rec?.muscleGroup)
+    })
+
+    it('Trigger A — never returns "อื่นๆ" when scheduledMuscle resolves to it but the domain is correctly restricted to real muscles', () => {
+      const rec = suggestMuscleToTrain({ อก: 60, หลัง: 50, ขา: 40 }, 'อื่นๆ')
+      expect(rec?.muscleGroup).not.toBe('อื่นๆ')
+      expect(['อก', 'หลัง', 'ขา']).toContain(rec?.muscleGroup)
+    })
+
+    it('Trigger B — the final rank-highest fallback never surfaces a catch-all category when every real muscle is over target or below the Good tier, as long as the domain excludes them', () => {
+      // อก/หลัง/ขา ล้วน "เกินเป้า Volume" (ไม่พร้อมถูกแนะนำผ่าน bestReadyAndUnderTarget) — บังคับให้ตกไปที่
+      // final fallback (rank สูงสุดข้าม entries ทั้งหมด) — โดเมนนี้ไม่มี "ทั้งตัว"/"อื่นๆ" เลย (จำลอง Coach/
+      // Recovery หลังแก้ P1-5) ผลต้องเป็นหนึ่งใน 3 กล้ามเนื้อจริงเท่านั้น ไม่ใช่ Infinity-ranked catch-all
+      // ที่ไม่มีทางปรากฏขึ้นมาได้เลยเพราะไม่ใช่ key ในโดเมน
+      const rec = suggestMuscleToTrain(
+        { อก: 100, หลัง: 90, ขา: 80 },
+        null,
+        { อก: 15, หลัง: 12, ขา: 20 },
+        { อก: 10, หลัง: 10, ขา: 12 }
+      )
+      expect(rec?.muscleGroup).not.toBe('ทั้งตัว')
+      expect(rec?.muscleGroup).not.toBe('อื่นๆ')
+      expect(['อก', 'หลัง', 'ขา']).toContain(rec?.muscleGroup)
+    })
+
+    it('Trigger B — a never-trained catch-all category in the domain would otherwise win via P1-1\'s null-ranks-Infinity rule (the exact pre-fix failure mode)', () => {
+      // เดียวกับเทสต์ก่อนหน้าเป๊ะ แต่ "ทั้งตัว" ยังอยู่ในโดเมน (จำลอง Coach ก่อนแก้ P1-5, MUSCLE_GROUPS ทั้ง 9)
+      // และไม่เคยถูกฝึกเลย (pct: null) — ต้องชนะทุกกล้ามเนื้อจริงที่เกินเป้าไปแล้ว เพราะ null ranks เป็น Infinity
+      const rec = suggestMuscleToTrain(
+        { อก: 100, หลัง: 90, ขา: 80, 'ทั้งตัว': null },
+        null,
+        { อก: 15, หลัง: 12, ขา: 20 },
+        { อก: 10, หลัง: 10, ขา: 12 }
+      )
+      expect(rec?.muscleGroup).toBe('ทั้งตัว')
+    })
+  })
 })
 
 describe('computeTodaysRecommendation', () => {

@@ -12,7 +12,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
-import { MUSCLE_GROUPS, MUSCLE_GROUP_COLORS, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
+import { MUSCLE_GROUPS, RECOVERY_MUSCLES, MUSCLE_GROUP_COLORS, dominantMuscleGroup, type MuscleGroup } from '@/lib/muscle-groups'
 import {
   computeRecoveryPct,
   recoveryStatusColor,
@@ -276,9 +276,15 @@ export default function RecoveryPage() {
       </div>
 
       {!loading && !error && rows.length > 0 && (() => {
+        // 6D P1-5 — rows (ด้านบน) ครอบคลุมทั้ง 9 MUSCLE_GROUPS โดยเจตนา เพื่อเป็น display list ของหน้านี้
+        // (โชว์สถานะ "ทั้งตัว"/"อื่นๆ" ได้ถ้าผู้ใช้เคย log ไว้จริง — ยังเป็น valid classification สำหรับ UI)
+        // แต่ recoveryPctMap ที่ป้อนเข้า suggestMuscleToTrain ต้องเป็น candidate domain เดียวกับ Dashboard/
+        // Train (RECOVERY_MUSCLES, 7 กลุ่ม) เท่านั้น — ไม่งั้น engine เลือก "ทั้งตัว"/"อื่นๆ" เป็นคำแนะนำได้จริง
+        // (ไม่มี weekly volume target ให้เทียบ, กำกวมเกินกว่าจะเทียบได้ตรงๆ ตาม comment ที่ RECOVERY_MUSCLES/
+        // VOLUME_MUSCLES ใน lib/muscle-groups.ts) — filter ตรงนี้จุดเดียว ไม่แตะ rows/การแสดงผลอื่นเลย
         const recoveryPctMap: Record<string, number | null> = {}
         rows.forEach((r) => {
-          recoveryPctMap[r.mg] = r.pct
+          if ((RECOVERY_MUSCLES as readonly string[]).includes(r.mg)) recoveryPctMap[r.mg] = r.pct
         })
         const recommendation = suggestMuscleToTrain(recoveryPctMap, scheduledMuscle, thisWeekSets, weeklyVolumeTargets)
         if (!recommendation) return null
