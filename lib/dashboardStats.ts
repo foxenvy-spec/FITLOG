@@ -3,6 +3,7 @@ import { todayStr, bangkokParts } from './weekdays'
 import type { ExerciseDef } from './exerciseLibrary'
 import { COLORS, FIRE_ACCENT } from './theme'
 import { workoutVolumeKg, computeDayTotals } from './workoutDisplay'
+import { estimateWorkoutsCalories } from './calorieEstimate'
 
 // เพดานลูปกันเผื่อกรณีขอบ (เช่น ตั้งโปรแกรมแบบไม่มี weekday ไหนเป็นวันฝึกเลย) ไม่ให้วนไม่มีที่สิ้นสุด — export
 // ออกไปให้ทุกจุดที่ query workouts เพื่อป้อนเข้า computeCurrentStreak/computeLongestStreak (DashboardView.tsx,
@@ -215,46 +216,18 @@ export function findNextProgramDay(days: ProgramDay[], fromDow: number): NextPro
 }
 
 // ==================== แคลอรี่ (ค่าประมาณ) ====================
-// ใช้สูตรมาตรฐาน kcal/นาที = (MET x 3.5 x น้ำหนักตัว กก.) / 200
-// MET เป็นค่าอ้างอิงทั่วไป ไม่ใช่ค่าที่วัดจริงรายบุคคล
-// export ไว้ให้ lib/weeklyCardioVolume.ts เอาไปคำนวณแคลอรี่ของสัปดาห์ซ้ำได้ ไม่ต้องก็อปปี้ตาราง MET
-export const CARDIO_MET: Record<string, number> = {
-  วิ่ง: 9.0,
-  ปั่นจักรยาน: 7.5,
-  ว่ายน้ำ: 7.0,
-  เดินเร็ว: 4.3,
-  กระโดดเชือก: 10.0,
-}
-export const DEFAULT_CARDIO_MET = 6.0
-const STRENGTH_MET = 5.0
-export const DEFAULT_BODYWEIGHT_KG = 70
-
-export function kcalForMinutes(met: number, minutes: number, bodyWeightKg: number) {
-  return (met * 3.5 * bodyWeightKg) / 200 * minutes
-}
-
-// แคลอรี่ของ cardio หนึ่งเซสชัน — ถ้าผู้ใช้กรอก/นำเข้าค่าจริงมา (calories_kcal) ใช้ค่านั้นก่อนเสมอ
-// เพราะแม่นกว่าค่าประมาณจากสูตร MET; ถ้าไม่มีค่าจริงค่อย fallback ไปประมาณจาก MET ตามชนิดคาร์ดิโอ
-export function estimateCardioSessionCalories(w: Workout, bodyWeightKg: number | null): number {
-  if (w.calories_kcal !== null && w.calories_kcal !== undefined) return w.calories_kcal
-  const weight = bodyWeightKg ?? DEFAULT_BODYWEIGHT_KG
-  const met = w.cardio_type ? CARDIO_MET[w.cardio_type] ?? DEFAULT_CARDIO_MET : DEFAULT_CARDIO_MET
-  return kcalForMinutes(met, w.duration_min ?? 0, weight)
-}
+// CAL-1 (Cross-Surface Data Integrity Audit) — สูตร MET/ค่าคงที่ทั้งหมดย้ายไปอยู่ที่ lib/calorieEstimate.ts
+// เป็น shared primitive กลาง ให้ computeDayTotals/computeDaySummary (lib/workoutDisplay.ts) เรียกใช้ตัวเดียว
+// กันได้ ไม่ต้อง duplicate สูตร — re-export ที่นี่ไว้ให้จุดที่เคย import ค่าคงที่พวกนี้จาก './dashboardStats'
+// (เช่น lib/weeklyCardioVolume.ts) ยังใช้ได้เหมือนเดิมทุกประการ
+export { CARDIO_MET, DEFAULT_CARDIO_MET, DEFAULT_BODYWEIGHT_KG, kcalForMinutes, estimateCardioSessionCalories } from './calorieEstimate'
 
 export function estimateCaloriesToday(
   todayWorkouts: Workout[],
   strengthSessionMinutes: number | null,
   bodyWeightKg: number | null
 ): number {
-  const weight = bodyWeightKg ?? DEFAULT_BODYWEIGHT_KG
-  const cardio = todayWorkouts.filter((w) => w.type === 'cardio')
-
-  const cardioKcal = cardio.reduce((sum, w) => sum + estimateCardioSessionCalories(w, weight), 0)
-
-  const strengthKcal = strengthSessionMinutes ? kcalForMinutes(STRENGTH_MET, strengthSessionMinutes, weight) : 0
-
-  return Math.round(cardioKcal + strengthKcal)
+  return estimateWorkoutsCalories(todayWorkouts, strengthSessionMinutes, bodyWeightKg)
 }
 
 // ==================== Recovery ต่อกลุ่มกล้ามเนื้อ (ค่าประมาณ) ====================

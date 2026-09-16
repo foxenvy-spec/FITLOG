@@ -48,6 +48,10 @@ function HistoryPageInner() {
   // เข้าด้วยกันโดยไม่ตั้งใจ) ทำให้ Stats (ที่ query แยก 500 แถวของตัวเอง) เห็นประวัติมากกว่าหน้านี้ ตรวจ PR
   // ได้แม่นกว่าสำหรับท่าที่ฝึกไม่บ่อย — ใช้ PR_HISTORY_LIMIT (canonical, lib/workoutDisplay.ts) แทน
   const [prHistoryPool, setPrHistoryPool] = useState<Workout[]>([])
+  // CAL-1 (Cross-Surface Data Integrity Audit) — หน้านี้ไม่เคย fetch body_metrics เลยมาก่อน ต้องมีเพื่อป้อน
+  // calorie estimator ตัวเดียวกับ Dashboard/Stats/Session (ดู computeDaySummary ด้านล่าง) — query แบบเดียวกับ
+  // ที่ Stats/Session ใช้อยู่แล้ว (แค่น้ำหนักล่าสุด ไม่ใช่ประวัติทั้งหมด)
+  const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null)
   const [setsByWorkoutId, setSetsByWorkoutId] = useState<Record<string, WorkoutSet[]>>({})
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<Filter>('all')
@@ -108,6 +112,19 @@ function HistoryPageInner() {
       setPrHistoryPool((data as Workout[]) ?? [])
     }
     loadPrHistory()
+  }, [supabase])
+
+  useEffect(() => {
+    async function loadBodyWeight() {
+      const { data } = await supabase
+        .from('body_metrics')
+        .select('weight_kg')
+        .order('measured_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      setBodyWeightKg((data as { weight_kg: number | null } | null)?.weight_kg ?? null)
+    }
+    loadBodyWeight()
   }, [supabase])
 
   async function handleDelete(id: string, label: string) {
@@ -320,7 +337,7 @@ function HistoryPageInner() {
             <div key={date}>
               <p className="text-xs font-mono tracked text-muted mb-2 uppercase">{formatThaiDate(date)}</p>
               <DaySummaryHeader
-                summary={computeDaySummary(grouped[date])}
+                summary={computeDaySummary(grouped[date], bodyWeightKg)}
                 prBreakdown={countDayPRsBreakdown(
                   grouped[date].filter((w) => w.type === 'strength'),
                   prHistoryPool

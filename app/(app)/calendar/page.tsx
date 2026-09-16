@@ -476,7 +476,10 @@ export default function CalendarPage() {
           ) : (
             <>
               {(() => {
-                const summary = computeDaySummary(selectedWorkouts)
+                // CAL-1 — latestMetric ถูก fetch มาแล้วในหน้านี้อยู่แล้ว (loadGoalsData, ใช้ sync progress %
+                // กับ Health/Dashboard) เอา weight_kg มาป้อน calorie estimator ตัวเดียวกับ Dashboard/Stats
+                // โดยไม่ต้อง query ใหม่
+                const summary = computeDaySummary(selectedWorkouts, latestMetric?.weight_kg ?? null)
                 const prBreakdown = countDayPRsBreakdown(
                   selectedWorkouts.filter((w) => w.type === 'strength'),
                   prHistoryPool

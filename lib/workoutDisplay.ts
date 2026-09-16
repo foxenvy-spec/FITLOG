@@ -1,4 +1,5 @@
 import type { Workout } from './types'
+import { estimateWorkoutsCalories } from './calorieEstimate'
 
 // volume ของ workout หนึ่งแถว — ใช้ total_volume_kg ถ้ามี (แม่นยำกว่าเพราะรวมจากทีละเซ็ตจริง)
 // ไม่งั้น fallback ไปคูณ sets*reps*weight_kg (สำหรับแถวเก่าที่ยังไม่มี total_volume_kg)
@@ -18,11 +19,10 @@ export interface DaySummary {
 // สรุปภาพรวมของวันหนึ่งๆ (คำนวณเองจากรายการที่กรองมาให้แล้ว) — โชว์ก่อนเห็นรายการละเอียด จะได้รู้ทันทีว่า
 // วันนั้นหนักแค่ไหน — ตัวเลขจริงๆ มาจาก computeDayTotals() ด้านล่าง (canonical) ฟังก์ชันนี้เป็นแค่ทางลัดของ
 // caller ที่กรอง workouts ของวันนั้นมาให้แล้วเอง (History/Calendar/Train/Log) ไม่ต้องแก้ call site เหล่านั้น
-function computeDaySummaryMath(dayWorkouts: Workout[]): DaySummary {
+function computeDaySummaryMath(dayWorkouts: Workout[], bodyWeightKg?: number | null): DaySummary {
   const strength = dayWorkouts.filter((w) => w.type === 'strength')
   const totalSets = strength.reduce((s, w) => s + (w.sets ?? 0), 0)
   const totalVolumeKg = strength.reduce((s, w) => s + workoutVolumeKg(w), 0)
-  const caloriesKcal = dayWorkouts.reduce((s, w) => s + (w.calories_kcal ?? 0), 0)
   const muscleGroups = Array.from(new Set(strength.map((w) => w.muscle_group).filter((m): m is string => !!m)))
 
   // ไม่มีฟิลด์ duration ต่อวันเก็บตรงๆ — ประมาณจากช่วงเวลา created_at แรกสุดถึงล่าสุดของวันนั้น
@@ -57,6 +57,16 @@ function computeDaySummaryMath(dayWorkouts: Workout[]): DaySummary {
   const cardioDurationMin = dayWorkouts.filter((w) => w.type === 'cardio').reduce((s, w) => s + (w.duration_min ?? 0), 0)
   const durationMin = spanMin !== null ? Math.max(spanMin, cardioDurationMin) : cardioDurationMin > 0 ? cardioDurationMin : null
 
+  // CAL-1 (Cross-Surface Data Integrity Audit) — เดิมรวมแค่ w.calories_kcal ที่บันทึกไว้ตรงๆ (?? 0) ไม่มี
+  // fallback เลย ทำให้วันที่เทรน strength ล้วน (calories_kcal เป็น null เสมอ ไม่มี UI ให้กรอก) ได้ 0 เงียบๆ
+  // ต่างจาก Dashboard/Stats/Session ที่ estimate ด้วย MET เสมอเมื่อไม่มีค่าบันทึกไว้ — เปลี่ยนมาเรียก
+  // estimateWorkoutsCalories() primitive เดียวกับ estimateCaloriesToday (lib/dashboardStats.ts) แทน ไม่ duplicate
+  // สูตร MET ที่นี่ — durationMin ด้านบนคือค่าเดียวกับที่ caller ฝั่ง Dashboard/Stats ส่งเป็น
+  // strengthSessionMinutes อยู่แล้ว (ผ่าน computeTodayTotals) ไม่ต้องคิดค่าใหม่ ส่วน bodyWeightKg เป็น
+  // optional parameter ใหม่ — caller ที่ไม่ส่งมา (undefined) จะ fallback ไปใช้ DEFAULT_BODYWEIGHT_KG เหมือน
+  // ทุกจุดอื่นที่เรียก estimator นี้เป๊ะ ไม่ใช่พฤติกรรมใหม่
+  const caloriesKcal = estimateWorkoutsCalories(dayWorkouts, durationMin, bodyWeightKg ?? null)
+
   return { exerciseCount: dayWorkouts.length, totalSets, totalVolumeKg, caloriesKcal, muscleGroups, durationMin }
 }
 
@@ -74,17 +84,20 @@ function computeDaySummaryMath(dayWorkouts: Workout[]): DaySummary {
 export function computeDayTotals(
   workouts: Workout[],
   date: string,
-  opts?: { onlyProgramDayId?: string | null }
+  opts?: { onlyProgramDayId?: string | null; bodyWeightKg?: number | null }
 ): DaySummary {
   let dayWorkouts = workouts.filter((w) => w.performed_at === date)
   if (opts && opts.onlyProgramDayId !== undefined) {
     dayWorkouts = dayWorkouts.filter((w) => !w.program_day_id || w.program_day_id === opts.onlyProgramDayId)
   }
-  return computeDaySummaryMath(dayWorkouts)
+  return computeDaySummaryMath(dayWorkouts, opts?.bodyWeightKg)
 }
 
-export function computeDaySummary(dayWorkouts: Workout[]): DaySummary {
-  return computeDaySummaryMath(dayWorkouts)
+// CAL-1 — bodyWeightKg เป็น optional parameter ใหม่ (ค่าน้ำหนักล่าสุดที่มี ไม่ใช่น้ำหนัก ณ วันที่ workout
+// เกิดขึ้น — ตรงกับ semantics เดิมที่ Dashboard/Stats/Session ใช้อยู่แล้วทุกจุด) ไม่ส่งมา = ใช้
+// DEFAULT_BODYWEIGHT_KG fallback เหมือนเดิม caller เดิมที่ไม่รู้จัก parameter นี้ยังทำงานเหมือนเดิมทุกประการ
+export function computeDaySummary(dayWorkouts: Workout[], bodyWeightKg?: number | null): DaySummary {
+  return computeDaySummaryMath(dayWorkouts, bodyWeightKg)
 }
 
 // ท่านี้ตัวไหนคือ "สถิติใหม่" ของวันนั้น (นับทั้ง pr น้ำหนักและ bestVolume) — ใช้เช็คตัวจุด/badge ที่แค่ต้องรู้

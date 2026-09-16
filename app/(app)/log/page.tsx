@@ -112,6 +112,10 @@ function LogPageInner() {
   const [prFlash, setPrFlash] = useState(false)
 
   const [today, setToday] = useState<Workout[]>([])
+  // CAL-1 (Cross-Surface Data Integrity Audit) — หน้านี้ไม่เคย fetch body_metrics เลยมาก่อน ต้องมีเพื่อป้อน
+  // calorie estimator ตัวเดียวกับ Dashboard/Stats/Session (ดู daySummary ด้านล่าง) — query แบบเดียวกับที่
+  // Stats/Session ใช้อยู่แล้ว (แค่น้ำหนักล่าสุด ไม่ใช่ประวัติทั้งหมด)
+  const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null)
 
   // รูปท่าออกกำลังกายจริง (ไม่ใช่ไดอะแกรมกล้ามเนื้อ) — เอาไว้โชว์คู่กับ MuscleDiagram ตอนเลือกท่า
   // ใช้ exerciseLibraryId ก่อน (แม่นสุด, ตรงกับท่าที่เลือกจาก dropdown เป๊ะๆ) ถ้าไม่มีค่อย fallback
@@ -202,6 +206,19 @@ function LogPageInner() {
   useEffect(() => {
     loadToday()
   }, [loadToday])
+
+  useEffect(() => {
+    async function loadBodyWeight() {
+      const { data } = await supabase
+        .from('body_metrics')
+        .select('weight_kg')
+        .order('measured_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      setBodyWeightKg((data as { weight_kg: number | null } | null)?.weight_kg ?? null)
+    }
+    loadBodyWeight()
+  }, [supabase])
 
   // เปิดหน้านี้พร้อม ?edit=<id> (เช่น กดปุ่ม "แก้ไข" จากหน้าประวัติ) — โหลดรายการนั้นเข้าฟอร์ม
   // แล้วล้าง query param ทิ้งกัน refresh แล้วเด้งเข้าโหมดแก้ไขซ้ำอีกครั้งโดยไม่ตั้งใจ
@@ -531,7 +548,7 @@ function LogPageInner() {
     ? HR_ZONES.find((z) => z.key === classifyHRZone(Number(avgHeartRate), maxHeartRate ?? DEFAULT_MAX_HEART_RATE))
     : null
 
-  const daySummary = today.length > 0 ? computeDaySummary(today) : null
+  const daySummary = today.length > 0 ? computeDaySummary(today, bodyWeightKg) : null
 
   return (
     <div className="max-w-6xl mx-auto pb-4">

@@ -8,6 +8,7 @@ import {
   formatDuration,
   workoutVolumeKg,
 } from './workoutDisplay'
+import { estimateCaloriesToday, computeTodayTotals } from './dashboardStats'
 import type { Workout } from './types'
 
 function makeWorkout(overrides: Partial<Workout> = {}): Workout {
@@ -61,13 +62,83 @@ describe('computeDaySummary', () => {
     expect(summary.muscleGroups.sort()).toEqual(['อก', 'แขน'].sort())
   })
 
-  it('sums calories across all entries', () => {
-    const summary = computeDaySummary([
-      makeWorkout({ id: 'a', calories_kcal: 320 }),
-      makeWorkout({ id: 'b', type: 'cardio', calories_kcal: 210 }),
-      makeWorkout({ id: 'c', calories_kcal: null }),
-    ])
-    expect(summary.caloriesKcal).toBe(530)
+  // CAL-1 (Cross-Surface Data Integrity Audit — Calories) — เดิม caloriesKcal เป็นแค่ผลรวม w.calories_kcal
+  // ตรงๆ (?? 0) ไม่มี MET fallback เลย ทำให้วันที่เทรน strength ล้วน (calories_kcal เป็น null เสมอ ไม่มี UI
+  // ไหนให้กรอกค่านี้สำหรับ strength) ได้ 0 เงียบๆ ต่างจาก Dashboard/Stats/Session ที่ estimate ด้วย MET เสมอ
+  // เปลี่ยนมาเรียก estimateWorkoutsCalories primitive เดียวกับ estimateCaloriesToday แทน — เทสต์ชุดนี้ยืนยัน
+  // ทั้ง 6 scenario ที่ CAL-1 ล็อกไว้
+  describe('caloriesKcal (CAL-1)', () => {
+    it('cardio: recorded calories_kcal wins over any MET estimate', () => {
+      const summary = computeDaySummary([
+        makeWorkout({ id: 'a', type: 'cardio', cardio_type: 'วิ่ง', duration_min: 0, calories_kcal: 999 }),
+      ])
+      expect(summary.caloriesKcal).toBe(999)
+    })
+
+    it('cardio: estimates via MET when calories_kcal is not recorded', () => {
+      const summary = computeDaySummary(
+        [makeWorkout({ id: 'a', type: 'cardio', cardio_type: 'วิ่ง', duration_min: 30, calories_kcal: null })],
+        70
+      )
+      // cardio MET: (9.0 * 3.5 * 70 / 200) * 30 = 330.75 — บวก strength-session phantom term ที่คำนวณจาก
+      // durationMin ของทั้งวัน (30 เช่นกัน เพราะมีรายการเดียว) เหมือนที่ Dashboard/Stats ทำอยู่แล้วเป๊ะ
+      // (estimateCaloriesToday ส่ง dayTotals.durationMin ทั้งก้อนเป็น strengthSessionMinutes เสมอ ไม่ได้
+      // กรองเฉพาะวันที่มี strength จริง — ไม่ใช่พฤติกรรมใหม่ที่ CAL-1 สร้างขึ้น แค่ทำให้ History/Calendar/Log
+      // ได้สูตรเดียวกันเป๊ะ): (5.0 * 3.5 * 70 / 200) * 30 = 183.75 → รวม round(330.75 + 183.75) = 515
+      expect(summary.caloriesKcal).toBe(515)
+    })
+
+    it('strength: no calories_kcal ever recorded (no UI field for it) — estimates via STRENGTH_MET using the day\'s duration, never silently 0', () => {
+      const summary = computeDaySummary(
+        [
+          makeWorkout({ id: 'a', created_at: '2026-07-20T10:00:00Z' }),
+          makeWorkout({ id: 'b', created_at: '2026-07-20T10:40:00Z' }), // 40-minute span
+        ],
+        70
+      )
+      // (5.0 * 3.5 * 70 / 200) * 40 = 245
+      expect(summary.caloriesKcal).toBe(245)
+    })
+
+    it('mixed day: cardio uses its recorded value, strength is estimated from the session duration on top', () => {
+      const summary = computeDaySummary(
+        [
+          makeWorkout({ id: 'a', type: 'cardio', cardio_type: 'วิ่ง', duration_min: 20, calories_kcal: 150, created_at: '2026-07-20T09:00:00Z' }),
+          makeWorkout({ id: 'b', type: 'strength', created_at: '2026-07-20T09:30:00Z' }),
+        ],
+        70
+      )
+      // durationMin = max(30-minute span, 20-minute cardio duration) = 30
+      // strengthKcal = (5.0 * 3.5 * 70 / 200) * 30 = 183.75; cardioKcal = 150 (recorded, ignores MET)
+      // total = round(150 + 183.75) = 334
+      expect(summary.caloriesKcal).toBe(334)
+    })
+
+    it('falls back to DEFAULT_BODYWEIGHT_KG (70) when bodyWeightKg is not provided — same fallback as estimateCaloriesToday', () => {
+      const workouts = [makeWorkout({ id: 'a', type: 'cardio', cardio_type: 'วิ่ง', duration_min: 30, calories_kcal: null })]
+      expect(computeDaySummary(workouts).caloriesKcal).toBe(computeDaySummary(workouts, 70).caloriesKcal)
+    })
+
+    it('a heavier recorded body weight increases the estimate — the scalar is actually used, not ignored', () => {
+      const workouts = [makeWorkout({ id: 'a', type: 'cardio', cardio_type: 'วิ่ง', duration_min: 30, calories_kcal: null })]
+      expect(computeDaySummary(workouts, 100).caloriesKcal).toBeGreaterThan(computeDaySummary(workouts, 70).caloriesKcal)
+    })
+
+    // CAL-1's actual goal: the same day must carry the same calorie total whether it's read through the
+    // Dashboard/Stats/Session path (estimateCaloriesToday, lib/dashboardStats.ts) or the History/Calendar/Log
+    // path (computeDaySummary, this file) — both now delegate to the one shared primitive in
+    // lib/calorieEstimate.ts instead of two independently-implemented formulas that happened to agree.
+    it('matches estimateCaloriesToday (Dashboard/Stats/Session) exactly for the same day and body weight — single shared engine, not two that happen to agree', () => {
+      const dayWorkouts = [
+        makeWorkout({ id: 'a', type: 'cardio', cardio_type: 'ปั่นจักรยาน', duration_min: 25, calories_kcal: null, created_at: '2026-07-20T07:00:00Z' }),
+        makeWorkout({ id: 'b', type: 'strength', created_at: '2026-07-20T07:50:00Z' }),
+      ]
+      const weight = 82
+      const viaDaySummary = computeDaySummary(dayWorkouts, weight).caloriesKcal
+      const viaDashboardPath = estimateCaloriesToday(dayWorkouts, computeTodayTotals(dayWorkouts).durationMin, weight)
+      expect(viaDaySummary).toBe(viaDashboardPath)
+      expect(viaDaySummary).toBeGreaterThan(0)
+    })
   })
 
   it('estimates duration from the spread of created_at timestamps', () => {
