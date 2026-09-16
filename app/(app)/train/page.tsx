@@ -4,13 +4,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ProgramDay, ProgramExercise, Workout, WorkoutTemplate, WorkoutTemplateExercise } from '@/lib/types'
 import { todayStr, todayDayOfWeek, daysAgoStr } from '@/lib/weekdays'
-import { computeCurrentStreak, relativeDayLabel } from '@/lib/dashboardStats'
+import { computeCurrentStreak, relativeDayLabel, computeTodaysAction, STREAK_WALK_MAX_DAYS, type TodaysAction } from '@/lib/dashboardStats'
+import { loadMuscleRecommendation } from '@/lib/muscleRecommendationData'
 import { computeDaySummary } from '@/lib/workoutDisplay'
 import { startTemplateAsWorkoutLog } from '@/lib/startTemplate'
 import { calculatePlates } from '@/lib/plateCalculator'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { getErrorMessage } from '@/lib/errors'
-import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
+import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import { withAlpha } from '@/lib/theme'
 import { DS } from '@/lib/designSystem'
 import PremiumCard from '@/components/ui/PremiumCard'
@@ -22,8 +23,6 @@ import ErrorState from '@/components/ErrorState'
 // เทมเพลตที่บันทึกไว้/streak) — จอใหญ่จัด 2 คอลัมน์ (~60:40) จอมือถือเรียงเป็นคอลัมน์เดียวโดยจงใจเรียง
 // ลำดับให้ปุ่ม action หลัก (เริ่มเทรน/บันทึกอิสระ/เครื่องมือ) ขึ้นก่อนการ์ดเสริม (เซสชันล่าสุด/เทมเพลตด่วน)
 // ด้วย order-* (มือถือ) คู่กับ lg:col-start/row-start (จอใหญ่) แบบเดียวกับที่ DashboardView.tsx ใช้อยู่แล้ว
-
-const STREAK_LOOKBACK_DAYS = 400
 
 const SECONDARY = [
   { href: '/program', icon: '📅', label: 'โปรแกรม' },
@@ -41,7 +40,20 @@ interface TrainData {
   currentDay: ProgramDay | null
   todayExercises: ProgramExercise[]
   completedCount: number
+  // 6D P1-2B — ท่าที่จบผ่าน workout_id (ad-hoc/สลับกลางเซสชัน) ของแผนวันนี้โดยเฉพาะ — ไม่รวมเข้า
+  // completedCount ตัวบน (ความหมายเดิม "ทำครบตามแผนหรือยัง" คงเดิม) แต่ต้องรวมเข้า completion truth
+  // (todaysAction.isCompletedToday) ให้ตรงกับ Dashboard เป๊ะ — ดู comment เต็มที่ adhocCompletedCount ใน
+  // DashboardView.tsx
+  adhocCompletedCount: number
   streak: number
+  // 6D P1-2B — canonical source of truth เดียวกับ Dashboard (computeTodaysAction, lib/dashboardStats.ts)
+  // sessionHref/isCompletedToday/scheduleOverriddenFrom ของหน้านี้ต้องอ่านจากตรงนี้เท่านั้น ห้าม
+  // reconstruct เอง (เดิม sessionHrefWithMakeup() รู้จักแค่เคส makeup resume ไม่รู้จัก scheduleOverriddenFrom)
+  todaysAction: TodaysAction
+  // มีเซสชันชดเชย "แท้จริง" ค้างอยู่ไหม (isGenuineMakeupSession() ยืนยันแล้วตอน session/page.tsx set ค่านี้ —
+  // ไม่มีทางเป็น schedule-override session เลยตาม invariant ที่ล็อกไว้ P1-2B) ใช้แสดง banner "กำลังทำแผนชดเชย"
+  activeMakeupDayId: string | null
+  activeMakeupDayTitle: string | null
   recentSessions: RecentSession[]
   templates: WorkoutTemplate[]
   exercisesByTemplate: Record<string, WorkoutTemplateExercise[]>
@@ -69,20 +81,13 @@ export default function TrainPage() {
   const [templateMessage, setTemplateMessage] = useState<string | null>(null)
   const [repeatingDate, setRepeatingDate] = useState<string | null>(null)
   const [repeatResult, setRepeatResult] = useState<{ date: string; message: string } | null>(null)
-  // บั๊กเดียวกับที่แก้ใน BottomNav.tsx/DashboardView.tsx/CommandPalette.tsx — /train เป็นทางเข้าหลักฝั่ง
-  // เดสก์ท็อป (แท็บ "เทรน" ใน SidebarNav.tsx) เทียบเท่าปุ่มลอย "START WORKOUT" ของ BottomNav บนมือถือ
-  // ปุ่ม CTA หลักของหน้านี้เอง (ด้านล่าง) เดิม hardcode href="/session" ตรงๆ เหมือนกัน
-  const [sessionHref, setSessionHref] = useState('/session')
-  useEffect(() => {
-    setSessionHref(sessionHrefWithMakeup())
-  }, [])
 
   const load = useCallback(async () => {
     setLoadError(null)
     try {
       const today = todayStr()
       const dow = todayDayOfWeek()
-      const streakCutoff = daysAgoStr(STREAK_LOOKBACK_DAYS)
+      const streakCutoff = daysAgoStr(STREAK_WALK_MAX_DAYS)
 
       const [
         { data: dayRows, error: dayErr },
@@ -136,6 +141,69 @@ export default function TrainPage() {
         completedCount = completions?.length ?? 0
       }
 
+      // 6D P1-2B — ท่าที่จบผ่าน workout_id (ad-hoc/สลับกลางเซสชัน) ของแผนวันนี้ — พอร์ต 1:1 จาก
+      // DashboardView.tsx (ดู comment เต็มที่ adhocCompletedCount ที่นั่น) ให้ completion truth ของ Train
+      // ตรงกับ Dashboard เป๊ะ ไม่ใช่แค่ program_exercise_id ตามแผนเท่านั้น
+      const { data: adhocCompletions } = await supabase
+        .from('program_completions')
+        .select('id, workout_id')
+        .eq('completed_at', today)
+        .not('workout_id', 'is', null)
+      const typedAdhocCompletions = (adhocCompletions as { id: string; workout_id: string }[]) ?? []
+      const adhocWorkoutIds = typedAdhocCompletions.map((c) => c.workout_id)
+      const { data: adhocWorkoutDays } =
+        adhocWorkoutIds.length > 0
+          ? await supabase.from('workouts').select('id, program_day_id').in('id', adhocWorkoutIds)
+          : { data: [] as { id: string; program_day_id: string | null }[] }
+      const adhocWorkoutDayById = new Map(
+        ((adhocWorkoutDays as { id: string; program_day_id: string | null }[]) ?? []).map((w) => [w.id, w.program_day_id])
+      )
+      const adhocCompletedCount = currentDay
+        ? typedAdhocCompletions.filter((c) => adhocWorkoutDayById.get(c.workout_id) === currentDay.id).length
+        : 0
+
+      // recentWorkouts เรียง performed_at ใหม่สุดก่อนแล้ว (ไม่มี date filter) จึงรวมแถวของ "วันนี้" อยู่แล้ว
+      // โดยไม่ต้อง query ใหม่ — ใช้เป็น todayList แทน (ตามขอบเขตที่ล็อกไว้: ห้ามเพิ่ม query สำหรับ todayWorkouts)
+      const allRecent = (recentWorkouts as Workout[]) ?? []
+      const todayList = allRecent.filter((w) => w.performed_at === today)
+      const todayMuscleGroups = Array.from(new Set(todayList.map((w) => w.muscle_group).filter((mg): mg is string => !!mg)))
+
+      // progressPctForLabel: สูตรเดียวกับ DashboardView.tsx เป๊ะ (ไม่รวม adhoc โดยเจตนา — ดู comment เต็ม
+      // ที่จุดเดียวกันในไฟล์นั้น) ป้อนเป็น input ของ loadMuscleRecommendation() เท่านั้น ไม่ใช้แสดงผลที่นี่
+      const progressPctForLabel =
+        todayExercises.length > 0
+          ? Math.round((completedCount / todayExercises.length) * 100)
+          : todayList.length > 0
+            ? 100
+            : null
+
+      const { recommendation, programDayMuscleGroups } = await loadMuscleRecommendation(supabase, {
+        programDays: typedDays,
+        currentDay,
+        todayDayOfWeek: dow,
+        todayExercises,
+        todayMuscleGroups,
+        progressPctForLabel,
+      })
+
+      // hasMakeupToday/todayCompletedRaw: พอร์ต 1:1 จาก DashboardView.tsx (ดู comment เต็มที่จุดเดียวกัน)
+      const hasMakeupToday = todayList.some((w) => w.program_day_id && w.program_day_id !== currentDay?.id)
+      const adhocAwareProgressPct =
+        todayExercises.length > 0 ? Math.min(100, Math.round(((completedCount + adhocCompletedCount) / todayExercises.length) * 100)) : null
+      const todayCompletedRaw =
+        (adhocAwareProgressPct !== null && adhocAwareProgressPct >= 100) || (adhocAwareProgressPct === null && todayList.length > 0)
+
+      const activeMakeupDayId = getActiveMakeupDayId()
+      const todaysAction = computeTodaysAction({
+        recommendation,
+        programDays: typedDays,
+        programDayMuscleGroups,
+        activeMakeupDayId,
+        hasMakeupToday,
+        todayCompletedRaw,
+      })
+      const activeMakeupDayTitle = activeMakeupDayId ? (typedDays.find((d) => d.id === activeMakeupDayId)?.title ?? null) : null
+
       const distinctDates = Array.from(
         new Set(((dateRows as { performed_at: string }[]) ?? []).map((r) => r.performed_at))
       )
@@ -143,8 +211,6 @@ export default function TrainPage() {
       const streak = computeCurrentStreak(distinctDates, workoutWeekdays)
 
       // 2 เซสชันล่าสุด "ที่ไม่ใช่วันนี้" — กันไม่ให้ซ้ำกับการ์ดโปรแกรมวันนี้ด้านบนที่คุยเรื่องวันนี้อยู่แล้ว
-      // recentWorkouts เรียง performed_at ใหม่สุดก่อนแล้ว แถวของวันเดียวกันจึงเรียงติดกันเป็นก้อนเสมอ
-      const allRecent = (recentWorkouts as Workout[]) ?? []
       const pastWorkouts = allRecent.filter((w) => w.performed_at !== today)
       const recentDates: string[] = []
       pastWorkouts.forEach((w) => {
@@ -176,7 +242,11 @@ export default function TrainPage() {
         currentDay,
         todayExercises,
         completedCount,
+        adhocCompletedCount,
         streak,
+        todaysAction,
+        activeMakeupDayId,
+        activeMakeupDayTitle,
         recentSessions,
         templates,
         exercisesByTemplate,
@@ -283,7 +353,6 @@ export default function TrainPage() {
       ) : (
         <TrainBody
           data={data}
-          sessionHref={sessionHref}
           startingTemplateId={startingTemplateId}
           templateMessage={templateMessage}
           repeatingDate={repeatingDate}
@@ -298,7 +367,6 @@ export default function TrainPage() {
 
 function TrainBody({
   data,
-  sessionHref,
   startingTemplateId,
   templateMessage,
   repeatingDate,
@@ -307,7 +375,6 @@ function TrainBody({
   onRepeatSession,
 }: {
   data: TrainData
-  sessionHref: string
   startingTemplateId: string | null
   templateMessage: string | null
   repeatingDate: string | null
@@ -316,8 +383,22 @@ function TrainBody({
   onRepeatSession: (s: RecentSession) => void
 }) {
   const totalToday = data.todayExercises.length
-  const doneAll = totalToday > 0 && data.completedCount >= totalToday
-  const ctaLabel = totalToday === 0 ? 'เริ่มเทรนเลย' : doneAll ? 'ทบทวนเวิร์กเอาต์วันนี้' : data.completedCount > 0 ? 'ไปต่อเวิร์กเอาต์นี้' : 'เริ่มเวิร์กเอาต์นี้'
+  const startedCount = data.completedCount + data.adhocCompletedCount
+  // 6D P1-2B — CTA priority order locked: (1) genuine makeup resume (activeMakeupDayId — provably genuine,
+  // ไม่มีทาง overlap กับ schedule-override เพราะ isGenuineMakeupSession() คุมการเขียนค่านี้ไว้แล้ว), (2)
+  // isCompletedToday (adhoc-aware, จาก computeTodaysAction เดียวกับ Dashboard), (3) schedule-override ไม่มี
+  // label เฉพาะของตัวเอง — ใช้ label เดียวกับ (4)/(5)/(6) ตาม completion state (ตาม Dashboard's own precedent:
+  // ปุ่มไม่เปลี่ยนคำอธิบายตาม override เลย มีแค่ href ที่ต่างไป) (4)-(6) ตาม totalToday/startedCount เดิม
+  const sessionHref = data.todaysAction.sessionHref
+  const ctaLabel = data.activeMakeupDayId
+    ? 'ไปต่อ'
+    : data.todaysAction.isCompletedToday
+      ? 'ทบทวนเวิร์กเอาต์วันนี้'
+      : totalToday === 0
+        ? 'เริ่มเทรนเลย'
+        : startedCount > 0
+          ? 'ไปต่อเวิร์กเอาต์นี้'
+          : 'เริ่มเวิร์กเอาต์นี้'
   const splits = muscleSplitSummary(data.todayExercises)
   const previewNames = data.todayExercises
     .slice(0, 3)
@@ -358,6 +439,17 @@ function TrainBody({
               <h2 className="font-display text-lg tracked uppercase text-ink">วันนี้ยังไม่ได้ตั้งโปรแกรม</h2>
               <p className="text-xs text-muted mt-1.5">ตั้งตารางฝึกล่วงหน้าได้ที่หน้าโปรแกรม หรือกดเริ่ม/บันทึกอิสระด้านล่างได้เลย</p>
             </div>
+          )}
+
+          {/* 6D P1-2B (state 1 ของ CTA matrix) — card ด้านบนยังโชว์ข้อมูลแผนวันนี้เอง (title/splits/preview)
+              เป็น context ของตาราง ไม่ใช่คำอ้างว่าปุ่มด้านล่างจะพาไปที่นั่น — เพิ่มบรรทัดนี้บอกตรงๆ ว่ากำลัง
+              จะไปต่อเซสชันชดเชยที่ค้างอยู่แทน กัน mismatch ระหว่างเนื้อหาการ์ดกับปลายทางจริงของปุ่ม (ข้อความ
+              เดียวกับ DashboardView.tsx's "🔄 กำลังทำแผนชดเชย" เป๊ะ — activeMakeupDayId ยืนยันแล้วว่าเป็น
+              genuine makeup เท่านั้น ไม่มีทางเป็น schedule-override เพราะ isGenuineMakeupSession() คุมไว้) */}
+          {data.activeMakeupDayId && (
+            <p className="text-[13px] text-amber flex items-center gap-1.5">
+              <span aria-hidden="true">🔄</span> กำลังทำแผนชดเชย{data.activeMakeupDayTitle ? ` · ${data.activeMakeupDayTitle}` : ''}
+            </p>
           )}
 
           <a
