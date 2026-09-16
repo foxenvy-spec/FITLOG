@@ -583,6 +583,15 @@ export default function ProgramPage() {
   }
 
   const isToday = selectedDow === todayDayOfWeek()
+  // 6D P1-4 — เดิม makeup CTA ใช้ !isToday เป็น proxy ของ "วันนี้พลาดไปแล้ว" ซึ่งไม่จริง เพราะ !isToday
+  // เป็นจริงทั้งวันในอดีตของสัปดาห์นี้ (พลาดจริง) และวันในอนาคตของสัปดาห์นี้ (ยังไม่ถึงเลย ไม่มีอะไรให้ชดเชย)
+  // — offset คำนวณแบบเดียวกับ findMissedProgramDays เป๊ะ (Monday-anchored ให้ตรงกับ getWeekRange/สัปดาห์ที่
+  // ระบบใช้ทั้งแอป) ไม่สร้าง helper ใหม่/สูตรใหม่แยกจากที่มีอยู่แล้ว — เฉพาะ selectedOffset < todayOffset
+  // (อดีตของสัปดาห์นี้จริงๆ) เท่านั้นที่นับเป็น eligible สำหรับ "เริ่มเซสชันชดเชย" ไม่แตะ isToday ตัวเดิม
+  // (ยังใช้กับ UI ส่วนอื่นของหน้านี้เหมือนเดิมทุกจุด)
+  const todayOffset = (todayDayOfWeek() + 6) % 7
+  const selectedOffset = (selectedDow + 6) % 7
+  const isPastDayThisWeek = selectedOffset < todayOffset
 
   if (loading) return <LoadingState />
   if (loadError) return <ErrorState title="โหลดโปรแกรมไม่สำเร็จ" message={loadError} onRetry={load} />
@@ -645,7 +654,7 @@ export default function ProgramPage() {
           param นี้แทน todayDayOfWeek() และแท็ก program_day_id ให้ตรงกับแผนนี้เสมอ กัน /session ของวันจริง
           ปนกับท่าที่ชดเชยมา — ดูรายละเอียดที่ isMakeupSession ใน session/page.tsx) ไม่แตะปุ่ม/behavior เดิม
           ของ isToday หรือ "บันทึกแผนนี้เข้า Log วันนี้" เลยสักจุด แค่เพิ่มทางเลือกที่สาม */}
-      {!isToday && currentDay && currentExercises.length > 0 && (
+      {isPastDayThisWeek && currentDay && currentExercises.length > 0 && (
         <Button as="a" href={`/session?day=${currentDay.id}`} size="md" className="w-full">
           🔁 เริ่มเซสชันชดเชย (แบบเรียลไทม์)
         </Button>
