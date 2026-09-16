@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, GoalStatus, GoalType, ProgramDay, ProgramExercise, Workout, WorkoutSet } from '@/lib/types'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
-import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown, workoutVolumeKg } from '@/lib/workoutDisplay'
 import { computeCurrentStreak, STREAK_WALK_MAX_DAYS } from '@/lib/dashboardStats'
 import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
@@ -252,9 +252,11 @@ export default function CalendarPage() {
     if (goal.goal_type === 'weight') current = latestMetric?.weight_kg ?? null
     else if (goal.goal_type === 'body_fat') current = latestMetric?.body_fat_pct ?? null
     else if (goal.goal_type === 'strength_volume') {
-      current = allWorkouts
-        .filter((w) => w.type === 'strength')
-        .reduce((s, w) => s + (w.sets ?? 0) * (w.reps ?? 0) * (w.weight_kg ?? 0), 0)
+      // 6D P2-1 — เดิมคำนวณ sets*reps*weight_kg ตรงๆ (สมมติทุกเซ็ตของท่าเดียวกันใช้ reps/น้ำหนักเท่ากันหมด)
+      // เมินเฉย total_volume_kg (ผลรวมจริงทีละเซ็ต ตัวเดียวกับที่ History/Stats/PR ใช้) ทำให้ท่า pyramid/
+      // drop set ถูกคำนวณ volume ต่ำกว่าจริง — ใช้ workoutVolumeKg() (lib/workoutDisplay.ts) ตัวเดียวกับ
+      // ที่ History/Calendar's DaySummaryHeader/Stats ใช้อยู่แล้วแทน ไม่คำนวณสูตรแยกอีกชุด
+      current = allWorkouts.filter((w) => w.type === 'strength').reduce((s, w) => s + workoutVolumeKg(w), 0)
     } else if (goal.goal_type === 'cardio_distance') {
       current = allWorkouts.filter((w) => w.type === 'cardio').reduce((s, w) => s + (w.distance_km ?? 0), 0)
     }
@@ -628,9 +630,10 @@ function GoalForm({
     if (goalType === 'weight') return latestWeight
     if (goalType === 'body_fat') return latestBodyFat
     if (goalType === 'strength_volume') {
-      return allWorkouts
-        .filter((w) => w.type === 'strength')
-        .reduce((s, w) => s + (w.sets ?? 0) * (w.reps ?? 0) * (w.weight_kg ?? 0), 0)
+      // 6D P2-1 — สูตรเดียวกับ goalProgress() ด้านบน (workoutVolumeKg, ไม่ใช่ sets*reps*weight_kg แยกสูตร) —
+      // สำคัญเพราะค่านี้กลายเป็น starting_value ของเป้าหมาย ถ้าคนละ semantics กับ current จะทำให้ % คืบหน้า
+      // เพี้ยนทั้งช่วง (denominator/baseline ผิดตั้งแต่วันสร้างเป้าหมาย)
+      return allWorkouts.filter((w) => w.type === 'strength').reduce((s, w) => s + workoutVolumeKg(w), 0)
     }
     if (goalType === 'cardio_distance') {
       return allWorkouts.filter((w) => w.type === 'cardio').reduce((s, w) => s + (w.distance_km ?? 0), 0)
