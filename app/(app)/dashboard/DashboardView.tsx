@@ -1107,7 +1107,12 @@ export default function DashboardPage() {
     if (!data) return null
     return computeFitnessScore([
       { key: 'workout', label: 'Workout Completion', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
-      { key: 'streak', label: 'Streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
+      // Metrics & Labels audit, Finding 1 — label เปลี่ยนจาก "Streak" เฉยๆ เป็น "Streak Score" กัน
+      // ambiguity กับ "Current Streak"/"Best Streak" (WorkoutStreakDetailSheet.tsx, day count จริง) ค่านี้
+      // เป็นแค่ streak ที่ normalize เข้าสเกล 0-100 (เพดาน 14 วัน) เป็น input น้ำหนัก 20% ของ Fitness Score
+      // ไม่ใช่จำนวนวันจริง — คนที่มี streak จริง 10 วันจะเห็น "Streak Score 71%" ไม่ใช่ streak 71 วัน
+      // ไม่แตะ data.streak/การ normalize/weight ใดๆ เลย เปลี่ยนแค่ label ที่แสดงผล
+      { key: 'streak', label: 'Streak Score', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
       { key: 'sleep', label: 'Sleep', value: null, weight: 20 },
       { key: 'recovery', label: 'Recovery', value: fitnessScoreRecoveryPct, weight: 15 },
       { key: 'weeklyGoal', label: 'Weekly Goal', value: data.weeklyGoalPct, weight: 10 },

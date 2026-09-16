@@ -70,7 +70,8 @@ export default function DashboardConceptPreviewPage() {
 
   const fitnessScore = computeFitnessScore([
     { key: 'workout', label: 'Workout Completion', value: Math.round((data.last7DaysTrainedCount / 7) * 100), weight: 30 },
-    { key: 'streak', label: 'Streak', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
+    // Metrics & Labels audit, Finding 1 — เดียวกับ DashboardView.tsx (production)
+    { key: 'streak', label: 'Streak Score', value: Math.min(100, Math.round((data.streak / 14) * 100)), weight: 20 },
     { key: 'sleep', label: 'Sleep', value: null, weight: 20 },
     { key: 'recovery', label: 'Recovery', value: recoveryPct, weight: 15 },
     { key: 'weeklyGoal', label: 'Weekly Goal', value: data.weeklyGoalPct, weight: 10 },
