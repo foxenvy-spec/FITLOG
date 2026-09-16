@@ -10,11 +10,16 @@ export default function DaySummaryHeader({
   prBreakdown,
   unit,
   toDisplay,
+  // 6D P2-4 — History ส่งค่านี้เป็น true เมื่อมี type filter/exercise filter/ค้นหาที่ทำให้ summary คำนวณจาก
+  // เฉพาะบางรายการของวันนั้น ไม่ใช่ทั้งวัน (ดู comment เต็มที่ history/page.tsx) — Calendar ไม่เคยส่งค่านี้
+  // (ไม่มี filter ลักษณะเดียวกัน วันที่เลือกคือทั้งวันเสมอ) จึงเห็น caption เดิมทุกประการ ไม่กระทบ
+  filtered,
 }: {
   summary: DaySummary
   prBreakdown: DayPRBreakdown
   unit: WeightUnit
   toDisplay: (kg: number) => number
+  filtered?: boolean
 }) {
   const stats: { value: string; label: string }[] = []
   if (summary.caloriesKcal > 0) {
@@ -38,7 +43,9 @@ export default function DaySummaryHeader({
           '📋 แผนที่ชดเชย' พอดี ผู้ใช้อาจงงว่าตัวเลขนี้เป็นของแผนหรือของจริง" — คำนี้ถูกทุกจุดที่ใช้ component
           นี้อยู่แล้วจริงๆ (คำนวณจาก workouts ที่ log จริงเสมอ ไม่เคยเป็นตัวเลขของแผน) เพิ่ม caption สั้นๆ
           กันความกำกวมโดยไม่ต้องแยก logic ต่อหน้า */}
-      <p className="text-[11px] tracked uppercase text-muted mb-1.5 px-2">💪 ผลการฝึกจริง</p>
+      <p className="text-[11px] tracked uppercase text-muted mb-1.5 px-2">
+        {filtered ? '💪 ผลการฝึกจริง (ตามตัวกรอง)' : '💪 ผลการฝึกจริง'}
+      </p>
       <div className="flex items-stretch">
         {stats.map((s, i) => (
           <div

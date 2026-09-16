@@ -327,6 +327,9 @@ function HistoryPageInner() {
                 )}
                 unit={unit}
                 toDisplay={toDisplay}
+                // 6D P2-4 — grouped[date] มาจาก filtered (type filter/exerciseFilter/search) ไม่ใช่ทั้งวันเสมอ
+                // ไป — บอก DaySummaryHeader ว่ากำลังโชว์ subset ที่ตรงกับตัวกรอง ไม่ใช่ผลรวมทั้งวันจริงๆ
+                filtered={filter !== 'all' || !!exerciseFilter || search.trim() !== ''}
               />
               <ul className="space-y-2">
                 {grouped[date].map((w) => (
