@@ -116,7 +116,9 @@ export default function StatsPage() {
   // History/Log/Session ใช้ — คนละคำถามกัน ("best historical performance คืออะไร" ไม่ใช่ "entry นี้เพิ่ง
   // สร้างสถิติใหม่ไหม") ตั้งชื่อให้ไม่ชวนเข้าใจผิดว่าใช้ engine เดียวกัน (ยังคงแยก implementation ตามเดิม
   // ทุกประการ — ไม่แตะ logic ข้างล่าง แค่เปลี่ยนชื่อตัวแปร)
-  const [bestLifts, setBestLifts] = useState<{ name: string; weight: number; reps: number | null; date: string; previousBest: number | null }[]>([])
+  const [bestLifts, setBestLifts] = useState<
+    { name: string; weight: number; reps: number | null; date: string; previousBest: number | null; tiedFromEarlierDate: boolean }[]
+  >([])
   // ฟีดแบ็ก "อยากได้ Search Box ในส่วน Personal Records — พิมพ์ 'Bench'/'Squat' แล้วกรองได้เลย" —
   // filter ฝั่ง client ล้วนๆ (bestLifts ทั้งหมดโหลดมาอยู่ในมือแล้ว ไม่ต้อง query ใหม่) จับคู่แบบ substring
   // ไม่สนตัวพิมพ์เล็ก-ใหญ่ ครอบคลุมทั้งชื่อท่าไทย/อังกฤษที่ผู้ใช้อาจพิมพ์มา
@@ -213,12 +215,21 @@ export default function StatsPage() {
       // เฉยๆ ในเคสนั้น) ดีกว่ายิง query แยกรายท่า (N+1) เพื่อความสมบูรณ์แบบร้อยเปอร์เซ็นต์
       const bestByName = new Map<string, { weight: number; reps: number | null; date: string }>()
       const previousBestByName = new Map<string, number>()
+      // 6D P2-3 — เดิม badge 🆕 NEW เช็คแค่ best.date === today ทั้งที่ tiebreaker ด้านบน (performed_at desc)
+      // เลือกแถวล่าสุดของน้ำหนักสูงสุดมาเป็น best เสมอ แม้น้ำหนักนั้นเคยทำมาก่อนแล้ว (tie) — ทำให้การทำน้ำหนัก
+      // "เท่าเดิม" ซ้ำในวันนี้ขึ้น NEW ผิด ทั้งที่ computeIsPR() (canonical, lib/workoutDisplay.ts ใช้ทั่วแอป)
+      // นับ PR เฉพาะ "มากกว่า" (strict greater-than) เท่านั้น ไม่ใช่ "เท่ากับ" — เก็บไว้ว่าน้ำหนักสูงสุดของท่านี้
+      // เคยถูกทำมาจากวันอื่น (ไม่ใช่วันเดียวกับ best.date) มาก่อนหรือไม่ ให้ NEW สะท้อน semantic เดียวกับ
+      // computeIsPR จริงๆ — ไม่แตะ previousBestByName (ยังหาค่าต่ำกว่าจริงๆ เท่านั้น สำหรับ "↑ +X จาก PR เดิม")
+      const tiedFromEarlierDate = new Map<string, boolean>()
       ;(data ?? []).forEach((row: { exercise_name: string | null; weight_kg: number | null; reps: number | null; performed_at: string }) => {
         const name = row.exercise_name
         if (!name || row.weight_kg === null) return
         const existing = bestByName.get(name)
         if (!existing) {
           bestByName.set(name, { weight: row.weight_kg, reps: row.reps, date: row.performed_at })
+        } else if (row.weight_kg === existing.weight && row.performed_at !== existing.date) {
+          tiedFromEarlierDate.set(name, true)
         } else if (row.weight_kg < existing.weight && !previousBestByName.has(name)) {
           previousBestByName.set(name, row.weight_kg)
         }
@@ -229,6 +240,7 @@ export default function StatsPage() {
         reps: best.reps,
         date: best.date,
         previousBest: previousBestByName.get(name) ?? null,
+        tiedFromEarlierDate: tiedFromEarlierDate.get(name) ?? false,
       }))
       setBestLifts(top.slice(0, 6))
     }
@@ -1095,7 +1107,7 @@ export default function StatsPage() {
           ) : (
             <PremiumCard className="divide-y divide-white/5" style={{ border: `1px solid ${withAlpha(COLORS.violet, '33')}` }}>
               {filteredBestLifts.map((p) => {
-                const isNewPR = p.date === todayStr()
+                const isNewPR = p.date === todayStr() && !p.tiedFromEarlierDate
                 return (
                   <a
                     key={p.name}
