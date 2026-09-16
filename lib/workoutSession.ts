@@ -256,14 +256,19 @@ export interface SkippedExercise {
   muscleGroup: string | null
 }
 
-// ท่าที่อยู่ในแผนวันนี้แต่ไม่ได้ log เลย (กด "ข้าม" หรือออกจากเซสชันก่อนถึงคิว)
-// ใช้โชว์สรุปตอนจบเซสชัน แยกจาก computeSessionSummary ที่นับเฉพาะท่าที่ทำจริง
+// 6D P1-3 — ท่าที่ไม่มีเซ็ตบันทึกจริงเลยสักเซ็ต (ไม่ใช่ "ไม่ได้กด logged" อีกต่อไป) — เดิม filter ตาม
+// logged (สถานะ workflow ที่ตั้งเมื่อกด "บันทึก & ท่าถัดไป" เท่านั้น) ทำให้ท่าที่ log ไปแล้วบางเซ็ตจริง
+// (persist ลง DB ไปแล้วผ่าน logSet() ทีละเซ็ต) แต่ถูกกด "ข้าม" ก่อนกดปุ่มจบท่า ถูกเรียกว่า "ข้ามไป" ทั้งที่
+// มี training data จริงอยู่ — ขัดกับสิ่งที่ Dashboard/History เห็นจริงในวันเดียวกัน (อ่านจาก DB ตรงๆ ไม่รู้จัก
+// logged เลย) workflow state (logged) กับการมีอยู่ของ training data เป็นคนละเรื่องกัน — ฟังก์ชันนี้ตอบแค่
+// "มีอะไรถูกบันทึกไว้จริงไหม" เท่านั้น ไม่ใช่ "workflow นี้ถูกปิดจบแล้วหรือยัง" (ดู comment เต็มที่
+// computeSessionSummary's caller ใน session/page.tsx — filter เดียวกันนี้ใช้ที่นั่นด้วย)
 export function getSkippedExercises(
   exercises: ProgramExercise[],
-  states: Record<string, Pick<SessionSetState, 'logged'>>
+  states: Record<string, Pick<SessionSetState, 'setsLog'>>
 ): SkippedExercise[] {
   return exercises
-    .filter((ex) => !states[ex.id]?.logged)
+    .filter((ex) => (states[ex.id]?.setsLog.length ?? 0) === 0)
     .map((ex) => ({ id: ex.id, exerciseName: ex.exercise_name, muscleGroup: ex.muscle_group }))
 }
 

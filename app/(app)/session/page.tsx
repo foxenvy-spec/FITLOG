@@ -167,12 +167,18 @@ export default function SessionPage() {
   const [states, setStates] = useState<Record<string, SessionSetState>>({})
   // 6B-2 (P0-2) — เดิม shareSession()/phase 'done' render เรียก computeSessionSummary() ด้วย input
   // นิพจน์เดียวกันเป๊ะแยกกันคนละจุด (คำนวณซ้ำ 2 รอบทุกครั้งที่กดแชร์ระหว่างดูหน้าสรุปอยู่) — hoist เป็น
-  // memo เดียว ใช้ค่าเดียวกันทั้ง 2 จุด ไม่เปลี่ยนสูตร/ผลลัพธ์เลย แค่เลิกคำนวณซ้ำ
+  // memo เดียว ใช้ค่าเดียวกันทั้ง 2 จุด
+  // 6D P1-3 — filter เปลี่ยนจาก s.logged (workflow state — ตั้งเมื่อกด "บันทึก & ท่าถัดไป" เท่านั้น) เป็น
+  // s.setsLog.length > 0 (มี training data จริงที่ persist ไปแล้ว) — เดิม exercise ที่ log ไปแล้วบางเซ็ต
+  // จริงแต่ถูกกด "ข้าม" ก่อนกดปุ่มจบท่า จะหายไปจาก summary นี้ทั้งที่ DB มีอยู่จริง (logSet() persist ทีละ
+  // เซ็ตทันที ไม่รอ logged) ทำให้ Complete screen โชว์ตัวเลขต่ำกว่าที่ Dashboard/History เห็นจริงในวันเดียวกัน
+  // — "workflow state ≠ training-data existence" ไม่แตะ logged เอง (ยังใช้ตัดสิน UI/navigation อื่นเหมือนเดิม
+  // ทุกจุด เช่น progress chips/sidebar list) และไม่แตะ computeSessionSummary()'s formula เลย แค่ input filter
   const sessionSummary = useMemo(
     () =>
       computeSessionSummary(
         Object.values(states)
-          .filter((s) => s.logged)
+          .filter((s) => s.setsLog.length > 0)
           .map((s) => ({ setsLog: s.setsLog }))
       ),
     [states]

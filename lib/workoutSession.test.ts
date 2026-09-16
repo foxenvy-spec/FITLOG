@@ -9,6 +9,7 @@ import {
   makeAdhocExercise,
   isAdhocExercise,
   computeSessionSummary,
+  getSkippedExercises,
   aggregateMuscleLoads,
   computeSessionAvgRpe,
   computeWorkoutScore,
@@ -262,6 +263,54 @@ describe('computeSessionSummary', () => {
 
   it('returns zeros for an empty session', () => {
     expect(computeSessionSummary([])).toEqual({ exerciseCount: 0, totalSets: 0, totalVolumeKg: 0 })
+  })
+})
+
+// 6D P1-3 — locked contract: an exercise counts as "skipped" only when it has zero persisted sets.
+// Partially-logged-then-skipped exercises have real training data (persisted via logSet() per-set,
+// independent of the `logged` workflow flag) and must not be classified as skipped.
+describe('getSkippedExercises', () => {
+  const set = { reps: 8, weightKg: 40 }
+
+  it('does not classify a 3-sets-then-skip exercise as skipped', () => {
+    const exercises = [makeExercise({ id: 'ex-1' })]
+    const states = { 'ex-1': { setsLog: [set, set, set] } }
+    expect(getSkippedExercises(exercises, states)).toEqual([])
+  })
+
+  it('does not classify a 1-set-then-skip exercise as skipped', () => {
+    const exercises = [makeExercise({ id: 'ex-1' })]
+    const states = { 'ex-1': { setsLog: [set] } }
+    expect(getSkippedExercises(exercises, states)).toEqual([])
+  })
+
+  it('classifies a 0-sets-then-skip exercise as skipped', () => {
+    const exercises = [makeExercise({ id: 'ex-1', exercise_name: 'Bench Press', muscle_group: 'อก' })]
+    const states = { 'ex-1': { setsLog: [] } }
+    expect(getSkippedExercises(exercises, states)).toEqual([{ id: 'ex-1', exerciseName: 'Bench Press', muscleGroup: 'อก' }])
+  })
+
+  it('treats a fully-finished exercise (any logged sets) the same as any other exercise with data', () => {
+    const exercises = [makeExercise({ id: 'ex-1' })]
+    const states = { 'ex-1': { setsLog: [set, set] } }
+    expect(getSkippedExercises(exercises, states)).toEqual([])
+  })
+
+  it('handles a mix of touched and untouched exercises independently', () => {
+    const exercises = [makeExercise({ id: 'ex-1' }), makeExercise({ id: 'ex-2' }), makeExercise({ id: 'ex-3' })]
+    const states = {
+      'ex-1': { setsLog: [set, set, set] }, // finished
+      'ex-2': { setsLog: [] }, // genuinely skipped
+      'ex-3': { setsLog: [set] }, // partial-then-skipped
+    }
+    expect(getSkippedExercises(exercises, states).map((s) => s.id)).toEqual(['ex-2'])
+  })
+
+  it('treats a missing state entry (exercise never opened at all) as skipped', () => {
+    const exercises = [makeExercise({ id: 'ex-1' })]
+    expect(getSkippedExercises(exercises, {})).toEqual([
+      { id: 'ex-1', exerciseName: exercises[0].exercise_name, muscleGroup: exercises[0].muscle_group },
+    ])
   })
 })
 
