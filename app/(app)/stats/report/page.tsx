@@ -280,7 +280,18 @@ export default function WorkoutReportPage() {
           ใหม่ — Goal bar ใช้ goalProgress ที่มาจาก lib/goalProgress.ts เดิม (weight/bodyFat เท่านั้น ตาราง
           goals ไม่รองรับ goal_type อื่น — กล้ามเนื้อจึงไม่มี goal ให้โชว์ ไม่ใช่ bug) */}
       <PremiumCard className="p-5 sm:p-6" reducedTexture>
-        <SectionHeader icon="💪" title="Body Progress" />
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <SectionHeader icon="💪" title="Body Progress" />
+          {/* Trend/Delta audit, Finding B — ตัวเลข/ลูกศรใน BodyProgressColumn ด้านล่างเทียบกับเอนทรีที่
+              computeBodyMetricsSummary(..., period) หาได้จริง (ใกล้เคียง period ที่เลือกที่สุด แต่ fallback
+              ไปเอนทรีเก่าสุดถ้าประวัติสั้นกว่า period — ดู findComparisonEntry, lib/bodyMetricsSummary.ts)
+              ไม่ใช่การรับประกันว่าเป็นค่าเมื่อ 7/30 วันก่อนพอดีเป๊ะเหมือน periodLabel ของทั้งหน้า (บรรทัด
+              ~94/129/334 ด้านบน ซึ่งอ้างอิง workouts ที่ date-range filter ตรงๆ ไม่มี fallback แบบนี้) — ใช้
+              bodySummary.periodLabel ที่มีอยู่แล้ว (คำนวณจากคู่เอนทรีจริงที่ใช้เทียบ ตัวเดียวกับที่ Dashboard
+              ใช้ใน MINT Coach insight) แทนการสร้างข้อความใหม่ ไม่แตะ findComparisonEntry/fallback/
+              delta/arrow/isGood ใดๆ เลย null ได้ (ไม่มีเอนทรีก่อนหน้าให้เทียบเลย) จึงไม่ render ตอนนั้น */}
+          {report.bodySummary.periodLabel && <p className="text-[11px] text-muted">{report.bodySummary.periodLabel}</p>}
+        </div>
         <div className="grid grid-cols-3 gap-4 mt-4">
           <BodyProgressColumn
             icon="⚖️"
@@ -403,8 +414,21 @@ function SectionHeader({ icon, title, iconBg }: { icon: string; title: string; i
   )
 }
 
+// Trend/Delta audit, Finding A — เดิม pct === null (ไม่มี baseline ให้เทียบ) กับ pct === 0 (มี baseline
+// แล้วค่าปัจจุบันเท่ากันเป๊ะ — "ไม่โต" ที่มีความหมายจริง) ถูก return null เหมือนกันหมด ทำให้ badge หายไป
+// เหมือนกันทั้งสองเคส ทั้งที่ BodyProgressColumn ด้านล่างในไฟล์เดียวกันแยกสองเคสนี้ออกจากกันอยู่แล้ว (null
+// -> "—", 0 -> "ไม่เปลี่ยนแปลง") — null ยังคง return null เหมือนเดิมทุกประการ (ไม่มี baseline = ไม่มีอะไรให้
+// แสดง) เปลี่ยนแค่เคส 0 ให้มี badge จริงแทนที่จะหายไปเงียบๆ สีเทากลาง (NEUTRAL.mutedIcon) ตัวเดียวกับที่
+// BodyProgressColumn ใช้กับเคส 0 อยู่แล้ว ไม่ใช่เขียว/แดง เพราะไม่ใช่ direction ที่ดี/แย่
 function DeltaBadge({ pct }: { pct: number | null }) {
-  if (pct === null || pct === 0) return null
+  if (pct === null) return null
+  if (pct === 0) {
+    return (
+      <span className="text-[11px] font-mono font-semibold" style={{ color: NEUTRAL.mutedIcon }}>
+        ไม่เปลี่ยนแปลง
+      </span>
+    )
+  }
   const color = pct > 0 ? COLORS.moss : DS.semantic.danger
   return (
     <span className="text-[11px] font-mono font-semibold" style={{ color }}>
