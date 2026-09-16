@@ -193,6 +193,44 @@ describe('computeDaySummary', () => {
   })
 })
 
+// CAL-2 (Duration Semantic Separation) — locked decision: session/page.tsx's live stopwatch
+// (totalElapsedMs, session-context) and computeDaySummary's created_at-span estimate (day-context) are two
+// intentionally distinct concepts, not two implementations of the same thing — session elapsed time
+// legitimately differs from a day's recorded-span duration (idle time before the first logged set, not
+// clicking "end session" immediately, or more than one session on the same calendar day). This is the one
+// targeted regression test the CAL-2 contract calls for (session/page.tsx itself is untested page-level
+// logic, out of scope for new test infra): it proves neither shared engine secretly depends on the other
+// or on any external session/stopwatch state, and that the same-day divergence in the example above is
+// real, deterministic behavior — not an accidental bug this suite would otherwise mask.
+describe('CAL-2: session-elapsed duration vs day-level duration are independent inputs to the shared calorie engine', () => {
+  it('estimateCaloriesToday (the exact call session/page.tsx makes with its stopwatch-derived minutes) does not affect, and is not affected by, computeDaySummary\'s day-level duration for the same workouts', () => {
+    const dayWorkouts = [
+      makeWorkout({ id: 'a', type: 'cardio', cardio_type: 'ว่ายน้ำ', duration_min: 15, calories_kcal: null, created_at: '2026-07-20T18:00:00Z' }),
+      makeWorkout({ id: 'b', type: 'strength', created_at: '2026-07-20T18:20:00Z' }),
+    ]
+    const weight = 75
+
+    // day-context: purely a function of the persisted workout rows (computeDaySummaryMath) — this is what
+    // History/Calendar/Dashboard/Log show for this day
+    const daySummaryBefore = computeDaySummary(dayWorkouts, weight)
+
+    // session-context: a stopwatch-derived value that legitimately differs from the day-level span (e.g.
+    // idled 43 extra minutes before logging the first set — see CAL-2 trace) — this is what session/page.tsx
+    // passes as strengthSessionMinutes
+    const sessionElapsedMin = 63
+    const sessionCalories = estimateCaloriesToday(dayWorkouts, sessionElapsedMin, weight)
+
+    expect(daySummaryBefore.durationMin).not.toBe(sessionElapsedMin) // genuinely different numbers here
+    expect(sessionCalories).not.toBe(daySummaryBefore.caloriesKcal) // ...so their calorie estimates differ too — expected, not a bug
+
+    // re-deriving the day-level path again after computing the session-level path must be byte-for-byte
+    // unaffected — proves the two engines don't share hidden state
+    const daySummaryAfter = computeDaySummary(dayWorkouts, weight)
+    expect(daySummaryAfter.durationMin).toBe(daySummaryBefore.durationMin)
+    expect(daySummaryAfter.caloriesKcal).toBe(daySummaryBefore.caloriesKcal)
+  })
+})
+
 // 6B-2 (P0-2) — canonical "totals for one day" engine. Contract: without onlyProgramDayId returns actual
 // day totals (all workouts on that date); with onlyProgramDayId returns the schedule-scoped subset. These
 // are two distinct, intentionally different answers — tests assert each mode's filtering independently,

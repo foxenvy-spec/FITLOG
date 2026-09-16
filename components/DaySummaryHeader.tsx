@@ -32,7 +32,12 @@ export default function DaySummaryHeader({
     stats.push({ value: `${summary.totalSets}`, label: 'Sets' })
   }
   if (summary.durationMin !== null) {
-    stats.push({ value: formatDuration(summary.durationMin), label: 'เวลา' })
+    // CAL-2 (Duration Semantic Separation) — "เวลาฝึก" ไม่ใช่ "เวลา" เฉยๆ เพื่อแยกจาก Session Complete's
+    // "เวลาที่ใช้" (session stopwatch elapsed time, คนละ concept กันโดยเจตนา — ดู session/page.tsx) ค่านี้
+    // มาจาก computeDaySummary/computeDayTotals เสมอ (ช่วงเวลาที่อนุมานจาก workout records ที่ persist ไว้
+    // ของวันนั้น ไม่ใช่วันนี้เสมอไป — component นี้ใช้ทั้งใน History แสดงวันที่ผ่านมา และ Calendar แสดงวันที่
+    // เลือก) คำนี้ใช้ได้กับทั้งสองบริบทโดยไม่ต้องอ้างว่าเป็น "วันนี้"
+    stats.push({ value: formatDuration(summary.durationMin), label: 'เวลาฝึก' })
   }
   stats.push({ value: `${summary.exerciseCount}`, label: summary.exerciseCount === 1 ? 'Exercise' : 'Exercises' })
 

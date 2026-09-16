@@ -951,7 +951,10 @@ export default function SessionPage() {
         .map((ex) => ({ ex, state: states[ex.id] }))
         .filter((e) => e.state?.logged)
 
-      const durationMin = Math.round(totalElapsedMs / 60000)
+      // CAL-2 — ตั้งชื่อ sessionElapsedMin ตรงๆ ไม่ใช่ durationMin เฉยๆ กันสับสนกับ DaySummary.durationMin
+      // (lib/workoutDisplay.ts) ซึ่งเป็นคนละ concept กัน (อนุมานจาก workout records ของวันนั้น ไม่ใช่จาก
+      // session stopwatch นี้) — ดู comment ที่ GlowStatCell "เวลาที่ใช้" ด้านล่างของไฟล์
+      const sessionElapsedMin = Math.round(totalElapsedMs / 60000)
       const { start: thisWeekStart, end: thisWeekEnd } = getWeekRange()
       const { start: lastWeekStart } = getPreviousWeekRange()
 
@@ -1010,7 +1013,14 @@ export default function SessionPage() {
         ])
 
       const bodyWeightKg = (latestMetric as { weight_kg: number | null } | null)?.weight_kg ?? null
-      const calories = estimateCaloriesToday((todayCardioRows as Workout[]) ?? [], durationMin, bodyWeightKg)
+      // CAL-2 (Duration Semantic Separation) — ตั้งใจส่ง sessionElapsedMin (session stopwatch) เข้าเป็น
+      // strengthSessionMinutes ที่นี่ ไม่ใช่ computeDaySummary's day-level durationMin แบบที่ Dashboard/
+      // History/Calendar ใช้ — ตัดสินใจแล้วว่านี่คือ session-context calorie estimate ที่ถูกต้องสำหรับหน้านี้
+      // โดยเฉพาะ (สะท้อนเวลาที่ stopwatch เพิ่งนับให้เห็นบนจอ ไม่ใช่เอา day-level ที่ไม่รู้จัก "เซสชัน" มา
+      // ปลอมเป็นเวลาของเซสชันนี้) ผลคือแคลอรี่ที่โชว์ตรงนี้กับที่ History/Dashboard จะโชว้ให้วันเดียวกันใน
+      // ภายหลังอาจไม่เท่ากัน — เป็นความต่างที่ยอมรับได้ตาม contract (session-context estimate vs day-context
+      // estimate เป็นคนละคำถามกัน) ไม่ใช่ data-integrity bug ห้ามเปลี่ยนมาใช้ day-level durationMin ตรงนี้
+      const calories = estimateCaloriesToday((todayCardioRows as Workout[]) ?? [], sessionElapsedMin, bodyWeightKg)
 
       // 6B-2 (P0-2 phase 2) — computeIsPR() (canonical) ตัวเดียวกับ History/Log แทนที่ priorBest map เดิม
       // ที่คำนวณ "หนักสุดก่อนหน้า" เองแยกจากจุดอื่น — historyPool มาจาก query ด้านบน (จำกัด PR_HISTORY_LIMIT
@@ -1371,12 +1381,20 @@ export default function SessionPage() {
             {/* ดู comment ที่ noLiveDuration state ด้านบนของไฟล์ — "00:00" สื่อว่าใช้เวลาศูนย์นาทีจริง ทั้งที่
                 จริงๆ คือไม่เคยมี stopwatch ให้นับเลย ใช้ "–" (เครื่องหมายเดียวกับที่วอลุ่มรวม/แคลอรี่ข้างล่าง
                 ใช้อยู่แล้วเวลาไม่มีข้อมูล) แทนให้สื่อความหมายตรงกับความจริง */}
+            {/* CAL-2 (Duration Semantic Separation) — totalElapsedMs คือ session stopwatch elapsed time
+                (นับต่อเนื่องตั้งแต่เข้าเซสชันจนกดจบ รวมช่วงพัก/downtime ตามที่ออกแบบไว้) คนละ concept กับ
+                "เวลาฝึก" ที่ History/Calendar โชว์ (อนุมานจากช่วง created_at ของ workout records ที่ persist
+                ไว้ของ "วัน" นั้น ไม่ใช่ของ "เซสชัน" นี้โดยเฉพาะ — ดู DaySummaryHeader.tsx) สองค่านี้ต่างกันได้
+                โดยไม่ใช่บั๊ก (เช่น อุ่นเครื่องก่อน log ท่าแรก, ยังไม่กด "จบเซสชัน" ทันทีหลัง log ท่าสุดท้าย,
+                วันเดียวกันมีมากกว่า 1 เซสชัน) — เพิ่ม caption สั้นๆ กันสับสนกับ "เวลาฝึก" โดยไม่เปลี่ยน label
+                หลักหรือ layout */}
             <GlowStatCell
               bare
               icon={<ClockIcon />}
               color={HOME_COLORS.orange}
               value={noLiveDuration ? '–' : formatClock(totalElapsedMs)}
               label="เวลาที่ใช้"
+              caption={noLiveDuration ? undefined : 'เวลารวมทั้งเซสชัน'}
             />
             {/* hero — ฟีดแบ็ก "7/39 ควรเป็นพระเอกเพราะอธิบาย session นี้ได้ดีที่สุด" — caption ใช้
                 skipped.length ที่มีอยู่แล้ว (ประกาศไว้ที่ต้นฟังก์ชัน) ไม่ใช่ตัวเลขใหม่ */}
