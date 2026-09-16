@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, GoalStatus, GoalType, ProgramDay, ProgramExercise, Workout, WorkoutSet } from '@/lib/types'
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
-import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown, workoutVolumeKg } from '@/lib/workoutDisplay'
+import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown, workoutVolumeKg, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 import { computeCurrentStreak, STREAK_WALK_MAX_DAYS } from '@/lib/dashboardStats'
 import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
@@ -51,6 +51,10 @@ export default function CalendarPage() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [goalsError, setGoalsError] = useState<string | null>(null)
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([])
+  // 6D P2-2 — pool แยกสำหรับตรวจ PR โดยเฉพาะ (canonical, เดียวกับ History/Log/Session) แยกจาก allWorkouts
+  // ด้านบน ซึ่งขอบเขต 400 วันถูกยืมมาจาก STREAK_WALK_MAX_DAYS เพื่อ streak/goal volume เท่านั้น ไม่ได้ตั้งใจ
+  // ให้เป็น PR pool (ดู comment เต็มที่จุด query ด้านล่าง) — allWorkouts ยังใช้กับ streak/goal volume เหมือนเดิม
+  const [prHistoryPool, setPrHistoryPool] = useState<Workout[]>([])
   const [latestMetric, setLatestMetric] = useState<BodyMetric | null>(null)
   // บั๊ก (เจอตอนไล่ตรวจทั้งโปรเจค): goalProgress() ด้านล่างเคยคำนวณด้วยสูตรของตัวเอง ใช้แค่
   // goal.starting_value (แช่แข็งตอนสร้างเป้าหมาย) เป็นจุดเริ่มต้นเสมอ — คนละสูตรกับ health/page.tsx และ
@@ -101,17 +105,28 @@ export default function CalendarPage() {
     // เดียวกับ Dashboard ตรงๆ แทน hardcode เลขแยก
     const since = new Date()
     since.setDate(since.getDate() - STREAK_WALK_MAX_DAYS)
-    const [goalsRes, workoutsRes, metricRes, metricHistoryRes] = await Promise.all([
+    const [goalsRes, workoutsRes, metricRes, metricHistoryRes, prHistoryRes] = await Promise.all([
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
       supabase.from('workouts').select('*').gte('performed_at', toIsoDate(since)),
       supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(1),
       // ประวัติทั้งหมด (ไม่จำกัดช่วง) เรียงเก่า -> ใหม่ ใช้หา earliestTrackedValue ต่อเป้าหมาย (ดูคอมเมนต์
       // ที่ metricsHistory state ด้านบน) ตัวเดียวกับที่ health/page.tsx ใช้ (metrics เต็มประวัติเช่นกัน)
       supabase.from('body_metrics').select('*').order('measured_at', { ascending: true }),
+      // 6D P2-2 — pool ตรวจ PR โดยเฉพาะ (canonical, เดียวกับ History/Log/Session เป๊ะ: type='strength',
+      // เรียงใหม่->เก่า, จำกัดด้วย PR_HISTORY_LIMIT) เดิมหน้านี้ใช้ allWorkouts ตัวเดียวกับ streak/goal volume
+      // (ขอบเขต 400 วันแบบ date-range) ทำให้ PR verdict ของ Calendar ไม่ตรงกับ History (ขอบเขต 500 แถวแบบ
+      // row-count — คนละกลไกกันเลย ไม่ใช่แค่ตัวเลขต่างกัน) — แยก query นี้ออกมาต่างหาก ไม่แตะ allWorkouts
+      supabase
+        .from('workouts')
+        .select('*')
+        .eq('type', 'strength')
+        .order('performed_at', { ascending: false })
+        .limit(PR_HISTORY_LIMIT),
     ])
     setGoalsError(goalsRes.error ? goalsRes.error.message : null)
     setGoals(goalsRes.error ? [] : (goalsRes.data as Goal[]) ?? [])
     setAllWorkouts((workoutsRes.data as Workout[]) ?? [])
+    setPrHistoryPool((prHistoryRes.data as Workout[]) ?? [])
     setLatestMetric(((metricRes.data as BodyMetric[]) ?? [])[0] ?? null)
     setMetricsHistory((metricHistoryRes.data as BodyMetric[]) ?? [])
   }, [supabase])
@@ -157,7 +172,7 @@ export default function CalendarPage() {
       const cur = map.get(w.performed_at) ?? { strength: false, cardio: false, pr: false }
       if (w.type === 'strength') {
         cur.strength = true
-        const progress = computeExerciseProgress(w, allWorkouts)
+        const progress = computeExerciseProgress(w, prHistoryPool)
         if (progress.kind === 'pr' || progress.kind === 'bestVolume') cur.pr = true
       } else {
         cur.cardio = true
@@ -165,7 +180,7 @@ export default function CalendarPage() {
       map.set(w.performed_at, cur)
     })
     return map
-  }, [monthWorkouts, allWorkouts])
+  }, [monthWorkouts, prHistoryPool])
 
   // บั๊ก (เจอตอนไล่เช็คทั้งโปรเจค): เดิมนับ "ทุกวันปฏิทินต้องมี workout ติดกัน" ล้วนๆ ไม่รู้จักวันพักตาม
   // โปรแกรม ทำให้ผู้ใช้ที่มีโปรแกรม (เช่น จ/พ/ศ) เห็นเลข streak หน้านี้ต่ำกว่า Dashboard มาก (ขาดทุกวันที่
@@ -464,7 +479,7 @@ export default function CalendarPage() {
                 const summary = computeDaySummary(selectedWorkouts)
                 const prBreakdown = countDayPRsBreakdown(
                   selectedWorkouts.filter((w) => w.type === 'strength'),
-                  allWorkouts
+                  prHistoryPool
                 )
                 return <DaySummaryHeader summary={summary} prBreakdown={prBreakdown} unit={unit} toDisplay={toDisplay} />
               })()}
@@ -487,7 +502,7 @@ export default function CalendarPage() {
                     key={w.id}
                     workout={w}
                     displaySets={buildDisplaySets(w, daySets[w.id] ?? [])}
-                    progress={computeExerciseProgress(w, allWorkouts)}
+                    progress={computeExerciseProgress(w, prHistoryPool)}
                     format={format}
                     expanded={expandedIds.has(w.id)}
                     onToggleExpand={() => toggleExpand(w.id)}
