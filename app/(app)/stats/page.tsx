@@ -774,10 +774,10 @@ export default function StatsPage() {
                       tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${v}`)}
                     />
                     <Tooltip
-                      cursor={{ fill: 'rgba(108,140,168,0.08)' }}
-                      contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                      cursor={{ fill: withAlpha(DS.domain.strength, '14') }}
+                      contentStyle={{ background: DS.surface.card, border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
                       labelStyle={{ color: DS.text.mutedChart }}
-                      itemStyle={{ color: '#F3F0E8' }}
+                      itemStyle={{ color: DS.text.primary }}
                       formatter={(v: number) => [`${v} ${unit}`, 'วอลุ่ม']}
                     />
                     <Bar dataKey="value" fill={DS.domain.strength} radius={[3, 3, 0, 0]} />
@@ -856,10 +856,10 @@ export default function StatsPage() {
               />
               <YAxis tick={{ fill: DS.text.mutedChart, fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
               <Tooltip
-                cursor={{ fill: 'rgba(193,80,58,0.08)' }}
-                contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                cursor={{ fill: withAlpha(DS.domain.cardio, '14') }}
+                contentStyle={{ background: DS.surface.card, border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
                 labelStyle={{ color: DS.text.mutedChart }}
-                itemStyle={{ color: '#F3F0E8' }}
+                itemStyle={{ color: DS.text.primary }}
                 formatter={(v: number) => [`${v} กม.`, 'ระยะทาง']}
               />
               <Bar dataKey="value" fill={DS.domain.cardio} radius={[3, 3, 0, 0]} />
@@ -930,9 +930,9 @@ export default function StatsPage() {
                   }}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: DS.surface.card, border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
                   labelStyle={{ color: DS.text.mutedChart }}
-                  itemStyle={{ color: '#F3F0E8' }}
+                  itemStyle={{ color: DS.text.primary }}
                   formatter={(v: number, _name: string, entry: any) =>
                     entry?.payload?.pct === null ? ['ไม่มีข้อมูล', 'ระดับ'] : [`${v}%`, 'ระดับ']
                   }
@@ -1022,9 +1022,9 @@ export default function StatsPage() {
                       2 หลักไม่พอที่ใส่แล้ว (สาเหตุเดียวกับกราฟ Weekly Volume ด้านบน) */}
                   <YAxis tick={{ fill: DS.text.mutedChart, fontSize: 10 }} axisLine={false} tickLine={false} width={40} domain={['auto', 'auto']} />
                   <Tooltip
-                    contentStyle={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
+                    contentStyle={{ background: DS.surface.card, border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12 }}
                     labelStyle={{ color: DS.text.mutedChart }}
-                    itemStyle={{ color: '#F3F0E8' }}
+                    itemStyle={{ color: DS.text.primary }}
                     formatter={(v: number) => [`${v} ${unit}`, 'Estimated 1RM']}
                   />
                   <Line type="monotone" dataKey="value" stroke={DS.domain.strength} strokeWidth={2} dot={{ r: 2, fill: DS.domain.strength }} />

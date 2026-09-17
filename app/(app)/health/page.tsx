@@ -32,6 +32,7 @@ import PremiumCard from '@/components/ui/PremiumCard'
 import BeforeAfterSlider from '@/components/BeforeAfterSlider'
 import ProgressTimelineCard from '@/components/ProgressTimelineCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
+import { DS } from '@/lib/designSystem'
 import Sparkline from '@/components/dashboard/Sparkline'
 // 6G-P1 #1 — ไฟล์นี้เคยประกาศ todayStr() ของตัวเอง (ใช้ getTimezoneOffset() ของเครื่องผู้ใช้) บัง
 // canonical todayStr() จาก lib/weekdays.ts (Asia/Bangkok เสมอ) — ผลคือค่าเริ่มต้นของฟอร์มบันทึก body
@@ -2401,8 +2402,8 @@ function ChartPointTooltip({
   if (!active || !payload || payload.length === 0) return null
   const point = payload[0].payload
   return (
-    <div style={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
-      <p style={{ color: '#9498A0', marginBottom: 2 }}>{label}</p>
+    <div style={{ background: DS.surface.card, border: '1px solid #2E333A', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+      <p style={{ color: DS.text.mutedChart, marginBottom: 2 }}>{label}</p>
       <p style={{ color: '#F3F0E8', fontWeight: 600 }}>
         {point.value.toFixed(1)} {unit}
       </p>
@@ -3004,10 +3005,10 @@ function MetricRowCard({ trend, periodLabel }: { trend: TrendDef; periodLabel: s
                   <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                     <CartesianGrid stroke="#2E333A" vertical={false} />
                     <XAxis dataKey="label" hide />
-                    <YAxis tick={{ fill: '#9498A0', fontSize: 9 }} axisLine={false} tickLine={false} width={26} domain={['auto', 'auto']} />
+                    <YAxis tick={{ fill: DS.text.mutedChart, fontSize: 9 }} axisLine={false} tickLine={false} width={26} domain={['auto', 'auto']} />
                     <Tooltip
-                      contentStyle={{ background: '#1C1F24', border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
-                      labelStyle={{ color: '#9498A0' }}
+                      contentStyle={{ background: DS.surface.card, border: '1px solid #2E333A', borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: DS.text.mutedChart }}
                       itemStyle={{ color: '#F3F0E8' }}
                       formatter={(v: number) => [`${v} ${trend.unit}`, trend.label]}
                     />

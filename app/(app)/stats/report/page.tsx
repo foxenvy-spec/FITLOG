@@ -80,7 +80,7 @@ export default function WorkoutReportPage() {
               คือภาพยังมีขอบเห็นชัดทั้ง 4 ด้าน เพิ่ม fade แนวตั้งอีกชั้นแก้ตรงนี้โดยเฉพาะ */}
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(110deg, #0B0B0B 0%, rgba(11,11,11,.9) 32%, rgba(11,11,11,.55) 62%, rgba(11,11,11,.3) 100%)' }}
+            style={{ background: `linear-gradient(110deg, ${DS.surface.bg} 0%, rgba(11,11,11,.9) 32%, rgba(11,11,11,.55) 62%, rgba(11,11,11,.3) 100%)` }}
           />
           <div
             className="absolute inset-0"
@@ -390,9 +390,9 @@ export default function WorkoutReportPage() {
 function TrendTooltipContent({ active, payload, label, unit }: { active?: boolean; payload?: { value: number }[]; label?: string; unit: string }) {
   if (!active || !payload || payload.length === 0) return null
   return (
-    <div style={{ background: '#1C1F24', border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12, padding: '6px 10px' }}>
+    <div style={{ background: DS.surface.card, border: `1px solid ${DS.border.default}`, borderRadius: 8, fontSize: 12, padding: '6px 10px' }}>
       <p style={{ color: DS.text.mutedChart, margin: 0 }}>{label}</p>
-      <p style={{ color: '#F3F0E8', margin: 0 }}>
+      <p style={{ color: DS.text.primary, margin: 0 }}>
         {payload[0].value} {unit} · วอลุ่ม
       </p>
     </div>
