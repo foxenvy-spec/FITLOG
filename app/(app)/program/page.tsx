@@ -17,6 +17,7 @@ import Button from '@/components/ui/Button'
 import { CARD_BORDER_CSS } from '@/lib/theme'
 import { DS } from '@/lib/designSystem'
 import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
+import { recordExplicitCompletion, recordManualUncomplete } from '@/lib/programCompletion'
 
 export default function ProgramPage() {
   const supabase = createClient()
@@ -167,26 +168,28 @@ export default function ProgramPage() {
     // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เดิม flip completedIds ก่อนยิง DB แล้วไม่มี rollback ถ้าพัง — ต่างจาก
     // handleBulkDelete/handleDeleteAll ด้านล่างที่ update state หลังยืนยันสำเร็จเท่านั้น" — สลับเป็น DB
     // สำเร็จก่อนค่อย update state เหมือนกัน
+    // 6F-P5 (P1) — เขียนผ่าน lib/programCompletion.ts แทนการ upsert/delete ตรงๆ: กด complete เอง = explicit
+    // intent (เคลียร์ manual_uncomplete override เก่าด้วย) กด uncheck = ต้องสร้าง override กันไม่ให้ session
+    // backfill/reconciliation ดึงกลับมา — ดู comment เต็มที่ lib/programCompletion.ts
     if (done) {
-      const { error: err } = await supabase
-        .from('program_completions')
-        .upsert(
-          { user_id: user.id, program_exercise_id: exerciseId, completed_at: todayStr() },
-          { onConflict: 'user_id,program_exercise_id,completed_at' }
-        )
-      if (err) {
-        setError(err.message)
+      const { error } = await recordExplicitCompletion(supabase, {
+        userId: user.id,
+        date: todayStr(),
+        target: { programExerciseId: exerciseId },
+      })
+      if (error) {
+        setError(error)
         return
       }
       setCompletedIds((prev) => new Set(prev).add(exerciseId))
     } else {
-      const { error: err } = await supabase
-        .from('program_completions')
-        .delete()
-        .eq('program_exercise_id', exerciseId)
-        .eq('completed_at', todayStr())
-      if (err) {
-        setError(err.message)
+      const { error } = await recordManualUncomplete(supabase, {
+        userId: user.id,
+        date: todayStr(),
+        programExerciseId: exerciseId,
+      })
+      if (error) {
+        setError(error)
         return
       }
       setCompletedIds((prev) => {
@@ -292,6 +295,21 @@ export default function ProgramPage() {
         setError(`บันทึกความคืบหน้าไม่สำเร็จ: ${cErr.message}`)
         return
       }
+
+      // 6F-P5 (P1) — "Log to Today" เป็น explicit completion intent เหมือน toggleComplete(true) ทุกท่า
+      // ในคราวเดียว ต้องเคลียร์ manual_uncomplete override ของวันนี้ด้วยเหตุผลเดียวกัน — best-effort (ไม่
+      // block ผลลัพธ์หลักถ้าพลาด เพราะ completion แถวจริงข้างบนเขียนสำเร็จแล้ว ดู comment เต็มที่
+      // recordExplicitCompletion ใน lib/programCompletion.ts)
+      const { error: overrideErr } = await supabase
+        .from('program_completion_overrides')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('completion_date', todayStr())
+        .in(
+          'program_exercise_id',
+          currentExercises.map((ex) => ex.id)
+        )
+      if (overrideErr) console.error('handleLogToToday: failed to clear stale overrides', overrideErr)
 
       setCompletedIds(new Set(currentExercises.map((ex) => ex.id)))
       setLogMessage(`บันทึก ${payload.length} ท่าเข้า Log ของวันนี้แล้ว`)

@@ -74,6 +74,7 @@ import { splitTitleDetail, computeIsPR, PR_HISTORY_LIMIT } from '@/lib/workoutDi
 import { createExercisePersistence, type ExercisePersistence } from '@/lib/sessionPersistence'
 import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
 import { getOrCreateSessionId, clearSessionId } from '@/lib/sessionId'
+import { recordExplicitCompletion, reconcileProgramCompletion, type CompletionTarget } from '@/lib/programCompletion'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 
@@ -539,9 +540,20 @@ export default function SessionPage() {
         return [id, state.logged && !trustLogged ? { ...state, logged: false } : state]
       })
     )
+    // 6F-P5 (P1) — reconcileProgramCompletion() แทน recordProgramCompletion() ตรงๆ: backfill นี้เป็นการ
+    // "เดา" ว่าท่านี้ควรจะ complete จาก workout evidence ไม่ใช่ explicit user intent เหมือนกดปุ่ม 'จบท่า'
+    // เอง จึงต้องเคารพ manual_uncomplete override ถ้าผู้ใช้เพิ่ง uncheck ท่านี้ไปเองใน /program (ไม่งั้นจะ
+    // ทำลาย invariant ที่ล็อกไว้ — ดู lib/programCompletion.ts) — error ไม่ throw/บล็อกหน้าโหลดเหมือนเดิม
+    // แต่ log ไว้แทนการกลืนเงียบสนิท (เดิม .catch(() => {})) เพราะ backfill ที่ fail ซ้ำๆ ควร debug ได้
     if (completionBackfills.length > 0) {
       await Promise.all(
-        completionBackfills.map(({ ex, workoutId }) => recordProgramCompletion(user.id, ex, workoutId).catch(() => {}))
+        completionBackfills.map(({ ex, workoutId }) => {
+          const target: CompletionTarget = isAdhocExercise(ex) ? { workoutId } : { programExerciseId: ex.id }
+          return reconcileProgramCompletion(supabase, { userId: user.id, date: todayStr(), target }).then(({ error }) => {
+            // eslint-disable-next-line no-console
+            if (error) console.error('completionBackfills: reconcileProgramCompletion failed', error)
+          })
+        })
       )
     }
 
@@ -728,9 +740,17 @@ export default function SessionPage() {
         return [id, state.logged && !trustLogged ? { ...state, logged: false } : state]
       })
     )
+    // 6F-P5 (P1) — เหตุผลเดียวกับ backfill ใน load(): เดาจาก workout evidence ไม่ใช่ explicit intent
+    // ต้องเคารพ manual_uncomplete override เสมอ
     if (completionBackfills.length > 0) {
       await Promise.all(
-        completionBackfills.map(({ ex, workoutId }) => recordProgramCompletion(userId, ex, workoutId).catch(() => {}))
+        completionBackfills.map(({ ex, workoutId }) => {
+          const target: CompletionTarget = isAdhocExercise(ex) ? { workoutId } : { programExerciseId: ex.id }
+          return reconcileProgramCompletion(supabase, { userId, date: todayStr(), target }).then(({ error }) => {
+            // eslint-disable-next-line no-console
+            if (error) console.error('completionBackfills: reconcileProgramCompletion failed', error)
+          })
+        })
       )
     }
 
@@ -916,21 +936,16 @@ export default function SessionPage() {
   // เดิมพังเงียบๆ ทุกครั้ง (unique index รอบแรกเป็น partial index ที่ ON CONFLICT เปล่าๆ จับคู่ไม่ได้ — ดู
   // migration 043) เพราะฟังก์ชันนี้ไม่เคยเช็ค error จาก upsert เลย เพิ่มการเช็ค+โยน error ให้ผู้เรียกจับได้
   // (เหมือน pattern persistSets ด้านบนที่ throw wErr ตอน insert/update workouts พลาด) กันความเงียบซ้ำอีก
+  // v3 (6F-P5, P1 — Completion Provenance Integrity) — ย้าย write logic ไป lib/programCompletion.ts
+  // (recordExplicitCompletion) ให้ /program (manual complete/"Log to Today") ใช้ชุดเดียวกัน — ตอนนี้การจบ
+  // ท่าใน /session ถือเป็น explicit completion intent เดียวกับการติ๊ก complete เอง จึงเคลียร์
+  // manual_uncomplete override ของวันนี้ด้วยเสมอ (best-effort, ดู comment เต็มที่ recordExplicitCompletion)
+  // — signature/throw-on-error behavior ของฟังก์ชันนี้ไม่เปลี่ยน กัน call site เดิม (logCurrentExercise/
+  // swapCurrentExercise) ไม่ต้องแก้เลย
   async function recordProgramCompletion(userId: string, ex: ProgramExercise, workoutId: string) {
-    if (isAdhocExercise(ex)) {
-      const { error } = await supabase
-        .from('program_completions')
-        .upsert({ user_id: userId, workout_id: workoutId, completed_at: todayStr() }, { onConflict: 'user_id,workout_id' })
-      if (error) throw error
-    } else {
-      const { error } = await supabase
-        .from('program_completions')
-        .upsert(
-          { user_id: userId, program_exercise_id: ex.id, completed_at: todayStr() },
-          { onConflict: 'user_id,program_exercise_id,completed_at' }
-        )
-      if (error) throw error
-    }
+    const target: CompletionTarget = isAdhocExercise(ex) ? { workoutId } : { programExerciseId: ex.id }
+    const { error } = await recordExplicitCompletion(supabase, { userId, date: todayStr(), target })
+    if (error) throw new Error(error)
   }
 
   // กด "เซ็ตนี้เสร็จแล้ว" — จำ reps/น้ำหนักที่กรอกอยู่ ณ ตอนนี้เป็นเซ็ตจริงเซ็ตหนึ่ง (ไม่ใช่แค่นับจำนวน)
