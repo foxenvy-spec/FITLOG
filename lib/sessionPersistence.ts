@@ -22,7 +22,12 @@ export async function persistSets(
   // program_day_id ของแผนที่กำลังเปิดอยู่ในเซสชันนี้ (component state `day` เดิม — ไม่ใช่ ex.program_day_id
   // ซึ่งเป็น '' ตายตัวสำหรับท่า ad-hoc/สลับกลางเซสชันเสมอ ดู comment ที่ payload.program_day_id ด้านล่าง)
   // ต้องส่งเข้ามาชัดเจนตอนย้ายออกมาจาก closure ของ component (P1-2)
-  dayId: string | null
+  dayId: string | null,
+  // 6F-P1 — session_id ของ "การเข้าเซสชันนี้" (generated ครั้งเดียวตอนเปิด /session ไม่ใช่ต่อการ persist
+  // แต่ละครั้ง — ดู lib/sessionId.ts) เดินขนานกับ dayId ตลอด ไม่ใช่แทนที่กัน: dayId ตอบ "ผูกแผนวันไหน"
+  // ส่วน sessionId ตอบ "มาจากการเปิดเซสชันครั้งไหน" — แยกกันเพื่อให้ findExtraLoggedExercises() แยกท่าจาก
+  // เซสชันอื่นออกจากท่าอิสระแท้ๆ (session_id เป็น null ทั้งคู่) ได้ในภายหลัง
+  sessionId: string | null
 ): Promise<{ workoutId: string | null; setsError: string | null }> {
   if (state.setsLog.length === 0) return { workoutId: state.workoutId ?? null, setsError: null }
 
@@ -55,6 +60,7 @@ export async function persistSets(
     // program_day_id เดียวกับแผนที่กำลังเปิดอยู่ตอนนี้ (state `day`) เหมือนท่าตามแผนทุกประการ ไม่ใช่
     // null ลอยๆ — null ควรเหลือไว้เฉพาะ workout จาก /log ที่ไม่มีบริบทเซสชันเลยจริงๆ เท่านั้น
     program_day_id: dayId,
+    session_id: sessionId,
   }
 
   // ถ้าเคยบันทึกท่านี้ไปแล้ว (เซ็ตก่อนหน้าในท่าเดียวกัน หรือกลับมาแก้ผ่าน progress chips)
@@ -111,11 +117,12 @@ export function createExercisePersistence(supabase: SupabaseClient) {
       ex: ProgramExercise,
       state: SessionSetState,
       userId: string,
-      dayId: string | null
+      dayId: string | null,
+      sessionId: string | null
     ): Promise<{ workoutId: string | null; setsError: string | null }> {
       return queue.enqueue(ex.id, async () => {
         const effectiveWorkoutId = state.workoutId ?? knownWorkoutIds.get(ex.id) ?? null
-        const result = await persistSets(supabase, ex, { ...state, workoutId: effectiveWorkoutId }, userId, dayId)
+        const result = await persistSets(supabase, ex, { ...state, workoutId: effectiveWorkoutId }, userId, dayId, sessionId)
         if (result.workoutId) knownWorkoutIds.set(ex.id, result.workoutId)
         return result
       })

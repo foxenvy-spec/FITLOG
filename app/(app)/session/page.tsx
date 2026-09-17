@@ -32,6 +32,7 @@ import {
   aggregateMuscleLoads,
   getSkippedExercises,
   findExtraLoggedExercises,
+  belongsToCurrentSession,
   makeAdhocExercise,
   isAdhocExercise,
   computeSessionAvgRpe,
@@ -72,6 +73,7 @@ import LoadingState from '@/components/LoadingState'
 import { splitTitleDetail, computeIsPR, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 import { createExercisePersistence, type ExercisePersistence } from '@/lib/sessionPersistence'
 import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
+import { getOrCreateSessionId, clearSessionId } from '@/lib/sessionId'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 
@@ -143,6 +145,12 @@ export default function SessionPage() {
   // (ซึ่งจะล้าง state ที่เพิ่งเรียนรู้มาทุกครั้ง ทำลายจุดประสงค์ทั้งหมดของมัน) — lazy-init ผ่าน ref ครั้งเดียว
   const persistenceRef = useRef<ExercisePersistence | null>(null)
   if (!persistenceRef.current) persistenceRef.current = createExercisePersistence(supabase)
+  // 6F-P1 — session_id ของ "การเข้าเซสชันครั้งนี้" สร้าง/กู้คืนครั้งเดียวตอน load()/loadGeneratedSession()
+  // กำหนด context ได้ (dayId ของแผน หรือ id ของ generated payload) ไม่ใช่สร้างใหม่ทุกครั้งที่ persist —
+  // sessionContextKeyRef เก็บ "คีย์" ที่ใช้ค้นหา/ล้างใน sessionStorage ไว้ด้วย เพราะตอน endSession() ต้องรู้
+  // ว่าจะเคลียร์คีย์ไหน (day state อาจเป็น null แล้วสำหรับ generated session ไปแล้วตอนนั้น)
+  const sessionIdRef = useRef<string | null>(null)
+  const sessionContextKeyRef = useRef<string | null>(null)
   const { unit, toDisplay, toKg, format } = useWeightUnit()
   const { showToast } = useToast()
   const { data: exerciseLibrary = [] } = useExerciseLibrary()
@@ -330,6 +338,12 @@ export default function SessionPage() {
     if (isMakeup) setActiveMakeupDayId(makeupDayId as string)
     else clearActiveMakeupDayId()
 
+    // 6F-P1 — session_id ของการเข้าเซสชันนี้ ผูกกับ dayId (identity ของแผนวันนี้/วันที่ชดเชย ซึ่งเป็น
+    // unique อยู่แล้ว) ไม่ใช่แค่วันที่ปฏิทิน — กัน session ชดเชยที่ทำค้างไว้ไม่จบสับสนกับ session ปกติของ
+    // วันนี้ที่เปิดทีหลัง (คนละ dayId คนละ session_id เสมอ) ดู lib/sessionId.ts
+    sessionContextKeyRef.current = (dayRow as ProgramDay).id
+    sessionIdRef.current = getOrCreateSessionId((dayRow as ProgramDay).id)
+
     const { data: exRows, error: exErr } = await supabase
       .from('program_exercises')
       .select('*')
@@ -373,7 +387,7 @@ export default function SessionPage() {
     // ท่าที่อยู่ในแผน เพราะท่าที่กด "เพิ่มท่า" เองระหว่างเซสชันก็ต้องรอดจากการรีเฟรชด้วยเหมือนกัน
     const { data: workoutRows } = await supabase
       .from('workouts')
-      .select('id, exercise_name, muscle_group, rpe, program_day_id')
+      .select('id, exercise_name, muscle_group, rpe, program_day_id, session_id')
       .eq('user_id', user.id)
       .eq('type', 'strength')
       .eq('performed_at', todayStr())
@@ -384,9 +398,20 @@ export default function SessionPage() {
     // แผนนี้ไปด้วย — กรองออกเฉพาะแถวที่ระบุ program_day_id ไว้ชัดเจนแล้วว่าเป็นของแผน "อื่น" (ไม่ใช่แผนที่
     // กำลังเปิดอยู่) เหลือไว้แค่ null (workout อิสระแท้ๆ ไม่ผูกแผนไหนเลย ยังต้องรอดจากการรีเฟรชเหมือนเดิม)
     // กับที่ตรงกับแผนนี้พอดี (ทำแผนเดียวกันซ้ำ/resume เซสชันชดเชยเดิมที่ยังไม่จบ)
+    //
+    // 6F-P1 (producer/consumer trace) — "null program_day_id" ไม่ใช่ bucket เดียวอีกต่อไป: AI quick-start,
+    // generated session, template quick-start, repeat-session ต่างก็ insert program_day_id = null เหมือน
+    // /log ทุกประการ แต่มี session_id คนละค่ากัน (หรือ null สำหรับ /log/import ตัวจริง) — ท่าที่ program_day_id
+    // เป็น null ต้องเหลือไว้เฉพาะที่ session_id ตรงกับเซสชันนี้เอง (ท่าที่เพิ่ม/สลับกลางเซสชันนี้มาก่อนแล้ว
+    // รีเฟรชมา) หรือ session_id เป็น null จริงๆ (ท่าอิสระแท้ๆ จาก /log) — ตัดท่าที่มาจาก session อื่นทิ้ง กัน
+    // ไม่ให้ AI quick-start/generated/template/repeat ของรอบอื่นโผล่มาเป็น ad-hoc ที่ "เสร็จแล้ว" ในเซสชันนี้
     const typedWorkoutRows = (
-      (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null; program_day_id: string | null })[]) ?? []
-    ).filter((w) => w.program_day_id == null || w.program_day_id === (dayRow as ProgramDay).id)
+      (workoutRows as (LoggedWorkoutRow & {
+        muscle_group: string | null
+        program_day_id: string | null
+        session_id: string | null
+      })[]) ?? []
+    ).filter((w) => belongsToCurrentSession(w, { dayId: (dayRow as ProgramDay).id, sessionId: sessionIdRef.current }))
 
     // ท่าที่ log ไปแล้ววันนี้แต่ไม่ได้อยู่ในแผน = ท่าที่เคย "เพิ่มท่า" เองมาก่อน — สร้างเป็นท่า ad-hoc
     // ต่อท้ายรายการท่าตามแผน ไม่งั้นรีเฟรชแล้วท่านี้จะหายไปทั้งที่บันทึกจริงอยู่แล้ว
@@ -644,15 +669,28 @@ export default function SessionPage() {
 
     const generatedExercises = stored.exercises
 
+    // 6F-P1 — contextKey ต้องเป็น identity ของ payload นี้เอง (stored.id, ดู lib/generatedSession.ts) ไม่ใช่
+    // literal คงที่ — สอง generated session คนละรอบ (สร้างทับ sessionStorage เดิม) ต้องได้ session_id คนละ
+    // ค่ากัน แม้รอบแรกจะทำค้างไว้ไม่จบก็ตาม (fallback 'generated' เผื่อ payload เก่าก่อน deploy นี้ที่ไม่มี
+    // id — ไม่เกิดขึ้นได้จริงในทางปฏิบัติเพราะ sessionStorage ล้างตอนปิดแท็บ แต่กันไว้ไม่ให้ contextKey เป็น
+    // undefined)
+    const generatedContextKey = stored.id ?? 'generated'
+    sessionContextKeyRef.current = generatedContextKey
+    sessionIdRef.current = getOrCreateSessionId(generatedContextKey)
+
     const { data: workoutRows } = await supabase
       .from('workouts')
-      .select('id, exercise_name, muscle_group, rpe, program_day_id')
+      .select('id, exercise_name, muscle_group, rpe, program_day_id, session_id')
       .eq('user_id', userId)
       .eq('type', 'strength')
       .eq('performed_at', todayStr())
     const typedWorkoutRows = (
-      (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null; program_day_id: string | null })[]) ?? []
-    ).filter((w) => w.program_day_id == null)
+      (workoutRows as (LoggedWorkoutRow & {
+        muscle_group: string | null
+        program_day_id: string | null
+        session_id: string | null
+      })[]) ?? []
+    ).filter((w) => belongsToCurrentSession(w, { dayId: null, sessionId: sessionIdRef.current }))
 
     const planNames = new Set(generatedExercises.map((ex) => ex.exercise_name))
     const extraLogged = findExtraLoggedExercises(typedWorkoutRows, planNames)
@@ -741,6 +779,11 @@ export default function SessionPage() {
     session.pause()
     if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
     clearActiveMakeupDayId()
+    // 6F-P1 — เคลียร์ session_id ของเซสชันนี้ทิ้งตอนจบจริงๆ (ทำครบทุกท่า หรือกด "จบก่อน") กันเซสชันถัดไป
+    // ในวันเดียวกัน (ถ้ามี, เช่น ทำ context เดิมซ้ำหลังจบไปแล้ว) สืบทอด session_id เก่าไปแบบผิดๆ — ไม่เคลียร์
+    // ตอน load()/loadGeneratedSession() เจอว่า allFinished อยู่แล้วตั้งแต่โหลด (นั่นคือ resume ของเซสชันที่
+    // จบไปแล้วจริง ไม่ใช่จบใหม่ตรงนี้ — ดู 6F-P1 lifecycle contract: ไม่เพิ่ม cleanup นอกเหนือจากนี้)
+    if (typeof window !== 'undefined' && sessionContextKeyRef.current) clearSessionId(sessionContextKeyRef.current)
     // 6E-P0 — clear only when the generated session has actually ended (here — never on load/first read/
     // reload, per the locked contract). Revisiting /session?source=generated afterwards (e.g. browser back)
     // doesn't need this to avoid "replaying" the workout as fresh either way: loadGeneratedSession always
@@ -897,7 +940,8 @@ export default function SessionPage() {
         current,
         { ...currentState, setsLog: newSetsLog },
         user.id,
-        day?.id ?? null
+        day?.id ?? null,
+        sessionIdRef.current
       )
       if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
       if (setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
@@ -940,7 +984,7 @@ export default function SessionPage() {
         // พร้อมกันแล้ว insert ซ้ำ/เขียนสลับกัน (ดู comment เต็มที่ createExercisePersistence)
         let workoutId: string | null
         try {
-          const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null)
+          const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null, sessionIdRef.current)
           workoutId = result.workoutId
           if (result.setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
         } catch (err) {
@@ -1009,7 +1053,7 @@ export default function SessionPage() {
         }
         // P1-2 — persistenceRef เดียวกับ logSet/logCurrentExercise เสมอ กันสามจุดนี้ persist ท่าเดียวกัน
         // พร้อมกัน (ดู comment เต็มที่ createExercisePersistence, lib/sessionPersistence.ts)
-        const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null)
+        const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null, sessionIdRef.current)
         if (result.setsError) {
           setSwapError('บันทึกท่าเดิมสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
         }

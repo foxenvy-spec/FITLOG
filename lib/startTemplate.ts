@@ -13,6 +13,10 @@ export async function startTemplateAsWorkoutLog(
 ): Promise<{ error: string | null; count: number }> {
   if (exercises.length === 0) return { error: null, count: 0 }
 
+  // 6F-P1 — UUID เดียวกันสำหรับทั้ง bulk insert นี้ แยกรอบ "เริ่มทันที" นี้จากรอบอื่น/producer อื่นที่
+  // program_day_id เป็น null เหมือนกัน (AI quick-start, generated session, repeat session) — ดู
+  // findExtraLoggedExercises() ใน lib/workoutSession.ts
+  const sessionId = crypto.randomUUID()
   const payload = exercises.map((ex) => ({
     user_id: userId,
     type: 'strength' as const,
@@ -26,6 +30,7 @@ export async function startTemplateAsWorkoutLog(
     weight_kg: ex.default_weight_kg,
     rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
     notes: ex.notes,
+    session_id: sessionId,
   }))
 
   const { error } = await supabase.from('workouts').insert(payload)

@@ -305,6 +305,10 @@ export default function TrainPage() {
       // ทำให้แถวที่ก๊อปมาไม่มี total_volume_kg (workoutVolumeKg() ต้อง fallback ไปคูณจาก top-set แทนผลรวม
       // จริงจากแต่ละเซ็ต ถ้าเซสชันต้นทางเป็น pyramid/drop set volume จะคำนวณผิด) และคาร์ดิโอเสีย HR/แคล/
       // cadence ไปเลยแบบเงียบๆ
+      // 6F-P1 — UUID เดียวกันสำหรับทั้ง bulk insert นี้ แยกรอบ "ก๊อปปี้" นี้จากรอบอื่น/producer อื่นที่
+      // program_day_id เป็น null เหมือนกัน (AI quick-start, generated session, template quick-start) — ดู
+      // findExtraLoggedExercises() ใน lib/workoutSession.ts
+      const sessionId = crypto.randomUUID()
       const payload = session.workouts.map((w) => ({
         user_id: user.id,
         type: w.type,
@@ -325,6 +329,7 @@ export default function TrainPage() {
         calories_kcal: w.calories_kcal,
         total_volume_kg: w.total_volume_kg,
         notes: w.notes,
+        session_id: sessionId,
       }))
       const { error } = await supabase.from('workouts').insert(payload)
       if (error) {

@@ -465,6 +465,7 @@ export default function CoachPage() {
   function handleStartGeneratedWorkout() {
     if (!generatedWorkout) return
     const stored: StoredGeneratedSession = {
+      id: crypto.randomUUID(),
       muscleGroup: generatedWorkout.muscleGroup,
       title: `เล่น${generatedWorkout.muscleGroup} (AI Coach)`,
       createdAt: new Date().toISOString(),

@@ -314,6 +314,10 @@ export default function AICoachCompactCard({
         setErrorMessage('กรุณาเข้าสู่ระบบใหม่')
         return
       }
+      // 6F-P1 — UUID เดียวกันสำหรับทุกท่าในการ insert ครั้งนี้ (bulk action เดียว ไม่ใช่ session แบบ /session
+      // ที่ persist ทีละท่า) แยกท่าจาก "เริ่มทันที" รอบนี้ออกจากรอบอื่น/producer อื่นที่ program_day_id
+      // เป็น null เหมือนกัน — ดู findExtraLoggedExercises() ใน lib/workoutSession.ts
+      const sessionId = crypto.randomUUID()
       const payload = chosenExercises.map((ex) => ({
         user_id: user.id,
         type: 'strength' as const,
@@ -327,6 +331,7 @@ export default function AICoachCompactCard({
         weight_kg: ex.default_weight_kg,
         rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
         notes: ex.notes,
+        session_id: sessionId,
       }))
       const { error } = await supabase.from('workouts').insert(payload)
       if (error) {

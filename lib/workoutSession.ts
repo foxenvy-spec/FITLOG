@@ -82,6 +82,25 @@ export interface TodaysWorkoutRow {
   muscle_group: string | null
 }
 
+// 6F-P1 (producer/consumer trace) — program_day_id = null ไม่ใช่ bucket เดียวอีกต่อไป: AI Coach
+// quick-start, generated session, template quick-start, repeat-session ต่างก็ insert program_day_id =
+// null เหมือน /log ทุกประการ แต่คนละ session_id กัน (หรือ null สำหรับ /log/import ตัวจริง) — ตัดสินว่า
+// ท่าที่ log ไปแล้ว "วันนี้" แถวหนึ่งควรถูกส่งต่อเข้า findExtraLoggedExercises() ของเซสชันที่กำลังเปิดอยู่นี้
+// ไหม ก่อนหน้านี้เกณฑ์เดียวคือ "program_day_id ตรงแผนนี้ หรือเป็น null" ซึ่งทำให้ผลจาก producer อื่น/
+// เซสชันอื่นที่ null เหมือนกันปนเข้ามาเป็น ad-hoc ที่ "เสร็จแล้ว" ผิดๆ ได้ — เกณฑ์ใหม่: อยู่ในแผนเดียวกัน
+// (program_day_id ตรง dayId) หรือเป็นท่าอิสระที่ "อิสระแท้ๆ" (program_day_id null และ session_id null,
+// เช่น /log) หรือ "มาจากเซสชันนี้เอง" (session_id ตรงกับ sessionId ที่กำลังเปิดอยู่ — ท่าที่เพิ่ม/สลับกลาง
+// เซสชันนี้มาก่อนแล้วรีเฟรชกลับมา) — dayId เป็น null สำหรับ generated session (ไม่มี program_days row)
+export function belongsToCurrentSession(
+  w: { program_day_id: string | null; session_id?: string | null },
+  ctx: { dayId: string | null; sessionId: string | null }
+): boolean {
+  if (ctx.dayId !== null && w.program_day_id === ctx.dayId) return true
+  if (w.program_day_id !== null) return false
+  const sessionId = w.session_id ?? null
+  return sessionId === null || sessionId === ctx.sessionId
+}
+
 export function findExtraLoggedExercises(
   todaysWorkouts: TodaysWorkoutRow[],
   planExerciseNames: Set<string>

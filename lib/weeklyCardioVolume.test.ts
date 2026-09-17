@@ -26,6 +26,7 @@ function makeCardio(overrides: Partial<Workout>): Workout {
     created_at: '2026-07-18T10:00:00Z',
     total_volume_kg: null,
     program_day_id: null,
+    session_id: null,
     ...overrides,
   }
 }

@@ -7,6 +7,10 @@ import type { MuscleGroup } from './muscle-groups'
 export const GENERATED_SESSION_STORAGE_KEY = 'fitlog:generatedSession'
 
 export interface StoredGeneratedSession {
+  // 6F-P1 — identity ของ "payload ชุดนี้" (crypto.randomUUID(), สร้างครั้งเดียวตอน Coach generate) ใช้เป็น
+  // contextKey ให้ lib/sessionId.ts แยก session_id ของ generated session แต่ละรอบออกจากกัน — ต้องเป็น id
+  // จริง ไม่ใช่ createdAt (timestamp) เพราะ timestamp/heuristic ถูกตัดออกจาก lifecycle contract แล้ว
+  id: string
   muscleGroup: MuscleGroup
   title: string
   createdAt: string

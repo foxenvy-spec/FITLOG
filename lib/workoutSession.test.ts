@@ -6,6 +6,7 @@ import {
   firstUnfinishedIndex,
   nextUnvisitedIndex,
   findExtraLoggedExercises,
+  belongsToCurrentSession,
   makeAdhocExercise,
   isAdhocExercise,
   computeSessionSummary,
@@ -238,6 +239,68 @@ describe('findExtraLoggedExercises', () => {
       new Set()
     )
     expect(result).toHaveLength(1)
+  })
+})
+
+// 6F-P1 — locked regression matrix: program_day_id = null is no longer one undifferentiated bucket.
+// Every case here mirrors a row from the 6F-P1 acceptance criteria table.
+describe('belongsToCurrentSession', () => {
+  it('Generated → Normal same day: a different session\'s null-program-day row is excluded', () => {
+    const generatedRow = { program_day_id: null, session_id: 'session-generated-A' }
+    expect(belongsToCurrentSession(generatedRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(false)
+  })
+
+  it('Coach quick-start → Normal: excluded the same way as any other unrelated session', () => {
+    const quickStartRow = { program_day_id: null, session_id: 'session-quickstart' }
+    expect(belongsToCurrentSession(quickStartRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(false)
+  })
+
+  it('Template quick-start → Normal: excluded', () => {
+    const templateRow = { program_day_id: null, session_id: 'session-template' }
+    expect(belongsToCurrentSession(templateRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(false)
+  })
+
+  it('Repeat Session → Normal: excluded', () => {
+    const repeatRow = { program_day_id: null, session_id: 'session-repeat' }
+    expect(belongsToCurrentSession(repeatRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(false)
+  })
+
+  it('Manual /log → Normal: genuine freestanding rows (session_id null) are preserved, matching pre-6F ad-hoc behavior', () => {
+    const logRow = { program_day_id: null, session_id: null }
+    expect(belongsToCurrentSession(logRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(true)
+  })
+
+  it('a row missing session_id entirely (pre-6F historical data) behaves like session_id: null', () => {
+    const historicalRow = { program_day_id: null }
+    expect(belongsToCurrentSession(historicalRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(true)
+  })
+
+  it('Normal → Generated: a plan-linked row from a normal session never leaks into a generated session (dayId null)', () => {
+    const normalRow = { program_day_id: 'day-push', session_id: 'session-normal-B' }
+    expect(belongsToCurrentSession(normalRow, { dayId: null, sessionId: 'session-generated-A' })).toBe(false)
+  })
+
+  it('Makeup → Normal same day: different program days stay isolated regardless of session_id', () => {
+    const makeupRow = { program_day_id: 'day-makeup', session_id: 'session-makeup' }
+    expect(belongsToCurrentSession(makeupRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(false)
+  })
+
+  it('Two normal sessions same day: each program day only admits its own rows', () => {
+    const dayARow = { program_day_id: 'day-a', session_id: 'session-a' }
+    const dayBRow = { program_day_id: 'day-b', session_id: 'session-b' }
+    expect(belongsToCurrentSession(dayARow, { dayId: 'day-a', sessionId: 'session-a' })).toBe(true)
+    expect(belongsToCurrentSession(dayARow, { dayId: 'day-b', sessionId: 'session-b' })).toBe(false)
+    expect(belongsToCurrentSession(dayBRow, { dayId: 'day-a', sessionId: 'session-a' })).toBe(false)
+  })
+
+  it('Refresh active session: an ad-hoc exercise added earlier in THIS session (session_id matches) is recovered', () => {
+    const ownAdhocRow = { program_day_id: null, session_id: 'session-normal-B' }
+    expect(belongsToCurrentSession(ownAdhocRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(true)
+  })
+
+  it('a plan-linked row for the current day is always included regardless of session_id', () => {
+    const plannedRow = { program_day_id: 'day-push', session_id: 'some-other-session' }
+    expect(belongsToCurrentSession(plannedRow, { dayId: 'day-push', sessionId: 'session-normal-B' })).toBe(true)
   })
 })
 

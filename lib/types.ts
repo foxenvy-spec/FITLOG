@@ -31,6 +31,11 @@ export interface Workout {
   // อิสระที่ไม่ผูกแผนเลย (เช่นจาก /log ทั่วไป) ใช้แยก "เซสชันชดเชย" (program_day_id ไม่ตรงกับวันจริง
   // ของ performed_at) ออกจากเซสชันปกติ/ท่า ad-hoc ที่เพิ่มเองกลางเซสชัน
   program_day_id: string | null
+  // 6F-P1 — UUID เดียวกันสำหรับทุกแถวที่มาจาก "การกระทำ/การเข้าเซสชันเดียวกัน" (generated ครั้งเดียวต่อ
+  // /session visit หรือต่อการ insert แบบ bulk 1 ครั้ง) — แยกจาก program_day_id โดยเจตนา: ฟิลด์นี้ตอบ
+  // "แถวนี้มาจากเหตุการณ์ไหน" ไม่ใช่ "ผูกแผนวันไหน" — null สำหรับ /log, CSV/backup import และข้อมูลเก่า
+  // ก่อน 6F (ไม่ backfill ย้อนหลัง)
+  session_id: string | null
 }
 
 // เซ็ตแต่ละเซ็ตของ workouts หนึ่งแถว — ทำให้ reps/น้ำหนักต่างกันได้ในแต่ละเซ็ต (เช่น drop set)

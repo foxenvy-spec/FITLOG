@@ -123,7 +123,7 @@ describe('persistSets', () => {
   it('inserts a new workout row on the first call (workoutId null), then updates it on subsequent calls', async () => {
     const supabase = createFakeSupabase()
     const ex = makeExercise()
-    const first = await persistSets(supabase, ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1')
+    const first = await persistSets(supabase, ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
     expect(first.workoutId).toBeTruthy()
     expect(first.setsError).toBeNull()
     expect(supabase._debug.workouts.size).toBe(1)
@@ -134,11 +134,29 @@ describe('persistSets', () => {
       ex,
       makeState({ setsLog: [{ reps: 8, weightKg: 60 }, { reps: 7, weightKg: 60 }], workoutId: first.workoutId }),
       'u1',
-      'day-1'
+      'day-1',
+      'sess-1'
     )
     expect(second.workoutId).toBe(first.workoutId)
     expect(supabase._debug.workouts.size).toBe(1) // still just one row, updated in place
     expect(supabase._debug.sets).toHaveLength(2)
+  })
+
+  // 6F-P1 — session_id เดินขนานกับ dayId เข้า payload ตรงๆ ไม่ผ่านการแปลง/derive ใดๆ ทั้งค่าที่มีและ null
+  it('writes the passed sessionId onto the workouts payload verbatim', async () => {
+    const supabase = createFakeSupabase()
+    const ex = makeExercise()
+    const result = await persistSets(supabase, ex, makeState(), 'u1', 'day-1', 'sess-A')
+    const row = supabase._debug.workouts.get(result.workoutId!)
+    expect(row?.session_id).toBe('sess-A')
+  })
+
+  it('writes session_id: null when no session context is open (matches /log-style freestanding persistence)', async () => {
+    const supabase = createFakeSupabase()
+    const ex = makeExercise()
+    const result = await persistSets(supabase, ex, makeState(), 'u1', null, null)
+    const row = supabase._debug.workouts.get(result.workoutId!)
+    expect(row?.session_id).toBeNull()
   })
 
   // 4. persistence failure — existing error behavior preserved
@@ -150,7 +168,7 @@ describe('persistSets', () => {
         insert: () => ({ select: () => ({ single: async () => ({ data: null, error: { message: 'insert failed' } }) }) }),
       }),
     } as unknown as SupabaseClient
-    await expect(persistSets(broken, makeExercise(), makeState(), 'u1', 'day-1')).rejects.toEqual({ message: 'insert failed' })
+    await expect(persistSets(broken, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toEqual({ message: 'insert failed' })
     // nothing persisted
     void supabase
   })
@@ -192,8 +210,8 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     const snapshotA = makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] })
     const snapshotB = makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }, { reps: 7, weightKg: 60 }] })
 
-    const resultA = persistence.persist(ex, snapshotA, 'u1', 'day-1')
-    const resultB = persistence.persist(ex, snapshotB, 'u1', 'day-1')
+    const resultA = persistence.persist(ex, snapshotA, 'u1', 'day-1', 'sess-1')
+    const resultB = persistence.persist(ex, snapshotB, 'u1', 'day-1', 'sess-1')
 
     const [a, b] = await Promise.all([resultA, resultB])
     expect(supabase._debug.workouts.size).toBe(1)
@@ -209,7 +227,7 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     const persistence = createExercisePersistence(supabase)
     const ex = makeExercise()
     // seed an existing workout first (sequential — simulating an earlier, already-completed persist)
-    const seeded = await persistence.persist(ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1')
+    const seeded = await persistence.persist(ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
     const workoutId = seeded.workoutId!
 
     const snapshotA = makeState({ workoutId, setsLog: [{ reps: 8, weightKg: 60 }, { reps: 7, weightKg: 62.5 }] })
@@ -218,8 +236,8 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
       setsLog: [{ reps: 8, weightKg: 60 }, { reps: 7, weightKg: 62.5 }, { reps: 6, weightKg: 65 }],
     })
 
-    const resultA = persistence.persist(ex, snapshotA, 'u1', 'day-1')
-    const resultB = persistence.persist(ex, snapshotB, 'u1', 'day-1')
+    const resultA = persistence.persist(ex, snapshotA, 'u1', 'day-1', 'sess-1')
+    const resultB = persistence.persist(ex, snapshotB, 'u1', 'day-1', 'sess-1')
     const [a, b] = await Promise.all([resultA, resultB])
 
     expect(a.setsError).toBeNull()
@@ -239,7 +257,7 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
       }),
     } as unknown as SupabaseClient
     const persistence = createExercisePersistence(broken)
-    await expect(persistence.persist(makeExercise(), makeState(), 'u1', 'day-1')).rejects.toEqual({ message: 'insert failed' })
+    await expect(persistence.persist(makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toEqual({ message: 'insert failed' })
   })
 
   // 5. sequential normal logging -> unchanged
@@ -247,12 +265,13 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     const supabase = makeControlledSupabase([])
     const persistence = createExercisePersistence(supabase)
     const ex = makeExercise()
-    const first = await persistence.persist(ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1')
+    const first = await persistence.persist(ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
     const second = await persistence.persist(
       ex,
       makeState({ workoutId: first.workoutId, setsLog: [{ reps: 8, weightKg: 60 }, { reps: 7, weightKg: 60 }] }),
       'u1',
-      'day-1'
+      'day-1',
+      'sess-1'
     )
     expect(supabase._debug.workouts.size).toBe(1)
     expect(second.workoutId).toBe(first.workoutId)
@@ -265,8 +284,8 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     const supabase = makeControlledSupabase([25, 0])
     const persistence = createExercisePersistence(supabase)
     const ex = makeExercise()
-    const fromLogSet = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1')
-    const fromFinish = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1')
+    const fromLogSet = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
+    const fromFinish = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
 
     await Promise.all([fromLogSet, fromFinish])
     expect(supabase._debug.workouts.size).toBe(1)
@@ -277,8 +296,8 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     const supabase = makeControlledSupabase([25, 0])
     const persistence = createExercisePersistence(supabase)
     const ex = makeExercise()
-    const fromLogSet = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1')
-    const fromSwap = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1')
+    const fromLogSet = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
+    const fromSwap = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
 
     await Promise.all([fromLogSet, fromSwap])
     expect(supabase._debug.workouts.size).toBe(1)
@@ -290,8 +309,8 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     const exA = makeExercise({ id: 'pe-1' })
     const exB = makeExercise({ id: 'pe-2', exercise_name: 'สควอท' })
 
-    const a = persistence.persist(exA, makeState(), 'u1', 'day-1')
-    const b = persistence.persist(exB, makeState(), 'u1', 'day-1')
+    const a = persistence.persist(exA, makeState(), 'u1', 'day-1', 'sess-1')
+    const b = persistence.persist(exB, makeState(), 'u1', 'day-1', 'sess-1')
     const [resA, resB] = await Promise.all([a, b])
     expect(resA.workoutId).not.toBe(resB.workoutId)
     expect(supabase._debug.workouts.size).toBe(2)
