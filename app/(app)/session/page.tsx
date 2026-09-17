@@ -796,6 +796,12 @@ export default function SessionPage() {
 
   const current = exercises[index] ?? null
   const currentState = current ? states[current.id] : null
+  // 6F-P3 (P1 — Optimistic State & Failed-Persistence Recovery) — primitive เดียวสำหรับทุก navigation
+  // guard (chips/sidebar/addExercise/skip): ห้ามเปลี่ยนท่าปัจจุบันระหว่างที่ยังมี persistence ค้างอยู่
+  // (loggingSet/saving/swapping มีความหมาย/lifecycle เดิมทุกประการ แค่ derive ค่านี้ไปใช้ guard เท่านั้น
+  // ไม่ merge เป็น state เดียว) — ปิดช่องที่ผู้ใช้ย้ายออกจากท่าที่ set เพิ่งถูก optimistic-update ไปแต่ยัง
+  // ไม่ resolve จริง โดยไม่ได้ตั้งใจ
+  const isPersisting = loggingSet || saving || swapping
   const targetSets = current?.sets ?? 3
 
   // คำแนะนำ Progressive Overload ของท่าปัจจุบัน — โชว์เฉพาะ "ก่อน" กดเซ็ตแรกของเซสชันนี้ (setsLog ว่าง)
@@ -862,6 +868,9 @@ export default function SessionPage() {
   // "เพิ่มท่า" เอง ระหว่างเซสชัน — รับได้ทั้งเลือกจากคลังท่า (ExercisePicker) และพิมพ์ชื่อเองอิสระ
   // ไม่ผูกกับ program_exercises จริง (ดู makeAdhocExercise) แต่เข้า flow เดียวกับท่าอื่นทุกอย่าง
   async function addExercise() {
+    // 6F-P3 (P1) — ห้ามเพิ่มท่าใหม่ (ซึ่ง jump index ออกจากท่าปัจจุบันทันที) ระหว่างที่ยังมี persistence
+    // ค้างอยู่กับท่าปัจจุบัน เหตุผลเดียวกับ skipCurrent()/chip navigation — ดู isPersisting
+    if (isPersisting) return
     const name = newExerciseName.trim()
     if (!name) {
       setAddExerciseError('กรุณาพิมพ์หรือเลือกชื่อท่าก่อน')
@@ -927,7 +936,12 @@ export default function SessionPage() {
     }
     setErrorMsg(null)
     setLoggingSet(true)
-    const newSetsLog = [...currentState.setsLog, { reps: currentState.reps, weightKg: currentState.weightKg ?? 0 }]
+    // 6F-P3 (P1) — previousSetsLog คือค่าก่อน optimistic update (จาก closure ของ currentState ตอนเรียก
+    // ฟังก์ชันนี้ ไม่ได้อ่านใหม่จาก state สดๆ) ใช้ rollback ถ้า persist ไม่สำเร็จ — locked invariant: หลัง
+    // persistence call จบแล้ว states[current.id].setsLog ต้องสะท้อนเฉพาะ sets ที่ได้รับ confirmation จาก
+    // DB เท่านั้น ไม่แตะ reps/weightKg เพราะเป็นแค่ draft ของเซ็ตถัดไป ไม่ใช่ optimistic persistence claim
+    const previousSetsLog = currentState.setsLog
+    const newSetsLog = [...previousSetsLog, { reps: currentState.reps, weightKg: currentState.weightKg ?? 0 }]
     updateCurrent({ setsLog: newSetsLog })
     writeRestStartedAt(current.id)
 
@@ -935,7 +949,10 @@ export default function SessionPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        updateCurrent({ setsLog: previousSetsLog })
+        return
+      }
       // 6F-P2 (P1) — persist() ตอนนี้เรียก persist_exercise_sets() RPC (atomic) แล้ว ไม่มี "สำเร็จบางส่วน"
       // เหลืออีกต่อไป (ดู lib/sessionPersistence.ts) — ล้มเหลว = throw เข้า catch ด้านล่างเท่านั้น
       const { workoutId } = await persistenceRef.current!.persist(
@@ -947,6 +964,7 @@ export default function SessionPage() {
       )
       if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
     } catch (err) {
+      updateCurrent({ setsLog: previousSetsLog })
       setErrorMsg(`บันทึกเซ็ตไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
       setLoggingSet(false)
@@ -1094,6 +1112,11 @@ export default function SessionPage() {
   // กด "ข้ามท่านี้" — ทำเครื่องหมายว่าท่านี้ถูกดูรอบนี้แล้ว (skipped) แยกจาก logged=false เฉยๆ
   // ที่แปลว่า "ยังไม่ถึงคิว" เพื่อไม่ให้ nextUnvisitedIndex วนกลับมาที่ท่านี้ซ้ำ
   function skipCurrent() {
+    // 6F-P3 (P1) — ห้ามข้ามท่าระหว่างที่ยังมี persistence ค้างอยู่ (isPersisting) กันกรณี setsLog ยังมี
+    // เซ็ตที่ optimistic-update ไปแล้วแต่ยังไม่ resolve จริง — พอ isPersisting กลับเป็น false (resolve
+    // แล้วไม่ว่าสำเร็จหรือ rollback) setsLog ที่เหลือคือเซ็ตที่ confirm แล้วเท่านั้น ปุ่ม skip จึงไม่มี
+    // เซ็ตที่ยังไม่ยืนยันให้ทิ้งอย่างเงียบๆ อีก — ไม่ต้อง persist-before-skip หรือ confirm dialog เพิ่ม
+    if (isPersisting) return
     if (!current) return
     const merged = { ...states, [current.id]: { ...states[current.id], skipped: true } }
     setStates(merged)
@@ -1823,7 +1846,9 @@ export default function SessionPage() {
             key={ex.id}
             type="button"
             onClick={() => setIndex(i)}
-            className={`h-1.5 flex-1 rounded-full transition ${
+            // 6F-P3 (P1) — ห้ามสลับท่าระหว่างที่ยังมี persistence ค้างอยู่กับท่าปัจจุบัน (ดู isPersisting)
+            disabled={isPersisting}
+            className={`h-1.5 flex-1 rounded-full transition disabled:opacity-50 ${
               i === index ? 'bg-[#FF8A00]' : states[ex.id]?.logged ? 'bg-[#20C8FF]' : 'bg-surface2'
             }`}
             aria-label={ex.exercise_name}
@@ -1860,7 +1885,8 @@ export default function SessionPage() {
             <button
               type="button"
               onClick={addExercise}
-              className="flex-[2] rounded-lg bg-[#20C8FF] text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] transition"
+              disabled={isPersisting}
+              className="flex-[2] rounded-lg bg-[#20C8FF] text-bg font-display tracked uppercase py-2.5 text-xs active:scale-[0.99] transition disabled:opacity-50"
             >
               เพิ่มท่านี้
             </button>
@@ -2232,7 +2258,7 @@ export default function SessionPage() {
         <button
           type="button"
           onClick={skipCurrent}
-          disabled={saving}
+          disabled={isPersisting}
           className="flex-1 rounded-full border border-line text-muted font-display tracked uppercase py-3 text-xs disabled:opacity-50 transition"
         >
           ข้ามท่านี้
@@ -2282,7 +2308,9 @@ export default function SessionPage() {
                   <button
                     type="button"
                     onClick={() => setIndex(i)}
-                    className={`w-full text-left px-2.5 py-2 rounded-lg text-xs transition flex items-center gap-2 ${
+                    // 6F-P3 (P1) — ห้ามสลับท่าระหว่างที่ยังมี persistence ค้างอยู่กับท่าปัจจุบัน (ดู isPersisting)
+                    disabled={isPersisting}
+                    className={`w-full text-left px-2.5 py-2 rounded-lg text-xs transition flex items-center gap-2 disabled:opacity-50 ${
                       activeItem ? 'bg-[#FF8A00]/10 text-[#FF8A00]' : 'text-ink hover:bg-surface2'
                     }`}
                   >
