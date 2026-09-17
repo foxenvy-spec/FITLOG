@@ -16,6 +16,7 @@ import PremiumCard from '@/components/ui/PremiumCard'
 import Button from '@/components/ui/Button'
 import { CARD_BORDER_CSS } from '@/lib/theme'
 import { DS } from '@/lib/designSystem'
+import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
 
 export default function ProgramPage() {
   const supabase = createClient()
@@ -63,6 +64,21 @@ export default function ProgramPage() {
   // โค้ดฝั่งแอปเรียกใช้เท่านั้น)
   const [confirmRemoveDay, setConfirmRemoveDay] = useState(false)
   const [removingDay, setRemovingDay] = useState(false)
+
+  // 6E-P1 (Cross-Surface Interaction & Navigation Integrity) — ปุ่ม "เริ่มเซสชันแบบเรียลไทม์" ด้านล่าง
+  // (isToday) เคย hardcode href="/session" ตรงๆ ทั้งที่ทุกจุดอื่นที่ลิงก์ไป "/session" เฉยๆ ทั่วแอป
+  // (BottomNav, การ์ด Today's Workout, CommandPalette) อ่าน getActiveMakeupDayId() ก่อนเสมอ (ดู
+  // lib/activeMakeupSession.ts) — ถ้ามีเซสชันชดเชยค้างอยู่ (เริ่มแล้วแต่ยัง log ไม่ครบ) กดปุ่มนี้จะพาไป
+  // เริ่มแผนวันนี้ใหม่แทนที่จะกลับเข้าเซสชันชดเชยเดิม เพราะ /session เองไม่มี safety net ให้ (ตั้งใจปล่อยผ่าน
+  // ไปแผนวันนี้ตามปกติถ้าไม่ได้รับ ?day= มา — ดู comment ที่ makeupCheckpointOtherDay ใน session/page.tsx)
+  // — sessionHrefWithMakeup() อ่าน localStorage เอง จึงต้อง useEffect หลัง mount เหมือนที่
+  // DashboardView.tsx ทำกับ activeMakeupDay (SSR ไม่มี window ให้อ่าน) ค่าเริ่มต้น '/session' ตรงกับ
+  // พฤติกรรมเดิมทุกประการเมื่อไม่มีเซสชันชดเชยค้างอยู่ ไม่แตะ session/page.tsx, computeTodaysAction(),
+  // หรือ makeup semantics ใดๆ เลย — แค่ให้ปุ่มนี้อ่าน pointer เดียวกับจุดอื่นทั่วแอป
+  const [sessionHref, setSessionHref] = useState('/session')
+  useEffect(() => {
+    setSessionHref(sessionHrefWithMakeup())
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -643,7 +659,7 @@ export default function ProgramPage() {
       {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-amber เรียบๆ ไม่มี glow เปลี่ยนมาใช้
           Button component กลาง (components/ui/Button.tsx, Phase 2) ให้ตรงกับปุ่ม CTA หลักทั่วแอปแล้ว */}
       {isToday && currentDay && currentExercises.length > 0 && (
-        <Button as="a" href="/session" size="md" className="w-full">
+        <Button as="a" href={sessionHref} size="md" className="w-full">
           ▶ เริ่มเซสชันแบบเรียลไทม์
         </Button>
       )}
