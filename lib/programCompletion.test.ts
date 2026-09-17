@@ -6,7 +6,7 @@ import { recordExplicitCompletion, recordManualUncomplete, reconcileProgramCompl
 // touches (program_completions, program_completion_overrides). Rows are plain objects keyed by a
 // synthetic id; `.eq()` accumulates filters lazily until a terminal call (`.maybeSingle()`, `.delete()`
 // resolving, or `.upsert()`) actually runs them — matching how the Supabase query builder chains.
-function createFakeSupabase() {
+function createFakeSupabase(opts?: { failDeleteOnTable?: string }) {
   let seq = 0
   const completions: Record<string, unknown>[] = []
   const overrides: Record<string, unknown>[] = []
@@ -34,8 +34,12 @@ function createFakeSupabase() {
         const rows = tableStore(table).filter((r) => matches(r, filters))
         return { data: rows[0] ?? null, error: null }
       },
-      async then(resolve: (v: { error: null }) => void) {
-        // delete() terminal — remove matching rows
+      async then(resolve: (v: { error: { message: string } | null }) => void) {
+        // delete() terminal — remove matching rows, or simulate a failed delete for a given table
+        if (opts?.failDeleteOnTable === table) {
+          resolve({ error: { message: `${table} delete failed` } })
+          return
+        }
         const store = tableStore(table)
         for (let i = store.length - 1; i >= 0; i--) {
           if (matches(store[i], filters)) store.splice(i, 1)
@@ -100,6 +104,44 @@ describe('recordExplicitCompletion', () => {
     await recordExplicitCompletion(supabase, { userId: USER, date: DATE, target: { programExerciseId: EX } })
     await recordExplicitCompletion(supabase, { userId: USER, date: DATE, target: { programExerciseId: EX } })
     expect(supabase._debug.completions).toHaveLength(1)
+  })
+
+  // Reviewer follow-up: does a "best-effort" override clear that itself fails leave a stale
+  // manual_uncomplete override capable of causing a FUTURE incorrect suppression? Proves it cannot, by
+  // exercising exactly that sequence rather than asserting it from reasoning alone.
+  it('a stale override left behind by a failed clear cannot suppress a later reconciliation, because completion-exists is checked first', async () => {
+    const supabase = createFakeSupabase({ failDeleteOnTable: 'program_completion_overrides' })
+    supabase._debug.overrides.push({
+      id: 'o1',
+      user_id: USER,
+      program_exercise_id: EX,
+      completion_date: DATE,
+      override_type: 'manual_uncomplete',
+    })
+
+    // completion succeeds; the override-clear delete is forced to fail — recordExplicitCompletion must
+    // still report success, since the completion itself (the thing the caller actually asked for) is
+    // correctly written. The override row is left behind, stale.
+    const { error } = await recordExplicitCompletion(supabase, { userId: USER, date: DATE, target: { programExerciseId: EX } })
+    expect(error).toBeNull()
+    expect(supabase._debug.completions).toHaveLength(1)
+    expect(supabase._debug.overrides).toHaveLength(1) // stale override confirmed still present
+
+    // the invariant that actually matters: does this stale override cause any future harm? Run
+    // reconciliation for the exact same (user, exercise, date) — it must be a pure no-op BECAUSE a
+    // completion already exists, never even reaching the override check that would otherwise see the
+    // stale row and (harmlessly, in this case) skip re-creating something that's already there.
+    const result = await reconcileProgramCompletion(supabase, { userId: USER, date: DATE, target: { programExerciseId: EX } })
+    expect(result).toEqual({ error: null, created: false })
+    expect(supabase._debug.completions).toHaveLength(1) // still exactly one completion row, no duplicate
+
+    // the stale override can only ever become "live" again if this exact completion row is deleted a
+    // second time — and the only code path that deletes program_completions at all (recordManualUncomplete)
+    // always upserts a fresh override in the same call, so it can never observe or be confused by this
+    // leftover row; it just overwrites it with current, correct values.
+    const uncomplete = await recordManualUncomplete(supabase, { userId: USER, date: DATE, programExerciseId: EX })
+    expect(uncomplete.error).toBeNull()
+    expect(supabase._debug.overrides).toHaveLength(1) // upserted in place, not duplicated
   })
 
   it('surfaces a completion write failure instead of reporting false success', async () => {
