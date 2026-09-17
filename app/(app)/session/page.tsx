@@ -71,6 +71,7 @@ import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
 import { splitTitleDetail, computeIsPR, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 import { createExercisePersistence, type ExercisePersistence } from '@/lib/sessionPersistence'
+import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 
@@ -148,6 +149,11 @@ export default function SessionPage() {
 
   const [phase, setPhase] = useState<Phase>('loading')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  // 6E-P0 (Cross-Surface Interaction & Navigation Integrity) — phase 'empty' เดิมมีความหมายเดียว
+  // ("ยังไม่มีโปรแกรมตั้งไว้สำหรับวันนี้") ตอนนี้ต้องรองรับอีกเหตุผลหนึ่งที่ไม่เกี่ยวกัน (?source=generated
+  // มาถึงโดยไม่มี/มี payload ที่ใช้ไม่ได้ใน sessionStorage) — reuse phase เดิม แค่แยกข้อความ/CTA ตาม
+  // เหตุผลจริง ห้ามใช้ข้อความ "ยังไม่มีโปรแกรม" กับเคส generated เพราะเป็นคนละสาเหตุ
+  const [emptyReason, setEmptyReason] = useState<'no-program' | 'generated-unavailable'>('no-program')
   const [day, setDay] = useState<ProgramDay | null>(null)
   // true เมื่อเข้ามาทำแผนของวันอื่น (ผ่าน ?day=<id> จาก /program) แทนวันจริงตามปฏิทินวันนี้ — "เซสชันชดเชย"
   const [isMakeupSession, setIsMakeupSession] = useState(false)
@@ -275,6 +281,23 @@ export default function SessionPage() {
     // พลาดวันไหนเลย — genuine makeup (ลิงก์จาก /program, "มีแผนที่พลาด" ในหน้านี้เอง, activeMakeupDayId ที่
     // ทำค้างไว้) ไม่เคยแนบ source นี้ จึงยังถูกจัดเป็นเซสชันชดเชยเหมือนเดิมทุกประการ
     const sessionSource = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('source') : null
+
+    // 6E-P0 (Cross-Surface Interaction & Navigation Integrity) — coach/page.tsx's handleStartGeneratedWorkout
+    // writes a StoredGeneratedSession to sessionStorage and pushes here with ?source=generated, claiming
+    // (in its own comment) that this page reads it back — it never did. Without this branch, execution fell
+    // straight into the program_days query below (dow-based, no ?day=), silently discarding the AI-generated
+    // workout and starting the user's ordinary today's plan (or the empty/rest state) with zero indication
+    // anything was wrong — confirmed by grepping this whole file for "generated" case-insensitively and
+    // getting zero hits before this fix. Handled as a fully separate, self-contained path below (see
+    // loadGeneratedSession): generated sessions have no ProgramDay row at all, so `day` stays null for their
+    // entire lifetime — that's the same "no program context" bucket /log-originated freestanding workouts
+    // already use via persistSets' existing dayId ?? null fallback, not a new concept introduced here. Must
+    // never fall through to the query below, on valid OR invalid/missing payload alike.
+    if (sessionSource === 'generated') {
+      await loadGeneratedSession(user.id)
+      return
+    }
+
     const { data: dayRow, error: dayErr } = await (makeupDayId
       ? supabase.from('program_days').select('*').eq('id', makeupDayId).maybeSingle()
       : supabase.from('program_days').select('*').eq('day_of_week', dow).maybeSingle())
@@ -590,6 +613,106 @@ export default function SessionPage() {
     setPhase('active')
   }, [supabase])
 
+  // 6E-P0 — locked contract: source of truth for a generated session is the StoredGeneratedSession itself.
+  // No program_days/program_exercises query, ever, on this path (valid or invalid payload alike) — day stays
+  // null for its whole lifetime. Reuses the exact reload-resume mechanism the normal flow already has
+  // (initSessionStates matches by exercise_name against today's logged workouts, findExtraLoggedExercises/
+  // makeAdhocExercise for exercises added mid-session) rather than inventing a second one — the only
+  // difference from the normal flow is where the exercise list comes from and that there's no ProgramDay to
+  // scope "today's logged workouts" to, so the scope here is simply "no program_day_id at all" (the same
+  // bucket /log-originated freestanding entries already use).
+  async function loadGeneratedSession(userId: string) {
+    let stored: StoredGeneratedSession | null = null
+    try {
+      const raw = typeof window !== 'undefined' ? window.sessionStorage.getItem(GENERATED_SESSION_STORAGE_KEY) : null
+      if (raw) {
+        const parsed = JSON.parse(raw) as StoredGeneratedSession
+        if (Array.isArray(parsed.exercises) && parsed.exercises.length > 0) stored = parsed
+      }
+    } catch {
+      stored = null
+    }
+
+    // missing / malformed JSON / invalid structure / empty exercises — must not become an active session,
+    // and must not fall through to today's normal plan (locked contract) — reuse phase 'empty' but with an
+    // accurate reason (see emptyReason state + its render branch below), not the "no program set" copy.
+    if (!stored) {
+      setEmptyReason('generated-unavailable')
+      setPhase('empty')
+      return
+    }
+
+    const generatedExercises = stored.exercises
+
+    const { data: workoutRows } = await supabase
+      .from('workouts')
+      .select('id, exercise_name, muscle_group, rpe, program_day_id')
+      .eq('user_id', userId)
+      .eq('type', 'strength')
+      .eq('performed_at', todayStr())
+    const typedWorkoutRows = (
+      (workoutRows as (LoggedWorkoutRow & { muscle_group: string | null; program_day_id: string | null })[]) ?? []
+    ).filter((w) => w.program_day_id == null)
+
+    const planNames = new Set(generatedExercises.map((ex) => ex.exercise_name))
+    const extraLogged = findExtraLoggedExercises(typedWorkoutRows, planNames)
+    const adhocExtras = extraLogged.map((w, i) =>
+      makeAdhocExercise({
+        id: w.id,
+        exerciseName: w.exercise_name,
+        muscleGroup: w.muscle_group,
+        position: generatedExercises.length + i,
+      })
+    )
+    const combinedExercises = [...generatedExercises, ...adhocExtras]
+
+    const workoutIds = typedWorkoutRows.map((w) => w.id)
+    const { data: setRows } =
+      workoutIds.length > 0
+        ? await supabase.from('workout_sets').select('workout_id, set_number, reps, weight_kg').in('workout_id', workoutIds)
+        : { data: [] as LoggedSetRow[] }
+
+    const initialStates = initSessionStates(combinedExercises, typedWorkoutRows, (setRows as LoggedSetRow[]) ?? [], {})
+
+    const finishedIds = readFinishedExerciseIds()
+    const targetSetsById = new Map(combinedExercises.map((ex) => [ex.id, ex.sets]))
+    const exercisesById = new Map(combinedExercises.map((ex) => [ex.id, ex]))
+    const completionBackfills: { ex: ProgramExercise; workoutId: string }[] = []
+    const adjustedStates = Object.fromEntries(
+      Object.entries(initialStates).map(([id, state]) => {
+        const targetSets = targetSetsById.get(id)
+        const meetsTargetSets = targetSets != null && targetSets > 0 && state.setsLog.length >= targetSets
+        const trustLogged = finishedIds.has(id) || meetsTargetSets
+        if (meetsTargetSets && !finishedIds.has(id) && state.workoutId) {
+          const ex = exercisesById.get(id)
+          if (ex) completionBackfills.push({ ex, workoutId: state.workoutId })
+        }
+        return [id, state.logged && !trustLogged ? { ...state, logged: false } : state]
+      })
+    )
+    if (completionBackfills.length > 0) {
+      await Promise.all(
+        completionBackfills.map(({ ex, workoutId }) => recordProgramCompletion(userId, ex, workoutId).catch(() => {}))
+      )
+    }
+
+    setDay(null)
+    setExercises(combinedExercises)
+    setStates(adjustedStates)
+    setLastPerformanceByName({})
+    setIndex(firstUnfinishedIndex(combinedExercises, adjustedStates))
+
+    const allFinished = combinedExercises.length > 0 && combinedExercises.every((ex) => adjustedStates[ex.id]?.logged)
+    if (allFinished) {
+      if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
+      setNoLiveDuration(true)
+      setPhase('done')
+      return
+    }
+
+    setPhase('active')
+  }
+
   useEffect(() => {
     load()
   }, [load])
@@ -618,6 +741,13 @@ export default function SessionPage() {
     session.pause()
     if (typeof window !== 'undefined') window.localStorage.removeItem(sessionStorageKey)
     clearActiveMakeupDayId()
+    // 6E-P0 — clear only when the generated session has actually ended (here — never on load/first read/
+    // reload, per the locked contract). Revisiting /session?source=generated afterwards (e.g. browser back)
+    // doesn't need this to avoid "replaying" the workout as fresh either way: loadGeneratedSession always
+    // re-derives state from what's actually persisted in the DB for today, so it lands back on the same
+    // 'done' summary, not a blank 'active' session — this clear is about not leaving a stale generated
+    // payload sitting in sessionStorage once its session is genuinely over, not a correctness requirement.
+    if (typeof window !== 'undefined') window.sessionStorage.removeItem(GENERATED_SESSION_STORAGE_KEY)
     setPhase('done')
   }
 
@@ -1154,6 +1284,21 @@ export default function SessionPage() {
   }
 
   if (phase === 'empty') {
+    // 6E-P0 — phase เดิมมีความหมายเดียว ("ยังไม่มีโปรแกรมตั้งไว้สำหรับวันนี้") ตอนนี้ generated-session ที่
+    // หา payload ไม่เจอ (missing/malformed/หมดอายุ/เปิด URL ตรงๆ) reuse phase เดียวกันนี้ด้วย แต่คนละสาเหตุ
+    // — ต้องไม่ใช้ข้อความ/CTA เดิม (ไปตั้งโปรแกรม/บันทึกอิสระ ไม่เกี่ยวกับ AI-generated workout เลย)
+    if (emptyReason === 'generated-unavailable') {
+      return (
+        <PremiumCard className="px-4 py-10 text-center space-y-3" style={{ border: `1px dashed ${HOME_COLORS.cardBorder}` }}>
+          <p className="text-sm text-muted">เวิร์กเอาต์ที่ AI Coach สร้างไว้ใช้ไม่ได้แล้ว (อาจหมดอายุ หรือเปิดหน้านี้มาโดยตรง) ลองสร้างใหม่อีกครั้ง</p>
+          <div className="flex gap-2 justify-center">
+            <a href="/coach" className="text-xs font-display tracked uppercase text-bg bg-[#FF8A00] rounded-lg px-4 py-2 inline-block">
+              กลับไป AI Coach
+            </a>
+          </div>
+        </PremiumCard>
+      )
+    }
     return (
       // เดิม border-dashed สื่อความหมาย "ว่างเปล่า/ยังไม่ตั้งค่า" — PremiumCard ตัด border ทึบออกแล้ว
       // (v48: ใช้ contact shadow บอกขอบแทน) ส่ง border ทับผ่าน style (ชนะ default ของ PremiumCard เพราะ
