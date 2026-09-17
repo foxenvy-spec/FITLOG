@@ -33,13 +33,12 @@ import BeforeAfterSlider from '@/components/BeforeAfterSlider'
 import ProgressTimelineCard from '@/components/ProgressTimelineCard'
 import { CARD_GRADIENT_CSS } from '@/lib/theme'
 import Sparkline from '@/components/dashboard/Sparkline'
-
-function todayStr() {
-  const d = new Date()
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60000)
-  return local.toISOString().slice(0, 10)
-}
+// 6G-P1 #1 — ไฟล์นี้เคยประกาศ todayStr() ของตัวเอง (ใช้ getTimezoneOffset() ของเครื่องผู้ใช้) บัง
+// canonical todayStr() จาก lib/weekdays.ts (Asia/Bangkok เสมอ) — ผลคือค่าเริ่มต้นของฟอร์มบันทึก body
+// metric และวันที่ progress photo อาจเพี้ยนไปคนละวันกับ Bangkok ถ้าเครื่องผู้ใช้ตั้ง timezone อื่น ใช้ตัว
+// canonical แทน (ดู comment ที่จุดใช้งานทั้งสองด้านล่าง — ไม่แตะ getTimezoneOffset() จุดอื่นในไฟล์นี้ที่ใช้
+// ทำ cutoff ของกราฟแนวโน้ม ซึ่งอยู่นอกขอบเขตที่ lock ไว้รอบนี้)
+import { todayStr } from '@/lib/weekdays'
 
 function shortLabel(iso: string) {
   const d = new Date(iso + 'T00:00:00')

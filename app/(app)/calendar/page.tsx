@@ -8,6 +8,7 @@ import type { WeightUnit } from '@/lib/weightUnit'
 import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown, workoutVolumeKg, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 import { computeCurrentStreak, STREAK_WALK_MAX_DAYS } from '@/lib/dashboardStats'
 import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
+import { bangkokMonthGrid, bangkokYearMonth, daysAgoStr, shiftMonth, todayStr } from '@/lib/weekdays'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
 import ErrorState from '@/components/ErrorState'
@@ -31,16 +32,14 @@ function goalTypeLabel(unit: WeightUnit): Record<GoalType, string> {
   }
 }
 
-function toIsoDate(d: Date) {
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60000)
-  return local.toISOString().slice(0, 10)
-}
-
 export default function CalendarPage() {
   const supabase = createClient()
   const { unit, toDisplay, format } = useWeightUnit()
-  const [cursor, setCursor] = useState(() => new Date())
+  // 6G-P1 #1 — cursor เก็บเป็น {year, month0} ตรงๆ แทน Date object ของ browser-local "now" เดิม ป้องกัน
+  // ปัญหา new Date(year, month, day) ตีความตาม timezone ของเครื่องที่รัน (ดู bangkokYearMonth/
+  // bangkokMonthGrid/shiftMonth ใน lib/weekdays.ts — ทั้ง grid, query boundary และ isToday ของหน้านี้
+  // เดินจาก canonical YYYY-MM-DD string เดียวกันทั้งหมดแล้ว)
+  const [cursor, setCursor] = useState(() => bangkokYearMonth())
   const [monthWorkouts, setMonthWorkouts] = useState<Workout[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [daySets, setDaySets] = useState<Record<string, WorkoutSet[]>>({})
@@ -78,8 +77,9 @@ export default function CalendarPage() {
     if (dateParam) setSelectedDate(dateParam)
   }, [])
 
-  const monthStart = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor])
-  const monthEnd = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0), [cursor])
+  // 6G-P1 #1 — แหล่งความจริงเดียวของเดือนที่กำลังแสดง: grid cells และ query boundary ทั้งคู่อ่านจาก
+  // monthGrid.days ตัวเดียวกัน (ไม่ใช่แปลง Date ไปมาคนละจุด) — ดู bangkokMonthGrid ใน lib/weekdays.ts
+  const monthGrid = useMemo(() => bangkokMonthGrid(cursor.year, cursor.month0), [cursor])
 
   const loadMonth = useCallback(async () => {
     setLoading(true)
@@ -87,8 +87,8 @@ export default function CalendarPage() {
     const { data, error } = await supabase
       .from('workouts')
       .select('*')
-      .gte('performed_at', toIsoDate(monthStart))
-      .lte('performed_at', toIsoDate(monthEnd))
+      .gte('performed_at', monthGrid.days[0])
+      .lte('performed_at', monthGrid.days[monthGrid.days.length - 1])
     if (error) {
       setLoadError(error.message)
       setLoading(false)
@@ -96,18 +96,18 @@ export default function CalendarPage() {
     }
     setMonthWorkouts((data as Workout[]) ?? [])
     setLoading(false)
-  }, [supabase, monthStart, monthEnd])
+  }, [supabase, monthGrid])
 
   const loadGoalsData = useCallback(async () => {
     // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "hardcode 365 วันแยกจาก STREAK_WALK_MAX_DAYS (400) ที่ computeCurrentStreak
     // เดินสายโซ่ได้ไกลสุด — คนที่มี streak ยาวเกิน 365 วันจะเห็นเลขต่ำกว่า Dashboard (query 400 วัน) ทั้งที่
     // ใช้สูตร computeCurrentStreak ตัวเดียวกันแล้ว (ดู comment ที่ streak useMemo ด้านล่าง)" — ใช้ constant
     // เดียวกับ Dashboard ตรงๆ แทน hardcode เลขแยก
-    const since = new Date()
-    since.setDate(since.getDate() - STREAK_WALK_MAX_DAYS)
+    // 6G-P1 #1 — เปลี่ยนจาก toIsoDate(since) (คำนวณผ่าน getTimezoneOffset ของเครื่อง) มาใช้ daysAgoStr()
+    // ตัว canonical จาก lib/weekdays.ts ตรงๆ (Bangkok-anchored เหมือนกับทุกจุดอื่นในหน้านี้แล้ว)
     const [goalsRes, workoutsRes, metricRes, metricHistoryRes, prHistoryRes] = await Promise.all([
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
-      supabase.from('workouts').select('*').gte('performed_at', toIsoDate(since)),
+      supabase.from('workouts').select('*').gte('performed_at', daysAgoStr(STREAK_WALK_MAX_DAYS)),
       supabase.from('body_metrics').select('*').order('measured_at', { ascending: false }).limit(1),
       // ประวัติทั้งหมด (ไม่จำกัดช่วง) เรียงเก่า -> ใหม่ ใช้หา earliestTrackedValue ต่อเป้าหมาย (ดูคอมเมนต์
       // ที่ metricsHistory state ด้านบน) ตัวเดียวกับที่ health/page.tsx ใช้ (metrics เต็มประวัติเช่นกัน)
@@ -193,14 +193,15 @@ export default function CalendarPage() {
     return computeCurrentStreak(days, workoutWeekdays)
   }, [allWorkouts, programByDow])
 
+  // 6G-P1 #1 — cell แต่ละอันเป็น YYYY-MM-DD string ตรงๆ (canonical, ตัวเดียวกับที่ query ใช้) ไม่ใช่ Date
+  // object ที่ต้องแปลงกลับไปมาอีกที — index ของ cell ในกริด 7 คอลัมน์ (grid-cols-7) ตรงกับ day-of-week
+  // เสมอ (i % 7) เพราะ null นำหน้าตาม firstWeekday ถูกใส่ไว้ก่อนแล้ว ไม่ต้องคำนวณ day-of-week จาก Date อีก
   const gridDays = useMemo(() => {
-    const firstWeekday = monthStart.getDay() // 0 = Sun
-    const daysInMonth = monthEnd.getDate()
-    const cells: (Date | null)[] = []
-    for (let i = 0; i < firstWeekday; i++) cells.push(null)
-    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(cursor.getFullYear(), cursor.getMonth(), d))
+    const cells: (string | null)[] = []
+    for (let i = 0; i < monthGrid.firstWeekday; i++) cells.push(null)
+    monthGrid.days.forEach((d) => cells.push(d))
     return cells
-  }, [monthStart, monthEnd, cursor])
+  }, [monthGrid])
 
   const selectedWorkouts = selectedDate ? monthWorkouts.filter((w) => w.performed_at === selectedDate) : []
   const scheduledProgram = selectedDate ? programByDow[new Date(selectedDate + 'T00:00:00').getDay()] ?? null : null
@@ -350,20 +351,27 @@ export default function CalendarPage() {
                 // วันนั้นมี log จริง" — reset selectedDate ทันทีที่กดเปลี่ยนเดือน กันข้อความไม่ตรงกับข้อมูลจริง
                 onClick={() => {
                   setSelectedDate(null)
-                  setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))
+                  setCursor((prev) => shiftMonth(prev.year, prev.month0, -1))
                 }}
                 className="w-9 h-9 rounded-full bg-surface2 border border-line text-ink"
               >
                 ‹
               </button>
               <p className="font-display tracked uppercase text-sm">
-                {cursor.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+                {/* 6G-P1 #1 — แสดงเดือน/ปีจาก cursor.year/month0 ตรงๆ ผ่าน Date.UTC ล้วนๆ (ไม่ใช่ new
+                    Date(year, month, day) ที่ตีความตาม timezone เครื่อง) ระบุ timeZone: 'UTC' ให้
+                    toLocaleDateString อ่านค่าเดือน/ปีตรงกับที่ตั้งไว้เป๊ะ ไม่ถูกเลื่อนอีกชั้นตอน render */}
+                {new Date(Date.UTC(cursor.year, cursor.month0, 1)).toLocaleDateString('th-TH', {
+                  month: 'long',
+                  year: 'numeric',
+                  timeZone: 'UTC',
+                })}
               </p>
               <button
                 type="button"
                 onClick={() => {
                   setSelectedDate(null)
-                  setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))
+                  setCursor((prev) => shiftMonth(prev.year, prev.month0, 1))
                 }}
                 className="w-9 h-9 rounded-full bg-surface2 border border-line text-ink"
               >
@@ -380,13 +388,14 @@ export default function CalendarPage() {
             </div>
 
             <div className="grid grid-cols-7 gap-1">
-              {gridDays.map((d, i) => {
-                if (!d) return <div key={`empty-${i}`} />
-                const iso = toIsoDate(d)
+              {gridDays.map((iso, i) => {
+                if (!iso) return <div key={`empty-${i}`} />
                 const marks = dayMap.get(iso)
-                const isToday = iso === toIsoDate(new Date())
+                const isToday = iso === todayStr()
                 const isSelected = iso === selectedDate
-                const hasProgram = (programByDow[d.getDay()]?.exercises.length ?? 0) > 0
+                // 6G-P1 #1 — คอลัมน์ index i ในกริด 7 คอลัมน์ตรงกับ day-of-week เสมอ (ดู comment ที่
+                // gridDays useMemo ด้านบน) ไม่ต้องเรียก .getDay() จาก Date object อีกต่อไป
+                const hasProgram = (programByDow[i % 7]?.exercises.length ?? 0) > 0
                 return (
                   <button
                     key={iso}
@@ -410,7 +419,7 @@ export default function CalendarPage() {
                         📋
                       </span>
                     )}
-                    <span className="font-mono">{d.getDate()}</span>
+                    <span className="font-mono">{Number(iso.slice(8, 10))}</span>
                     <span className="flex gap-0.5">
                       {marks?.strength && <span className="w-1 h-1 rounded-full bg-steel" />}
                       {marks?.cardio && <span className="w-1 h-1 rounded-full bg-rust" />}

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { todayStr } from '@/lib/weekdays'
+import { bangkokMonthGrid, bangkokYearMonth, daysAgoStr, shiftMonth, todayStr } from '@/lib/weekdays'
 import { useWeightUnit } from './WeightUnitProvider'
 import type { BodyMetric, Workout, WorkoutSet } from '@/lib/types'
 import { computeDaySummary, computeExerciseProgress, countDayPRs, formatDuration, workoutVolumeKg } from '@/lib/workoutDisplay'
@@ -13,12 +13,6 @@ import Skeleton from './Skeleton'
 
 // จ อ พ พฤ ศ ส อา — เริ่มจันทร์ ให้ตรงกับลำดับคอลัมน์ของกริด (Monday-first)
 const WEEKDAY_LABELS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
-
-function toIso(d: Date) {
-  const offset = d.getTimezoneOffset()
-  const local = new Date(d.getTime() - offset * 60000)
-  return local.toISOString().slice(0, 10)
-}
 
 // ระดับความเข้ม 0-3 เทียบกับค่าสูงสุดที่เจอในเดือนนั้น (สัดส่วนกับ max แทนเกณฑ์ตายตัว
 // เพราะ metric ต่างกัน — volume/calories หลักพัน vs sets หลักสิบ — ใช้เกณฑ์เดียวกันไม่ได้)
@@ -39,22 +33,23 @@ const LEVEL_STYLE: Record<number, { bg: string }> = {
 
 export default function WorkoutHeatmap() {
   const supabase = createClient()
-  const [cursor, setCursor] = useState(() => {
-    const d = new Date()
-    return new Date(d.getFullYear(), d.getMonth(), 1)
-  })
-  const monthStart = cursor
-  const monthEnd = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0), [cursor])
-  const monthKey = `${cursor.getFullYear()}-${cursor.getMonth()}`
+  // 6G-P1 #1 — cursor เก็บเป็น {year, month0} Bangkok-anchored (bangkokYearMonth) แทน Date object ของ
+  // browser-local "now" เดิม — monthGrid ตัวเดียวใช้ทั้งสร้าง grid (weeks) และขอบเขต query ด้านล่าง
+  // (workouts + body_metrics) กันไม่ให้สองฝั่งเพี้ยนไปคนละทิศ (ดู lib/weekdays.ts)
+  const [cursor, setCursor] = useState(() => bangkokYearMonth())
+  const monthGrid = useMemo(() => bangkokMonthGrid(cursor.year, cursor.month0), [cursor])
+  const monthKey = `${cursor.year}-${cursor.month0}`
 
   const { data, isLoading: loading } = useQuery({
     queryKey: ['workout-heatmap', monthKey],
     queryFn: async () => {
+      const monthStartIso = monthGrid.days[0]
+      const monthEndIso = monthGrid.days[monthGrid.days.length - 1]
       const { data } = await supabase
         .from('workouts')
         .select('*')
-        .gte('performed_at', toIso(monthStart))
-        .lte('performed_at', toIso(monthEnd))
+        .gte('performed_at', monthStartIso)
+        .lte('performed_at', monthEndIso)
         .order('created_at')
       const rows = (data as Workout[]) ?? []
       const counts: Record<string, number> = {}
@@ -83,8 +78,8 @@ export default function WorkoutHeatmap() {
       const { data: metricRows } = await supabase
         .from('body_metrics')
         .select('*')
-        .gte('measured_at', toIso(monthStart))
-        .lte('measured_at', toIso(monthEnd))
+        .gte('measured_at', monthStartIso)
+        .lte('measured_at', monthEndIso)
       const metricsByDate: Record<string, BodyMetric[]> = {}
       ;((metricRows as BodyMetric[]) ?? []).forEach((m) => {
         ;(metricsByDate[m.measured_at] ??= []).push(m)
@@ -105,13 +100,11 @@ export default function WorkoutHeatmap() {
   const { data: historyData } = useQuery({
     queryKey: ['workout-progress-history'],
     queryFn: async () => {
-      const since = new Date()
-      since.setDate(since.getDate() - 365)
       const { data } = await supabase
         .from('workouts')
         .select('*')
         .eq('type', 'strength')
-        .gte('performed_at', toIso(since))
+        .gte('performed_at', daysAgoStr(365))
       return (data as Workout[]) ?? []
     },
     staleTime: 5 * 60_000,
@@ -134,9 +127,11 @@ export default function WorkoutHeatmap() {
   }, [searchQuery, progressHistory])
 
   // กดผลลัพธ์จากช่องค้นหา — เลื่อนปฏิทินไปเดือนนั้นแล้วเปิดวันนั้นให้เลย
+  // 6G-P1 #1 — แยกปี/เดือนจาก YYYY-MM-DD string ตรงๆ ไม่ผ่าน Date object เลย (w.performed_at เป็น
+  // canonical date string อยู่แล้ว)
   function jumpToWorkout(w: Workout) {
-    const d = new Date(w.performed_at + 'T00:00:00')
-    setCursor(new Date(d.getFullYear(), d.getMonth(), 1))
+    const [y, m] = w.performed_at.split('-').map(Number)
+    setCursor({ year: y, month0: m - 1 })
     setSelectedDate(w.performed_at)
     setExpandedIds(new Set())
     setSearchQuery('')
@@ -156,30 +151,36 @@ export default function WorkoutHeatmap() {
     })
   }
 
+  // 6G-P1 #1 — cell แต่ละอันเป็น YYYY-MM-DD string ตรงๆ (canonical, ตัวเดียวกับที่ query ใช้) แปลง
+  // firstWeekday (0=Sun ตาม bangkokMonthGrid) เป็น Monday-first offset ด้วย (firstWeekday + 6) % 7
   const weeks = useMemo(() => {
-    const leadingBlanks = (monthStart.getDay() + 6) % 7 // Monday-first
-    const daysInMonth = monthEnd.getDate()
-    const cells: (Date | null)[] = Array(leadingBlanks).fill(null)
-    for (let d = 1; d <= daysInMonth; d++) {
-      cells.push(new Date(cursor.getFullYear(), cursor.getMonth(), d))
-    }
+    const leadingBlanks = (monthGrid.firstWeekday + 6) % 7 // Monday-first
+    const cells: (string | null)[] = Array(leadingBlanks).fill(null)
+    monthGrid.days.forEach((d) => cells.push(d))
     while (cells.length % 7 !== 0) cells.push(null)
-    const rows: (Date | null)[][] = []
+    const rows: (string | null)[][] = []
     for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7))
     return rows
-  }, [monthStart, monthEnd, cursor])
+  }, [monthGrid])
 
   const today = todayStr()
   const daysTrained = Object.keys(countByDate).length
   const daysElapsed = useMemo(() => {
-    const isCurrentMonth = cursor.getFullYear() === new Date().getFullYear() && cursor.getMonth() === new Date().getMonth()
-    return isCurrentMonth ? new Date().getDate() : monthEnd.getDate()
-  }, [cursor, monthEnd])
+    const currentMonth = bangkokYearMonth()
+    const isCurrentMonth = cursor.year === currentMonth.year && cursor.month0 === currentMonth.month0
+    return isCurrentMonth ? Number(todayStr().slice(8, 10)) : monthGrid.days.length
+  }, [cursor, monthGrid])
 
-  const monthLabel = cursor.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })
+  // 6G-P1 #1 — timeZone: 'UTC' กัน toLocaleDateString ตีความ Date(Date.UTC(...)) กลับด้วย timezone
+  // ของเครื่องอีกชั้น (เหมือนจุดเดียวกันใน calendar/page.tsx)
+  const monthLabel = new Date(Date.UTC(cursor.year, cursor.month0, 1)).toLocaleDateString('th-TH', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
 
-  function shiftMonth(delta: number) {
-    setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
+  function handleMonthShift(delta: number) {
+    setCursor((prev) => shiftMonth(prev.year, prev.month0, delta))
     setSelectedDate(null)
     setExpandedIds(new Set())
   }
@@ -265,16 +266,16 @@ export default function WorkoutHeatmap() {
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button
-            onClick={() => shiftMonth(-1)}
+            onClick={() => handleMonthShift(-1)}
             aria-label="เดือนก่อนหน้า"
             className="w-7 h-7 rounded-md border border-line text-muted hover:text-accent-primary hover:border-accent-primary/50 transition flex items-center justify-center text-xs"
           >
             ‹
           </button>
           <button
-            onClick={() => shiftMonth(1)}
+            onClick={() => handleMonthShift(1)}
             aria-label="เดือนถัดไป"
-            disabled={cursor.getFullYear() === new Date().getFullYear() && cursor.getMonth() === new Date().getMonth()}
+            disabled={cursor.year === bangkokYearMonth().year && cursor.month0 === bangkokYearMonth().month0}
             className="w-7 h-7 rounded-md border border-line text-muted hover:text-accent-primary hover:border-accent-primary/50 transition flex items-center justify-center text-xs disabled:opacity-30 disabled:hover:text-muted disabled:hover:border-line"
           >
             ›
@@ -357,10 +358,9 @@ export default function WorkoutHeatmap() {
           <div className="space-y-1.5">
             {weeks.map((week, wi) => (
               <div key={wi} className="grid grid-cols-7 gap-1.5">
-                {week.map((date, di) => {
-                  if (!date) return <div key={di} className="aspect-square rounded-[4px]" />
+                {week.map((iso, di) => {
+                  if (!iso) return <div key={di} className="aspect-square rounded-[4px]" />
                   if (loading) return <Skeleton key={di} className="aspect-square" />
-                  const iso = toIso(date)
                   const isFuture = iso > today
                   const isToday = iso === today
                   const entryCount = countByDate[iso] ?? 0
@@ -394,7 +394,7 @@ export default function WorkoutHeatmap() {
                         setSelectedDate(iso === selectedDate ? null : iso)
                         setExpandedIds(new Set())
                       }}
-                      title={`${date.getDate()} ${monthLabel}${entryCount ? ` · ${metricDisplay(value)}` : ''}`}
+                      title={`${Number(iso.slice(8, 10))} ${monthLabel}${entryCount ? ` · ${metricDisplay(value)}` : ''}`}
                       className={`relative aspect-square rounded-[4px] flex items-center justify-center text-[12px] font-mono transition ${
                         isFuture ? 'border border-dashed border-line text-muted/50' : 'text-bg'
                       } ${isToday ? 'ring-1 ring-amber ring-offset-1 ring-offset-surface' : ''} ${
@@ -402,7 +402,7 @@ export default function WorkoutHeatmap() {
                       } ${clickable ? 'cursor-pointer hover:brightness-110' : 'cursor-default'}`}
                       style={!isFuture ? { backgroundColor: LEVEL_STYLE[level].bg } : undefined}
                     >
-                      {level === 0 && !isFuture ? <span className="text-muted/60">{date.getDate()}</span> : null}
+                      {level === 0 && !isFuture ? <span className="text-muted/60">{Number(iso.slice(8, 10))}</span> : null}
                       {markers.length > 0 && (
                         <span className="absolute -top-1 -right-1 flex text-[7px] leading-none drop-shadow-sm">
                           {markers.slice(0, 3).map((m, mi) => (
