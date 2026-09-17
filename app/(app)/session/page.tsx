@@ -794,6 +794,17 @@ export default function SessionPage() {
     setPhase('done')
   }
 
+  // 6F-P4 (P2 — Completion Screen vs In-flight Persistence) — guard สำหรับปุ่ม "จบก่อน" โดยเฉพาะ ห้ามใส่
+  // guard นี้เข้าไปใน endSession() เอง: goNext() (natural completion, ดู logCurrentExercise()'s success
+  // branch) เรียก endSession() ตอน saving ยังเป็น true อยู่ (ก่อนถึง finally ที่ setSaving(false)) — ถ้า
+  // endSession() เองเช็ค isPersisting จะบล็อกการจบเซสชันตามปกติที่เพิ่ง persist สำเร็จไปแล้วโดยไม่ตั้งใจ
+  // ฟังก์ชันนี้จึงเป็นจุดเดียวที่ห้ามเปลี่ยนเป็น done ระหว่างมี persistence ค้างอยู่ — ใช้กับ explicit
+  // "จบก่อน" trigger เท่านั้น
+  function handleFinishEarly() {
+    if (isPersisting) return
+    endSession()
+  }
+
   const current = exercises[index] ?? null
   const currentState = current ? states[current.id] : null
   // 6F-P3 (P1 — Optimistic State & Failed-Persistence Recovery) — primitive เดียวสำหรับทุก navigation
@@ -1831,8 +1842,9 @@ export default function SessionPage() {
           <p className="text-[12px] font-mono text-muted tabular">{formatClock(totalElapsedMs)}</p>
           <button
             type="button"
-            onClick={endSession}
-            className="text-[12px] text-muted hover:text-rusttext transition"
+            onClick={handleFinishEarly}
+            disabled={isPersisting}
+            className="text-[12px] text-muted hover:text-rusttext transition disabled:opacity-50"
           >
             จบก่อน
           </button>
