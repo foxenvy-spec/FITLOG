@@ -1563,26 +1563,32 @@ export default function SessionPage() {
             emoji ย้ายเข้ามาอยู่บรรทัดเดียวกับชื่อ (ไม่ใช่ลอยแยกด้านบนอีกต่อไป) เหลือ flow child เดียว
             (title block) เลยเปลี่ยน justify-between เป็น justify-end (แค่ดันลงล่างพอ) ส่วน tagline
             ย้ายจาก top:44% เป็น bottom แทน คำนวณให้บรรทัดกลาง "Than" อยู่ระดับเดียวกับบรรทัดชื่อเซสชัน */}
-        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 min-h-[280px] sm:min-h-[340px] flex flex-col justify-end p-4 text-left">
+        {/* Workout Complete P1 Visual Polish (P1-2) — ฟีดแบ็ก "hero cinematic เกินไป แย่ง hierarchy จาก
+            'เซสชันเสร็จแล้ว'" ลดความสูง ~18% (280→230 / 340→280), ลด brightness ของภาพ (.75→.6) และเพิ่ม
+            ความเข้มของ gradient ด้านล่างให้ภาพเป็น atmosphere มากขึ้นแทนที่จะเป็นพระเอกของหน้า — ไม่เปลี่ยน
+            asset/objectPosition/layout structure */}
+        <div className="relative overflow-hidden rounded-card -mx-4 -mt-4 sm:mx-0 sm:mt-0 min-h-[230px] sm:min-h-[280px] flex flex-col justify-end p-4 text-left">
           <div className="absolute inset-0" aria-hidden="true">
             <Image
               src="/images/session-complete-hero-mobile.png"
               alt=""
               fill
               className="object-cover"
-              style={{ objectPosition: '50% 30%', filter: 'brightness(0.75)' }}
+              style={{ objectPosition: '50% 30%', filter: 'brightness(0.6)' }}
             />
             <div
               className="absolute inset-0"
-              style={{ background: `radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(5,11,18,.55) 55%, ${HOME_COLORS.bg} 100%)` }}
+              style={{ background: `radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, rgba(5,11,18,.65) 50%, ${HOME_COLORS.bg} 100%)` }}
             />
           </div>
           {/* ฟีดแบ็ก "ปรับให้เอียงและมีมิติเหมือนตัวอย่าง" — italic เดิมเอียงน้อยไป เพิ่ม rotate เล็กน้อย
               (transform) ให้เอียงชัดขึ้นแบบ mockup + text-shadow ให้ดูมีมิติ/นูน (เงาเข้มด้านล่างขวา)
-              เหมือนกับที่ทำให้ subtitle ไปแล้ว */}
+              เหมือนกับที่ทำให้ subtitle ไปแล้ว
+              P1-2 — ลด prominence ของ tagline ให้ "เซสชันเสร็จแล้ว" เป็น visual anchor หลักแทน: ลดขนาด
+              ตัวอักษร (text-base→text-sm) และลด opacity ของสีส้ม (ทึบ 100%→~70%) โดยไม่เปลี่ยนข้อความ/ตำแหน่ง */}
           <p
-            className="absolute right-4 bottom-6 font-quote italic font-semibold text-base text-right leading-tight"
-            style={{ color: HOME_COLORS.orange, transform: 'rotate(-4deg)', textShadow: '0 2px 4px rgba(0,0,0,.55)' }}
+            className="absolute right-4 bottom-6 font-quote italic font-semibold text-sm text-right leading-tight"
+            style={{ color: withAlpha(HOME_COLORS.orange, 'b3'), transform: 'rotate(-4deg)', textShadow: '0 2px 4px rgba(0,0,0,.55)' }}
           >
             Stronger
             <br />
@@ -1612,8 +1618,12 @@ export default function SessionPage() {
 
         {/* Version 4 (Motivational/Premium) — รวม 5 สถิติเข้าการ์ดใบเดียว คั่นด้วยเส้นบางๆ แทนที่จะเป็น
             การ์ดแยก 5 ใบเรียงกัน (ของเดิม) — ฟีดแบ็ก "ดู mockup ดีๆ" การ์ดนี้ควรมีกรอบทองสว่างใกล้เคียงกับ
-            Workout Score ไม่ใช่จางกว่ามากแบบเดิม (เดิม alpha 25/0d จางกว่า Workout Score's 90/35 เยอะ) */}
-        <PremiumCard className="p-4 space-y-4" style={{ border: `1.5px solid ${withAlpha(HOME_COLORS.orange, '70')}`, boxShadow: `0 0 24px ${withAlpha(HOME_COLORS.orange, '28')}` }}>
+            Workout Score ไม่ใช่จางกว่ามากแบบเดิม (เดิม alpha 25/0d จางกว่า Workout Score's 90/35 เยอะ)
+            Workout Complete P1 Visual Polish (P1-1) — ฟีดแบ็ก "orange density สูงเกินไปทั้งหน้า" การ์ด
+            ข้อมูล (เวลา/ท่า/เซ็ต/วอลุ่ม/แคลอรี่) ไม่ใช่ "achievement" เหมือน Workout Score ด้านล่าง จึงลด
+            ความเข้มของกรอบ/glow ลง (70→45, 28→15) ให้ orange เด่นเฉพาะจุด achievement จริงๆ — ไม่แตะสี
+            semantic ของแต่ละ metric (GlowStatCell/GlowStatRow ยังใช้ color เดิมทุกตัว) */}
+        <PremiumCard className="p-4 space-y-4" style={{ border: `1.5px solid ${withAlpha(HOME_COLORS.orange, '45')}`, boxShadow: `0 0 24px ${withAlpha(HOME_COLORS.orange, '15')}` }}>
           <div className="grid grid-cols-3 gap-2.5">
             {/* ดู comment ที่ noLiveDuration state ด้านบนของไฟล์ — "00:00" สื่อว่าใช้เวลาศูนย์นาทีจริง ทั้งที่
                 จริงๆ คือไม่เคยมี stopwatch ให้นับเลย ใช้ "–" (เครื่องหมายเดียวกับที่วอลุ่มรวม/แคลอรี่ข้างล่าง
@@ -2499,6 +2509,10 @@ function workoutScoreTier(score: number): { label: string; color: string } {
 // ฟีดแบ็ก "ดูตำแหน่ง/ความเข้มของกรอบ version 4 ดีๆ" — mockup ไม่ได้ให้ 2 การ์ดนี้เข้มเท่ากัน: Workout Score
 // มีกรอบทองสว่าง+เรืองแสงชัดเจน (เป็น "พระเอก" ของหน้า) ส่วน PR การ์ดกรอบจางกว่ามาก เกือบจะเป็นการ์ดเทาธรรมดา
 // — variant แยกความเข้มนี้แทนที่จะใช้กรอบเดียวกันทั้งคู่เหมือนรอบที่แล้ว
+// Workout Complete P1 Visual Polish (P1-1/P1-3) — ฟีดแบ็ก "Workout Score เด่นเกือบเท่า Hero กลายเป็น
+// second hero ของหน้า" ลดความเข้มของ 'hero' variant ลง (background 12→0c, border 90→60 พร้อมลดความหนา
+// 2px→1.5px, boxShadow 35→20) ให้เหลือเป็น highlight card ที่ยังเห็นชัดกว่า 'subtle' (PR การ์ด) แต่ไม่แข่ง
+// กับ Hero ด้านบนอีกต่อไป — คงตำแหน่ง/ข้อมูล/คะแนนเดิมทุกอย่าง แค่ลดความเข้มของกรอบ/glow
 function SessionHighlightRow({
   icon,
   iconColor,
@@ -2514,7 +2528,7 @@ function SessionHighlightRow({
 }) {
   const style =
     variant === 'hero'
-      ? { background: withAlpha(HOME_COLORS.orange, '12'), border: `2px solid ${withAlpha(HOME_COLORS.orange, '90')}`, boxShadow: `0 0 24px ${withAlpha(HOME_COLORS.orange, '35')}` }
+      ? { background: withAlpha(HOME_COLORS.orange, '0c'), border: `1.5px solid ${withAlpha(HOME_COLORS.orange, '60')}`, boxShadow: `0 0 24px ${withAlpha(HOME_COLORS.orange, '20')}` }
       : { background: 'transparent', border: `1px solid ${DS.border.default}` }
   return (
     // ฟีดแบ็ก (ui-ux-pro-max review) "ลูกศร › สื่อว่ากดได้แต่ไม่มีปลายทางจริง (false affordance)" —
