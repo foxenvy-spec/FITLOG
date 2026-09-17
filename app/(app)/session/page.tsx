@@ -936,7 +936,9 @@ export default function SessionPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
-      const { workoutId, setsError } = await persistenceRef.current!.persist(
+      // 6F-P2 (P1) — persist() ตอนนี้เรียก persist_exercise_sets() RPC (atomic) แล้ว ไม่มี "สำเร็จบางส่วน"
+      // เหลืออีกต่อไป (ดู lib/sessionPersistence.ts) — ล้มเหลว = throw เข้า catch ด้านล่างเท่านั้น
+      const { workoutId } = await persistenceRef.current!.persist(
         current,
         { ...currentState, setsLog: newSetsLog },
         user.id,
@@ -944,7 +946,6 @@ export default function SessionPage() {
         sessionIdRef.current
       )
       if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
-      if (setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
     } catch (err) {
       setErrorMsg(`บันทึกเซ็ตไม่สำเร็จ: ${getErrorMessage(err)}`)
     } finally {
@@ -984,9 +985,9 @@ export default function SessionPage() {
         // พร้อมกันแล้ว insert ซ้ำ/เขียนสลับกัน (ดู comment เต็มที่ createExercisePersistence)
         let workoutId: string | null
         try {
+          // 6F-P2 (P1) — atomic RPC ไม่มี "สำเร็จบางส่วน" เหลืออีกต่อไป ล้มเหลว = throw เข้า catch นี้เท่านั้น
           const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null, sessionIdRef.current)
           workoutId = result.workoutId
-          if (result.setsError) setErrorMsg('บันทึกสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
         } catch (err) {
           setErrorMsg(`บันทึกไม่สำเร็จ: ${getErrorMessage(err)}`)
           return
@@ -1053,10 +1054,8 @@ export default function SessionPage() {
         }
         // P1-2 — persistenceRef เดียวกับ logSet/logCurrentExercise เสมอ กันสามจุดนี้ persist ท่าเดียวกัน
         // พร้อมกัน (ดู comment เต็มที่ createExercisePersistence, lib/sessionPersistence.ts)
+        // 6F-P2 (P1) — atomic RPC ไม่มี "สำเร็จบางส่วน" เหลืออีกต่อไป ล้มเหลว = throw เข้า catch ของฟังก์ชันนี้
         const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null, sessionIdRef.current)
-        if (result.setsError) {
-          setSwapError('บันทึกท่าเดิมสำเร็จ แต่รายละเอียดทีละเซ็ตบันทึกไม่ครบ')
-        }
         if (result.workoutId) await recordProgramCompletion(user.id, current, result.workoutId)
         markExerciseFinished(current.id)
 

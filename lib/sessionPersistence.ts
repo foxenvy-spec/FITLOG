@@ -4,8 +4,7 @@ import type { SessionSetState } from './workoutSession'
 import { todayStr } from './weekdays'
 import { createKeyedQueue } from './persistenceQueue'
 
-// ย้ายมาจาก app/(app)/session/page.tsx (P1-2, 6A audit — "logSet() race") — ตัวฟังก์ชันเองไม่เปลี่ยนแม้
-// บรรทัดเดียว (query/payload/ลำดับ delete-then-insert เดิมทุกประการ) แค่รับ `supabase` เป็นพารามิเตอร์
+// ย้ายมาจาก app/(app)/session/page.tsx (P1-2, 6A audit — "logSet() race") — รับ `supabase` เป็นพารามิเตอร์
 // แทนที่จะอ่านจาก closure ของ component เพื่อให้ทดสอบได้ด้วย mock client (ดู
 // lib/sessionPersistence.test.ts) — เหตุผลที่ย้ายมาไม่ใช่เพื่อ "organize code" เฉยๆ แต่เพราะ
 // createKeyedQueue() (lib/persistenceQueue.ts) ต้องมีฟังก์ชันนี้เป็น pure-enough thunk ที่ enqueue ได้
@@ -14,22 +13,34 @@ import { createKeyedQueue } from './persistenceQueue'
 // เขียน setsLog ปัจจุบันของท่านี้ลง DB จริง (workouts + workout_sets) — เรียกทันทีทุกครั้งที่กด
 // "เซ็ตนี้เสร็จแล้ว" ไม่ใช่รอจนกดจบท่า เพราะ state ของหน้านี้อยู่ในหน่วยความจำล้วนๆ ถ้าออกจากหน้า
 // ระหว่างทำท่าอยู่ (เช่น สลับไปดูหน้าอื่นแล้วกลับมา) ข้อมูลที่ยังไม่ได้เขียนลง DB จะหายหมด
+//
+// 6F-P2 (P1 — Atomic Workout Persistence Integrity) — เดิมเขียน workouts (upsert) แล้ว workout_sets
+// (delete แล้ว insert) เป็น 2-3 client call แยกกัน ไม่มี transaction คร่อมกัน: ถ้า workouts เขียนสำเร็จ
+// แล้ว workout_sets delete/insert ล้มเหลว (delete()'s error เดิมไม่ถูกเช็คเลยด้วยซ้ำ) สองตารางจะเหลือ
+// state ไม่ตรงกัน (เช่น workouts.sets=5 total_volume_kg=ค่าใหม่ แต่ workout_sets มี 0 แถว) — เปลี่ยนมาเรียก
+// RPC เดียว (migration 047, persist_exercise_sets) ที่ทำทั้งสามขั้นตอนใน PL/pgSQL function เดียว ซึ่ง
+// Postgres รับประกัน atomicity ให้เอง (exception ใดๆ ใน function = rollback ทั้งฟังก์ชัน) — ไม่มีทางเกิด
+// workouts=ใหม่+workout_sets=เก่า/ว่างเปล่า จาก operation เดียวได้อีกต่อไป
+//
+// setsError ถูกถอดออกจาก return type: ก่อนหน้านี้ทั้ง 3 จุดเรียก (logSet/logCurrentExercise/
+// swapCurrentExercise ใน session/page.tsx) ใช้มันเป็นแค่ข้อความแสดงผล ไม่เคยแยกสาขา logic ตามค่านี้เลย
+// (ตรวจแล้วทั้ง 3 จุดตอน 6F-P2 trace) — ตอนนี้ที่ workouts/workout_sets รับประกันว่าไม่มี partial-success
+// อีกแล้ว ไม่มี "soft failure" ให้รายงานเหลืออยู่จริง ทุก failure คือ throw เดียวกันหมด
 export async function persistSets(
   supabase: SupabaseClient,
   ex: ProgramExercise,
   state: SessionSetState,
   userId: string,
   // program_day_id ของแผนที่กำลังเปิดอยู่ในเซสชันนี้ (component state `day` เดิม — ไม่ใช่ ex.program_day_id
-  // ซึ่งเป็น '' ตายตัวสำหรับท่า ad-hoc/สลับกลางเซสชันเสมอ ดู comment ที่ payload.program_day_id ด้านล่าง)
-  // ต้องส่งเข้ามาชัดเจนตอนย้ายออกมาจาก closure ของ component (P1-2)
+  // ซึ่งเป็น '' ตายตัวสำหรับท่า ad-hoc/สลับกลางเซสชันเสมอ ดู comment ที่ persist_exercise_sets ใน
+  // migration 047) ต้องส่งเข้ามาชัดเจนตอนย้ายออกมาจาก closure ของ component (P1-2)
   dayId: string | null,
   // 6F-P1 — session_id ของ "การเข้าเซสชันนี้" (generated ครั้งเดียวตอนเปิด /session ไม่ใช่ต่อการ persist
   // แต่ละครั้ง — ดู lib/sessionId.ts) เดินขนานกับ dayId ตลอด ไม่ใช่แทนที่กัน: dayId ตอบ "ผูกแผนวันไหน"
-  // ส่วน sessionId ตอบ "มาจากการเปิดเซสชันครั้งไหน" — แยกกันเพื่อให้ findExtraLoggedExercises() แยกท่าจาก
-  // เซสชันอื่นออกจากท่าอิสระแท้ๆ (session_id เป็น null ทั้งคู่) ได้ในภายหลัง
+  // ส่วน sessionId ตอบ "มาจากการเปิดเซสชันครั้งไหน"
   sessionId: string | null
-): Promise<{ workoutId: string | null; setsError: string | null }> {
-  if (state.setsLog.length === 0) return { workoutId: state.workoutId ?? null, setsError: null }
+): Promise<{ workoutId: string | null }> {
+  if (state.setsLog.length === 0) return { workoutId: state.workoutId ?? null }
 
   // top set = เซ็ตที่หนักที่สุด (ถ้าเท่ากันเทียบ reps) — เก็บลง workouts.reps/weight_kg
   // เพื่อให้ยังใช้เป็นค่าเดี่ยวสำหรับ PR / ประมาณ 1RM ได้เหมือนหน้า /log
@@ -40,18 +51,19 @@ export async function persistSets(
   }, state.setsLog[0])
   // total_volume_kg: รวมจาก reps x น้ำหนัก จริงทีละเซ็ต (ไม่ใช่ setsDone * ค่าเดียวเหมือนเดิม)
   const totalVolumeKg = state.setsLog.reduce((sum, s) => sum + s.reps * s.weightKg, 0)
-  const payload = {
-    user_id: userId,
-    type: 'strength' as const,
-    performed_at: todayStr(),
-    exercise_name: ex.exercise_name,
-    muscle_group: ex.muscle_group,
-    sets: state.setsLog.length,
-    reps: topSet.reps,
-    weight_kg: topSet.weightKg,
-    rpe: state.rpe,
-    notes: ex.rationale,
-    total_volume_kg: totalVolumeKg,
+
+  const { data, error } = await supabase.rpc('persist_exercise_sets', {
+    p_workout_id: state.workoutId,
+    p_user_id: userId,
+    p_performed_at: todayStr(),
+    p_exercise_name: ex.exercise_name,
+    p_muscle_group: ex.muscle_group,
+    p_sets: state.setsLog.length,
+    p_reps: topSet.reps,
+    p_weight_kg: topSet.weightKg,
+    p_rpe: state.rpe,
+    p_notes: ex.rationale,
+    p_total_volume_kg: totalVolumeKg,
     // บั๊ก (ฟีดแบ็ก "ทำเซสชันชดเชย Day 1 Push แล้วสลับท่าเป็น Assisted Dip Machine กลางเซสชัน —
     // พอเปิด /session ปกติของวันนี้ (Day 2 Pull) กลับเห็นท่านั้นโผล่มาเป็น ad-hoc ที่เสร็จแล้วด้วย")
     // เดิมใช้ ex.program_day_id ซึ่งเป็น '' (sentinel ว่าง) เสมอสำหรับท่า ad-hoc/สลับ (ดู
@@ -59,36 +71,14 @@ export async function persistSets(
     // สลับกลางเซสชัน "ผูกอยู่กับเซสชันนี้" อยู่แล้ว (ไม่ว่าเซสชันนั้นจะเป็นวันปกติหรือชดเชย) ควรได้
     // program_day_id เดียวกับแผนที่กำลังเปิดอยู่ตอนนี้ (state `day`) เหมือนท่าตามแผนทุกประการ ไม่ใช่
     // null ลอยๆ — null ควรเหลือไว้เฉพาะ workout จาก /log ที่ไม่มีบริบทเซสชันเลยจริงๆ เท่านั้น
-    program_day_id: dayId,
-    session_id: sessionId,
-  }
+    p_program_day_id: dayId,
+    p_session_id: sessionId,
+    p_sets_payload: state.setsLog.map((s, i) => ({ set_number: i + 1, reps: s.reps, weight_kg: s.weightKg })),
+  })
 
-  // ถ้าเคยบันทึกท่านี้ไปแล้ว (เซ็ตก่อนหน้าในท่าเดียวกัน หรือกลับมาแก้ผ่าน progress chips)
-  // ต้องอัปเดตแถวเดิมแทนการ insert ใหม่ ไม่งั้นจะได้รายการซ้ำซ้อนในประวัติ/สถิติ
-  const { data: upserted, error: wErr } = state.workoutId
-    ? await supabase.from('workouts').update(payload).eq('id', state.workoutId).select('id').single()
-    : await supabase.from('workouts').insert(payload).select('id').single()
+  if (error) throw error
 
-  if (wErr) throw wErr
-
-  const workoutId = (upserted as { id: string } | null)?.id ?? state.workoutId
-  if (!workoutId) return { workoutId: null, setsError: null }
-
-  // ลบเซ็ตเก่าทั้งหมดแล้วเขียนชุดใหม่ทับ — ง่ายกว่า diff ทีละเซ็ต และจำนวน/ลำดับเซ็ตอาจเปลี่ยนไปจากเดิม
-  if (state.workoutId) {
-    await supabase.from('workout_sets').delete().eq('workout_id', workoutId)
-  }
-  const setsPayload = state.setsLog.map((s, i) => ({
-    workout_id: workoutId,
-    user_id: userId,
-    set_number: i + 1,
-    reps: s.reps,
-    weight_kg: s.weightKg,
-    completed: true,
-  }))
-  const { error: setsError } = await supabase.from('workout_sets').insert(setsPayload)
-
-  return { workoutId, setsError: setsError ? setsError.message : null }
+  return { workoutId: data as string }
 }
 
 // P1-2 (6A audit — "logSet() race") — the actual fix, not just persistSets() + a raw queue.
@@ -119,7 +109,7 @@ export function createExercisePersistence(supabase: SupabaseClient) {
       userId: string,
       dayId: string | null,
       sessionId: string | null
-    ): Promise<{ workoutId: string | null; setsError: string | null }> {
+    ): Promise<{ workoutId: string | null }> {
       return queue.enqueue(ex.id, async () => {
         const effectiveWorkoutId = state.workoutId ?? knownWorkoutIds.get(ex.id) ?? null
         const result = await persistSets(supabase, ex, { ...state, workoutId: effectiveWorkoutId }, userId, dayId, sessionId)

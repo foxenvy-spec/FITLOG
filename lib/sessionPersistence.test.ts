@@ -4,12 +4,18 @@ import { persistSets, createExercisePersistence } from './sessionPersistence'
 import type { ProgramExercise } from './types'
 import type { SessionSetState } from './workoutSession'
 
-// P1-2 (6A audit — "logSet() race") — a minimal in-memory fake of the exact Supabase call shapes
-// persistSets uses (workouts insert/update/select/single, workout_sets delete/insert), including the real
-// unique(workout_id, set_number) constraint from migration 004, so a race that would violate it in
-// production fails the same way here. `hookBeforeResolve` lets a test control the relative timing of two
-// concurrent calls without relying on incidental microtask ordering.
-function createFakeSupabase(opts?: { hookBeforeResolve?: () => Promise<void> }) {
+// P1-2 (6A audit — "logSet() race") / 6F-P2 (P1 — Atomic Workout Persistence Integrity) — a minimal
+// in-memory fake of the `persist_exercise_sets` RPC (migration 047). persistSets() now makes exactly one
+// `.rpc()` call instead of separate workouts/workout_sets table calls — this fake simulates the RPC's
+// PL/pgSQL body: upsert workouts, then replace workout_sets, committing both together or neither (via
+// `failWorkoutsStep`/`failSetsStep`, which return an error with nothing written to `_debug`, mirroring a
+// real Postgres ROLLBACK on a raised exception inside the function). `hookBeforeResolve` lets a test
+// control the relative timing of two concurrent calls without relying on incidental microtask ordering.
+function createFakeSupabase(opts?: {
+  hookBeforeResolve?: () => Promise<void>
+  failWorkoutsStep?: boolean
+  failSetsStep?: boolean
+}) {
   let workoutSeq = 0
   let setSeq = 0
   const workouts = new Map<string, Record<string, unknown>>()
@@ -21,63 +27,45 @@ function createFakeSupabase(opts?: { hookBeforeResolve?: () => Promise<void> }) 
 
   const client = {
     _debug: { workouts, sets },
-    from(table: string) {
-      if (table === 'workouts') {
-        return {
-          insert(payload: Record<string, unknown>) {
-            return {
-              select: () => ({
-                single: async () => {
-                  await settle()
-                  const id = `w${++workoutSeq}`
-                  workouts.set(id, { id, ...payload })
-                  return { data: { id }, error: null }
-                },
-              }),
-            }
-          },
-          update(payload: Record<string, unknown>) {
-            return {
-              eq: (_col: string, id: string) => ({
-                select: () => ({
-                  single: async () => {
-                    await settle()
-                    workouts.set(id, { ...workouts.get(id), ...payload })
-                    return { data: { id }, error: null }
-                  },
-                }),
-              }),
-            }
-          },
+    rpc(fn: string, params: Record<string, unknown>) {
+      if (fn !== 'persist_exercise_sets') throw new Error(`unexpected rpc: ${fn}`)
+      return (async () => {
+        await settle()
+
+        // 6F-P2 — simulates the RPC raising partway through (workouts write) — real Postgres would roll
+        // back the whole function call, so nothing is committed to _debug here either.
+        if (opts?.failWorkoutsStep) return { data: null, error: { message: 'workouts write failed' } }
+        // simulates the RPC raising during the workout_sets replace step — same rollback semantics: the
+        // workouts upsert that already ran inside the same function call is undone too, so nothing commits.
+        if (opts?.failSetsStep) return { data: null, error: { message: 'workout_sets write failed' } }
+
+        const existingId = params.p_workout_id as string | null
+        const workoutId = existingId ?? `w${++workoutSeq}`
+        workouts.set(workoutId, {
+          id: workoutId,
+          user_id: params.p_user_id,
+          type: 'strength',
+          performed_at: params.p_performed_at,
+          exercise_name: params.p_exercise_name,
+          muscle_group: params.p_muscle_group,
+          sets: params.p_sets,
+          reps: params.p_reps,
+          weight_kg: params.p_weight_kg,
+          rpe: params.p_rpe,
+          notes: params.p_notes,
+          total_volume_kg: params.p_total_volume_kg,
+          program_day_id: params.p_program_day_id,
+          session_id: params.p_session_id,
+        })
+
+        for (let i = sets.length - 1; i >= 0; i--) {
+          if (sets[i].workout_id === workoutId) sets.splice(i, 1)
         }
-      }
-      if (table === 'workout_sets') {
-        return {
-          delete: () => ({
-            eq: async (_col: string, workoutId: string) => {
-              await settle()
-              for (let i = sets.length - 1; i >= 0; i--) {
-                if (sets[i].workout_id === workoutId) sets.splice(i, 1)
-              }
-              return { error: null }
-            },
-          }),
-          insert: async (rows: { workout_id: string; set_number: number; reps: number; weight_kg: number }[]) => {
-            await settle()
-            // unique (workout_id, set_number) — migration 004_workout_sets.sql. A real Postgres INSERT of
-            // multiple rows is atomic: any conflicting row fails the whole statement, nothing is inserted.
-            const conflict = rows.some((row) =>
-              sets.some((s) => s.workout_id === row.workout_id && s.set_number === row.set_number)
-            )
-            if (conflict) {
-              return { error: { message: 'duplicate key value violates unique constraint "workout_sets_workout_id_set_number_key"' } }
-            }
-            rows.forEach((r) => sets.push({ id: `s${++setSeq}`, ...r }))
-            return { error: null }
-          },
-        }
-      }
-      throw new Error(`unexpected table: ${table}`)
+        const setsPayload = params.p_sets_payload as { set_number: number; reps: number; weight_kg: number }[]
+        setsPayload.forEach((s) => sets.push({ id: `s${++setSeq}`, workout_id: workoutId, ...s }))
+
+        return { data: workoutId, error: null }
+      })()
     },
   }
   return client as unknown as SupabaseClient & { _debug: typeof client._debug }
@@ -125,7 +113,6 @@ describe('persistSets', () => {
     const ex = makeExercise()
     const first = await persistSets(supabase, ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
     expect(first.workoutId).toBeTruthy()
-    expect(first.setsError).toBeNull()
     expect(supabase._debug.workouts.size).toBe(1)
     expect(supabase._debug.sets).toHaveLength(1)
 
@@ -159,18 +146,59 @@ describe('persistSets', () => {
     expect(row?.session_id).toBeNull()
   })
 
-  // 4. persistence failure — existing error behavior preserved
-  it('propagates a workouts-table write failure as a thrown error (unchanged from before extraction)', async () => {
+  // 4. persistence failure — a thrown error, same as before the RPC extraction
+  it('propagates an RPC error as a thrown error', async () => {
+    const supabase = createFakeSupabase({ failWorkoutsStep: true })
+    await expect(persistSets(supabase, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toEqual({
+      message: 'workouts write failed',
+    })
+    expect(supabase._debug.workouts.size).toBe(0)
+  })
+
+  // 6F-P2 (P1) regression matrix — required test #4, the direct regression test for the root cause found
+  // in the read-only trace: a workout_sets-step failure must not leave a committed workouts row behind.
+  // persist_exercise_sets() does both steps inside one PL/pgSQL function body, so a raised exception during
+  // the workout_sets replace rolls back the workouts upsert that already ran earlier in the same call —
+  // this fake models that same all-or-nothing outcome (see failSetsStep above). The actual ROLLBACK
+  // guarantee is enforced by Postgres/the migration's function body, not by this unit test — this test
+  // only proves the client-side contract (RPC rejects → persistSets throws → nothing is treated as saved).
+  it('a workout_sets-step failure leaves no workouts row committed either (regression test for the P1 root cause)', async () => {
+    const supabase = createFakeSupabase({ failSetsStep: true })
+    await expect(persistSets(supabase, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toEqual({
+      message: 'workout_sets write failed',
+    })
+    expect(supabase._debug.workouts.size).toBe(0)
+    expect(supabase._debug.sets).toHaveLength(0)
+  })
+
+  it('replaces existing workout_sets atomically — no partial/duplicate rows survive an update', async () => {
     const supabase = createFakeSupabase()
-    // force the underlying insert to fail by making the table name wrong via a broken client
-    const broken = {
-      from: () => ({
-        insert: () => ({ select: () => ({ single: async () => ({ data: null, error: { message: 'insert failed' } }) }) }),
-      }),
-    } as unknown as SupabaseClient
-    await expect(persistSets(broken, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toEqual({ message: 'insert failed' })
-    // nothing persisted
-    void supabase
+    const ex = makeExercise()
+    const first = await persistSets(supabase, ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }, { reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
+    expect(supabase._debug.sets).toHaveLength(2)
+
+    // fewer sets on the next call (e.g. user removed the last set) — old rows must not linger
+    await persistSets(supabase, ex, makeState({ workoutId: first.workoutId, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
+    expect(supabase._debug.sets).toHaveLength(1)
+    expect(supabase._debug.sets.every((s) => s.workout_id === first.workoutId)).toBe(true)
+  })
+
+  it('a retry after a failed persist can succeed cleanly on the next call', async () => {
+    let shouldFail = true
+    const supabase = {
+      _debug: createFakeSupabase()._debug,
+      rpc: (fn: string, params: Record<string, unknown>) => {
+        if (shouldFail) {
+          shouldFail = false
+          return Promise.resolve({ data: null, error: { message: 'transient failure' } })
+        }
+        return createFakeSupabase().rpc(fn, params)
+      },
+    } as unknown as SupabaseClient & { _debug: ReturnType<typeof createFakeSupabase>['_debug'] }
+
+    await expect(persistSets(supabase, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toBeTruthy()
+    const retry = await persistSets(supabase, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')
+    expect(retry.workoutId).toBeTruthy()
   })
 })
 
@@ -216,13 +244,12 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     const [a, b] = await Promise.all([resultA, resultB])
     expect(supabase._debug.workouts.size).toBe(1)
     expect(a.workoutId).toBe(b.workoutId) // B ran after A completed and reused A's id, not a new insert
-    expect(a.setsError).toBeNull()
-    expect(b.setsError).toBeNull()
   })
 
-  // 2. concurrent existing-workout writes -> no unique constraint collision
+  // 2. concurrent existing-workout writes -> the queue still serializes them (no interleaving), even though
+  // the RPC itself is atomic per call
   // 3. two snapshots -> final workout_sets = one complete snapshot, never partial/interleaved
-  it('two concurrent updates to an existing workout never collide on unique(workout_id, set_number), and the final sets match one complete snapshot', async () => {
+  it('two concurrent updates to an existing workout are serialized by the queue, and the final sets match one complete snapshot', async () => {
     const supabase = makeControlledSupabase([])
     const persistence = createExercisePersistence(supabase)
     const ex = makeExercise()
@@ -238,10 +265,8 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
 
     const resultA = persistence.persist(ex, snapshotA, 'u1', 'day-1', 'sess-1')
     const resultB = persistence.persist(ex, snapshotB, 'u1', 'day-1', 'sess-1')
-    const [a, b] = await Promise.all([resultA, resultB])
+    await Promise.all([resultA, resultB])
 
-    expect(a.setsError).toBeNull()
-    expect(b.setsError).toBeNull() // no unique-constraint collision — serialized, not interleaved
     // final workout_sets reflects exactly one complete snapshot (whichever ran last), not a mix of both
     // (e.g. 2 rows from A's snapshot + 1 leftover from B, or vice versa)
     expect(supabase._debug.sets).toHaveLength(3) // snapshotB's length — B was enqueued after A
@@ -249,15 +274,13 @@ describe('P1-2: createExercisePersistence — concurrent calls for the same exer
     expect(weights).toEqual([60, 62.5, 65].sort())
   })
 
-  // 4. persistence failure -> existing error behavior preserved (through the queue too, not just the raw function)
+  // 4. persistence failure -> rejects for its own caller even when routed through the queue
   it('a failed persist still rejects for its own caller even when routed through the queue', async () => {
-    const broken = {
-      from: () => ({
-        insert: () => ({ select: () => ({ single: async () => ({ data: null, error: { message: 'insert failed' } }) }) }),
-      }),
-    } as unknown as SupabaseClient
-    const persistence = createExercisePersistence(broken)
-    await expect(persistence.persist(makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toEqual({ message: 'insert failed' })
+    const supabase = createFakeSupabase({ failWorkoutsStep: true })
+    const persistence = createExercisePersistence(supabase)
+    await expect(persistence.persist(makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toEqual({
+      message: 'workouts write failed',
+    })
   })
 
   // 5. sequential normal logging -> unchanged
