@@ -113,6 +113,11 @@ function deltaColor(isGood: boolean | null): string {
   return 'rgba(255,255,255,.5)'
 }
 
+// Dashboard UX polish (P0) — ฟีดแบ็ก (design review, 9.0/10) "Weight/BF/Muscle สามช่องมี visual weight
+// เท่ากันหมด ทั้งที่ user ต้องการ scan Weight ก่อนเป็นหลัก — ควรมี primary metric ชัดเจน 1 ตัว" —
+// เพิ่ม prop `primary` (เดิม StatCell ไม่มีแนวคิดนี้เลย ทุกช่องเท่ากัน) ให้ icon/value ใหญ่ขึ้นและจัด
+// แนวนอน (icon ซ้าย ข้อความขวา) แทนแนวตั้งเดิม เมื่อเป็นช่องหลัก — ไม่แตะข้อมูล/delta logic ใดๆ เลย
+// แค่ปรับ layout+ขนาดตัวอักษรของ cell เดียวกัน ค่า default (primary=false) ยังคงหน้าตาเดิมทุกกระเบียดนิ้ว
 function StatCell({
   icon,
   iconTint,
@@ -121,6 +126,7 @@ function StatCell({
   value,
   delta,
   isGood,
+  primary = false,
 }: {
   icon: React.ReactNode
   iconTint: string
@@ -133,8 +139,53 @@ function StatCell({
   value: string
   delta: number | null
   isGood: boolean | null
+  /** true = Weight (primary metric ที่ user scan ก่อนเสมอ) — icon ใหญ่ขึ้น จัดแนวนอน ตัวเลขใหญ่ขึ้น
+   * ไม่ระบุ = พฤติกรรม/หน้าตาเดิมทุกประการ (BF/Muscle, secondary) */
+  primary?: boolean
 }) {
   const { iconSize, iconRadius } = dashboardSpec.bodyOverviewCard
+  const primaryIconSize = iconSize * 1.4
+  if (primary) {
+    return (
+      <div
+        className="rounded-xl flex items-center"
+        style={{
+          background: 'rgba(255,255,255,.045)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,.07)',
+          borderRadius: dashboardSpec.bodyOverviewCard.statBorderRadius,
+          padding: '10px 12px',
+          gap: 12,
+        }}
+      >
+        <div
+          className="flex items-center justify-center shrink-0"
+          style={{
+            width: primaryIconSize,
+            height: primaryIconSize,
+            borderRadius: iconRadius,
+            background: iconTint,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,.35), inset 0 -5px 7px rgba(0,0,0,.12), 0 2px 7px ${iconGlow}`,
+          }}
+          aria-hidden="true"
+        >
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-homeTh" style={{ color: HOME_COLORS.textSecondary, fontSize: 11, marginBottom: 1 }}>
+            {label}
+          </p>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <p className="font-homeNum font-bold" style={{ fontSize: 22, color: HOME_COLORS.textPrimary }}>
+              {value}
+            </p>
+            <p className="font-homeNum font-bold" style={{ fontSize: 12, color: deltaColor(isGood) }}>
+              {deltaText(delta)}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
     <div
       className="rounded-xl"
@@ -274,7 +325,11 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           </span>
         </Link>
       ) : (
-        <div className="grid grid-cols-3" style={{ gap: statGap }}>
+        // Dashboard UX polish — ฟีดแบ็ก "Weight ควรเป็น primary metric ที่ scan ก่อน BF/Muscle เป็น
+        // secondary" — เดิม grid-cols-3 ให้ 3 ช่องน้ำหนักภาพเท่ากันหมด เปลี่ยนเป็น Weight แถวเดี่ยวเต็ม
+        // ความกว้าง (primary) ต่อด้วย Body Fat/Muscle 2 คอลัมน์ (secondary) ด้านล่าง — ไม่เพิ่ม/ลดข้อมูล
+        // ใดๆ ทั้ง 3 ค่ายังมาจาก props เดิมทุกจุด แค่จัด layout+ขนาดใหม่
+        <div className="space-y-2" style={{ gap: statGap }}>
           {/* ฟีดแบ็ก "ทำสี/font/ตำแหน่งให้เหมือน 100%" (poster "Version 2 — 9.3/10") — badge ไอคอนใน
               mockup เป็นสีทึบอิ่มตัว (ไอคอนขาวทับพื้นสี) ไม่ใช่พื้นจางๆ+ไอคอนสี — สลับ iconTint จาก
               rgba(...,.15) เป็นสีทึบ และไอคอนเป็นสีขาวแทน */}
@@ -286,25 +341,28 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
             value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
             delta={weight.delta}
             isGood={weight.isGood}
+            primary
           />
-          <StatCell
-            icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
-            iconTint="linear-gradient(135deg,#ff7fb0,#d94f86)"
-            iconGlow="rgba(255,92,147,.28)"
-            label="Body Fat"
-            value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
-            delta={bodyFatPct.delta}
-            isGood={bodyFatPct.isGood}
-          />
-          <StatCell
-            icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
-            iconTint="linear-gradient(135deg,#57e0cd,#1fae94)"
-            iconGlow="rgba(52,214,196,.28)"
-            label="Muscle"
-            value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
-            delta={muscleKg.delta}
-            isGood={muscleKg.isGood}
-          />
+          <div className="grid grid-cols-2" style={{ gap: statGap }}>
+            <StatCell
+              icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
+              iconTint="linear-gradient(135deg,#ff7fb0,#d94f86)"
+              iconGlow="rgba(255,92,147,.28)"
+              label="Body Fat"
+              value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
+              delta={bodyFatPct.delta}
+              isGood={bodyFatPct.isGood}
+            />
+            <StatCell
+              icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
+              iconTint="linear-gradient(135deg,#57e0cd,#1fae94)"
+              iconGlow="rgba(52,214,196,.28)"
+              label="Muscle"
+              value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}
+              delta={muscleKg.delta}
+              isGood={muscleKg.isGood}
+            />
+          </div>
         </div>
       )}
     </div>
