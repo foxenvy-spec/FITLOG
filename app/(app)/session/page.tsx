@@ -12,7 +12,6 @@ import { findExerciseByName } from '@/lib/exercises'
 import { getErrorMessage } from '@/lib/errors'
 import {
   COLORS,
-  NEUTRAL,
   withAlpha,
   CNC_CORNER_CLIP_PATH_DEFAULT,
 } from '@/lib/theme'
@@ -2136,7 +2135,7 @@ export default function SessionPage() {
                 type="button"
                 onClick={() => updateCurrent({ weightKg: overloadSuggestion.weightKg, reps: overloadSuggestion.reps })}
                 className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-display tracked uppercase active:scale-[0.98] transition"
-                style={{ background: HOME_COLORS.orange, color: NEUTRAL.onAmberText }}
+                style={{ background: HOME_COLORS.orange, color: DS.text.onAccent }}
               >
                 ใช้เลย
               </button>
@@ -2263,14 +2262,14 @@ export default function SessionPage() {
             style={{
               backgroundImage:
                 'radial-gradient(circle at 25% 20%, rgba(255,255,255,0.35), transparent 50%), linear-gradient(135deg, #4ADE80, #22C55E)',
-              color: NEUTRAL.onAmberText,
+              color: DS.text.onAccent,
               boxShadow: '0 0 24px rgba(74,222,128,0.4)',
             }}
             className="w-full rounded-full font-display tracked uppercase py-3.5 text-sm active:scale-[0.98] transition flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <span
               className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] shrink-0"
-              style={{ backgroundColor: NEUTRAL.onAmberText, color: COLORS.green }}
+              style={{ backgroundColor: DS.text.onAccent, color: COLORS.green }}
             >
               ✓
             </span>
