@@ -1,14 +1,32 @@
-import { computeRecoveryPct, WEEKLY_VOLUME_TARGETS } from './dashboardStats'
+import { computeRecoveryPct, recoveryTier, WEEKLY_VOLUME_TARGETS } from './dashboardStats'
 import { RECOVERY_MUSCLES } from './muscle-groups'
 import type { MuscleGroup } from './muscle-groups'
 
 export type RecoveryTier = 'green' | 'yellow' | 'orange' | 'red'
 
-// เกณฑ์สีเป็นค่าอ้างอิงคร่าวๆ สำหรับจัดกลุ่ม ไม่ใช่ค่าทางสรีรวิทยาที่แม่นยำ
+// เกณฑ์สีเป็นค่าอ้างอิงคร่าวๆ สำหรับจัดกลุ่ม ไม่ใช่ค่าทางสรีรวิทยาที่แม่นยำ — ใช้เฉพาะกับกลุ่มกล้ามเนื้อที่
+// trained วันนี้ (fatigue projection) เท่านั้น ดู recoveryTierFromCalendarRecovery ด้านล่างสำหรับกลุ่มที่
+// ไม่ได้ trained วันนี้ (H-05-C)
 export function tierForPct(pct: number): RecoveryTier {
   if (pct >= 75) return 'green'
   if (pct >= 55) return 'yellow'
   if (pct >= 30) return 'orange'
+  return 'red'
+}
+
+// H-05-C (Recovery / Muscle Readiness Semantic Split) — กลุ่มกล้ามเนื้อที่ "ไม่ได้ trained วันนี้" คือ
+// "การฟื้นตัว" (calendar-day recovery) คนละ metric จาก "ความพร้อมสำหรับครั้งถัดไป" (load/fatigue
+// projection ของกลุ่มที่ trained วันนี้ — ยังใช้ tierForPct() ข้างบนเหมือนเดิม) — เดิมทั้งสองกลุ่มถูก
+// re-tier ผ่าน tierForPct() (75/55/30) เหมือนกันหมด ทั้งที่กลุ่มไม่ trained วันนี้คำนวณจาก
+// computeRecoveryPct() ตัวเดียวกับที่ recoveryTier() (lib/dashboardStats.ts, threshold 90/65/35,
+// ใช้ร่วมกับ Dashboard/Coach/AI Coach/Recovery page) ใช้อยู่แล้ว — mapping label→string ตรงนี้แค่คง
+// type เดิมของ MuscleRecoveryScore.tier ไว้ (ไม่แตะ trigger logic ของ notReady filter ใน session/page.tsx
+// ที่อ่านค่านี้อยู่) โดยไม่ประดิษฐ์ threshold ใหม่เอง — ตัวเลข 90/65/35 มาจาก recoveryTier() ตรงๆ
+function recoveryTierFromCalendarRecovery(pct: number): RecoveryTier {
+  const labelEn = recoveryTier(pct).labelEn
+  if (labelEn === 'Excellent') return 'green'
+  if (labelEn === 'Good') return 'yellow'
+  if (labelEn === 'Recovering') return 'orange'
   return 'red'
 }
 
@@ -60,7 +78,7 @@ export function computeSessionMuscleRecovery(
     // (ไม่แตะ aggregate/session summary ในเฟสนี้ตามที่ตกลงไว้) แทนที่จะเปลี่ยน MuscleRecoveryScore.pct เป็น
     // nullable ซึ่งจะกระทบ ProgressRing/MuscleReadinessRow ที่ยังไม่ได้อยู่ใน scope ของ P1-1 รอบนี้
     const pct = computeRecoveryPct(lastDate, mg) ?? 100
-    return { muscleGroup: mg, pct, tier: tierForPct(pct), trainedToday: false, hasHistory: lastDate !== null }
+    return { muscleGroup: mg, pct, tier: recoveryTierFromCalendarRecovery(pct), trainedToday: false, hasHistory: lastDate !== null }
   })
 
   // เฉลี่ยเฉพาะกลุ่มที่มีประวัติจริง (ฝึกวันนี้ หรือเคยฝึกมาก่อน) — กลุ่มที่ไม่เคยฝึกเลย (hasHistory: false)

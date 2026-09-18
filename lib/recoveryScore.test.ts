@@ -105,4 +105,30 @@ describe('computeSessionMuscleRecovery', () => {
     expect(chest.hasHistory).toBe(true)
     expect(overall).toBe(chest.pct) // กลุ่มอื่นไม่มีประวัติเลย ถูกกรองออกหมด เหลือแค่อกกลุ่มเดียวในค่าเฉลี่ย
   })
+
+  // H-05-C (Recovery / Muscle Readiness Semantic Split) — กลุ่มที่ "ไม่ trained วันนี้" ต้องถูก tier ผ่าน
+  // recoveryTier() ของ lib/dashboardStats.ts (threshold 90/65/35, ตัวเดียวกับ Dashboard/Coach/AI Coach/
+  // Recovery page) ไม่ใช่ tierForPct() (75/55/30) ของไฟล์นี้ที่ยังใช้เฉพาะกลุ่ม trained วันนี้เท่านั้น —
+  // pct=33 (หลัง, ฝึกล่าสุดเมื่อวาน, window 3 วัน) เป็นค่าที่สอง threshold ให้ tier ต่างกัน:
+  // tierForPct(33)='orange' แต่ recoveryTier(33).labelEn='Rest' -> 'red' — ถ้า test นี้ผ่านแปลว่ากลุ่มที่
+  // ไม่ trained วันนี้ถูก re-tier ผ่าน recoveryTier() จริง ไม่ใช่ tierForPct() เดิม
+  it('tiers a not-trained-today muscle via recoveryTier() (90/65/35), not tierForPct() (75/55/30)', () => {
+    const { byMuscle } = computeSessionMuscleRecovery({}, { หลัง: '2026-07-17' }) // ฝึกล่าสุดเมื่อวาน
+    const back = byMuscle.find((m) => m.muscleGroup === 'หลัง')!
+    expect(back.trainedToday).toBe(false)
+    expect(back.pct).toBe(33)
+    expect(tierForPct(back.pct)).toBe('orange') // ถ้ายังใช้ระบบเดิมจะได้ tier นี้
+    expect(back.tier).toBe('red') // แต่ recoveryTier(33) ให้ 'Rest' -> 'red' ตามที่ contract ล็อกไว้
+  })
+
+  // สลับกัน — กลุ่มที่ trained วันนี้ต้องยังคง tierForPct() เดิมไม่เปลี่ยน แม้ pct จะตกอยู่ในช่วงเดียวกัน
+  // ที่ recoveryTier() ให้ tier ต่างออกไป (pct=30: tierForPct='orange', recoveryTier='red') — พิสูจน์ว่า
+  // สอง branch ใช้คนละ threshold system กันจริง ไม่ได้ merge เป็นระบบเดียวโดยไม่ตั้งใจ
+  it('keeps tierForPct() (75/55/30) for a muscle trained today, unaffected by H-05-C', () => {
+    const { byMuscle } = computeSessionMuscleRecovery({ อก: { sets: 7, avgRpe: 10 } }, {})
+    const chest = byMuscle.find((m) => m.muscleGroup === 'อก')!
+    expect(chest.trainedToday).toBe(true)
+    expect(chest.pct).toBe(30)
+    expect(chest.tier).toBe('orange') // tierForPct(30) — ไม่ใช่ recoveryTier(30) ซึ่งจะให้ 'red'
+  })
 })

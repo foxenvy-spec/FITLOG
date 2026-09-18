@@ -1762,22 +1762,42 @@ export default function SessionPage() {
               {[...summaryExtras.recovery.byMuscle]
                 .sort((a, b) => b.pct - a.pct)
                 .map((m) => (
-                  <MuscleReadinessRow key={m.muscleGroup} muscleGroup={m.muscleGroup} pct={m.pct} tier={m.tier} />
+                  <MuscleReadinessRow
+                    key={m.muscleGroup}
+                    muscleGroup={m.muscleGroup}
+                    pct={m.pct}
+                    tier={m.tier}
+                    trainedToday={m.trainedToday}
+                  />
                 ))}
             </div>
             {/* คำแนะนำสั้นๆ — เลือกกล้ามเนื้อที่ยังไม่พร้อม (tier red/orange) สูงสุด 2 กลุ่มจาก byMuscle ที่มี
-                อยู่แล้ว ไม่ใช่ query/สูตรใหม่ — ไม่มีเลยไม่โชว์เลย (ไม่เดาคำแนะนำเชิงบวกให้เพิ่ม) */}
+                อยู่แล้ว ไม่ใช่ query/สูตรใหม่ — ไม่มีเลยไม่โชว์เลย (ไม่เดาคำแนะนำเชิงบวกให้เพิ่ม) — เกณฑ์การ
+                เลือก (top-2 แย่สุด, tier red/orange) ไม่เปลี่ยน H-05-C แค่แยกข้อความตาม trainedToday: กลุ่ม
+                ที่ trained วันนี้คือ "ความพร้อมสำหรับครั้งถัดไป" ไม่ใช่ "ฟื้นตัว" (ดู H-05-C trace/contract) —
+                ปกติจะมีแค่ประโยคเดียว (ทุกกลุ่มใน top-2 มาจาก branch เดียวกัน) นานๆ ครั้งที่ top-2 คาบเกี่ยว
+                ทั้งสอง branch ถึงจะเห็น 2 ประโยค */}
             {(() => {
               const notReady = summaryExtras.recovery.byMuscle
                 .filter((m) => m.tier === 'red' || m.tier === 'orange')
                 .sort((a, b) => a.pct - b.pct)
                 .slice(0, 2)
-                .map((m) => m.muscleGroup)
               if (notReady.length === 0) return null
+              const readinessLow = notReady.filter((m) => m.trainedToday).map((m) => m.muscleGroup)
+              const recoveryLow = notReady.filter((m) => !m.trainedToday).map((m) => m.muscleGroup)
               return (
-                <p className="text-xs text-ink">
-                  💡 วันนี้ควรเลี่ยง{notReady.join('และ')} เพราะยังฟื้นตัวไม่เต็มที่
-                </p>
+                <>
+                  {readinessLow.length > 0 && (
+                    <p className="text-xs text-ink">
+                      💡 วันนี้ควรเลี่ยง{readinessLow.join('และ')} เพราะความพร้อมสำหรับครั้งถัดไปยังไม่เต็มที่
+                    </p>
+                  )}
+                  {recoveryLow.length > 0 && (
+                    <p className="text-xs text-ink">
+                      💡 วันนี้ควรเลี่ยง{recoveryLow.join('และ')} เพราะยังฟื้นตัวไม่เต็มที่
+                    </p>
+                  )}
+                </>
               )
             })()}
             <p className="text-[12px] text-muted/70">
@@ -2476,9 +2496,10 @@ function GlowStatRow({
   return <PremiumCard className="px-3.5 py-3.5 flex items-center gap-3">{content}</PremiumCard>
 }
 
-// สีวงแหวน ProgressRing ของ "ความพร้อมกล้ามเนื้อโดยรวม" — ผูกกับ tier เดียวกับแถบสีรายกลุ่ม
-// (recoveryBarColor) ไม่ใช้ fire gradient เริ่มต้นของ ProgressRing เพราะที่นี่สื่อความหมาย
-// ระดับความพร้อม ไม่ใช่แค่ของตกแต่ง
+// สีวงแหวน ProgressRing ของ "ความพร้อมกล้ามเนื้อโดยรวม" (ค่า overall เฉลี่ยรวมทั้ง trained/not-trained
+// วันนี้เข้าด้วยกัน — ดู computeSessionMuscleRecovery) ไม่ใช้ fire gradient เริ่มต้นของ ProgressRing
+// เพราะที่นี่สื่อความหมายระดับความพร้อม ไม่ใช่แค่ของตกแต่ง — ยังคง tierForPct() เดิม (H-05-C ไม่แตะ ring
+// นี้ เพราะเป็นค่ารวมที่ผสมสอง metric เข้าด้วยกันแล้ว ไม่ใช่ค่าของ muscle group เดียวที่แยก branch ได้)
 function ringStopsForPct(pct: number) {
   const tier = tierForPct(pct)
   const c = tier === 'green' ? COLORS.steel : tier === 'yellow' ? COLORS.amber : COLORS.rust
@@ -2486,12 +2507,6 @@ function ringStopsForPct(pct: number) {
     { offset: '0%', color: c },
     { offset: '100%', color: c },
   ]
-}
-
-function recoveryBarColor(tier: 'green' | 'yellow' | 'orange' | 'red') {
-  if (tier === 'green') return 'bg-steel'
-  if (tier === 'yellow') return 'bg-amber'
-  return 'bg-rust'
 }
 
 // ป้าย/สี Workout Score — ใช้ตัวเลขเดียวกับ computeWorkoutScore (lib/workoutSession.ts) เป๊ะ แค่แปลเป็น
@@ -2576,8 +2591,33 @@ function muscleGroupEmoji(muscleGroup: string): string {
 // ฟีดแบ็ก "อยากได้ไอคอนกลมสีแบบ mockup" — คงสีตาม tier ความพร้อมไว้ (ไม่ใช่สีตามกลุ่มกล้ามเนื้อแบบ mockup)
 // รวมจุดสี+emoji เดิม (2 ไอคอนแยกกัน) เข้าเป็นวงกลมเดียว: พื้นหลัง/กรอบใช้สี tier, ไอคอนข้างในใช้
 // muscleGroupEmoji เดิม ให้ยังแยกแยะกลุ่มกล้ามเนื้อได้แต่สียังสื่อความพร้อม/ไม่พร้อมเหมือนเดิม
-function MuscleReadinessRow({ muscleGroup, pct, tier }: { muscleGroup: string; pct: number; tier: 'green' | 'yellow' | 'orange' | 'red' }) {
-  const tierColor = tier === 'green' ? COLORS.steel : tier === 'yellow' ? COLORS.amber : COLORS.rust
+// H-05-C (Recovery / Muscle Readiness Semantic Split) — trainedToday แยกว่าแถวนี้คือ "ความพร้อมสำหรับ
+// ครั้งถัดไป" (load/fatigue projection, tierForPct() เดิม 75/55/30, สี steel/amber/rust เดิมของ Session)
+// หรือ "การฟื้นตัว" (calendar-day recovery, computeRecoveryPct()) ซึ่งต้องใช้ recoveryTier() ของ System A
+// ตรงๆ (90/65/35, recovery-specific color family #6CBF74/amber/FIRE_ACCENT/#C96A57 — ตัวเดียวกับ
+// Dashboard/Coach/AI Coach/Recovery page) แทนสี steel/amber/rust ของ readiness — สองอย่างนี้เป็นคนละ
+// metric กัน ไม่ควรใช้ชุดสีเดียวกัน (ดู 6G-P0/H-05 trace) — แถบ progress bar ย้ายจาก recoveryBarColor()
+// (Tailwind class ผูกกับ steel/amber/rust ตายตัว) มาใช้ tierColor ตัวเดียวกับวงกลม เพื่อให้ทั้งแถวสื่อสี
+// เดียวกันไม่ว่าจะมาจาก branch ไหน — ค่าสีของ trained-today ยังเป็น COLORS.steel/.amber/.rust ตัวเดิมเป๊ะ
+// (เทียบกับ bg-steel/bg-amber/bg-rust ใน tailwind.config.js) จึงไม่มีการเปลี่ยนภาพที่เห็นสำหรับ branch นั้น
+function MuscleReadinessRow({
+  muscleGroup,
+  pct,
+  tier,
+  trainedToday,
+}: {
+  muscleGroup: string
+  pct: number
+  tier: 'green' | 'yellow' | 'orange' | 'red'
+  trainedToday: boolean
+}) {
+  const tierColor = trainedToday
+    ? tier === 'green'
+      ? COLORS.steel
+      : tier === 'yellow'
+        ? COLORS.amber
+        : COLORS.rust
+    : recoveryTier(pct).color
   return (
     <div className="flex items-center gap-2.5">
       <span
@@ -2589,7 +2629,7 @@ function MuscleReadinessRow({ muscleGroup, pct, tier }: { muscleGroup: string; p
       </span>
       <span className="text-[12px] text-muted w-14 shrink-0">{muscleGroup}</span>
       <div className="flex-1 h-1.5 rounded-full bg-surface2 overflow-hidden">
-        <div className={`h-full rounded-full ${recoveryBarColor(tier)}`} style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: tierColor }} />
       </div>
       <span className="text-[12px] font-mono text-ink w-9 text-right">{pct}%</span>
     </div>
