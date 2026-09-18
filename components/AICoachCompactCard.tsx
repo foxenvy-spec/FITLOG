@@ -604,14 +604,29 @@ export default function AICoachCompactCard({
               ) : displayPct === null ? (
                 // P1-1 — ไม่เคยฝึกกล้ามเนื้อนี้เลย ห้ามส่งเข้า recoveryTier/readinessVerdict (ไม่มีนิยาม tier
                 // สำหรับ "ไม่มีข้อมูล")
+                // Dashboard UX polish (Coach density, round 2) — ฟีดแบ็ก "3 ชั้นพูดเรื่องเดียวกัน: Next
+                // session → Next program → CTA's Day 5" — ตัดส่วนต่อท้าย "· Today/Next session •
+                // {relatedGroupsText}" ออกเฉพาะตอนที่บรรทัด "Next program · {startLabel}" ด้านล่างจะแสดง
+                // อยู่แล้ว (showsNextProgramLine) เพราะบรรทัดนั้นบอกปลายทางชัดเจนกว่าอยู่แล้ว ไม่ต้องพูดซ้ำ
+                // สั้นกว่า — เคสอื่น (Today จริง, หรือยังไม่มีเทมเพลตให้เริ่ม) ยังคงข้อความเดิมทุกคำ
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: TEXT.title }}>
-                  🆕 ยังไม่เคยฝึกกล้ามเนื้อนี้ พร้อมเริ่มได้เลย ·{' '}
-                  {isRecommendationForToday ? 'Today' : 'Next session'} • {relatedGroupsText}
+                  🆕 ยังไม่เคยฝึกกล้ามเนื้อนี้ พร้อมเริ่มได้เลย
+                  {!showsNextProgramLine && (
+                    <>
+                      {' '}
+                      · {isRecommendationForToday ? 'Today' : 'Next session'} • {relatedGroupsText}
+                    </>
+                  )}
                 </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
-                  {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text} ·{' '}
-                  {isRecommendationForToday ? 'Today' : 'Next session'} • {relatedGroupsText}
+                  {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text}
+                  {!showsNextProgramLine && (
+                    <>
+                      {' '}
+                      · {isRecommendationForToday ? 'Today' : 'Next session'} • {relatedGroupsText}
+                    </>
+                  )}
                 </p>
               )}
 

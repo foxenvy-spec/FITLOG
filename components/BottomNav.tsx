@@ -28,8 +28,15 @@ import FitnessRing from '@/components/dashboard/FitnessRing'
 // v: "FITLOG Premium Home Design System" — glow/ring ย้ายไปใช้โทนส้มเดียวกับ HOME_COLORS
 // (orange/orangeGlow) แทนเฉด #FF8A3D/#A8410F เดิม ให้ปุ่มลอยกลางอ้างอิงส้มแบรนด์ตัวเดียวกับ CTA
 // อื่นทั่วหน้า Home (Header logo badge, TodayCard ปุ่ม START WORKOUT)
+// Dashboard UX polish (BottomNav/TodayCard emphasis) — ฟีดแบ็ก (design review) "TodayCard ปุ่ม RESUME
+// WORKOUT (primary, filled เต็มความกว้าง) กับปุ่มลอยกลางนี้ (RESUME, persistent) มี visual weight ใกล้
+// เคียงกันจนรู้สึกเหมือน action ซ้ำ ทั้งที่ behavior ไม่ได้ซ้ำจริง (TodayCard = contextual CTA ในการ์ด,
+// ปุ่มนี้ = persistent global state indicator)" — ไม่แตะ btnSize/label/ring gradient/state logic ใดๆ เลย
+// (ประวัติปรับขนาดมาหลายรอบแล้ว เห็นชัดว่าตั้งใจให้ยังเด่นอยู่) ลด glow อีกขั้นเดียว (~15-20%, สัดส่วน
+// เดียวกับ v2 ด้านบน) ให้ปุ่มนี้อ่านเป็น "compact persistent action" ชัดขึ้นเทียบกับ TodayCard ที่ยังเป็น
+// primary CTA เด่นสุดของหน้าเหมือนเดิมทุกจุด
 const BOTTOM_NAV_GLOW_SHADOW =
-  '0 0 2px rgba(255,255,255,.3), 0 0 8px rgba(255,138,0,.3), 0 0 20px rgba(255,101,0,.16), 0 0 46px rgba(255,101,0,.05)'
+  '0 0 2px rgba(255,255,255,.25), 0 0 8px rgba(255,138,0,.25), 0 0 20px rgba(255,101,0,.13), 0 0 46px rgba(255,101,0,.04)'
 
 const BOTTOM_NAV_RING_GRADIENT = [
   { offset: '0%', color: '#5C2208' },
