@@ -577,9 +577,17 @@ function TrainBody({
 function PlateCalculatorWidget() {
   const { unit } = useWeightUnit()
   const [input, setInput] = useState('')
+  // บาร์เปล่าเริ่มที่ 0 เสมอ — บาร์แต่ละยิมไม่เท่ากันจริง (ต่างจาก session ที่มี default 20kg/45lb
+  // เพราะรู้อยู่แล้วว่ากำลังเทรนที่ไหน) ให้ผู้ใช้กรอกเองว่าบาร์ที่ใช้จริงหนักเท่าไหร่
+  const [barWeightInput, setBarWeightInput] = useState('0')
   const targetWeight = Number(input)
+  const barWeight = barWeightInput.trim() !== '' && Number.isFinite(Number(barWeightInput)) && Number(barWeightInput) >= 0
+    ? Number(barWeightInput)
+    : 0
   const breakdown =
-    input.trim() !== '' && Number.isFinite(targetWeight) && targetWeight > 0 ? calculatePlates(targetWeight, unit) : null
+    input.trim() !== '' && Number.isFinite(targetWeight) && targetWeight > 0
+      ? calculatePlates(targetWeight, unit, barWeight)
+      : null
 
   return (
     <div>
@@ -592,6 +600,17 @@ function PlateCalculatorWidget() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={`น้ำหนักรวมที่ต้องการ (${unit})`}
+            className="flex-1 min-w-0 bg-surface2 text-ink text-sm font-mono rounded px-3 py-2 border border-line outline-none focus:border-accent-primary"
+          />
+          <span className="text-xs text-muted shrink-0">{unit}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={barWeightInput}
+            onChange={(e) => setBarWeightInput(e.target.value)}
+            placeholder={`น้ำหนักบาร์เปล่า (${unit})`}
             className="flex-1 min-w-0 bg-surface2 text-ink text-sm font-mono rounded px-3 py-2 border border-line outline-none focus:border-accent-primary"
           />
           <span className="text-xs text-muted shrink-0">{unit}</span>
