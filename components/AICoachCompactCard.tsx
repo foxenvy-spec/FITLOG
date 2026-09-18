@@ -288,6 +288,28 @@ export default function AICoachCompactCard({
   // "เริ่ม X" กับข้อความสำเร็จ "บันทึก X เข้า Log" ต้องอธิบายสิ่งที่ handleStart() insert จริง ไม่ใช่สิ่งที่
   // ระบบ "แนะนำ" (สองอย่างนี้ต่างกันได้ตามที่อธิบายไว้ข้างบน)
   const startLabel = resolved.actionLabel
+  // Dashboard UX polish (Item 1, narrow presentation-only fix) — ฟีดแบ็ก "Coach บอก 'Core' แต่ปุ่มพาไป
+  // 'Day 5 — Lower (Hamstring Glute)' ดูเหมือนขัดกัน" — headline (displayRegion) กับปุ่ม "เริ่ม
+  // {startLabel}" ตอบคนละคำถามอยู่แล้วโดยเจตนา (Recommendation Identity vs Action Identity — ดู comment
+  // ยาวด้านบนที่ startLabel/resolveRecommendationDisplay()) ไม่ใช่บั๊ก แต่ไม่มีข้อความไหนบอกตรงๆ ว่า
+  // "ปุ่มนี้จะพาไปโปรแกรมที่ชื่อนี้" — ไม่แตะ startLabel/actionLabel/template selection logic ใดๆ เลย
+  // แค่เพิ่มบรรทัดบอกบริบทก่อนถึงปุ่ม โดยเงื่อนไขนี้ต้องตรงกับเงื่อนไขของปุ่ม "เริ่ม {startLabel}" ที่
+  // แท้จริง (บรรทัด ~730 ด้านล่าง) เป๊ะ กันไม่ให้โชว์บรรทัดนี้ตอนที่ปุ่มจริงเป็น secondary link แบบอื่น
+  // (isRestDay/makeup/missedPlan/lowRecoveryCaution/mismatch — ตอนนั้นไม่มี "Next program" ให้ชี้) และ
+  // เฉพาะ "Next Session" เท่านั้น (isRecommendationForToday=true ใช้ todaySessionHref/displayRegion ตรงกัน
+  // อยู่แล้ว ไม่มี mismatch ให้ชี้แจง)
+  const showsNextProgramLine =
+    !isRestDay &&
+    !makeupSessionActive &&
+    !hasMakeupToday &&
+    missedPlanCount === 0 &&
+    !muscleRecommendation?.lowRecoveryCaution &&
+    !nextRecommendationMismatch &&
+    !(isRecommendationForToday && todayWorkoutTitle && todaySessionHref) &&
+    !templatesLoading &&
+    !!chosen &&
+    chosenExercises.length > 0 &&
+    !isRecommendationForToday
   // recoveryPct มาจาก TodaysRecommendation ตรงๆ (Recommendation Identity) ไม่คำนวณ computeRecoveryPct
   // ซ้ำใน component นี้อีกแล้ว — ตัวเลขเดียวกับที่ Insight ใช้เป๊ะ ไม่มีโอกาสเพี้ยนจาก recoveryDates ที่อาจ
   // ไม่ sync กับตอนที่ recommendation engine คำนวณ pct ไว้
@@ -590,6 +612,15 @@ export default function AICoachCompactCard({
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
                   {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text} ·{' '}
                   {isRecommendationForToday ? 'Today' : 'Next session'} • {relatedGroupsText}
+                </p>
+              )}
+
+              {/* Dashboard UX polish (Item 1) — บอกตรงๆ ว่าปุ่ม "เริ่ม {startLabel}" ด้านล่างจะพาไปโปรแกรม
+                  ไหนจริง แยกจาก headline (displayRegion) ที่เป็นคำแนะนำกล้ามเนื้อของ Coach — ไม่แตะ
+                  startLabel เอง แค่แสดงค่าเดิมในบริบทที่ชัดขึ้น (ดู showsNextProgramLine ด้านบนของไฟล์) */}
+              {showsNextProgramLine && (
+                <p className="truncate mt-0.5" style={{ fontSize: 10.5, color: TEXT.caption }}>
+                  Next program · {startLabel}
                 </p>
               )}
 
