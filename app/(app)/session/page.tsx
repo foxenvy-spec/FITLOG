@@ -1017,16 +1017,50 @@ export default function SessionPage() {
     }
   }
 
-  // "ลบเซ็ตล่าสุด" — เอาเซ็ตท้ายสุดออก แล้วดึงค่า reps/น้ำหนักของเซ็ตนั้นกลับมาเป็น draft
-  // ให้แก้ไขแล้วกดเสร็จใหม่ได้ทันที แทนที่จะแค่ลดตัวนับ
-  function removeLastSet() {
+  // "ลบเซ็ตล่าสุด" (P0-02) — เอาเซ็ตท้ายสุดออก แล้วดึงค่า reps/น้ำหนักของเซ็ตนั้นกลับมาเป็น draft ให้แก้ไข
+  // แล้วกดเสร็จใหม่ได้ทันที — เดิมแก้แค่ local state ไม่มี DB write เลย ทำให้เซ็ตที่เคย persist ไปแล้วค้างอยู่
+  // ใน DB ถาวรถ้าผู้ใช้ลบแล้วออกจากท่านี้โดยไม่ log ใหม่ (skip/จบก่อน ไม่มีจุดไหน re-persist เผื่อกรณีนี้เลย —
+  // ดู comment ที่ skipCurrent() ที่อาศัย invariant ว่า setsLog หลัง isPersisting=false คือของที่ DB confirm
+  // แล้วเท่านั้น ซึ่งการลบแบบ local-only เดิมทำลาย invariant นี้ตรงๆ) ตอนนี้ persist/delete ทันทีผ่านคิว
+  // เดียวกับ logSet()/logCurrentExercise()/swapCurrentExercise() (persistenceRef, keyed ต่อ exercise.id)
+  // กันไม่ให้ race กับ operation อื่นของท่าเดียวกันที่อาจกำลังค้างอยู่ — เหลือ >0 เซ็ต: persist array ที่เหลือ
+  // ทับของเดิม เหลือ 0 เซ็ต: ลบแถว workouts ทิ้งทั้งแถว (ตัดสินใจแล้วว่า sets=0 ไม่ควรมี workout row ค้างอยู่
+  // ต่างจากยังไม่เคย log อะไรเลย — ดู deleteWorkout()/persistOrDelete() ใน lib/sessionPersistence.ts)
+  async function removeLastSet() {
+    if (isPersisting) return
     if (!current || !currentState || currentState.setsLog.length === 0) return
     const popped = currentState.setsLog[currentState.setsLog.length - 1]
-    updateCurrent({
-      setsLog: currentState.setsLog.slice(0, -1),
-      reps: popped.reps,
-      weightKg: popped.weightKg,
-    })
+    const previousSetsLog = currentState.setsLog
+    const previousWorkoutId = currentState.workoutId
+    const previousLogged = currentState.logged
+    const newSetsLog = previousSetsLog.slice(0, -1)
+    updateCurrent({ setsLog: newSetsLog, reps: popped.reps, weightKg: popped.weightKg })
+    setLoggingSet(true)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        updateCurrent({ setsLog: previousSetsLog, workoutId: previousWorkoutId, logged: previousLogged })
+        setErrorMsg(AUTH_EXPIRED_MESSAGE)
+        return
+      }
+      const { workoutId } = await persistenceRef.current!.persistOrDelete(
+        current,
+        { ...currentState, setsLog: newSetsLog },
+        user.id,
+        day?.id ?? null,
+        sessionIdRef.current
+      )
+      // ลบจนเหลือ 0 เซ็ตแล้ว ไม่มี workout เหลืออยู่จริงอีกต่อไป — เคลียร์ logged ด้วย (ไม่งั้น nextUnvisitedIndex
+      // จะยังนับว่าท่านี้ "ดูแล้ว" ทั้งที่ไม่มีข้อมูลหลงเหลือเลย) เหลือ >0 เซ็ต ไม่แตะ logged เดิม
+      updateCurrent({ workoutId, logged: newSetsLog.length === 0 ? false : currentState.logged })
+    } catch (err) {
+      updateCurrent({ setsLog: previousSetsLog, workoutId: previousWorkoutId, logged: previousLogged })
+      setErrorMsg(sessionErrorMessage(err, 'ลบเซ็ตไม่สำเร็จ: '))
+    } finally {
+      setLoggingSet(false)
+    }
   }
 
   async function logCurrentExercise() {
@@ -2319,7 +2353,8 @@ export default function SessionPage() {
             <button
               type="button"
               onClick={removeLastSet}
-              className="w-full text-[12px] text-muted hover:text-[#FF8A00] transition"
+              disabled={isPersisting}
+              className="w-full text-[12px] text-muted hover:text-[#FF8A00] transition disabled:opacity-50"
             >
               แก้ไข — ลบเซ็ตล่าสุด
             </button>

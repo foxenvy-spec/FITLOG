@@ -81,6 +81,22 @@ export async function persistSets(
   return { workoutId: data as string }
 }
 
+// P0-02 (Product Audit — "removeLastSet() DB/UI divergence") — เมื่อผู้ใช้ลบเซ็ตสุดท้ายของท่าที่เคย persist
+// ไปแล้ว (setsLog กลับมาว่างเปล่า) ตั้งใจ "ไม่มี workout ของท่านี้แล้ว" ไม่ใช่แค่ "ยังไม่ได้ persist" — ลบแถว
+// workouts ทั้งแถวแทนที่จะพยายามยัด sets_payload ว่างเข้า persist_exercise_sets (ซึ่ง RPC เองรองรับได้จริง
+// แต่ persistSets() ข้างบนตั้งใจ early-return เมื่อ setsLog ว่างเพื่อกัน topSet คำนวณจาก array ว่างพัง —
+// ฟังก์ชันนี้จึงเป็นทางแยกต่างหาก ไม่ใช่การ "แก้" persistSets() ให้รองรับ array ว่าง)
+//
+// workout_sets ของแถวนี้หายไปเอง (ON DELETE CASCADE, migration 004) เช่นเดียวกับ ad-hoc program_completions
+// ถ้ามี (workout_id-based, ON DELETE CASCADE, migration 042 — ผูกกับ workout แบบ 1:1 อยู่แล้วโดยธรรมชาติ
+// สมเหตุสมผลที่จะหายไปด้วยกัน) ส่วน completion แบบแผนจริง (program_exercise_id-based) ไม่มี FK เชื่อมกับ
+// workouts เลย ไม่ถูกแตะ — ตรงกับ Delete Workout Semantics Option A ที่ล็อกไว้แล้ว (ยืนยันด้วย grep ทุก
+// migration ก่อนเขียนฟังก์ชันนี้ ไม่ใช่ assumption)
+export async function deleteWorkout(supabase: SupabaseClient, workoutId: string): Promise<void> {
+  const { error } = await supabase.from('workouts').delete().eq('id', workoutId)
+  if (error) throw error
+}
+
 // P1-2 (6A audit — "logSet() race") — the actual fix, not just persistSets() + a raw queue.
 //
 // Serializing calls through createKeyedQueue() alone is not enough on its own: logSet()/
@@ -112,6 +128,32 @@ export function createExercisePersistence(supabase: SupabaseClient) {
     ): Promise<{ workoutId: string | null }> {
       return queue.enqueue(ex.id, async () => {
         const effectiveWorkoutId = state.workoutId ?? knownWorkoutIds.get(ex.id) ?? null
+        const result = await persistSets(supabase, ex, { ...state, workoutId: effectiveWorkoutId }, userId, dayId, sessionId)
+        if (result.workoutId) knownWorkoutIds.set(ex.id, result.workoutId)
+        return result
+      })
+    },
+
+    // P0-02 — ใช้คิวเดียวกับ persist() เป๊ะ (keyed ต่อ ex.id) กันไม่ให้ race กับ persist() ของท่าเดียวกันที่
+    // อาจกำลังค้างอยู่ (เช่น logSet() ที่ยัง await persist_exercise_sets ไม่จบ) — ถ้า setsLog เหลือ >0 เซ็ต
+    // ทำเหมือน persist() ทุกประการ (persist array ที่เหลือทับของเดิม) ถ้าเหลือ 0 เซ็ตและมี workout อยู่จริง
+    // (จาก state หรือจากคิวเดียวกันที่เพิ่ง persist ไปก่อนหน้า) ลบทั้งแถวแทน — ดู deleteWorkout() ด้านบน
+    persistOrDelete(
+      ex: ProgramExercise,
+      state: SessionSetState,
+      userId: string,
+      dayId: string | null,
+      sessionId: string | null
+    ): Promise<{ workoutId: string | null }> {
+      return queue.enqueue(ex.id, async () => {
+        const effectiveWorkoutId = state.workoutId ?? knownWorkoutIds.get(ex.id) ?? null
+        if (state.setsLog.length === 0) {
+          if (effectiveWorkoutId) {
+            await deleteWorkout(supabase, effectiveWorkoutId)
+            knownWorkoutIds.delete(ex.id)
+          }
+          return { workoutId: null }
+        }
         const result = await persistSets(supabase, ex, { ...state, workoutId: effectiveWorkoutId }, userId, dayId, sessionId)
         if (result.workoutId) knownWorkoutIds.set(ex.id, result.workoutId)
         return result

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { persistSets, createExercisePersistence } from './sessionPersistence'
+import { persistSets, createExercisePersistence, deleteWorkout } from './sessionPersistence'
 import type { ProgramExercise } from './types'
 import type { SessionSetState } from './workoutSession'
 
@@ -15,6 +15,7 @@ function createFakeSupabase(opts?: {
   hookBeforeResolve?: () => Promise<void>
   failWorkoutsStep?: boolean
   failSetsStep?: boolean
+  failDelete?: boolean
 }) {
   let workoutSeq = 0
   let setSeq = 0
@@ -66,6 +67,28 @@ function createFakeSupabase(opts?: {
 
         return { data: workoutId, error: null }
       })()
+    },
+    // P0-02 — minimal fake of .from('workouts').delete().eq('id', workoutId), the shape deleteWorkout()
+    // uses. Mirrors ON DELETE CASCADE (migration 004) by also dropping any workout_sets rows for the
+    // deleted workout, so tests can assert both tables the same way the real FK guarantees.
+    from(table: string) {
+      if (table !== 'workouts') throw new Error(`unexpected table: ${table}`)
+      return {
+        delete() {
+          return {
+            async eq(col: string, val: unknown) {
+              await settle()
+              if (col !== 'id') throw new Error(`unexpected eq column: ${col}`)
+              if (opts?.failDelete) return { error: { message: 'delete failed' } }
+              workouts.delete(val as string)
+              for (let i = sets.length - 1; i >= 0; i--) {
+                if (sets[i].workout_id === val) sets.splice(i, 1)
+              }
+              return { error: null }
+            },
+          }
+        },
+      }
     },
   }
   return client as unknown as SupabaseClient & { _debug: typeof client._debug }
@@ -199,6 +222,117 @@ describe('persistSets', () => {
     await expect(persistSets(supabase, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')).rejects.toBeTruthy()
     const retry = await persistSets(supabase, makeExercise(), makeState(), 'u1', 'day-1', 'sess-1')
     expect(retry.workoutId).toBeTruthy()
+  })
+})
+
+describe('deleteWorkout', () => {
+  it('removes the workouts row (and its workout_sets, mirroring ON DELETE CASCADE)', async () => {
+    const supabase = createFakeSupabase()
+    const ex = makeExercise()
+    const { workoutId } = await persistSets(supabase, ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
+    expect(supabase._debug.workouts.size).toBe(1)
+    expect(supabase._debug.sets).toHaveLength(1)
+
+    await deleteWorkout(supabase, workoutId!)
+    expect(supabase._debug.workouts.size).toBe(0)
+    expect(supabase._debug.sets).toHaveLength(0)
+  })
+
+  it('propagates a delete error as a thrown error', async () => {
+    const supabase = createFakeSupabase({ failDelete: true })
+    await expect(deleteWorkout(supabase, 'w1')).rejects.toEqual({ message: 'delete failed' })
+  })
+})
+
+describe('P0-02: createExercisePersistence.persistOrDelete', () => {
+  it('behaves exactly like persist() when setsLog still has sets after the removal', async () => {
+    const supabase = createFakeSupabase()
+    const persistence = createExercisePersistence(supabase)
+    const ex = makeExercise()
+    const seeded = await persistence.persist(
+      ex,
+      makeState({ setsLog: [{ reps: 8, weightKg: 60 }, { reps: 7, weightKg: 60 }] }),
+      'u1',
+      'day-1',
+      'sess-1'
+    )
+    // user removed the last set (3 -> 2 sets remaining) — should overwrite in place, not delete
+    const result = await persistence.persistOrDelete(
+      ex,
+      makeState({ workoutId: seeded.workoutId, setsLog: [{ reps: 8, weightKg: 60 }] }),
+      'u1',
+      'day-1',
+      'sess-1'
+    )
+    expect(result.workoutId).toBe(seeded.workoutId)
+    expect(supabase._debug.workouts.size).toBe(1)
+    expect(supabase._debug.sets).toHaveLength(1)
+  })
+
+  it('deletes the workouts row when setsLog becomes empty and a workout was already persisted (1 -> 0 sets)', async () => {
+    const supabase = createFakeSupabase()
+    const persistence = createExercisePersistence(supabase)
+    const ex = makeExercise()
+    const seeded = await persistence.persist(ex, makeState({ setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
+    expect(supabase._debug.workouts.size).toBe(1)
+
+    const result = await persistence.persistOrDelete(
+      ex,
+      makeState({ workoutId: seeded.workoutId, setsLog: [] }),
+      'u1',
+      'day-1',
+      'sess-1'
+    )
+    expect(result.workoutId).toBeNull()
+    expect(supabase._debug.workouts.size).toBe(0)
+    expect(supabase._debug.sets).toHaveLength(0)
+  })
+
+  it('is a no-op when setsLog is empty and nothing was ever persisted (no workoutId to delete)', async () => {
+    const supabase = createFakeSupabase()
+    const persistence = createExercisePersistence(supabase)
+    const ex = makeExercise()
+    const result = await persistence.persistOrDelete(ex, makeState({ workoutId: null, setsLog: [] }), 'u1', 'day-1', 'sess-1')
+    expect(result.workoutId).toBeNull()
+    expect(supabase._debug.workouts.size).toBe(0)
+  })
+
+  // Race protection — the exact scenario the trace flagged: logSet() (persist) mid-flight for an
+  // exercise, and removeLastSet() (persistOrDelete) fires for the same exercise before it resolves.
+  // Both go through the same keyed queue (ex.id), so persistOrDelete must wait for persist() to finish
+  // and land on the workoutId persist() actually established — never delete before it exists, and never
+  // let a stale/earlier snapshot resurrect a workout the later call meant to remove.
+  it('a persist() in flight and a persistOrDelete() for the same exercise serialize — the delete only runs after the workout actually exists', async () => {
+    vi.useFakeTimers()
+    try {
+      let callIndex = 0
+      const delaysMs = [25, 0]
+      const supabase = createFakeSupabase({
+        hookBeforeResolve: async () => {
+          const ms = delaysMs[callIndex] ?? 0
+          callIndex++
+          if (ms > 0) await vi.advanceTimersByTimeAsync(ms)
+        },
+      })
+      const persistence = createExercisePersistence(supabase)
+      const ex = makeExercise()
+
+      // logSet()-style call: first (and only) set of a brand-new workout, workoutId still null in its snapshot
+      const fromLogSet = persistence.persist(ex, makeState({ workoutId: null, setsLog: [{ reps: 8, weightKg: 60 }] }), 'u1', 'day-1', 'sess-1')
+      // removeLastSet()-style call fired immediately after, before logSet's persist has resolved — its own
+      // snapshot also still carries workoutId: null (React hasn't re-rendered with the new id yet)
+      const fromRemove = persistence.persistOrDelete(ex, makeState({ workoutId: null, setsLog: [] }), 'u1', 'day-1', 'sess-1')
+
+      const [logSetResult, removeResult] = await Promise.all([fromLogSet, fromRemove])
+      expect(logSetResult.workoutId).toBeTruthy()
+      // the delete ran after persist() established the row, found it via the shared knownWorkoutIds map,
+      // and removed it — never a race that leaves a stale workout row behind or throws on a missing row
+      expect(removeResult.workoutId).toBeNull()
+      expect(supabase._debug.workouts.size).toBe(0)
+      expect(supabase._debug.sets).toHaveLength(0)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 
