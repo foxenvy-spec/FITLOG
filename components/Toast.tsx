@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useRef, useState } from 'react'
 // action อื่นๆ เช่นติ๊กเซ็ตเสร็จระหว่างเซสชัน — ตัวนี้เป็น toast กลางที่เรียกใช้ได้จากทุกหน้า/component
 // ที่อยู่ใต้ ToastProvider (ประกาศไว้ที่ app/(app)/layout.tsx ครอบทั้งแอปที่ login แล้ว)
 
-type ToastVariant = 'success' | 'pr'
+type ToastVariant = 'success' | 'pr' | 'error'
 
 interface ToastItem {
   id: number
@@ -25,6 +25,9 @@ const VARIANT_STYLE: Record<ToastVariant, string> = {
   success: 'bg-steel text-bg border-steel',
   // PR (สถิติใหม่) เด่นกว่าการบันทึกทั่วไปหน่อย — ใช้สี amber เดียวกับที่ใช้เน้น PR ที่อื่นในแอป
   pr: 'bg-amber text-bg border-amber',
+  // Auth Expiry Handling v1 — ต้องไม่ใช้ success/pr (ทั้งคู่สื่อ "ผลลัพธ์ดี") สำหรับ "เซสชันหมดอายุ" —
+  // ใช้ rust/danger เดียวกับที่ health page ใช้กับปุ่ม/แถบสถานะเชิงเตือนอยู่แล้ว (bg-rust text-ink)
+  error: 'bg-rust text-ink border-rust',
 }
 
 // Haptic feedback — สั่นสั้นๆ ตอนบันทึกสำเร็จ (แนวเดียวกับ Apple/Hevy) มีผลเฉพาะเบราว์เซอร์ที่รองรับ
@@ -33,6 +36,7 @@ const VARIANT_STYLE: Record<ToastVariant, string> = {
 const VIBRATE_PATTERN: Record<ToastVariant, number | number[]> = {
   success: 15,
   pr: [15, 60, 15],
+  error: [15, 60, 15],
 }
 
 // รวมเวลาที่ toast อยู่บนจอ (ต้องตรงกับ duration ของ keyframe "toast" ใน tailwind.config.js —

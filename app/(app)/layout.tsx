@@ -5,6 +5,7 @@ import { WeightUnitProvider } from '@/components/WeightUnitProvider'
 import { ToastProvider } from '@/components/Toast'
 import { DashboardSettingsProvider } from '@/components/DashboardSettingsProvider'
 import CommandPalette from '@/components/CommandPalette'
+import AuthExpiryListener from '@/components/AuthExpiryListener'
 
 export default async function AppLayout({
   children,
@@ -72,6 +73,9 @@ export default async function AppLayout({
             หน้า Dashboard) ให้ shortcut ใช้ได้จากทุกหน้าในแอป ตัว component เองจัดการ event listener/
             modal ทั้งหมดในตัว render null ตอนปิดอยู่ (ไม่มี DOM ค้างตอนไม่ได้ใช้) */}
         <CommandPalette />
+        {/* Auth Expiry Handling v1 (Option 2, LOCKED) — global layer เดียวกับ CommandPalette: mount
+            ครั้งเดียวที่นี่ ไม่มี UI ของตัวเอง (render null เสมอ) ฟัง onAuthStateChange() ตรงๆ */}
+        <AuthExpiryListener />
         </QueryProvider>
       </ToastProvider>
     </WeightUnitProvider>

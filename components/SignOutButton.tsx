@@ -2,12 +2,17 @@
 
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { markIntentionalSignOut } from '@/lib/authError'
 
 export default function SignOutButton() {
   const router = useRouter()
   const supabase = createClient()
 
   async function handleSignOut() {
+    // Auth Expiry Handling v1 — signOut() ยิง SIGNED_OUT เหมือนกับตอน session หมดอายุจริง ต้องบอก
+    // AuthExpiryListener (components/AuthExpiryListener.tsx) ว่านี่คือ intentional ไม่ให้โชว์ toast
+    // "เซสชันหมดอายุ" ซ้ำกับ redirect ที่ทำอยู่แล้วตรงนี้
+    markIntentionalSignOut()
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()

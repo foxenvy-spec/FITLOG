@@ -75,8 +75,18 @@ import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/li
 import { getOrCreateSessionId, clearSessionId } from '@/lib/sessionId'
 import { recordExplicitCompletion, reconcileProgramCompletion, type CompletionTarget } from '@/lib/programCompletion'
 import { setFinishedToday } from '@/lib/finishForToday'
+import { isAuthError, AUTH_EXPIRED_MESSAGE } from '@/lib/authError'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
+
+// Auth Expiry Handling v1 (Option 2, LOCKED) — session-specific acknowledgement: ใช้แทน
+// `${prefix}${getErrorMessage(err)}` ตรงๆ ทุกจุดที่จับ error จาก write ระหว่างเซสชัน (logSet/
+// logCurrentExercise/swapCurrentExercise) กัน raw PostgREST/GoTrue auth error หลุดถึง UI — ไม่แตะ
+// rollback/retry/persistence semantics ใดๆ เลย แค่เลือกข้อความ ส่วน redirect เป็นหน้าที่ของ
+// AuthExpiryListener (global layer, คนละจุดกันตามที่ตกลงไว้) ดู lib/authError.ts's isAuthError()
+function sessionErrorMessage(err: unknown, fallbackPrefix: string): string {
+  return isAuthError(err) ? AUTH_EXPIRED_MESSAGE : `${fallbackPrefix}${getErrorMessage(err)}`
+}
 
 // ตั้งแต่ persistSets เขียนลง DB ทันทีทีละเซ็ต (ไม่รอจนกดจบท่า) แถว workouts ของท่านึงอาจมีอยู่แล้ว
 // ทั้งที่ผู้ใช้ยังไม่ได้กด "บันทึก & ท่าถัดไป" จริงๆ — initSessionStates (lib/workoutSession.ts) เดา
@@ -986,6 +996,7 @@ export default function SessionPage() {
       } = await supabase.auth.getUser()
       if (!user) {
         updateCurrent({ setsLog: previousSetsLog })
+        setErrorMsg(AUTH_EXPIRED_MESSAGE)
         return
       }
       // 6F-P2 (P1) — persist() ตอนนี้เรียก persist_exercise_sets() RPC (atomic) แล้ว ไม่มี "สำเร็จบางส่วน"
@@ -1000,7 +1011,7 @@ export default function SessionPage() {
       if (workoutId && workoutId !== currentState.workoutId) updateCurrent({ workoutId })
     } catch (err) {
       updateCurrent({ setsLog: previousSetsLog })
-      setErrorMsg(`บันทึกเซ็ตไม่สำเร็จ: ${getErrorMessage(err)}`)
+      setErrorMsg(sessionErrorMessage(err, 'บันทึกเซ็ตไม่สำเร็จ: '))
     } finally {
       setLoggingSet(false)
     }
@@ -1027,7 +1038,7 @@ export default function SessionPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        setErrorMsg('กรุณาเข้าสู่ระบบใหม่')
+        setErrorMsg(AUTH_EXPIRED_MESSAGE)
         return
       }
 
@@ -1042,7 +1053,7 @@ export default function SessionPage() {
           const result = await persistenceRef.current!.persist(current, currentState, user.id, day?.id ?? null, sessionIdRef.current)
           workoutId = result.workoutId
         } catch (err) {
-          setErrorMsg(`บันทึกไม่สำเร็จ: ${getErrorMessage(err)}`)
+          setErrorMsg(sessionErrorMessage(err, 'บันทึกไม่สำเร็จ: '))
           return
         }
 
@@ -1064,7 +1075,7 @@ export default function SessionPage() {
 
       goNext()
     } catch (err) {
-      setErrorMsg(`เกิดข้อผิดพลาด: ${getErrorMessage(err)}`)
+      setErrorMsg(sessionErrorMessage(err, 'เกิดข้อผิดพลาด: '))
     } finally {
       setSaving(false)
     }
@@ -1102,7 +1113,7 @@ export default function SessionPage() {
           data: { user },
         } = await supabase.auth.getUser()
         if (!user) {
-          setSwapError('กรุณาเข้าสู่ระบบใหม่')
+          setSwapError(AUTH_EXPIRED_MESSAGE)
           return
         }
         // P1-2 — persistenceRef เดียวกับ logSet/logCurrentExercise เสมอ กันสามจุดนี้ persist ท่าเดียวกัน
@@ -1138,7 +1149,7 @@ export default function SessionPage() {
       setSwapDef(null)
       setShowSwapExercise(false)
     } catch (err) {
-      setSwapError(`เปลี่ยนท่าไม่สำเร็จ: ${getErrorMessage(err)}`)
+      setSwapError(sessionErrorMessage(err, 'เปลี่ยนท่าไม่สำเร็จ: '))
     } finally {
       setSwapping(false)
     }
