@@ -57,7 +57,7 @@ import {
 import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { dropSetWeightKg } from '@/lib/weightUnit'
 import { suggestNextLoad } from '@/lib/progressiveOverload'
-import { calculatePlates, BAR_WEIGHT } from '@/lib/plateCalculator'
+import { calculatePlates } from '@/lib/plateCalculator'
 import { useToast } from '@/components/Toast'
 import WeightUnitToggle from '@/components/WeightUnitToggle'
 import { computeSessionMuscleRecovery, tierForPct, type MuscleRecoveryScore } from '@/lib/recoveryScore'
@@ -213,14 +213,15 @@ export default function SessionPage() {
   const [shareMsg, setShareMsg] = useState<string | null>(null)
   // ฟีดแบ็ก "บาร์บางที่หนักไม่เท่ากัน อยากปรับน้ำหนักบาร์ในหน้าเซสชันได้เลย" — ปรับได้ทันทีต่อเซสชัน ไม่
   // persist ข้ามเซสชัน/อุปกรณ์ (ต่างจากส่วนสูง/เพศในโปรไฟล์ที่เป็นค่าประจำตัว บาร์ที่ใช้จริงเปลี่ยนไปตามยิม
-  // ได้) หน่วยเดียวกับ unit ที่กำลังแสดงอยู่ตอนนั้น — สลับหน่วย kg/lb ระหว่างเซสชันแล้วรีเซ็ตกลับค่ามาตรฐาน
-  // เพราะเลขที่ตั้งไว้ในหน่วยเดิมไม่ใช่ค่าเดียวกันพอดีในอีกหน่วย (20kg ปัดเป็น 45lb พอดี แต่บาร์ custom เช่น
-  // 15kg ไม่มีเลข lb ที่ตรงกันเป๊ะ) ไม่กระทบ weightKg ที่กรอกซึ่งยังหมายถึงน้ำหนักรวมเหมือนเดิม (1RM/Volume/
-  // PR ไม่กระทบ) แค่เปลี่ยนตัวเลขที่ใช้ลบออกก่อนคำนวณแผ่น
-  const [barWeightOverride, setBarWeightOverride] = useState<number | null>(null)
+  // ได้) หน่วยเดียวกับ unit ที่กำลังแสดงอยู่ตอนนั้น — เริ่มที่ 0 เสมอ (ไม่ assume บาร์มาตรฐาน 20kg/45lb
+  // เพราะบาร์แต่ละยิมไม่เท่ากันจริง) ให้ผู้ใช้กรอก/ปรับเองว่าบาร์ที่ใช้จริงหนักเท่าไหร่ สลับหน่วย kg/lb
+  // ระหว่างเซสชันแล้วรีเซ็ตกลับ 0 เพราะเลขที่ตั้งไว้ในหน่วยเดิมไม่ใช่ค่าเดียวกันพอดีในอีกหน่วย ไม่กระทบ
+  // weightKg ที่กรอกซึ่งยังหมายถึงน้ำหนักรวมเหมือนเดิม (1RM/Volume/PR ไม่กระทบ) แค่เปลี่ยนตัวเลขที่ใช้ลบออก
+  // ก่อนคำนวณแผ่น
+  const [barWeightOverride, setBarWeightOverride] = useState(0)
   const [editingBarWeight, setEditingBarWeight] = useState(false)
   useEffect(() => {
-    setBarWeightOverride(null)
+    setBarWeightOverride(0)
     setEditingBarWeight(false)
   }, [unit])
   // ผลงาน "ครั้งก่อน" ต่อชื่อท่า — เดิมเป็นแค่ตัวแปร local ใน load() ใช้ตั้งค่าเริ่มต้น reps/น้ำหนักเฉยๆ
@@ -848,7 +849,7 @@ export default function SessionPage() {
   const currentEquipment = current ? findExerciseByName(exerciseLibrary, current.exercise_name)?.equipment : undefined
   const plateBreakdown =
     currentEquipment === 'บาร์เบล' && (currentState?.weightKg ?? 0) > 0
-      ? calculatePlates(toDisplay(currentState!.weightKg!), unit, barWeightOverride ?? undefined)
+      ? calculatePlates(toDisplay(currentState!.weightKg!), unit, barWeightOverride)
       : null
 
   function updateCurrent(patch: Partial<SessionSetState>) {
@@ -2182,8 +2183,8 @@ export default function SessionPage() {
 
           {/* Plate Calculator — เฉพาะท่าอุปกรณ์บาร์เบล (ดู plateBreakdown ด้านบน) บอกว่าต้องใส่แผ่น
               อะไรต่อข้างบ้างถึงจะได้น้ำหนักรวมตามที่กรอกไว้ ไม่ต้องคำนวณเลขในหัวเองระหว่างเทรน —
-              น้ำหนักบาร์ปรับได้ทันที (ดู barWeightOverride ด้านบนของไฟล์ — ค่าเริ่มต้น 20kg/45lb
-              มาตรฐาน กดที่ label เพื่อแก้เมื่อบาร์จริงไม่เท่ากับมาตรฐาน) */}
+              น้ำหนักบาร์ปรับได้ทันที (ดู barWeightOverride ด้านบนของไฟล์ — เริ่มที่ 0 เสมอ ไม่ assume
+              บาร์มาตรฐาน กดที่ label เพื่อกรอกน้ำหนักบาร์จริงที่ใช้) */}
           {plateBreakdown && (
             <div className="rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap" style={{ background: 'rgba(255,255,255,.04)' }}>
               <button
@@ -2197,9 +2198,7 @@ export default function SessionPage() {
                 <div className="flex items-center gap-2 basis-full">
                   <button
                     type="button"
-                    onClick={() =>
-                      setBarWeightOverride(Math.max(0, (barWeightOverride ?? BAR_WEIGHT[unit]) - (unit === 'lb' ? 5 : 2.5)))
-                    }
+                    onClick={() => setBarWeightOverride(Math.max(0, barWeightOverride - (unit === 'lb' ? 5 : 2.5)))}
                     className="w-7 h-7 rounded-full bg-surface2 border border-line text-ink text-sm active:scale-[0.98]"
                   >
                     −
@@ -2209,15 +2208,15 @@ export default function SessionPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setBarWeightOverride((barWeightOverride ?? BAR_WEIGHT[unit]) + (unit === 'lb' ? 5 : 2.5))}
+                    onClick={() => setBarWeightOverride(barWeightOverride + (unit === 'lb' ? 5 : 2.5))}
                     className="w-7 h-7 rounded-full bg-surface2 border border-line text-ink text-sm active:scale-[0.98]"
                   >
                     +
                   </button>
-                  {barWeightOverride !== null && (
+                  {barWeightOverride !== 0 && (
                     <button
                       type="button"
-                      onClick={() => setBarWeightOverride(null)}
+                      onClick={() => setBarWeightOverride(0)}
                       className="text-[12px] text-muted hover:text-[#FF8A00] transition"
                     >
                       รีเซ็ต
