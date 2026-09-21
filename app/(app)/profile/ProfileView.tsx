@@ -35,6 +35,9 @@ export default function ProfileView() {
   const supabase = createClient()
   const [email, setEmail] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
+  // P0-01 — เก็บ user.id ไว้แยกจาก profile (ซึ่งเป็น null ได้สำหรับ user ใหม่ที่ยังไม่เคยมีแถว profiles
+  // เลย) ให้ onSaved ด้านล่างสร้าง local Profile ตัวแรกได้ถูกต้องโดยไม่ต้องเดา user_id
+  const [userId, setUserId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null)
   const [highlightBadges, setHighlightBadges] = useState<Badge[]>([])
@@ -54,6 +57,7 @@ export default function ProfileView() {
         } = await supabase.auth.getUser()
         if (!active || !user) return
         setEmail(user.email ?? null)
+        setUserId(user.id)
         const [profileRes, weightRes, workoutsRes, dayRes] = await Promise.all([
           supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
           supabase
@@ -145,7 +149,21 @@ export default function ProfileView() {
           <PersonalInfoCard
             profile={profile}
             weightKg={latestWeightKg}
-            onSaved={(updater) => setProfile((prev) => (prev ? updater(prev) : prev))}
+            onSaved={(updater) =>
+              setProfile((prev) =>
+                updater(
+                  prev ?? {
+                    user_id: userId ?? '',
+                    height_cm: null,
+                    age: null,
+                    sex: null,
+                    max_heart_rate: null,
+                    resting_heart_rate: null,
+                    updated_at: new Date().toISOString(),
+                  }
+                )
+              )
+            }
           />
         )}
 
@@ -270,7 +288,6 @@ function PersonalInfoCard({
   }, [profile?.height_cm])
 
   async function handlePickSex(sex: 'male' | 'female') {
-    if (!profile) return
     setSavingSex(sex)
     try {
       await saveSex(supabase, sex)
@@ -288,25 +305,24 @@ function PersonalInfoCard({
   // หรือค่าที่เป็นไปไม่ได้ (เช่น อายุ 9999) บันทึกลง DB ได้ตรงๆ แล้วไหลเข้า computeBmr() ต่อทันที ทำให้ BMR
   // ที่โชว์ผิดเพี้ยน/ติดลบ — เพิ่มขอบเขตค่าที่เป็นไปได้จริงของมนุษย์ (อายุ 1-120 ปี, ส่วนสูง 50-250 ซม.)
   async function handleAgeBlur() {
-    if (!profile) return
     const trimmed = ageInput.trim()
     // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "ล้างช่องให้ว่างแล้ว blur — เดิม return เฉยๆ ไม่ save และไม่ sync
     // กลับ ช่องเลยค้างว่างเปล่าทั้งที่ profile.age (และ BMR ที่คำนวณจากมัน) ไม่ได้เปลี่ยนเลย ดูเหมือนกรอก
     // อะไรไปแล้วหาย — sync ค่าที่ยัง persist อยู่จริงกลับเข้าช่องเมื่อไม่มีอะไรให้ save"
     if (!trimmed) {
-      setAgeInput(profile.age ? String(profile.age) : '')
+      setAgeInput(profile?.age ? String(profile.age) : '')
       return
     }
     const num = Math.round(Number(trimmed))
     if (!Number.isFinite(num)) {
-      setAgeInput(profile.age ? String(profile.age) : '')
+      setAgeInput(profile?.age ? String(profile.age) : '')
       return
     }
     if (!isValidAge(num)) {
       setAgeError(`อายุต้องอยู่ระหว่าง ${AGE_RANGE.min}-${AGE_RANGE.max} ปี`)
       return
     }
-    if (num === profile.age) return
+    if (num === profile?.age) return
     setAgeError(null)
     try {
       await saveAge(supabase, num)
@@ -318,22 +334,21 @@ function PersonalInfoCard({
   }
 
   async function handleHeightBlur() {
-    if (!profile) return
     const trimmed = heightInput.trim()
     if (!trimmed) {
-      setHeightInput(profile.height_cm ? String(profile.height_cm) : '')
+      setHeightInput(profile?.height_cm ? String(profile.height_cm) : '')
       return
     }
     const num = Math.round(Number(trimmed))
     if (!Number.isFinite(num)) {
-      setHeightInput(profile.height_cm ? String(profile.height_cm) : '')
+      setHeightInput(profile?.height_cm ? String(profile.height_cm) : '')
       return
     }
     if (!isValidHeightCm(num)) {
       setHeightError(`ส่วนสูงต้องอยู่ระหว่าง ${HEIGHT_CM_RANGE.min}-${HEIGHT_CM_RANGE.max} ซม.`)
       return
     }
-    if (num === profile.height_cm) return
+    if (num === profile?.height_cm) return
     setHeightError(null)
     try {
       await saveHeightCm(supabase, num)
@@ -367,7 +382,7 @@ function PersonalInfoCard({
             type="button"
             onClick={() => handlePickSex('male')}
             aria-pressed={profile?.sex === 'male'}
-            disabled={savingSex !== null || !profile}
+            disabled={savingSex !== null}
             className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase transition disabled:opacity-50 ${
               profile?.sex === 'male' ? 'bg-accent-primary text-bg' : 'text-muted'
             }`}
@@ -378,7 +393,7 @@ function PersonalInfoCard({
             type="button"
             onClick={() => handlePickSex('female')}
             aria-pressed={profile?.sex === 'female'}
-            disabled={savingSex !== null || !profile}
+            disabled={savingSex !== null}
             className={`px-3.5 py-1.5 rounded-full text-xs font-display tracked uppercase transition disabled:opacity-50 ${
               profile?.sex === 'female' ? 'bg-accent-primary text-bg' : 'text-muted'
             }`}
@@ -398,7 +413,6 @@ function PersonalInfoCard({
           inputMode="numeric"
           min={1}
           max={120}
-          disabled={!profile}
           value={ageInput}
           onChange={(e) => setAgeInput(e.target.value)}
           onBlur={handleAgeBlur}
@@ -419,7 +433,6 @@ function PersonalInfoCard({
           inputMode="numeric"
           min={50}
           max={250}
-          disabled={!profile}
           value={heightInput}
           onChange={(e) => setHeightInput(e.target.value)}
           onBlur={handleHeightBlur}
