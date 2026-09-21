@@ -74,6 +74,7 @@ import { createExercisePersistence, type ExercisePersistence } from '@/lib/sessi
 import { GENERATED_SESSION_STORAGE_KEY, type StoredGeneratedSession } from '@/lib/generatedSession'
 import { getOrCreateSessionId, clearSessionId } from '@/lib/sessionId'
 import { recordExplicitCompletion, reconcileProgramCompletion, type CompletionTarget } from '@/lib/programCompletion'
+import { setFinishedToday } from '@/lib/finishForToday'
 
 type Phase = 'loading' | 'error' | 'empty' | 'makeupCheckpoint' | 'smartStart' | 'active' | 'done'
 
@@ -820,8 +821,16 @@ export default function SessionPage() {
   // endSession() เองเช็ค isPersisting จะบล็อกการจบเซสชันตามปกติที่เพิ่ง persist สำเร็จไปแล้วโดยไม่ตั้งใจ
   // ฟังก์ชันนี้จึงเป็นจุดเดียวที่ห้ามเปลี่ยนเป็น done ระหว่างมี persistence ค้างอยู่ — ใช้กับ explicit
   // "จบก่อน" trigger เท่านั้น
+  //
+  // Finish-for-Today State Contract v1 — set ที่นี่เท่านั้น "ก่อน" endSession() (ไม่ใช่ข้างใน endSession()
+  // เอง เพราะ endSession() เป็น shared path กับ natural 8/8 completion ด้วย ซึ่งต้อง "ไม่" set flag นี้)
+  // fire-and-forget โดยเจตนา — ผู้ใช้กด "จบก่อน" ต้องการหยุดทันที ไม่ควรรอ network ก่อนเห็นหน้าสรุปผล
+  // ถ้าเขียนพลาด flag แค่ไม่ถูกตั้ง (ไม่กระทบการจบเซสชัน) ดู lib/finishForToday.ts
   function handleFinishEarly() {
     if (isPersisting) return
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setFinishedToday(supabase, { userId: user.id, date: todayStr() })
+    })
     endSession()
   }
 

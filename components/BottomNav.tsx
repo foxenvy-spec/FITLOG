@@ -13,6 +13,7 @@ import { todayStr } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import { createClient } from '@/lib/supabase/client'
 import { fetchDashboardData } from '@/app/(app)/dashboard/DashboardView'
+import { clearFinishedToday } from '@/lib/finishForToday'
 import FitnessRing from '@/components/dashboard/FitnessRing'
 
 // ฟีดแบ็ก "5 เมนูด้านล่างยังไม่เหมือน poster" (New_mobile_app.zip rebuild, เทียบ "Version 2 — 9.3/10")
@@ -99,7 +100,12 @@ const TABS = [
 // isInProgress (0 < completed < total) ให้ปุ่มแยก "ยังไม่เริ่มเลย" ออกจาก "เริ่มแล้วแต่ยังไม่ครบ" ได้ —
 // สูตรเดียวกับ isCompleted เป๊ะ ("Program Complete" ในฟีดแบ็กไม่ได้ทำ — FITLOG ไม่มีข้อมูล "จบโปรแกรม
 // ทั้งชุด" จริง โปรแกรมเป็นตารางประจำสัปดาห์ที่วนซ้ำไม่มีจุดจบ ใส่ state นี้จะต้องเดา/ปั้นความหมายขึ้นมาเอง)
-function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean; isInProgress: boolean } {
+function useTodayWorkoutStatus(): {
+  isRestDay: boolean
+  isCompleted: boolean
+  isInProgress: boolean
+  isFinishedForToday: boolean
+} {
   const pathname = usePathname()
   const supabase = createClient()
   const today = todayStr()
@@ -108,7 +114,7 @@ function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean; is
     queryFn: () => fetchDashboardData(supabase),
     enabled: pathname === '/dashboard',
   })
-  if (!data) return { isRestDay: false, isCompleted: false, isInProgress: false }
+  if (!data) return { isRestDay: false, isCompleted: false, isInProgress: false, isFinishedForToday: false }
   const hasTodayPlan = data.todayExercises.length > 0
   const hasLoggedToday = data.todayWorkouts.length > 0
   const hasAnyProgram = data.programDays.length > 0
@@ -118,14 +124,27 @@ function useTodayWorkoutStatus(): { isRestDay: boolean; isCompleted: boolean; is
   const completed = hasTodayPlan ? data.completedCount + data.adhocCompletedCount : entryCount
   const total = Math.max(data.todayExercises.length, entryCount, 1)
   const isCompleted = !isRestDay && completed >= total && (hasTodayPlan || hasLoggedToday)
-  const isInProgress = !isRestDay && !isCompleted && completed > 0
+  // Finish-for-Today State Contract v1 — สูตรเดียวกับ isInProgress เป๊ะ บวก finishedForToday (ดู
+  // comment เต็มที่ TodayCard.tsx's isFinishedForToday — flag เดียวกันจาก fetchDashboardData เดียวกันนี้)
+  const isInProgress = !isRestDay && !isCompleted && completed > 0 && !data.finishedForToday
+  const isFinishedForToday = !isRestDay && !isCompleted && completed > 0 && data.finishedForToday
 
-  return { isRestDay, isCompleted, isInProgress }
+  return { isRestDay, isCompleted, isInProgress, isFinishedForToday }
 }
 
 export default function BottomNav() {
   const pathname = usePathname()
-  const { isRestDay, isCompleted, isInProgress } = useTodayWorkoutStatus()
+  const supabase = createClient()
+  const { isRestDay, isCompleted, isInProgress, isFinishedForToday } = useTodayWorkoutStatus()
+  // Finish-for-Today State Contract v1 — เหมือน handleEnterSession ใน MobileDashboardView.tsx เป๊ะ
+  // (fire-and-forget, ไม่ preventDefault การนำทางของ <Link> เดิม) เรียกเฉพาะตอนปุ่มนี้พาเข้า /session
+  // จริง (ไม่ใช่ /coach ของ isRestDay หรือ view-summary ของ isCompleted)
+  function handleEnterSession() {
+    if (isRestDay || isCompleted) return
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) clearFinishedToday(supabase, user.id)
+    })
+  }
   // บั๊ก (ฟีดแบ็ก "เล่นเซสชันชดเชยอยู่ สลับไปหน้าอื่น แล้วกดปุ่ม START WORKOUT ลอยกลางอีกครั้ง — พาไปแผน
   // จริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยเดิม") — ปุ่มนี้ผูกกับ '/session' เฉยๆ มาตั้งแต่ก่อนมีฟีเจอร์
   // เซสชันชดเชย ไม่รู้จัก ?day= เลย อ่าน pointer ที่ session/page.tsx เขียนไว้ (lib/activeMakeupSession.ts)
@@ -169,14 +188,25 @@ export default function BottomNav() {
   // (START -> RESUME -> VIEW SUMMARY -> VIEW RECOVERY) แล้วเล่น .animate-fade-scale-in ที่มีอยู่แล้ว
   // (ใช้ซ้ำจาก MobileDashboardView.tsx ทั้งหน้า — fade+scale 0.97->1, 0.4s, ไม่มี bounce/overshoot ตาม
   // ที่ขอ "subtle" ไม่ใช่ .animate-pop-in ที่มี overshoot เด้ง ซึ่งจะกลับไปให้ความรู้สึก "gaming" อีก)
-  const ctaStateKey = isRestDay ? 'rest' : isCompleted ? 'done' : isInProgress ? 'progress' : 'start'
+  const ctaStateKey = isRestDay ? 'rest' : isCompleted ? 'done' : isFinishedForToday ? 'finished' : isInProgress ? 'progress' : 'start'
 
   const floatingButton = (
     <Link
       href={sessionHref}
       className="relative flex items-start justify-center"
-      aria-label={isRestDay ? 'ดู Recovery' : isCompleted ? 'ดูสรุปผลวันนี้' : isInProgress ? 'ทำเวิร์กเอาต์ต่อ' : 'เริ่มเวิร์กเอาต์'}
+      aria-label={
+        isRestDay
+          ? 'ดู Recovery'
+          : isCompleted
+            ? 'ดูสรุปผลวันนี้'
+            : isFinishedForToday
+              ? 'เทรนต่อวันนี้'
+              : isInProgress
+                ? 'ทำเวิร์กเอาต์ต่อ'
+                : 'เริ่มเวิร์กเอาต์'
+      }
       onPointerDown={hapticSuccess}
+      onClick={handleEnterSession}
     >
       {/* v3: ฟีดแบ็ก "เอาให้วงขึ้นเหนือกรอบ ให้มีมิติแบบตัวอย่าง" — เพิ่ม top offset จาก -0.42*btnSize
           เป็น -0.58*btnSize ให้โผล่พ้นขอบบนชัดเจน + contact shadow วงรีด้านล่างจำลองเงาทอดลงพื้น
@@ -265,6 +295,12 @@ export default function BottomNav() {
                     VIEW
                     <br />
                     SUMMARY
+                  </>
+                ) : isFinishedForToday ? (
+                  <>
+                    TRAIN
+                    <br />
+                    MORE
                   </>
                 ) : isInProgress ? (
                   <>

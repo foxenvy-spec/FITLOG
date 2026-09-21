@@ -14,6 +14,7 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import { saveDisplayName } from '@/lib/profile'
 import { DEFAULT_DASHBOARD_PREFS, loadDashboardPrefs, saveDashboardPrefs, type DashboardPrefs } from '@/lib/dashboardPrefs'
 import { fetchDashboardData, greeting, emailDisplayName, FITLOG_PR_RECENT_DAYS } from './DashboardView'
+import { clearFinishedToday } from '@/lib/finishForToday'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import MobileDashboardSkeleton from '@/components/MobileDashboardSkeleton'
 import ErrorState from '@/components/ErrorState'
@@ -76,6 +77,16 @@ export default function MobileDashboardView() {
   async function handleSaveDisplayName(name: string) {
     await saveDisplayName(supabase, name)
     queryClient.invalidateQueries({ queryKey: ['dashboard', today] })
+  }
+
+  // Finish-for-Today State Contract v1 — เรียกจาก TodayCard's onCtaClick เท่านั้น (fire เฉพาะตอนปุ่มพา
+  // เข้า /session จริง, ดู comment ที่ TodayCard.tsx's onCtaClick prop) fire-and-forget โดยเจตนา — ไม่
+  // await/ไม่ preventDefault การนำทางของ <Link> เดิม ถ้าเขียนพลาด flag แค่ค้างไว้ชั่วคราว (หมดผลเองข้ามวัน)
+  // ไม่ควรบล็อกไม่ให้ผู้ใช้เข้าเซสชันได้
+  function handleEnterSession() {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) clearFinishedToday(supabase, user.id)
+    })
   }
 
   function retry() {
@@ -323,6 +334,8 @@ export default function MobileDashboardView() {
               completed={todayCardCompleted}
               total={todayCardTotal}
               href={todayCardHref}
+              finishedForToday={data.finishedForToday}
+              onCtaClick={handleEnterSession}
             />
           </div>
 

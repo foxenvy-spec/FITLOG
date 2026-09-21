@@ -18,6 +18,7 @@ import { CARD_BORDER_CSS } from '@/lib/theme'
 import { DS } from '@/lib/designSystem'
 import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
 import { recordExplicitCompletion, recordManualUncomplete } from '@/lib/programCompletion'
+import { isFinishedToday, clearFinishedToday } from '@/lib/finishForToday'
 
 export default function ProgramPage() {
   const supabase = createClient()
@@ -26,6 +27,12 @@ export default function ProgramPage() {
   const [days, setDays] = useState<ProgramDay[]>([])
   const [exercisesByDay, setExercisesByDay] = useState<Record<string, ProgramExercise[]>>({})
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
+  // Finish-for-Today State Contract v1 — query แยกจาก Dashboard/BottomNav โดยเจตนา (หน้านี้ไม่ได้ใช้
+  // fetchDashboardData ร่วมกับสองจุดนั้นอยู่แล้ว มี query ของตัวเองทุกจุดเป็นทุนเดิม) checkbox ความคืบหน้า
+  // (completedIds ด้านบน) ยังคงสะท้อน fact จริงเสมอ ไม่แตะ — flag นี้ใช้แค่กับข้อความ/ปุ่มเข้าเซสชันด้านล่าง
+  // เท่านั้น กันไม่ให้ contradiction กับ Dashboard/BottomNav ("จบแล้ววันนี้" ที่นั่น แต่ที่นี่ยังชวน "เริ่มต่อ"
+  // เฉยๆ)
+  const [finishedForToday, setFinishedForToday] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -140,8 +147,28 @@ export default function ProgramPage() {
 
     setCompletedIds(new Set((completions ?? []).map((c: { program_exercise_id: string }) => c.program_exercise_id)))
 
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select('finished_workout_for_date')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    setFinishedForToday(
+      isFinishedToday(
+        (profileRow as { finished_workout_for_date: string | null } | null)?.finished_workout_for_date ?? null,
+        todayStr()
+      )
+    )
+
     setLoading(false)
   }, [supabase])
+
+  // Finish-for-Today State Contract v1 — fire-and-forget เหมือน handleEnterSession ใน
+  // MobileDashboardView.tsx/BottomNav.tsx เป๊ะ ไม่ await/ไม่ preventDefault การนำทางของปุ่มเดิม
+  function handleEnterSession() {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) clearFinishedToday(supabase, user.id)
+    })
+  }
 
   useEffect(() => {
     load()
@@ -677,9 +704,16 @@ export default function ProgramPage() {
       {/* v52: ฟีดแบ็ก "หน้าอื่นควรอิงภาษาเดียวกับ Dashboard" — เดิม bg-amber เรียบๆ ไม่มี glow เปลี่ยนมาใช้
           Button component กลาง (components/ui/Button.tsx, Phase 2) ให้ตรงกับปุ่ม CTA หลักทั่วแอปแล้ว */}
       {isToday && currentDay && currentExercises.length > 0 && (
-        <Button as="a" href={sessionHref} size="md" className="w-full">
-          ▶ เริ่มเซสชันแบบเรียลไทม์
-        </Button>
+        <>
+          {/* Finish-for-Today State Contract v1 — กันข้อความขัดกับ Dashboard/BottomNav ("จบแล้ววันนี้"
+              ที่นั่น แต่ที่นี่ชวน "เริ่มเซสชัน" เฉยๆ) checkbox ความคืบหน้าด้านบนไม่แตะ ยังสะท้อน fact จริง */}
+          {finishedForToday && (
+            <p className="text-[12px] text-muted bg-surface2 rounded-lg px-3 py-2">จบแล้ววันนี้ — กดเพื่อเทรนต่อได้</p>
+          )}
+          <Button as="a" href={sessionHref} size="md" className="w-full" onClick={handleEnterSession}>
+            ▶ เริ่มเซสชันแบบเรียลไทม์
+          </Button>
+        </>
       )}
       {/* ฟีดแบ็ก "ป่วยวันจันทร์ หายป่วยวันพุธ อยากทำแผนจันทร์ชดเชย" — เดิมวันที่ไม่ใช่วันนี้มีแค่ "บันทึกแผน
           นี้เข้า Log วันนี้" (bulk log ตรงเข้า workouts ไม่ผ่าน guided flow) ให้ทางเลือกเดียว ทำให้ผู้ใช้ที่
@@ -689,7 +723,7 @@ export default function ProgramPage() {
           ปนกับท่าที่ชดเชยมา — ดูรายละเอียดที่ isMakeupSession ใน session/page.tsx) ไม่แตะปุ่ม/behavior เดิม
           ของ isToday หรือ "บันทึกแผนนี้เข้า Log วันนี้" เลยสักจุด แค่เพิ่มทางเลือกที่สาม */}
       {isPastDayThisWeek && currentDay && currentExercises.length > 0 && (
-        <Button as="a" href={`/session?day=${currentDay.id}`} size="md" className="w-full">
+        <Button as="a" href={`/session?day=${currentDay.id}`} size="md" className="w-full" onClick={handleEnterSession}>
           🔁 เริ่มเซสชันชดเชย (แบบเรียลไทม์)
         </Button>
       )}

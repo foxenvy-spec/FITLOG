@@ -19,6 +19,14 @@ interface TodayCardProps {
   completed: number
   total: number
   href: string
+  /** Finish-for-Today State Contract v1 — true เมื่อกด "จบก่อน" ใน /session วันนี้แล้ว (ดู
+      lib/finishForToday.ts) เปลี่ยน copy จาก "RESUME WORKOUT"/"X% complete" ไม่ให้ดูเหมือนเชิญชวนกลับไป
+      ต่อทันที แต่ยังกดเข้า /session ได้เหมือนเดิม (เปลี่ยนใจกลับมาเทรนต่อได้ — ดู onCtaClick) */
+  finishedForToday?: boolean
+  /** เรียกตอนกดปุ่ม CTA ที่นำไปสู่ /session จริง (ไม่ใช่ /coach ของ restDay/noProgram) — ใช้ clear
+      finishedForToday ก่อนเข้าเซสชันใหม่ ตาม Finish-for-Today State Contract v1 (explicit START/RESUME
+      เท่านั้นที่ clear ได้ — ไม่ preventDefault การนำทาง แค่ fire ผลข้างเคียงไปพร้อมกัน) */
+  onCtaClick?: () => void
 }
 
 function ClockIcon() {
@@ -61,6 +69,8 @@ export default function TodayCard({
   completed,
   total,
   href,
+  finishedForToday = false,
+  onCtaClick,
 }: TodayCardProps) {
   const { borderRadius, padding } = dashboardSpec.todayCard
   const mg = muscleRecommendation?.muscleGroup as MuscleGroup | undefined
@@ -101,6 +111,10 @@ export default function TodayCard({
   // BottomNav.tsx เป๊ะ: !isCompleted && completed>0) คั่นกลางระหว่าง "ยังไม่เริ่ม" กับ "เสร็จแล้ว" ไม่เพิ่ม
   // state/ข้อมูลใหม่ใดๆ เลย แค่ทำให้ label ที่มีอยู่แล้วครบทุกจังหวะ
   const isInProgress = variant === 'active' && !isCompleted && completed > 0
+  // Finish-for-Today State Contract v1 — เมื่อกด "จบก่อน" วันนี้แล้ว ไม่ควรโชว์ RESUME WORKOUT (ชวนกลับไป
+  // ต่อทันที ขัดกับ intent ที่เพิ่งประกาศ) แต่ยังกดเข้า /session ได้เหมือนเดิมถ้าเปลี่ยนใจ (onCtaClick
+  // clear flag ให้ตอนนั้น) เงื่อนไขเดียวกับ isInProgress เป๊ะ บวก finishedForToday
+  const isFinishedForToday = isInProgress && finishedForToday
   // ฟีดแบ็ก (Final UX Consistency audit, "CTA wording/capitalization") "'View Summary'/'Ask MINT' เป็น
   // Title Case ทั้งที่อีก 3 state บนปุ่มเดียวกัน (START WORKOUT/RESUME WORKOUT/VIEW RECOVERY) เป็น ALL
   // CAPS หมด — ไม่สม่ำเสมอบนปุ่มเดียวกันเอง แถม 'View Summary' ยังขัดกับ BottomNav.tsx ที่พูดสถานะ isCompleted
@@ -113,17 +127,25 @@ export default function TodayCard({
         ? 'VIEW RECOVERY'
         : isCompleted
           ? 'VIEW SUMMARY'
-          : isInProgress
-            ? 'RESUME WORKOUT'
-            : 'START WORKOUT'
+          : isFinishedForToday
+            ? 'TRAIN MORE'
+            : isInProgress
+              ? 'RESUME WORKOUT'
+              : 'START WORKOUT'
   const buttonHref = variant === 'noProgram' || variant === 'restDay' ? '/coach' : href
   // ฟีดแบ็ก "เพิ่มสถานะของ Today's Workout ให้ actionable ขึ้น — Ready to start / X% complete / Workout
   // complete ✓ แทนที่จะมีแค่เลขจำนวนท่า" — สามสถานะตามความคืบหน้าจริง (completed/total เดิม ไม่คำนวณใหม่)
   const workoutStatusLabel = isCompleted
     ? 'Workout complete ✓'
-    : completed > 0
-      ? `${Math.round((completed / Math.max(total, 1)) * 100)}% complete`
-      : 'Ready to start'
+    : isFinishedForToday
+      ? 'จบแล้ววันนี้'
+      : completed > 0
+        ? `${Math.round((completed / Math.max(total, 1)) * 100)}% complete`
+        : 'Ready to start'
+  // เรียก onCtaClick เฉพาะตอนปุ่มนี้พาเข้า /session จริง (variant==='active' — buttonHref===href) ไม่ใช่
+  // ตอนพาไป /coach (restDay/noProgram) เพราะไม่มีเซสชันให้ "เริ่ม/resume" ในกรณีนั้น — ไม่ preventDefault
+  // การนำทาง แค่ fire ผลข้างเคียงไปพร้อมกัน (ดู comment เต็มที่ onCtaClick prop ด้านบน)
+  const handleCtaClick = variant === 'active' ? onCtaClick : undefined
 
   return (
     <div
@@ -200,6 +222,7 @@ export default function TodayCard({
             VIEW RECOVERY -> /coach ตอน restDay ที่จุดคำนวณ buttonLabel/buttonHref ด้านบนแล้ว) */}
         <Link
           href={buttonHref}
+          onClick={handleCtaClick}
           className="flex items-center justify-center active:opacity-90 active:scale-[0.97] transition font-homeTh font-bold"
           style={{
             width: '100%',

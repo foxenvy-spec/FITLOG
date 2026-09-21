@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button'
 import InfoTooltip from '@/components/ui/InfoTooltip'
 import type { ProgramDay, ProgramExercise, Workout, BodyMetric } from '@/lib/types'
 import { todayDayOfWeek, todayStr, daysAgoStr, bangkokParts } from '@/lib/weekdays'
+import { isFinishedToday } from '@/lib/finishForToday'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import {
   computeCurrentStreakDates,
@@ -215,6 +216,10 @@ export interface DashboardData {
   // ดูเหมือนเป็น "Next Session" แต่จริงๆ ไม่ตรงกับ Next ของตารางเลย — เปิด map วัน→กล้ามเนื้อของโปรแกรม
   // (คำนวณใน loadMuscleRecommendation(), lib/muscleRecommendationData.ts) ออกมาให้ component เทียบกับกล้ามเนื้อที่แนะนำได้ตรงๆ
   programDayMuscleGroups: Record<number, string | null>
+  // Finish-for-Today State Contract v1 (locked) — user intent แยกจาก completedCount/todayExercises
+  // (training fact) โดยเจตนา true เมื่อผู้ใช้กด "จบก่อน" ใน /session วันนี้ (profiles.
+  // finished_workout_for_date === today) หมดผลเองข้ามวันโดยไม่ต้องมี cleanup — ดู lib/finishForToday.ts
+  finishedForToday: boolean
 }
 
 export async function fetchDashboardData(supabase: ReturnType<typeof createClient>): Promise<DashboardData> {
@@ -264,8 +269,8 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
       .limit(1000),
     // ชื่อที่แสดงบน Dashboard ที่ผู้ใช้ตั้งเอง (ถ้ามี) — ดู lib/profile.ts
     user
-      ? supabase.from('profiles').select('display_name').eq('user_id', user.id).maybeSingle()
-      : Promise.resolve({ data: null as { display_name: string | null } | null }),
+      ? supabase.from('profiles').select('display_name, finished_workout_for_date').eq('user_id', user.id).maybeSingle()
+      : Promise.resolve({ data: null as { display_name: string | null; finished_workout_for_date: string | null } | null }),
     // ฟีดแบ็ก "Body Goal โชว์ '0% Progress'/'เริ่มต้นเป้าหมาย' ทั้งที่จริงๆ ลดมาใกล้เป้าหมายมากแล้ว —
     // ควรคำนวณจาก starting weight จริง" — /health page แก้ปัญหานี้ไปแล้วตั้งแต่ v62 (ใช้
     // earliestTrackedValue จากประวัติทั้งหมด แทน goal.starting_value ที่แช่แข็งไว้ตอนสร้างเป้าหมายเฉยๆ)
@@ -586,6 +591,10 @@ export async function fetchDashboardData(supabase: ReturnType<typeof createClien
   return {
     email: user?.email ?? null,
     profileDisplayName: (profileRow as { display_name: string | null } | null)?.display_name ?? null,
+    finishedForToday: isFinishedToday(
+      (profileRow as { finished_workout_for_date: string | null } | null)?.finished_workout_for_date ?? null,
+      today
+    ),
     todayWorkouts: todayList,
     streak,
     bestStreak,
