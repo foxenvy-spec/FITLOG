@@ -2235,6 +2235,38 @@ export default function SessionPage() {
             />
           </div>
 
+          {/* P0-03 — RPE ที่ผู้ใช้กรอกเองจริงๆ ระหว่างเทรน (ไม่บังคับ) ใช้ pattern เดียวกับ chip
+              เลือก RPE ในหน้า /log (ค่า '' = "ไม่ระบุ" = null) ผูกกับ currentState.rpe ตรงๆ ผ่าน
+              updateCurrent — เขียนลงฟิลด์ workouts.rpe เดิมที่มีอยู่แล้ว ไม่มีฟิลด์/schema ใหม่
+              target_rir ด้านบน (เป้าหมาย {targetSets} เซ็ต...) ยังคงเป็นค่าที่ "วางแผนไว้" เท่านั้น
+              ไม่เกี่ยวกับค่านี้ที่ผู้ใช้กรอกว่า "รู้สึกจริง" เป็นเท่าไหร่ */}
+          <div>
+            <p className="text-[12px] tracked uppercase text-muted mb-1.5">RPE — ความหนักที่รู้สึก (ไม่บังคับ)</p>
+            <div className="flex flex-wrap gap-1.5">
+              {['', '6', '7', '8', '9', '10'].map((v) => {
+                const value = v === '' ? null : Number(v)
+                const active = currentState.rpe === value
+                return (
+                  <button
+                    key={v || 'none'}
+                    type="button"
+                    onClick={() => updateCurrent({ rpe: value })}
+                    className={`text-[12px] px-3 py-1.5 rounded-full border transition active:scale-[0.98] ${
+                      active ? '' : 'bg-surface2 border-line text-muted hover:text-ink hover:border-[#FF8A00]/50'
+                    }`}
+                    style={
+                      active
+                        ? { background: HOME_COLORS.orange, borderColor: HOME_COLORS.orange, color: DS.text.onAccent }
+                        : undefined
+                    }
+                  >
+                    {v === '' ? 'ไม่ระบุ' : v}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Plate Calculator — เฉพาะท่าอุปกรณ์บาร์เบล (ดู plateBreakdown ด้านบน) บอกว่าต้องใส่แผ่น
               อะไรต่อข้างบ้างถึงจะได้น้ำหนักรวมตามที่กรอกไว้ ไม่ต้องคำนวณเลขในหัวเองระหว่างเทรน —
               น้ำหนักบาร์ปรับได้ทันที (ดู barWeightOverride ด้านบนของไฟล์ — เริ่มที่ 0 เสมอ ไม่ assume

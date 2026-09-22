@@ -66,12 +66,14 @@ function makeExercise(overrides: Partial<ProgramExercise> = {}): ProgramExercise
 }
 
 describe('initSessionSet', () => {
-  it('seeds actual values from the program targets', () => {
+  it('seeds actual reps/weight from the program targets, but never fabricates an actual RPE from target_rir (P0-03)', () => {
     const state = initSessionSet(makeExercise())
     expect(state.setsLog).toEqual([])
     expect(state.reps).toBe(7) // avg(6,8)
     expect(state.weightKg).toBe(60)
-    expect(state.rpe).toBe(8.5) // rir avg 1.5 -> rpe 8.5
+    // target_rir is a planned-intensity field — it must not be borrowed as a stand-in for actual RPE
+    // before the user has entered anything. rpe stays null until real input exists.
+    expect(state.rpe).toBeNull()
     expect(state.logged).toBe(false)
     expect(state.skipped).toBe(false)
   })
@@ -129,6 +131,21 @@ describe('initSessionStates', () => {
     const exercises = [makeExercise({ id: 'ex-1' })]
     const states = initSessionStates(exercises, [], [])
     expect(states['ex-1']).toEqual(initSessionSet(exercises[0]))
+  })
+
+  it('resuming a legacy-logged exercise (rpe: null) keeps rpe null even when target_rir is set (P0-03)', () => {
+    // ท่านี้มี target_rir กำหนดไว้ในแผน แต่แถว workouts ที่ log ไปแล้ววันนี้เป็นของเก่า (ก่อนมี RPE
+    // input จริง) rpe เลยเป็น null ใน DB จริงๆ — ต้อง hydrate เป็น null ตรงๆ ห้าม fallback ไปแปลง
+    // target_rir มาแทน ไม่งั้นจะกลายเป็นข้อมูลที่ผู้ใช้ไม่ได้กรอกจริงแต่ระบบเดาให้
+    const exercises = [makeExercise({ id: 'ex-1', exercise_name: 'เบนช์เพรส', target_rir: '1-2' })]
+    const states = initSessionStates(
+      exercises,
+      [{ id: 'w-1', exercise_name: 'เบนช์เพรส', rpe: null }],
+      [{ workout_id: 'w-1', set_number: 1, reps: 8, weight_kg: 60 }]
+    )
+
+    expect(states['ex-1'].logged).toBe(true)
+    expect(states['ex-1'].rpe).toBeNull()
   })
 })
 

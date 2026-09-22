@@ -1,5 +1,5 @@
 import type { ProgramExercise } from './types'
-import { parseRangeToNumber, rirToRpe } from './importWorkoutExcel'
+import { parseRangeToNumber } from './importWorkoutExcel'
 
 // แกะค่า "พัก" (free text เช่น "90s", "2-3 min", "1-2 นาที", "60") ให้เป็นวินาที
 // เพื่อตั้งค่าเริ่มต้นให้ Rest Timer อัตโนมัติ — ไม่ต้องให้ผู้ใช้พิมพ์เอง
@@ -61,12 +61,17 @@ function nonNegative(n: number | null): number | null {
   return n === null ? null : Math.max(0, n)
 }
 
+// P0-03 — rpe เริ่มที่ null เสมอสำหรับท่าที่ยังไม่เคย log วันนี้เลย ไม่ fabricate จาก ex.target_rir
+// อีกต่อไป (เดิมแปลง target_rir → RPE ทันทีตอน init ทำให้ downstream (Workout Score, recovery
+// weighting, avgRpe) เข้าใจผิดว่านี่คือความหนักที่รู้สึกจริง ทั้งที่เป็นแค่ค่าที่แผนตั้งเป้าไว้ ยังไม่มีใคร
+// กรอกอะไรเลย) target_rir ยังใช้เป็น planned intensity ตามเดิมทุกจุดที่แสดงผล (เช่น RIR ในการ์ดเป้าหมาย
+// ของท่า) — แค่ไม่ถูกยืมมาสวมรอยเป็น actual RPE อีกต่อไป ผู้ใช้กรอกเองผ่าน RPE chip ระหว่าง log เซ็ต
 export function initSessionSet(ex: ProgramExercise, last?: LastPerformance | null): SessionSetState {
   return {
     setsLog: [],
     reps: nonNegative(last ? last.reps : parseRangeToNumber(ex.target_reps)),
     weightKg: nonNegative(last ? last.weightKg : ex.default_weight_kg),
-    rpe: rirToRpe(parseRangeToNumber(ex.target_rir)),
+    rpe: null,
     logged: false,
     skipped: false,
     workoutId: null,
@@ -205,11 +210,15 @@ export function initSessionStates(
         .map((s) => ({ reps: s.reps, weightKg: s.weight_kg }))
       const last = sets[sets.length - 1] ?? null
 
+      // P0-03 — resume ท่าที่เคย log ไปแล้ววันนี้: hydrate rpe จาก match.rpe (ค่าจริงที่ persist ไว้แล้ว
+      // ใน DB) ตรงๆ ไม่ fallback ไปยืม target_rir มาแทนอีกต่อไป (ดู comment เต็มที่ initSessionSet
+      // ด้านบน) — match.rpe เป็น null ได้จริงถ้าเป็น session เก่าที่ log ก่อนมี RPE input จริง ซึ่งถูกต้อง
+      // แล้วที่จะคง null ไว้ ไม่ใช่แปลว่า "ยังไม่ได้กรอก" ต้องเดาค่าให้
       const state: SessionSetState = {
         setsLog: sets,
         reps: last ? last.reps : parseRangeToNumber(ex.target_reps),
         weightKg: last ? last.weightKg : ex.default_weight_kg,
-        rpe: match.rpe ?? rirToRpe(parseRangeToNumber(ex.target_rir)),
+        rpe: match.rpe,
         logged: true,
         skipped: false,
         workoutId: match.id,
