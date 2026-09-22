@@ -947,6 +947,10 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: null,
       hasMakeupToday: false,
       todayCompletedRaw: false,
+      todayExercisesCount: 0,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     // 6C-1 — schedule-override sessions must be marked so /session doesn't classify them as a genuine
     // makeup/catch-up session (see lib/activeMakeupSession.ts's isGenuineMakeupSession)
@@ -963,6 +967,10 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: 'day-makeup',
       hasMakeupToday: true,
       todayCompletedRaw: false,
+      todayExercisesCount: 0,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     // genuine makeup sessions never carry the recommendation marker — this IS a real catch-up session
     expect(action.sessionHref).toBe('/session?day=day-makeup')
@@ -976,9 +984,17 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: null, // cleared once the makeup session finished
       hasMakeupToday: true, // but a workout was logged today under a different program_day_id
       todayCompletedRaw: false, // raw progress against today's own scheduled day is still 0
+      todayExercisesCount: 5,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     expect(action.isCompletedToday).toBe(true)
     expect(action.sessionHref).toBe('/session')
+    // P1-01 — visible completed/total must not contradict isCompletedToday: no more "0/5" for a day
+    // that's already considered done via a finished makeup session logged elsewhere today
+    expect(action.completed).toBe(5)
+    expect(action.total).toBe(5)
   })
 
   it('scenario 2b: falls back to the raw completion flag when there is no makeup session today', () => {
@@ -989,6 +1005,10 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: null,
       hasMakeupToday: false,
       todayCompletedRaw: true,
+      todayExercisesCount: 0,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     expect(completed.isCompletedToday).toBe(true)
 
@@ -999,6 +1019,10 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: null,
       hasMakeupToday: false,
       todayCompletedRaw: false,
+      todayExercisesCount: 0,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     expect(notCompleted.isCompletedToday).toBe(false)
   })
@@ -1011,6 +1035,10 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: null,
       hasMakeupToday: false,
       todayCompletedRaw: false,
+      todayExercisesCount: 0,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     expect(cautioned.lowRecoveryCaution).toBe(true)
 
@@ -1021,6 +1049,10 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: null,
       hasMakeupToday: false,
       todayCompletedRaw: false,
+      todayExercisesCount: 0,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     expect(notCautioned.lowRecoveryCaution).toBe(false)
   })
@@ -1033,8 +1065,140 @@ describe('computeTodaysAction', () => {
       activeMakeupDayId: null,
       hasMakeupToday: false,
       todayCompletedRaw: false,
+      todayExercisesCount: 0,
+      completedCount: 0,
+      adhocCompletedCount: 0,
+      entryCount: 0,
     })
     expect(action.sessionHref).toBe('/session')
+  })
+
+  describe('P1-01/P1-02: canonical completed/total', () => {
+    it('normal scheduled day: reflects the plan-based completed/total exactly, no makeup involved', () => {
+      const action = computeTodaysAction({
+        recommendation: null,
+        programDays: [],
+        programDayMuscleGroups: {},
+        activeMakeupDayId: null,
+        hasMakeupToday: false,
+        todayCompletedRaw: false,
+        todayExercisesCount: 5,
+        completedCount: 2,
+        adhocCompletedCount: 1,
+        entryCount: 3,
+      })
+      expect(action.completed).toBe(3) // completedCount + adhocCompletedCount
+      expect(action.total).toBe(5) // max(todayExercisesCount, entryCount, 1)
+    })
+
+    it('extra ad-hoc exercises beyond the plan widen total, same as entryCount already implied', () => {
+      const action = computeTodaysAction({
+        recommendation: null,
+        programDays: [],
+        programDayMuscleGroups: {},
+        activeMakeupDayId: null,
+        hasMakeupToday: false,
+        todayCompletedRaw: false,
+        todayExercisesCount: 5,
+        completedCount: 5,
+        adhocCompletedCount: 1,
+        entryCount: 7, // 5 planned + 2 unfinished ad-hoc entries logged today
+      })
+      expect(action.completed).toBe(6)
+      expect(action.total).toBe(7)
+    })
+
+    it('no plan today (rest day/no program): falls back to raw entryCount for both completed and total', () => {
+      const untouched = computeTodaysAction({
+        recommendation: null,
+        programDays: [],
+        programDayMuscleGroups: {},
+        activeMakeupDayId: null,
+        hasMakeupToday: false,
+        todayCompletedRaw: false,
+        todayExercisesCount: 0,
+        completedCount: 0,
+        adhocCompletedCount: 0,
+        entryCount: 0,
+      })
+      expect(untouched.completed).toBe(0)
+      expect(untouched.total).toBe(1) // never 0 — avoids a 0/0 display
+
+      const freeLogged = computeTodaysAction({
+        recommendation: null,
+        programDays: [],
+        programDayMuscleGroups: {},
+        activeMakeupDayId: null,
+        hasMakeupToday: false,
+        todayCompletedRaw: true,
+        todayExercisesCount: 0,
+        completedCount: 0,
+        adhocCompletedCount: 0,
+        entryCount: 2,
+      })
+      expect(freeLogged.completed).toBe(2)
+      expect(freeLogged.total).toBe(2)
+    })
+
+    it('makeup session actively in progress (not yet finished): shows the makeup session\'s own live progress, not 0/N of the untouched scheduled plan', () => {
+      const action = computeTodaysAction({
+        recommendation: null,
+        programDays: [],
+        programDayMuscleGroups: {},
+        activeMakeupDayId: 'day-makeup',
+        hasMakeupToday: true,
+        todayCompletedRaw: false,
+        todayExercisesCount: 5, // today's own scheduled plan, untouched so far
+        completedCount: 0,
+        adhocCompletedCount: 0,
+        entryCount: 0,
+        makeupSessionActive: true,
+        makeupExercisesCompleted: 2,
+        makeupTotalExercises: 6,
+      })
+      expect(action.completed).toBe(2)
+      expect(action.total).toBe(6)
+    })
+
+    it('makeupSessionActive is ignored once anything has been logged against today\'s own plan', () => {
+      const action = computeTodaysAction({
+        recommendation: null,
+        programDays: [],
+        programDayMuscleGroups: {},
+        activeMakeupDayId: 'day-makeup',
+        hasMakeupToday: true,
+        todayCompletedRaw: false,
+        todayExercisesCount: 5,
+        completedCount: 1,
+        adhocCompletedCount: 0,
+        entryCount: 1, // something already logged against today's own scheduled plan
+        makeupSessionActive: true,
+        makeupExercisesCompleted: 2,
+        makeupTotalExercises: 6,
+      })
+      expect(action.completed).toBe(1)
+      expect(action.total).toBe(5)
+    })
+
+    it('desktop/BottomNav callers that never pass makeup-active params behave exactly as before during an active makeup session (no regression)', () => {
+      const action = computeTodaysAction({
+        recommendation: null,
+        programDays: [],
+        programDayMuscleGroups: {},
+        activeMakeupDayId: 'day-makeup',
+        hasMakeupToday: true,
+        todayCompletedRaw: false,
+        todayExercisesCount: 5,
+        completedCount: 0,
+        adhocCompletedCount: 0,
+        entryCount: 0,
+        // no makeupSessionActive/makeupExercisesCompleted/makeupTotalExercises passed
+      })
+      // hasMakeupToday still folds in even without the live makeup-progress params — falls to the
+      // else branch, completed clamped up to total (5/5), same as scenario 2 above
+      expect(action.completed).toBe(5)
+      expect(action.total).toBe(5)
+    })
   })
 })
 

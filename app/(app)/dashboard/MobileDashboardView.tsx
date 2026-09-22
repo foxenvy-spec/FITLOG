@@ -199,6 +199,10 @@ export default function MobileDashboardView() {
   // 6B-1 — sessionHref/isCompletedToday ตัวเดียวกับ DashboardView.tsx เดสก์ท็อป (canonical pipeline,
   // lib/dashboardStats.ts) แทนที่จะคำนวณแยกเอง 2 ที่ (เดิม mobile กับ desktop ได้ค่าไม่ตรงกันได้ในเคส
   // schedule override / makeup session) — ไม่แตะ recommendation engine หรือ threshold ใดๆ
+  // P1-01/P1-02 — canonical completed/total ผ่าน computeTodaysAction แทนการคำนวณ todayCardCompleted/Total
+  // แยกเองที่นี่ — คงเคสพิเศษ "กำลังทำเซสชันชดเชยอยู่จริง ยังไม่จบ" (makeupSessionActive, live DB check ที่
+  // มีแค่ไฟล์นี้ทำ) ไว้เป๊ะทุกประการผ่าน makeupSessionActive/makeupExercisesCompleted/makeupTotalExercises
+  // (ดู comment เต็มที่ computeTodaysAction, lib/dashboardStats.ts)
   const todaysAction = computeTodaysAction({
     recommendation: muscleRecommendation,
     programDays: data.programDays,
@@ -206,18 +210,17 @@ export default function MobileDashboardView() {
     activeMakeupDayId: activeMakeupDay,
     hasMakeupToday,
     todayCompletedRaw: todayCompleted,
+    todayExercisesCount: data.todayExercises.length,
+    completedCount: data.completedCount,
+    adhocCompletedCount: data.adhocCompletedCount,
+    entryCount: totals.entryCount,
+    makeupSessionActive: workoutCardVariant === 'active' && makeupSessionActive,
+    makeupExercisesCompleted,
+    makeupTotalExercises,
   })
   const sessionHref = todaysAction.sessionHref
-  const todayCardCompleted =
-    workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0
-      ? makeupExercisesCompleted
-      : data.todayExercises.length > 0
-        ? data.completedCount + data.adhocCompletedCount
-        : totals.entryCount
-  const todayCardTotal =
-    workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0
-      ? Math.max(makeupTotalExercises, 1)
-      : Math.max(data.todayExercises.length, totals.entryCount, 1)
+  const todayCardCompleted = todaysAction.completed
+  const todayCardTotal = todaysAction.total
   const todayCardHref =
     workoutCardVariant === 'active' && makeupSessionActive && totals.entryCount === 0 ? sessionHref : scheduledDay ? sessionHref : '/log'
 

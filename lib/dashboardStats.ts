@@ -526,6 +526,13 @@ export interface TodaysAction {
   scheduleOverriddenFrom: string | null
   sessionHref: string
   isCompletedToday: boolean
+  // P1-01/P1-02 (Dashboard Today-State Canonicalization) — completed/total "วันนี้" หนึ่งเดียวที่ทุกจุด
+  // ที่โชว์ตัวเลขนี้ต้องใช้ (desktop progress ring, TodayCard มือถือ, BottomNav) ก่อนหน้านี้ทั้ง 3 จุด
+  // คำนวณแยกกันเอง (สูตรเกือบเหมือนกันแต่ denominator ไม่ตรงกันเป๊ะ และไม่มีจุดไหนรู้จัก hasMakeupToday
+  // เลยสักจุด) ทำให้ "จบเซสชันชดเชยไปแล้ววันนี้" ยังโชว์ "0/N ยังไม่เริ่ม" อยู่ ทั้งที่การแจ้งเตือน
+  // (isCompletedToday ด้านบน) ถือว่าวันนี้จบแล้วจาก signal เดียวกันนี้อยู่แล้ว
+  completed: number
+  total: number
 }
 
 export function computeTodaysAction(params: {
@@ -540,10 +547,43 @@ export function computeTodaysAction(params: {
   // มีเซสชันชดเชย (program_day_id ต่างจากวันตารางจริง) บันทึกไว้แล้ว "วันนี้" หรือยัง — ไม่สนว่าจะยัง
   // active อยู่หรือจบไปแล้ว (activeMakeupDayId ถูกเคลียร์ตอนจบเซสชัน แต่ hasMakeupToday ยังเป็น true)
   hasMakeupToday: boolean
-  // todayCompleted เดิม — คำนวณจาก progress ของ "วันตารางจริงของวันนี้" เท่านั้น (ไม่รู้จัก makeup)
+  // todayCompleted เดิม — คำนวณจาก progress ของ "วันตารางจริงของวันนี้" เท่านั้น (ไม่รู้จัก makeup) — คง
+  // สูตร/ความหมายเดิมไว้เป๊ะ ป้อนแค่ isCompletedToday (การแจ้งเตือน) เท่านั้น ไม่ปนกับ completed/total
+  // ใหม่ด้านล่าง (ซึ่งมี denominator ต่างออกไปเล็กน้อยตอนมีท่า ad-hoc เกินแผน — ดู comment ที่ completed/
+  // total) กันไม่ให้ P1-01/P1-02 กระทบพฤติกรรมแจ้งเตือนที่ไม่ได้อยู่ในสโคปนี้โดยไม่ตั้งใจ
   todayCompletedRaw: boolean
+  // P1-01/P1-02 — ตัวเลขดิบของ "แผนจริงวันนี้" เดิมประกอบเป็น completed/total แยกกันเองใน 3 จุด
+  // (DashboardView.tsx's ring, MobileDashboardView.tsx's TodayCard, BottomNav.tsx's useTodayWorkoutStatus)
+  // ด้วยสูตรเดียวกันเป๊ะอยู่แล้ว (hasTodayPlan ? completedCount+adhocCompletedCount : entryCount, total =
+  // max(todayExercisesCount, entryCount, 1)) — ย้ายมารวมไว้ที่นี่ที่เดียว ผู้เรียกส่งตัวเลขดิบเข้ามาเฉยๆ
+  todayExercisesCount: number
+  completedCount: number
+  adhocCompletedCount: number
+  entryCount: number
+  // เฉพาะตอนกำลังทำเซสชันชดเชยค้างอยู่จริง (live DB check ว่ายัง log ไม่ครบ — ปัจจุบันมีแค่
+  // MobileDashboardView.tsx ที่ทำ live check นี้) ให้เห็นความคืบหน้าของเซสชันชดเชยที่กำลังทำแทนเลข 0/N
+  // ของแผนจริงวันนี้ที่ยังไม่ได้แตะ — desktop/BottomNav ไม่ส่งพารามิเตอร์นี้มา (ไม่มี live check นี้) จึง
+  // ยังเห็นแค่ตัวเลขของแผนจริงวันนี้เหมือนเดิมทุกประการระหว่างเซสชันชดเชยกำลังดำเนินอยู่ — ไม่ใช่
+  // regression ใหม่ พฤติกรรมเดิมของทั้งสองจุดนี้ไม่เคยรู้จักเซสชันชดเชยที่กำลังทำอยู่เลยตั้งแต่แรก
+  makeupSessionActive?: boolean
+  makeupExercisesCompleted?: number
+  makeupTotalExercises?: number
 }): TodaysAction {
-  const { recommendation, programDays, programDayMuscleGroups, activeMakeupDayId, hasMakeupToday, todayCompletedRaw } = params
+  const {
+    recommendation,
+    programDays,
+    programDayMuscleGroups,
+    activeMakeupDayId,
+    hasMakeupToday,
+    todayCompletedRaw,
+    todayExercisesCount,
+    completedCount,
+    adhocCompletedCount,
+    entryCount,
+    makeupSessionActive,
+    makeupExercisesCompleted,
+    makeupTotalExercises,
+  } = params
 
   let sessionHref = '/session'
   if (activeMakeupDayId) {
@@ -565,12 +605,32 @@ export function computeTodaysAction(params: {
     if (overrideDay) sessionHref = `/session?day=${overrideDay.id}&source=recommendation`
   }
 
+  const hasTodayPlan = todayExercisesCount > 0
+  let completed: number
+  let total: number
+  if (makeupSessionActive && entryCount === 0) {
+    completed = makeupExercisesCompleted ?? 0
+    total = Math.max(makeupTotalExercises ?? 0, 1)
+  } else {
+    completed = hasTodayPlan ? completedCount + adhocCompletedCount : entryCount
+    total = Math.max(todayExercisesCount, entryCount, 1)
+    // P1-01 — ฝึกเซสชันชดเชยของแผนอื่นไปแล้ววันนี้ (hasMakeupToday) โดยแผนจริงของวันนี้เองยังไม่ถูกแตะ
+    // เลยสักเซ็ต (entryCount===0) — เดิมทุกจุดที่โชว์ completed/total (ring/TodayCard/BottomNav) จะยังขึ้น
+    // "0/N ยังไม่เริ่ม" ทั้งที่ isCompletedToday ด้านล่างถือว่าวันนี้จบแล้วจาก signal เดียวกันนี้อยู่แล้ว
+    // (การแจ้งเตือนไม่เคยขึ้นเตือนซ้ำ) ทำให้ตัวเลขที่เห็นขัดกับสถานะจริง — แก้ให้เลขที่โชว์สอดคล้องกัน
+    // เงื่อนไข entryCount===0 กันไม่ให้ clamp ทับความคืบหน้าจริงบางส่วนของแผนวันนี้เอง (เช่น ทำแผนวันนี้ไป
+    // แล้ว 1/5 ท่า และมี makeup อยู่ด้วย — ต้องโชว์ 1/5 จริง ไม่ใช่ปัดเป็น 5/5 ให้ดูเหมือนทำครบทั้งที่ยังไม่ครบ)
+    if (hasMakeupToday && entryCount === 0 && completed < total) completed = total
+  }
+
   return {
     muscleGroup: recommendation?.muscleGroup ?? null,
     lowRecoveryCaution: recommendation?.lowRecoveryCaution ?? false,
     scheduleOverriddenFrom: recommendation?.scheduleOverriddenFrom ?? null,
     sessionHref,
     isCompletedToday: todayCompletedRaw || hasMakeupToday,
+    completed,
+    total,
   }
 }
 

@@ -194,6 +194,10 @@ export default function TrainPage() {
         (adhocAwareProgressPct !== null && adhocAwareProgressPct >= 100) || (adhocAwareProgressPct === null && todayList.length > 0)
 
       const activeMakeupDayId = getActiveMakeupDayId()
+      // P1-01/P1-02 — computeTodaysAction ตอนนี้ต้องการตัวเลขดิบสำหรับ completed/total ด้วย (canonical
+      // ให้ Desktop/Mobile/BottomNav) — หน้านี้ไม่เคยอ่าน todaysAction.completed/total เลย (ใช้แค่
+      // .sessionHref/.isCompletedToday ที่ CTA ด้านล่าง) ส่งตัวเลขจริงที่มีอยู่แล้วในสโคปนี้ไปเฉยๆ เพื่อ
+      // ความถูกต้อง ไม่กระทบพฤติกรรมของหน้านี้แต่อย่างใด (นอกสโคป P1-03 — ไม่แตะ/ไม่ใช้ค่านี้)
       const todaysAction = computeTodaysAction({
         recommendation,
         programDays: typedDays,
@@ -201,6 +205,10 @@ export default function TrainPage() {
         activeMakeupDayId,
         hasMakeupToday,
         todayCompletedRaw,
+        todayExercisesCount: todayExercises.length,
+        completedCount,
+        adhocCompletedCount,
+        entryCount: todayList.filter((w) => !w.program_day_id || w.program_day_id === currentDay?.id).length,
       })
       const activeMakeupDayTitle = activeMakeupDayId ? (typedDays.find((d) => d.id === activeMakeupDayId)?.title ?? null) : null
 

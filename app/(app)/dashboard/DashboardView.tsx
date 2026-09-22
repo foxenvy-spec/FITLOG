@@ -1026,6 +1026,13 @@ export default function DashboardPage() {
     activeMakeupDayId: activeMakeupDay,
     hasMakeupToday,
     todayCompletedRaw: todayCompleted,
+    // P1-01/P1-02 — canonical completed/total (ดู comment เต็มที่ computeTodaysAction, lib/dashboardStats.ts)
+    // ไม่มี live check เซสชันชดเชยที่กำลังทำอยู่ที่นี่ (เดสก์ท็อปไม่เคยมี) — ไม่ส่ง makeupSessionActive
+    // ใดๆ เข้าไป พฤติกรรมระหว่างเซสชันชดเชยกำลังดำเนินอยู่จึงเหมือนเดิมทุกประการ
+    todayExercisesCount: data?.todayExercises.length ?? 0,
+    completedCount: data?.completedCount ?? 0,
+    adhocCompletedCount: data?.adhocCompletedCount ?? 0,
+    entryCount: totals.entryCount,
   })
   const sessionHref = todaysAction.sessionHref
   // ฟีดแบ็ก (design review — "Training This Week บอก 'Next → Day 5 — Lower' แต่ MINT Coach บอก 'ควรพัก
@@ -1879,10 +1886,14 @@ export default function DashboardPage() {
                 บนหน้าเดียวกัน — ผู้ใช้อ่านว่าทั้งคู่คือ physiological readiness ทั้งที่วงนี้จริงๆ คือ progressPct
                 (% ท่าตามแผนวันนี้ที่ทำเสร็จแล้ว ไม่เกี่ยวกับการฟื้นตัวเลย)" — เปลี่ยนแค่คำ label/aria-label ให้
                 ตรงกับสิ่งที่ค่าจริงวัด ("ความคืบหน้า" ของแผนวันนี้) ไม่แตะสูตร progressPct/ขนาดวง/ตำแหน่ง/
-                Recovery ใดๆ เลย */}
+                Recovery ใดๆ เลย
+                P1-01/P1-02 — เปลี่ยนมาใช้ todaysAction.completed/total (canonical) แทน progressPct เดิมที่
+                คำนวณแยก (denominator ผูกกับ todayExercises.length เฉยๆ ไม่รู้จัก entryCount ส่วนเกิน/
+                hasMakeupToday เลย) — progressPct ตัวแปรเดิมยังอยู่ที่จุดอื่น (todayCompleted/Fitness Score)
+                ไม่แตะ เพราะไม่ใช่ 1 ใน 3 consumer ที่ล็อกสโคปไว้ */}
             <div className="absolute bottom-6 right-4 z-10" style={{ filter: `drop-shadow(0 0 6px ${withAlpha(DS.accent.primary, '24')})` }}>
               <GoalRing
-                pct={progressPct ?? (totals.entryCount > 0 ? 100 : 0)}
+                pct={Math.round((todaysAction.completed / todaysAction.total) * 100)}
                 size={64}
                 strokeWidth={5}
                 color={DS.accent.primary}

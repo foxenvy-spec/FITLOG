@@ -9,10 +9,11 @@ import { dashboardSpec } from '@/lib/dashboardSpec'
 import { HOME_COLORS } from '@/lib/homeColors'
 import { DS } from '@/lib/designSystem'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
-import { todayStr } from '@/lib/weekdays'
+import { todayStr, todayDayOfWeek } from '@/lib/weekdays'
 import { getActiveMakeupDayId } from '@/lib/activeMakeupSession'
 import { createClient } from '@/lib/supabase/client'
 import { fetchDashboardData } from '@/app/(app)/dashboard/DashboardView'
+import { computeTodayTotals, computeTodaysAction } from '@/lib/dashboardStats'
 import { clearFinishedToday } from '@/lib/finishForToday'
 import FitnessRing from '@/components/dashboard/FitnessRing'
 
@@ -100,42 +101,97 @@ const TABS = [
 // isInProgress (0 < completed < total) ให้ปุ่มแยก "ยังไม่เริ่มเลย" ออกจาก "เริ่มแล้วแต่ยังไม่ครบ" ได้ —
 // สูตรเดียวกับ isCompleted เป๊ะ ("Program Complete" ในฟีดแบ็กไม่ได้ทำ — FITLOG ไม่มีข้อมูล "จบโปรแกรม
 // ทั้งชุด" จริง โปรแกรมเป็นตารางประจำสัปดาห์ที่วนซ้ำไม่มีจุดจบ ใส่ state นี้จะต้องเดา/ปั้นความหมายขึ้นมาเอง)
+// P1-01/P1-02 (Dashboard Today-State Canonicalization) — เดิมฟังก์ชันนี้คำนวณ completed/total/sessionHref
+// แยกเองทั้งหมด (entryCount ดิบ ไม่ผ่าน onlyProgramDayId filter เหมือน Desktop/Mobile เลย ทำให้ total ไม่
+// ตรงกับอีกสองจุดตอนมี makeup entry, และ sessionHref เดิมไม่เคยรู้จัก recommendation.scheduleOverriddenFrom
+// เลยสักครั้ง — บั๊กคลาสเดียวกับที่ computeTodaysAction ถูกสร้างมาแก้ให้ Desktop/Mobile ไปแล้วตั้งแต่ 6B-1)
+// — ย้ายมาใช้ canonical computeTodaysAction ตัวเดียวกับ Desktop/Mobile ทั้งหมด ห้ามคำนวณแยกเองอีกต่อไป
 function useTodayWorkoutStatus(): {
   isRestDay: boolean
   isCompleted: boolean
   isInProgress: boolean
   isFinishedForToday: boolean
+  sessionHref: string
 } {
   const pathname = usePathname()
   const supabase = createClient()
   const today = todayStr()
+  const dow = todayDayOfWeek()
   const { data } = useQuery({
     queryKey: ['dashboard', today],
     queryFn: () => fetchDashboardData(supabase),
     enabled: pathname === '/dashboard',
   })
-  if (!data) return { isRestDay: false, isCompleted: false, isInProgress: false, isFinishedForToday: false }
+  // pointer เซสชันชดเชยที่ยังไม่จบ (localStorage) — ย้ายเข้ามาในฮุกนี้ (เดิมอยู่ใน BottomNav() เอง) เพราะ
+  // ตอนนี้ sessionHref มาจาก computeTodaysAction ที่ต้องใช้ค่านี้ประกอบด้วย
+  const [activeMakeupDay, setActiveMakeupDay] = useState<string | null>(null)
+  useEffect(() => {
+    setActiveMakeupDay(getActiveMakeupDayId())
+  }, [pathname])
+
+  if (!data) {
+    return {
+      isRestDay: false,
+      isCompleted: false,
+      isInProgress: false,
+      isFinishedForToday: false,
+      sessionHref: activeMakeupDay ? `/session?day=${activeMakeupDay}` : '/session',
+    }
+  }
   const hasTodayPlan = data.todayExercises.length > 0
   const hasLoggedToday = data.todayWorkouts.length > 0
   const hasAnyProgram = data.programDays.length > 0
   const isRestDay = !hasTodayPlan && !hasLoggedToday && hasAnyProgram
 
-  const entryCount = data.todayWorkouts.length
-  const completed = hasTodayPlan ? data.completedCount + data.adhocCompletedCount : entryCount
-  const total = Math.max(data.todayExercises.length, entryCount, 1)
+  const scheduledDay = data.programDays.find((d) => d.day_of_week === dow) ?? null
+  // กรอง workout ของแผน "อื่น" (เซสชันชดเชย) ออกก่อนนับ — สูตรเดียวกับ DashboardView.tsx/
+  // MobileDashboardView.tsx เป๊ะ (เดิมไฟล์นี้ใช้ data.todayWorkouts.length ดิบ ไม่กรอง ทำให้ total ไม่ตรง
+  // กับอีกสองจุดตอนมี makeup entry วันนี้)
+  const totals = computeTodayTotals(data.todayWorkouts, { onlyProgramDayId: scheduledDay?.id ?? null })
+  const hasMakeupToday = data.todayWorkouts.some((w) => w.program_day_id && w.program_day_id !== scheduledDay?.id)
+
+  // todayCompletedRaw — สูตรเดียวกับ progressPct/todayCompleted ของ Desktop/Mobile เป๊ะ (ไม่มีผลต่อ
+  // ค่าที่ใช้จริงในไฟล์นี้ — ไฟล์นี้คำนวณ isCompleted ของตัวเองจาก completed/total ด้านล่างตรงๆ — แต่ส่ง
+  // เข้าไปให้ถูกต้องตามสัญญาของ canonical function แทนค่า placeholder ที่ไม่มีความหมาย)
+  const planPct = hasTodayPlan
+    ? Math.min(100, Math.round(((data.completedCount + data.adhocCompletedCount) / data.todayExercises.length) * 100))
+    : null
+  const todayCompletedRaw = (planPct !== null && planPct >= 100) || (planPct === null && data.todayWorkouts.length > 0)
+
+  const todaysAction = computeTodaysAction({
+    recommendation: data.muscleRecommendation,
+    programDays: data.programDays,
+    programDayMuscleGroups: data.programDayMuscleGroups,
+    activeMakeupDayId: activeMakeupDay,
+    hasMakeupToday,
+    todayCompletedRaw,
+    todayExercisesCount: data.todayExercises.length,
+    completedCount: data.completedCount,
+    adhocCompletedCount: data.adhocCompletedCount,
+    entryCount: totals.entryCount,
+    // ไม่มี live check เซสชันชดเชยที่กำลังทำอยู่ที่นี่ (เหมือน Desktop — มีแค่ Mobile ที่ทำ) — ไม่ส่ง
+    // makeupSessionActive ใดๆ พฤติกรรมระหว่างเซสชันชดเชยกำลังดำเนินอยู่จึงเหมือนเดิมทุกประการ
+  })
+
+  const completed = todaysAction.completed
+  const total = todaysAction.total
   const isCompleted = !isRestDay && completed >= total && (hasTodayPlan || hasLoggedToday)
   // Finish-for-Today State Contract v1 — สูตรเดียวกับ isInProgress เป๊ะ บวก finishedForToday (ดู
   // comment เต็มที่ TodayCard.tsx's isFinishedForToday — flag เดียวกันจาก fetchDashboardData เดียวกันนี้)
   const isInProgress = !isRestDay && !isCompleted && completed > 0 && !data.finishedForToday
   const isFinishedForToday = !isRestDay && !isCompleted && completed > 0 && data.finishedForToday
+  // v55: วันพัก (isRestDay) ไม่พาไป /session อีกต่อไป — พาไปดู /coach (Recovery) แทน — ยกเว้นกำลังทำ
+  // เซสชันชดเชยค้างอยู่จริง (activeMakeupDay) ซึ่ง todaysAction.sessionHref จัดการให้แล้วเป็นลำดับแรกอยู่
+  // แล้วภายใน computeTodaysAction (activeMakeupDayId ชนะทุกกรณี) — ลำดับความสำคัญเดิมทุกประการ
+  const sessionHref = isRestDay && !activeMakeupDay ? '/coach' : todaysAction.sessionHref
 
-  return { isRestDay, isCompleted, isInProgress, isFinishedForToday }
+  return { isRestDay, isCompleted, isInProgress, isFinishedForToday, sessionHref }
 }
 
 export default function BottomNav() {
   const pathname = usePathname()
   const supabase = createClient()
-  const { isRestDay, isCompleted, isInProgress, isFinishedForToday } = useTodayWorkoutStatus()
+  const { isRestDay, isCompleted, isInProgress, isFinishedForToday, sessionHref } = useTodayWorkoutStatus()
   // Finish-for-Today State Contract v1 — เหมือน handleEnterSession ใน MobileDashboardView.tsx เป๊ะ
   // (fire-and-forget, ไม่ preventDefault การนำทางของ <Link> เดิม) เรียกเฉพาะตอนปุ่มนี้พาเข้า /session
   // จริง (ไม่ใช่ /coach ของ isRestDay หรือ view-summary ของ isCompleted)
@@ -145,15 +201,10 @@ export default function BottomNav() {
       if (user) clearFinishedToday(supabase, user.id)
     })
   }
-  // บั๊ก (ฟีดแบ็ก "เล่นเซสชันชดเชยอยู่ สลับไปหน้าอื่น แล้วกดปุ่ม START WORKOUT ลอยกลางอีกครั้ง — พาไปแผน
-  // จริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยเดิม") — ปุ่มนี้ผูกกับ '/session' เฉยๆ มาตั้งแต่ก่อนมีฟีเจอร์
-  // เซสชันชดเชย ไม่รู้จัก ?day= เลย อ่าน pointer ที่ session/page.tsx เขียนไว้ (lib/activeMakeupSession.ts)
-  // เพื่อสร้าง href กลับเข้าเซสชันเดิมได้ถูกต้อง — re-read ทุกครั้งที่ pathname เปลี่ยน (สลับหน้าไปมา)
-  // เพราะ localStorage ไม่ reactive เอง ไม่มี pointer ค้าง = พฤติกรรมเดิมทุกประการ (ไป /session เฉยๆ)
-  const [activeMakeupDay, setActiveMakeupDay] = useState<string | null>(null)
-  useEffect(() => {
-    setActiveMakeupDay(getActiveMakeupDayId())
-  }, [pathname])
+  // P1-01/P1-02 — sessionHref (รวม pointer เซสชันชดเชยค้างอยู่ — ฟีดแบ็ก "เล่นเซสชันชดเชยอยู่ สลับไปหน้า
+  // อื่น แล้วกดปุ่ม START WORKOUT ลอยกลางอีกครั้ง — พาไปแผนจริงของวันนี้แทนที่จะกลับเข้าเซสชันชดเชยเดิม")
+  // ย้ายไปคำนวณใน useTodayWorkoutStatus() แล้วทั้งหมด (ผ่าน canonical computeTodaysAction ตัวเดียวกับ
+  // Desktop/Mobile — ห้ามคำนวณแยกเองที่นี่อีกต่อไป) ไม่ต้องมี activeMakeupDay state ซ้ำอีกจุดในนี้
   // ฟีดแบ็ก "ทำไมไม่เห็นครบวงครับ" — ปุ่มลอย /session เดิมอยู่ *ข้างใน* <nav> ที่มี clipPath (สำหรับตัด
   // มุม CNC) ครอบอยู่ clipPath ตัดทุกอย่างที่ล้นเหนือกรอบ nav ทิ้งเสมอ (ไม่ใช่แค่ overflow:hidden ที่พอมี
   // ทางเลี่ยง) พอเพิ่มระยะยกปุ่มขึ้น (-0.58*btnSize) ในรอบก่อน ปุ่มเลยโผล่พ้นกรอบ nav จริงและโดนตัดหัวเรียบ
@@ -173,12 +224,9 @@ export default function BottomNav() {
   const coreSize = Math.round(btnSize * 0.74)
   // v55: วันพัก (isRestDay) ไม่พาไป /session (เริ่มเวิร์กเอาต์) อีกต่อไป — พาไปดู /coach
   // (Recovery) แทน ปุ่มเดียวกับที่ AI Coach ใช้ตอน isRestDay ("ดู Recovery →") ให้ปลายทางตรงกับ
-  // ป้ายที่เห็นจริง ไม่ใช่แค่เปลี่ยนคำแต่กดแล้วยังพาไปเริ่มเวิร์กเอาต์เหมือนเดิม
-  // pointer เซสชันชดเชยที่ยังไม่จบต้องมาก่อน isRestDay เสมอ — isRestDay มาจากสถานะแผนจริงของ
-  // วันนี้ (React Query cache) ซึ่งอาจยังเป็น true ได้ถ้าเพิ่งเริ่มเซสชันชดเชยแบบยังไม่ log
-  // เซ็ตไหนเลยสักเซ็ต (hasLoggedToday ยังเป็น false) กันปุ่มพาไป /coach ทั้งที่กำลังทำเซสชันชดเชย
-  // อยู่จริง
-  const sessionHref = activeMakeupDay ? `/session?day=${activeMakeupDay}` : isRestDay ? '/coach' : '/session'
+  // ป้ายที่เห็นจริง ไม่ใช่แค่เปลี่ยนคำแต่กดแล้วยังพาไปเริ่มเวิร์กเอาต์เหมือนเดิม — pointer เซสชันชดเชยที่
+  // ยังไม่จบต้องมาก่อน isRestDay เสมอ (P1-01/P1-02 — sessionHref ทั้งหมดนี้คำนวณใน useTodayWorkoutStatus()
+  // ผ่าน canonical computeTodaysAction แล้ว ดูปลายทางจริงที่นั่น ไม่คำนวณซ้ำที่นี่อีกต่อไป)
   // ฟีดแบ็ก (Product/UI review, "The center button is not navigation. It is the user's most
   // relevant action right now.") "ปุ่มกลาง KEEP ทุกอย่างตามเดิม (ขนาด/glow/state-based label ฯลฯ) —
   // POLISH แค่ 3 จุด: label ทุก state น้ำหนัก/ความยาวใกล้เคียงกัน (ตรวจแล้ว — ใช้ span เดียวกันทุก state
