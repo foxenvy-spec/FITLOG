@@ -19,6 +19,15 @@ import { DS } from '@/lib/designSystem'
 import { sessionHrefWithMakeup } from '@/lib/activeMakeupSession'
 import { recordExplicitCompletion, recordManualUncomplete } from '@/lib/programCompletion'
 import { isFinishedToday, clearFinishedToday } from '@/lib/finishForToday'
+import { isAuthError, AUTH_EXPIRED_MESSAGE } from '@/lib/authError'
+
+// P1-04 — pattern เดียวกับ session/page.tsx's sessionErrorMessage() ใช้กับ write/delete ที่ไม่มี !user
+// pre-check ของตัวเอง (พึ่ง RLS ปฏิเสธเมื่อ auth หมดอายุ) กัน raw PostgREST/GoTrue error (เช่น
+// "JWT expired") หลุดออกมาตรงๆ ตอนที่รู้แน่ชัดว่าเป็น auth-expiry — error อื่นที่ไม่ใช่ auth ยังคงข้อความ
+// เดิมเป๊ะ (fallbackPrefix + err.message) ไม่เปลี่ยน
+function programErrorMessage(err: unknown, fallbackPrefix = ''): string {
+  return isAuthError(err) ? AUTH_EXPIRED_MESSAGE : `${fallbackPrefix}${(err as { message?: string })?.message ?? 'เกิดข้อผิดพลาด'}`
+}
 
 export default function ProgramPage() {
   const supabase = createClient()
@@ -95,7 +104,11 @@ export default function ProgramPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+    // P1-04 — เดิม !user ตรงนี้แค่ setLoading(false) เฉยๆ ไม่ set loadError เลย ทำให้หน้าเรนเดอร์
+    // days/exercisesByDay ว่างเปล่า (ค่าเริ่มต้นของ state) ดูไม่ต่างจาก "ยังไม่เคยตั้งโปรแกรมเลย" — ต้อง
+    // set loadError ให้ ErrorState (L658) โชว์แทน ไม่ให้ auth หมดอายุถูกตีความผิดเป็น empty state
     if (!user) {
+      setLoadError(AUTH_EXPIRED_MESSAGE)
       setLoading(false)
       return
     }
@@ -190,7 +203,11 @@ export default function ProgramPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) return
+    // P1-04 — เดิม silent return เฉยๆ กดแล้วดูเหมือนไม่มีอะไรเกิดขึ้น
+    if (!user) {
+      setError(AUTH_EXPIRED_MESSAGE)
+      return
+    }
 
     // บั๊ก (ไล่ตรวจทั้งโปรเจครอบใหม่) "เดิม flip completedIds ก่อนยิง DB แล้วไม่มี rollback ถ้าพัง — ต่างจาก
     // handleBulkDelete/handleDeleteAll ด้านล่างที่ update state หลังยืนยันสำเร็จเท่านั้น" — สลับเป็น DB
@@ -239,7 +256,7 @@ export default function ProgramPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        setError('กรุณาเข้าสู่ระบบใหม่')
+        setError(AUTH_EXPIRED_MESSAGE)
         return
       }
       const { data: existing, error: checkErr } = await supabase
@@ -277,7 +294,7 @@ export default function ProgramPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        setError('กรุณาเข้าสู่ระบบใหม่')
+        setError(AUTH_EXPIRED_MESSAGE)
         return
       }
 
@@ -354,7 +371,14 @@ export default function ProgramPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) return null
+    // P1-04 — เดิม return null เฉยๆ เหมือนกับ "สร้างวันไม่สำเร็จ" ด้านล่าง (err || !data) ทั้งที่เป็นคนละ
+    // สาเหตุกันเลย — ผู้เรียก (handleApplyTemplate/handleAddExercise) เห็นแค่ !day แล้วหยุดเงียบๆ ไม่มี
+    // error ให้เห็นเลยสักจุด ต่าง set error ไว้ตรงนี้ก่อน return null ให้ auth-expiry ไม่ถูกกลืนเป็น
+    // generic null เหมือนกรณีอื่น
+    if (!user) {
+      setError(AUTH_EXPIRED_MESSAGE)
+      return null
+    }
 
     const { data, error: err } = await supabase
       .from('program_days')
@@ -442,7 +466,10 @@ export default function ProgramPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+    // P1-04 — เดิม silent return เฉยๆ กดใช้เทมเพลตแล้วเหมือนไม่มีอะไรเกิดขึ้น (วันถูกสร้างไปแล้วจาก
+    // ensureDayExists ด้านบนด้วยซ้ำ แต่ท่ายังไม่ถูกก็อปเข้ามา — ไม่มี error บอกว่าทำไม)
     if (!user) {
+      setError(AUTH_EXPIRED_MESSAGE)
       setApplyingTemplateId(null)
       return
     }
@@ -497,7 +524,11 @@ export default function ProgramPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) return
+    // P1-04 — เดิม silent return เฉยๆ กดเพิ่มท่าแล้วเหมือนไม่มีอะไรเกิดขึ้น
+    if (!user) {
+      setError(AUTH_EXPIRED_MESSAGE)
+      return
+    }
 
     const position = (exercisesByDay[day.id] ?? []).length
 
@@ -537,7 +568,7 @@ export default function ProgramPage() {
   async function handleUpdateExercise(ex: ProgramExercise, patch: Partial<ProgramExercise>) {
     const { error: err } = await supabase.from('program_exercises').update(patch).eq('id', ex.id)
     if (err) {
-      setError(err.message)
+      setError(programErrorMessage(err))
       return
     }
     setExercisesByDay((prev) => ({
@@ -551,7 +582,7 @@ export default function ProgramPage() {
   async function handleDeleteExercise(ex: ProgramExercise) {
     const { error: err } = await supabase.from('program_exercises').delete().eq('id', ex.id)
     if (err) {
-      setError(err.message)
+      setError(programErrorMessage(err))
       return
     }
     setExercisesByDay((prev) => ({
@@ -583,7 +614,7 @@ export default function ProgramPage() {
     const { error: err } = await supabase.from('program_exercises').delete().in('id', ids)
     setBulkDeleting(false)
     if (err) {
-      setError(`ลบท่าที่เลือกไม่สำเร็จ: ${err.message}`)
+      setError(programErrorMessage(err, 'ลบท่าที่เลือกไม่สำเร็จ: '))
       return
     }
     setExercisesByDay((prev) => ({
@@ -600,7 +631,7 @@ export default function ProgramPage() {
     const { error: err } = await supabase.from('program_exercises').delete().eq('program_day_id', currentDay.id)
     setBulkDeleting(false)
     if (err) {
-      setError(`ลบท่าทั้งหมดไม่สำเร็จ: ${err.message}`)
+      setError(programErrorMessage(err, 'ลบท่าทั้งหมดไม่สำเร็จ: '))
       return
     }
     setExercisesByDay((prev) => ({ ...prev, [currentDay.id]: [] }))
@@ -614,7 +645,7 @@ export default function ProgramPage() {
   async function handleRenameDay(day: ProgramDay, title: string) {
     const { error: err } = await supabase.from('program_days').update({ title }).eq('id', day.id)
     if (err) {
-      setError(err.message)
+      setError(programErrorMessage(err))
       return
     }
     setDays((prev) => prev.map((d) => (d.id === day.id ? { ...d, title } : d)))
@@ -630,7 +661,7 @@ export default function ProgramPage() {
     const { error: err } = await supabase.from('program_days').delete().eq('id', currentDay.id)
     setRemovingDay(false)
     if (err) {
-      setError(`ลบวัน${WEEKDAYS[currentDay.day_of_week]}ไม่สำเร็จ: ${err.message}`)
+      setError(programErrorMessage(err, `ลบวัน${WEEKDAYS[currentDay.day_of_week]}ไม่สำเร็จ: `))
       return
     }
     const removedId = currentDay.id
