@@ -441,9 +441,15 @@ function TrainBody({
                   {previewExtra}
                 </p>
               )}
+              {/* P1-03 — เลขที่โชว์เปลี่ยนมาใช้ todaysAction.completed/total (canonical เดียวกับ Dashboard/
+                  Mobile/BottomNav หลัง P1-01/P1-02) แทน data.completedCount/totalToday เดิม (นับเฉพาะแผน
+                  ไม่รวม ad-hoc/makeup เลย ทำให้ CTA ข้างล่าง ซึ่งอ่าน isCompletedToday แบบ adhoc-aware
+                  อยู่แล้ว ขัดกับเลขที่เห็นได้ เช่น CTA บอก "ทบทวนเวิร์กเอาต์วันนี้" แต่เลขยังโชว์ "3/5")
+                  totalToday (เงื่อนไขซ่อน/โชว์แถวนี้) ยังคงเป็น data.todayExercises.length เป๊ะเหมือนเดิม —
+                  ตั้งใจไม่เปลี่ยน ให้ ad-hoc-only/no-plan ยังซ่อนแถวนี้เหมือนเดิมทุกประการ (ล็อกไว้แล้ว) */}
               {totalToday > 0 && (
                 <p className="text-[12px] text-muted mt-2">
-                  {data.completedCount}/{totalToday} ท่าเสร็จแล้ว
+                  {data.todaysAction.completed}/{data.todaysAction.total} ท่าเสร็จแล้ว
                 </p>
               )}
             </div>
