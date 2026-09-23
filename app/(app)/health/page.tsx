@@ -142,6 +142,7 @@ function bodyWaterPctZone(waterKg: number, weightKg: number, sex: 'male' | 'fema
 
 import ErrorState from '@/components/ErrorState'
 import LoadingState from '@/components/LoadingState'
+import EmptyState from '@/components/EmptyState'
 import ImportBodyReportPhoto, { ExtractedBodyReport } from '@/components/ImportBodyReportPhoto'
 
 type TrendDef = {
@@ -1791,16 +1792,13 @@ export default function HealthPage() {
             <h2 className="font-display text-sm tracked uppercase text-muted mb-3">ประวัติการวัดผล</h2>
             {metricDeleteError && <p className="text-[12px] text-rusttext mb-2">{metricDeleteError}</p>}
             {metrics.length === 0 ? (
-              <PremiumCard className="px-4 py-8 text-center space-y-3">
-                <div className="text-3xl">📏</div>
-                <p className="text-sm text-muted">ยังไม่มีข้อมูล เริ่มบันทึกครั้งแรกได้เลย</p>
-                <a
-                  href="#metric-form"
-                  className="inline-block text-[12px] font-display tracked uppercase text-bg bg-accent-primary rounded-lg px-4 py-2 active:scale-[0.99] transition"
-                >
-                  + บันทึกครั้งแรก
-                </a>
-              </PremiumCard>
+              <EmptyState
+                icon="📏"
+                title="ยังไม่มีประวัติการวัดผล"
+                message="เริ่มบันทึกครั้งแรกได้เลย"
+                ctaHref="#metric-form"
+                ctaLabel="+ บันทึกครั้งแรก"
+              />
             ) : (
               <PremiumCard className="divide-y divide-white/5">
                 {metrics.map((m) => (
