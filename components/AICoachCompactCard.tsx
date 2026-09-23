@@ -689,13 +689,13 @@ export default function AICoachCompactCard({
           )}
 
           {isRestDay ? (
-            // ฟีดแบ็ก "REST DAY ไม่ควรมีปุ่มเริ่ม DAY 4 — UPPER" — ตัดปุ่ม "เริ่ม [เทมเพลต]" ออกทั้งชุด
-            // (chosen/handleStart ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ isRestDay สลับเป็น false ระหว่าง
-            // เซสชัน แต่จะไม่ถูกเสนอเป็น action หลักตอนวันนี้เป็นวันพัก) เปลี่ยนเป็นลิงก์เบาๆ ไปดู
-            // Recovery/AI Coach แทน ไม่ใช่ CTA เด่นแบบ "เริ่ม" เพราะ Rest Day ไม่ควรมี action ที่เด่นกว่า "พัก"
-            <Button as={Link} href={href} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
-              ดู Recovery →
-            </Button>
+            // ฟีดแบ็ก (production screenshot, Dashboard review) "Today's Focus การ์ดข้างบนมีปุ่ม VIEW
+            // RECOVERY -> /coach อยู่แล้วตอน Rest Day การ์ดนี้ยังมีปุ่ม 'ดู Recovery ->' ไปปลายทางเดียวกัน
+            // เป๊ะ กลายเป็น CTA ซ้ำ 2 ปุ่มบนหน้าเดียว" — ตัดปุ่มนี้ออกไปเลยสำหรับ isRestDay โดยเฉพาะ (ไม่ใช่
+            // branch อื่น) ทั้งการ์ดนี้ยังเป็น <Link href={href}> ทับอยู่ทั้งใบอยู่แล้ว (ครอบ avatar+ข้อความ
+            // ด้านบน) จึงยังกดไป /coach ได้เหมือนเดิม แค่ไม่มีปุ่มซ้ำอีกจุด — headline/reason line
+            // ("RECOVERY DAY" / "พักวันนี้ · ฝึกมาแล้ว N วัน") ไม่แตะ
+            null
           ) : makeupSessionActive ? (
             // ฟีดแบ็ก (screenshot จริง ระหว่างทำเซสชันชดเชยค้างอยู่ 4/23 เซ็ต) "การ์ด Today's Workout
             // เปลี่ยนเป็น 'กำลังทำแผนชดเชย · ไปต่อ ▶' แล้ว แต่การ์ดนี้ยังเสนอปุ่ม 'เริ่ม Day 2 — Pull' อยู่
