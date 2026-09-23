@@ -1902,6 +1902,14 @@ export default function SessionPage() {
   // ของท่าปัจจุบันด้านบน (และ makeAdhocExercise ที่ default 3 เหมือนกัน) ไม่คิดค่า default แยกใหม่
   const sessionTargetSets = exercises.reduce((sum, ex) => sum + (ex.sets ?? 3), 0)
   const sessionLoggedSets = exercises.reduce((sum, ex) => sum + (states[ex.id]?.setsLog.length ?? 0), 0)
+  // P1-05 — ปุ่ม Save หลักต้องถามคำถามเดียวกับที่ goNext()/logCurrentExercise() ใช้ตัดสินจริง
+  // (nextUnvisitedIndex หลัง mark ท่าปัจจุบันเป็น logged แล้ว) แทนเช็ค array position
+  // (index >= exercises.length - 1) เดิม ซึ่งไม่รู้จักท่าที่ถูกข้าม/ยังไม่ทำก่อนหน้าเลย ทำให้ label เคย
+  // ขัดกับสิ่งที่กดแล้วเกิดขึ้นจริงได้ (เช่น อยู่ท่าสุดท้ายของ array แต่ยังมีท่าที่ข้ามไว้ค้าง — label บอก
+  // "จบเซสชัน" ทั้งที่กดแล้วจะพาไปท่าที่ข้ามไว้แทน) — ไม่แตะ nextUnvisitedIndex/goNext/logCurrentExercise
+  // ใดๆ เลย แค่ pre-compute merged state เดียวกับที่ logCurrentExercise ส่งเข้า goNext(merged) จริง
+  const willFinishOnSave =
+    nextUnvisitedIndex(exercises, { ...states, [current.id]: { ...currentState, logged: true } }, index) === null
 
   return (
     <div className="lg:max-w-5xl lg:mx-auto lg:grid lg:grid-cols-[1fr_280px] lg:gap-6 lg:items-start">
@@ -2424,7 +2432,7 @@ export default function SessionPage() {
         >
           {saving
             ? 'กำลังบันทึก...'
-            : index >= exercises.length - 1
+            : willFinishOnSave
               ? 'บันทึก & จบเซสชัน'
               : 'บันทึก & ท่าถัดไป ▶'}
         </Button>
