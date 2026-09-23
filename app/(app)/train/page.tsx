@@ -355,8 +355,7 @@ export default function TrainPage() {
   return (
     <div className="pb-4">
       <div className="mb-5">
-        <p className="text-[12px] tracked uppercase text-muted">Train</p>
-        <h1 className="font-display text-xl tracked uppercase text-ink">เริ่มเล่นเลย</h1>
+        <h1 className="font-display text-2xl tracked uppercase text-ink">เทรน</h1>
       </div>
 
       {loadError ? (
