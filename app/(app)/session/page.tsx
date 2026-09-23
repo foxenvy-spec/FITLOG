@@ -1276,9 +1276,14 @@ export default function SessionPage() {
           // สัปดาห์นี้เทียบสัปดาห์ที่แล้ว ต่อกลุ่มกล้ามเนื้อ — รูปแบบเดียวกับ fetchDashboardData ใน
           // DashboardView.tsx ทุกประการ (query เดียว ช่วง lastWeekStart..thisWeekEnd แล้วแยกด้วย
           // performed_at >= thisWeekStart) ให้ผลลัพธ์ volumeIncrease ตรงกับที่ Dashboard คำนวณเป๊ะ
+          // P2-02 — เดิมขาด .eq('user_id', user.id) ต่างจาก priorRows/recentMuscleRows (2 sibling queries
+          // ด้านบนในไฟล์นี้) ที่มี filter นี้อยู่แล้ว เพิ่มให้ตรง convention เดียวกัน (จุดอื่นที่พบ pattern
+          // เดียวกัน — lib/muscleRecommendationData.ts, DashboardView.tsx — บันทึกแยกเป็น follow-up finding
+          // ไม่รวมอยู่ใน scope นี้)
           supabase
             .from('workouts')
             .select('muscle_group, sets, performed_at')
+            .eq('user_id', user.id)
             .eq('type', 'strength')
             .gte('performed_at', lastWeekStart)
             .lte('performed_at', thisWeekEnd),
