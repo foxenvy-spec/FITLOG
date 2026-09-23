@@ -197,6 +197,10 @@ export default function ProgramPage() {
     setConfirmBulkDelete(false)
     setConfirmDeleteAll(false)
     setConfirmRemoveDay(false)
+    // P2-01 — confirmLogDuplicate อ่าน currentDay/currentExercises สดจาก selectedDow ทุกครั้งที่ render
+    // (ไม่ใช่ snapshot ตอนเปิด dialog) ถ้าไม่ reset ตรงนี้ด้วย เปิด confirmation จากวัน A แล้วสลับไปวัน B
+    // ก่อนกดยืนยัน จะกลาย log แผนของวัน B เข้า Log วันนี้แทน ทั้งที่ duplicate check ทำไว้กับวัน A เท่านั้น
+    setConfirmLogDuplicate(false)
   }, [selectedDow])
 
   async function toggleComplete(exerciseId: string, done: boolean) {
