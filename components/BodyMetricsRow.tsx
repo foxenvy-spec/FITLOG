@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { BodyMetric, Goal, Profile } from '@/lib/types'
 import { computeBodyMetricsSummary, bmiCategory, bmiCategoryColor, bmiOf, type MetricsTimeframe } from '@/lib/bodyMetricsSummary'
-import { goalProgressPct } from '@/lib/goalProgress'
+import { goalProgressPct, goalHigherIsGood } from '@/lib/goalProgress'
 import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
 import MetricCard, { type MetricIconImageKey, type MetricCardTheme } from './MetricCard'
@@ -173,7 +173,15 @@ export default function BodyMetricsRow({
     )
   }
 
-  const summary = computeBodyMetricsSummary(metrics, heightCm, timeframe)
+  // P2-04 — ต้องหา active goal ก่อนเรียก computeBodyMetricsSummary (ย้ายขึ้นมาจากตำแหน่งเดิมด้านล่าง)
+  // เพื่อส่ง direction override เข้าไปให้ weight/bodyFatPct.isGood สะท้อนทิศทางเป้าหมายจริง แทน
+  // "ลดลง=ดีเสมอ" ที่ hardcode ไว้เดิม — ดู goalHigherIsGood (lib/goalProgress.ts)
+  const weightGoal = goals.find((g) => g.goal_type === 'weight')
+  const bodyFatGoal = goals.find((g) => g.goal_type === 'body_fat')
+  const summary = computeBodyMetricsSummary(metrics, heightCm, timeframe, {
+    weightHigherIsGood: goalHigherIsGood(weightGoal),
+    bodyFatHigherIsGood: goalHigherIsGood(bodyFatGoal),
+  })
   // label เดียวใช้ร่วมกันทุกการ์ด ปรับข้อความอัตโนมัติตามระยะเวลาจริงระหว่างสองเอนทรีล่าสุด
   // (เช่น "จากเมื่อวาน" / "จาก 3 วันก่อน" / "จากสัปดาห์ที่แล้ว" / "จากเดือนที่แล้ว") แทนคำว่า "จากสัปดาห์ที่แล้ว" ตายตัว
   const period = summary.periodLabel ?? 'จากครั้งก่อน'
@@ -201,9 +209,6 @@ export default function BodyMetricsRow({
   const bmiSeries = seriesFor((m) => bmiOf(m.weight_kg, heightCm))
   const visceralFatSeries = seriesFor((m) => m.visceral_fat_grade)
 
-  // เป้าหมาย active ล่าสุดต่อประเภท (ตาราง goals รองรับแค่ weight/body_fat — เหมือนหน้า /health)
-  const weightGoal = goals.find((g) => g.goal_type === 'weight')
-  const bodyFatGoal = goals.find((g) => g.goal_type === 'body_fat')
   // v62: ฟีดแบ็ก "ทำ progress % เป็นเรียลไทม์ตลอดการบันทึก แทนที่จะแช่แข็งตอนตั้งเป้าหมาย" (จาก /health) —
   // หาค่าเก่าที่สุดที่มีบันทึกจริงจาก chronological (เรียงเก่า→ใหม่อยู่แล้ว) ส่งเข้า goalProgressPct แทนการ
   // ปล่อยให้ใช้ starting_value ที่แช่แข็งไว้ตอนสร้างเป้าหมายเสมอ — ให้ตรงกับพฤติกรรมหน้า /health เป๊ะ

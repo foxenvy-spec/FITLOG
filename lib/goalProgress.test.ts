@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { goalProgressLabel, goalProgressLabelParts, estimateGoalEtaWeeks } from './goalProgress'
+import { goalProgressLabel, goalProgressLabelParts, estimateGoalEtaWeeks, goalHigherIsGood } from './goalProgress'
 
 describe('goalProgressLabel', () => {
   it('shows "เริ่มต้นเป้าหมาย" instead of "0% ถึงเป้าหมาย" when there is no progress yet', () => {
@@ -147,5 +147,29 @@ describe('estimateGoalEtaWeeks', () => {
       { date: '2026-01-29', value: 79.8 },
     ]
     expect(estimateGoalEtaWeeks(entries, 60)).toBeNull()
+  })
+})
+
+describe('goalHigherIsGood', () => {
+  it('a lose-weight goal (target below starting) means lower is good', () => {
+    expect(goalHigherIsGood({ target_value: 70, starting_value: 80 })).toBe(false)
+  })
+
+  it('a gain-weight goal (target above starting) means higher is good', () => {
+    expect(goalHigherIsGood({ target_value: 85, starting_value: 80 })).toBe(true)
+  })
+
+  it('returns null when there is no goal at all', () => {
+    expect(goalHigherIsGood(null)).toBeNull()
+    expect(goalHigherIsGood(undefined)).toBeNull()
+  })
+
+  it('returns null when target/starting are missing', () => {
+    expect(goalHigherIsGood({ target_value: null, starting_value: 80 })).toBeNull()
+    expect(goalHigherIsGood({ target_value: 70, starting_value: null })).toBeNull()
+  })
+
+  it('returns null when target equals starting (no direction to infer)', () => {
+    expect(goalHigherIsGood({ target_value: 75, starting_value: 75 })).toBeNull()
   })
 })

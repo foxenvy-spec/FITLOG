@@ -20,6 +20,18 @@ export function goalProgressPct(
   return Math.min(100, Math.max(0, ((currentValue - start) / (goal.target_value - start)) * 100))
 }
 
+// P2-04 — ทิศทางที่ "ดีขึ้น" ของเป้าหมายนี้ (higherIsGood สำหรับ MetricDelta, lib/bodyMetricsSummary.ts)
+// อนุมานจาก target_value เทียบ starting_value ตัวเป้าหมายเอง (คนละคำถามกับ goalProgressPct ด้านบนที่ใช้
+// earliestTrackedValue แทน starting_value เพื่อ % คืบหน้าเรียลไทม์ — ทิศทางของเป้าหมายไม่ควรขยับตามข้อมูล
+// ที่เพิ่งบันทึกใหม่ เป็นคนละ concern กัน) — true = ตั้งเป้าเพิ่ม (สูงขึ้น=ดี), false = ตั้งเป้าลด
+// (ต่ำลง=ดี), null = ไม่มี goal ที่ใช้งานได้ หรือ target เท่ากับ starting เป๊ะ (ไม่มีทิศทางให้อนุมาน) —
+// ผู้เรียกต้อง fallback เป็นค่าเริ่มต้นเดิมของ metric นั้นเอง ไม่ใช่หน้าที่ฟังก์ชันนี้ที่จะเดาค่า default ให้
+export function goalHigherIsGood(goal: Pick<Goal, 'target_value' | 'starting_value'> | null | undefined): boolean | null {
+  if (!goal || goal.target_value === null || goal.starting_value === null) return null
+  if (goal.target_value === goal.starting_value) return null
+  return goal.target_value > goal.starting_value
+}
+
 // ฟีดแบ็ก "Body Goal โชว์ '0% Progress' ดูเหมือนยังไม่ก้าวหน้าเลย ทั้งที่จริงๆ อาจเพิ่งตั้งเป้าหมายวันนี้ —
 // ควรเขียนว่า 'เริ่มต้นเป้าหมาย' แทน" — goalProgressPct คืน 0 ทั้งกรณี "เพิ่งเริ่ม ยังไม่มีข้อมูลขยับ" และ
 // "ขยับผิดทาง" (ค่าปัจจุบันแย่กว่าจุดเริ่มต้น ถูก clamp ไว้ที่ 0) แยกกันไม่ได้จากตัวเลขเฉยๆ แต่ทั้งสองกรณีก็

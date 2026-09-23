@@ -22,7 +22,7 @@ import {
   type ReportSummary,
   type TrendPoint,
 } from './workoutReport'
-import { goalProgressPct } from './goalProgress'
+import { goalProgressPct, goalHigherIsGood } from './goalProgress'
 import { fetchBodyMetricsData } from '@/components/BodyMetricsRow'
 import { getErrorMessage } from './errors'
 
@@ -162,14 +162,20 @@ export function useWorkoutReport(period: ReportPeriod) {
           }))
         : weeklyTrend
 
-    const bodySummary = computeBodyMetricsSummary(bodyMetricsInput.metrics, bodyMetricsInput.heightCm, period)
+    // P2-04 — ต้องหา active goal ก่อนเรียก computeBodyMetricsSummary เพื่อส่ง direction override เข้าไป
+    // ให้ weight/bodyFatPct.isGood สะท้อนทิศทางเป้าหมายจริง แทน "ลดลง=ดีเสมอ" ที่ hardcode ไว้เดิม
+    // (ดู goalHigherIsGood, lib/goalProgress.ts — pattern เดียวกับ BodyMetricsRow.tsx)
+    const weightGoal = bodyMetricsInput.goals.find((g) => g.goal_type === 'weight')
+    const bodyFatGoal = bodyMetricsInput.goals.find((g) => g.goal_type === 'body_fat')
+    const bodySummary = computeBodyMetricsSummary(bodyMetricsInput.metrics, bodyMetricsInput.heightCm, period, {
+      weightHigherIsGood: goalHigherIsGood(weightGoal),
+      bodyFatHigherIsGood: goalHigherIsGood(bodyFatGoal),
+    })
 
     // Goal Progress (Body Progress section) — reuse ของเดิมจาก BodyMetricsRow.tsx/lib/goalProgress.ts
     // เป๊ะ (ตาราง goals รองรับแค่ weight/body_fat, ใช้ earliest tracked value แทน starting_value แช่แข็ง
     // เพื่อให้ % คืบหน้าเรียลไทม์ตาม v62 — ดูคอมเมนต์เดิมใน goalProgress.ts) ไม่คิดสูตรใหม่
     const chronologicalMetrics = [...bodyMetricsInput.metrics].reverse()
-    const weightGoal = bodyMetricsInput.goals.find((g) => g.goal_type === 'weight')
-    const bodyFatGoal = bodyMetricsInput.goals.find((g) => g.goal_type === 'body_fat')
     const earliestWeight = chronologicalMetrics.find((m) => m.weight_kg != null)?.weight_kg ?? null
     const earliestBodyFat = chronologicalMetrics.find((m) => m.body_fat_pct != null)?.body_fat_pct ?? null
     const goalProgress = {

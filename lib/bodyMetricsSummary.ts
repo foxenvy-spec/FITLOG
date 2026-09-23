@@ -142,6 +142,15 @@ export interface BodyMetricsSummary {
   latestMeasuredAt: string | null
 }
 
+// P2-04 — เดิม weight/bodyFatPct hardcode higherIsGood=false (ลดลง=ดีเสมอ) ไม่ว่าเป้าหมายจริงของผู้ใช้จะ
+// เป็นลดหรือเพิ่มก็ตาม — ผู้เรียกที่รู้ active goal (target vs starting_value) ของตัวเอง ส่ง override
+// เข้ามาได้ผ่าน param นี้ (ดู goalHigherIsGood, lib/goalProgress.ts) ไม่ส่ง/ส่ง null = พฤติกรรมเดิมทุก
+// ประการ (fallback ไป false เหมือนเดิม — ไม่มี active goal ไม่ควรเปลี่ยน semantic ที่มีอยู่แล้ว)
+export interface MetricDirectionOverrides {
+  weightHigherIsGood?: boolean | null
+  bodyFatHigherIsGood?: boolean | null
+}
+
 // metrics ควรเรียงใหม่ -> เก่า (measured_at desc) — ตรงกับที่หน้า /health query มาอยู่แล้ว
 // timeframe: null (ดีฟอลต์) = พฤติกรรมเดิม เทียบกับเอนทรีก่อนหน้าล่าสุดเสมอไม่ว่าจะห่างกี่วัน — ส่งค่านี้
 // เมื่อผู้ใช้เลือกกรอบเวลาเอง (BodyMetricsRow.tsx) เท่านั้น จุดเรียกอื่น (เช่น AI Coach insight ใน
@@ -149,7 +158,8 @@ export interface BodyMetricsSummary {
 export function computeBodyMetricsSummary(
   metrics: BodyMetric[],
   heightCm: number | null,
-  timeframe: MetricsTimeframe | null = null
+  timeframe: MetricsTimeframe | null = null,
+  directionOverrides?: MetricDirectionOverrides
 ): BodyMetricsSummary {
   const previous = timeframe === null ? findPreviousEntry(metrics) : findComparisonEntry(metrics, timeframe)
   const latest = metrics[0] ?? null
@@ -161,8 +171,8 @@ export function computeBodyMetricsSummary(
     return null
   }
   return {
-    weight: metricDelta(metrics, previous, (m) => m.weight_kg, false),
-    bodyFatPct: metricDelta(metrics, previous, (m) => m.body_fat_pct, false),
+    weight: metricDelta(metrics, previous, (m) => m.weight_kg, directionOverrides?.weightHigherIsGood ?? false),
+    bodyFatPct: metricDelta(metrics, previous, (m) => m.body_fat_pct, directionOverrides?.bodyFatHigherIsGood ?? false),
     // ห้าม fallback ข้ามฟิลด์ระหว่าง latest/previous (ดู comment ของ metricDeltaWithFallbackFields
     // ด้านบน) — skeletal_muscle_kg กับ muscle_kg เป็นคนละตัวชี้วัดกันจริงๆ ไม่ใช่แค่ชื่อคอลัมน์ต่างกัน
     skeletalMuscleKg: metricDeltaWithFallbackFields(metrics, previous, [(m) => m.skeletal_muscle_kg, (m) => m.muscle_kg], true),

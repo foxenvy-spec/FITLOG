@@ -107,6 +107,62 @@ describe('computeBodyMetricsSummary — skeletalMuscleKg', () => {
   })
 })
 
+describe('P2-04: computeBodyMetricsSummary weight/bodyFatPct goal-direction override', () => {
+  it('weight, no override: a decrease is good (existing lower-is-good fallback, unchanged)', () => {
+    const latest = emptyMetric({ id: 'latest', measured_at: '2026-01-10', weight_kg: 68 })
+    const previous = emptyMetric({ id: 'previous', measured_at: '2026-01-05', weight_kg: 70 })
+    const summary = computeBodyMetricsSummary([latest, previous], null)
+    expect(summary.weight.isGood).toBe(true)
+  })
+
+  it('weight, lose-weight goal (weightHigherIsGood: false): a decrease is good', () => {
+    const latest = emptyMetric({ id: 'latest', measured_at: '2026-01-10', weight_kg: 68 })
+    const previous = emptyMetric({ id: 'previous', measured_at: '2026-01-05', weight_kg: 70 })
+    const summary = computeBodyMetricsSummary([latest, previous], null, null, { weightHigherIsGood: false })
+    expect(summary.weight.isGood).toBe(true)
+  })
+
+  it('weight, gain-weight goal (weightHigherIsGood: true): an increase is good, a decrease is bad', () => {
+    const latest = emptyMetric({ id: 'latest', measured_at: '2026-01-10', weight_kg: 72 })
+    const previous = emptyMetric({ id: 'previous', measured_at: '2026-01-05', weight_kg: 70 })
+    const gaining = computeBodyMetricsSummary([latest, previous], null, null, { weightHigherIsGood: true })
+    expect(gaining.weight.isGood).toBe(true)
+
+    const latestDropped = emptyMetric({ id: 'latest', measured_at: '2026-01-10', weight_kg: 68 })
+    const losing = computeBodyMetricsSummary([latestDropped, previous], null, null, { weightHigherIsGood: true })
+    expect(losing.weight.isGood).toBe(false)
+  })
+
+  it('bodyFatPct, no override: a decrease is good (existing lower-is-good fallback, unchanged)', () => {
+    const latest = emptyMetric({ id: 'latest', measured_at: '2026-01-10', body_fat_pct: 18 })
+    const previous = emptyMetric({ id: 'previous', measured_at: '2026-01-05', body_fat_pct: 20 })
+    const summary = computeBodyMetricsSummary([latest, previous], null)
+    expect(summary.bodyFatPct.isGood).toBe(true)
+  })
+
+  it('bodyFatPct, lose-body-fat goal (bodyFatHigherIsGood: false): a decrease is good', () => {
+    const latest = emptyMetric({ id: 'latest', measured_at: '2026-01-10', body_fat_pct: 18 })
+    const previous = emptyMetric({ id: 'previous', measured_at: '2026-01-05', body_fat_pct: 20 })
+    const summary = computeBodyMetricsSummary([latest, previous], null, null, { bodyFatHigherIsGood: false })
+    expect(summary.bodyFatPct.isGood).toBe(true)
+  })
+
+  it('bodyFatPct, gain-body-fat goal (bodyFatHigherIsGood: true): an increase is good', () => {
+    const latest = emptyMetric({ id: 'latest', measured_at: '2026-01-10', body_fat_pct: 22 })
+    const previous = emptyMetric({ id: 'previous', measured_at: '2026-01-05', body_fat_pct: 20 })
+    const summary = computeBodyMetricsSummary([latest, previous], null, null, { bodyFatHigherIsGood: true })
+    expect(summary.bodyFatPct.isGood).toBe(true)
+  })
+
+  it('no active weight goal (weightHigherIsGood: null from goalHigherIsGood): falls back to lower-is-good', () => {
+    const latest = emptyMetric({ id: 'latest', measured_at: '2026-01-10', weight_kg: 72 })
+    const previous = emptyMetric({ id: 'previous', measured_at: '2026-01-05', weight_kg: 70 })
+    const summary = computeBodyMetricsSummary([latest, previous], null, null, { weightHigherIsGood: null })
+    // เพิ่มขึ้นโดยไม่มี goal ที่บอกทิศทาง -> ต้องยัง "ไม่ดี" ตาม fallback เดิม ไม่ใช่ semantic ใหม่
+    expect(summary.weight.isGood).toBe(false)
+  })
+})
+
 describe('findComparisonEntry', () => {
   // เรียงใหม่ -> เก่า เสมอ (measured_at desc) ตรงกับที่ query จริงส่งมา
   const entries = [
