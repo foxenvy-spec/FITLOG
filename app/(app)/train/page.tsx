@@ -401,16 +401,28 @@ function TrainBody({
   // isCompletedToday (adhoc-aware, จาก computeTodaysAction เดียวกับ Dashboard), (3) schedule-override ไม่มี
   // label เฉพาะของตัวเอง — ใช้ label เดียวกับ (4)/(5)/(6) ตาม completion state (ตาม Dashboard's own precedent:
   // ปุ่มไม่เปลี่ยนคำอธิบายตาม override เลย มีแค่ href ที่ต่างไป) (4)-(6) ตาม totalToday/startedCount เดิม
-  const sessionHref = data.todaysAction.sessionHref
+  // Train Routing Gap (locked boundary) — currentDay เป็น state เดียวกับ Dashboard's scheduledDay เป๊ะ
+  // (ทั้งคู่ programDays.find(d => d.day_of_week === todayDayOfWeek())) แต่เดิม sessionHref ที่นี่ไม่เคย
+  // มี override แบบที่ BottomNav/Dashboard มีเลย (isRestDay/scheduledDay ? sessionHref : '/coach') ทำให้
+  // ผู้ใช้ที่วันนี้ไม่มีโปรแกรมตั้งไว้เลยโดนพาไปเข้า /session ซึ่งเป็น dead-end (ไม่มีโปรแกรมให้เริ่ม)
+  // แทนที่จะไปหน้า /coach ที่แนะนำเวิร์กเอาต์ให้ได้จริงเหมือน Dashboard/BottomNav — อยู่ที่ลำดับความสำคัญ
+  // ต่ำสุด (ตำแหน่งเดียวกับที่ totalToday === 0 เคยอยู่) ไม่แตะ activeMakeupDayId/isCompletedToday ที่ยัง
+  // priority สูงกว่าเดิมทุกประการ (6D P1-2B) — เคส currentDay มีอยู่จริงแต่ totalToday === 0 (มีวันแต่ยังไม่มี
+  // ท่า) ไม่เข้าเงื่อนไขนี้ ยังคง sessionHref/'เริ่มเทรนเลย' เดิมเป๊ะ
+  const noProgramToday = !data.currentDay
+  const sessionHref =
+    !data.activeMakeupDayId && !data.todaysAction.isCompletedToday && noProgramToday ? '/coach' : data.todaysAction.sessionHref
   const ctaLabel = data.activeMakeupDayId
     ? 'ไปต่อ'
     : data.todaysAction.isCompletedToday
       ? 'ทบทวนเวิร์กเอาต์วันนี้'
-      : totalToday === 0
-        ? 'เริ่มเทรนเลย'
-        : startedCount > 0
-          ? 'ไปต่อเวิร์กเอาต์นี้'
-          : 'เริ่มเวิร์กเอาต์นี้'
+      : noProgramToday
+        ? '🤖 ให้ MINT แนะนำ'
+        : totalToday === 0
+          ? 'เริ่มเทรนเลย'
+          : startedCount > 0
+            ? 'ไปต่อเวิร์กเอาต์นี้'
+            : 'เริ่มเวิร์กเอาต์นี้'
   const splits = muscleSplitSummary(data.todayExercises)
   const previewNames = data.todayExercises
     .slice(0, 3)
