@@ -888,7 +888,7 @@ export default function StatsPage() {
               ).map(({ label, axis }) => (
                 <div key={label} className="rounded-lg bg-surface2 px-2 py-2.5 text-center">
                   <p className="text-[12px] tracked uppercase text-muted">{label}</p>
-                  <p className="font-display text-sm text-ink mt-1">{strengthTierLabel(axis.pct) ?? '—'}</p>
+                  <p className="font-display text-sm text-ink mt-1 break-words">{strengthTierLabel(axis.pct) ?? '—'}</p>
                   <p className="text-[12px] font-mono text-muted mt-0.5">{axis.pct !== null ? `${axis.pct}%` : 'ไม่มีข้อมูล'}</p>
                 </div>
               ))}
