@@ -24,7 +24,11 @@ export interface PeriodTotals {
 export function computePeriodTotals(workouts: Workout[]): PeriodTotals {
   const strengthWorkouts = workouts.filter((w) => w.type === 'strength')
   const totalVolumeKg = strengthWorkouts.reduce((sum, w) => sum + workoutVolumeKg(w), 0)
-  const totalSets = strengthWorkouts.reduce((sum, w) => sum + (w.sets ?? 1), 0)
+  // P1-06 — เดิม ?? 1 เป็นจุดเดียวในทั้ง repo ที่ fallback sets:null/undefined เป็น 1 (แถวจริง ไม่มีเซ็ต
+  // ที่ทำจริง) ขัดกับ convention ?? 0 ของ Workout.sets ทุกจุดอื่น (lib/workoutDisplay.ts,
+  // lib/exerciseStats.ts, lib/dashboardStats.ts, lib/muscleRecommendationData.ts, lib/trends.ts,
+  // lib/progressTimeline.ts) ทำให้ totalSets ของการ์ดนี้บวกเซ็ตที่ไม่มีจริงเข้าไปทุกแถวที่ไม่มี sets
+  const totalSets = strengthWorkouts.reduce((sum, w) => sum + (w.sets ?? 0), 0)
   const workoutCount = new Set(workouts.map((w) => w.performed_at)).size
 
   const byDay = new Map<string, Workout[]>()

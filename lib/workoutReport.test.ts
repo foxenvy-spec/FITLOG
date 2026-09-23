@@ -84,6 +84,33 @@ describe('computePeriodTotals', () => {
     const result = computePeriodTotals(workouts)
     expect(result.totalDurationMin).toBe(50)
   })
+
+  describe('P1-06: totalSets null/undefined fallback', () => {
+    it('counts an explicit sets value on a strength row as-is', () => {
+      const result = computePeriodTotals([makeWorkout({ type: 'strength', sets: 5 })])
+      expect(result.totalSets).toBe(5)
+    })
+
+    it('counts an explicit sets: 0 on a strength row as 0 (not touched by ??)', () => {
+      const result = computePeriodTotals([makeWorkout({ type: 'strength', sets: 0 })])
+      expect(result.totalSets).toBe(0)
+    })
+
+    it('falls back to 0, not 1, for a strength row with sets: null', () => {
+      const result = computePeriodTotals([makeWorkout({ type: 'strength', sets: null })])
+      expect(result.totalSets).toBe(0)
+    })
+
+    it('falls back to 0, not 1, for a strength row with sets left undefined', () => {
+      const result = computePeriodTotals([makeWorkout({ type: 'strength', sets: undefined })])
+      expect(result.totalSets).toBe(0)
+    })
+
+    it('excludes a cardio row from totalSets entirely, regardless of its sets value', () => {
+      const result = computePeriodTotals([makeWorkout({ type: 'cardio', sets: null })])
+      expect(result.totalSets).toBe(0)
+    })
+  })
 })
 
 describe('computePctChange', () => {
