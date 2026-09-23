@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { goalProgressLabel, goalProgressLabelParts, estimateGoalEtaWeeks, goalHigherIsGood } from './goalProgress'
+import { goalProgressLabel, goalProgressLabelParts, estimateGoalEtaWeeks, goalHigherIsGood, isValidGoalTarget } from './goalProgress'
 
 describe('goalProgressLabel', () => {
   it('shows "เริ่มต้นเป้าหมาย" instead of "0% ถึงเป้าหมาย" when there is no progress yet', () => {
@@ -171,5 +171,39 @@ describe('goalHigherIsGood', () => {
 
   it('returns null when target equals starting (no direction to infer)', () => {
     expect(goalHigherIsGood({ target_value: 75, starting_value: 75 })).toBeNull()
+  })
+})
+
+describe('isValidGoalTarget', () => {
+  it('accepts a normal positive value', () => {
+    expect(isValidGoalTarget('10')).toBe(true)
+  })
+
+  it('rejects 0', () => {
+    expect(isValidGoalTarget('0')).toBe(false)
+  })
+
+  it('rejects a negative value', () => {
+    expect(isValidGoalTarget('-10')).toBe(false)
+  })
+
+  it('rejects an empty string', () => {
+    expect(isValidGoalTarget('')).toBe(false)
+  })
+
+  it('rejects a whitespace-only string', () => {
+    expect(isValidGoalTarget('   ')).toBe(false)
+  })
+
+  it('rejects a non-numeric value', () => {
+    expect(isValidGoalTarget('abc')).toBe(false)
+  })
+
+  it('rejects Infinity', () => {
+    expect(isValidGoalTarget('Infinity')).toBe(false)
+  })
+
+  it('accepts a small fractional value above 0', () => {
+    expect(isValidGoalTarget('0.1')).toBe(true)
   })
 })

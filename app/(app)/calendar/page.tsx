@@ -7,7 +7,7 @@ import { useWeightUnit } from '@/components/WeightUnitProvider'
 import type { WeightUnit } from '@/lib/weightUnit'
 import { computeDaySummary, computeExerciseProgress, countDayPRsBreakdown, workoutVolumeKg, PR_HISTORY_LIMIT } from '@/lib/workoutDisplay'
 import { computeCurrentStreak, STREAK_WALK_MAX_DAYS } from '@/lib/dashboardStats'
-import { goalProgressPct as sharedGoalProgressPct } from '@/lib/goalProgress'
+import { goalProgressPct as sharedGoalProgressPct, isValidGoalTarget } from '@/lib/goalProgress'
 import { bangkokMonthGrid, bangkokYearMonth, daysAgoStr, shiftMonth, todayStr } from '@/lib/weekdays'
 import ExerciseCard, { buildDisplaySets } from '@/components/ExerciseCard'
 import DaySummaryHeader from '@/components/DaySummaryHeader'
@@ -671,6 +671,14 @@ function GoalForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    // P2-05 — target_value เดิมไม่มี validation เลยสักจุด (min ของ input เฉยๆ ไม่พอ เพราะ onSubmit เรียก
+    // preventDefault() ตรงๆ อยู่แล้ว ไม่ผ่าน native constraint validation) ค่า 0/ติดลบ/ว่าง/ไม่ใช่ตัวเลข
+    // ไม่มีความหมายทางกายภาพสำหรับ goal ทั้ง 4 ประเภท — เช็คก่อนแตะ Supabase เลย เหมือน write-boundary
+    // pattern ของ saveAge/saveHeight (lib/profile.ts)
+    if (!isValidGoalTarget(targetValue)) {
+      setError('กรุณากรอกค่าเป้าหมายที่มากกว่า 0')
+      return
+    }
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -683,7 +691,9 @@ function GoalForm({
       user_id: user.id,
       title: title || goalTypeLabel(unit)[goalType],
       goal_type: goalType,
-      target_value: targetValue ? (isWeightGoalType(goalType) ? toKg(Number(targetValue)) : Number(targetValue)) : null,
+      // P2-05 — targetValue ผ่าน isValidGoalTarget() ด้านบนแล้ว การันตีว่าไม่ว่าง/เป็นตัวเลข/>0 เสมอ
+      // ณ จุดนี้ ไม่ต้อง fallback เป็น null อีกต่อไป
+      target_value: isWeightGoalType(goalType) ? toKg(Number(targetValue)) : Number(targetValue),
       starting_value: currentBaseline(),
       target_date: targetDate || null,
       status: 'active' as const,
@@ -724,6 +734,7 @@ function GoalForm({
           type="number"
           inputMode="decimal"
           step="0.1"
+          min="0.1"
           value={targetValue}
           onChange={(e) => setTargetValue(e.target.value)}
           placeholder="ค่าเป้าหมาย"

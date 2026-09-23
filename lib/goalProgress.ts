@@ -122,3 +122,14 @@ export function estimateGoalEtaWeeks(entries: GoalEtaEntry[], target: number): n
   if (weeks <= 0 || weeks > MAX_ETA_WEEKS) return null
   return weeks
 }
+
+// P2-05 — เป้าหมายทุกประเภท (weight/body_fat/strength_volume/cardio_distance) ไม่มีความหมายทางกายภาพเลย
+// ถ้า target เป็น 0/ติดลบ/ไม่ใช่ตัวเลข ใช้เกณฑ์เดียวกันทั้ง 4 ประเภท (P2-05 จำกัดแค่ lower bound เท่านั้น
+// ตั้งใจไม่ทำ upper bound แยกตาม goal_type — body-fat/weight/strength_volume/cardio_distance มี semantics
+// ต่างกันมากพอที่ upper bound ที่เหมาะสมต้องเป็นคนละ design decision) — รับ raw string ตรงจาก input
+// ควบคุม (ไม่ใช่ number ที่ parse มาแล้ว) เพื่อจับกรณีเว้นว่าง/whitespace ได้ตรงจุดเดียวกับที่ฟอร์มเรียกใช้
+export function isValidGoalTarget(raw: string): boolean {
+  if (raw.trim() === '') return false
+  const n = Number(raw)
+  return Number.isFinite(n) && n > 0
+}
