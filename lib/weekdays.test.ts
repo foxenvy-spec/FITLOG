@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { bangkokMonthGrid, bangkokYearMonth, shiftMonth } from './weekdays'
+import { describe, expect, it, afterEach, vi } from 'vitest'
+import { bangkokMonthGrid, bangkokYearMonth, shiftMonth, daysAgoStr, todayStr } from './weekdays'
 
 // 6G-P1 #1 — ทดสอบ helper ใหม่ทั้ง 3 ตัวที่ calendar/page.tsx และ WorkoutHeatmap.tsx เรียกใช้แทน
 // browser-local Date construction เดิม ทุก assertion เป็นค่า deterministic ที่รู้ล่วงหน้า (ไม่พึ่ง
@@ -66,5 +66,36 @@ describe('bangkokYearMonth', () => {
 
   it('กลางเดือนธรรมดา', () => {
     expect(bangkokYearMonth(new Date('2024-06-15T10:00:00Z'))).toEqual({ year: 2024, month0: 5 })
+  })
+})
+
+// P1-07 — daysAgoStr() ไม่เคยมี test ตรงๆ มาก่อน ทั้งที่เป็น utility ที่ทั้งแอปพึ่งพา (streak cutoff ใน
+// lib/dashboardStats.ts, และตอนนี้ 4 จุดใน health/page.tsx) — ยืนยันว่า anchor ที่ Asia/Bangkok จริง ไม่ใช่
+// timezone ของเครื่อง/runner ที่รัน test (ตัวอย่างเช่น CI ที่มักรันเป็น UTC)
+describe('daysAgoStr', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('anchors "today" to Bangkok time near a day boundary, not UTC/runner-local time', () => {
+    // 2026-07-18T17:30:00Z = 2026-07-19T00:30:00+07:00 (Bangkok) — เป็น "19 กรกฎาคม" แล้วตามเวลากรุงเทพฯ
+    // ทั้งที่ยังเป็น "18 กรกฎาคม" ตาม UTC — ถ้า daysAgoStr() ไม่ anchor ที่ Bangkok จริง N=0 จะได้ 18 แทน 19
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-18T17:30:00Z'))
+    expect(daysAgoStr(0)).toBe('2026-07-19')
+    expect(daysAgoStr(7)).toBe('2026-07-12')
+  })
+
+  it('N=0 matches todayStr() exactly', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-18T09:00:00Z'))
+    expect(daysAgoStr(0)).toBe(todayStr())
+  })
+
+  it('30 and 90 day cutoffs shift by exactly that many Bangkok calendar days', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-18T09:00:00Z')) // 2026-07-18T16:00+07:00 — ยังเป็นวันที่ 18 ที่ Bangkok
+    expect(daysAgoStr(30)).toBe('2026-06-18')
+    expect(daysAgoStr(90)).toBe('2026-04-19')
   })
 })

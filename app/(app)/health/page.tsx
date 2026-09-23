@@ -37,9 +37,9 @@ import Sparkline from '@/components/dashboard/Sparkline'
 // 6G-P1 #1 — ไฟล์นี้เคยประกาศ todayStr() ของตัวเอง (ใช้ getTimezoneOffset() ของเครื่องผู้ใช้) บัง
 // canonical todayStr() จาก lib/weekdays.ts (Asia/Bangkok เสมอ) — ผลคือค่าเริ่มต้นของฟอร์มบันทึก body
 // metric และวันที่ progress photo อาจเพี้ยนไปคนละวันกับ Bangkok ถ้าเครื่องผู้ใช้ตั้ง timezone อื่น ใช้ตัว
-// canonical แทน (ดู comment ที่จุดใช้งานทั้งสองด้านล่าง — ไม่แตะ getTimezoneOffset() จุดอื่นในไฟล์นี้ที่ใช้
-// ทำ cutoff ของกราฟแนวโน้ม ซึ่งอยู่นอกขอบเขตที่ lock ไว้รอบนี้)
-import { todayStr } from '@/lib/weekdays'
+// canonical แทน (ตอนนั้น getTimezoneOffset() อีก 4 จุดที่ใช้ทำ cutoff ของกราฟแนวโน้ม/forecast ถูกเลื่อนไว้
+// นอกขอบเขต — แก้ครบแล้วใน P1-07 ด้วย daysAgoStr() ตัวเดียวกันนี้ ดู comment ที่จุดใช้งานแต่ละจุดด้านล่าง)
+import { todayStr, daysAgoStr } from '@/lib/weekdays'
 
 function shortLabel(iso: string) {
   const d = new Date(iso + 'T00:00:00')
@@ -286,10 +286,10 @@ export default function HealthPage() {
 
   // เฉพาะข้อมูลในช่วงเวลาที่เลือกดู (7/30/90 วัน) ใช้กับกราฟแนวโน้มเท่านั้น — แท็บภาพรวมยังใช้ค่าล่าสุดจาก metrics ทั้งหมด
   const periodMetrics = useMemo(() => {
-    const since = new Date()
-    since.setDate(since.getDate() - trendPeriodDays)
-    const offset = since.getTimezoneOffset()
-    const sinceStr = new Date(since.getTime() - offset * 60000).toISOString().slice(0, 10)
+    // P1-07 — daysAgoStr() แทน getTimezoneOffset() ของเครื่อง (measured_at เป็น Bangkok calendar date
+    // เสมอ — cutoff ต้อง anchor ที่ Asia/Bangkok เหมือนกัน ไม่งั้นเครื่องที่ตั้ง timezone อื่นได้ cutoff
+    // เพี้ยนไปคนละวัน ดู comment เต็มที่ import daysAgoStr ด้านบนไฟล์)
+    const sinceStr = daysAgoStr(trendPeriodDays)
     return metrics.filter((m) => m.measured_at >= sinceStr)
   }, [metrics, trendPeriodDays])
 
@@ -796,10 +796,8 @@ export default function HealthPage() {
   // 45 วัน (เผื่อ ±15 วันรอบเป้า 30 วัน) ถือว่าไม่ใช่ "เดือนที่แล้ว" จริงๆ แล้ว ไม่โชว์ trend แทนที่จะโชว์ผิดๆ
   const oneMonthAgoIndex = useMemo(() => {
     if (!latest) return -1
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - 30)
-    const offset = cutoff.getTimezoneOffset()
-    const cutoffStr = new Date(cutoff.getTime() - offset * 60000).toISOString().slice(0, 10)
+    // P1-07 — daysAgoStr() แทน getTimezoneOffset() (ดู comment เต็มที่ import ด้านบนไฟล์)
+    const cutoffStr = daysAgoStr(30)
     const idx = metrics.findIndex((m) => m.measured_at <= cutoffStr && m.id !== latest.id)
     if (idx < 0) return -1
     const daysGap = Math.abs(
@@ -2455,10 +2453,8 @@ function OverviewTrendChart({
   const valueUnit = metricKey === 'bodyFat' ? '%' : unit
 
   const data = useMemo(() => {
-    const since = new Date()
-    since.setDate(since.getDate() - rangeDays)
-    const offset = since.getTimezoneOffset()
-    const sinceStr = new Date(since.getTime() - offset * 60000).toISOString().slice(0, 10)
+    // P1-07 — daysAgoStr() แทน getTimezoneOffset() (ดู comment เต็มที่ import ด้านบนไฟล์)
+    const sinceStr = daysAgoStr(rangeDays)
     const filtered = metrics.filter((m) => m.measured_at >= sinceStr)
     const rows =
       metricKey === 'weight'
@@ -3081,10 +3077,8 @@ function linearForecast(rows: { t: number; value: number }[], daysAhead: number)
 // การ์ดคาดการณ์ 4 สัปดาห์ข้างหน้า — คำนวณจากแนวโน้มเชิงเส้นของข้อมูล 90 วันล่าสุด (ไม่ใช่การพยากรณ์ทางการแพทย์ เป็นเพียงการประมาณจากแนวโน้มที่ผ่านมา)
 function ForecastCard({ metrics, toDisplay, unit }: { metrics: BodyMetric[]; toDisplay: (v: number) => number; unit: string }) {
   const forecast = useMemo(() => {
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - 90)
-    const offset = cutoff.getTimezoneOffset()
-    const cutoffStr = new Date(cutoff.getTime() - offset * 60000).toISOString().slice(0, 10)
+    // P1-07 — daysAgoStr() แทน getTimezoneOffset() (ดู comment เต็มที่ import ด้านบนไฟล์)
+    const cutoffStr = daysAgoStr(90)
     const within = metrics.filter((m) => m.measured_at >= cutoffStr)
 
     function rowsFor(field: 'weight_kg' | 'body_fat_pct' | 'skeletal_muscle_kg' | 'body_fat_kg', display?: boolean) {
