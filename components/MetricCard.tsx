@@ -18,6 +18,21 @@ import {
 } from '@/lib/theme'
 import Sparkline from './dashboard/Sparkline'
 
+// BodyMetricsRow → Desktop Navy-Glass migration (traced/boundary-locked with the user: material-only,
+// Desktop !compact branch only, Mobile/compact untouched, identity/delta/glow/bevel/border/shadow
+// untouched) — re-hue of CARD_GRADIENT_CSS (lib/theme.ts, gray #333539→#1C1C1E, shared app-wide token,
+// left untouched itself) for the Desktop metric-card base surface only. Same 4 stop positions/shape,
+// navy hue matching the #101D29/#0B1520 family every other Desktop Dashboard card already converged
+// on this session (Body Goal/Recovery/Training This Week/Quick Actions/MINT Coach/Weekly Sets/Muscle
+// Heatmap) — local to this file, not exported, so CARD_GRADIENT_CSS's other consumers (PremiumCard,
+// this same file's compact/Mobile branch and icon badge, both explicitly out of this round's scope)
+// are completely unaffected.
+const DESKTOP_METRIC_NAVY_GRADIENT_CSS = 'linear-gradient(180deg, #16232F 0%, #101B26 35%, #0C161F 70%, #0A1219 100%)'
+// Dark-center depth spot re-hued proportionally to the same navy family (was #2C2E33, a shade darker
+// than the old gradient's #333539 top stop — #131E28 keeps the same relative darkness against the new
+// #16232F top stop) — purely a depth cue, not identity-tied, so a direct hue swap is safe.
+const DESKTOP_METRIC_NAVY_DARK_CENTER = '#131E28'
+
 export type MetricIconImageKey = 'weight' | 'bodyFat' | 'muscle' | 'fatMass' | 'bmi' | 'visceralFat'
 
 // ไอคอนรูปจริงชุดเดียวกับหน้าสุขภาพ (health/page.tsx: STAT_ICON_IMAGES) แทนไอคอนเส้น SVG เดิม
@@ -190,9 +205,14 @@ export default function MetricCard({
           // ใหม่ที่ขอ "เหมือน 100%" มีขอบสีอิ่มตัวชัดเจนรอบการ์ดทุกใบ ไม่ใช่แค่ icon — เพิ่มความเข้มขอบ
           // ขึ้นมาก (0a/22/0a -> 40/80/40, ~25-50% alpha) ให้เห็นเป็นเส้นขอบสีจริงแทนเงาบางๆ ไม่แตะ
           // compact/มือถือเลย (ค่าเดิมทุกประการ)
+          // v54 (BodyMetricsRow → Desktop Navy-Glass, boundary-locked) — เดสก์ท็อป (!compact) เท่านั้น:
+          // พื้นเทาเย็น (CARD_GRADIENT_CSS) + dark-center (#2C2E33) เปลี่ยนเป็น
+          // DESKTOP_METRIC_NAVY_GRADIENT_CSS/DESKTOP_METRIC_NAVY_DARK_CENTER (re-hue เท่านั้น, stop
+          // positions/shape เดิมทุกจุด) — border gradient ท้ายสุด (theme.main40/80/40, identity glow)
+          // ไม่แตะเลย มือถือ (compact) ไม่แตะทั้งบรรทัด
           backgroundImage: compact
             ? `${CARD_MULTI_REFLECTION_CSS}, ${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(45% 45% at 0% 0%, ${theme.main}${coreAlpha}, transparent 70%), radial-gradient(45% 45% at 100% 100%, ${theme.second}${coreAlpha}, transparent 70%), radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), ${CARD_BEVEL_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
-            : `radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${theme.main}40, ${theme.main}80, ${theme.main}40)`,
+            : `radial-gradient(circle at 50% 55%, ${DESKTOP_METRIC_NAVY_DARK_CENTER}, transparent 60%), ${DESKTOP_METRIC_NAVY_GRADIENT_CSS}, linear-gradient(135deg, ${theme.main}40, ${theme.main}80, ${theme.main}40)`,
           backgroundOrigin: 'border-box',
           // หมายเหตุ: CARD_MULTI_REFLECTION_CSS รวม 3 เกรเดียนต์ไว้ในตัวเอง (คั่น comma) นับเป็น 3 layer
           // ไม่ใช่ 1 — clip/size/position ด้านล่างต้องมี 3 ค่าแรกตรงกับ 3 layer นั้นเสมอ (ไม่งั้น CSS จะ

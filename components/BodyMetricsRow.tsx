@@ -144,11 +144,22 @@ export default function BodyMetricsRow({
     { value: 'all', label: 'All' },
   ]
 
+  // v2 (BodyMetricsRow → Desktop Navy-Glass, boundary-locked) — เดิม loading skeleton นี้ไม่เคยเช็ค
+  // compact เลย (ใช้ markup เดียวกันทั้ง Mobile/Desktop) ให้ gate ตาม compact แทนการเปลี่ยนทับทั้งคู่ —
+  // เดสก์ท็อป (!compact) ย้ายไป navy family (bg-[#101D29]/80 border-white/10) ให้เข้าธีมเดียวกับการ์ด
+  // อื่นที่ migrate ไปแล้ว มือถือ (compact) คงค่าเดิม bg-surface/border-line ทุกประการ (ไม่อยู่ใน scope
+  // รอบนี้ — ถึงแม้ Mobile เองก็ใช้ HOME_COLORS เป็นธีมจริงอยู่แล้ว จุดนี้ก็ไม่แตะเพื่อคุม blast radius
+  // ให้แคบที่สุดตามที่ตกลงไว้)
+  const chromeSurfaceClass = compact ? 'bg-surface border-line' : 'bg-[#101D29]/80 border-white/10'
+  // pill (timeframe selector) เดิมใช้ bg-surface2 (เข้มกว่า bg-surface เล็กน้อย) คนละเฉดกับ skeleton/
+  // empty state ด้านบน — แยก class เป็นของตัวเอง กัน Mobile ได้ bg-surface ผิดเฉดไปจากเดิมเงียบๆ
+  const pillSurfaceClass = compact ? 'bg-surface2 border-line' : 'bg-[#101D29]/80 border-white/10'
+
   if (isLoading || !data) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="rounded-lg bg-surface border border-line px-4 py-4">
+          <div key={i} className={`rounded-lg border px-4 py-4 ${chromeSurfaceClass}`}>
             <Skeleton className="h-3 w-16 mb-3" />
             <Skeleton className="h-6 w-20 mb-2" />
             <Skeleton className="h-3 w-24" />
@@ -164,7 +175,7 @@ export default function BodyMetricsRow({
     return (
       <a
         href="/health"
-        className="flex items-center justify-between gap-3 rounded-lg bg-surface border border-line px-4 py-4 hover:border-accent-primary/40 transition"
+        className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-4 hover:border-accent-primary/40 transition ${chromeSurfaceClass}`}
       >
         <div>
           <p className="text-sm text-ink">ยังไม่มีข้อมูลสัดส่วนร่างกาย</p>
@@ -331,7 +342,7 @@ export default function BodyMetricsRow({
             </Link>
           )}
         </div>
-        <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
+        <div className={`shrink-0 flex items-center gap-0.5 rounded-full border p-0.5 ${pillSurfaceClass}`}>
           {TIMEFRAME_OPTIONS.map((opt) => (
             <button
               key={String(opt.value)}
