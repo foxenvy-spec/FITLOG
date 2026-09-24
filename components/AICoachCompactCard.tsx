@@ -854,16 +854,16 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
   //
   // v2 (ฟีดแบ็ก design review, screenshot จริง) "การ์ดนี้ยังดูเหมือน widget ที่ถูกวางเพิ่มทีหลัง —
   // ควรรู้สึกเป็นหนึ่งใน secondary glass surfaces ไม่ใช่ floating utility box — polish surface +
-  // hierarchy มากกว่าขยายขนาด" — ไม่เพิ่ม box-shadow แบบ elevated (Body Goal/Recovery/Training This
-  // Week ข้างเคียงตั้งใจไม่มี shadow-elevated มาตั้งแต่ v41 "การ์ดรอง ไม่ใช่ Hero" — เพิ่มจะทำให้ใบนี้
-  // เด่นผิดกลุ่มแทน) เพิ่มแค่ rim light บางๆ ขอบบน (inset, ไม่ใช่ drop shadow) — คุณสมบัติ "กระจก" เดียวกับ
-  // ที่ Quick Action tiles ข้างๆ ใช้อยู่แล้ว (inset 0 1px 0 rgba(255,255,255,.08)) ให้พื้นผิวรู้สึกเป็น
-  // วัสดุเดียวกับเพื่อนบ้านจริงๆ ไม่ใช่แค่สีตรงกันเฉยๆ
+  // hierarchy มากกว่าขยายขนาด" — ตอนนั้นไม่เพิ่ม box-shadow แบบ elevated เพราะ Body Goal/Recovery/
+  // Training This Week ข้างเคียงตั้งใจไม่มี shadow-elevated มาตั้งแต่ v41 ("การ์ดรอง ไม่ใช่ Hero")
+  // เพิ่มแค่ rim light บางๆ ขอบบนตอนนั้น
+  // v3 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว") — เทียบกับ mockup Version 3 แล้วพบว่าการ์ดกลุ่มนี้ทั้งหมด
+  // แบนกว่ามาก v41 ("ไม่มี shadow-elevated") ถูกพลิกทิศทางแล้วที่ Body Goal/Recovery/Training This
+  // Week (DashboardView.tsx) การ์ดนี้จึงต้องตามให้เข้ากลุ่มเดิม (ไม่ใช่เด่นผิดกลุ่มอีกต่อไป เพราะเพื่อนบ้าน
+  // เปลี่ยนตามแล้ว) — เพิ่ม .shadow-elevated (globals.css, ยูทิลิตี้กลางเดียวกับที่ Muscle Heatmap/Weekly
+  // Sets/Body Goal/Recovery/Training This Week ใช้) แทนการเขียน box-shadow เองแยก ไม่แตะ layout/padding
   return (
-    <div
-      className="rounded-card bg-[#101D29]/80 border border-white/10 flex flex-col gap-1.5 px-3 py-2.5"
-      style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08)' }}
-    >
+    <div className="rounded-card bg-[#101D29]/80 border border-white/10 flex flex-col gap-1.5 px-3 py-2.5 shadow-elevated">
       {children}
     </div>
   )

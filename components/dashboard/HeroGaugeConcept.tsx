@@ -104,20 +104,24 @@ function GlowLayers({ size, color }: { size: number; color: string }) {
           (tuned alpha ไว้แล้วหลายรอบ ไม่ได้คิดค่าใหม่) เอามาใช้ซ้ำกับทั้งสองวงในนี้
           ฟีดแบ็ก (P1.1, Information Hierarchy review) "ลด glow ของ Fitness Score/Recovery ประมาณ
           30-40% — ไม่ต้องลบวง/ตัวเลข แค่ลดสิ่งที่แย่งสายตา" — ลด alpha ทั้ง 3 ชั้นลง ~35% (11->0B,
-          20->15, 36->23) วงยังอยู่ครบ แค่เรืองแสงจางลง ไม่กระทบ GoalRing/DialText/ตัวเลขใดๆ */}
+          20->15, 36->23) วงยังอยู่ครบ แค่เรืองแสงจางลง ไม่กระทบ GoalRing/DialText/ตัวเลขใดๆ
+          v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว" — พลิกทิศทาง "less glow" เดิมโดยตั้งใจ หลังเทียบกับ
+          mockup Version 3 แล้วเห็นชัดว่าวงแหวนของจริงแบนกว่ามาก) — เพิ่ม alpha กลับขึ้นมาเกินค่าเดิมก่อน
+          P1.1 ด้วยซ้ำ (0B/15/23 -> 18/28/40, สูงกว่าค่าดั้งเดิม 11/20/36) ให้วงมี glow เด่นสมกับเป็นจุด
+          โฟกัสหลักของ Header ไม่กระทบ GoalRing/DialText/ตัวเลขเลย เหมือนรอบก่อน */}
       <div
         className="absolute rounded-full pointer-events-none"
-        style={{ width: size * 2.6, height: size * 2.6, background: `radial-gradient(circle, ${color}0B, transparent 60%)` }}
+        style={{ width: size * 2.6, height: size * 2.6, background: `radial-gradient(circle, ${color}18, transparent 60%)` }}
         aria-hidden="true"
       />
       <div
         className="absolute rounded-full pointer-events-none"
-        style={{ width: size * 1.7, height: size * 1.7, background: `radial-gradient(circle, ${color}15, transparent 65%)` }}
+        style={{ width: size * 1.7, height: size * 1.7, background: `radial-gradient(circle, ${color}28, transparent 65%)` }}
         aria-hidden="true"
       />
       <div
         className="absolute rounded-full pointer-events-none"
-        style={{ width: size * 1.05, height: size * 1.05, background: `radial-gradient(circle, ${color}23, transparent 55%)` }}
+        style={{ width: size * 1.05, height: size * 1.05, background: `radial-gradient(circle, ${color}40, transparent 55%)` }}
         aria-hidden="true"
       />
       {/* ขอบกระจก 2 ชั้น (glass bezel) — วงบางรอบนอกสุด 2 เส้น จำลองขอบกระจกโค้งซ้อนกัน */}

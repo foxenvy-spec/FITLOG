@@ -1202,11 +1202,15 @@ export default function DashboardPage() {
           จุดเริ่มของ Hero การ์ดเสมอ ไม่ว่าจะมี Body Goal/Onboarding banner คั่นอยู่ระหว่างกลางหรือไม่ (เป็น
           gradient นุ่มมาก ไม่ใช่รูปทรงคมชัดที่ต้องตรงตำแหน่งเป๊ะ) — โทนสีเดียวกับแสงอาทิตย์ในรูปภูเขาที่ Hero
           ใช้อยู่แล้ว (v64) ให้สองจุดรู้สึกเป็นแหล่งแสงเดียวกัน — pointer-events-none, ไม่มี z-index (paint
-          ก่อน children ปกติทุกตัวใน stacking context นี้ ตามรูปแบบเดียวกับ glow เดิมหลังชื่อ) */}
+          ก่อน children ปกติทุกตัวใน stacking context นี้ ตามรูปแบบเดียวกับ glow เดิมหลังชื่อ)
+          v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว" — พลิกทิศทาง "less glow" เดิมโดยตั้งใจ หลังเทียบกับ mockup
+          Version 3 แล้วพบว่าพื้นหลังนอกการ์ดของจริงยังดำสนิทเกินไป) — เพิ่ม alpha .05 -> .12 (~2.4x) และ
+          ขยายพื้นที่คลุม h-[560px] -> h-[820px] ให้บรรยากาศไหลต่อเนื่องลงไปถึงโซน Quick Actions/MINT Coach
+          ไม่จบแค่ Hero การ์ด ยัง paint ก่อน children ทุกตัวเหมือนเดิม */}
       <div
-        className="absolute inset-x-0 top-0 h-[560px] pointer-events-none"
+        className="absolute inset-x-0 top-0 h-[820px] pointer-events-none"
         style={{
-          backgroundImage: 'radial-gradient(ellipse 85% 55% at 35% 0%, rgba(255,150,30,.05), transparent 70%)',
+          backgroundImage: 'radial-gradient(ellipse 85% 55% at 35% 0%, rgba(255,150,30,.12), transparent 70%)',
         }}
         aria-hidden="true"
       />
@@ -1465,7 +1469,14 @@ export default function DashboardPage() {
                 padding/spacing เดิมทั้งชุดลง ไม่แตะ layout ของแต่ละบรรทัด) — py-3 -> py-2.5 (-17%), mb-2 ->
                 mb-1.5 (-25%, ใกล้เคียงช่วงที่ขอที่สุดในสเกล Tailwind ที่มี), gap-4 -> gap-3.5 (-12.5%, เผื่อ
                 กรณี viewport แคบที่ grid ตกเป็น 1 คอลัมน์ gap นี้ทำหน้าที่เป็นระยะห่างแนวตั้งระหว่าง 2 metric) */}
-            <div className="rounded-card bg-[#101D29]/80 border border-white/10 px-4 py-2.5">
+            {/* v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว" — เทียบกับ mockup Version 3 แล้วเห็นว่าการ์ดกลุ่ม
+                Level-2 (Body Goal/Recovery/Training This Week) แบนเกินไป ไม่มีมิติเหมือน mockup ที่การ์ด
+                ดูลอยเป็นชั้นจริง) — เพิ่ม .shadow-elevated (globals.css, ยูทิลิตี้ "การ์ดลอย" กลางที่
+                Muscle Heatmap/Weekly Sets ใช้อยู่แล้ว) กลับเข้าไป (การ์ดกลุ่มนี้ไม่เคยมี shadow-elevated
+                มาตั้งแต่ v41 "การ์ดรอง ไม่ใช่ Hero" — พลิกทิศทางนั้นโดยตั้งใจตามคำสั่งรอบนี้ ใช้ class
+                กลางแทนเขียน box-shadow เองซ้ำ ให้เข้าชุดเดียวกับการ์ดที่ elevated อยู่แล้วเป๊ะ) ไม่แตะ
+                padding/layout/เนื้อหาใดๆ เลย */}
+            <div className="rounded-card bg-[#101D29]/80 border border-white/10 px-4 py-2.5 shadow-elevated">
               <p className="text-[12px] tracked uppercase text-muted mb-1.5 flex items-center gap-1">
                 Body Goal
                 {/* ฟีดแบ็ก (P2, "Metric explanation") "Progress % (เช่น 37%) เพิ่ม ⓘ อธิบายว่าคำนวณจากอะไร" */}
@@ -1731,10 +1742,13 @@ export default function DashboardPage() {
         {/* v62: ฟีดแบ็ก "อยากได้ Warm Glow ด้านหลังข้อความแทน ให้ Text เป็น Hero รูปเป็น Supporting" —
             วงรีเรืองแสงอำพันนุ่มๆ วางไว้หลังโซนข้อความ (ซ้าย) โดยเฉพาะ ทะลุผ่านแผ่นกระจกกึ่งโปร่งแสง
             (rgba(18,20,26,.55) ด้านล่าง) ออกมาเป็นไอความอุ่นรอบๆ panel แทนที่จะให้ข้อความลอยอยู่บนพื้นเรียบ
-            เฉยๆ — วางไว้ก่อนเลเยอร์ ring/ข้อความ (ต่ำกว่า z-10) ให้กระจกทับอยู่ด้านบนเสมอ */}
+            เฉยๆ — วางไว้ก่อนเลเยอร์ ring/ข้อความ (ต่ำกว่า z-10) ให้กระจกทับอยู่ด้านบนเสมอ
+            v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว") — หลังตัดแผ่นกระจก (v65, ลด nested-card) ออกไปแล้ว
+            glow นี้เป็นสิ่งเดียวที่รองรับข้อความอยู่ ต้องเข้มขึ้นเพื่อชดเชย: .24 -> .38 (+58%) และขยายจาก
+            280 -> 340px ให้ครอบคลุม text panel (max-w-[230px] + padding) ได้พอดีขึ้น ไม่ตัดจบกลางคำ */}
         <div
           className="absolute pointer-events-none"
-          style={{ top: 0, bottom: 0, left: 0, width: 280, background: 'radial-gradient(ellipse 90% 80% at 20% 45%, rgba(255,170,60,.24), transparent 75%)' }}
+          style={{ top: 0, bottom: 0, left: 0, width: 340, background: 'radial-gradient(ellipse 90% 80% at 20% 45%, rgba(255,170,60,.38), transparent 75%)' }}
           aria-hidden="true"
         />
 
@@ -2251,7 +2265,10 @@ export default function DashboardPage() {
           // ช่วง 14" ที่วัดได้พอดี พร้อม margin กันขอบ) เหลือแค่เลข % (สีเดียวกับ badge เดิม ข้อมูลไม่หาย
           // แค่กระชับขึ้น) — จอ 24" (การ์ดกว้าง ~555px+) กว้างกว่า threshold มาก ไม่โดนกฎนี้เลย หน้าตาเดิม
           // 100% ตามที่ขอ ("จอ 24 นิ้วไม่ต้องแก้ไขอะไร")
-          className="rounded-card bg-[#101D29]/80 border border-white/10 overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1 recovery-card-cq"
+          // v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว") — เพิ่ม .shadow-elevated กลับเข้ามา เหตุผลเดียวกับ
+          // Body Goal ด้านบน (เทียบ mockup Version 3 แล้วการ์ดกลุ่มนี้แบนไป) พลิกทิศทาง "ไม่มี
+          // shadow-elevated" เดิม (v41) โดยตั้งใจตามคำสั่งรอบนี้ ไม่แตะ layout/hover/เนื้อหาใดๆ เลย
+          className="rounded-card bg-[#101D29]/80 border border-white/10 overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1 recovery-card-cq shadow-elevated"
           style={{ animationDelay: '240ms', containerType: 'inline-size' }}
         >
           {/* ฟีดแบ็ก "Micro-interaction — hover state ทั่วหน้า Dashboard ยังไม่สม่ำเสมอ" — การ์ดนี้เป็นลิงก์
@@ -2639,7 +2656,9 @@ export default function DashboardPage() {
       <div
         // v41: เหตุผลเดียวกับการ์ด Recovery ด้านบน — ตัด glow ระดับการ์ดออก เหลือ border-line กลาง
         // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
-        className="rounded-card bg-[#101D29]/80 border border-white/10 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
+        // v50 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว") — เพิ่ม .shadow-elevated กลับเข้ามา เหตุผลเดียวกับ
+        // Body Goal/Recovery (เทียบ mockup Version 3 แล้วแบนไป) พลิกทิศทาง v41 โดยตั้งใจ
+        className="rounded-card bg-[#101D29]/80 border border-white/10 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1 shadow-elevated"
         style={{ animationDelay: '300ms' }}
       >
         <div className="px-4 py-3">
