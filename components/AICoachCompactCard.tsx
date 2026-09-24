@@ -102,6 +102,13 @@ interface AICoachCompactCardProps {
    * พอสนับสนุนเหตุผลนี้ ไม่โชว์อะไรเพิ่ม (คงข้อความเดิมเฉยๆ ตามที่ตกลง "ไม่มีข้อมูลพอ = ไม่แสดง ดีกว่า
    * แสดง generic filler") */
   thisWeekWorkoutDays?: number | null
+  /** เป้าหมายจำนวนครั้ง/สัปดาห์ (data.weeklyWorkoutGoal ตัวเดียวกับที่การ์ด Training This Week ใช้คู่กับ
+   * thisWeekWorkoutDays อยู่แล้ว ไม่คำนวณซ้ำ) — ฟีดแบ็ก (design review 9.1/10) "AI Coach ยังซ้ำกับ Today's
+   * Workout (พูด 'DAY 3 — LEGS' ซ้ำ) ควรให้ Insight ที่ต่างออกไป เช่น Recovery % + Consistency สัปดาห์นี้
+   * (มีข้อมูลจริงรองรับ ไม่ใช่ Rest Time/Load แต่งขึ้นเองที่เคยถูกปฏิเสธไปแล้ว)" — ใช้คู่กับ
+   * thisWeekWorkoutDays แสดง "สัปดาห์นี้ฝึกแล้ว X/Y ครั้ง" เฉพาะ variant="default" (เดสก์ท็อป, ดู
+   * showsRecoveryConsistencyLead ด้านล่าง) ไม่ระบุ = ไม่โชว์บรรทัดนี้ (เผื่อจุดเรียกใช้อื่นไม่มีค่านี้ส่งมา) */
+  weeklyWorkoutGoal?: number | null
   /** true เมื่อวันนี้มี workout ที่ log ไปแล้วสำหรับแผนวันอื่น (เซสชันชดเชย — program_day_id ไม่ตรงกับ
    * scheduledDay ของวันนี้ ดู hasMakeupToday ใน DashboardView.tsx) และยังไม่ได้แตะแผนวันนี้เองเลย —
    * ฟีดแบ็ก "จบเซสชันชดเชยไปแล้ว ไม่ควรกลับมาเจอปุ่ม 'เริ่ม X' เร่งให้ฝึกอีกรอบเหมือนไม่มีอะไรเกิดขึ้น
@@ -220,6 +227,7 @@ export default function AICoachCompactCard({
   todayWorkoutTitle = null,
   nextScheduledMuscleGroup = null,
   thisWeekWorkoutDays = null,
+  weeklyWorkoutGoal = null,
   hasMakeupToday = false,
   makeupSessionActive = false,
   missedPlanCount = 0,
@@ -316,6 +324,21 @@ export default function AICoachCompactCard({
   // ทั้งความหมายและสี) เดิม ?? 0 ทำให้ readinessVerdict(0) ตีความว่า "ควรพักหรือฝึกเบามากๆ" สีแดง ทั้งที่จริง
   // คือไม่มี fatigue เลย — เก็บ displayPct ไว้เป็น number | null แล้ว branch แยกตอน render แทน
   const displayPct = resolved.recoveryPct
+  // ฟีดแบ็ก (design review 9.1/10) "AI Coach ยังซ้ำกับ Today's Workout (headline 'DAY 3 — LEGS' ซ้ำ) ควร
+  // ให้ Insight ที่ต่างออกไปแทนการย้ำ Day/กล้ามเนื้อซ้ำ — ใช้ Recovery % + Consistency สัปดาห์นี้ (มีข้อมูล
+  // จริงรองรับ) ไม่ใช่ Rest Time/Load ที่แต่งขึ้นเอง" — เงื่อนไขเดียวกับ "เป้าหมายสัปดาห์นี้" เดิมด้านล่าง
+  // เป๊ะ (เคสเดียวกัน — "Today" ปกติ ไม่ใช่ rest/makeup/mismatch/missedPlan/no-data) บวก variant==='default'
+  // เท่านั้น (เดสก์ท็อป — รีวิวรอบนี้พูดถึงภาพเดสก์ท็อปโดยตรง มือถือ (variant="flat") ไม่แตะเลย กันผลกระทบ
+  // ที่ไม่ได้ขอ)
+  const showsRecoveryConsistencyLead =
+    variant === 'default' &&
+    !isRestDay &&
+    !makeupSessionActive &&
+    !hasMakeupToday &&
+    missedPlanCount === 0 &&
+    displayPct !== null &&
+    isRecommendationForToday &&
+    !!muscleRecommendation
   // ฟีดแบ็ก (design review, P2) "Mint Coach ควรเด่นขึ้น แต่ CTA ต้องไม่มี glow (สงวนไว้ให้ Today's
   // Workout hero เป็น glow-CTA เดียวของหน้าเท่านั้น)" — เพิ่มความเด่นด้วย contrast/น้ำหนักตัวอักษรแทน:
   // border alpha ของปุ่ม secondary เดิม (40, ~25%) -> 66 (~40%) + font-semibold เฉพาะปุ่มในการ์ดนี้
@@ -532,15 +555,20 @@ export default function AICoachCompactCard({
                   showsNextProgramLine (จะมีบรรทัด startLabel ที่เจาะจงกว่าโผล่ด้านล่างอยู่แล้ว) ลด weight
                   ของ headline กลุ่มกล้ามเนื้อทั่วไปนี้ลง (18px bold -> 14px semibold, สีจาง TEXT.secondary)
                   ให้อ่านเป็น "บริบท" ไม่ใช่ "หัวเรื่องหลัก" อีกต่อไป — isRestDay/เคสอื่นทั้งหมดไม่กระทบเลย */}
+              {/* ฟีดแบ็ก (design review 9.1/10, เดสก์ท็อป) "'DAY 3 — LEGS' ซ้ำกับการ์ด Today's Workout
+                  ด้านบนตรงๆ" — เหตุผลเดียวกับ showsNextProgramLine ด้านบน (ลด headline ลงเป็น "บริบท" แทน
+                  "หัวเรื่องหลัก") แต่ใช้กับเคส "Today" ปกติด้วย (showsRecoveryConsistencyLead) เติมคำนำ
+                  "วันนี้: " ให้ยังอ่านออกว่าเป็นวันไหน (ตำแหน่งเดิม เพียงแต่ลด weight ลงและมี Recovery %/
+                  Consistency ขึ้นนำแทนที่บรรทัด verdict ด้านล่าง — ดู showsRecoveryConsistencyLead) */}
               <p
-                className={`font-display tracked uppercase truncate mt-1 ${isRestDay || (!isRestDay && showsNextProgramLine) ? 'font-semibold' : 'font-bold text-ink'}`}
+                className={`font-display tracked uppercase truncate mt-1 ${isRestDay || (!isRestDay && showsNextProgramLine) || showsRecoveryConsistencyLead ? 'font-semibold' : 'font-bold text-ink'}`}
                 style={{
-                  fontSize: isRestDay ? 13 : showsNextProgramLine ? 14 : 18,
+                  fontSize: isRestDay ? 13 : showsNextProgramLine || showsRecoveryConsistencyLead ? 14 : 18,
                   lineHeight: 1.15,
-                  color: isRestDay || showsNextProgramLine ? TEXT.secondary : undefined,
+                  color: isRestDay || showsNextProgramLine || showsRecoveryConsistencyLead ? TEXT.secondary : undefined,
                 }}
               >
-                {isRestDay ? 'Recovery Day' : displayRegion}
+                {isRestDay ? 'Recovery Day' : showsRecoveryConsistencyLead ? `วันนี้: ${displayRegion}` : displayRegion}
               </p>
               {/* ฟีดแบ็ก "อยากลดข้อความลงประมาณ 20-30% — Coach ควรพูดสั้นๆ เหมือนคนพูด ไม่ใช่ย่อหน้ายาว" —
                   เดิม subtitle ("Today • Lower • Hamstring") กับ verdict ("🟢 เหมาะสำหรับฝึกวันนี้") เป็น
@@ -633,6 +661,16 @@ export default function AICoachCompactCard({
                     </>
                   )}
                 </p>
+              ) : showsRecoveryConsistencyLead ? (
+                // ฟีดแบ็ก (design review 9.1/10, เดสก์ท็อป) "แม้ไอคอนดีขึ้น แต่ข้อความยังเป็น 'DAY 3 — LEGS'
+                // ซึ่งซ้ำกับการ์ด Workout ด้านบน — ควรให้ Insight ที่ไม่มีในการ์ดหลัก เช่น Recovery %" —
+                // แทนที่ readinessVerdict (ประโยคตีความ เช่น "เหมาะสำหรับฝึกวันนี้") ด้วยตัวเลข Recovery %
+                // + tier ดิบๆ ("Recovery 95% — Excellent") ตรงๆ — displayPct/recoveryTier ตัวเดียวกับที่
+                // readinessVerdict ใช้คำนวณอยู่แล้ว (ข้อมูลจริง ไม่ใช่ค่าใหม่) แค่เปลี่ยนวิธีนำเสนอให้เป็น
+                // ตัวเลขที่ต่างจาก headline ด้านบน (ซึ่งตอนนี้ลด weight ลงเป็น "วันนี้: ..." แล้ว)
+                <p className="truncate mt-1 font-semibold" style={{ fontSize: 13, color: recoveryTier(displayPct).color }}>
+                  Recovery {displayPct}% — {recoveryTier(displayPct).labelEn}
+                </p>
               ) : (
                 <p className="truncate mt-1 font-medium" style={{ fontSize: 11, color: recoveryTier(displayPct).color }}>
                   {readinessVerdict(displayPct).emoji} {readinessVerdict(displayPct).text}
@@ -652,14 +690,28 @@ export default function AICoachCompactCard({
                   (setsCurrent/setsTarget/setsRemaining) ตัวเดียวกับที่การ์ด Recovery/Today's Workout เดิม
                   เคยใช้ (ข้อมูลจริง ไม่ใช่คำแนะนำที่เดาขึ้นมาเอง เช่น "พัก 90-120 วินาที" ที่ไม่มีระบบไหน
                   คำนวณจริง) — ให้การ์ดนี้มีข้อมูลที่ Today's Workout ไม่พูดแล้ว (ตัดกล่อง "ทำไมวันนี้?" ออกจาก
-                  Hero ไปก่อนหน้านี้) แทนที่จะย้ำ Day/กล้ามเนื้อซ้ำเฉยๆ — คำ/สีเดียวกับที่การ์ดเดิมเคยใช้ */}
-              {!isRestDay && !makeupSessionActive && !hasMakeupToday && missedPlanCount === 0 && displayPct !== null && isRecommendationForToday && muscleRecommendation && muscleRecommendation.setsTarget > 0 && (
-                <p
-                  className="truncate mt-1"
-                  style={{ fontSize: 11, color: muscleRecommendation.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}
-                >
-                  {muscleRecommendation.setsRemaining > 0 ? '🎯' : '✅'} เป้าหมายสัปดาห์นี้ {muscleRecommendation.setsCurrent}/{muscleRecommendation.setsTarget} เซ็ต
-                </p>
+                  Hero ไปก่อนหน้านี้) แทนที่จะย้ำ Day/กล้ามเนื้อซ้ำเฉยๆ — คำ/สีเดียวกับที่การ์ดเดิมเคยใช้
+                  v2 (ฟีดแบ็ก 9.1/10) "ใช้ AI Coach Insight จาก Recovery + Consistency ที่มีข้อมูลจริง" — เมื่อ
+                  showsRecoveryConsistencyLead (บรรทัด verdict ด้านบนกลายเป็น Recovery % ไปแล้ว) สลับบรรทัดนี้
+                  จาก "เป้าหมายสัปดาห์นี้ X/Y เซ็ต" (ต่อกลุ่มกล้ามเนื้อ) เป็น "สัปดาห์นี้ฝึกแล้ว X/Y ครั้ง"
+                  (thisWeekWorkoutDays/weeklyWorkoutGoal ตัวเดียวกับการ์ด Training This Week ไม่คำนวณซ้ำ) —
+                  ทั้งคู่เป็นข้อมูลจริง ไม่เพิ่มบรรทัดใหม่ (คงจำนวนบรรทัดเดิม กันการ์ดสูงขึ้น) เคสอื่นทั้งหมด
+                  (Next session, mobile variant="flat") ยังเห็น sets-target เดิมทุกประการ */}
+              {showsRecoveryConsistencyLead ? (
+                thisWeekWorkoutDays != null && weeklyWorkoutGoal != null && weeklyWorkoutGoal > 0 && (
+                  <p className="truncate mt-1" style={{ fontSize: 11, color: TEXT.body }}>
+                    📅 สัปดาห์นี้ฝึกแล้ว {thisWeekWorkoutDays}/{weeklyWorkoutGoal} ครั้ง
+                  </p>
+                )
+              ) : (
+                !isRestDay && !makeupSessionActive && !hasMakeupToday && missedPlanCount === 0 && displayPct !== null && isRecommendationForToday && muscleRecommendation && muscleRecommendation.setsTarget > 0 && (
+                  <p
+                    className="truncate mt-1"
+                    style={{ fontSize: 11, color: muscleRecommendation.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}
+                  >
+                    {muscleRecommendation.setsRemaining > 0 ? '🎯' : '✅'} เป้าหมายสัปดาห์นี้ {muscleRecommendation.setsCurrent}/{muscleRecommendation.setsTarget} เซ็ต
+                  </p>
+                )
               )}
 
               {/* Dashboard UX polish (Item 1) — บอกตรงๆ ว่าปุ่ม "เริ่ม {startLabel}" ด้านล่างจะพาไปโปรแกรม
@@ -801,8 +853,10 @@ export default function AICoachCompactCard({
             // 'เริ่มเทรนเลย'/'START DAY 3'/'เริ่มโปรแกรม' — ควรใช้คำเดียวกันทั่วระบบ" — ปุ่มนี้เป็นภาษาอังกฤษ
             // จุดเดียวในบรรดาปุ่ม CTA ของ Dashboard ทั้งหมด (Today's Workout ใช้ 'เริ่มเทรนเลย'/'ไปต่อ' เป็น
             // ภาษาไทยหมด) เปลี่ยนเป็นภาษาไทยให้ตรงกัน ไม่แตะ href/logic ใดๆ
+            // v3 (ฟีดแบ็ก "ปุ่มเขียนว่า 'ไปต่อ' ยังไม่บอกว่ากดแล้วจะเกิดอะไร") — เปลี่ยนเป็น 'ดูคำแนะนำ' ให้
+            // สื่อชัดว่ากดแล้วไปดูคำแนะนำ/รายละเอียดของ Coach ไม่ใช่คำกำกวมทั่วไป ไม่แตะ href/logic
             <Button as={Link} href={todaySessionHref} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
-              ไปต่อ →
+              ดูคำแนะนำ →
             </Button>
           ) : templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />

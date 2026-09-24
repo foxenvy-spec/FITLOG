@@ -1555,10 +1555,12 @@ export default function DashboardPage() {
                     </div>
                     {/* เหตุผลเดียวกับบล็อกน้ำหนักด้านบน — แยก headline/detail เหมือนกัน สีตามแท่ง progress
                         ของบล็อกนี้เอง (moss ไม่ใช่ amber)
-                        v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย") — เหตุผลเดียวกับน้ำหนักด้านบน คืน remainingText กลับมา */}
+                        v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย") — เหตุผลเดียวกับน้ำหนักด้านบน คืน remainingText กลับมา
+                        v3 (ฟีดแบ็ก "เหลืออีก 3.2% กำกวมกับค่า Body Fat ปัจจุบัน ควรสื่อว่าเป็นหน่วยความคืบหน้า
+                        ไม่ใช่เปอร์เซ็นต์ไขมัน") — เปลี่ยนหน่วยจาก "%" เป็น "จุดเปอร์เซ็นต์" ตัวเลขเดิมไม่เปลี่ยน */}
                     <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
                       {(() => {
-                        const remainingText = `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
+                        const remainingText = `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)} จุดเปอร์เซ็นต์`
                         const parts = goalProgressLabelParts(bodyFatPct, remainingText)
                         return (
                           <>
@@ -1599,7 +1601,11 @@ export default function DashboardPage() {
           items-stretch ให้ทุกการ์ดในแถวเดียวกันสูงเท่ากันจริง (Recovery/Training This Week เพิ่ม h-full
           flex ด้านในให้เนื้อหากระจายตัวเต็มความสูงแทนที่จะเหลือพื้นที่ว่างเงียบๆ ด้านล่าง — ดู comment ที่
           การ์ดนั้นๆ) ไม่กระทบ Hero (สูงสุดอยู่แล้ว ไม่มีอะไรให้ยืดเพิ่ม) */}
-      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-stretch">
+      {/* v2 (ฟีดแบ็ก 9.1/10) "พื้นที่ดำด้านล่างใหญ่เกินไป" — แยก gap-3 (12px ทั้งแนวตั้ง/นอน) เป็น
+          gap-x-3/gap-y-4 (16px แนวตั้งระหว่างแถว Hero row กับ Quick Actions/AI Coach row เท่านั้น) ให้
+          เนื้อหารวมสูงขึ้นอีกนิดแบบมี "breathing room" จริง ไม่ใช่การ์ดว่างเปล่า — gap แนวนอนระหว่างคอลัมน์
+          (ที่ปรับสัดส่วน 6+6/col-start ไว้ละเอียดแล้วหลายรอบ) ไม่แตะเลย ยังเป็น 12px เท่าเดิมทุกจุด */}
+      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-x-3 lg:gap-y-4 lg:items-stretch">
       {/* left column (lg+): today's workout, quick start, muscle heatmap. */}
       <div className="space-y-6 lg:space-y-0 lg:contents">
       {/* card 1: hero — today's workout. Sets the visual tone: everything else below is
@@ -1632,7 +1638,11 @@ export default function DashboardPage() {
           // "เพิ่มความสูงจาก ~250px เป็น 300-340px ให้ภาพมีพื้นที่หายใจมากขึ้น" — การ์ดนี้ไม่เคยมี minHeight
           // มาก่อน (สูงตามเนื้อหาล้วนๆ) ตั้งค่ากลางช่วงที่ขอ (320px) เป็นพื้นชั้นต่ำสุด เนื้อหาที่สูงกว่านี้อยู่
           // แล้ว (เช่น State ที่มี Weekly context ยาว) ยังขยายตามปกติ ไม่ถูกบังคับให้เตี้ยลง
-          minHeight: 320,
+          // v2 (ฟีดแบ็ก 9.1/10) "พื้นที่ดำด้านล่างใหญ่เกินไป — ขยายแถว Workout/Recovery/Training ลงเล็กน้อย
+          // (ไม่เพิ่มการ์ดใหม่)" — ขยับขึ้นไปที่ขอบบนของช่วงที่เคย lock ไว้แล้ว (320 -> 340, ยังอยู่ในช่วง
+          // 300-340 เดิมเป๊ะ ไม่ใช่ค่าใหม่ที่เดาขึ้นมา) Recovery/Training This Week stretch ตาม (items-stretch)
+          // อยู่แล้วเลยได้ความสูงเพิ่มไปด้วยโดยไม่ต้องแตะการ์ดนั้นตรงๆ
+          minHeight: 340,
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
         onMouseMove={handleHeroMouseMove}
@@ -2913,6 +2923,12 @@ export default function DashboardPage() {
             nextScheduledMuscleGroup={nextScheduledMuscleGroup}
             hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
             makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
+            /* ฟีดแบ็ก (design review 9.1/10) "AI Coach ควรให้ Insight จาก Recovery + Consistency ที่มี
+               ข้อมูลจริง แทนการย้ำ Day/กล้ามเนื้อซ้ำกับ Today's Workout" — ส่ง thisWeekWorkoutDays/
+               weeklyWorkoutGoal ตัวเดียวกับที่การ์ด Training This Week ใช้อยู่แล้ว (บรรทัด ~2704/2708) เข้า
+               ไปให้ AICoachCompactCard.tsx ใช้ประกอบ showsRecoveryConsistencyLead (ดู comment ที่นั่น) */
+            thisWeekWorkoutDays={data.thisWeekWorkoutDays}
+            weeklyWorkoutGoal={data.weeklyWorkoutGoal}
           />
         </div>
       )}
