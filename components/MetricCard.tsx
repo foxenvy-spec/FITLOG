@@ -185,9 +185,14 @@ export default function MetricCard({
           // เหลือแค่พื้นเข้ม + เส้นขอบไล่สีบางๆ (linear-gradient 135deg ท้ายสุด ยังอยู่ — เป็น "ขอบ" ไม่ใช่
           // "แสงฟุ้ง") — glow ยกไปอยู่ที่ไอคอนสี่เหลี่ยมมุมโค้งด้านล่างแทน (ดู boxShadow ของ span ไอคอน)
           // มือถือ (compact) ไม่แตะ เพราะ tune มาแล้วหลายสิบรอบแยกต่างหาก ไม่ใช่จุดที่ฟีดแบ็กรอบนี้พูดถึง
+          // v53 (Desktop mockup match, "colored glow border") — เดสก์ท็อป (!compact) เดิม border
+          // เป็นแค่ไล่สีบางมาก (0a/22/0a, ~4-13% alpha) ตาม v48 ("Glow ย้ายจาก Card ไป Icon") — mockup
+          // ใหม่ที่ขอ "เหมือน 100%" มีขอบสีอิ่มตัวชัดเจนรอบการ์ดทุกใบ ไม่ใช่แค่ icon — เพิ่มความเข้มขอบ
+          // ขึ้นมาก (0a/22/0a -> 40/80/40, ~25-50% alpha) ให้เห็นเป็นเส้นขอบสีจริงแทนเงาบางๆ ไม่แตะ
+          // compact/มือถือเลย (ค่าเดิมทุกประการ)
           backgroundImage: compact
             ? `${CARD_MULTI_REFLECTION_CSS}, ${CARD_CURVATURE_HIGHLIGHT_CSS}, ${CARD_REFLECTION_CSS}, radial-gradient(45% 45% at 0% 0%, ${theme.main}${coreAlpha}, transparent 70%), radial-gradient(45% 45% at 100% 100%, ${theme.second}${coreAlpha}, transparent 70%), radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, radial-gradient(120% 120% at 0% 0%, ${theme.main}${glowAlpha}, transparent 55%), radial-gradient(120% 120% at 100% 100%, ${theme.second}${glowAlpha}, transparent 55%), ${CARD_BEVEL_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`
-            : `radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${theme.main}0a, ${theme.main}22, ${theme.main}0a)`,
+            : `radial-gradient(circle at 50% 55%, #2C2E33, transparent 60%), ${CARD_GRADIENT_CSS}, linear-gradient(135deg, ${theme.main}40, ${theme.main}80, ${theme.main}40)`,
           backgroundOrigin: 'border-box',
           // หมายเหตุ: CARD_MULTI_REFLECTION_CSS รวม 3 เกรเดียนต์ไว้ในตัวเอง (คั่น comma) นับเป็น 3 layer
           // ไม่ใช่ 1 — clip/size/position ด้านล่างต้องมี 3 ค่าแรกตรงกับ 3 layer นั้นเสมอ (ไม่งั้น CSS จะ
@@ -250,7 +255,10 @@ export default function MetricCard({
           // orange accent .035 alpha ซึ่งเป็น "accent" ชั้นที่ 8 ที่ไม่มีใครสังเกตเห็นจริงอยู่แล้ว) เหลือ
           // 6 เลเยอร์ (ambient/float/inset highlight/inset shadow/glow มุม x2) — ยังคงวัสดุไทเทเนียมไว้
           // ครบ ไม่ใช่ตัดทิ้งทั้งระบบ แค่ตัดชั้นส่วนเกินที่ไม่มีผลต่อการรับรู้จริง
-          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.088)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.55), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}` : ''}`,
+          // v53 (Desktop mockup match) — v48 ตัด corner glow ของการ์ดเดสก์ท็อปออกไปทั้งคู่ (ย้ายไปอยู่ที่
+          // ไอคอนแทน) ตาม mockup ใหม่ที่ต้องการ glow รอบการ์ดชัดเจน เพิ่มกลับมาแบบเบากว่ามือถือ (soft
+          // ambient glow รอบทั้งใบ ไม่ใช่ offset ชี้มุมแบบมือถือ) ซ้อนต่อจากเงาเดิม ไม่แตะ compact/มือถือ
+          boxShadow: `${compact ? `${CARD_AMBIENT_SHADOW_CSS}, ${CARD_FLOAT_SHADOW}` : '0 2px 6px rgba(0,0,0,.35), 0 8px 24px 2px rgba(0,0,0,.4)'}, ${compact ? 'inset 1px 1px 0 0 rgba(255,255,255,.088)' : 'inset 0 1px rgba(255,255,255,.05)'}${compact ? `, inset 0 -5.3px 13.2px rgba(0,0,0,.55), -6px -6px 20px ${theme.main}${glowAlpha}, 6px 6px 20px ${theme.second}${glowAlpha}` : `, 0 0 24px 1px ${theme.main}40`}`,
         }}
       >
         {/* เกรนผิวโลหะบางๆ (Dark Titanium เดียวกับหน้าเทมเพลต/PremiumCard)
