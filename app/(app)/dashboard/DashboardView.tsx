@@ -1163,12 +1163,12 @@ export default function DashboardPage() {
         แลกกับการที่ต้องเลื่อนกลับขึ้นบนสุดก่อนถึงจะกดสลับได้ถ้าเลื่อนลงไปอ่านเนื้อหาลึกๆ แล้ว — ยังปัด/ลาก
         สลับหน้าได้ตรงๆ จากจุดไหนก็ได้เหมือนเดิม (ไม่ต้องพึ่งปุ่มนี้เสมอไป) */}
     <div className="flex justify-center pb-3">
-      <div className="inline-flex items-center gap-1 rounded-full border border-line p-1">
+      <div className="inline-flex items-center gap-1 rounded-full border border-white/10 p-1">
         <button
           type="button"
           onClick={() => scrollDetailToIndex(0)}
           aria-pressed={detailPageIndex === 0}
-          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 0 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 0 ? 'bg-[#101D29] text-ink' : 'text-muted hover:text-ink'}`}
         >
           1 · ภาพรวม
         </button>
@@ -1176,7 +1176,7 @@ export default function DashboardPage() {
           type="button"
           onClick={() => scrollDetailToIndex(1)}
           aria-pressed={detailPageIndex === 1}
-          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 1 ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink'}`}
+          className={`text-[12px] font-display tracked uppercase rounded-full px-4 py-1.5 transition ${detailPageIndex === 1 ? 'bg-[#101D29] text-ink' : 'text-muted hover:text-ink'}`}
         >
           2 · รายละเอียด
         </button>
@@ -1434,7 +1434,7 @@ export default function DashboardPage() {
                 padding/spacing เดิมทั้งชุดลง ไม่แตะ layout ของแต่ละบรรทัด) — py-3 -> py-2.5 (-17%), mb-2 ->
                 mb-1.5 (-25%, ใกล้เคียงช่วงที่ขอที่สุดในสเกล Tailwind ที่มี), gap-4 -> gap-3.5 (-12.5%, เผื่อ
                 กรณี viewport แคบที่ grid ตกเป็น 1 คอลัมน์ gap นี้ทำหน้าที่เป็นระยะห่างแนวตั้งระหว่าง 2 metric) */}
-            <div className="rounded-card bg-surface2/40 border border-line px-4 py-2.5">
+            <div className="rounded-card bg-[#101D29]/80 border border-white/10 px-4 py-2.5">
               <p className="text-[12px] tracked uppercase text-muted mb-1.5 flex items-center gap-1">
                 Body Goal
                 {/* ฟีดแบ็ก (P2, "Metric explanation") "Progress % (เช่น 37%) เพิ่ม ⓘ อธิบายว่าคำนวณจากอะไร" */}
@@ -1623,7 +1623,7 @@ export default function DashboardPage() {
             แต่เหมือนถ่ายในสตูดิโอ" — เพิ่มเลเยอร์ specular flare (เส้นทแยงบางๆ ไล่ขาว/ครีมอ่อนๆ mixBlendMode:
             overlay จำลองแสงสะท้อนผิวโลหะแบบสตูดิโอ ไม่ใช่แสง flare แบบเกม) วางทับรูปแต่ใต้ overlay มืด/glow
             เดิม */}
-        <div className="absolute inset-0 bg-surface overflow-hidden">
+        <div className="absolute inset-0 bg-[#0B1520] overflow-hidden">
           <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box overflow-hidden">
             <div className="absolute inset-0" style={{ transform: 'scale(0.92)', transformOrigin: '60% 42%' }}>
               <Image
@@ -2317,14 +2317,14 @@ export default function DashboardPage() {
           // ช่วง 14" ที่วัดได้พอดี พร้อม margin กันขอบ) เหลือแค่เลข % (สีเดียวกับ badge เดิม ข้อมูลไม่หาย
           // แค่กระชับขึ้น) — จอ 24" (การ์ดกว้าง ~555px+) กว้างกว่า threshold มาก ไม่โดนกฎนี้เลย หน้าตาเดิม
           // 100% ตามที่ขอ ("จอ 24 นิ้วไม่ต้องแก้ไขอะไร")
-          className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1 recovery-card-cq"
+          className="rounded-card bg-[#101D29]/80 border border-white/10 overflow-hidden animate-rise lg:col-start-6 lg:col-span-4 lg:row-start-1 recovery-card-cq"
           style={{ animationDelay: '240ms', containerType: 'inline-size' }}
         >
           {/* ฟีดแบ็ก "Micro-interaction — hover state ทั่วหน้า Dashboard ยังไม่สม่ำเสมอ" — การ์ดนี้เป็นลิงก์
               เต็มใบ (คลิกได้ทั้งการ์ด) แต่เดิมมีแค่ active: (ตอนกด) ไม่มี hover: เลย บนจอคอมที่ใช้เมาส์ ผู้ใช้
               จะไม่เห็นสัญญาณใดๆ ว่าการ์ดนี้กดได้จนกว่าจะคลิกไปแล้ว — เพิ่ม hover เบากว่า active (60% ของสี
               เดียวกัน) ให้มีสัญญาณ affordance ก่อนคลิกจริง */}
-          <Link href="/recovery" className="block px-4 py-3 hover:bg-surface2/60 active:bg-surface2 transition">
+          <Link href="/recovery" className="block px-4 py-3 hover:bg-[#101D29]/60 active:bg-[#101D29] transition">
             <div className="flex items-center justify-between mb-2">
               <p className="text-[12px] tracked uppercase text-muted">Recovery</p>
             </div>
@@ -2705,7 +2705,7 @@ export default function DashboardPage() {
       <div
         // v41: เหตุผลเดียวกับการ์ด Recovery ด้านบน — ตัด glow ระดับการ์ดออก เหลือ border-line กลาง
         // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
-        className="rounded-card bg-surface2/40 border border-line overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
+        className="rounded-card bg-[#101D29]/80 border border-white/10 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1"
         style={{ animationDelay: '300ms' }}
       >
         <div className="px-4 py-3">
@@ -3052,7 +3052,7 @@ export default function DashboardPage() {
               )
             return (
               <div
-                className="rounded-card border border-line bg-surface2/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap transition-shadow"
+                className="rounded-card border border-white/10 bg-[#101D29]/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap transition-shadow"
                 style={
                   isMatched
                     ? { borderColor: heatmapInsight.color, boxShadow: `0 0 0 1px ${heatmapInsight.color}, 0 0 16px ${withAlpha(heatmapInsight.color, '33')}` }
