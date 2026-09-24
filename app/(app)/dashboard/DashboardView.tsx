@@ -1628,6 +1628,11 @@ export default function DashboardPage() {
           // ฟีดแบ็ก (design review, micro-polish หลังปิด P1) — ลดต่ออีก ~13% (1B/27dec -> 18/24dec,
           // 47/71dec -> 3E/62dec) ต่อเนื่องจาก v42 ตามเหตุผลเดียวกับ border ด้านบน
           boxShadow: `0 0 8px ${withAlpha(COLORS.amber, '18')}, 0 0 1px ${withAlpha(COLORS.amber, '3E')}`,
+          // v66 (ฟีดแบ็ก "Gradient Wash เป็นพื้นหลัก + Photo Accent จุดเดียวที่ Hero" — locked direction)
+          // "เพิ่มความสูงจาก ~250px เป็น 300-340px ให้ภาพมีพื้นที่หายใจมากขึ้น" — การ์ดนี้ไม่เคยมี minHeight
+          // มาก่อน (สูงตามเนื้อหาล้วนๆ) ตั้งค่ากลางช่วงที่ขอ (320px) เป็นพื้นชั้นต่ำสุด เนื้อหาที่สูงกว่านี้อยู่
+          // แล้ว (เช่น State ที่มี Weekly context ยาว) ยังขยายตามปกติ ไม่ถูกบังคับให้เตี้ยลง
+          minHeight: 320,
           ...(totals.entryCount === 0 ? undefined : { animationDelay: '60ms' }),
         }}
         onMouseMove={handleHeroMouseMove}
@@ -1677,11 +1682,11 @@ export default function DashboardPage() {
             overlay จำลองแสงสะท้อนผิวโลหะแบบสตูดิโอ ไม่ใช่แสง flare แบบเกม) วางทับรูปแต่ใต้ overlay มืด/glow
             เดิม */}
         <div className="absolute inset-0 bg-[#0B1520] overflow-hidden">
-          {/* v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external review "ซ้าย 42% ข้อมูล / ขวา 58% ภาพ") — สัดส่วนรูป
-              66.7% (w-2/3) -> 60% (w-3/5, ใกล้เคียง 58% ที่ขอที่สุดในสเกล fraction ของ Tailwind) ให้โซน
-              ข้อความมีพื้นที่หายใจมากขึ้นโดยไม่ต้องเปลี่ยนโครงสร้าง — แก้พร้อมกันทั้ง 3 จุด (รูป/gradient/
-              scrim ด้านล่าง) ให้ยังคง align กันสนิทเหมือนเดิม */}
-          <div className="absolute inset-y-0 right-0 w-full sm:w-3/5 hero-image-box overflow-hidden">
+          {/* v2 (ฟีดแบ็ก "ซ้าย 42% ข้อมูล / ขวา 58% ภาพ") — สัดส่วนรูป 66.7% (w-2/3) -> 60% (w-3/5)
+              v3 (ฟีดแบ็ก "Gradient Wash เป็นพื้นหลัก + Photo Accent จุดเดียวที่ Hero" — locked direction)
+              "ให้ภาพกินพื้นที่ด้านขวาประมาณ 45-50%" — ปรับต่ออีกขั้น 60% -> 50% (w-1/2, กลาง-บนสุดของช่วง
+              ที่ขอ) ให้ฝั่งข้อมูลกว้างขึ้นอีก ยังคง align กันสนิททั้ง 3 จุด (รูป/gradient/scrim) เหมือนเดิม */}
+          <div className="absolute inset-y-0 right-0 w-full sm:w-1/2 hero-image-box overflow-hidden">
             <div className="absolute inset-0">
               {/* v64 (mockup match, "Version 3" warm-sunset direction) — สลับจากรูปดัมเบล (product shot)
                   เป็น home-header-hero.png (ภูเขา sunset อุ่น) ไฟล์เดียวกับที่ Mobile Home ใช้จริงอยู่แล้ว
@@ -1710,7 +1715,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div
-            className="absolute inset-y-0 right-0 w-full sm:w-3/5 hero-gradient-box"
+            className="absolute inset-y-0 right-0 w-full sm:w-1/2 hero-gradient-box"
             style={{
               // v64 (mockup match) — เดิมมี radial "light on dumbbell" เจาะจงตำแหน่งหัวดัมเบล เอาออกเพราะ
               // ภาพภูเขาเองมีจุดแสงอาทิตย์อุ่นอยู่แล้วในเนื้อภาพจริง ไม่ต้องจำลองแสงตกกระทบซ้อนทับ — เหลือ
@@ -1732,7 +1737,7 @@ export default function DashboardPage() {
               ตัวนี้ซ้อนอยู่ข้างหน้า" — ระบุ scrim นี้เจาะจงว่าเป็นสาเหตุหลัก ลด alpha ลง .50 -> .36 (-28%)
               ยังคงเจตนาเดิม (ลด visual weight ตอนเนื้อหาน้อย) ไว้ แค่ไม่ให้รูปจมหายไปทั้งหมด */}
           {!scheduledDay && !todayCompleted && (
-            <div className="absolute inset-y-0 right-0 w-full sm:w-3/5 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.36)' }} />
+            <div className="absolute inset-y-0 right-0 w-full sm:w-1/2 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.36)' }} />
           )}
           {/* v64 (mockup match) — ตัด particle/dust/spark cluster เดิม (12 จุด) ออกทั้งหมด: จำลองฝุ่น
               ชอล์ก/ประกายโลหะรอบดัมเบลจริงๆ ไม่มีความหมายบนภาพภูเขา (ไม่ใช่แค่ "ดูแปลก" แต่ผิดบริบทภาพ
