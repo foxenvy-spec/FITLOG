@@ -17,6 +17,14 @@ import {
 } from '@/lib/theme'
 import { DS } from '@/lib/designSystem'
 
+// ฟีดแบ็ก (screenshot จริง) "พื้น sidebar ยังลายๆ ไม่เข้ากับหน้า Dashboard" — sidebar ยังไม่เคยผ่าน
+// migration navy-glass เลยตลอด session นี้ (ยังใช้ CARD_GRADIENT_CSS เทาไทเทเนียมเดิม + TITANIUM_MESH_CSS
+// เต็ม opacity ซึ่งคือลายตาราง CNC ที่เห็นเป็น "ลายๆ" ตรงๆ) — ใช้ navy family เดียวกับที่ Desktop Dashboard
+// ทั้งหน้าย้ายไปแล้ว (#16232F/#101B26/#0C161F/#0A1219 เดียวกับ MetricCard.tsx's
+// DESKTOP_METRIC_NAVY_GRADIENT_CSS) local ในไฟล์นี้เพื่อไม่ต้องแตะ CARD_GRADIENT_CSS ที่เป็น token กลาง
+// ใช้ร่วมกับ component อื่นทั่วแอป (BottomNav/avatar ท้าย sidebar ด้านล่าง ยังใช้ค่าเดิมไม่กระทบ)
+const SIDEBAR_NAVY_GRADIENT_CSS = 'linear-gradient(180deg, #16232F 0%, #101B26 35%, #0C161F 70%, #0A1219 100%)'
+
 // Desktop-only (lg+) sidebar — mirrors BottomNav's role on mobile/tablet but with
 // room for the full nav set instead of just the 4 tabs that fit a thumb-reachable
 // bottom bar. Kept as a separate component (rather than branching BottomNav) since
@@ -102,14 +110,17 @@ export default function SidebarNav() {
       // จึงขยับตามความกว้างจริงของแผ่นนี้เองโดยอัตโนมัติ ไม่ต้องคำนวณ margin แยก
       className="hidden lg:flex lg:flex-col lg:w-16 xl:w-44 lg:shrink-0 lg:h-screen lg:sticky lg:top-0 relative"
       style={{
-        backgroundImage: [CARD_MULTI_REFLECTION_CSS, CARD_REFLECTION_CSS, CARD_GRADIENT_CSS].join(', '),
+        backgroundImage: [CARD_MULTI_REFLECTION_CSS, CARD_REFLECTION_CSS, SIDEBAR_NAVY_GRADIENT_CSS].join(', '),
         boxShadow: '10px 0 32px -16px rgba(0,0,0,.55)',
       }}
     >
       {/* เกรนผิวโลหะ + mesh ไขว้ CNC ชั้นเดียวกับ BottomNav/PremiumCard — ให้แผ่น sidebar "จับต้องได้"
-          เป็นวัสดุจริง แทนสีทึบเรียบๆ เหมือนเดิม */}
+          เป็นวัสดุจริง แทนสีทึบเรียบๆ เหมือนเดิม
+          v2 (ฟีดแบ็ก "พื้นลายๆ ไม่เข้ากับหน้า") — ลด TITANIUM_MESH_CSS opacity 1 (ดีฟอลต์) -> 0.4 เหตุผล
+          เดียวกับที่ MetricCard.tsx's !compact ทำไปแล้ว (ลายตาราง CNC เต็มความเข้มอ่านเป็น "ลายๆ" ชัดเกิน
+          บนพื้น navy ใหม่ ซึ่งควรให้พื้นเรียบเป็นตัวเด่นแทนลาย) ไม่แตะ NOISE_BG (จางอยู่แล้ว 0.03) */}
       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: NOISE_BG, opacity: 0.03, mixBlendMode: 'overlay' }} aria-hidden="true" />
-      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: TITANIUM_MESH_CSS }} aria-hidden="true" />
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: TITANIUM_MESH_CSS, opacity: 0.4 }} aria-hidden="true" />
       {/* Hairline ขอบขวา — เส้นคมสว่างจ้าบางๆ พาดขอบขวาสุดของแผ่น (คู่กับ hairline แนวนอนของ BottomNav
           ที่ขอบบน) แทน border-r ทึบเดิม สว่างสุดกลางความสูง ค่อยๆ จางไปทั้งบน/ล่าง */}
       <div
