@@ -363,7 +363,11 @@ export default function ConsistencyStrip() {
     // shadow-elevated (สไตล์เดียวกับที่ Recovery/Training This Week/Body Goal ใช้เป็น "การ์ดรอง" อยู่แล้ว
     // ในรอบก่อนหน้า) ให้ Consistency เบากว่า Muscle Heatmap/Weekly Volume โดยเปรียบเทียบ ไม่แตะเนื้อหา/
     // ข้อมูลใดๆ ภายใน (ปฏิทิน 21 วันยังโชว์เต็มเหมือนเดิมทุกประการ ตามที่ระบุว่าห้ามลด)
-    <div className="rounded-lg bg-[#101D29]/80 border border-white/10 overflow-hidden lg:grid lg:grid-cols-3">
+    // v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว") — Recovery/Training This Week/Body Goal ที่ comment ข้างบน
+    // อ้างเป็น "สไตล์การ์ดรอง" ได้ shadow-elevated กลับมาแล้วในรอบนี้ ใส่กลับให้ ConsistencyStrip ตามด้วย
+    // เพื่อให้ยังตรงกับ "การ์ดรอง" reference เดิมของตัวเอง — hierarchy (secondary กว่า Muscle Heatmap)
+    // ยังคงอยู่ผ่าน opacity /80 (Muscle Heatmap ทึบเต็ม) ไม่ได้พึ่ง shadow เป็นตัวบอกความสำคัญอีกต่อไป
+    <div className="rounded-lg bg-[#101D29]/80 border border-white/10 overflow-hidden lg:grid lg:grid-cols-3 shadow-elevated">
       {/* left: calendar grid + legend — spans 2/3 on lg+ so the 4 stat tiles can sit
           beside it as a 2x2 block instead of stacking in a row underneath */}
       {/* ฟีดแบ็ก "Consistency สามารถลดความสูงลงได้ประมาณ 15-20%" — ลด padding แนวตั้งของทั้งสองโซน

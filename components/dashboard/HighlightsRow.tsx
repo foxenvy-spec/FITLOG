@@ -31,7 +31,11 @@ interface HighlightsRowProps {
 
 export default function HighlightsRow({ streak, bestVolumeIncrease, weeklyConsistencyPct }: HighlightsRowProps) {
   return (
-    <div className="rounded-lg border border-white/10 bg-[#101D29]/80 px-4 py-3.5 space-y-2.5">
+    // v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว", ขยาย cinematic depth pass ไปหน้า 2) — เพิ่ม .shadow-elevated
+    // เดียวกับที่หน้า 1 ใช้แล้ว (Body Goal/Recovery/Training This Week/MINT Coach) ให้ทั้งสองแท็บมีมิติ
+    // สม่ำเสมอกัน — เฉพาะ wrapper ชั้นนอกสุดเท่านั้น (การ์ดย่อย HighlightTile ด้านในยังแบนเหมือนเดิม กัน
+    // nested-card ซ้อนกัน 2 ชั้น)
+    <div className="rounded-lg border border-white/10 bg-[#101D29]/80 px-4 py-3.5 space-y-2.5 shadow-elevated">
       <p className="text-[12px] tracked uppercase text-muted">Highlights</p>
       <div className="flex flex-wrap gap-2.5">
         {/* ฟีดแบ็ก "Streak ต่อเนื่อง ซ้ำความหมายกันเอง (Streak ก็แปลว่าต่อเนื่องอยู่แล้ว)" — ตัด "ต่อเนื่อง"

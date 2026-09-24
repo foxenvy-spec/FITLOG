@@ -3012,9 +3012,13 @@ export default function DashboardPage() {
               ) : (
                 heatmapInsight.text
               )
+            // v2 (ฟีดแบ็ก "จัดเลย ลุยเลย ไม่ต้องกลัว") — เพิ่ม shadow-elevated เป็น base state (ไม่ matched)
+            // เหตุผลเดียวกับการ์ดอื่นในหน้า 2 — ตอน isMatched อยู่แล้วยัง override ด้วย inline boxShadow
+            // (glow สีตาม insight) ที่แรงกว่าอยู่ดี เพราะ inline style ชนะ class เสมอ ไม่กระทบ behavior
+            // เดิมของ isMatched เลย
             return (
               <div
-                className="rounded-card border border-white/10 bg-[#101D29]/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap transition-shadow"
+                className={`rounded-card border border-white/10 bg-[#101D29]/60 px-5 py-4 flex items-center justify-between gap-4 flex-wrap transition-shadow ${isMatched ? '' : 'shadow-elevated'}`}
                 style={
                   isMatched
                     ? { borderColor: heatmapInsight.color, boxShadow: `0 0 0 1px ${heatmapInsight.color}, 0 0 16px ${withAlpha(heatmapInsight.color, '33')}` }
