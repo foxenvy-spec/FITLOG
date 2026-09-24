@@ -640,6 +640,23 @@ export default function AICoachCompactCard({
                 </p>
               )}
 
+              {/* v2 (ฟีดแบ็ก "8.9/10 — AI Coach Value 7.9/10 ต่ำสุด, ยังดูเป็นการ์ดซ้ำ Today's Workout ไม่ใช่
+                  Insight จริง — ควรตีความข้อมูล ไม่ใช่ทวนสิ่งที่ Today's Workout บอกไปแล้ว") — เพิ่มบรรทัด
+                  Weekly Target ให้เฉพาะเคส "Today" ปกติ (เคสเดียวกับ verdict ด้านบน ไม่แตะ branch อื่นเลย —
+                  isRestDay/makeup/missedPlan/displayPct null ทั้งหมดไม่โดน) ใช้ muscleRecommendation
+                  (setsCurrent/setsTarget/setsRemaining) ตัวเดียวกับที่การ์ด Recovery/Today's Workout เดิม
+                  เคยใช้ (ข้อมูลจริง ไม่ใช่คำแนะนำที่เดาขึ้นมาเอง เช่น "พัก 90-120 วินาที" ที่ไม่มีระบบไหน
+                  คำนวณจริง) — ให้การ์ดนี้มีข้อมูลที่ Today's Workout ไม่พูดแล้ว (ตัดกล่อง "ทำไมวันนี้?" ออกจาก
+                  Hero ไปก่อนหน้านี้) แทนที่จะย้ำ Day/กล้ามเนื้อซ้ำเฉยๆ — คำ/สีเดียวกับที่การ์ดเดิมเคยใช้ */}
+              {!isRestDay && !makeupSessionActive && !hasMakeupToday && missedPlanCount === 0 && displayPct !== null && isRecommendationForToday && muscleRecommendation && muscleRecommendation.setsTarget > 0 && (
+                <p
+                  className="truncate mt-1"
+                  style={{ fontSize: 11, color: muscleRecommendation.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}
+                >
+                  {muscleRecommendation.setsRemaining > 0 ? '🎯' : '✅'} เป้าหมายสัปดาห์นี้ {muscleRecommendation.setsCurrent}/{muscleRecommendation.setsTarget} เซ็ต
+                </p>
+              )}
+
               {/* Dashboard UX polish (Item 1) — บอกตรงๆ ว่าปุ่ม "เริ่ม {startLabel}" ด้านล่างจะพาไปโปรแกรม
                   ไหนจริง แยกจาก headline (displayRegion) ที่เป็นคำแนะนำกล้ามเนื้อของ Coach — ไม่แตะ
                   startLabel เอง แค่แสดงค่าเดิมในบริบทที่ชัดขึ้น (ดู showsNextProgramLine ด้านบนของไฟล์)
