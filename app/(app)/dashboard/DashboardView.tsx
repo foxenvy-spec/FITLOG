@@ -1514,10 +1514,14 @@ export default function DashboardPage() {
                         ออก เหลือแค่ 'Progress' เฉยๆ (ไม่ตัดคำว่า Progress ทั้งคำ ไม่รวมบรรทัด/ลด metric ใดๆ
                         Current→Goal/%/ETA ทั้งหมดยังอยู่ครบ)" — ไม่ผ่านค่า remainingText เข้า
                         goalProgressLabelParts() อีกต่อไป (ฟังก์ชันเดิมคืน detail="Progress" เฉยๆ อยู่แล้ว
-                        เมื่อไม่มี remainingText — ไม่ต้องแก้ lib/goalProgress.ts เลย) */}
+                        เมื่อไม่มี remainingText — ไม่ต้องแก้ lib/goalProgress.ts เลย)
+                        v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external design review) "'3%' ลอยโดยไม่ระบุว่าคือ
+                        อะไร ควรมี 'เหลืออีก X kg' กำกับชัดเจน" — ย้อนกลับมาผ่าน remainingText อีกครั้ง
+                        (goalProgressLabelParts รองรับ param นี้อยู่แล้วตั้งแต่แรก ไม่ต้องแก้ lib เลย) */}
                     <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
                       {(() => {
-                        const parts = goalProgressLabelParts(weightPct)
+                        const remainingText = `${Math.abs(toDisplay(data.weightGoalTarget as number) - toDisplay(data.bodyMetricsSummary.weight.value as number)).toFixed(1)} ${unit}`
+                        const parts = goalProgressLabelParts(weightPct, remainingText)
                         return (
                           <>
                             <span className="font-mono font-bold text-sm" style={{ color: DS.accent.primary }}>
@@ -1550,11 +1554,12 @@ export default function DashboardPage() {
                       <AnimatedBarFill pct={Math.max(0, Math.min(100, bodyFatPct))} color={COLORS.moss} />
                     </div>
                     {/* เหตุผลเดียวกับบล็อกน้ำหนักด้านบน — แยก headline/detail เหมือนกัน สีตามแท่ง progress
-                        ของบล็อกนี้เอง (moss ไม่ใช่ amber) — เหตุผลเดียวกับ #3 ด้านบนด้วย: ตัด "· เหลืออีก X%"
-                        ออก เหลือแค่ "Progress" */}
+                        ของบล็อกนี้เอง (moss ไม่ใช่ amber)
+                        v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย") — เหตุผลเดียวกับน้ำหนักด้านบน คืน remainingText กลับมา */}
                     <p className="text-[12px] text-muted mt-1 flex items-baseline gap-1">
                       {(() => {
-                        const parts = goalProgressLabelParts(bodyFatPct)
+                        const remainingText = `${Math.abs((data.bodyFatGoalTarget as number) - (data.bodyMetricsSummary.bodyFatPct.value as number)).toFixed(1)}%`
+                        const parts = goalProgressLabelParts(bodyFatPct, remainingText)
                         return (
                           <>
                             <span className="font-mono font-bold text-sm" style={{ color: COLORS.moss }}>
@@ -1588,7 +1593,13 @@ export default function DashboardPage() {
           flow was leaving phantom empty rows before AI Coach and before the quick-actions row
           (an auto-placement cursor quirk). Explicit col-start / row-start classes on every item
           below sidestep that entirely — placement no longer depends on auto-placement order. */}
-      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-start">
+      {/* v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external design review, "ด้านล่างซ้ายและกลางมีพื้นที่ว่างมาก") —
+          items-start เดิมทำให้ Recovery/Training This Week (เนื้อหาสั้นกว่า) ไม่ยืดตามความสูงของ Hero
+          (ยาวเพราะมีรูป) เหลือช่องว่างเป็นแถบว่างใต้การ์ดสองใบนั้นก่อนจะถึงแถว Quick Actions — เปลี่ยนเป็น
+          items-stretch ให้ทุกการ์ดในแถวเดียวกันสูงเท่ากันจริง (Recovery/Training This Week เพิ่ม h-full
+          flex ด้านในให้เนื้อหากระจายตัวเต็มความสูงแทนที่จะเหลือพื้นที่ว่างเงียบๆ ด้านล่าง — ดู comment ที่
+          การ์ดนั้นๆ) ไม่กระทบ Hero (สูงสุดอยู่แล้ว ไม่มีอะไรให้ยืดเพิ่ม) */}
+      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-stretch">
       {/* left column (lg+): today's workout, quick start, muscle heatmap. */}
       <div className="space-y-6 lg:space-y-0 lg:contents">
       {/* card 1: hero — today's workout. Sets the visual tone: everything else below is
@@ -1666,7 +1677,11 @@ export default function DashboardPage() {
             overlay จำลองแสงสะท้อนผิวโลหะแบบสตูดิโอ ไม่ใช่แสง flare แบบเกม) วางทับรูปแต่ใต้ overlay มืด/glow
             เดิม */}
         <div className="absolute inset-0 bg-[#0B1520] overflow-hidden">
-          <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box overflow-hidden">
+          {/* v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external review "ซ้าย 42% ข้อมูล / ขวา 58% ภาพ") — สัดส่วนรูป
+              66.7% (w-2/3) -> 60% (w-3/5, ใกล้เคียง 58% ที่ขอที่สุดในสเกล fraction ของ Tailwind) ให้โซน
+              ข้อความมีพื้นที่หายใจมากขึ้นโดยไม่ต้องเปลี่ยนโครงสร้าง — แก้พร้อมกันทั้ง 3 จุด (รูป/gradient/
+              scrim ด้านล่าง) ให้ยังคง align กันสนิทเหมือนเดิม */}
+          <div className="absolute inset-y-0 right-0 w-full sm:w-3/5 hero-image-box overflow-hidden">
             <div className="absolute inset-0">
               {/* v64 (mockup match, "Version 3" warm-sunset direction) — สลับจากรูปดัมเบล (product shot)
                   เป็น home-header-hero.png (ภูเขา sunset อุ่น) ไฟล์เดียวกับที่ Mobile Home ใช้จริงอยู่แล้ว
@@ -1695,7 +1710,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div
-            className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-gradient-box"
+            className="absolute inset-y-0 right-0 w-full sm:w-3/5 hero-gradient-box"
             style={{
               // v64 (mockup match) — เดิมมี radial "light on dumbbell" เจาะจงตำแหน่งหัวดัมเบล เอาออกเพราะ
               // ภาพภูเขาเองมีจุดแสงอาทิตย์อุ่นอยู่แล้วในเนื้อภาพจริง ไม่ต้องจำลองแสงตกกระทบซ้อนทับ — เหลือ
@@ -1717,7 +1732,7 @@ export default function DashboardPage() {
               ตัวนี้ซ้อนอยู่ข้างหน้า" — ระบุ scrim นี้เจาะจงว่าเป็นสาเหตุหลัก ลด alpha ลง .50 -> .36 (-28%)
               ยังคงเจตนาเดิม (ลด visual weight ตอนเนื้อหาน้อย) ไว้ แค่ไม่ให้รูปจมหายไปทั้งหมด */}
           {!scheduledDay && !todayCompleted && (
-            <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.36)' }} />
+            <div className="absolute inset-y-0 right-0 w-full sm:w-3/5 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.36)' }} />
           )}
           {/* v64 (mockup match) — ตัด particle/dust/spark cluster เดิม (12 จุด) ออกทั้งหมด: จำลองฝุ่น
               ชอล์ก/ประกายโลหะรอบดัมเบลจริงๆ ไม่มีความหมายบนภาพภูเขา (ไม่ใช่แค่ "ดูแปลก" แต่ผิดบริบทภาพ
@@ -1940,45 +1955,13 @@ export default function DashboardPage() {
                   หาเหตุผลเองจากการ์ด Recovery ด้านล่าง — ใช้ data.todaysRecommendation ตัวเดียวกับที่การ์ด
                   Recovery ใช้อยู่แล้ว (ไม่คำนวณซ้ำ) โชว์เฉพาะตอน isRecommendationForToday จริงๆ (กันกรณี
                   คำแนะนำเป็นของวันอื่น/กลุ่มอื่นที่ไม่ตรงกับ workoutTitle ด้านบน จะทำให้ bullet พูดคนละเรื่อง
-                  กับหัวการ์ด) */}
-              {/* ฟีดแบ็ก "ทำไมวันนี้? ค่อนข้างแน่นนิดหนึ่ง — จัดเป็น WHY TODAY แล้วทำ 3 bullet ให้ visual
-                  hierarchy ชัดขึ้น" — ไม่ตัดข้อมูลอะไรออก (ทั้ง 3 เหตุผลยังอยู่ครบ) แค่ห่อเป็นกล่องย่อยแยก
-                  ออกจากเนื้อหาอื่นในการ์ด (border จางๆ) เพิ่มระยะห่างระหว่างแถวเล็กน้อย และให้หัวข้อเด่นขึ้น
-                  (ตัวหนา + tracking กว้างขึ้น) ให้สแกนอ่าน 3 บรรทัดแยกจากกันได้ง่ายกว่าเดิมที่ชิดกันเป็นก้อน */}
-              {!isEmptyWorkoutState && data.isRecommendationForToday && data.todaysRecommendation && (() => {
-                const rec = data.todaysRecommendation
-                // P1-1 — rec.pct null (ไม่เคยฝึกกล้ามเนื้อนี้เลย) ต้องมี bullet ของตัวเอง ห้ามส่งเข้า
-                // recoveryTier/recoveryVerdictEmoji (ไม่มีนิยาม tier สำหรับ "ไม่มีข้อมูล") หรือโชว์ "null%"
-                const tier = rec.pct === null ? null : recoveryTier(rec.pct)
-                const daysSince = daysSinceLastTrained(data.recoveryDates[rec.muscleGroup] ?? null)
-                return (
-                  <div className="mt-2.5 rounded-lg border border-white/5 bg-black/10 px-2.5 py-2 space-y-1.5">
-                    <p className="text-[12px] font-bold tracked-lg uppercase text-muted">ทำไมวันนี้?</p>
-                    {rec.pct === null ? (
-                      <p className="text-[12px] leading-snug text-muted">
-                        🆕 ยังไม่เคยฝึก{rec.muscleGroup} พร้อมเริ่มได้เลย
-                      </p>
-                    ) : (
-                      <p className="text-[12px] leading-snug" style={{ color: tier!.color }}>
-                        {recoveryVerdictEmoji(rec.pct)} {rec.muscleGroup} ฟื้นตัวแล้ว {rec.pct}%
-                      </p>
-                    )}
-                    {rec.setsTarget > 0 && (
-                      <p className="text-[12px] leading-snug" style={{ color: rec.setsRemaining > 0 ? COLORS.moss : COLORS.amber }}>
-                        {rec.setsRemaining > 0 ? '🟢' : '🟡'} เป้าหมายสัปดาห์นี้ {rec.setsCurrent}/{rec.setsTarget} เซ็ต
-                      </p>
-                    )}
-                    <p className="text-[12px] leading-snug text-muted">
-                      🔵{' '}
-                      {daysSince === null
-                        ? `ยังไม่เคยเทรน${rec.muscleGroup}มาก่อน`
-                        : daysSince === 0
-                          ? `เทรน${rec.muscleGroup}ไปแล้ววันนี้`
-                          : `เทรน${rec.muscleGroup}ล่าสุดเมื่อ ${daysSince} วันก่อน`}
-                    </p>
-                  </div>
-                )
-              })()}
+                  กับหัวการ์ด)
+                  v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external design review) "Workout Card เนื้อหาด้านซ้ายแน่น
+                  เกินไป ลดข้อความให้เหลือแค่ Day/ชื่อ/กลุ่มกล้ามเนื้อ + Exercises/Sets + CTA รายละเอียด
+                  ระดับนี้ (Recovery %, Weekly Target, วันที่เทรนล่าสุด) ย้ายไปแสดงในการ์ด Recovery/Training
+                  This Week ที่มีข้อมูลชุดเดียวกันอยู่แล้วแทน (ไม่ใช่ข้อมูลหายไปจากแอป แค่ไม่พูดซ้ำสองที่ในการ์ด
+                  เดียวกัน)" — เอาบล็อกนี้ออกจาก Hero (ตัด render ไม่ลบ data source ที่มาจาก
+                  data.todaysRecommendation/data.recoveryDates ซึ่งการ์ดอื่นยังใช้ร่วมกันอยู่) */}
 
               {/* ฟีดแบ็ก "เพิ่มท่า/เพิ่ม Set ระหว่างเซสชัน แต่พอจบ หน้านี้ไม่แสดงตามความจริง" — เดิม Exercises
                   ใช้ data.todayExercises.length (จำนวนแผนล้วนๆ) ตรงๆ ตราบใดที่มีแผนตั้งไว้ (>0 ก็ truthy
@@ -2275,7 +2258,9 @@ export default function DashboardPage() {
               เต็มใบ (คลิกได้ทั้งการ์ด) แต่เดิมมีแค่ active: (ตอนกด) ไม่มี hover: เลย บนจอคอมที่ใช้เมาส์ ผู้ใช้
               จะไม่เห็นสัญญาณใดๆ ว่าการ์ดนี้กดได้จนกว่าจะคลิกไปแล้ว — เพิ่ม hover เบากว่า active (60% ของสี
               เดียวกัน) ให้มีสัญญาณ affordance ก่อนคลิกจริง */}
-          <Link href="/recovery" className="block px-4 py-3 hover:bg-[#101D29]/60 active:bg-[#101D29] transition">
+          {/* v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย") — h-full flex flex-col ให้ Link (คลิกได้เต็มใบ) ยืดตามการ์ดนอก
+              ที่ตอนนี้ items-stretch แล้ว (ไม่งั้น hover/พื้นที่คลิกจะสั้นกว่ากรอบการ์ดจริงที่ยืดไปแล้ว) */}
+          <Link href="/recovery" className="h-full flex flex-col px-4 py-3 hover:bg-[#101D29]/60 active:bg-[#101D29] transition">
             <div className="flex items-center justify-between mb-2">
               <p className="text-[12px] tracked uppercase text-muted">Recovery</p>
             </div>
@@ -2661,7 +2646,9 @@ export default function DashboardPage() {
         className="rounded-card bg-[#101D29]/80 border border-white/10 overflow-hidden animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-1 shadow-elevated"
         style={{ animationDelay: '300ms' }}
       >
-        <div className="px-4 py-3">
+        {/* v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย") — h-full flex flex-col ให้เนื้อหายืดตามการ์ดนอกที่ items-stretch
+            แล้ว ไม่ให้ค้างอยู่แค่ความสูงเนื้อหาเดิมเหลือช่องว่างด้านล่างในกรอบการ์ด */}
+        <div className="h-full flex flex-col px-4 py-3">
           {/* ฟีดแบ็ก "Weekly Goal/Volume/Consistency แยกกันมากจนรู้สึกเหมือน 3 ระบบ อยากได้การ์ดเดียวชื่อ
               'TRAINING THIS WEEK'" — เปลี่ยนป้ายหัวการ์ดจาก "Weekly Goal" (เดิมอ่านเหมือนพูดถึงแค่ % เดียว)
               เป็น "Training This Week" ให้ตรงกับบทบาทใหม่ที่ครอบทั้ง 3 ตัวเลข ไม่ใช่รื้อการ์ดย่อยที่เหลือ
@@ -2893,8 +2880,13 @@ export default function DashboardPage() {
           ของ slide 2 ด้านล่าง เนื้อหา/สูตรคำนวณไม่เปลี่ยนเลย แค่ย้ายตำแหน่งหน้า) การ์ดนี้เลยไม่ต้อง
           row-span-2 อีกต่อไป (เดิมยืดเพื่อเทียบความสูงกับคอลัมน์ซ้ายที่มี HighlightsRow+Balance banner
           ซึ่งย้ายออกไปแล้วเช่นกัน) เหลือแค่ row-start-2 แถวเดียวคู่กับ Quick Actions ข้างๆ */}
+      {/* v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external design review, "AI Coach เล็กและโดดเดี่ยวมุมขวาล่าง
+          ควรมีบทบาทมากขึ้น") — col-span-3 -> 6 (คู่กับ Quick Actions ที่แคบลงเหลือ 6 ด้านบน) ให้การ์ดนี้
+          กว้างขึ้นจริง ไม่ใช่กล่องแคบๆ ลอยมุมขวา — col-start ขยับ 10 -> 7 ให้ต่อกับ Quick Actions พอดี
+          (1-6 + 7-12 = เต็ม 12 คอลัมน์เหมือนเดิม ไม่มีช่องว่างระหว่างกลาง) ไม่แตะ layout/เนื้อหาภายในการ์ด
+          เอง (ดู AICoachCompactCard.tsx สำหรับการเปลี่ยนแปลงเนื้อหา) */}
       {prefs.showAICoach && (
-        <div className="animate-rise lg:col-start-10 lg:col-span-3 lg:row-start-2" style={{ animationDelay: '360ms' }}>
+        <div className="animate-rise lg:col-start-7 lg:col-span-6 lg:row-start-2" style={{ animationDelay: '360ms' }}>
           {/* บั๊ก (code-review sweep ทั้งแอป) "Desktop ไม่เคยส่ง isRestDay เข้าการ์ดนี้เลย — ตอนเป็นวันพัก
               ตามแผน (isScheduledRestDay) การ์ด Today's Workout hero ด้านบนบอก 'Rest Day' ถูกต้องแล้ว (แก้
               ไปแล้วใน 27f6bfc) แต่การ์ด MINT Coach ข้างๆ ยังคงแนะนำกลุ่มกล้ามเนื้อ + ปุ่ม 'เริ่ม X' เหมือน
@@ -2931,17 +2923,18 @@ export default function DashboardPage() {
       {/* quick actions — lg only. Below lg, the two original quick-action groups above/below
           (quick-start + log/templates/stats) stay as-is; at xl they're both hidden and replaced
           by this single deduplicated row so the 12-col grid doesn't show the same "บันทึก"/
-          "เทมเพลต" shortcuts twice. Narrowed to col-span-9 (from 12) so it sits beside the AI
-          Coach card instead of running underneath it.
+          "เทมเพลต" shortcuts twice.
           ฟีดแบ็ก (design review — "Information Density สูงเกินไป") — HighlightsRow ที่เคยวางเหนือแถวนี้
           ย้ายไปแท็บ "2 · รายละเอียด" แล้ว (ดูเหตุผลที่ comment ของการ์ด MINT Coach ด้านบน) เหลือแค่ Quick
-          Actions เดี่ยวๆ ในเซลล์นี้ ไม่ต้องห่อ flex-col อีกต่อไป (มีแค่ grid เดียวไม่ได้ stack กับอะไร) */}
-      <div className="hidden lg:block lg:col-start-1 lg:col-span-9 lg:row-start-2">
-        <div className={`grid gap-3 ${data.hasAnyHistory ? 'grid-cols-5' : 'grid-cols-4'}`}>
+          Actions เดี่ยวๆ ในเซลล์นี้ ไม่ต้องห่อ flex-col อีกต่อไป (มีแค่ grid เดียวไม่ได้ stack กับอะไร)
+          v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external design review, "ปุ่มเยอะเกินไป น้ำหนักใกล้กันหมด") —
+          ตัดเหลือ 3 ปุ่ม (บันทึกสถิติ/วิเคราะห์ร่างกาย/ถาม AI) — "เลือกโปรแกรม" กับ "สถิติ" เข้าถึงได้จาก
+          Sidebar อยู่แล้ว (เมนู "โปรแกรม"/"สถิติ") ไม่ได้หายไปจากแอป แค่ไม่ต้องซ้ำจุดที่สองในแถวนี้ — col-span
+          9 -> 6 (ให้พื้นที่คืนกับ MINT Coach ข้างๆ ซึ่งแคบไปที่ col-span-3 เดิม ดู comment ที่การ์ดนั้น) */}
+      <div className="hidden lg:block lg:col-start-1 lg:col-span-6 lg:row-start-2">
+        <div className={`grid gap-3 ${data.hasAnyHistory ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
-          <QuickAction href="/templates" label="เลือกโปรแกรม" icon="📋" accent="steel" />
           <QuickAction href="/health" label="วิเคราะห์ร่างกาย" icon="🔍" accent="amber" />
-          <QuickAction href="/stats" label="สถิติ" icon="📈" accent="rust" weight="tertiary" />
           {data.hasAnyHistory && <QuickAction href="/coach" label="ถาม AI" icon="🤖" accent="violet" weight="tertiary" />}
         </div>
       </div>

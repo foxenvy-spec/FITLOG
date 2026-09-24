@@ -775,8 +775,12 @@ export default function AICoachCompactCard({
             // workout_templates (ระบบคนละอันกับ program_days ที่อาจไม่ตรงตารางจริงเลย) — chosen/
             // handleStart/startLabel ยังคำนวณอยู่เบื้องหลังเหมือนเดิม เผื่อ branch นี้ไม่ตรง (ไม่มี
             // todaySessionHref ส่งมา เช่น เดสก์ท็อป) จะได้ fallback ไปที่ branch เดิมด้านล่างแทน
+            {/* v2 (ฟีดแบ็ก "ทำแม่งให้หมดเลย" — external design review) "อย่าสลับคำปุ่มระหว่าง
+                'เริ่มเทรนเลย'/'START DAY 3'/'เริ่มโปรแกรม' — ควรใช้คำเดียวกันทั่วระบบ" — ปุ่มนี้เป็นภาษาอังกฤษ
+                จุดเดียวในบรรดาปุ่ม CTA ของ Dashboard ทั้งหมด (Today's Workout ใช้ 'เริ่มเทรนเลย'/'ไปต่อ' เป็น
+                ภาษาไทยหมด) เปลี่ยนเป็นภาษาไทยให้ตรงกัน ไม่แตะ href/logic ใดๆ */}
             <Button as={Link} href={todaySessionHref} variant="secondary" className="flex-1 min-w-0 font-semibold" style={ctaEmphasisStyle}>
-              Start {displayRegion} →
+              ไปต่อ →
             </Button>
           ) : templatesLoading ? (
             <div className="flex-1 h-9 rounded-full skeleton-shimmer bg-surface2" />
