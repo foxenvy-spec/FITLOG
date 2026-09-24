@@ -1687,28 +1687,21 @@ export default function DashboardPage() {
               "ให้ภาพกินพื้นที่ด้านขวาประมาณ 45-50%" — ปรับต่ออีกขั้น 60% -> 50% (w-1/2, กลาง-บนสุดของช่วง
               ที่ขอ) ให้ฝั่งข้อมูลกว้างขึ้นอีก ยังคง align กันสนิททั้ง 3 จุด (รูป/gradient/scrim) เหมือนเดิม */}
           <div className="absolute inset-y-0 right-0 w-full sm:w-1/2 hero-image-box overflow-hidden">
-            <div className="absolute inset-0">
-              {/* v64 (mockup match, "Version 3" warm-sunset direction) — สลับจากรูปดัมเบล (product shot)
-                  เป็น home-header-hero.png (ภูเขา sunset อุ่น) ไฟล์เดียวกับที่ Mobile Home ใช้จริงอยู่แล้ว
-                  (components/dashboard/Header.tsx) ไม่ใช่ไฟล์ใหม่ — เลือก objectPosition ให้จุดที่แสง
-                  อาทิตย์ส้มทองอยู่ในโซนที่มองเห็นได้ (ฝั่งขวาของการ์ด) แทนตำแหน่งเดิมที่ล็อกไว้สำหรับดัมเบล
-                  เอง (76%/45%) — ตัด scale(0.92) crop เดิม (ทำไว้เพื่อจัดองค์ประกอบดัมเบลโดยเฉพาะ ไม่จำเป็น
-                  กับภาพแนวนอนธรรมชาติ) — filter เอา sepia/hue-rotate เดิม (แต่งสีให้โลหะดูอุ่น) ออก เพราะ
-                  ภาพนี้มีโทนอุ่นจากแสงอาทิตย์จริงอยู่แล้ว ใช้แค่ contrast/saturate/brightness ลดลงแบบเดียว
-                  กับที่ Header.tsx (มือถือ) ใช้กับภาพเดียวกันนี้ (เพื่อ mood สอดคล้องกัน) */}
-              {/* ฟีดแบ็ก (design review, screenshot จริง) "Hero ภาพสวย แต่ด้านซ้าย/ล่างแทบกลืนกับ #101D29
-                  โดยเฉพาะเมื่อมี dark overlay ของ Today's Workout ซ้อนอยู่ข้างหน้า — ปรับ image visibility
-                  ขึ้น ~10-15% (ไม่เปลี่ยนรูป) รักษาโทน amber sunset ไว้" — brightness 0.85 -> 0.95 (+12%),
-                  saturate 0.9 -> 1.0 (+11%, ให้โทนอำพันยังคงชัดหลังสว่างขึ้น ไม่จางลง), contrast 0.9 -> 0.95
-                  (เบามาก กันภาพแบนไปหลัง brightness ขึ้น) */}
+            <div className="absolute inset-0" style={{ transform: 'scale(0.92)', transformOrigin: '60% 42%' }}>
+              {/* v65 (ลองสลับกลับ) — user ขอลองเปลี่ยนจากภูเขา (home-header-hero.png, v64) กลับไปเป็นรูปดัมเบล
+                  (today-workout-hero-dumbbell.png) เพื่อเทียบดู — คืนค่า crop/objectPosition/filter ชุดสุดท้าย
+                  ที่เคย tuned ไว้สำหรับรูปนี้โดยเฉพาะ (v63: objectPosition 76%/45%, scale(0.92) crop จัดองค์
+                  ประกอบดัมเบลให้อยู่กลางเฟรม, filter blur/contrast/sepia/saturate/hue-rotate/brightness ที่ปรับ
+                  หลายรอบจน text เป็น hero รูปเป็น supporting) — ยังไม่คืนเลเยอร์ตกแต่งเฉพาะดัมเบล (light streak,
+                  particle dust) ที่ถูกถอดไปตอน v64 เพราะ user แค่ขอลองสลับรูป ยังไม่ได้ขอ effect ชุดเดิมกลับมา */}
               <Image
-                src="/images/home-header-hero.png"
+                src="/images/today-workout-hero-dumbbell.png"
                 alt=""
                 fill
                 className="object-cover"
                 style={{
-                  objectPosition: '70% 35%',
-                  filter: 'contrast(0.95) saturate(1.0) brightness(0.95)',
+                  objectPosition: '76% 45%',
+                  filter: 'blur(0.7px) contrast(0.95) sepia(0.15) saturate(1.2) hue-rotate(-6deg) brightness(0.82)',
                 }}
                 priority
               />
