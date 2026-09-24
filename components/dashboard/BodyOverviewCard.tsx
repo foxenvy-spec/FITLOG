@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { dashboardSpec } from '@/lib/dashboardSpec'
 import { METRIC_ICON_IMAGES } from '@/components/MetricCard'
 import { HOME_COLORS } from '@/lib/homeColors'
+import { METRIC_IDENTITY, METRIC_DELTA } from '@/lib/metricIdentity'
 
 interface MetricDelta {
   value: number | null
@@ -107,9 +108,14 @@ function deltaText(delta: number | null, digits = 1): string {
 // size แต่เพิ่ม font weight + brightness เล็กน้อย ให้ scan ได้ว่าน้ำหนัก/ไขมันลดลงโดยไม่ต้องอ่านตัวเลข
 // ละเอียด" — ปรับ hex ให้สว่าง/อิ่มตัวขึ้นเล็กน้อย (font-weight ปรับที่จุดเรียกใช้ใน StatCell แทน เพราะ
 // เป็น Tailwind className ไม่ใช่ค่าที่ฟังก์ชันนี้ควบคุม)
+// good/bad now come from lib/metricIdentity.ts (cross-surface migration, shared with
+// BodyMetricsRow.tsx) — delta-bad changed from #ff6b80 to METRIC_DELTA.bad: the old value sat only
+// ~14-21deg of hue from this card's own Body Fat identity color (real collision risk), the new one
+// keeps the same "danger" hue family as the rest of the app's rust/danger tokens while clearing
+// WCAG AA contrast and sitting ~38deg away from Body Fat's pink (see lib/metricIdentity.ts)
 function deltaColor(isGood: boolean | null): string {
-  if (isGood === true) return '#3fe092'
-  if (isGood === false) return '#ff6b80'
+  if (isGood === true) return METRIC_DELTA.good
+  if (isGood === false) return METRIC_DELTA.bad
   return 'rgba(255,255,255,.5)'
 }
 
@@ -335,7 +341,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
               rgba(...,.15) เป็นสีทึบ และไอคอนเป็นสีขาวแทน */}
           <StatCell
             icon={<MaskIcon src={METRIC_ICON_IMAGES.weight} color="#fff" />}
-            iconTint="linear-gradient(135deg,#63b6ff,#2f74e0)"
+            iconTint={`linear-gradient(135deg,${METRIC_IDENTITY.weight.main},${METRIC_IDENTITY.weight.second})`}
             iconGlow="rgba(77,168,255,.28)"
             label="Weight"
             value={weight.value != null ? `${weight.value.toFixed(1)} ${weightUnit}` : '–'}
@@ -346,7 +352,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
           <div className="grid grid-cols-2" style={{ gap: statGap }}>
             <StatCell
               icon={<MaskIcon src={METRIC_ICON_IMAGES.bodyFat} color="#fff" />}
-              iconTint="linear-gradient(135deg,#ff7fb0,#d94f86)"
+              iconTint={`linear-gradient(135deg,${METRIC_IDENTITY.bodyFat.main},${METRIC_IDENTITY.bodyFat.second})`}
               iconGlow="rgba(255,92,147,.28)"
               label="Body Fat"
               value={bodyFatPct.value != null ? `${bodyFatPct.value.toFixed(1)}%` : '–'}
@@ -355,7 +361,7 @@ export default function BodyOverviewCard({ weight, weightUnit, bodyFatPct, muscl
             />
             <StatCell
               icon={<MaskIcon src={METRIC_ICON_IMAGES.muscle} color="#fff" />}
-              iconTint="linear-gradient(135deg,#57e0cd,#1fae94)"
+              iconTint={`linear-gradient(135deg,${METRIC_IDENTITY.muscle.main},${METRIC_IDENTITY.muscle.second})`}
               iconGlow="rgba(52,214,196,.28)"
               label="Muscle"
               value={muscleKg.value != null ? `${muscleKg.value.toFixed(1)} kg` : '–'}

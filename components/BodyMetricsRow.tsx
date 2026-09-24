@@ -11,13 +11,14 @@ import { useWeightUnit } from './WeightUnitProvider'
 import Skeleton from './Skeleton'
 import MetricCard, { type MetricIconImageKey, type MetricCardTheme } from './MetricCard'
 import MetricDetailSheet from './dashboard/MetricDetailSheet'
-import { COLORS, NEUTRAL } from '@/lib/theme'
-import { DS } from '@/lib/designSystem'
+import { NEUTRAL } from '@/lib/theme'
 import { dashboardSpec } from '@/lib/dashboardSpec'
+import { METRIC_IDENTITY, METRIC_DELTA } from '@/lib/metricIdentity'
 
-// ธีมสีต่อการ์ด (main + second) ตาม Color token ล่าสุด: น้ำหนัก=ส้ม #F59E0B, ไขมัน=ชมพู #EC4899,
-// กล้ามเนื้อ=ฟ้า #3B82F6, มวลไขมัน=เขียว #22C55E — second เป็นเฉดเข้มกว่าของสีเดียวกัน (ใช้กับ glow
-// มุมขวาล่างของการ์ด)
+// ธีมสีต่อการ์ด (main + second) — second เป็นเฉดเข้มกว่าของสีเดียวกัน (ใช้กับ glow มุมขวาล่างของการ์ด)
+// weight/bodyFat/muscle มาจาก lib/metricIdentity.ts (shared กับ BodyOverviewCard.tsx, cross-surface
+// migration): น้ำหนัก=ฟ้า, ไขมัน=ชมพู, กล้ามเนื้อ=เขียวมิ้นต์ — มวลไขมัน/BMI/Visceral Fat ยังเป็นค่า
+// เดิมในไฟล์นี้ (ไม่อยู่ใน migration scope)
 //
 // glow (0-100): ความเข้ม glow มุมการ์ดต่อเมตริก — เดิมทุกใบใช้ alpha คงที่เท่ากันหมด (33 hex ≈ 20%)
 // ทำให้ glow ทุกใบสว่างเท่ากันดูไม่เป็นธรรมชาติ ตามฟีดแบ็กที่ขอให้แต่ละใบไม่เท่ากัน — น้ำหนัก (การ์ด
@@ -45,9 +46,12 @@ import { dashboardSpec } from '@/lib/dashboardSpec'
 // Weight/Body Fat/Muscle/BMI — เก็บ entry fatMass ไว้ใน record นี้ต่อ (type ยังต้องครอบ MetricIconImageKey
 // เต็มรูปแบบ เพราะ CardDef.icon ใช้ type เดียวกัน ไม่คุ้มจะแยก type ย่อยเพื่อเอนทรีที่ไม่ได้ใช้แค่จุดเดียว)
 const METRIC_THEME: Record<MetricIconImageKey, MetricCardTheme> = {
-  weight: { main: '#F59E0B', second: '#D97706', glow: 10 },
-  bodyFat: { main: '#EC4899', second: '#DB2777', glow: 8 },
-  muscle: { main: '#3B82F6', second: '#2563EB', glow: 6 },
+  // weight/bodyFat/muscle main+second now come from lib/metricIdentity.ts (cross-surface
+  // migration, shared with BodyOverviewCard.tsx) — glow stays a per-card-only value, not part of
+  // the shared identity contract
+  weight: { main: METRIC_IDENTITY.weight.main, second: METRIC_IDENTITY.weight.second, glow: 10 },
+  bodyFat: { main: METRIC_IDENTITY.bodyFat.main, second: METRIC_IDENTITY.bodyFat.second, glow: 8 },
+  muscle: { main: METRIC_IDENTITY.muscle.main, second: METRIC_IDENTITY.muscle.second, glow: 6 },
   fatMass: { main: '#22C55E', second: '#16A34A', glow: 5 },
   bmi: { main: '#1b8cff', second: '#3f6cff', glow: 6 },
   // ฟีดแบ็ก "เพิ่มการ์ดที่ 5 (Visceral Fat) ให้เต็ม grid 5 ช่องบนเดสก์ท็อป" — สีส้มแดง แยกจากสีที่ใช้
@@ -231,7 +235,7 @@ export default function BodyMetricsRow({
       valueText: summary.weight.value != null ? `${toDisplay(summary.weight.value).toFixed(1)} ${unit}` : '—',
       deltaText:
         summary.weight.delta != null ? `${fmtSigned(toDisplay(summary.weight.delta), 1, ` ${unit}`)} ${period}` : null,
-      deltaColor: summary.weight.isGood == null ? NEUTRAL.mutedIcon : summary.weight.isGood ? COLORS.deltaGood : DS.semantic.danger,
+      deltaColor: summary.weight.isGood == null ? NEUTRAL.mutedIcon : summary.weight.isGood ? METRIC_DELTA.good : METRIC_DELTA.bad,
       deltaDir: summary.weight.delta == null ? null : summary.weight.delta > 0 ? 'up' : summary.weight.delta < 0 ? 'down' : null,
       series: weightSeries,
       goal: weightGoalDetail,
@@ -244,7 +248,7 @@ export default function BodyMetricsRow({
       label: 'ไขมัน (%)',
       valueText: summary.bodyFatPct.value != null ? `${summary.bodyFatPct.value.toFixed(1)} %` : '—',
       deltaText: summary.bodyFatPct.delta != null ? `${fmtSigned(summary.bodyFatPct.delta, 1, '%')} ${period}` : null,
-      deltaColor: summary.bodyFatPct.isGood == null ? NEUTRAL.mutedIcon : summary.bodyFatPct.isGood ? COLORS.deltaGood : DS.semantic.danger,
+      deltaColor: summary.bodyFatPct.isGood == null ? NEUTRAL.mutedIcon : summary.bodyFatPct.isGood ? METRIC_DELTA.good : METRIC_DELTA.bad,
       deltaDir: summary.bodyFatPct.delta == null ? null : summary.bodyFatPct.delta > 0 ? 'up' : summary.bodyFatPct.delta < 0 ? 'down' : null,
       series: bodyFatSeries,
       goal: bodyFatGoalDetail,
@@ -260,7 +264,7 @@ export default function BodyMetricsRow({
           ? `${fmtSigned(toDisplay(summary.skeletalMuscleKg.delta), 1, ` ${unit}`)} ${period}`
           : null,
       deltaColor:
-        summary.skeletalMuscleKg.isGood == null ? NEUTRAL.mutedIcon : summary.skeletalMuscleKg.isGood ? COLORS.deltaGood : DS.semantic.danger,
+        summary.skeletalMuscleKg.isGood == null ? NEUTRAL.mutedIcon : summary.skeletalMuscleKg.isGood ? METRIC_DELTA.good : METRIC_DELTA.bad,
       deltaDir:
         summary.skeletalMuscleKg.delta == null ? null : summary.skeletalMuscleKg.delta > 0 ? 'up' : summary.skeletalMuscleKg.delta < 0 ? 'down' : null,
       series: muscleSeries,
@@ -289,7 +293,7 @@ export default function BodyMetricsRow({
       valueText: summary.visceralFat.value != null ? `${summary.visceralFat.value} ระดับ` : '—',
       deltaText: summary.visceralFat.delta != null ? `${fmtSigned(summary.visceralFat.delta, 0, ' ระดับ')} ${period}` : null,
       deltaColor:
-        summary.visceralFat.isGood == null ? NEUTRAL.mutedIcon : summary.visceralFat.isGood ? COLORS.deltaGood : DS.semantic.danger,
+        summary.visceralFat.isGood == null ? NEUTRAL.mutedIcon : summary.visceralFat.isGood ? METRIC_DELTA.good : METRIC_DELTA.bad,
       deltaDir: summary.visceralFat.delta == null ? null : summary.visceralFat.delta > 0 ? 'up' : summary.visceralFat.delta < 0 ? 'down' : null,
       series: visceralFatSeries,
       goal: null,
