@@ -2883,7 +2883,15 @@ export default function DashboardPage() {
               isRestDay={'{'}workoutCardVariant === 'restDay'{'}'} มาตั้งแต่แรกอยู่แล้ว มีแค่ Desktop ที่ตกหล่น
               จุดนี้เป็นบั๊กคลาสเดียวกับที่ comment ของ prop นี้ใน AICoachCompactCard.tsx ระบุไว้ตรงๆ ว่า
               'REST DAY กับ UPPER BODY + ปุ่มเริ่ม ไม่ควรเกิดพร้อมกัน' — ส่ง isScheduledRestDay (คำนวณไว้แล้ว
-              ด้านบนไฟล์นี้ ตัวเดียวกับที่การ์ด Today's Workout ใช้) เข้าไปให้ตรงกัน ไม่แตะ prop อื่นเลย */}
+              ด้านบนไฟล์นี้ ตัวเดียวกับที่การ์ด Today's Workout ใช้) เข้าไปให้ตรงกัน ไม่แตะ prop อื่นเลย
+              บั๊ก (ยืนยันจาก production data จริง) "Badge/headline/verdict ของการ์ดนี้บอก 'Today · Day 3 —
+              Legs' ตรงกับ Today's Workout ถูกต้องแล้ว แต่ปุ่ม CTA กลับเขียน 'เริ่ม Day 5 — Lower (Hamstring
+              Glute) V2' คนละวันคนละกล้ามเนื้อ" — root cause คือจุดนี้ไม่เคยส่ง todaySessionHref เข้าไปเลย
+              (AICoachCompactCard.tsx บรรทัด ~770 มี branch "isRecommendationForToday && todayWorkoutTitle &&
+              todaySessionHref" ที่จะพาไปเซสชันจริงของวันนี้ตรงๆ อยู่แล้ว — comment ของโค้ดจุดนั้นระบุไว้ตรงๆ
+              ว่า "ไม่มี todaySessionHref ส่งมา เช่น เดสก์ท็อป จะ fallback ไปที่ branch เดิมด้านล่างแทน" ซึ่ง
+              คือ branch ที่เดาจาก workout_templates แทน) — ส่ง sessionHref ตัวเดียวกับที่ปุ่มจริงของ Today's
+              Workout hero ใช้อยู่แล้ว (todaysAction.sessionHref) เข้าไป ไม่มี logic ใหม่ ไม่แตะ branch อื่นเลย */}
           <AICoachCompactCard
             message={data.aiDailySummary}
             muscleRecommendation={data.todaysRecommendation}
@@ -2892,6 +2900,7 @@ export default function DashboardPage() {
             lastUpdatedAt={dataUpdatedAt}
             isRecommendationForToday={data.isRecommendationForToday}
             todayWorkoutTitle={workoutTitle}
+            todaySessionHref={sessionHref}
             nextScheduledMuscleGroup={nextScheduledMuscleGroup}
             hasMakeupToday={hasMakeupToday && !makeupSessionActive && totals.entryCount === 0}
             makeupSessionActive={makeupSessionActive && totals.entryCount === 0}
