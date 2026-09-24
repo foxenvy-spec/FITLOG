@@ -520,9 +520,20 @@ export default function AICoachCompactCard({
                   เล็กน้อย" — ตอน isRestDay เท่านั้น ลดขนาด/น้ำหนัก/สีของ 'Recovery Day' ลง (18->13,
                   font-bold->font-semibold, text-ink->TEXT.secondary) ไม่แตะ 'region' (ชื่อกลุ่มกล้ามเนื้อ
                   วันฝึกปกติ เช่น "LOWER BODY") เลย เพราะเป็นคนละเคส มีประวัติปรับแยกของตัวเองอยู่แล้ว */}
+              {/* ฟีดแบ็ก (design review รอบ 3, screenshot จริง) "สายตาเจอ Today's Workout → Day 3 แล้วอีก
+                  ไม่ไกลก็เจอ MINT Coach → Day 3 ซ้ำ (semantic duplication ทางภาพ ทั้งที่ข้อมูลไม่ผิด) —
+                  ไม่แก้ logic แต่ทำให้ hierarchy ของ Coach ชัดว่าเป็น 'next recommendation' ไม่ใช่ recap ของ
+                  วันนี้ — Today's Workout = สิ่งที่ต้องทำตอนนี้, MINT Coach = สิ่งที่ควรทำต่อ" — เฉพาะตอน
+                  showsNextProgramLine (จะมีบรรทัด startLabel ที่เจาะจงกว่าโผล่ด้านล่างอยู่แล้ว) ลด weight
+                  ของ headline กลุ่มกล้ามเนื้อทั่วไปนี้ลง (18px bold -> 14px semibold, สีจาง TEXT.secondary)
+                  ให้อ่านเป็น "บริบท" ไม่ใช่ "หัวเรื่องหลัก" อีกต่อไป — isRestDay/เคสอื่นทั้งหมดไม่กระทบเลย */}
               <p
-                className={`font-display tracked uppercase truncate mt-1 ${isRestDay ? 'font-semibold' : 'font-bold text-ink'}`}
-                style={{ fontSize: isRestDay ? 13 : 18, lineHeight: 1.15, color: isRestDay ? TEXT.secondary : undefined }}
+                className={`font-display tracked uppercase truncate mt-1 ${isRestDay || (!isRestDay && showsNextProgramLine) ? 'font-semibold' : 'font-bold text-ink'}`}
+                style={{
+                  fontSize: isRestDay ? 13 : showsNextProgramLine ? 14 : 18,
+                  lineHeight: 1.15,
+                  color: isRestDay || showsNextProgramLine ? TEXT.secondary : undefined,
+                }}
               >
                 {isRestDay ? 'Recovery Day' : displayRegion}
               </p>
@@ -631,11 +642,22 @@ export default function AICoachCompactCard({
 
               {/* Dashboard UX polish (Item 1) — บอกตรงๆ ว่าปุ่ม "เริ่ม {startLabel}" ด้านล่างจะพาไปโปรแกรม
                   ไหนจริง แยกจาก headline (displayRegion) ที่เป็นคำแนะนำกล้ามเนื้อของ Coach — ไม่แตะ
-                  startLabel เอง แค่แสดงค่าเดิมในบริบทที่ชัดขึ้น (ดู showsNextProgramLine ด้านบนของไฟล์) */}
+                  startLabel เอง แค่แสดงค่าเดิมในบริบทที่ชัดขึ้น (ดู showsNextProgramLine ด้านบนของไฟล์)
+                  v2 (design review รอบ 3) "3 ชั้นพูดเรื่องเดียวกัน (headline ทั่วไป -> next program caption
+                  เล็กจิ๋ว -> ปุ่ม CTA) ตัวที่เจาะจงและ actionable ที่สุด (startLabel) กลับเป็นตัวที่เบาที่สุด
+                  ในการ์ด (10.5px, TEXT.caption) สลับกับ headline ด้านบนที่ลด weight ลงไปแล้ว (ดู comment
+                  ที่ headline) ให้ startLabel นี้กลายเป็นจุดเด่นหลักแทน (label 'NEXT PROGRAM' ตัวพิมพ์เล็ก
+                  จาง + startLabel ตัวใหญ่ขึ้น 10.5 -> 15, semibold, text-ink) ไม่แตะ startLabel/ค่าที่แสดง
+                  ใดๆ เลย แค่สลับ typography scale กับ headline ด้านบน */}
               {showsNextProgramLine && (
-                <p className="truncate mt-0.5" style={{ fontSize: 10.5, color: TEXT.caption }}>
-                  Next program · {startLabel}
-                </p>
+                <>
+                  <p className="mt-1.5 text-[10px] font-display tracked uppercase" style={{ color: TEXT.caption }}>
+                    Next Program
+                  </p>
+                  <p className="truncate -mt-0.5 font-semibold text-ink" style={{ fontSize: 15, lineHeight: 1.2 }}>
+                    {startLabel}
+                  </p>
+                </>
               )}
 
               {/* ฟีดแบ็ก (design review — "MINT Coach ยังมีข้อมูล Recovery ซ้ำอยู่ภายในตัวเอง") "Recovery

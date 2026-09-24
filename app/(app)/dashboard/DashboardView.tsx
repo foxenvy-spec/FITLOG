@@ -1363,6 +1363,21 @@ export default function DashboardPage() {
             หนาแน่น"/น้ำหนักภาพของฝั่งวงแหวนลงจริง) 88/76 -> 76/66 (~13-14%, อยู่ในช่วง 10-15% ที่ขอ) ไม่แตะ
             ขนาดตัวอักษรชื่อ (36px, เป็น hero identity ที่ยืนยันไว้หลายรอบก่อนหน้าว่าต้องใหญ่กว่า section
             อื่นชัดเจน) หรือขนาดตัวอักษร badge (ความอ่านง่าย) เลย */}
+        {/* ฟีดแบ็ก (design review รอบ 3, screenshot จริง) "BANK / Body Fat ↓1.0% กับ Fitness Score 42 /
+            Recovery 95% ยังรู้สึกเหมือนอยู่คนละ visual system ทั้งที่ Mobile เชื่อม Header → Hero → Body
+            Overview เป็นเรื่องเดียวกันต่อเนื่อง — ไม่ต้องเพิ่ม component ใหม่ ใช้ ambient glow/typography/
+            spacing เชื่อมทั้งหมดพอ ไม่ต้องเพิ่ม glow เยอะ (Mobile เองก็ไม่ได้ใช้ glow หนัก)" — เพิ่มเส้นคั่น
+            บางๆ ไล่จางหัวท้าย (hairline, ไม่ใช่ border ทึบ) คั่นระหว่างคอลัมน์ชื่อกับกลุ่มวงแหวน ให้อ่านเป็น
+            "แถบข้อมูลเดียวที่มี 2 ส่วน" แทนที่จะเป็น 2 เกาะแยกที่มีที่ว่างกลางคั่นเฉยๆ — self-stretch ยืดตาม
+            ความสูงจริงของแถว (กำหนดจากฝั่งชื่อ ~113px ตามที่บันทึกไว้ด้านบน) ไม่แตะ layout/ขนาด/ตำแหน่งของ
+            ทั้งฝั่งชื่อและ HeroGaugeConcept เลยสักจุด */}
+        {fitnessScore && (
+          <div
+            aria-hidden="true"
+            className="hidden md:block self-stretch w-px shrink-0"
+            style={{ background: 'linear-gradient(180deg, transparent, rgba(255,255,255,.1) 15%, rgba(255,255,255,.1) 85%, transparent)' }}
+          />
+        )}
         {fitnessScore && (
           <div className="hidden md:flex flex-1 justify-center items-center self-center">
             <HeroGaugeConcept
@@ -1878,14 +1893,26 @@ export default function DashboardPage() {
                 const splitAt = title.search(/\s[—-]\s/)
                 const dayLabel = splitAt >= 0 ? title.slice(0, splitAt) : null
                 const restLabel = splitAt >= 0 ? title.slice(splitAt + 3) : title
+                // ฟีดแบ็ก (design review รอบ 3, screenshot จริง) "DAY 3 / LEGS (QUAD-DOMINANT...) โดน
+                // truncate กลางคำเพราะ Desktop มีพื้นที่กว้างแต่ text panel แคบเทียบกับรูป — ไม่ขยาย
+                // card/แก้ grid แต่ใช้ typography hierarchy แทนการบีบทุกอย่างไว้บรรทัดเดียว: แยกส่วนใน
+                // วงเล็บ (เช่น 'Quad-dominant V2') ออกมาเป็นบรรทัดย่อยเล็กกว่า ด้วย splitTitleDetail()
+                // ตัวเดียวกับที่ AICoachCompactCard ใช้อยู่แล้ว (ไม่ใช่ logic ใหม่ ใช้ของเดิมที่มีอยู่) —
+                // ชื่อ workout จริง/data ไม่เปลี่ยนเลยสักตัว แค่การนำเสนอ (presentation-only) */}
+                const { main: restMain, detail: restDetail } = splitTitleDetail(restLabel)
                 return (
                   <>
                     {dayLabel && (
                       <p className="font-display text-lg tracked uppercase text-amber leading-tight">{dayLabel}</p>
                     )}
                     <p className="font-display text-xl tracked uppercase text-ink leading-tight truncate">
-                      {restLabel}
+                      {restMain}
                     </p>
+                    {restDetail && (
+                      <p className="font-display text-[11px] tracked uppercase text-muted leading-tight mt-0.5 truncate">
+                        {restDetail}
+                      </p>
+                    )}
                   </>
                 )
               })()}
@@ -3075,14 +3102,22 @@ function QuickAction({
           ชัดเจน" — พื้นเทาดำ #1B1D20/#0D0E10 (โทนเดียวกับตอนทั้งหน้ายังเป็น "Dark Titanium" เดิมก่อน
           migration) เปลี่ยนเป็นสีเดียวกับ navy-glass ที่การ์ดอื่นในหน้าใช้แล้ว (bg-[#101D29]/80 เทียบเท่า) —
           ไม่แตะ backdrop-blur/glow ต่อ hover/จำนวน-เลย์เอาต์ปุ่มใดๆ เลย แค่สลับสีพื้นให้เข้าธีมเดียวกัน */}
+      {/* v2 (ฟีดแบ็ก design review รอบ 3, screenshot จริง) "Quick Actions ยังเป็น utility strip มากกว่า
+          premium component — navy glass surface ทำแล้ว (รอบก่อน) แต่ icon container/label hierarchy/
+          spacing ยังไม่เข้า card family เดียวกับ Mobile" — ไม่เพิ่ม animation ใหม่ ไม่เปลี่ยนจำนวน action
+          ตามที่ขอ แค่: (1) icon container มุมโค้งขึ้น rounded-md(6px) -> rounded-[10px] (รัศมีเดียวกับ icon
+          badge ที่ MetricCard.tsx ใช้ทั่วแอปอยู่แล้ว, "ภาษาไอคอน" เดียวกัน) + inset highlight บางๆ ให้รู้สึก
+          เป็นกระจกเหมือน icon badge อื่น (2) label hierarchy ชัดขึ้นด้วยขนาด ไม่ใช่แค่สี/น้ำหนัก (primary
+          12.5px bold, secondary 12px semibold, tertiary 11px medium) (3) padding แนวนอน 3 -> 3.5 ให้
+          สัดส่วนใกล้เคียงการ์ด navy-glass อื่นๆ ในหน้ามากขึ้น */}
       <Link
         href={href}
-        className="quick-action relative rounded-lg backdrop-blur-md flex items-center gap-2.5 px-3 py-3 transition active:scale-[0.99]"
+        className="quick-action relative rounded-lg backdrop-blur-md flex items-center gap-2.5 px-3.5 py-3 transition active:scale-[0.99]"
         style={{ backgroundColor: 'rgba(16,29,41,.8)' }}
       >
         <span
-          className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base"
-          style={{ backgroundColor: `${hex}${iconBgAlpha}` }}
+          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 text-base"
+          style={{ backgroundColor: `${hex}${iconBgAlpha}`, boxShadow: 'inset 0 1px rgba(255,255,255,.14)' }}
           aria-hidden="true"
         >
           {icon}
@@ -3093,7 +3128,13 @@ function QuickAction({
             บรรทัดที่ 2 ได้โดยไม่ต้องขยายการ์ด/เปลี่ยนคำ — ตัด truncate ออก ปล่อยให้ wrap ตามความกว้างจริงของ
             คอลัมน์แทน (leading-tight กันบรรทัดที่ 2 ดันความสูงเกินจำเป็น) */}
         <span
-          className={`text-[12px] font-display tracked uppercase leading-tight ${weight === 'primary' ? 'font-semibold text-ink' : weight === 'tertiary' ? 'text-muted' : 'text-ink'}`}
+          className={`font-display tracked uppercase leading-tight ${
+            weight === 'primary'
+              ? 'text-[12.5px] font-bold text-ink'
+              : weight === 'tertiary'
+                ? 'text-[11px] font-medium text-muted'
+                : 'text-[12px] font-semibold text-ink'
+          }`}
         >
           {label}
         </span>
