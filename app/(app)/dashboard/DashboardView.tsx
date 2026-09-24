@@ -2968,7 +2968,20 @@ export default function DashboardPage() {
       {/* slide 2 — Muscle Heatmap/Weekly Sets/Consistency/Cardio Volume, moved out of the 12-col
           grid entirely into their own self-contained stack (no longer needs lg:col-start/row-start) */}
       <div ref={slide2Ref} className="shrink-0 w-full snap-center">
-        <div className="space-y-6 px-1">
+        <div className="relative space-y-6 px-1">
+          {/* v2 (ฟีดแบ็ก "ทำทุกอย่างที่ทำให้ดีขึ้น", final audit — หน้าพื้นหลังยังดำสนิทเทียบกับหน้า 1 ที่มี
+              ambient wash แล้ว) — เพิ่ม ambient wash เดียวกันทุกประการ (เทคนิค/โทนสี/alpha เดียวกับ Header→
+              Hero wash ของหน้า 1) ให้แท็บ "2 · รายละเอียด" มีบรรยากาศต่อเนื่องเหมือนกัน ไม่ใช่รูปภาพจริง
+              (ยังคง constraint "ไม่เอา full landscape takeover" ตามที่ล็อกไว้ตอนเลือก Version 3 — นี่คือ
+              gradient นุ่มล้วนๆ ไม่ใช่รูปถ่าย) pointer-events-none, ไม่มี z-index (paint ก่อน children
+              ทุกตัวเหมือนแพทเทิร์นเดิม) */}
+          <div
+            className="absolute inset-x-0 top-0 h-[600px] pointer-events-none"
+            style={{
+              backgroundImage: 'radial-gradient(ellipse 85% 55% at 35% 0%, rgba(255,150,30,.1), transparent 70%)',
+            }}
+            aria-hidden="true"
+          />
           {/* ฟีดแบ็ก (design review — "Information Density สูงเกินไปในหน้า Overview") — BodyMetricsRow
               (5 การ์ด weight/bodyFat/muscle/bmi/visceralFat, "ภาพรวมร่างกาย") ย้ายมาจากแท็บ "1 · ภาพรวม"
               (ดู comment ที่จุดเดิมของมัน ต้นๆ ของ slide 1 ด้านบน) เนื้อหา/สูตรคำนวณไม่เปลี่ยนเลย แค่ย้าย
