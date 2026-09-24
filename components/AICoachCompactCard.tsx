@@ -412,9 +412,14 @@ export default function AICoachCompactCard({
             มีข้อมูลมากกว่า) ลดลงอีกขั้น (64/56 -> 44/38) — เดสก์ท็อป (variant="default") และ
             stats/report/page.tsx ที่ import AiRingAvatar ไปใช้ร่วมยังเป็นกรอบวง+เพชรเดิมทุกจุด (ไม่ได้อยู่
             ในสโคปของรอบรีดีไซน์ Home นี้เลย) */}
+        {/* ฟีดแบ็ก "ตรง AI เอารูปเดียวกับ mobile มาใช้ได้ไหม" — เดสก์ท็อป (variant="default") เปลี่ยนจาก
+            icon='gem' (เพชรเหลี่ยมนามธรรม) เป็น 'robot' (mint-coach-avatar.png ตัวเดียวกับมือถือ) ให้
+            ตัวตน MINT Coach เป็นภาพเดียวกันทั้งสอง surface — คงขนาดเดิมของเดสก์ท็อป (89/104) ไว้ ไม่ลดลงมา
+            เท่าขนาดมือถือ (38/44) เพราะกรอบ 'robot' ที่ AiRingAvatar สร้างสเกลตามขนาดเองอยู่แล้ว
+            stats/report/page.tsx ยังไม่แตะ (import แยก ไม่ได้อยู่ในสโคปที่ขอ) */}
         <AiRingAvatar
           size={variant === 'flat' ? (isRestDay ? 38 : 44) : isRestDay ? 89 : 104}
-          icon={variant === 'flat' ? 'robot' : 'gem'}
+          icon="robot"
         />
         <div className="min-w-0 flex-1">
           {/* v30: ฟีดแบ็ก "Orange = Action/Energy เท่านั้น" — ป้ายชื่อการ์ด "AI Coach" เอง ไม่ใช่ action/
