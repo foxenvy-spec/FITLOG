@@ -1625,162 +1625,50 @@ export default function DashboardPage() {
             เดิม */}
         <div className="absolute inset-0 bg-[#0B1520] overflow-hidden">
           <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-image-box overflow-hidden">
-            <div className="absolute inset-0" style={{ transform: 'scale(0.92)', transformOrigin: '60% 42%' }}>
+            <div className="absolute inset-0">
+              {/* v64 (mockup match, "Version 3" warm-sunset direction) — สลับจากรูปดัมเบล (product shot)
+                  เป็น home-header-hero.png (ภูเขา sunset อุ่น) ไฟล์เดียวกับที่ Mobile Home ใช้จริงอยู่แล้ว
+                  (components/dashboard/Header.tsx) ไม่ใช่ไฟล์ใหม่ — เลือก objectPosition ให้จุดที่แสง
+                  อาทิตย์ส้มทองอยู่ในโซนที่มองเห็นได้ (ฝั่งขวาของการ์ด) แทนตำแหน่งเดิมที่ล็อกไว้สำหรับดัมเบล
+                  เอง (76%/45%) — ตัด scale(0.92) crop เดิม (ทำไว้เพื่อจัดองค์ประกอบดัมเบลโดยเฉพาะ ไม่จำเป็น
+                  กับภาพแนวนอนธรรมชาติ) — filter เอา sepia/hue-rotate เดิม (แต่งสีให้โลหะดูอุ่น) ออก เพราะ
+                  ภาพนี้มีโทนอุ่นจากแสงอาทิตย์จริงอยู่แล้ว ใช้แค่ contrast/saturate/brightness ลดลงแบบเดียว
+                  กับที่ Header.tsx (มือถือ) ใช้กับภาพเดียวกันนี้ (เพื่อ mood สอดคล้องกัน) */}
               <Image
-                src="/images/today-workout-hero-dumbbell.png"
+                src="/images/home-header-hero.png"
                 alt=""
                 fill
                 className="object-cover"
                 style={{
-                  objectPosition: '76% 45%',
-                  // v62: ฟีดแบ็ก "ภาพดัมเบลยังคมกว่า Card ฝั่งข้อความมาก สายตาโดนดึงไปที่ดัมเบลก่อน DAY 3/
-                  // LEGS อยากได้ Text เป็น Hero รูปเป็น Supporting แบบ Apple" — ลด contrast ~10% (1.05 ->
-                  // 0.95) + เพิ่ม blur เล็กน้อย (0.4px -> 0.7px, "sharpness ลดนิดเดียว") ให้รูปถอยไปเป็น
-                  // บรรยากาศพื้นหลังชัดเจนขึ้น ไม่แย่งสายตาจากข้อความ — saturate ลดตามสัดส่วนเดียวกันเล็กน้อย
-                  // (1.25 -> 1.2) กัน contrast ที่ลดลงทำให้สีดูซีดขึ้นสวนทาง (คงความอุ่นไว้) brightness 1.02 ->
-                  // 1.0 (เดิมชดเชย overlay มืดที่ตัดไปเยอะแล้วจาก v56 ไม่จำเป็นต้องชดเชยเพิ่มอีก)
-                  // v63: ฟีดแบ็ก (P1.3, Information Hierarchy review) "ลดความสว่าง background image ของ
-                  // Today's Workout ประมาณ 15-20% เพราะรูป Dumbbell ดึงสายตาค่อนข้างแรง" — เหตุผลเดียวกับ
-                  // v62 เป๊ะ (text ควรเป็น hero รูปเป็น supporting) แต่รอบนี้ระบุตัวเลขชัดเจน — brightness
-                  // 1.0 -> 0.82 (-18%, อยู่ในช่วงที่ขอ)
-                  filter: 'blur(0.7px) contrast(0.95) sepia(0.15) saturate(1.2) hue-rotate(-6deg) brightness(0.82)',
+                  objectPosition: '70% 35%',
+                  filter: 'contrast(0.9) saturate(0.9) brightness(0.85)',
                 }}
                 priority
               />
             </div>
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: `linear-gradient(90deg, ${withAlpha(COLORS.amber, '00')} 0%, ${withAlpha(COLORS.amber, '55')} 8%, transparent 22%)`,
-                mixBlendMode: 'screen',
-              }}
-              aria-hidden="true"
-            />
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  'linear-gradient(115deg, transparent 38%, rgba(255,255,255,.10) 47%, rgba(255,244,224,.16) 50%, rgba(255,255,255,.08) 53%, transparent 62%)',
-                mixBlendMode: 'overlay',
-              }}
-              aria-hidden="true"
-            />
-            {/* v61: ฟีดแบ็ก "พื้นที่หลังดัมเบลยังโล่ง อยากเพิ่มฝุ่น/particle/แสง/หมอกบางๆ ให้หลังดัมเบล แบบ
-                Nike/Apple Fitness/Whoop" — โซนล่างขวาของรูป (หลัง/ใต้ดัมเบล) ค่อนข้างว่างเปล่าหลังผ่าน
-                overlay มืด/vignette หลายรอบ เพิ่มหมอกอุ่นบางๆ (radial ต่ำมาก 10% alpha) เติมเต็มโซนนั้น
-                โดยเฉพาะ ไม่ใช่ครอบทั้งรูป */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: 'radial-gradient(ellipse 70% 60% at 82% 72%, rgba(255,180,90,.10), transparent 75%)' }}
-              aria-hidden="true"
-            />
           </div>
           <div
             className="absolute inset-y-0 right-0 w-full sm:w-2/3 hero-gradient-box"
             style={{
-              // v58: ฟีดแบ็ก "ใส่ glow สีส้มอ่อนด้านหลังดัมเบลนิดเดียว ไม่ใช่ให้เห็นเป็นวง แต่ให้รู้สึกว่า
-              // 'แสงกำลังตกที่ดัมเบล'" — glow เดิม (v56, ellipse 65%/55% ค่อนข้างกลม + fade ที่ 62% ค่อนข้าง
-              // แข็ง) เริ่มอ่านเป็นรูปทรงวง/blob ชัดเจนไป — ขยาย ellipse ให้ใหญ่/รีกว่าเดิมมาก (95%/80%,
-              // ไม่กลมแบบเดิม) ลด alpha (.28 -> .18) และยืด fade ให้นุ่มมาก (62% -> 82%) ให้ไม่มีขอบชัดเจน
-              // ตำแหน่งศูนย์กลางยังอยู่บริเวณเดิม (มุมบนขวา เหนือหัวดัมเบล) ตามภาพร่างที่ให้มา (ประกาย/แสงอยู่
-              // เหนือวัตถุ) — อ่านเป็น "แสงกระจายอุ่นๆ ตกกระทบ" แทนที่จะเป็นวงเรืองแสงลอยอยู่ต่างหาก
+              // v64 (mockup match) — เดิมมี radial "light on dumbbell" เจาะจงตำแหน่งหัวดัมเบล เอาออกเพราะ
+              // ภาพภูเขาเองมีจุดแสงอาทิตย์อุ่นอยู่แล้วในเนื้อภาพจริง ไม่ต้องจำลองแสงตกกระทบซ้อนทับ — เหลือ
+              // แค่ dark-to-image fade แนวนอนเดิม (จำเป็นสำหรับให้ข้อความฝั่งซ้ายอ่านออก) กับ vignette บนบางๆ
               backgroundImage: [
                 'linear-gradient(180deg, rgba(7,9,13,.08), rgba(7,9,13,.18))',
-                'radial-gradient(ellipse 95% 80% at 85% 25%, rgba(255,154,22,.18), transparent 82%)',
                 'linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%)',
               ].join(', '),
             }}
           />
           {/* ฟีดแบ็ก "Today's Workout ใหญ่เกินไปตอนยังไม่มีโปรแกรม — Visual Weight > Information Value"
-              (ยืนยันจากสกรีนช็อตจริง — รูปดัมเบลยังเด่นมากแม้เนื้อหาจริงมีแค่ '0 Exercises') — ไม่แตะสูตรภาพ/
-              filter/glow ที่ผ่านการปรับละเอียดมาหลายรอบเลย (เสี่ยงทำลายงานที่ verify แล้ว) แต่เพิ่ม scrim มืด
-              อีกชั้นทับเฉพาะ State B (ยังไม่มีโปรแกรม + ยังไม่ได้เทรนวันนี้) ให้รูปถอยเป็นพื้นหลังมากขึ้นตอนที่
-              เนื้อหาจริงมีน้อย — State A/C (มีโปรแกรม/เทรนเสร็จแล้ว) ไม่โดนกฎนี้ ยังเห็นรูปเต็มที่เหมือนเดิม
-              รอบถัดมา: ฟีดแบ็ก "ลด opacity ลงอีกประมาณ 10-20% ให้ข้อความเป็นพระเอก" (เห็นจากสกรีนช็อตจริง
-              หลังรอบแรกแล้วว่ายังไม่พอ) — เพิ่ม alpha .38 -> .50 (+~30% เชิงสัมพัทธ์ อยู่ในช่วงที่ขอ) */}
+              (ยืนยันจากสกรีนช็อตจริง) — เพิ่ม scrim มืดอีกชั้นทับเฉพาะ State B (ยังไม่มีโปรแกรม + ยังไม่ได้
+              เทรนวันนี้) ให้รูปถอยเป็นพื้นหลังมากขึ้นตอนที่เนื้อหาจริงมีน้อย — State A/C (มีโปรแกรม/เทรนเสร็จ
+              แล้ว) ไม่โดนกฎนี้ ยังเห็นรูปเต็มที่เหมือนเดิม — ยังใช้ได้เหมือนเดิม ไม่ขึ้นกับภาพพื้นหลังตัวไหน */}
           {!scheduledDay && !todayCompleted && (
             <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.50)' }} />
           )}
-          {/* v48: ฟีดแบ็ก "โซน Dumbbell (~35% ของการ์ด) มีแค่รูปดัมเบลอย่างเดียว อยากเพิ่ม Glow/Particle
-              เบาๆ ให้ดูมีชีวิต" — จุดกระพริบเล็กๆ กระจายรอบไอคอน (เทคนิคเดียวกับ "Particles" ใน
-              TodaysWorkoutCompactCard.tsx ขนาด/ตำแหน่งไม่เท่ากันจำลองประกายลอยในอากาศ ไม่ใช่ pattern
-              ซ้ำเป๊ะ) — สีทองอุ่นเดียวกับ spark SVG เดิม (#FFB84A) ให้เป็นชุดสีเดียวกัน ยังใช้ได้ดีทับรูปถ่าย
-              จริง เพราะรูปที่เลือกมามีฝุ่นกระจายอยู่แล้ว เข้ากับธีมประกายลอยในอากาศพอดี
-              v54: ฟีดแบ็ก "เพิ่มฝุ่นหรือ Spark ไม่ต้องเยอะ 2-3 จุดพอ จะดู Cinematic แบบ Nike/Under Armour" —
-              เดิมมี 5 จุดเล็กคมเท่ากันหมด (sharp dot ล้วน) ลดเหลือ 3 จุด ผสม 2 แบบ: ฝุ่น/chalk (วงกลม
-              เบลอนุ่มๆ ใหญ่กว่า ให้ความรู้สึกเป็นละอองฝุ่นลอย ไม่ใช่จุดคมแข็ง) 2 จุด + spark สว่างคมจุดเดียว
-              (คงกลิ่นอายแสงระยิบเดิมไว้ 1 จุด ไม่ให้หายไปทั้งหมด)
-              v55: ฟีดแบ็ก "เพิ่ม particle อีกนิด: ฝุ่นทอง 2-3 จุด + bokeh เล็กๆ เฉพาะบริเวณบนของดัมเบล" —
-              เพิ่มอีก 2 จุด (bokeh วงใหญ่เบลอจาง + ฝุ่นทองเล็ก) รวมเป็น 5 ทั้งหมด แต่ทุกจุดใหม่กระจุกอยู่
-              โซนบนของดัมเบล (top ~10-22%) ตามที่ขอเจาะจง ไม่ใช่กระจายทั่วการ์ดเหมือนเซ็ตเดิม
-              v56: ฟีดแบ็ก "particle/dust/orange glow เพิ่มความรู้สึก 'วันนี้คือวันลุย'" — เพิ่มอีก 2 จุด
-              (bokeh กลางเฟรม + spark ฝั่งขวาล่าง) รวมเป็น 7 จุด ให้ภาพดูมีพลัง/เคลื่อนไหวมากขึ้น
-              v59: ฟีดแบ็ก "รูปดัมเบลยังนิ่ง อยากเพิ่มฝุ่นลอย นิดเดียว" — เพิ่ม animation ลอยเบาๆ (translate
-              ไม่กี่ px, 6-8.5s/รอบ) ให้ 3 จุดที่เบลอนุ่มอยู่แล้ว (ไม่ใส่กับจุด spark คมๆ กันดูรบกวนเกินไป)
-              — เพิ่ม 2 จุดฝุ่นจางมากๆ (opacity .22-.28) ที่ฝั่งซ้ายของการ์ด (นอกกรอบรูปเดิม เข้าไปในโซน
-              ข้อความ) ให้ทั้งการ์ดรู้สึกเป็นฉากเดียวกัน ไม่ใช่รูปกับข้อความคนละที่ (ดู "การ์ดกับรูปแยกกัน" ด้านล่าง) */}
-          <div
-            className="absolute rounded-full pointer-events-none hero-dust-float-a"
-            style={{ left: '58%', top: '16%', width: 22, height: 22, background: 'radial-gradient(circle, rgba(255,200,120,.22), transparent 70%)', filter: 'blur(3px)' }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute rounded-full pointer-events-none hero-dust-float-b"
-            style={{ left: '68%', top: '10%', width: 10, height: 10, background: 'radial-gradient(circle, rgba(255,244,224,.35), transparent 70%)', filter: 'blur(1.5px)' }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '86%', top: '22%', width: 14, height: 14, background: 'radial-gradient(circle, rgba(255,184,74,.28), transparent 70%)', filter: 'blur(2px)' }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute rounded-full pointer-events-none hero-dust-float-c"
-            style={{ left: '50%', top: '45%', width: 12, height: 12, background: 'radial-gradient(circle, rgba(255,184,74,.18), transparent 70%)', filter: 'blur(2px)' }}
-            aria-hidden="true"
-          />
-          <span
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '73%', top: '14%', width: 2.5, height: 2.5, background: '#FFF4E0', opacity: 0.85, boxShadow: '0 0 5px 1.5px rgba(255,184,74,.7)' }}
-            aria-hidden="true"
-          />
-          <span
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '80%', top: '58%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.6, boxShadow: '0 0 4px 1px rgba(255,184,74,.55)' }}
-            aria-hidden="true"
-          />
-          <span
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '92%', top: '38%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.55, boxShadow: '0 0 4px 1px rgba(255,184,74,.5)' }}
-            aria-hidden="true"
-          />
-          <span
-            className="absolute rounded-full pointer-events-none hero-dust-float-d"
-            style={{ left: '4%', top: '30%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.28, boxShadow: '0 0 4px 1px rgba(255,184,74,.3)' }}
-            aria-hidden="true"
-          />
-          <span
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '-2%', top: '68%', width: 1.5, height: 1.5, background: '#FFF4E0', opacity: 0.22, boxShadow: '0 0 3px 1px rgba(255,184,74,.25)' }}
-            aria-hidden="true"
-          />
-          {/* v61: อีก 3 จุดเติมโซนล่างขวาที่ว่างเปล่า (ดูคอมเมนต์หมอกด้านบน) — bokeh ใหญ่จาง 1 จุด + spark
-              เล็ก 2 จุด ให้สอดคล้องกับสัดส่วน bokeh:spark ของคลัสเตอร์เดิมด้านบน */}
-          <div
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '95%', top: '75%', width: 16, height: 16, background: 'radial-gradient(circle, rgba(255,190,110,.2), transparent 70%)', filter: 'blur(2.5px)' }}
-            aria-hidden="true"
-          />
-          <span
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '88%', top: '80%', width: 2, height: 2, background: '#FFF4E0', opacity: 0.5, boxShadow: '0 0 4px 1px rgba(255,184,74,.45)' }}
-            aria-hidden="true"
-          />
-          <span
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: '78%', top: '85%', width: 1.5, height: 1.5, background: '#FFF4E0', opacity: 0.4, boxShadow: '0 0 3px 1px rgba(255,184,74,.4)' }}
-            aria-hidden="true"
-          />
+          {/* v64 (mockup match) — ตัด particle/dust/spark cluster เดิม (12 จุด) ออกทั้งหมด: จำลองฝุ่น
+              ชอล์ก/ประกายโลหะรอบดัมเบลจริงๆ ไม่มีความหมายบนภาพภูเขา (ไม่ใช่แค่ "ดูแปลก" แต่ผิดบริบทภาพ
+              โดยตรง) — mockup อ้างอิงที่ล็อกไว้ก็ไม่มี particle overlay แบบนี้เช่นกัน */}
         </div>
 
         {/* v59: ฟีดแบ็ก "Card กับรูปยังแยกกัน เหมือนเอา Card มาวางทับรูป ไม่ได้เชื่อมกัน อยากได้ vignette ให้
