@@ -43,7 +43,9 @@ function shortThaiDate(iso: string) {
 type Level = 'none' | 'low' | 'mid' | 'high'
 
 const LEVEL_COLOR: Record<Level, string> = {
-  none: '#2E333A',
+  // "none" (no data that day) is a neutral fill, not a data-semantic tier like low/mid/high —
+  // migrated to match the navy-glass surface language (was the old border-line hex, #2E333A)
+  none: 'rgba(255,255,255,.08)',
   low: '#C1503A',
   mid: '#E8A33D',
   high: '#7A9B57',
@@ -357,17 +359,17 @@ export default function ConsistencyStrip() {
   return (
     // ฟีดแบ็ก "Muscle Heatmap + Weekly Volume ควรเป็น PRIMARY, Consistency + Week Streak ควรเป็น
     // SECONDARY — ตอนนี้ทุกการ์ดแย่งความสนใจเท่ากันหมด" — bg-surface + shadow-elevated เดิม ทำให้การ์ด
-    // นี้มีน้ำหนักภาพเท่ากับ Muscle Heatmap ที่ควรเป็น primary — เปลี่ยนเป็น bg-surface2/40 ไม่มี
+    // นี้มีน้ำหนักภาพเท่ากับ Muscle Heatmap ที่ควรเป็น primary — เปลี่ยนเป็น bg-[#101D29]/80 ไม่มี
     // shadow-elevated (สไตล์เดียวกับที่ Recovery/Training This Week/Body Goal ใช้เป็น "การ์ดรอง" อยู่แล้ว
     // ในรอบก่อนหน้า) ให้ Consistency เบากว่า Muscle Heatmap/Weekly Volume โดยเปรียบเทียบ ไม่แตะเนื้อหา/
     // ข้อมูลใดๆ ภายใน (ปฏิทิน 21 วันยังโชว์เต็มเหมือนเดิมทุกประการ ตามที่ระบุว่าห้ามลด)
-    <div className="rounded-lg bg-surface2/40 border border-line overflow-hidden lg:grid lg:grid-cols-3">
+    <div className="rounded-lg bg-[#101D29]/80 border border-white/10 overflow-hidden lg:grid lg:grid-cols-3">
       {/* left: calendar grid + legend — spans 2/3 on lg+ so the 4 stat tiles can sit
           beside it as a 2x2 block instead of stacking in a row underneath */}
       {/* ฟีดแบ็ก "Consistency สามารถลดความสูงลงได้ประมาณ 15-20%" — ลด padding แนวตั้งของทั้งสองโซน
           (หัวการ์ด + บริเวณปฏิทิน) ลงเล็กน้อย ไม่แตะขนาดกริดปฏิทิน/ขนาดตัวอักษร (เสี่ยงกระทบ readability
           มากกว่า) รวมกันแล้วลดความสูงจริงได้ตามสัดส่วนที่ขอโดยไม่ต้องตัดข้อมูลออก */}
-      <div className="lg:col-span-2 lg:border-r lg:border-line">
+      <div className="lg:col-span-2 lg:border-r lg:border-white/10">
         <div className="px-4 pt-3 pb-2 flex items-start justify-between gap-2">
           <div>
             <p className="text-[12px] tracked uppercase text-muted">Consistency</p>
@@ -387,7 +389,7 @@ export default function ConsistencyStrip() {
                 type="button"
                 onClick={() => goToOffset(weekOffset + 1)}
                 aria-label="ดูช่วงก่อนหน้า"
-                className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink border border-line"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink border border-white/10"
               >
                 ‹
               </button>
@@ -396,7 +398,7 @@ export default function ConsistencyStrip() {
                 onClick={() => goToOffset(weekOffset - 1)}
                 disabled={weekOffset === 0}
                 aria-label="ดูช่วงถัดไป"
-                className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink border border-line disabled:opacity-30 disabled:pointer-events-none"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink border border-white/10 disabled:opacity-30 disabled:pointer-events-none"
               >
                 ›
               </button>
@@ -470,7 +472,7 @@ export default function ConsistencyStrip() {
             />
           ) : (
             insights.length > 0 && (
-              <div className="flex-1 min-w-[180px] border-l border-line pl-4 flex flex-col justify-center gap-2">
+              <div className="flex-1 min-w-[180px] border-l border-white/10 pl-4 flex flex-col justify-center gap-2">
                 {insights.map((line) => (
                   <p key={line.icon} className="text-[12px] leading-snug" style={{ color: line.color }}>
                     <span aria-hidden="true">{line.icon}</span> {line.text}
@@ -486,8 +488,8 @@ export default function ConsistencyStrip() {
           ก่อน" — เดิมโชว์ 4 tile พร้อมกันเสมอ ลดเหลือ 2 tile หลัก (Consistency%, สัปดาห์ติด) ที่เห็นทันที
           ส่วนน้ำหนักรวม/ท่าออกกำลังกายซ่อนหลังปุ่ม toggle แทน (ข้อมูลเดิมทุกตัวเลข ไม่มีอะไรหายไป แค่ไม่ต้อง
           โชว์พร้อมกันทั้งหมดตั้งแต่แรกเห็น) */}
-      <div className="border-t border-line lg:border-t-0 lg:col-span-1">
-        <div className="grid grid-cols-2 divide-x divide-line">
+      <div className="border-t border-white/10 lg:border-t-0 lg:col-span-1">
+        <div className="grid grid-cols-2 divide-x divide-white/10">
           {/* ฟีดแบ็ก "ปุ่มเลื่อนดูปฏิทินไม่ควรทำให้ Consistency%/สัปดาห์ติด เปลี่ยน" — ทั้งคู่อ่านจาก
               liveStats (คำนวณจาก data ตรงๆ เสมอ) ไม่ใช่ displayGrid ที่เปลี่ยนตาม weekOffset */}
           {liveStats?.consistencyPct !== null && liveStats?.consistencyPct !== undefined ? (
@@ -519,13 +521,13 @@ export default function ConsistencyStrip() {
         <button
           type="button"
           onClick={() => setShowMoreStats((v) => !v)}
-          className="w-full text-center text-[12px] font-medium py-2 border-t border-line"
+          className="w-full text-center text-[12px] font-medium py-2 border-t border-white/10"
           style={{ color: '#E8A33D' }}
         >
           {showMoreStats ? 'ซ่อนรายละเอียดเพิ่มเติม ↑' : 'ดูรายละเอียดเพิ่มเติม →'}
         </button>
         {showMoreStats && (
-          <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
+          <div className="grid grid-cols-2 divide-x divide-white/10 border-t border-white/10">
             <StatTile value={data ? Math.round(data.weekVolumeKg).toLocaleString('th-TH') : 0} label="กก. น้ำหนักรวม" caption="สัปดาห์นี้" />
             <StatTile value={data?.weekExerciseCount ?? 0} label="ท่าออกกำลังกาย" caption="สัปดาห์นี้" />
           </div>
@@ -536,7 +538,7 @@ export default function ConsistencyStrip() {
           — เทียบ current streak (นับวัน) กับสถิติสูงสุดที่เคยทำได้ ตัวเดียวกับ Dashboard "Workout Streak"
           (ดู comment เต็มที่ fetchConsistencyData) ไม่โชว์ตอนไม่มีข้อมูลพอ (ยังไม่เคยมี streak เลย) */}
       {data && data.bestStreakEver > 0 && (
-        <div className="lg:col-span-3 border-t border-line px-4 py-2.5">
+        <div className="lg:col-span-3 border-t border-white/10 px-4 py-2.5">
           {data.currentStreak >= data.bestStreakEver ? (
             <p className="text-[12px] text-center" style={{ color: '#E8A33D' }}>
               {/* ฟีดแบ็ก "ตอน Streak ขยับแตะสถิติใหม่ ใส่ Micro-celebration เล็กๆ ไอคอนไฟสั่นดุ๊กดิ๊ก+ประกาย" —
@@ -618,7 +620,7 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
   }
 
   return (
-    <div className="flex-1 min-w-[180px] border-l border-line pl-4 flex flex-col">
+    <div className="flex-1 min-w-[180px] border-l border-white/10 pl-4 flex flex-col">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-[12px] text-ink font-medium">{shortThaiDate(iso)}</p>
@@ -661,7 +663,7 @@ function DayDetail({ iso, workouts, onClose }: { iso: string; workouts: Workout[
                   {isOpen && canExpand && (
                     <div className="grid grid-cols-3 gap-1 mb-1.5 mt-1">
                       {displaySets.map((s) => (
-                        <div key={s.id} className="rounded-md bg-surface2 px-1.5 py-1 text-center">
+                        <div key={s.id} className="rounded-md bg-[#101D29] px-1.5 py-1 text-center">
                           <p className="text-[12px] tracked uppercase text-muted">เซ็ต {s.set_number}</p>
                           <p className="font-mono text-[12px] font-semibold text-ink tabular">
                             {s.weight_kg ?? '—'}กก. × {s.reps ?? '—'}

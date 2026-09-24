@@ -13,7 +13,7 @@ import type { VolumeIncrease } from '@/lib/dashboardStats'
 // จะยิ่งสับสน) เก็บไว้แค่ Highlights ซึ่งเป็นข้อมูลที่ยังไม่มีจริงเท่านั้น
 function HighlightTile({ icon, value, label }: { icon: string; value: string; label: string }) {
   return (
-    <div className="rounded-lg bg-surface2 px-3 py-2.5 flex-1 min-w-[120px]">
+    <div className="rounded-lg bg-[#101D29] px-3 py-2.5 flex-1 min-w-[120px]">
       <p className="text-lg leading-none">{icon}</p>
       <p className="font-mono font-bold text-ink mt-1.5" style={{ fontSize: 18 }}>
         {value}
@@ -31,7 +31,7 @@ interface HighlightsRowProps {
 
 export default function HighlightsRow({ streak, bestVolumeIncrease, weeklyConsistencyPct }: HighlightsRowProps) {
   return (
-    <div className="rounded-lg border border-line bg-surface2/40 px-4 py-3.5 space-y-2.5">
+    <div className="rounded-lg border border-white/10 bg-[#101D29]/80 px-4 py-3.5 space-y-2.5">
       <p className="text-[12px] tracked uppercase text-muted">Highlights</p>
       <div className="flex flex-wrap gap-2.5">
         {/* ฟีดแบ็ก "Streak ต่อเนื่อง ซ้ำความหมายกันเอง (Streak ก็แปลว่าต่อเนื่องอยู่แล้ว)" — ตัด "ต่อเนื่อง"

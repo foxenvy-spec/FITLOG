@@ -104,7 +104,7 @@ export default function WeeklyVolume({ highlightGroup, setsByMuscle, targets }: 
         <button
           type="button"
           onClick={() => setSettingsOpen(true)}
-          className="text-[12px] text-muted hover:text-ink border border-line rounded px-2 py-1 mt-0.5 shrink-0"
+          className="text-[12px] text-muted hover:text-ink border border-white/10 rounded px-2 py-1 mt-0.5 shrink-0"
         >
           ตั้งเป้าหมาย
         </button>

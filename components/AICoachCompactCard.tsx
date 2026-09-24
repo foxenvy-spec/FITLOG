@@ -23,7 +23,6 @@ import { recoveryTier, recoveryVerdictEmoji, type TodaysRecommendation } from '@
 import { describeMuscleFocus, formatRelatedGroups, type MuscleGroup } from '@/lib/muscle-groups'
 import { resolveRecommendationDisplay } from '@/lib/recommendationDisplay'
 import { splitTitleDetail } from '@/lib/workoutDisplay'
-import PremiumCard from './ui/PremiumCard'
 import Button from './ui/Button'
 import { HOME_COLORS } from '@/lib/homeColors'
 
@@ -792,9 +791,11 @@ export default function AICoachCompactCard({
   )
 }
 
-// สลับพื้นผิว wrapper ตาม variant — 'default' (เดสก์ท็อป/เดิม) ยังเป็น PremiumCard (Dark Titanium) เป๊ะ
-// ทุกกระเบียดนิ้ว, 'flat' (Mobile Dashboard) เป็นการ์ดเรียบแบนแทน — สลับแค่พื้นผิวชั้นนอกสุด ไม่แตะ
-// เนื้อหา/logic ข้างในเลยสักบรรทัด (children เดียวกันทั้งสอง variant)
+// สลับพื้นผิว wrapper ตาม variant — 'default' (เดสก์ท็อป) และ 'flat' (Mobile Dashboard) ทั้งคู่ใช้
+// navy-glass ของ HOME_COLORS แล้ว (Desktop → theme migration ย้ายออกจาก PremiumCard เดิม เพื่อให้
+// ตรงกับการ์ดข้างเคียง Body Goal/Recovery/Training This Week ที่ย้ายไปก่อนหน้า) ต่างกันแค่รายละเอียด
+// blur/shadow ที่ยังคง spacing เดิมของแต่ละฝั่งไว้ — สลับแค่พื้นผิวชั้นนอกสุด ไม่แตะเนื้อหา/logic ข้างใน
+// เลยสักบรรทัด (children เดียวกันทั้งสอง variant)
 //
 // v2: "New_mobile_app.zip" — พื้นผิว flat เปลี่ยนจาก gradient #1E2228→#17191E (สไตล์ "brief 2" เดิม)
 // เป็นสีทึบ #12161d + border rgba(255,255,255,.06) ให้ตรงกับการ์ดแบนใบอื่นๆ ในหน้า Home ที่เพิ่ง
@@ -822,7 +823,15 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
       </div>
     )
   }
-  return <PremiumCard className="flex flex-col gap-1.5 px-3 py-2.5">{children}</PremiumCard>
+  // Desktop ('default') previously used the generic <PremiumCard> (app-wide Dark Titanium
+  // identity), while Mobile ('flat', above) already uses HOME_COLORS — leaving MINT Coach as the
+  // only Desktop Dashboard card still on the old shared card style once Body Goal/Recovery/
+  // Training This Week were migrated to the same navy-glass tone. Matches those siblings' exact
+  // treatment (not the 'flat' branch's blur/shadow recipe, which is tuned for Mobile's tighter
+  // spacing) — composition/padding untouched, only the surface color/border changed.
+  return (
+    <div className="rounded-card bg-[#101D29]/80 border border-white/10 flex flex-col gap-1.5 px-3 py-2.5">{children}</div>
+  )
 }
 
 // Avatar วงแหวน — ใช้ภาษา "donut ring" เดียวกับ FitnessRing/GoalRing ที่ใช้ทั่วแอป (ไม่ใช่กรอบสี่เหลี่ยม

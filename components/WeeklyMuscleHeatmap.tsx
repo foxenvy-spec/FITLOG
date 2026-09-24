@@ -376,13 +376,13 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
 
   return (
     // v49: rounded-lg (8px) -> rounded-card (24px, token เดียวกับ PremiumCard) ตามฟีดแบ็ก Radius
-    <div className="rounded-card bg-surface border border-line shadow-elevated overflow-hidden">
+    <div className="rounded-card bg-[#0B1520] border border-white/10 shadow-elevated overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-center justify-between gap-2">
         <div>
           <p className="text-[12px] tracked uppercase text-muted">Graphic Muscle Heatmap</p>
           <p className="font-display text-sm uppercase text-ink mt-0.5">สัดส่วนกล้ามเนื้อ (สัปดาห์นี้)</p>
         </div>
-        <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-line bg-surface2 p-0.5">
+        <div className="shrink-0 flex items-center gap-0.5 rounded-full border border-white/10 bg-[#101D29] p-0.5">
           <button
             type="button"
             onClick={() => setView('volume')}
@@ -408,7 +408,7 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
           รายกลุ่ม) เป็น hero metric ตัวใหญ่ (text-3xl) ให้เห็นก่อนอย่างอื่นทั้งหมด — เซ็ต/ท่ารวมย้ายไปเป็น
           ข้อความรองเล็กๆ ฝั่งขวาแทน ไม่ได้ตัดข้อมูลออก แค่สลับลำดับความสำคัญ */}
       {!isLoading && hasAnyData && balance && (
-        <div className="px-4 pb-3 flex items-start justify-between gap-3 border-b border-line">
+        <div className="px-4 pb-3 flex items-start justify-between gap-3 border-b border-white/10">
           <div>
             <p className="text-[12px] tracked uppercase text-muted flex items-center gap-1">
               Balance
@@ -503,7 +503,7 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
                 การคลิกเพราะ pointer-events-none) */}
             {hoveredGroup && statByGroup.get(hoveredGroup) && (
               <div
-                className="absolute z-20 top-0 left-1 w-52 rounded-lg border border-line bg-surface2 px-3 py-2 shadow-elevated pointer-events-none"
+                className="absolute z-20 top-0 left-1 w-52 rounded-lg border border-white/10 bg-[#101D29] px-3 py-2 shadow-elevated pointer-events-none"
                 role="tooltip"
               >
                 {(() => {
@@ -543,7 +543,7 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
                 const isOpen = expanded === s.group
                 const color = view === 'balance' ? BALANCE_COLOR[rowTier(s.pct)] : MUSCLE_GROUP_COLORS[s.group]
                 return (
-                  <div key={s.group} className="rounded-md bg-surface2 overflow-hidden">
+                  <div key={s.group} className="rounded-md bg-[#101D29] overflow-hidden">
                     <button
                       type="button"
                       onClick={() => toggleExpand(s.group)}
@@ -639,7 +639,7 @@ export default function WeeklyMuscleHeatmap({ onInsight, onActiveGroupChange }: 
           แนะนำสัปดาห์หน้า" — Muscle Distribution คือแถวรายกลุ่มด้านบนอยู่แล้ว (ไม่ทำซ้ำ) ตรงนี้เพิ่มส่วนที่
           ยังไม่มี: Upper/Lower %, Push/Pull %, และสรุปคำแนะนำที่อ่านแล้วลงมือทำได้ทันที */}
       {!isLoading && hasAnyData && trainingBalanceDetail && (
-        <div className="border-t border-line px-4 py-3">
+        <div className="border-t border-white/10 px-4 py-3">
           <button
             type="button"
             onClick={() => setBalanceDetailsOpen((v) => !v)}
