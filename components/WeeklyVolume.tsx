@@ -9,7 +9,6 @@ import { VOLUME_MUSCLES, type MuscleGroup } from '@/lib/muscle-groups'
 import { COLORS } from '@/lib/theme'
 import AnimatedBarFill from './AnimatedBarFill'
 import VolumeTargetsSettings from './VolumeTargetsSettings'
-import PremiumCard from './ui/PremiumCard'
 
 // ลำดับแสดงผล — จัดให้ตรงกับ Graphic Muscle Heatmap (อก, หลัง, ไหล่, แขน, แกนกลางลำตัว, ขา, น่อง)
 // แยกจาก VOLUME_MUSCLES ตัวหลัก (ซึ่งใช้ลำดับอื่นและถูกอ้างจากหลายที่ในแอป) เพื่อไม่กระทบจุดอื่น
@@ -89,7 +88,15 @@ export default function WeeklyVolume({ highlightGroup, setsByMuscle, targets }: 
     // Weekly Volume ควร PRIMARY, Consistency + Week Streak ควร SECONDARY" จัดการ์ดนี้เป็น primary แล้ว
     // (คู่กับ Muscle Heatmap ที่ใช้พื้นผิวเต็มอยู่แล้ว) จึงคืนพื้นผิวเต็มกลับมา ไม่ลด texture อีกต่อไป —
     // ส่วน ConsistencyStrip.tsx ถูกปรับให้เบาลง (bg-surface2/40) แทน เพื่อสร้าง contrast primary/secondary
-    <PremiumCard className="overflow-hidden">
+    //
+    // v2 (ฟีดแบ็ก design review, screenshot จริง) "Weekly Sets ยังมี gray brushed surface ค่อนข้างแรง
+    // ขณะที่ Muscle Heatmap (คู่ primary เดียวกันตามคอมเมนต์ด้านบน) ใช้ navy surface แล้ว — สองตัวอยู่ข้างกัน
+    // แต่ material language ยังไม่ตรงกัน" — เดิม <PremiumCard> (พื้นผิวเทาไทเทเนียมกลางของแอป) ยังไม่เคย
+    // migrate ตอน f2c3320 (ตอนนั้นแค่แก้ border ปุ่มตั้งเป้าหมายจุดเดียว ไม่ได้แตะ wrapper หลัก) — เปลี่ยน
+    // เป็นพื้นผิวเดียวกับ WeeklyMuscleHeatmap.tsx เป๊ะ (bg-[#0B1520] border-white/10 shadow-elevated) ตามที่
+    // คอมเมนต์ข้างบนตั้งใจไว้อยู่แล้วว่าให้ "คู่กับ Muscle Heatmap" — confirmed zero blast radius (import
+    // เดียวใช้ผ่าน dynamic() ใน DashboardView.tsx เท่านั้น)
+    <div className="rounded-card bg-[#0B1520] border border-white/10 shadow-elevated overflow-hidden">
       <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-2">
         <div>
           {/* ฟีดแบ็ก (Information Hierarchy review) "'Weekly Volume' + '64 sets' ผิด terminology —
@@ -290,6 +297,6 @@ export default function WeeklyVolume({ highlightGroup, setsByMuscle, targets }: 
             setSettingsOpen(false)
           }}
         />
-    </PremiumCard>
+    </div>
   )
 }

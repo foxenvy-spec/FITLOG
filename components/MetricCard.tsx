@@ -297,18 +297,26 @@ export default function MetricCard({
             ได้ลายเดียวกัน
             v47: ฟีดแบ็ก "ลายเยอะไปนิด เหลือประมาณ 30% ของตอนนี้ เพราะ Titanium จริงๆ จะเห็น Texture น้อยมาก
             จะดูแพงกว่า" — ลดจาก 0.65 เหลือ 0.65*0.3 ≈ 0.2 ตามสัดส่วนที่ขอเป๊ะ ไม่แตะ TITANIUM_MESH_CSS
-            ด้านล่าง (ลายตาข่าย คนละชั้นกับลายเฉียงนี้ ไม่ได้ถูกพูดถึง) */}
+            ด้านล่าง (ลายตาข่าย คนละชั้นกับลายเฉียงนี้ ไม่ได้ถูกพูดถึง)
+            v53 (ฟีดแบ็ก design review, screenshot จริง) "Metric card เดสก์ท็อปยังมี brushed gray/diagonal
+            texture ที่ดูเป็น legacy Desktop มากกว่า Mobile navy-glass — ถ้าเป้าหมายคือ Computer เข้า Mobile
+            theme ให้ลดความเป็น gray-metal ลงอีกนิด ให้ navy-glass (พื้น CARD_GRADIENT_CSS เดิม) เป็น
+            dominant material แทน ไม่ต้องเปลี่ยนสี metric identity (28a93b2 ปิดไปแล้ว)" — ลดเฉพาะเดสก์ท็อป
+            (!compact) ต่ออีกขั้น 0.2 -> 0.08 (~-60%) ไม่แตะค่ามือถือ (compact ยังคง 0.2 ทุกประการ ผ่านการ
+            ปรับหลายรอบมาแล้วโดยเจตนาแยกกัน) */}
         <div
           aria-hidden="true"
           className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-          style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: 0.2 }}
+          style={{ backgroundImage: DIAGONAL_TITANIUM_CSS, opacity: compact ? 0.2 : 0.08 }}
         />
         {/* v27: "Titanium Mesh" — ลายไขว้ 2 ทิศละเอียด (โทเคนเดียวกับ PremiumCard ใช้) ซ้อนแยกจากลายเฉียง
-            ทิศทางเดียวด้านบน ให้การ์ดนี้มีลายตารางแบบเดียวกับการ์ดอื่นทั่วแอปด้วย ไม่ใช่แค่ลายเฉียงเดิม */}
+            ทิศทางเดียวด้านบน ให้การ์ดนี้มีลายตารางแบบเดียวกับการ์ดอื่นทั่วแอปด้วย ไม่ใช่แค่ลายเฉียงเดิม
+            v53 (ฟีดแบ็ก design review เดียวกับลายเฉียงด้านบน) — ลดเฉพาะเดสก์ท็อป (!compact) เหตุผลเดียวกัน
+            เป๊ะ (opacity เดิมของชั้นนี้ไม่เคยระบุ = ใช้ค่า default 1 มาตลอด ไม่กระทบมือถือที่ยังเป็น 1 เท่าเดิม) */}
         <div
           aria-hidden="true"
           className={`pointer-events-none absolute inset-0 ${radiusClass}`}
-          style={{ backgroundImage: TITANIUM_MESH_CSS }}
+          style={{ backgroundImage: TITANIUM_MESH_CSS, opacity: compact ? 1 : 0.45 }}
         />
         {/* v15: การ์ดยังดู "Matte" — เพิ่มแถบสะท้อนแสงเฉียง (diagonal reflection) มุมบนซ้ายไล่ไปขวาล่าง
             แยกจาก CARD_REFLECTION_CSS เดิม (ซึ่งเป็นแถบแนวนอนบนสุดล้วนๆ) อันนี้เอียงตามทิศทางเดียวกับ

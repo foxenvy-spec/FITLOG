@@ -829,8 +829,21 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
   // Training This Week were migrated to the same navy-glass tone. Matches those siblings' exact
   // treatment (not the 'flat' branch's blur/shadow recipe, which is tuned for Mobile's tighter
   // spacing) — composition/padding untouched, only the surface color/border changed.
+  //
+  // v2 (ฟีดแบ็ก design review, screenshot จริง) "การ์ดนี้ยังดูเหมือน widget ที่ถูกวางเพิ่มทีหลัง —
+  // ควรรู้สึกเป็นหนึ่งใน secondary glass surfaces ไม่ใช่ floating utility box — polish surface +
+  // hierarchy มากกว่าขยายขนาด" — ไม่เพิ่ม box-shadow แบบ elevated (Body Goal/Recovery/Training This
+  // Week ข้างเคียงตั้งใจไม่มี shadow-elevated มาตั้งแต่ v41 "การ์ดรอง ไม่ใช่ Hero" — เพิ่มจะทำให้ใบนี้
+  // เด่นผิดกลุ่มแทน) เพิ่มแค่ rim light บางๆ ขอบบน (inset, ไม่ใช่ drop shadow) — คุณสมบัติ "กระจก" เดียวกับ
+  // ที่ Quick Action tiles ข้างๆ ใช้อยู่แล้ว (inset 0 1px 0 rgba(255,255,255,.08)) ให้พื้นผิวรู้สึกเป็น
+  // วัสดุเดียวกับเพื่อนบ้านจริงๆ ไม่ใช่แค่สีตรงกันเฉยๆ
   return (
-    <div className="rounded-card bg-[#101D29]/80 border border-white/10 flex flex-col gap-1.5 px-3 py-2.5">{children}</div>
+    <div
+      className="rounded-card bg-[#101D29]/80 border border-white/10 flex flex-col gap-1.5 px-3 py-2.5"
+      style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08)' }}
+    >
+      {children}
+    </div>
   )
 }
 

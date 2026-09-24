@@ -1193,7 +1193,23 @@ export default function DashboardPage() {
         comment เก่าที่บอกว่า "ไม่แตะ lg:gap-4 ของ grid หลัก" แต่นั่นคือตอนอยากลดแค่คู่ header->Body
         Overview คู่เดียว ไม่ใช่ทุกคู่ — รอบนี้อยากลดทุกคู่พร้อมกันจริงๆ เพื่อประหยัดความสูงรวม จึงแก้ตรงนี้
         ได้ ปลอดภัย ไม่กระทบเนื้อหา/การ์ดภายในเลย แค่ระยะห่างระหว่างการ์ด) */}
-    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-start">
+    <div className="relative space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-start">
+      {/* ฟีดแบ็ก (design review, screenshot จริง) "Header ยังรู้สึก 'เก่า' กว่า Mobile ชัดที่สุด — พื้นที่
+          ด้านบนเป็น black/empty เยอะ ไม่มี visual connection กับ mountain hero ด้านล่าง — ไม่ต้องทำเป็น
+          Mobile layout แต่ควรมี hero atmosphere ต่อเนื่องจาก Header ลงมา" — เพิ่ม ambient wash อุ่นๆ จางมาก
+          (~4-5% peak) วางเป็นชั้นแรกสุดของทั้งกลุ่ม (Header + Hero cluster) แทนที่จะเป็นจุดกำเนิดแสงแยกเฉพาะ
+          หลังชื่อเหมือนเดิม (glow เดิมหลังชื่อ v45 ยังอยู่ไม่แตะ) — กว้าง/สูงพอคลุมทั้งแถว Header ลงไปจนถึง
+          จุดเริ่มของ Hero การ์ดเสมอ ไม่ว่าจะมี Body Goal/Onboarding banner คั่นอยู่ระหว่างกลางหรือไม่ (เป็น
+          gradient นุ่มมาก ไม่ใช่รูปทรงคมชัดที่ต้องตรงตำแหน่งเป๊ะ) — โทนสีเดียวกับแสงอาทิตย์ในรูปภูเขาที่ Hero
+          ใช้อยู่แล้ว (v64) ให้สองจุดรู้สึกเป็นแหล่งแสงเดียวกัน — pointer-events-none, ไม่มี z-index (paint
+          ก่อน children ปกติทุกตัวใน stacking context นี้ ตามรูปแบบเดียวกับ glow เดิมหลังชื่อ) */}
+      <div
+        className="absolute inset-x-0 top-0 h-[560px] pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(ellipse 85% 55% at 35% 0%, rgba(255,150,30,.05), transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
       {/* greeting + settings */}
       <div className="relative z-20 lg:col-span-12 lg:order-1 flex items-start justify-between gap-3 px-1 animate-rise" style={{ animationDelay: '0ms' }}>
         {/* Hero Background — แสงอำพันจางมากๆ (~3% peak) หลัง Header ตรงจุดที่ชื่อ (BANK ฯลฯ) อยู่ ให้
@@ -1634,6 +1650,11 @@ export default function DashboardPage() {
                   กับภาพแนวนอนธรรมชาติ) — filter เอา sepia/hue-rotate เดิม (แต่งสีให้โลหะดูอุ่น) ออก เพราะ
                   ภาพนี้มีโทนอุ่นจากแสงอาทิตย์จริงอยู่แล้ว ใช้แค่ contrast/saturate/brightness ลดลงแบบเดียว
                   กับที่ Header.tsx (มือถือ) ใช้กับภาพเดียวกันนี้ (เพื่อ mood สอดคล้องกัน) */}
+              {/* ฟีดแบ็ก (design review, screenshot จริง) "Hero ภาพสวย แต่ด้านซ้าย/ล่างแทบกลืนกับ #101D29
+                  โดยเฉพาะเมื่อมี dark overlay ของ Today's Workout ซ้อนอยู่ข้างหน้า — ปรับ image visibility
+                  ขึ้น ~10-15% (ไม่เปลี่ยนรูป) รักษาโทน amber sunset ไว้" — brightness 0.85 -> 0.95 (+12%),
+                  saturate 0.9 -> 1.0 (+11%, ให้โทนอำพันยังคงชัดหลังสว่างขึ้น ไม่จางลง), contrast 0.9 -> 0.95
+                  (เบามาก กันภาพแบนไปหลัง brightness ขึ้น) */}
               <Image
                 src="/images/home-header-hero.png"
                 alt=""
@@ -1641,7 +1662,7 @@ export default function DashboardPage() {
                 className="object-cover"
                 style={{
                   objectPosition: '70% 35%',
-                  filter: 'contrast(0.9) saturate(0.9) brightness(0.85)',
+                  filter: 'contrast(0.95) saturate(1.0) brightness(0.95)',
                 }}
                 priority
               />
@@ -1653,8 +1674,11 @@ export default function DashboardPage() {
               // v64 (mockup match) — เดิมมี radial "light on dumbbell" เจาะจงตำแหน่งหัวดัมเบล เอาออกเพราะ
               // ภาพภูเขาเองมีจุดแสงอาทิตย์อุ่นอยู่แล้วในเนื้อภาพจริง ไม่ต้องจำลองแสงตกกระทบซ้อนทับ — เหลือ
               // แค่ dark-to-image fade แนวนอนเดิม (จำเป็นสำหรับให้ข้อความฝั่งซ้ายอ่านออก) กับ vignette บนบางๆ
+              // v65 (ฟีดแบ็ก "image visibility ~10-15%") — vignette บนลดลงตามสัดส่วนเดียวกับ brightness
+              // ด้านบน (.08/.18 -> .06/.14, ~-25%) ไม่แตะ horizontal fade (จำเป็นสำหรับ text legibility
+              // ของ panel ข้อความฝั่งซ้าย ไม่ใช่จุดที่ฟีดแบ็กรอบนี้พูดถึง)
               backgroundImage: [
-                'linear-gradient(180deg, rgba(7,9,13,.08), rgba(7,9,13,.18))',
+                'linear-gradient(180deg, rgba(7,9,13,.06), rgba(7,9,13,.14))',
                 'linear-gradient(90deg, rgba(28,31,36,1) 0%, rgba(28,31,36,0.55) 35%, rgba(28,31,36,0.15) 70%)',
               ].join(', '),
             }}
@@ -1662,9 +1686,12 @@ export default function DashboardPage() {
           {/* ฟีดแบ็ก "Today's Workout ใหญ่เกินไปตอนยังไม่มีโปรแกรม — Visual Weight > Information Value"
               (ยืนยันจากสกรีนช็อตจริง) — เพิ่ม scrim มืดอีกชั้นทับเฉพาะ State B (ยังไม่มีโปรแกรม + ยังไม่ได้
               เทรนวันนี้) ให้รูปถอยเป็นพื้นหลังมากขึ้นตอนที่เนื้อหาจริงมีน้อย — State A/C (มีโปรแกรม/เทรนเสร็จ
-              แล้ว) ไม่โดนกฎนี้ ยังเห็นรูปเต็มที่เหมือนเดิม — ยังใช้ได้เหมือนเดิม ไม่ขึ้นกับภาพพื้นหลังตัวไหน */}
+              แล้ว) ไม่โดนกฎนี้ ยังเห็นรูปเต็มที่เหมือนเดิม — ยังใช้ได้เหมือนเดิม ไม่ขึ้นกับภาพพื้นหลังตัวไหน
+              v65 (ฟีดแบ็ก, screenshot จริง) "ด้านซ้าย/ล่างของรูปแทบกลืนกับพื้นหลัง โดยเฉพาะเมื่อมี scrim
+              ตัวนี้ซ้อนอยู่ข้างหน้า" — ระบุ scrim นี้เจาะจงว่าเป็นสาเหตุหลัก ลด alpha ลง .50 -> .36 (-28%)
+              ยังคงเจตนาเดิม (ลด visual weight ตอนเนื้อหาน้อย) ไว้ แค่ไม่ให้รูปจมหายไปทั้งหมด */}
           {!scheduledDay && !todayCompleted && (
-            <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.50)' }} />
+            <div className="absolute inset-y-0 right-0 w-full sm:w-2/3 pointer-events-none" style={{ backgroundColor: 'rgba(9,10,12,.36)' }} />
           )}
           {/* v64 (mockup match) — ตัด particle/dust/spark cluster เดิม (12 จุด) ออกทั้งหมด: จำลองฝุ่น
               ชอล์ก/ประกายโลหะรอบดัมเบลจริงๆ ไม่มีความหมายบนภาพภูเขา (ไม่ใช่แค่ "ดูแปลก" แต่ผิดบริบทภาพ
@@ -1676,10 +1703,13 @@ export default function DashboardPage() {
             เบาๆ เท่ากันทั้งใบ ให้ฝั่งข้อความ (ซ้าย) กับฝั่งรูป (ขวา) ถูกมืดขอบแบบเดียวกัน อ่านเป็นภาพถ่ายเดียว
             ที่มีการ์ด (กระจก) ลอยอยู่ข้างใน แทนที่จะเป็น 2 พื้นผิวแยกกันชัดเจน — วางไว้เหนือทุกเลเยอร์ของภาพ/
             gradient เดิมแต่ใต้ ring/ข้อความ (pointer-events-none, ไม่มี z ระบุ = อยู่ในลำดับ DOM ปกติ ก่อน
-            ring/ข้อความที่มี z-10 อยู่แล้ว) */}
+            ring/ข้อความที่มี z-10 อยู่แล้ว)
+            v65 (ฟีดแบ็ก "image visibility ~10-15%") — ขอบมืด .30 -> .22 (-27%) ตามสัดส่วนเดียวกับการปรับ
+            brightness/scrim อื่นๆ ในการ์ดนี้ ยังทำหน้าที่ "เชื่อมการ์ดกับรูปเป็นฉากเดียว" เหมือนเดิม แค่
+            ไม่กินขอบรูปมากเท่าก่อน */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 130% 130% at 50% 45%, transparent 55%, rgba(0,0,0,.30) 100%)' }}
+          style={{ background: 'radial-gradient(ellipse 130% 130% at 50% 45%, transparent 55%, rgba(0,0,0,.22) 100%)' }}
           aria-hidden="true"
         />
 
@@ -1820,28 +1850,17 @@ export default function DashboardPage() {
           </p>
 
           <div className="mt-4">
-            {/* v46: "Glass Layer" — ฟีดแบ็ก "Card มี Layer 2 ชั้นเหมือน Apple Vision Pro" — เพิ่มแผ่นกระจก
-                (backdrop-blur) ลอยอยู่หลังโซนตัวหนังสือเท่านั้น (ไม่ครอบทั้งการ์ด กันไม่ให้เบลอโซน
-                Dumbbell/Spark ทางขวาซึ่งควรคมชัด) แยกชั้น "โลหะ" (พื้นการ์ด) ออกจากชั้น "กระจก" (แผงข้อความ)
-                ให้เห็นความลึก 2 ชั้นจริง ไม่ใช่พื้นผิวเดียวแบน
-                v47: "Option A" — เลิก flex row ร่วมกับ Ring เดิม (ย้ายไปลอย absolute มุมขวาล่างแล้ว ดูด้านบน)
-                จำกัด max-width แทน กันตัวหนังสือยาวเกินไปชนโซน Ring/Dumbbell มุมขวาล่าง
-                v55: ฟีดแบ็ก "เพิ่ม Depth ระหว่างข้อความกับพื้นหลัง กล่องข้อความเรียบไป ลองทำ Glass เบาๆ" —
-                ของเดิม (v46) เบาบางมาก (blur-sm 4px, bg แทบมองไม่เห็นแค่ highlight gradient จาง ๆ) อัปเกรด
-                ตามค่าที่ขอเป๊ะ: bg ทึบขึ้น rgba(18,20,26,.55) + backdrop-blur 16px (blur-sm -> ตัวเลขตรง
-                ผ่าน style ปกติเพราะ Tailwind ไม่มี blur-16 ในสเกลดีฟอลต์) + border rgba(255,255,255,.06)
-                ให้แผงข้อความ "ลอย" เหนือภาพชัดเจนขึ้นตามที่ขอ */}
+            {/* v46-v55: "Glass Layer" — เคยมีแผ่นกระจก (backdrop-blur 16px + bg rgba(18,20,26,.55) +
+                border) ลอยหลังโซนตัวหนังสือ เพื่อแยกชั้น "โลหะ" (พื้นการ์ด) ออกจากชั้น "กระจก" (แผงข้อความ)
+                v65 (ฟีดแบ็ก design review, screenshot จริง) "Today's Workout ซ้อนกันเยอะเกินไป — Outer Hero
+                > Inner dark panel > Mountain image อ่านเหมือน card ซ้อน card ซ้อน image เทียบกับ Mobile ที่
+                เรียบกว่า (ข้อความลอยตรงบนรูปเลย ไม่มีกรอบกระจกคั่น)" — ตัดชั้นกระจกนี้ออกทั้งชั้น (ชั้นที่ทำให้
+                รู้สึกเป็น "การ์ดที่ 2" ซ้อนอยู่ในการ์ด) — ไม่กระทบ text legibility เพราะ horizontal fade
+                gradient เดิมของรูปพื้นหลัง (rgba(28,31,36,1) ที่ 0% ไล่จาง 35%/70%, ดู hero-gradient-box
+                ด้านบน) ทึบมากอยู่แล้วในโซน 0-35% ซึ่งเป็นที่อยู่ของ panel นี้ทั้งหมด (max-w-[230px]) — Mobile
+                (TodaysWorkoutEmptyCard/TodaysFocusCard) ก็ไม่มีกรอบกระจกคั่นแบบนี้เช่นกัน ใช้ fade เดียวกันนี้
+                ทำหน้าที่อ่านง่ายพอแล้ว */}
             <div className="min-w-0 max-w-[230px] relative">
-              <div
-                className="absolute -inset-3 rounded-xl pointer-events-none"
-                style={{
-                  background: 'rgba(18,20,26,.55)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255,255,255,.06)',
-                }}
-                aria-hidden="true"
-              />
               <div className="relative">
               {(() => {
                 // ฟีดแบ็ก "'ยังไม่ได้ตั้งโปรแกรม' อ่านยากกว่า 'ยังไม่มี Workout วันนี้'" — เปลี่ยนหัวข้อใหญ่
@@ -3050,11 +3069,16 @@ function QuickAction({
           border/boxShadow ย้ายจาก inline style มาไว้ใน <style jsx> ทั้งคู่ (rest + hover) เพราะ inline
           style attribute มี specificity สูงกว่า stylesheet เสมอ (ไม่ว่า pseudo-class จะเจาะจงแค่ไหน) —
           ตอนแรก border/boxShadow ยังอยู่ใน inline style เดิมทำให้กฎ :hover ด้านล่างไม่มีทางชนะ เขียนสอง
-          property นี้ไปแล้วแต่ hover ไม่เห็นผลจริงเลย (ตรวจพบจาก computed style ไม่ตรงกับที่คาด) */}
+          property นี้ไปแล้วแต่ hover ไม่เห็นผลจริงเลย (ตรวจพบจาก computed style ไม่ตรงกับที่คาด)
+          v65 (ฟีดแบ็ก design review, screenshot จริง) "Quick Actions ยังเป็น black gradient rectangular
+          buttons ทั้งที่ส่วนบนของหน้าเป็น navy glass + thin border + glow แล้ว เกิด visual discontinuity
+          ชัดเจน" — พื้นเทาดำ #1B1D20/#0D0E10 (โทนเดียวกับตอนทั้งหน้ายังเป็น "Dark Titanium" เดิมก่อน
+          migration) เปลี่ยนเป็นสีเดียวกับ navy-glass ที่การ์ดอื่นในหน้าใช้แล้ว (bg-[#101D29]/80 เทียบเท่า) —
+          ไม่แตะ backdrop-blur/glow ต่อ hover/จำนวน-เลย์เอาต์ปุ่มใดๆ เลย แค่สลับสีพื้นให้เข้าธีมเดียวกัน */}
       <Link
         href={href}
         className="quick-action relative rounded-lg backdrop-blur-md flex items-center gap-2.5 px-3 py-3 transition active:scale-[0.99]"
-        style={{ backgroundImage: 'linear-gradient(180deg, #1B1D20cc, #0D0E10cc)' }}
+        style={{ backgroundColor: 'rgba(16,29,41,.8)' }}
       >
         <span
           className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base"
@@ -3076,7 +3100,7 @@ function QuickAction({
       </Link>
       <style jsx>{`
         .quick-action {
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.25);
         }
         @media (hover: hover) {
