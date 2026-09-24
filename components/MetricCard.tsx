@@ -436,8 +436,13 @@ export default function MetricCard({
                 // + จุดสีธีมจางๆ ที่มุมบนซ้าย เป็นการ "แต้ม" สี ไม่ใช่ "ย้อม" ทั้งกล่อง
                 // v43: ฐานกรมท่า (#232C40/#0A0E18) เปลี่ยนเป็น CARD_GRADIENT_CSS (โทนไทเทเนียมเดียวกับ
                 // พื้นการ์ดหลัก) ตามที่พบใน audit รอบสุดท้าย — จุดสีธีมด้านบนไม่แตะ ยังแต้มทับเหมือนเดิม
-                background: CARD_GRADIENT_CSS,
-                backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), ${CARD_GRADIENT_CSS}`,
+                // v54 (ฟีดแบ็ก "อยากได้ 9.5-10, ใช้สกิล" — final audit) — icon badge นี้ไม่เคยถูก gate ตาม
+                // compact เลย (ใช้ CARD_GRADIENT_CSS เทาเดิมทั้งสองแพลตฟอร์ม) ทำให้เหลือเป็นจุดเทาจุดเดียว
+                // ลอยอยู่ในการ์ดเดสก์ท็อปที่ re-hue เป็น navy หมดแล้ว (BodyMetricsRow → Navy-Glass, 5079e5a)
+                // — เดสก์ท็อป (!compact) เท่านั้น เปลี่ยนไปใช้ DESKTOP_METRIC_NAVY_GRADIENT_CSS เดียวกับพื้น
+                // การ์ดหลัก มือถือ (compact) ไม่แตะเลย (ยังเป็น CARD_GRADIENT_CSS เดิมทุกประการ)
+                background: compact ? CARD_GRADIENT_CSS : DESKTOP_METRIC_NAVY_GRADIENT_CSS,
+                backgroundImage: `radial-gradient(circle at 30% 25%, ${theme.main}55, transparent 65%), ${compact ? CARD_GRADIENT_CSS : DESKTOP_METRIC_NAVY_GRADIENT_CSS}`,
                 // border บาง 1px สีธีม (คมชัด แทนเส้นหนาๆ) + inset highlight ลดความสว่างลง (.35→.15) ให้เป็น
                 // แค่ "ผิวมัน" บางๆ ไม่ใช่เส้นขอบขาวหนา ปล่อยให้ glow ด้านนอกทำหน้าที่เน้นความเด่นแทน
                 border: `1px solid ${theme.main}55`,
