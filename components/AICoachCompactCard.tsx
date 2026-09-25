@@ -942,8 +942,12 @@ function AICoachCardWrapper({ variant, children }: { variant: 'default' | 'flat'
   // Week (DashboardView.tsx) การ์ดนี้จึงต้องตามให้เข้ากลุ่มเดิม (ไม่ใช่เด่นผิดกลุ่มอีกต่อไป เพราะเพื่อนบ้าน
   // เปลี่ยนตามแล้ว) — เพิ่ม .shadow-elevated (globals.css, ยูทิลิตี้กลางเดียวกับที่ Muscle Heatmap/Weekly
   // Sets/Body Goal/Recovery/Training This Week ใช้) แทนการเขียน box-shadow เองแยก ไม่แตะ layout/padding
+  // v4 (ฟีดแบ็ก IA/hierarchy trace, เดสก์ท็อปเท่านั้น) "Primary/Supporting/Secondary ยังไม่มี visual
+  // tier" — MINT Coach จัดเป็น Secondary tier (คู่กับ Body Goal/Quick Actions) ต่างจาก Recovery/Training
+  // This Week ที่เป็น Supporting tier (ยังคง shadow-elevated) — ถอด shadow-elevated ออกจากตรงนี้ให้แบน
+  // ลงกว่า Supporting จริง ไม่แตะ bg/border/padding/มือถือ (variant="flat" คนละ branch ด้านบน ไม่โดน)
   return (
-    <div className="rounded-card bg-[#101D29]/80 border border-white/10 flex flex-col gap-1.5 px-3 py-2.5 shadow-elevated">
+    <div className="rounded-card bg-[#101D29]/80 border border-white/10 flex flex-col gap-1.5 px-3 py-2.5">
       {children}
     </div>
   )

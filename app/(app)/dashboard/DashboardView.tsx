@@ -1476,7 +1476,12 @@ export default function DashboardPage() {
                 มาตั้งแต่ v41 "การ์ดรอง ไม่ใช่ Hero" — พลิกทิศทางนั้นโดยตั้งใจตามคำสั่งรอบนี้ ใช้ class
                 กลางแทนเขียน box-shadow เองซ้ำ ให้เข้าชุดเดียวกับการ์ดที่ elevated อยู่แล้วเป๊ะ) ไม่แตะ
                 padding/layout/เนื้อหาใดๆ เลย */}
-            <div className="rounded-card bg-[#101D29]/80 border border-white/10 px-4 py-2.5 shadow-elevated">
+            {/* v3 (ฟีดแบ็ก IA/hierarchy trace) "Primary/Supporting/Secondary ยังไม่มี visual tier —
+                ทุกการ์ดส่งสัญญาณความสำคัญใกล้เคียงกัน" — ใช้ elevation เป็นตัวแยกชั้น (ไม่เพิ่ม decoration
+                ใหม่ตามที่ขอ): Hero=shadow-hero (Primary), Recovery/Training This Week=shadow-elevated
+                (Supporting) คงเดิม, Body Goal/Quick Actions/MINT Coach=Secondary — ถอด shadow-elevated
+                ออกจากตรงนี้ (Body Goal) ให้แบนลงกว่า Supporting tier จริง ไม่แตะ bg/border/padding */}
+            <div className="rounded-card bg-[#101D29]/80 border border-white/10 px-4 py-2.5">
               <p className="text-[12px] tracked uppercase text-muted mb-1.5 flex items-center gap-1">
                 Body Goal
                 {/* ฟีดแบ็ก (P2, "Metric explanation") "Progress % (เช่น 37%) เพิ่ม ⓘ อธิบายว่าคำนวณจากอะไร" */}
@@ -1605,7 +1610,15 @@ export default function DashboardPage() {
           gap-x-3/gap-y-4 (16px แนวตั้งระหว่างแถว Hero row กับ Quick Actions/AI Coach row เท่านั้น) ให้
           เนื้อหารวมสูงขึ้นอีกนิดแบบมี "breathing room" จริง ไม่ใช่การ์ดว่างเปล่า — gap แนวนอนระหว่างคอลัมน์
           (ที่ปรับสัดส่วน 6+6/col-start ไว้ละเอียดแล้วหลายรอบ) ไม่แตะเลย ยังเป็น 12px เท่าเดิมทุกจุด */}
-      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-x-3 lg:gap-y-4 lg:items-stretch">
+      {/* v3 (ฟีดแบ็ก IA/hierarchy trace) "Body Goal เป็น long-horizon metric ควรอยู่หลัง Today's Workout/
+          Recovery/Training This Week (triad ของวันนี้) ไม่ใช่ก่อน" — เดิม grid นี้ (order-5) รวม row 1
+          (triad) + row 2 (Quick Actions/MINT Coach) เป็นก้อนเดียว ทำให้ Body Goal (order-4, render ก่อน
+          grid นี้ทั้งก้อน) ไปอยู่ก่อน triad เสมอ — แยกเป็น 2 grid อิสระ: grid นี้ (row 1/triad เท่านั้น)
+          เปลี่ยนเป็น order-3 (มาก่อน Body Goal), ส่วน row 2 (Quick Actions/MINT Coach) แยกเป็น grid ใหม่
+          ด้านล่าง (หลัง Training This Week) เป็น order-5 (มาหลัง Body Goal) — Body Goal เองไม่ต้องย้าย
+          ตำแหน่ง JSX เลย แค่ order-3 < order-4 < order-5 ก็ได้ลำดับที่ต้องการแล้ว — col-start/col-span/
+          สัดส่วนภายในแต่ละการ์ดไม่แตะเลยแม้แต่จุดเดียว */}
+      <div className="space-y-6 lg:space-y-0 lg:col-span-12 lg:order-3 lg:grid lg:grid-cols-12 lg:gap-x-3 lg:gap-y-4 lg:items-stretch">
       {/* left column (lg+): today's workout, quick start, muscle heatmap. */}
       <div className="space-y-6 lg:space-y-0 lg:contents">
       {/* card 1: hero — today's workout. Sets the visual tone: everything else below is
@@ -2875,6 +2888,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      </div>
+      </div>
+
+      {/* v3 (ฟีดแบ็ก IA/hierarchy trace) — ปิด grid ของ row 1 (triad) ตรงนี้ (2 </div> ด้านบน: ปิด
+          "right column" lg:contents wrapper แล้วปิดตัว grid เอง) เปิด grid ใหม่สำหรับ row 2 (Quick
+          Actions/MINT Coach) ด้านล่างนี้แยกเป็นก้อนอิสระ — row-start ภายในเปลี่ยนจาก 2 เป็น 1 ทั้งคู่
+          (กลายเป็น grid เดี่ยวมีแค่แถวเดียว ไม่ใช่แถวที่สองของ grid รวมเดิมอีกต่อไป) col-start/col-span
+          เดิมไม่แตะเลย */}
+      <div className="lg:col-span-12 lg:order-5 lg:grid lg:grid-cols-12 lg:gap-3 lg:items-stretch">
       {/* card 5 (optional): AI coach — sits under Weekly Goal in the rightmost column, single row
           (row-start-2 only) beside the quick-actions row.
           v42: ฟีดแบ็ก "Version 3" มอคอัพมี AI Coach panel เป็นทรง ring-avatar + headline + recovery bar
@@ -2894,7 +2916,7 @@ export default function DashboardPage() {
           (1-6 + 7-12 = เต็ม 12 คอลัมน์เหมือนเดิม ไม่มีช่องว่างระหว่างกลาง) ไม่แตะ layout/เนื้อหาภายในการ์ด
           เอง (ดู AICoachCompactCard.tsx สำหรับการเปลี่ยนแปลงเนื้อหา) */}
       {prefs.showAICoach && (
-        <div className="animate-rise lg:col-start-7 lg:col-span-6 lg:row-start-2" style={{ animationDelay: '360ms' }}>
+        <div className="animate-rise lg:col-start-7 lg:col-span-6 lg:row-start-1" style={{ animationDelay: '360ms' }}>
           {/* บั๊ก (code-review sweep ทั้งแอป) "Desktop ไม่เคยส่ง isRestDay เข้าการ์ดนี้เลย — ตอนเป็นวันพัก
               ตามแผน (isScheduledRestDay) การ์ด Today's Workout hero ด้านบนบอก 'Rest Day' ถูกต้องแล้ว (แก้
               ไปแล้วใน 27f6bfc) แต่การ์ด MINT Coach ข้างๆ ยังคงแนะนำกลุ่มกล้ามเนื้อ + ปุ่ม 'เริ่ม X' เหมือน
@@ -2932,7 +2954,6 @@ export default function DashboardPage() {
           />
         </div>
       )}
-      </div>
 
       {/* quick actions — lg only. Below lg, the two original quick-action groups above/below
           (quick-start + log/templates/stats) stay as-is; at xl they're both hidden and replaced
@@ -2945,7 +2966,7 @@ export default function DashboardPage() {
           ตัดเหลือ 3 ปุ่ม (บันทึกสถิติ/วิเคราะห์ร่างกาย/ถาม AI) — "เลือกโปรแกรม" กับ "สถิติ" เข้าถึงได้จาก
           Sidebar อยู่แล้ว (เมนู "โปรแกรม"/"สถิติ") ไม่ได้หายไปจากแอป แค่ไม่ต้องซ้ำจุดที่สองในแถวนี้ — col-span
           9 -> 6 (ให้พื้นที่คืนกับ MINT Coach ข้างๆ ซึ่งแคบไปที่ col-span-3 เดิม ดู comment ที่การ์ดนั้น) */}
-      <div className="hidden lg:block lg:col-start-1 lg:col-span-6 lg:row-start-2">
+      <div className="hidden lg:block lg:col-start-1 lg:col-span-6 lg:row-start-1">
         <div className={`grid gap-3 ${data.hasAnyHistory ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <QuickAction href="/log" label="บันทึกสถิติ" icon="➕" accent="moss" weight="primary" />
           <QuickAction href="/health" label="วิเคราะห์ร่างกาย" icon="🔍" accent="amber" />
@@ -2959,7 +2980,8 @@ export default function DashboardPage() {
           ไม่ซ้อนกับอีก 2 ใบที่พูดเรื่องเดียวกัน) เนื้อหา/สูตรคำนวณไม่เปลี่ยนเลย แค่ย้ายตำแหน่งหน้า */}
 
       </div>
-      {/* end cards cluster sub-grid */}
+      {/* end row 2 sub-grid (Quick Actions/MINT Coach) — row 1 (triad) closed further up as its own
+          separate grid, see v3 comment there */}
 
       {/* quick actions — hidden at xl, superseded by the merged row placed with lg:order-9 above */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:hidden">
